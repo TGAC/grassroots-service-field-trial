@@ -246,7 +246,6 @@ static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 		} /* if (data_p -> psd_database_s) */
 
-
 	return success_flag;
 }
 
@@ -402,42 +401,6 @@ static bool CloseDFWFieldTrialService (Service *service_p)
 }
 
 
-static json_type GetDFWFieldTrialJSONFieldType (const char *name_s, const void *data_p)
-{
-	json_type t = JSON_STRING;
-	DFWFieldTrialServiceData *service_data_p = (DFWFieldTrialServiceData *) (data_p);
-	const json_t *config_p = service_data_p -> dftsd_base_data.sd_config_p;
-
-	if (config_p)
-		{
-			const json_t *field_defs_p = json_object_get (config_p, "field_defs");
-
-			if (field_defs_p)
-				{
-					const char *field_def_s = GetJSONString (field_defs_p, name_s);
-
-					if (field_def_s)
-						{
-							if (strcmp (field_def_s, "int") == 0)
-								{
-									t = JSON_INTEGER;
-								}
-							else if (strcmp (field_def_s, "real") == 0)
-								{
-									t = JSON_REAL;
-								}
-							else if (strcmp (field_def_s, "bool") == 0)
-								{
-									t = JSON_TRUE;
-								}
-						}
-				}
-		}
-
-	return t;
-}
-
-
 static bool GetCollectionName (ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p, const char **collection_name_ss, DFWFieldTrialData *collection_type_p)
 {
 	SharedType value;
@@ -497,28 +460,6 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 }
 
 
-
-static char *GetCurrentDateAsString (void)
-{
-	char *date_s = NULL;
-	struct tm current_time;
-
-	if (GetCurrentTime (&current_time))
-		{
-			date_s = GetTimeAsString (&current_time);
-
-			if (!date_s)
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to convert time to a string");
-				}
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get current time");
-		}
-	const char *(*insert_fn) (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p) = NULL;
-	return date_s;
-}
 
 
 static json_t *ConvertToResource (const size_t i, json_t *src_record_p)
@@ -640,8 +581,6 @@ static OperationStatus SearchData (MongoTool *tool_p, ServiceJob *job_p, json_t 
 
 													if (!preview_flag)
 														{
-															if (AddLiveDateFiltering (raw_result_p, date_s))
-																{
 																	/*
 																	 * If the result is non-trivial i.e. has at least one of the sample,
 																	 * genotype or phenotype, then keep it
@@ -657,12 +596,7 @@ static OperationStatus SearchData (MongoTool *tool_p, ServiceJob *job_p, json_t 
 
 																			raw_result_p = NULL;
 																		}
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add date filtering for %d", collection_type);
-																	raw_result_p = NULL;
-																}		/* if (!AddLiveDateFiltering (values_p, collection_type)) */
+
 														}		/* if (!private_view_flag) */
 
 													if (raw_result_p)
