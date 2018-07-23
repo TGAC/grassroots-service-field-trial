@@ -14,27 +14,32 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * germplasm.h
  *
- *  Created on: 16 Jul 2018
+ *  Created on: 23 Jul 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_
 
 
-#include "address.h"
+#include "typedefs.h"
 
-typedef struct
+#include "dfw_field_trial_service_library.h"
+
+#include "jansson.h"
+
+
+typedef struct Germplasm
 {
-	uint32 fi_id;
-	char *fi_name_s;
-	char *fi_experiment_name_s;
-	Address *fi_address_p;
-	uint32 fi_year;
-	char *fi_soil_type_s;
-} Field;
+	char **ge_sources_ss;
+
+	char **ge_accessions_ss;
+
+	uint32 ge_num_crosses;
+} Germplasm;
+
 
 
 #ifdef __cplusplus
@@ -42,10 +47,17 @@ extern "C"
 {
 #endif
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Germplasm *AllocateGermplasm ();
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeGermplasm (Germplasm *germplasm_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetGermplasmAsJSON (const Germplasm *germplasm_p);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_ */

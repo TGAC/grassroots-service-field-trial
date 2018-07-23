@@ -16,25 +16,37 @@
 /*
  * plot.h
  *
- *  Created on: 16 Jul 2018
+ *  Created on: 23 Jul 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
 
+#include "typedefs.h"
 
-#include "address.h"
-
-typedef struct
+typedef struct Plot
 {
-	uint32 fi_id;
-	char *fi_name_s;
-	char *fi_experiment_name_s;
-	Address *fi_address_p;
-	uint32 fi_year;
-	char *fi_soil_type_s;
-} Field;
+	uint32 pl_id;
+
+	uint32 pl_sowing_date;
+
+	uint32 pl_harvest_date;
+
+	char *pl_row_factor_s;
+
+	bool pl_replication_flag;
+
+	char *pl_trial_design_s;
+
+	Size pl_size;
+
+	char *pl_growing_conditions_s;
+
+	char *pl_treatments_s;
+
+
+} Plot;
 
 
 #ifdef __cplusplus
@@ -48,4 +60,5 @@ extern "C"
 #endif
 
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_ */
+
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */

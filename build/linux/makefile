@@ -39,6 +39,7 @@ INCLUDES = \
 	
 SRCS 	= \
 	dfw_field_trial_service.c \
+	germplasm.c 
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

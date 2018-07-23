@@ -14,27 +14,37 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * drilling.h
  *
- *  Created on: 16 Jul 2018
+ *  Created on: 23 Jul 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_DRILLING_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_DRILLING_H_
 
 
-#include "address.h"
+#include "typedefs.h"
+#include "dfw_field_trial_service_library.h"
+#include "germplasm.h"
+#include "coordinate.h"
 
-typedef struct
+
+typedef struct Drilling
 {
-	uint32 fi_id;
-	char *fi_name_s;
-	char *fi_experiment_name_s;
-	Address *fi_address_p;
-	uint32 fi_year;
-	char *fi_soil_type_s;
-} Field;
+	uint32 dr_plot_id;
+
+	uint32 dr_field_id;
+
+	Germplasm *dr_germplasm_p;
+
+	uint32 dr_date;
+
+	Coordinate *dr_gps_north_east_p;
+
+	Coordinate *dr_gps_south_west_p;
+
+} Drilling;
 
 
 #ifdef __cplusplus
@@ -47,5 +57,4 @@ extern "C"
 }
 #endif
 
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_DRILLING_H_ */
