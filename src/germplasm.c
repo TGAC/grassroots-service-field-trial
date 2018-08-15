@@ -23,6 +23,7 @@
 #include "germplasm.h"
 
 #include "memory_allocations.h"
+#include "string_utils.h"
 
 
 static void FreeStringArray (char **array_ss, uint32 size);
@@ -30,7 +31,10 @@ static void FreeStringArray (char **array_ss, uint32 size);
 
 Germplasm *AllocateGermplasm ()
 {
+	Germplasm *germplasm_p = NULL;
 
+
+	return germplasm_p;
 }
 
 
@@ -52,7 +56,9 @@ void FreeGermplasm (Germplasm *germplasm_p)
 
 json_t *GetGermplasmAsJSON (const Germplasm *germplasm_p)
 {
+	json_t *res_p = NULL;
 
+	return res_p;
 }
 
 

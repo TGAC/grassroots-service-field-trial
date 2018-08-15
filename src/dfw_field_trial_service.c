@@ -108,13 +108,13 @@ static json_t *ConvertToResource (const size_t i, json_t *src_record_p);
 
 static ServiceMetadata *GetDFWFieldTrialServiceMetadata (Service *service_p);
 
-
+/*
 static const char *InsertFieldData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
 static const char *InsertPlotData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
 static const char *InsertDrillingData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
 static const char *InsertRawPhenotypeData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
 static const char *InsertCorrectedPhenotypeData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
-
+*/
 
 /*
  * API FUNCTIONS
@@ -465,7 +465,7 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 static json_t *ConvertToResource (const size_t i, json_t *src_record_p)
 {
 	json_t *resource_p = NULL;
-	char *title_s = ConvertNumberToString ((double) i, -1);
+	char *title_s = ConvertUnsignedIntegerToString (i);
 
 	if (title_s)
 		{
@@ -569,7 +569,7 @@ static OperationStatus SearchData (MongoTool *tool_p, ServiceJob *job_p, json_t 
 											for (i = 0; i < size; ++ i)
 												{
 													raw_result_p = json_array_get (raw_results_p, i);
-													char *title_s = ConvertNumberToString ((double) i + 1, -1);
+													char *title_s = ConvertUnsignedIntegerToString (i + 1);
 
 													if (!title_s)
 														{
@@ -578,26 +578,6 @@ static OperationStatus SearchData (MongoTool *tool_p, ServiceJob *job_p, json_t 
 
 													/* We don't need to return the internal mongo id so remove it */
 													json_object_del (raw_result_p, MONGO_ID_S);
-
-													if (!preview_flag)
-														{
-																	/*
-																	 * If the result is non-trivial i.e. has at least one of the sample,
-																	 * genotype or phenotype, then keep it
-																	 */
-																	if ((json_object_get (raw_result_p, PG_SAMPLE_S) == NULL) &&
-																			(json_object_get (raw_result_p, PG_PHENOTYPE_S) == NULL) &&
-																			(json_object_get (raw_result_p, PG_GENOTYPE_S) == NULL))
-																		{
-#if DFW_FIELD_TRIAL_SERVICE_DEBUG >= STM_LEVEL_FINE
-																			const char *id_s = GetJSONString (raw_result_p, PG_ID_S);
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Discarding %s after filtering", id_s ? id_s : "");
-#endif
-
-																			raw_result_p = NULL;
-																		}
-
-														}		/* if (!private_view_flag) */
 
 													if (raw_result_p)
 														{
@@ -676,32 +656,6 @@ static OperationStatus SearchData (MongoTool *tool_p, ServiceJob *job_p, json_t 
 static char *CheckDataIsValid (const json_t *row_p, DFWFieldTrialServiceData *data_p)
 {
 	char *errors_s = NULL;
-	ByteBuffer *buffer_p = AllocateByteBuffer (1024);
-
-	if (buffer_p)
-		{
-			/*
-			 * Each row the pathogenmics must contain an ID field
-			 * not the mongo _id, and the ability to get a geojson
-			 * stub and a date.
-			 */
-
-			if (!json_object_get (row_p, PG_ID_S))
-				{
-					if (!AppendStringsToByteBuffer (buffer_p, "The row does not have an ",  PG_ID_S,  " field", NULL))
-						{
-						}
-				}
-
-			// http://api.opencagedata.com/geocode/v1/geojson?pretty=1&key=1a9d04b5e924fd52d1f306d924d023a5&query=Osisek,+Croatia'
-
-
-
-			if (GetByteBufferSize (buffer_p) > 0)
-				{
-					errors_s = DetachByteBufferData (buffer_p);
-				}
-		}		/* if (buffer_p) */
 
 	return errors_s;
 }
@@ -745,6 +699,7 @@ static uint32 InsertData (MongoTool *tool_p, ServiceJob *job_p, json_t *values_p
 	PrintJSONToLog (STM_LEVEL_FINE, __FILE__, __LINE__, values_p, "values_p: ");
 	#endif
 
+	/*
 	switch (collection_type)
 		{
 			case DFTD_FIELD:
@@ -770,7 +725,7 @@ static uint32 InsertData (MongoTool *tool_p, ServiceJob *job_p, json_t *values_p
 			default:
 				break;
 		}
-
+*/
 
 	if (insert_fn)
 		{
@@ -818,13 +773,9 @@ static uint32 InsertData (MongoTool *tool_p, ServiceJob *job_p, json_t *values_p
 bool AddErrorMessage (ServiceJob *job_p, const json_t *value_p, const char *error_s, const int index)
 {
 	char *dump_s = json_dumps (value_p, JSON_INDENT (2) | JSON_PRESERVE_ORDER);
-	const char *id_s = GetJSONString (value_p, PG_ID_S);
+	const char *id_s = GetJSONString (value_p, "id");
 	bool added_error_flag = false;
 
-	if (!id_s)
-		{
-			id_s = GetJSONString (value_p, PG_UKCPVS_ID_S);
-		}
 
 	if (id_s)
 		{
