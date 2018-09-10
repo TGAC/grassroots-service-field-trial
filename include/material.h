@@ -14,56 +14,35 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * material.h
  *
- *  Created on: 23 Jul 2018
+ *  Created on: 11 Sep 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_H_
 
 #include "typedefs.h"
-#include "experimental_area.h"
 
 
-typedef struct Plot
+typedef struct Material
 {
-	uint32 pl_id;
+	uint32 ma_id;
 
-	ExperimentalArea *pl_parent_p;
+	uint32 ma_germplasm_id;
 
-	uint32 pl_sowing_date;
+	char *ma_source_s;
 
-	uint32 pl_harvest_date;
+	char *ma_accession_s;
 
-	double64 pl_width;
+	char *ma_pedigree_s;
 
-	double64 pl_height;
+	char *ma_barcode_s;
 
-	uint32 pl_x;
+	bool ma_in_gru_flag;
 
-	uint32 pl_y;
-
-	char *pl_trial_design_s;
-
-	char *pl_growing_conditions_s;
-
-	char *pl_treatments_s;
-
-} Plot;
+} Material;
 
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_H_ */

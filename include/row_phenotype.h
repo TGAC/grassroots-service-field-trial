@@ -14,56 +14,35 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * row_phenotype.h
  *
- *  Created on: 23 Jul 2018
+ *  Created on: 11 Sep 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_PHENOTYPE_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_PHENOTYPE_H_
+
 
 #include "typedefs.h"
-#include "experimental_area.h"
+#include "phenotype.h"
+#include "row.h"
 
 
-typedef struct Plot
+typedef struct RowPhenotype
 {
-	uint32 pl_id;
+	uint32 rp_id;
 
-	ExperimentalArea *pl_parent_p;
+	Phenotype *rp_phenotype_p;
 
-	uint32 pl_sowing_date;
+	bool rp_corrected_flag;
 
-	uint32 pl_harvest_date;
+	char *rp_method_s;
 
-	double64 pl_width;
+	Row *rp_row_p;
 
-	double64 pl_height;
-
-	uint32 pl_x;
-
-	uint32 pl_y;
-
-	char *pl_trial_design_s;
-
-	char *pl_growing_conditions_s;
-
-	char *pl_treatments_s;
-
-} Plot;
-
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
+} RowPhenotype;
 
 
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_PHENOTYPE_H_ */

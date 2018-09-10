@@ -14,56 +14,40 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * phenotype.h
  *
- *  Created on: 23 Jul 2018
+ *  Created on: 11 Sep 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_
+
 
 #include "typedefs.h"
-#include "experimental_area.h"
+
+#include "instrument.h"
 
 
-typedef struct Plot
+
+typedef struct Phenotype
 {
-	uint32 pl_id;
+	uint32 ph_id;
 
-	ExperimentalArea *pl_parent_p;
+	char *ph_trait_s;
 
-	uint32 pl_sowing_date;
+	char *ph_trait_abbreviation_s;
 
-	uint32 pl_harvest_date;
+	char *ph_measurement_s;
 
-	double64 pl_width;
+	char *ph_unit_s;
 
-	double64 pl_height;
+	char *ph_date_s;
 
-	uint32 pl_x;
+	Instrument *ph_instrument_p;
 
-	uint32 pl_y;
+	char *growth_stage_s;
 
-	char *pl_trial_design_s;
+} Phenotype;
 
-	char *pl_growing_conditions_s;
-
-	char *pl_treatments_s;
-
-} Plot;
-
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_ */

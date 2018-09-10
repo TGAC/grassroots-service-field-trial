@@ -14,56 +14,34 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * experimental_area.h
  *
- *  Created on: 23 Jul 2018
+ *  Created on: 11 Sep 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-
-#include "typedefs.h"
-#include "experimental_area.h"
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_
 
 
-typedef struct Plot
+#include "field_trial.h"
+
+
+typedef struct ExperimentalArea
 {
-	uint32 pl_id;
+	uint32 ea_id;
 
-	ExperimentalArea *pl_parent_p;
+	FieldTrial *ea_parent_p;
 
-	uint32 pl_sowing_date;
+	char *ea_location_s;
 
-	uint32 pl_harvest_date;
+	char *ea_soil_type_s;
 
-	double64 pl_width;
+	char *ea_name_s;
 
-	double64 pl_height;
+	uint32 ea_year;
 
-	uint32 pl_x;
-
-	uint32 pl_y;
-
-	char *pl_trial_design_s;
-
-	char *pl_growing_conditions_s;
-
-	char *pl_treatments_s;
-
-} Plot;
+} ExperimentalArea;
 
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_ */

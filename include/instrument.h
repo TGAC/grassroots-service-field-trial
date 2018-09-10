@@ -14,56 +14,28 @@
 ** limitations under the License.
 */
 /*
- * plot.h
+ * instrument.h
  *
- *  Created on: 23 Jul 2018
+ *  Created on: 11 Sep 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_INSTRUMENT_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_INSTRUMENT_H_
+
 
 #include "typedefs.h"
-#include "experimental_area.h"
 
 
-typedef struct Plot
+typedef struct Instrument
 {
-	uint32 pl_id;
+	uint32 in_id;
 
-	ExperimentalArea *pl_parent_p;
+	char *in_name_s;
 
-	uint32 pl_sowing_date;
+	char *in_model_s;
 
-	uint32 pl_harvest_date;
-
-	double64 pl_width;
-
-	double64 pl_height;
-
-	uint32 pl_x;
-
-	uint32 pl_y;
-
-	char *pl_trial_design_s;
-
-	char *pl_growing_conditions_s;
-
-	char *pl_treatments_s;
-
-} Plot;
+} Instrument;
 
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_INSTRUMENT_H_ */
