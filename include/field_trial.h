@@ -23,8 +23,11 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_TRIAL_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_TRIAL_H_
 
+#include "jansson.h"
 
 #include "typedefs.h"
+#include "dfw_field_trial_service_library.h"
+#include "linked_list.h"
 
 
 typedef struct FieldTrial
@@ -36,6 +39,28 @@ typedef struct FieldTrial
 	char *ft_team_s;
 
 } FieldTrial;
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialExperimentalAreas (FieldTrial *trial_p);
+
+#ifdef __cplusplus
+}
+#endif
+
+
 
 
 

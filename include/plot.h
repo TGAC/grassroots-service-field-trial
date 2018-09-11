@@ -23,8 +23,12 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
 
-#include "typedefs.h"
+#include "jansson.h"
+
+
+#include "linked_list.h"
 #include "experimental_area.h"
+#include "dfw_field_trial_service_library.h"
 
 
 typedef struct Plot
@@ -54,10 +58,28 @@ typedef struct Plot
 } Plot;
 
 
+typedef struct PlotNode
+{
+	ListItem pn_node;
+
+	Plot *pn_plot_p;
+} PlotNode;
+
+
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot ();
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (const Plot *plot_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPlotRows (Plot *plot_p);
 
 
 #ifdef __cplusplus

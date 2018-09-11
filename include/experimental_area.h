@@ -24,7 +24,11 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_
 
 
+#include "jansson.h"
+
+#include "typedefs.h"
 #include "field_trial.h"
+#include "dfw_field_trial_service_library.h"
 
 
 typedef struct ExperimentalArea
@@ -42,6 +46,28 @@ typedef struct ExperimentalArea
 	uint32 ea_year;
 
 } ExperimentalArea;
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea ();
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p);
+
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_ */

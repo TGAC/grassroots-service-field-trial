@@ -40,5 +40,30 @@ typedef struct Row
 } Row;
 
 
+typedef struct RowNode
+{
+	ListItem rn_node;
+
+	Row *rn_row_p;
+} RowNode;
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow ();
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_H_ */

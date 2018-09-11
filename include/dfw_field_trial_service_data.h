@@ -45,6 +45,15 @@ typedef enum
 	DFTD_NUM_TYPES
 } DFWFieldTrialData;
 
+
+typedef enum
+{
+	DB_MONGO_DB,
+	DB_SQLITE,
+	DB_NUM_BACKENDS
+} DFWBackend;
+
+
 typedef struct DFWFieldTrialServiceData DFWFieldTrialServiceData;
 
 /**
@@ -57,12 +66,20 @@ struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 	/** The base ServiceData. */
 	ServiceData dftsd_base_data;
 
+
+
+	DFWBackend dftsd_backend;
+
 	/**
 	 * @private
 	 *
 	 * The MongoTool to connect to the database where our data is stored.
 	 */
-	MongoTool *dftsd_tool_p;
+	MongoTool *dftsd_mongo_p;
+
+
+
+	SQLiteTool *dftsd_sqlite_p;
 
 
 	/**
