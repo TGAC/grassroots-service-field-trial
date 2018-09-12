@@ -75,14 +75,34 @@ void FreeFieldTrial (FieldTrial *trial_p)
 }
 
 
+FieldTrial *GetFieldTrialByName (DFWFieldTrialServiceData *data_p, const char *name_s)
+{
+	FieldTrial *trial_p = NULL;
 
-static bool SaveFieldTrial (DFWFieldTrialServiceData *data_p, FieldTrial *trial_p)
+	switch (data_p -> dftsd_backend)
+		{
+			case DB_MONGO_DB:
+				trial_p = GetFieldTrialFromMongoDB (data_p -> dftsd_mongo_p, name_s);
+				break;
+
+			default:
+				break;
+		}
+
+	return trial_p;
+}
+
+
+static bool CreateFieldTrial (DFWFieldTrialServiceData *data_p, FieldTrial *trial_p)
 {
 	bool success_flag = false;
 
 	switch (data_p -> dftsd_backend)
 		{
 			case DB_MONGO_DB:
+				break;
+
+			default:
 				break;
 		}
 
