@@ -33,7 +33,7 @@
 #include "service.h"
 #include "mongodb_tool.h"
 #include "dfw_field_trial_service_library.h"
-
+#include "sqlite_tool.h"
 
 typedef enum
 {
@@ -54,14 +54,19 @@ typedef enum
 } DFWBackend;
 
 
-typedef struct DFWFieldTrialServiceData DFWFieldTrialServiceData;
+typedef union
+{
+	uint32 di_index;
+	char *di_id_s;
+} DFWId;
+
 
 /**
  * The configuration data used by the DFW Field Trial Service.
  *
  * @extends ServiceData
  */
-struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
+typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 {
 	/** The base ServiceData. */
 	ServiceData dftsd_base_data;
@@ -96,7 +101,28 @@ struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 	 */
 	const char *dftsd_collection_ss [DFTD_NUM_TYPES];
 
-};
+} DFWFieldTrialServiceData;
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUnitialisedId (DFWId *id_p, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddIdToJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetIdFromJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* DFW_FIELD_TRIAL_SERVICE_DATA_H_ */

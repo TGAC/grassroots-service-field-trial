@@ -252,15 +252,15 @@ static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 {
-	MongoTool *tool_p = AllocateMongoTool ();
+	MongoTool *mongo_p = AllocateMongoTool ();
 
-	if (tool_p)
+	if (mongo_p)
 		{
 			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
 
 			if (data_p)
 				{
-					data_p -> dftsd_tool_p = tool_p;
+					data_p -> dftsd_mongo_p = mongo_p;
 					data_p -> dftsd_database_s = NULL;
 
 					memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
@@ -268,7 +268,7 @@ static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 					return data_p;
 				}
 
-			FreeMongoTool (tool_p);
+			FreeMongoTool (mongo_p);
 		}
 
 	return NULL;
@@ -277,7 +277,7 @@ static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 
 static void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p)
 {
-	FreeMongoTool (data_p -> dftsd_tool_p);
+	FreeMongoTool (data_p -> dftsd_mongo_p);
 
 	FreeMemory (data_p);
 }

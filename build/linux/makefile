@@ -22,6 +22,7 @@ VPATH	= \
 INCLUDES = \
 	-I$(DIR_INCLUDE) \
 	-I$(DIR_GRASSROOTS_MONGODB_INC) \
+	-I$(DIR_GRASSROOTS_SQLITE_INC) \
 	-I$(DIR_GRASSROOTS_UTIL_INC) \
 	-I$(DIR_GRASSROOTS_UTIL_INC)/containers \
 	-I$(DIR_GRASSROOTS_UTIL_INC)/io \
@@ -36,10 +37,14 @@ INCLUDES = \
 	-I$(DIR_UUID_INC) \
 	-I$(DIR_MONGODB_INC) \
 	-I$(DIR_BSON_INC) \
+	-I$(DIR_SQLITE_INC)
 	
 SRCS 	= \
 	dfw_field_trial_service.c \
-	field_trial.c 
+	dfw_field_trial_service_data.c \
+	experimental_area.c \
+	field_trial.c \
+	field_trial_mongodb.c
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

@@ -29,11 +29,14 @@
 #include "typedefs.h"
 #include "field_trial.h"
 #include "dfw_field_trial_service_library.h"
+#include "dfw_field_trial_service_data.h"
+
+
 
 
 typedef struct ExperimentalArea
 {
-	uint32 ea_id;
+	DFWId ea_id;
 
 	FieldTrial *ea_parent_p;
 
@@ -49,6 +52,30 @@ typedef struct ExperimentalArea
 
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_EXPERIMENTAL_AREA_TAGS
+	#define EXPERIMENTAL_AREA_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define EXPERIMENTAL_AREA_VAL(x)	= x
+#else
+	#define EXPERIMENTAL_AREA_PREFIX extern
+	#define EXPERIMENTAL_AREA_VAL(x)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+EXPERIMENTAL_AREA_PREFIX const char *EA_NAME_S EXPERIMENTAL_AREA_VAL ("name");
+
+EXPERIMENTAL_AREA_PREFIX const char *EA_LOCATION_S EXPERIMENTAL_AREA_VAL ("location");
+
+EXPERIMENTAL_AREA_PREFIX const char *EA_SOIL_TYPE_S EXPERIMENTAL_AREA_VAL ("soil");
+
+EXPERIMENTAL_AREA_PREFIX const char *EA_YEAR_S EXPERIMENTAL_AREA_VAL ("year");
+
+EXPERIMENTAL_AREA_PREFIX const char *EA_PARENT_FIELD_TRIAL_S EXPERIMENTAL_AREA_VAL ("field_trial_id");
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -59,7 +86,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea ();
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p);
 

@@ -27,19 +27,51 @@
 
 #include "typedefs.h"
 #include "dfw_field_trial_service_library.h"
+#include "dfw_field_trial_service_data.h"
 #include "linked_list.h"
 
+/* forward declarations */
+struct ExperimentalArea;
 
 typedef struct FieldTrial
 {
-	uint32 ft_id;
+	DFWId ft_id;
 
 	char *ft_name_s;
 
 	char *ft_team_s;
 
+	LinkedList *experimental_areas_p;
+
 } FieldTrial;
 
+
+typedef struct FieldTrialNode
+{
+	ListItem ftn_node;
+
+	FieldTrial *ftn_field_trial_p;
+
+} FieldTrialNode;
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_FIELD_TRIAL_TAGS
+	#define FIELD_TRIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define FIELD_TRIAL_VAL(x)	= x
+#else
+	#define FIELD_TRIAL_PREFIX extern
+	#define FIELD_TRIAL_VAL(x)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+FIELD_TRIAL_PREFIX const char *FT_NAME_S FIELD_TRIAL_VAL ("name");
+
+
+FIELD_TRIAL_PREFIX const char *FT_TEAM_S FIELD_TRIAL_VAL ("team");
 
 
 #ifdef __cplusplus
@@ -48,13 +80,26 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialNode (ListItem *node_p);
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p);
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialExperimentalAreas (FieldTrial *trial_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
+
+
 
 #ifdef __cplusplus
 }
