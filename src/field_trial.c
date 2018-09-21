@@ -53,11 +53,7 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWField
 							trial_p -> ft_name_s = copied_name_s;
 							trial_p -> ft_team_s = copied_team_s;
 
-							switch (data_p -> dftsd_backend)
-								{
-
-								}
-							SetUnitialisedId (& (trial_p -> ft_id), data_p);
+							InitialiseId (& (trial_p -> ft_id));
 
 							return trial_p;
 						}
@@ -80,6 +76,8 @@ void FreeFieldTrial (FieldTrial *trial_p)
 {
 	FreeCopiedString (trial_p -> ft_name_s);
 	FreeCopiedString (trial_p -> ft_team_s);
+
+	ClearId (& (trial_p -> ft_id));
 
 	FreeMemory (trial_p);
 }

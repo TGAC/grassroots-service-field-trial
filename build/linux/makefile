@@ -44,7 +44,8 @@ SRCS 	= \
 	dfw_field_trial_service_data.c \
 	experimental_area.c \
 	field_trial.c \
-	field_trial_mongodb.c
+	field_trial_mongodb.c \
+	field_trial_sqlite.c
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 
@@ -55,6 +56,7 @@ LDFLAGS += -L$(DIR_JANSSON_LIB) -ljansson \
 	-L$(DIR_GRASSROOTS_NETWORK_LIB) -l$(GRASSROOTS_NETWORK_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_PARAMS_LIB) -l$(GRASSROOTS_PARAMS_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_MONGODB_LIB) -l$(GRASSROOTS_MONGODB_LIB_NAME)  \
+	-L$(DIR_GRASSROOTS_SQLITE_LIB) -l$(GRASSROOTS_SQLITE_LIB_NAME)  \
 	-L$(DIR_GRASSROOTS_GEOCODER_LIB) -l$(GRASSROOTS_GEOCODER_LIB_NAME)
 
 

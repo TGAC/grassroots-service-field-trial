@@ -113,6 +113,8 @@ extern "C"
 
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL void InitialiseId (DFWId *id_p);
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearId (DFWId *id_p);
 
 
@@ -120,6 +122,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIdString (DFWId *id_p, const char *id_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void SetIdIndex (DFWId *id_p, const uint32 id_index);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddIdToJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p);

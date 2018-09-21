@@ -47,16 +47,20 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 }
 
 
-void ClearId (DFWId *id_p)
+void InitialiseId (DFWId *id_p)
 {
 	id_p -> di_index = UINT32_MAX;
+	id_p -> di_id_s = NULL;
+}
 
+void ClearId (DFWId *id_p)
+{
 	if (id_p -> di_id_s)
 		{
 			FreeCopiedString (id_p -> di_id_s);
 		}
 
-	id_p -> di_id_s = NULL;
+	InitialiseId (id_p);
 }
 
 
@@ -185,20 +189,17 @@ bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p)
 			case DB_MONGO_DB:
 				{
 					if (id_p -> di_id_s)
+						{
+							set_flag = true;
+						}
 				}
 				break;
 
 			case DB_SQLITE:
 				{
-					const char *value_s = GetJSONString (json_p, key_s);
-
-					if (value_s)
+					if (id_p -> di_index != UINT32_MAX)
 						{
-							if (SetIdString (id_p, value_s))
-								{
-									success_flag = true;
-								}
-
+							set_flag = true;
 						}
 				}
 				break;
@@ -208,6 +209,6 @@ bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p)
 		}
 
 
-	return success_flag;
+	return set_flag;
 
 }

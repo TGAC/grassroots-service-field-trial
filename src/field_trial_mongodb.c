@@ -132,7 +132,7 @@ bool AddFieldTrialByNameToMongoDB (DFWFieldTrialServiceData *data_p, FieldTrial 
 
 													bson_oid_to_string (id_p, buffer_s);
 
-													if (!SetIdString (id_p, buffer_s))
+													if (!SetIdString (& (trial_p -> ft_id), buffer_s))
 														{
 															error_s = "Failed to set id";
 														}

@@ -20,6 +20,7 @@
  *      Author: billy
  */
 
+#define ALLOCATE_EXPERIMENTAL_AREA_TAGS (1)
 #include "experimental_area.h"
 #include "memory_allocations.h"
 
