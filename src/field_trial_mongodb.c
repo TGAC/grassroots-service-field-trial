@@ -85,18 +85,78 @@ bool AddFieldTrialByNameToMongoDB (DFWFieldTrialServiceData *data_p, FieldTrial 
 
 					if (values_p)
 						{
-							const char *keys_ss [2] = { FT_NAME_S, FT_TEAM_S };
-							const size_t num_keys = 2;
-							const char *error_s = InsertOrUpdateMongoData (data_p -> dftsd_mongo_p, values_p, NULL, NULL, keys_ss, num_keys, NULL, NULL);
+							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+								{
+									const char *keys_ss [2] = { FT_NAME_S, FT_TEAM_S };
+									const size_t num_keys = 2;
+									const char *error_s = NULL;
 
-							if (error_s)
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, values_p, "Failed to write data, error \"%s\"", error_s);
-								}		/* if (error_s) */
-							else
-								{
-									success_flag = true;
-								}
+									if (IsIdSet (& (trial_p -> ft_id), data_p))
+										{
+											json_t *query_p = json_object ();
+
+											if (query_p)
+												{
+													if (json_object_set_new (query_p, "_id", json_string (trial_p -> ft_id.di_id_s)) == 0)
+														{
+
+															if (UpdateMongoDocumentByJSON (data_p -> dftsd_mongo_p, query_p, values_p))
+																{
+																	success_flag = true;
+																}
+															else
+																{
+																	error_s = "Failed to update doc";
+																}
+
+														}
+													else
+														{
+															error_s = "Failed to set _id";
+														}
+
+													json_decref (query_p);
+												}
+											else
+												{
+													error_s = "failed to create query";
+												}
+										}
+									else
+										{
+											bson_oid_t *id_p = InsertJSONIntoMongoCollection (data_p -> dftsd_mongo_p, values_p);
+
+											if (id_p)
+												{
+													char buffer_s [25];
+
+													bson_oid_to_string (id_p, buffer_s);
+
+													if (!SetIdString (id_p, buffer_s))
+														{
+															error_s = "Failed to set id";
+														}
+
+													FreeMemory (id_p);
+												}
+											else
+												{
+													error_s = "Failed to insert into mongodb";
+												}
+										}
+
+
+									if (error_s)
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, values_p, "Failed to write data, error \"%s\"", error_s);
+										}		/* if (error_s) */
+									else
+										{
+											success_flag = true;
+										}
+
+								}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s, data_p -> dftsd_collection_ss [DFTD_FIELD])) */
+
 
 							json_decref (values_p);
 						}		/* if (values_p) */
@@ -156,7 +216,7 @@ static LinkedList *GetMatchingFieldTrialsFromMongoDB (DFWFieldTrialServiceData *
 													for (i = 0; i < size; ++ i)
 														{
 															json_t *result_p = json_array_get (results_p, i);
-															FieldTrial *trial_p = GetFieldTrialFromJSON (result_p);
+															FieldTrial *trial_p = GetFieldTrialFromJSON (result_p, data_p);
 
 															if (trial_p)
 																{

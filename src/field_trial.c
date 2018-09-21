@@ -53,6 +53,10 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWField
 							trial_p -> ft_name_s = copied_name_s;
 							trial_p -> ft_team_s = copied_team_s;
 
+							switch (data_p -> dftsd_backend)
+								{
+
+								}
 							SetUnitialisedId (& (trial_p -> ft_id), data_p);
 
 							return trial_p;
@@ -66,6 +70,8 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWField
 
 	return NULL;
 }
+
+
 
 
 
@@ -105,10 +111,10 @@ json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p)
 		{
 			if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0)
 				{
-					if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0)
+					if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0)
 						{
 							return trial_json_p;
-						}		/* if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0) */
+						}		/* if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0) */
 
 				}		/* if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0) */
 
@@ -129,7 +135,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, DFWFieldTrialServiceDat
 
 			if (team_s)
 				{
-					FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s);
+					FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, data_p);
 
 					return trial_p;
 				}
@@ -146,7 +152,7 @@ FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *t
 
 	if (trial_p)
 		{
-			FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p, data_p);
+			FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p);
 
 			if (node_p)
 				{
@@ -160,7 +166,7 @@ FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *t
 }
 
 
-FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p)
 {
 	FieldTrialNode *node_p = (FieldTrialNode *) AllocMemory (sizeof (FieldTrialNode));
 
