@@ -30,7 +30,6 @@
 #include "memory_allocations.h"
 
 
-static bool SaveFieldTrial (FieldTrial *trial_p);
 
 static bool LoadFieldTrialByName (const char *name_s);
 
@@ -46,24 +45,33 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const ch
 
 			if (copied_team_s)
 				{
-					FieldTrial *trial_p = (FieldTrial *) AllocMemory (sizeof (FieldTrial));
+					bool success_flag = true;
+					bson_oid_t *id_p = NULL;
 
-					if (trial_p)
+					if (id_s)
 						{
-							trial_p -> ft_name_s = copied_name_s;
-							trial_p -> ft_team_s = copied_team_s;
+							id_p = GetBSONOidFromString (id_s);
 
-							if (id_s)
+							success_flag = (id_p != NULL);
+						}
+
+					if (success_flag)
+						{
+							FieldTrial *trial_p = (FieldTrial *) AllocMemory (sizeof (FieldTrial));
+
+							if (trial_p)
 								{
+									trial_p -> ft_name_s = copied_name_s;
+									trial_p -> ft_team_s = copied_team_s;
+									trial_p -> ft_id_p = id_p;
 
-									//trial_p -> ft_id = *id_p;
+									return trial_p;
 								}
-							else
+
+							if (id_p)
 								{
-									trial_p -> ft_id_s = NULL;
+									FreeMemory (id_p);
 								}
-
-							return trial_p;
 						}
 
 					FreeCopiedString (copied_team_s);
@@ -76,14 +84,113 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const ch
 }
 
 
+
+bool GenerateIdFromString (bson_oid_t **id_pp, const char *id_s)
+{
+	bool success_flag = false;
+
+	if (bson_oid_is_valid (id_s, strlen (id_s)))
+		{
+			bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+
+			if (id_p)
+				{
+					bson_oid_init_from_string (id_p, id_s);
+					*id_pp = id_p;
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bson_oid_t *GetNewId (void)
+{
+	bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+
+	if (id_p)
+		{
+			bson_oid_init (id_p, bson_context_get_default ());
+		}
+
+	return id_p;
+}
+
+
+char *GetFieldTrialIdAsString (const FieldTrial *trial_p)
+{
+	char *id_s = NULL;
+
+	if (trial_p -> ft_id_p)
+		{
+			id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+		}
+
+	return id_s;
+}
+
+
+bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bool insert_flag = false;
+	json_t *field_trial_json_p = NULL;
+
+	if (! (trial_p -> ft_id_p))
+		{
+			trial_p -> ft_id_p  = GetNewId ();
+
+			if (trial_p -> ft_id_p)
+				{
+					insert_flag = true;
+				}
+		}
+
+
+	if (trial_p -> ft_id_p)
+		{
+			field_trial_json_p = GetFieldTrialAsJSON (trial_p);
+
+			if (field_trial_json_p)
+				{
+					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+						{
+							if (insert_flag)
+								{
+									bson_t *reply_p = NULL;
+
+									if (InsertMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, &reply_p))
+										{
+											success_flag = true;
+										}
+
+								}		/* if (insert_flag) */
+							else
+								{
+									/* it's an update */
+								}
+
+						}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+
+					json_decref (field_trial_json_p);
+				}		/* if (field_trial_json_p) */
+
+		}		/* if (trial_p -> ft_id_p) */
+
+	return success_flag;
+}
+
+
+
 void FreeFieldTrial (FieldTrial *trial_p)
 {
 	FreeCopiedString (trial_p -> ft_name_s);
 	FreeCopiedString (trial_p -> ft_team_s);
 
-	if (trial_p -> ft_id_s)
+	if (trial_p -> ft_id_p)
 		{
-			FreeCopiedString (trial_p -> ft_id_s);
+			FreeMemory (trial_p -> ft_id_p);
 		}
 
 
@@ -127,6 +234,7 @@ json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * c
 				{
 					if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0)
 						{
+
 							return trial_json_p;
 						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
 
@@ -149,7 +257,9 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, DFWFieldTrialServiceDat
 
 			if (team_s)
 				{
-					FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, data_p);
+					const char *id_s = GetJSONString (json_p, FT_ID_S);
+
+					FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_s);
 
 					return trial_p;
 				}
@@ -160,9 +270,9 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, DFWFieldTrialServiceDat
 }
 
 
-FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p)
+FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, const char *id_s)
 {
-	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, data_p);
+	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_s);
 
 	if (trial_p)
 		{
@@ -223,19 +333,3 @@ bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_
 }
 
 
-static bool CreateFieldTrial (DFWFieldTrialServiceData *data_p, FieldTrial *trial_p)
-{
-	bool success_flag = false;
-
-	switch (data_p -> dftsd_backend)
-		{
-			case DB_MONGO_DB:
-
-				break;
-
-			default:
-				break;
-		}
-
-	return success_flag;
-}

@@ -23,7 +23,7 @@
 #define ALLOCATE_EXPERIMENTAL_AREA_TAGS (1)
 #include "experimental_area.h"
 #include "memory_allocations.h"
-
+#include "string_utils.h"
 
 /*
  * DB COLUMN NAMES
@@ -167,12 +167,19 @@ static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *a
 								{
 									if (json_object_set_new (area_json_p, year_key_s, json_integer (area_p -> ea_year)) == 0)
 										{
-											if (json_object_set_new (area_json_p, field_trial_key_s, json_string (area_p -> ea_parent_p -> ft_id_s)) == 0)
+											char *parent_field_trial_id_s = GetFieldTrialIdAsString (area_p -> ea_parent_p);
+
+											if (parent_field_trial_id_s)
 												{
-													if (json_object_set_new (area_json_p, id_key_s, json_string (area_p -> ea_id_s)) == 0)
+													if (json_object_set_new (area_json_p, field_trial_key_s, json_string (parent_field_trial_id_s)) == 0)
 														{
-															return area_json_p;
+															if (json_object_set_new (area_json_p, id_key_s, json_string (area_p -> ea_id_s)) == 0)
+																{
+																	return area_json_p;
+																}
 														}
+
+													FreeCopiedString (parent_field_trial_id_s);
 												}
 										}
 								}

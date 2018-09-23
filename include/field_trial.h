@@ -33,9 +33,11 @@
 /* forward declarations */
 struct ExperimentalArea;
 
+
+
 typedef struct FieldTrial
 {
-	char *ft_id_s;
+	bson_oid_t *ft_id_p;
 
 	char *ft_name_s;
 
@@ -82,8 +84,9 @@ typedef struct FieldTrialNode
 
 FIELD_TRIAL_PREFIX const char *FT_NAME_S FIELD_TRIAL_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 
-
 FIELD_TRIAL_PREFIX const char *FT_TEAM_S FIELD_TRIAL_VAL ("team");
+
+FIELD_TRIAL_PREFIX const char *FT_ID_S FIELD_TRIAL_VAL ("_id");
 
 
 #ifdef __cplusplus
@@ -96,7 +99,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, const char *id_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p);
 
@@ -111,9 +114,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *j
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialExperimentalAreas (FieldTrial *trial_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialIdAsString (const FieldTrial *trial_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p);
 
 
 

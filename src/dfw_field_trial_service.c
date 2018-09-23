@@ -379,11 +379,11 @@ static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 
 							if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIAL_TEAM.npt_name_s, &team_value, true))
 								{
-									FieldTrial *trial_p = AllocateFieldTrial (value.st_string_value_s, team_value.st_string_value_s, data_p);
+									FieldTrial *trial_p = AllocateFieldTrial (value.st_string_value_s, team_value.st_string_value_s, NULL);
 
 									if (trial_p)
 										{
-											if (AddFieldTrialToSQLite (data_p, trial_p))
+											if (SaveFieldTrial (trial_p, data_p))
 												{
 													res = 1;
 												}
