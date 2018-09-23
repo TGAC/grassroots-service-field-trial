@@ -33,25 +33,6 @@
 
 
 
-
-typedef struct ExperimentalArea
-{
-	DFWId ea_id;
-
-	FieldTrial *ea_parent_p;
-
-	char *ea_location_s;
-
-	char *ea_soil_type_s;
-
-	char *ea_name_s;
-
-	uint32 ea_year;
-
-} ExperimentalArea;
-
-
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef ALLOCATE_EXPERIMENTAL_AREA_TAGS
@@ -65,15 +46,54 @@ typedef struct ExperimentalArea
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
+EXPERIMENTAL_AREA_PREFIX const char *EA_ID_S EXPERIMENTAL_AREA_VAL ("id");
+
 EXPERIMENTAL_AREA_PREFIX const char *EA_NAME_S EXPERIMENTAL_AREA_VAL ("name");
 
 EXPERIMENTAL_AREA_PREFIX const char *EA_LOCATION_S EXPERIMENTAL_AREA_VAL ("location");
 
-EXPERIMENTAL_AREA_PREFIX const char *EA_SOIL_TYPE_S EXPERIMENTAL_AREA_VAL ("soil");
+EXPERIMENTAL_AREA_PREFIX const char *EA_SOIL_S EXPERIMENTAL_AREA_VAL ("soil");
 
 EXPERIMENTAL_AREA_PREFIX const char *EA_YEAR_S EXPERIMENTAL_AREA_VAL ("year");
 
-EXPERIMENTAL_AREA_PREFIX const char *EA_PARENT_FIELD_TRIAL_S EXPERIMENTAL_AREA_VAL ("field_trial_id");
+EXPERIMENTAL_AREA_PREFIX const char *EA_PARENT_FIELD_TRIAL_S EXPERIMENTAL_AREA_VAL ("parent_field_trial_id");
+
+
+
+
+typedef struct ExperimentalArea
+{
+	char *ea_id_s;
+
+	FieldTrial *ea_parent_p;
+
+	char *ea_location_s;
+
+	char *ea_soil_type_s;
+
+	char *ea_name_s;
+
+	uint32 ea_year;
+
+	/**
+	 * A LinkedList of PlotNodes
+	 * for all of the Plots in this
+	 * ExperimentalArea.
+	 */
+	LinkedList *ea_plots_p;
+
+} ExperimentalArea;
+
+
+
+typedef struct ExperimentalAreaNode
+{
+	ListItem ean_node;
+
+	ExperimentalArea *ean_experimental_area_p;
+
+} ExperimentalAreaNode;
+
 
 
 #ifdef __cplusplus
@@ -86,12 +106,15 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea ();
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

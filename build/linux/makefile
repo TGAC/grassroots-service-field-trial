@@ -45,7 +45,6 @@ SRCS 	= \
 	experimental_area.c \
 	field_trial.c \
 	field_trial_mongodb.c \
-	field_trial_sqlite.c
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

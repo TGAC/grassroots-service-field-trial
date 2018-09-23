@@ -21,6 +21,8 @@
  */
 
 #include "field_trial_mongodb.h"
+#include "string_utils.h"
+
 
 
 static LinkedList *GetMatchingFieldTrialsFromMongoDB (DFWFieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
@@ -91,13 +93,13 @@ bool AddFieldTrialByNameToMongoDB (DFWFieldTrialServiceData *data_p, FieldTrial 
 									const size_t num_keys = 2;
 									const char *error_s = NULL;
 
-									if (IsIdSet (& (trial_p -> ft_id), data_p))
+									if (trial_p -> ft_id_s)
 										{
 											json_t *query_p = json_object ();
 
 											if (query_p)
 												{
-													if (json_object_set_new (query_p, "_id", json_string (trial_p -> ft_id.di_id_s)) == 0)
+													if (json_object_set_new (query_p, "_id", json_string (trial_p -> ft_id_s)) == 0)
 														{
 
 															if (UpdateMongoDocumentByJSON (data_p -> dftsd_mongo_p, query_p, values_p))
@@ -132,7 +134,7 @@ bool AddFieldTrialByNameToMongoDB (DFWFieldTrialServiceData *data_p, FieldTrial 
 
 													bson_oid_to_string (id_p, buffer_s);
 
-													if (!SetIdString (& (trial_p -> ft_id), buffer_s))
+													if ((trial_p -> ft_id_s = EasyCopyToNewString (buffer_s)) == NULL)
 														{
 															error_s = "Failed to set id";
 														}

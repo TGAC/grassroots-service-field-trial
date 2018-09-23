@@ -47,168 +47,169 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 }
 
 
-void InitialiseId (DFWId *id_p)
-{
-	id_p -> di_index = UINT32_MAX;
-	id_p -> di_id_s = NULL;
-}
 
-void ClearId (DFWId *id_p)
-{
-	if (id_p -> di_id_s)
-		{
-			FreeCopiedString (id_p -> di_id_s);
-		}
-
-	InitialiseId (id_p);
-}
-
-
-
-bool SetIdString (DFWId *id_p, const char *id_s)
-{
-	bool success_flag = false;
-	char *copied_id_s = EasyCopyToNewString (id_s);
-
-	if (copied_id_s)
-		{
-			if (id_p -> di_id_s)
-				{
-					FreeCopiedString (id_p -> di_id_s);
-				}
-
-			id_p -> di_id_s = copied_id_s;
-		}		/* if (copied_id_s) */
-
-	return success_flag;
-}
-
-
-void SetIdIndex (DFWId *id_p, const uint32 id_index)
-{
-	id_p -> di_index = id_index;
-}
+//void InitialiseId (DFWId *id_p)
+//{
+//	id_p -> di_index = UINT32_MAX;
+//	id_p -> di_id_s = NULL;
+//}
+//
+//void ClearId (DFWId *id_p)
+//{
+//	if (id_p -> di_id_s)
+//		{
+//			FreeCopiedString (id_p -> di_id_s);
+//		}
+//
+//	InitialiseId (id_p);
+//}
+//
+//
+//
+//bool SetIdString (DFWId *id_p, const char *id_s)
+//{
+//	bool success_flag = false;
+//	char *copied_id_s = EasyCopyToNewString (id_s);
+//
+//	if (copied_id_s)
+//		{
+//			if (id_p -> di_id_s)
+//				{
+//					FreeCopiedString (id_p -> di_id_s);
+//				}
+//
+//			id_p -> di_id_s = copied_id_s;
+//		}		/* if (copied_id_s) */
+//
+//	return success_flag;
+//}
 
 
-bool AddIdToJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-	json_t *value_p = NULL;
-
-	switch (data_p -> dftsd_backend)
-		{
-			case DB_MONGO_DB:
-				value_p = json_integer (id_p -> di_index);
-				if (!value_p)
-					{
-
-					}
-				break;
-
-			case DB_SQLITE:
-				value_p = json_string (id_p -> di_id_s);
-				if (!value_p)
-					{
-
-					}
-				break;
-
-			default:
-				break;
-		}
-
-
-	if (value_p)
-		{
-			if (json_object_set_new (json_p, key_s, value_p) == 0)
-				{
-					success_flag = true;
-				}
-			else
-				{
-
-				}
-		}
-
-	return success_flag;
-}
-
-
-
-bool GetIdFromJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-
-	switch (data_p -> dftsd_backend)
-		{
-			case DB_MONGO_DB:
-				{
-					int i = 0;
-
-					if (GetJSONInteger (json_p, key_s, &i))
-						{
-							id_p -> di_index = (uint32) i;
-							success_flag = true;
-						}
-				}
-				break;
-
-			case DB_SQLITE:
-				{
-					const char *value_s = GetJSONString (json_p, key_s);
-
-					if (value_s)
-						{
-							if (SetIdString (id_p, value_s))
-								{
-									success_flag = true;
-								}
-
-						}
-				}
-				break;
-
-			default:
-				break;
-		}
-
-
-	return success_flag;
-
-}
-
-
-
-
-bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p)
-{
-	bool set_flag = false;
-
-	switch (data_p -> dftsd_backend)
-		{
-			case DB_MONGO_DB:
-				{
-					if (id_p -> di_id_s)
-						{
-							set_flag = true;
-						}
-				}
-				break;
-
-			case DB_SQLITE:
-				{
-					if (id_p -> di_index != UINT32_MAX)
-						{
-							set_flag = true;
-						}
-				}
-				break;
-
-			default:
-				break;
-		}
-
-
-	return set_flag;
-
-}
+//void SetIdIndex (DFWId *id_p, const uint32 id_index)
+//{
+//	id_p -> di_index = id_index;
+//}
+//
+//
+//bool AddIdToJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p)
+//{
+//	bool success_flag = false;
+//	json_t *value_p = NULL;
+//
+//	switch (data_p -> dftsd_backend)
+//		{
+//			case DB_MONGO_DB:
+//				value_p = json_integer (id_p -> di_index);
+//				if (!value_p)
+//					{
+//
+//					}
+//				break;
+//
+//			case DB_SQLITE:
+//				value_p = json_string (id_p -> di_id_s);
+//				if (!value_p)
+//					{
+//
+//					}
+//				break;
+//
+//			default:
+//				break;
+//		}
+//
+//
+//	if (value_p)
+//		{
+//			if (json_object_set_new (json_p, key_s, value_p) == 0)
+//				{
+//					success_flag = true;
+//				}
+//			else
+//				{
+//
+//				}
+//		}
+//
+//	return success_flag;
+//}
+//
+//
+//
+//bool GetIdFromJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p)
+//{
+//	bool success_flag = false;
+//
+//	switch (data_p -> dftsd_backend)
+//		{
+//			case DB_MONGO_DB:
+//				{
+//					int i = 0;
+//
+//					if (GetJSONInteger (json_p, key_s, &i))
+//						{
+//							id_p -> di_index = (uint32) i;
+//							success_flag = true;
+//						}
+//				}
+//				break;
+//
+//			case DB_SQLITE:
+//				{
+//					const char *value_s = GetJSONString (json_p, key_s);
+//
+//					if (value_s)
+//						{
+//							if (SetIdString (id_p, value_s))
+//								{
+//									success_flag = true;
+//								}
+//
+//						}
+//				}
+//				break;
+//
+//			default:
+//				break;
+//		}
+//
+//
+//	return success_flag;
+//
+//}
+//
+//
+//
+//
+//bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p)
+//{
+//	bool set_flag = false;
+//
+//	switch (data_p -> dftsd_backend)
+//		{
+//			case DB_MONGO_DB:
+//				{
+//					if (id_p -> di_id_s)
+//						{
+//							set_flag = true;
+//						}
+//				}
+//				break;
+//
+//			case DB_SQLITE:
+//				{
+//					if (id_p -> di_index != UINT32_MAX)
+//						{
+//							set_flag = true;
+//						}
+//				}
+//				break;
+//
+//			default:
+//				break;
+//		}
+//
+//
+//	return set_flag;
+//
+//}

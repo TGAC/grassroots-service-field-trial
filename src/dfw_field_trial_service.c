@@ -238,7 +238,7 @@ static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 					if (strcmp (value_s, "mongodb") == 0)
 						{
 							data_p -> dftsd_backend = DB_MONGO_DB;
-							data_p -> dftsd_mongo_p = AllocateMongoTool ();
+							data_p -> dftsd_mongo_p = AllocateMongoTool (NULL);
 
 							if (data_p -> dftsd_mongo_p)
 								{
@@ -249,7 +249,7 @@ static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 						{
 							data_p -> dftsd_backend = DB_SQLITE;
 
-							data_p -> dftsd_sqlite_p = AllocateSQLiteTool (data_p -> dftsd_database_s, 0, NULL);
+							data_p -> dftsd_sqlite_p = AllocateSQLiteTool (data_p -> dftsd_database_s, SQLITE_OPEN_READWRITE);
 
 							if (data_p -> dftsd_sqlite_p)
 								{
@@ -297,8 +297,6 @@ static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 			data_p -> dftsd_database_s = NULL;
 			data_p -> dftsd_sqlite_p = NULL;
 			data_p -> dftsd_backend = DB_NUM_BACKENDS;
-
-			memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
 
 			data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL] = "FieldTrial";
 			data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA] = "ExperimentalArea";

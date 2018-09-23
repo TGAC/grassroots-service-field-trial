@@ -25,8 +25,33 @@
 #include "memory_allocations.h"
 
 
+/*
+ * DB COLUMN NAMES
+ */
+
+static const char *S_ID_COLUMN_S = "id";
+
+static const char *S_NAME_COLUMN_S = "name";
+
+static const char *S_LOCATION_COLUMN_S = "location";
+
+static const char *S_SOIL_COLUMN_S = "soil";
+
+static const char *S_YEAR_COLUMN_S = "year";
+
+static const char *S_PARENT_FIELD_TRIAL_COLUMN_S = "parent_field_trial_id";
 
 
+/*
+ * STATIC PROTOTYPES
+ */
+static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *area_p, const char *name_key_s, const char *soil_key_s, const char *location_key_s, const char *year_key_s, const char *field_trial_key_s, const char *id_key_s);
+
+
+
+/*
+ * API FUNCTIONS
+ */
 
 ExperimentalArea *AllocateExperimentalArea ()
 {
@@ -38,44 +63,124 @@ ExperimentalArea *AllocateExperimentalArea ()
 
 void FreeExperimentalArea (ExperimentalArea *area_p)
 {
-
-}
-
-
-json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
-{
-	json_t *area_json_p = json_object ();
-
-	if (json_object_set_new (area_json_p, EA_NAME_S, json_string (area_p -> ea_name_s)) == 0)
+	if (area_p -> ea_name_s)
 		{
-			if (json_object_set_new (area_json_p, EA_SOIL_TYPE_S, json_string (area_p -> ea_soil_type_s)) == 0)
-				{
-					if (json_object_set_new (area_json_p, EA_LOCATION_S, json_string (area_p -> ea_location_s)) == 0)
-						{
-							if (json_object_set_new (area_json_p, EA_YEAR_S, json_integer (area_p -> ea_year)) == 0)
-								{
-									if (AddIdToJSON (area_json_p, EA_PARENT_FIELD_TRIAL_S, & (area_p -> ea_parent_p -> ft_id), data_p))
-										{
-
-										}
-
-								}
-
-						}
-
-				}
-
+			FreeCopiedString (area_p -> ea_name_s);
 		}
 
-	return area_json_p;
+	if (area_p -> ea_soil_type_s)
+		{
+			FreeCopiedString (area_p -> ea_soil_type_s);
+		}
+
+	if (area_p -> ea_location_s)
+		{
+			FreeCopiedString (area_p -> ea_location_s);
+		}
+
+	if (area_p -> ea_plots_p)
+		{
+			FreeLinkedList (area_p -> ea_plots_p);
+		}
+
+	FreeMemory (area_p);
 }
+
+
+json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
+{
+	return GetExperimentalAreaAsJSONWithNamedKeys (area_p, EA_NAME_S, EA_SOIL_S, EA_LOCATION_S, EA_YEAR_S, EA_PARENT_FIELD_TRIAL_S, EA_ID_S);
+}
+
+
+json_t *GetExperimentalAreaAsJSONForDB (const ExperimentalArea *area_p)
+{
+	return GetExperimentalAreaAsJSONWithNamedKeys (area_p, S_NAME_COLUMN_S, S_SOIL_COLUMN_S, S_LOCATION_COLUMN_S, S_YEAR_COLUMN_S, S_PARENT_FIELD_TRIAL_COLUMN_S, S_ID_COLUMN_S);
+}
+
 
 
 LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p)
 {
 	LinkedList *plots_list_p = NULL;
 
+	if (! (area_p -> ea_plots_p))
+		{
+
+		}		/* if (! (area_p -> ea_plots_p)) */
+
 	return plots_list_p;
 }
 
 
+bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *area_json_p = GetExperimentalAreaAsJSONForDB (area_p);
+
+	if (area_json_p)
+		{
+			char *error_s = InsertOrUpdateSQLiteData (data_p -> dftsd_sqlite_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], S_ID_COLUMN_S);
+
+			if (error_s)
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, area_json_p, "Failed to save ExperimentalArea, error: \"%s\"", error_s);
+					FreeCopiedString (error_s);
+				}
+			else
+				{
+					success_flag = true;
+				}
+
+		}		/* if (area_json_p) */
+
+	return success_flag;
+}
+
+
+ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p)
+{
+	ExperimentalArea *area_p = NULL;
+
+
+	return area_p;
+}
+
+
+
+
+/*
+ * STATIC FUNCTIONS
+ */
+
+static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *area_p, const char *name_key_s, const char *soil_key_s, const char *location_key_s, const char *year_key_s, const char *field_trial_key_s, const char *id_key_s)
+{
+	json_t *area_json_p = json_object ();
+
+	if (area_json_p)
+		{
+			if (json_object_set_new (area_json_p, name_key_s, json_string (area_p -> ea_name_s)) == 0)
+				{
+					if (json_object_set_new (area_json_p, soil_key_s, json_string (area_p -> ea_soil_type_s)) == 0)
+						{
+							if (json_object_set_new (area_json_p, location_key_s, json_string (area_p -> ea_location_s)) == 0)
+								{
+									if (json_object_set_new (area_json_p, year_key_s, json_integer (area_p -> ea_year)) == 0)
+										{
+											if (json_object_set_new (area_json_p, field_trial_key_s, json_string (area_p -> ea_parent_p -> ft_id_s)) == 0)
+												{
+													if (json_object_set_new (area_json_p, id_key_s, json_string (area_p -> ea_id_s)) == 0)
+														{
+															return area_json_p;
+														}
+												}
+										}
+								}
+						}
+				}
+
+			json_decref (area_json_p);
+		}		/* if (area_json_p) */
+
+	return NULL;
+}

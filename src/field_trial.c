@@ -36,7 +36,7 @@ static bool LoadFieldTrialByName (const char *name_s);
 
 
 
-FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p)
+FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const char *id_s)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -53,7 +53,15 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWField
 							trial_p -> ft_name_s = copied_name_s;
 							trial_p -> ft_team_s = copied_team_s;
 
-							InitialiseId (& (trial_p -> ft_id));
+							if (id_s)
+								{
+
+									//trial_p -> ft_id = *id_p;
+								}
+							else
+								{
+									trial_p -> ft_id_s = NULL;
+								}
 
 							return trial_p;
 						}
@@ -68,16 +76,16 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWField
 }
 
 
-
-
-
-
 void FreeFieldTrial (FieldTrial *trial_p)
 {
 	FreeCopiedString (trial_p -> ft_name_s);
 	FreeCopiedString (trial_p -> ft_team_s);
 
-	ClearId (& (trial_p -> ft_id));
+	if (trial_p -> ft_id_s)
+		{
+			FreeCopiedString (trial_p -> ft_id_s);
+		}
+
 
 	FreeMemory (trial_p);
 }
@@ -101,20 +109,28 @@ LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *
 }
 
 
+
 json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p)
+{
+	return GetFieldTrialAsConfiguredJSON (trial_p, FT_NAME_S, FT_TEAM_S);
+}
+
+
+
+json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * const name_key_s, const char * const team_key_s)
 {
 	json_t *trial_json_p = json_object ();
 
 	if (trial_json_p)
 		{
-			if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0)
+			if (json_object_set_new (trial_json_p, name_key_s, json_string (trial_p -> ft_name_s)) == 0)
 				{
-					if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0)
+					if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0)
 						{
 							return trial_json_p;
-						}		/* if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0) */
+						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
 
-				}		/* if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0) */
+				}		/* if (json_object_set_new (trial_json_p, name_key_s, json_string (trial_p -> ft_name_s)) == 0) */
 
 			json_decref (trial_json_p);
 		}		/* if (trial_json_p) */
@@ -194,7 +210,7 @@ void FreeFieldTrialNode (ListItem *node_p)
 bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, data_p);
+	json_t *area_json_p = GetExperimentalAreaAsJSON (area_p);
 
 	if (area_json_p)
 		{

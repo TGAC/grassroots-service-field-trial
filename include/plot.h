@@ -55,6 +55,13 @@ typedef struct Plot
 
 	char *pl_treatments_s;
 
+	/**
+	 * A LinkedList of RowNodes
+	 * for all of the Rows in this
+	 * Plot.
+	 */
+	LinkedList *pl_rows_p;
+
 } Plot;
 
 

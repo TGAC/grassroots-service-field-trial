@@ -35,13 +35,18 @@ struct ExperimentalArea;
 
 typedef struct FieldTrial
 {
-	DFWId ft_id;
+	char *ft_id_s;
 
 	char *ft_name_s;
 
 	char *ft_team_s;
 
-	LinkedList *experimental_areas_p;
+	/**
+	 * A LinkedList of ExperimentalAreaNodes
+	 * for all of the ExperimentalAreas in this
+	 * FieldTrial.
+	 */
+	LinkedList *ft_experimental_areas_p;
 
 } FieldTrial;
 
@@ -60,15 +65,22 @@ typedef struct FieldTrialNode
 #ifdef ALLOCATE_FIELD_TRIAL_TAGS
 	#define FIELD_TRIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
 	#define FIELD_TRIAL_VAL(x)	= x
+	#define FIELD_TRIAL_CONCAT_VAL(x,y)	= x y
 #else
 	#define FIELD_TRIAL_PREFIX extern
 	#define FIELD_TRIAL_VAL(x)
+	#define FIELD_TRIAL_CONCAT_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
-FIELD_TRIAL_PREFIX const char *FT_NAME_S FIELD_TRIAL_VAL ("name");
+
+
+/* Field Trial */
+
+
+FIELD_TRIAL_PREFIX const char *FT_NAME_S FIELD_TRIAL_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 
 
 FIELD_TRIAL_PREFIX const char *FT_TEAM_S FIELD_TRIAL_VAL ("team");
@@ -80,7 +92,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const char *id_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
 
@@ -92,12 +104,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * const name_key_s, const char * const team_key_s);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialExperimentalAreas (FieldTrial *trial_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
+
+
 
 
 

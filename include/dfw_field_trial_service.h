@@ -21,9 +21,11 @@
 #ifdef ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS
 	#define DFW_FIELD_TRIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
 	#define DFW_FIELD_TRIAL_VAL(x)	= x
+	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
 #else
 	#define DFW_FIELD_TRIAL_PREFIX extern
 	#define DFW_FIELD_TRIAL_VAL(x)
+	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
