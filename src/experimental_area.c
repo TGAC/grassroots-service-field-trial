@@ -113,30 +113,37 @@ LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p)
 }
 
 
+
 bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *area_json_p = GetExperimentalAreaAsJSONForDB (area_p);
+	bool insert_flag = false;
 
-	if (area_json_p)
+	if (! (area_p -> ea_id_p))
 		{
-			char *error_s = InsertOrUpdateSQLiteData (data_p -> dftsd_sqlite_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], S_ID_COLUMN_S);
+			area_p -> ea_id_p  = GetNewId ();
 
-			if (error_s)
+			if (area_p -> ea_id_p)
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, area_json_p, "Failed to save ExperimentalArea, error: \"%s\"", error_s);
-					FreeCopiedString (error_s);
+					insert_flag = true;
 				}
-			else
-				{
-					success_flag = true;
-				}
+		}
 
-		}		/* if (area_json_p) */
+	if (area_p -> ea_id_p)
+		{
+			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p);
+
+			if (area_json_p)
+				{
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], insert_flag);
+
+					json_decref (area_json_p);
+				}		/* if (area_json_p) */
+
+		}		/* if (area_p -> ea_id_p) */
 
 	return success_flag;
 }
-
 
 ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p)
 {
@@ -173,9 +180,16 @@ static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *a
 												{
 													if (json_object_set_new (area_json_p, field_trial_key_s, json_string (parent_field_trial_id_s)) == 0)
 														{
-															if (json_object_set_new (area_json_p, id_key_s, json_string (area_p -> ea_id_s)) == 0)
+															char *id_s = GetBSONOidAsString (area_p -> ea_id_p);
+
+															if (id_s)
 																{
-																	return area_json_p;
+																	if (json_object_set_new (area_json_p, id_key_s, json_string (id_s)) == 0)
+																		{
+																			return area_json_p;
+																		}
+
+																	FreeCopiedString (id_s);
 																}
 														}
 

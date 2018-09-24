@@ -147,31 +147,13 @@ bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 				}
 		}
 
-
 	if (trial_p -> ft_id_p)
 		{
 			field_trial_json_p = GetFieldTrialAsJSON (trial_p);
 
 			if (field_trial_json_p)
 				{
-					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
-						{
-							if (insert_flag)
-								{
-									bson_t *reply_p = NULL;
-
-									if (InsertMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, &reply_p))
-										{
-											success_flag = true;
-										}
-
-								}		/* if (insert_flag) */
-							else
-								{
-									/* it's an update */
-								}
-
-						}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], insert_flag);
 
 					json_decref (field_trial_json_p);
 				}		/* if (field_trial_json_p) */
