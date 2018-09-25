@@ -105,19 +105,6 @@ bool GenerateIdFromString (bson_oid_t **id_pp, const char *id_s)
 }
 
 
-bson_oid_t *GetNewId (void)
-{
-	bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
-
-	if (id_p)
-		{
-			bson_oid_init (id_p, bson_context_get_default ());
-		}
-
-	return id_p;
-}
-
-
 char *GetFieldTrialIdAsString (const FieldTrial *trial_p)
 {
 	char *id_s = NULL;
@@ -229,7 +216,7 @@ json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * c
 }
 
 
-FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, FT_NAME_S);
 

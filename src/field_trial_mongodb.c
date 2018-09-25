@@ -110,7 +110,7 @@ static LinkedList *GetMatchingFieldTrialsFromMongoDB (DFWFieldTrialServiceData *
 
 									if (success_flag)
 										{
-											json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p);
+											json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
 											if (results_p)
 												{

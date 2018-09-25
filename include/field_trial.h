@@ -110,7 +110,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (const FieldTrial *tri
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * const name_key_s, const char * const team_key_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialExperimentalAreas (FieldTrial *trial_p);
 

@@ -35,7 +35,7 @@
 #include "audit.h"
 
 #include "field_trial.h"
-#include "field_trial_sqlite.h"
+#include "experimental_area.h"
 
 
 #ifdef _DEBUG
@@ -45,14 +45,30 @@
 #endif
 
 
+
+static NamedParameterType DFTS_FIELD_TRIALS_LIST = { "Field Trials", PT_STRING };
+
 /*
  * Field Trial parameters
  */
-static NamedParameterType DFTS_FIELD_TRIAL_NAME = { "Name", PT_STRING };
-static NamedParameterType DFTS_FIELD_TRIAL_TEAM = { "Team", PT_STRING };
+static NamedParameterType DFTS_FIELD_TRIAL_NAME = { "FT Name", PT_STRING };
+static NamedParameterType DFTS_FIELD_TRIAL_TEAM = { "FT Team", PT_STRING };
 static NamedParameterType DFTS_ADD_FIELD_TRIAL = { "Add Field Trial", PT_BOOLEAN };
 static NamedParameterType DFTS_GET_ALL_FIELD_TRIALS = { "Get all Field Trials", PT_BOOLEAN };
 
+
+/*
+ * Experimental Area parameters
+ */
+
+
+
+static NamedParameterType DFTS_EXPERIMENTAL_AREA_NAME = { "EA Name", PT_STRING };
+static NamedParameterType DFTS_EXPERIMENTAL_AREA_LOCATION = { "EA Location", PT_STRING };
+static NamedParameterType DFTS_EXPERIMENTAL_AREA_SOIL = { "EA Soil", PT_STRING };
+static NamedParameterType DFTS_EXPERIMENTAL_AREA_YEAR = { "EA Year", PT_UNSIGNED_INT };
+static NamedParameterType DFTS_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
+static NamedParameterType DFTS_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
 
 
 static const char *s_data_names_pp [DFTD_NUM_TYPES];
@@ -105,6 +121,14 @@ static uint32 DeleteData (MongoTool *tool_p, ServiceJob *job_p, json_t *data_p, 
 static bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p);
+
+static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
+
+
+static bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p);
+
+
+static int RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p);
 
 
 static json_t *ConvertToResource (const size_t i, json_t *src_record_p);
@@ -242,7 +266,14 @@ static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 							if (data_p -> dftsd_mongo_p)
 								{
-									success_flag = true;
+									if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
+										}
 								}
 						}
 					else if (strcmp (value_s, "sqlite") == 0)
@@ -288,24 +319,32 @@ static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 {
+	MongoTool *tool_p = AllocateMongoTool (NULL);
 
-	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
-
-	if (data_p)
+	if (tool_p)
 		{
-			data_p -> dftsd_mongo_p = NULL;
-			data_p -> dftsd_database_s = NULL;
-			data_p -> dftsd_sqlite_p = NULL;
-			data_p -> dftsd_backend = DB_NUM_BACKENDS;
+			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
 
-			data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL] = "FieldTrial";
-			data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA] = "ExperimentalArea";
-			data_p -> dftsd_collection_ss [DFTD_PLOT] = "Plot";
-			data_p -> dftsd_collection_ss [DFTD_ROW] = "Row";
-			data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE] = "Phenotype";
-		}
+			if (data_p)
+				{
+					data_p -> dftsd_mongo_p = tool_p;
+					data_p -> dftsd_database_s = NULL;
+					data_p -> dftsd_sqlite_p = NULL;
+					data_p -> dftsd_backend = DB_NUM_BACKENDS;
 
-	return data_p;
+					data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL] = "FieldTrial";
+					data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA] = "ExperimentalArea";
+					data_p -> dftsd_collection_ss [DFTD_PLOT] = "Plot";
+					data_p -> dftsd_collection_ss [DFTD_ROW] = "Row";
+					data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE] = "Phenotype";
+
+					return data_p;
+				}
+
+			FreeMongoTool (tool_p);
+		}		/* if (tool_p) */
+
+	return NULL;
 }
 
 
@@ -352,7 +391,10 @@ static ParameterSet *GetDFWFieldTrialServiceParameters (Service *service_p, Reso
 		{
 			if (AddFieldTrialParams (service_p -> se_data_p, params_p))
 				{
-					return params_p;
+					if (AddExperimentalAreaParams (service_p -> se_data_p, params_p))
+						{
+							return params_p;
+						}
 				}
 
 			FreeParameterSet (params_p);
@@ -405,6 +447,7 @@ static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 	return res;
 }
 
+
 static bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
@@ -431,9 +474,211 @@ static bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 		}
 
 	return success_flag;
-
 }
 
+
+static bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+	SharedType def;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Experimental Area", NULL, false, data_p, param_set_p);
+
+	def.st_string_value_s = NULL;
+
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_NAME.npt_type, DFTS_EXPERIMENTAL_AREA_NAME.npt_name_s, "Name", "The name of the Experimental Area", def, PL_BASIC)) != NULL)
+		{
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_type, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_name_s, "Location", "The location of the  Experimental Area", def, PL_BASIC)) != NULL)
+				{
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_SOIL.npt_type, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_BASIC)) != NULL)
+						{
+							def.st_ulong_value = 2017;
+
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_YEAR.npt_type, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, "Year", "The year of the Experimental Area", def, PL_BASIC)) != NULL)
+								{
+									if (SetUpFieldTrialsListParameter (data_p, param_set_p, group_p))
+										{
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_ADD_EXPERIMENTAL_AREA.npt_type, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
+												{
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_type, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
+														{
+															success_flag = true;
+														}
+												}
+
+										}
+								}
+						}
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+static int RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p)
+{
+	int res = 0;
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true))
+		{
+			if (value.st_boolean_value)
+				{
+					if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_NAME.npt_name_s, &value, true))
+						{
+							SharedType location_value;
+							InitSharedType (&location_value);
+
+							if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_name_s, &location_value, true))
+								{
+									SharedType soil_value;
+									InitSharedType (&soil_value);
+
+									if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, &soil_value, true))
+										{
+											SharedType year_value;
+											InitSharedType (&year_value);
+
+											if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, &year_value, true))
+												{
+													ExperimentalArea *area_p = AllocateExperimentalArea (value.st_string_value_s, location_value.st_string_value_s, soil_value.st_string_value_s, year_value.st_ulong_value, NULL);
+
+													if (area_p)
+														{
+															if (SaveExperimentalArea (area_p, data_p))
+																{
+																	res = 1;
+																}
+															else
+																{
+																	res = -1;
+																}
+
+															FreeExperimentalArea (area_p);
+														}
+
+												}
+
+										}
+
+								}
+
+						}
+
+				}		/* if (value.st_boolean_value) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_FIELD_TRIAL.npt_name_s, &value, true)) */
+
+	return res;
+}
+
+
+static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+		{
+			bson_t *query_p = NULL;
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", "team", BCON_INT32 (1), "}");
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							const size_t num_results = json_array_size (results_p);
+
+							if (num_results > 0)
+								{
+									size_t i = 0;
+									json_t *entry_p = json_array_get (results_p, i);
+									FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, data_p);
+
+
+									if (trial_p)
+										{
+											char *name_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+
+											if (name_s)
+												{
+													SharedType def;
+													char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+
+													if (id_s)
+														{
+															def.st_string_value_s = name_s;
+
+															param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, DFTS_FIELD_TRIALS_LIST.npt_type, DFTS_FIELD_TRIALS_LIST.npt_name_s, "Field Trials", "The available field trials", def, PL_ALL);
+
+															if (param_p)
+																{
+																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, id_s);
+																}
+														}
+
+													FreeCopiedString (name_s);
+												}
+
+											FreeFieldTrial (trial_p);
+										}		/* if (trial_p) */
+
+									if (success_flag)
+										{
+											for (++ i; i < num_results; ++ i)
+												{
+													entry_p = json_array_get (results_p, i);
+													trial_p = GetFieldTrialFromJSON (entry_p, data_p);
+
+													if (trial_p)
+														{
+															char *name_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+
+															if (name_s)
+																{
+																	SharedType def;
+																	char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+
+																	if (id_s)
+																		{
+																			def.st_string_value_s = name_s;
+
+																			if (param_p)
+																				{
+																					success_flag = CreateAndAddParameterOptionToParameter (param_p, def, id_s);
+																				}
+																		}
+
+																	FreeCopiedString (name_s);
+																}		/* if (name_s) */
+
+															FreeFieldTrial (trial_p);
+														}		/* if (trial_p) */
+
+												}		/* for (++ i; i < num_results; ++ i) */
+
+											if (!success_flag)
+												{
+													FreeParameter (param_p);
+													param_p = NULL;
+												}
+
+										}		/* if (param_p) */
+
+								}
+
+						}		/* if (json_is_array (results_p)) */
+
+				}		/* if (results_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+
+	return success_flag;
+}
 
 
 
@@ -473,6 +718,11 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 			if (param_set_p)
 				{
 					int res = RunForFieldTrialParams (data_p, param_set_p);
+
+					if (res == 0)
+						{
+							res = RunForExperimentalAreaParams (data_p, param_set_p);
+						}
 
 				}		/* if (param_set_p) */
 
@@ -551,7 +801,7 @@ static OperationStatus SearchData (MongoTool *tool_p, ServiceJob *job_p, json_t 
 
 				}		/* if (fields_p) */
 
-			if (FindMatchingMongoDocumentsByJSON (tool_p, values_p, fields_ss))
+			if (FindMatchingMongoDocumentsByJSON (tool_p, values_p, fields_ss, NULL))
 				{
 					json_t *raw_results_p = GetAllExistingMongoResultsAsJSON (tool_p);
 
