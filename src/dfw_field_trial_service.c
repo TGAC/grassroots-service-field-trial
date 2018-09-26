@@ -120,7 +120,7 @@ static uint32 DeleteData (MongoTool *tool_p, ServiceJob *job_p, json_t *data_p, 
 
 static bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p);
 
-static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p);
+static bool RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
 
@@ -128,7 +128,7 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 static bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-static int RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p);
+static bool RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 static json_t *ConvertToResource (const size_t i, json_t *src_record_p);
@@ -404,9 +404,9 @@ static ParameterSet *GetDFWFieldTrialServiceParameters (Service *service_p, Reso
 }
 
 
-static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p)
+static bool RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
-	int res = 0;
+	bool job_done_flag = false;
 	SharedType value;
 	InitSharedType (&value);
 
@@ -414,6 +414,11 @@ static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 		{
 			if (value.st_boolean_value)
 				{
+					bool success_flag = false;
+
+					/* It's a job for FieldTrials */
+					job_done_flag = true;
+
 					if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIAL_NAME.npt_name_s, &value, true))
 						{
 							SharedType team_value;
@@ -425,26 +430,85 @@ static int RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 
 									if (trial_p)
 										{
-											if (SaveFieldTrial (trial_p, data_p))
-												{
-													res = 1;
-												}
-											else
-												{
-													res = -1;
-												}
-
+											success_flag = SaveFieldTrial (trial_p, data_p);
 											FreeFieldTrial (trial_p);
 										}
 								}
 
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
+
+
+					SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
+				}		/* if (value.st_boolean_value) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_FIELD_TRIAL.npt_name_s, &value, true)) */
+
+	return job_done_flag;
+}
+
+
+static bool RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true))
+		{
+			if (value.st_boolean_value)
+				{
+					bool success_flag = false;
+
+					/* It's a job for ExperimentalAreas */
+					job_done_flag = true;
+
+					if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_NAME.npt_name_s, &value, true))
+						{
+							SharedType location_value;
+							InitSharedType (&location_value);
+
+							if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_name_s, &location_value, true))
+								{
+									SharedType soil_value;
+									InitSharedType (&soil_value);
+
+									if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, &soil_value, true))
+										{
+											SharedType year_value;
+											InitSharedType (&year_value);
+
+											if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, &year_value, true))
+												{
+													SharedType parent_field_trial_value;
+													InitSharedType (&parent_field_trial_value);
+
+													if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true))
+														{
+															ExperimentalArea *area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, location_value.st_string_value_s, soil_value.st_string_value_s, year_value.st_ulong_value, parent_field_trial_value.st_string_value_s);
+
+															if (area_p)
+																{
+																	success_flag = SaveExperimentalArea (area_p, data_p);
+
+																	FreeExperimentalArea (area_p);
+																}
+														}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true)) */
+
+												}
+
+										}
+
+								}
+
 						}
+
+					SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
 
 				}		/* if (value.st_boolean_value) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_FIELD_TRIAL.npt_name_s, &value, true)) */
 
-	return res;
+	return job_done_flag;
 }
 
 
@@ -457,15 +521,15 @@ static bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_FIELD_TRIAL_NAME.npt_type, DFTS_FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_BASIC)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_FIELD_TRIAL_NAME.npt_type, DFTS_FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_BASIC)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_FIELD_TRIAL_TEAM.npt_type, DFTS_FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_BASIC)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_FIELD_TRIAL_TEAM.npt_type, DFTS_FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_BASIC)) != NULL)
 				{
 					def.st_boolean_value = false;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_ADD_FIELD_TRIAL.npt_type, DFTS_ADD_FIELD_TRIAL.npt_name_s, "Add", "Add a new Field Trial", def, PL_BASIC)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_ADD_FIELD_TRIAL.npt_type, DFTS_ADD_FIELD_TRIAL.npt_name_s, "Add", "Add a new Field Trial", def, PL_BASIC)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_GET_ALL_FIELD_TRIALS.npt_type, DFTS_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_GET_ALL_FIELD_TRIALS.npt_type, DFTS_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
 								{
 									success_flag = true;
 								}
@@ -486,21 +550,21 @@ static bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_NAME.npt_type, DFTS_EXPERIMENTAL_AREA_NAME.npt_name_s, "Name", "The name of the Experimental Area", def, PL_BASIC)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_NAME.npt_type, DFTS_EXPERIMENTAL_AREA_NAME.npt_name_s, "Name", "The name of the Experimental Area", def, PL_BASIC)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_type, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_name_s, "Location", "The location of the  Experimental Area", def, PL_BASIC)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_type, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_name_s, "Location", "The location of the  Experimental Area", def, PL_BASIC)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_SOIL.npt_type, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_BASIC)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_SOIL.npt_type, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_BASIC)) != NULL)
 						{
 							def.st_ulong_value = 2017;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_EXPERIMENTAL_AREA_YEAR.npt_type, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, "Year", "The year of the Experimental Area", def, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_YEAR.npt_type, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, "Year", "The year of the Experimental Area", def, PL_BASIC)) != NULL)
 								{
-									if (SetUpFieldTrialsListParameter (data_p, param_set_p, group_p))
+									if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_set_p, group_p))
 										{
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_ADD_EXPERIMENTAL_AREA.npt_type, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_ADD_EXPERIMENTAL_AREA.npt_type, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_type, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_type, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
 														{
 															success_flag = true;
 														}
@@ -516,64 +580,6 @@ static bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_
 }
 
 
-
-static int RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p)
-{
-	int res = 0;
-	SharedType value;
-	InitSharedType (&value);
-
-	if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true))
-		{
-			if (value.st_boolean_value)
-				{
-					if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_NAME.npt_name_s, &value, true))
-						{
-							SharedType location_value;
-							InitSharedType (&location_value);
-
-							if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_LOCATION.npt_name_s, &location_value, true))
-								{
-									SharedType soil_value;
-									InitSharedType (&soil_value);
-
-									if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, &soil_value, true))
-										{
-											SharedType year_value;
-											InitSharedType (&year_value);
-
-											if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, &year_value, true))
-												{
-													ExperimentalArea *area_p = AllocateExperimentalArea (value.st_string_value_s, location_value.st_string_value_s, soil_value.st_string_value_s, year_value.st_ulong_value, NULL);
-
-													if (area_p)
-														{
-															if (SaveExperimentalArea (area_p, data_p))
-																{
-																	res = 1;
-																}
-															else
-																{
-																	res = -1;
-																}
-
-															FreeExperimentalArea (area_p);
-														}
-
-												}
-
-										}
-
-								}
-
-						}
-
-				}		/* if (value.st_boolean_value) */
-
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_FIELD_TRIAL.npt_name_s, &value, true)) */
-
-	return res;
-}
 
 
 static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
@@ -599,7 +605,6 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 									json_t *entry_p = json_array_get (results_p, i);
 									FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, data_p);
 
-
 									if (trial_p)
 										{
 											char *name_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
@@ -611,14 +616,16 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 
 													if (id_s)
 														{
-															def.st_string_value_s = name_s;
+															def.st_string_value_s = id_s;
 
 															param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, DFTS_FIELD_TRIALS_LIST.npt_type, DFTS_FIELD_TRIALS_LIST.npt_name_s, "Field Trials", "The available field trials", def, PL_ALL);
 
 															if (param_p)
 																{
-																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, id_s);
+																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
 																}
+
+															FreeCopiedString (id_s);
 														}
 
 													FreeCopiedString (name_s);
@@ -645,12 +652,14 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 
 																	if (id_s)
 																		{
-																			def.st_string_value_s = name_s;
+																			def.st_string_value_s = id_s;
 
 																			if (param_p)
 																				{
-																					success_flag = CreateAndAddParameterOptionToParameter (param_p, def, id_s);
+																					success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
 																				}
+
+																			FreeCopiedString (id_s);
 																		}
 
 																	FreeCopiedString (name_s);
@@ -669,6 +678,11 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 
 										}		/* if (param_p) */
 
+								}		/* if (num_results > 0) */
+							else
+								{
+									/* nothing to add */
+									success_flag = true;
 								}
 
 						}		/* if (json_is_array (results_p)) */
@@ -717,12 +731,10 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 
 			if (param_set_p)
 				{
-					int res = RunForFieldTrialParams (data_p, param_set_p);
-
-					if (res == 0)
+					if (!RunForFieldTrialParams (data_p, param_set_p, job_p))
 						{
-							res = RunForExperimentalAreaParams (data_p, param_set_p);
-						}
+							RunForExperimentalAreaParams (data_p, param_set_p, job_p);
+						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
 				}		/* if (param_set_p) */
 

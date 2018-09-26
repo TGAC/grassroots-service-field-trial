@@ -104,9 +104,13 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea ();
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil__s, const uint32 year, const char *parent_field_trial_id_s, DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalAreaNode *AllocateExperimentalAreaNode (ExperimentalArea *area_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalAreaNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p);
 

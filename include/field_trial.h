@@ -95,11 +95,13 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const char *id_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrialWithIdAsString (const char *name_s, const char *team_s, const char *id_s);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, const char *id_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p);
 
@@ -107,7 +109,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * const name_key_s, const char * const team_key_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
@@ -122,6 +123,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *tr
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialById (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p);
 
 
 

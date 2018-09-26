@@ -29,23 +29,9 @@
  * DB COLUMN NAMES
  */
 
-static const char *S_ID_COLUMN_S = "id";
-
-static const char *S_NAME_COLUMN_S = "name";
-
-static const char *S_LOCATION_COLUMN_S = "location";
-
-static const char *S_SOIL_COLUMN_S = "soil";
-
-static const char *S_YEAR_COLUMN_S = "year";
-
-static const char *S_PARENT_FIELD_TRIAL_COLUMN_S = "parent_field_trial_id";
-
-
 /*
  * STATIC PROTOTYPES
  */
-static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *area_p, const char *name_key_s, const char *soil_key_s, const char *location_key_s, const char *year_key_s, const char *field_trial_key_s, const char *id_key_s);
 
 
 
@@ -53,11 +39,61 @@ static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *a
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea ()
+ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 year, const char *parent_field_trial_id_s, DFWFieldTrialServiceData *data_p)
 {
-	ExperimentalArea *area_p = NULL;
+	FieldTrial *parent_field_trial_p = GetFieldTrialById (parent_field_trial_id_s, data_p);
 
-	return area_p;
+	if (parent_field_trial_p)
+		{
+			char *copied_name_s = EasyCopyToNewString (name_s);
+
+			if (copied_name_s)
+				{
+					char *copied_location_s = EasyCopyToNewString (location_s);
+
+					if (copied_location_s)
+						{
+							char *copied_soil_s = EasyCopyToNewString (soil_s);
+
+							if (copied_soil_s)
+								{
+									ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+
+									if (area_p)
+										{
+											area_p -> ea_id_p = id_p;
+											area_p -> ea_location_s = copied_location_s;
+											area_p -> ea_name_s = copied_name_s;
+											area_p -> ea_soil_type_s = copied_soil_s;
+											area_p -> ea_year = year;
+											area_p -> ea_parent_p = parent_field_trial_p;
+											area_p -> ea_plots_p = NULL;
+
+											return area_p;
+										}
+
+								}		/* if (copied_soil_s) */
+							else
+								{
+
+								}
+
+						}		/* if (copied_location_s) */
+					else
+						{
+
+						}
+
+				}		/* if (copied_name_s) */
+			else
+				{
+
+				}
+
+			FreeFieldTrial (parent_field_trial_p);
+		}		/* if (parent_field_trial_p) */
+
+	return NULL;
 }
 
 
@@ -87,17 +123,31 @@ void FreeExperimentalArea (ExperimentalArea *area_p)
 }
 
 
-json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
+ExperimentalAreaNode *AllocateExperimentalAreaNode (ExperimentalArea *area_p)
 {
-	return GetExperimentalAreaAsJSONWithNamedKeys (area_p, EA_NAME_S, EA_SOIL_S, EA_LOCATION_S, EA_YEAR_S, EA_PARENT_FIELD_TRIAL_S, EA_ID_S);
+	ExperimentalAreaNode *ea_node_p = (ExperimentalAreaNode *) AllocMemory (sizeof (ExperimentalAreaNode));
+
+	if (ea_node_p)
+		{
+			InitListItem (& (ea_node_p -> ean_node));
+
+			ea_node_p -> ean_experimental_area_p = area_p;
+		}
+
+	return ea_node_p;
 }
 
-
-json_t *GetExperimentalAreaAsJSONForDB (const ExperimentalArea *area_p)
+void FreeExperimentalAreaNode (ListItem *node_p)
 {
-	return GetExperimentalAreaAsJSONWithNamedKeys (area_p, S_NAME_COLUMN_S, S_SOIL_COLUMN_S, S_LOCATION_COLUMN_S, S_YEAR_COLUMN_S, S_PARENT_FIELD_TRIAL_COLUMN_S, S_ID_COLUMN_S);
-}
+	ExperimentalAreaNode *ea_node_p = (ExperimentalAreaNode *) node_p;
 
+	if (ea_node_p -> ean_experimental_area_p)
+		{
+			FreeExperimentalArea (ea_node_p -> ean_experimental_area_p);
+		}
+
+	FreeMemory (ea_node_p);
+}
 
 
 LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p)
@@ -160,41 +210,21 @@ ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServic
  * STATIC FUNCTIONS
  */
 
-static json_t *GetExperimentalAreaAsJSONWithNamedKeys (const ExperimentalArea *area_p, const char *name_key_s, const char *soil_key_s, const char *location_key_s, const char *year_key_s, const char *field_trial_key_s, const char *id_key_s)
+json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 {
 	json_t *area_json_p = json_object ();
 
 	if (area_json_p)
 		{
-			if (json_object_set_new (area_json_p, name_key_s, json_string (area_p -> ea_name_s)) == 0)
+			if (json_object_set_new (area_json_p, EA_NAME_S, json_string (area_p -> ea_name_s)) == 0)
 				{
-					if (json_object_set_new (area_json_p, soil_key_s, json_string (area_p -> ea_soil_type_s)) == 0)
+					if (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0)
 						{
-							if (json_object_set_new (area_json_p, location_key_s, json_string (area_p -> ea_location_s)) == 0)
+							if (json_object_set_new (area_json_p, EA_LOCATION_S, json_string (area_p -> ea_location_s)) == 0)
 								{
-									if (json_object_set_new (area_json_p, year_key_s, json_integer (area_p -> ea_year)) == 0)
+									if (json_object_set_new (area_json_p, EA_YEAR_S, json_integer (area_p -> ea_year)) == 0)
 										{
-											char *parent_field_trial_id_s = GetFieldTrialIdAsString (area_p -> ea_parent_p);
 
-											if (parent_field_trial_id_s)
-												{
-													if (json_object_set_new (area_json_p, field_trial_key_s, json_string (parent_field_trial_id_s)) == 0)
-														{
-															char *id_s = GetBSONOidAsString (area_p -> ea_id_p);
-
-															if (id_s)
-																{
-																	if (json_object_set_new (area_json_p, id_key_s, json_string (id_s)) == 0)
-																		{
-																			return area_json_p;
-																		}
-
-																	FreeCopiedString (id_s);
-																}
-														}
-
-													FreeCopiedString (parent_field_trial_id_s);
-												}
 										}
 								}
 						}

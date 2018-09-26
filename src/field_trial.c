@@ -28,14 +28,10 @@
 #include "string_utils.h"
 #include "experimental_area.h"
 #include "memory_allocations.h"
+#include "streams.h"
 
 
-
-static bool LoadFieldTrialByName (const char *name_s);
-
-
-
-FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const char *id_s)
+FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -45,17 +41,9 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const ch
 
 			if (copied_team_s)
 				{
-					bool success_flag = true;
-					bson_oid_t *id_p = NULL;
+					LinkedList *areas_p = AllocateLinkedList (FreeExperimentalAreaNode);
 
-					if (id_s)
-						{
-							id_p = GetBSONOidFromString (id_s);
-
-							success_flag = (id_p != NULL);
-						}
-
-					if (success_flag)
+					if (areas_p)
 						{
 							FieldTrial *trial_p = (FieldTrial *) AllocMemory (sizeof (FieldTrial));
 
@@ -64,15 +52,12 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const ch
 									trial_p -> ft_name_s = copied_name_s;
 									trial_p -> ft_team_s = copied_team_s;
 									trial_p -> ft_id_p = id_p;
+									trial_p -> ft_experimental_areas_p = areas_p;
 
 									return trial_p;
 								}
 
-							if (id_p)
-								{
-									FreeMemory (id_p);
-								}
-						}
+						}		/* if (areas_p) */
 
 					FreeCopiedString (copied_team_s);
 				}		/* if (copied_team_s) */
@@ -82,6 +67,31 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, const ch
 
 	return NULL;
 }
+
+
+FieldTrial *AllocateFieldTrialWithIdAsString (const char *name_s, const char *team_s, const char *id_s)
+{
+	if (id_s)
+		{
+			bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
+			if (id_p)
+				{
+					FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
+
+					if (trial_p)
+						{
+							return trial_p;
+						}
+
+					FreeMemory (id_p);
+				}
+
+		}
+
+	return NULL;
+}
+
 
 
 
@@ -162,6 +172,10 @@ void FreeFieldTrial (FieldTrial *trial_p)
 			FreeMemory (trial_p -> ft_id_p);
 		}
 
+	if (trial_p -> ft_experimental_areas_p)
+		{
+			FreeLinkedList (trial_p -> ft_experimental_areas_p);
+		}
 
 	FreeMemory (trial_p);
 }
@@ -188,23 +202,19 @@ LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *
 
 json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p)
 {
-	return GetFieldTrialAsConfiguredJSON (trial_p, FT_NAME_S, FT_TEAM_S);
-}
-
-
-
-json_t *GetFieldTrialAsConfiguredJSON (const FieldTrial *trial_p, const char * const name_key_s, const char * const team_key_s)
-{
 	json_t *trial_json_p = json_object ();
 
 	if (trial_json_p)
 		{
-			if (json_object_set_new (trial_json_p, name_key_s, json_string (trial_p -> ft_name_s)) == 0)
+			if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0)
 				{
-					if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0)
+					if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0)
 						{
+							if (AddIdToJSON (trial_json_p, trial_p -> ft_id_p))
+								{
+									return trial_json_p;
+								}
 
-							return trial_json_p;
 						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
 
 				}		/* if (json_object_set_new (trial_json_p, name_key_s, json_string (trial_p -> ft_name_s)) == 0) */
@@ -226,34 +236,19 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServ
 
 			if (team_s)
 				{
-					const char *id_s = GetJSONString (json_p, FT_ID_S);
+					bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
 
-					FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_s);
+					if (id_p)
+						{
+							if (GetIdFromJSON (json_p, id_p))
+								{
+									FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
 
-					return trial_p;
+									return trial_p;
+								}
+						}
 				}
-
 		}
-
-	return NULL;
-}
-
-
-FieldTrialNode *AllocateFieldTrialNodeByParts (const char *name_s, const char *team_s, const char *id_s)
-{
-	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_s);
-
-	if (trial_p)
-		{
-			FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p);
-
-			if (node_p)
-				{
-					return node_p;
-				}
-
-			FreeFieldTrial (trial_p);
-		}		/* if (trial_p) */
 
 	return NULL;
 }
@@ -284,6 +279,94 @@ void FreeFieldTrialNode (ListItem *node_p)
 
 	FreeMemory (field_trial_node_p);
 }
+
+
+FieldTrial *GetFieldTrialById (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p)
+{
+	FieldTrial *trial_p = NULL;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (bson_oid_is_valid (field_trial_id_s, strlen (field_trial_id_s)))
+		{
+			if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+				{
+					bson_t *query_p = bson_new ();
+
+					if (query_p)
+						{
+							bson_oid_t oid;
+
+							bson_oid_init_from_string (&oid, field_trial_id_s);
+
+							if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid))
+								{
+									json_t *results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL);
+
+									if (results_p)
+										{
+											if (json_is_array (results_p))
+												{
+													size_t num_results = json_array_size (results_p);
+
+													if (num_results == 1)
+														{
+															json_t *res_p = json_array_get (results_p, 0);
+
+															trial_p = GetFieldTrialFromJSON (res_p, data_p);
+
+															if (!trial_p)
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "failed to create field trial for id \"%s\"", field_trial_id_s);
+																}
+
+														}		/* if (num_results == 1) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "" SIZET_FMT " results when searching for field trial with id \"%s\"", field_trial_id_s);
+														}
+
+												}		/* if (json_is_array (results_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array");
+												}
+
+											json_decref (results_p);
+										}		/* if (results_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for field trial with id \"%s\"", field_trial_id_s);
+										}
+
+								}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for field trial with id \"%s\"", field_trial_id_s);
+								}
+
+							bson_destroy (query_p);
+						}		/* if (query_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for field trial with id \"%s\"", field_trial_id_s);
+						}
+
+				}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]);
+				}
+
+		}		/* if (bson_oid_is_valid (field_trial_id_s, strlen (field_trial_id_s))) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" is not a valid oid", field_trial_id_s);
+		}
+
+	return trial_p;
+}
+
+
 
 
 bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
