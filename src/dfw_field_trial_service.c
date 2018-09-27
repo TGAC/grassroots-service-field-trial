@@ -54,6 +54,7 @@ static NamedParameterType DFTS_FIELD_TRIALS_LIST = { "Field Trials", PT_STRING }
 static NamedParameterType DFTS_FIELD_TRIAL_NAME = { "FT Name", PT_STRING };
 static NamedParameterType DFTS_FIELD_TRIAL_TEAM = { "FT Team", PT_STRING };
 static NamedParameterType DFTS_ADD_FIELD_TRIAL = { "Add Field Trial", PT_BOOLEAN };
+static NamedParameterType DFTS_SEARCH_FIELD_TRIALS = { "Search Field Trials", PT_BOOLEAN };
 static NamedParameterType DFTS_GET_ALL_FIELD_TRIALS = { "Get all Field Trials", PT_BOOLEAN };
 
 
@@ -66,7 +67,8 @@ static NamedParameterType DFTS_GET_ALL_FIELD_TRIALS = { "Get all Field Trials", 
 static NamedParameterType DFTS_EXPERIMENTAL_AREA_NAME = { "EA Name", PT_STRING };
 static NamedParameterType DFTS_EXPERIMENTAL_AREA_LOCATION = { "EA Location", PT_STRING };
 static NamedParameterType DFTS_EXPERIMENTAL_AREA_SOIL = { "EA Soil", PT_STRING };
-static NamedParameterType DFTS_EXPERIMENTAL_AREA_YEAR = { "EA Year", PT_UNSIGNED_INT };
+static NamedParameterType DFTS_EXPERIMENTAL_AREA_SOWING_YEAR = { "EA Sowing Year", PT_UNSIGNED_INT };
+static NamedParameterType DFTS_EXPERIMENTAL_AREA_HARVEST_YEAR = { "EA Harvest Year", PT_UNSIGNED_INT };
 static NamedParameterType DFTS_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
 static NamedParameterType DFTS_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
 
@@ -442,6 +444,53 @@ static bool RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterS
 				}		/* if (value.st_boolean_value) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_ADD_FIELD_TRIAL.npt_name_s, &value, true)) */
+	else
+		{
+			if (GetParameterValueFromParameterSet (param_set_p, DFTS_SEARCH_FIELD_TRIALS.npt_name_s, &value, true))
+				{
+					if (value.st_boolean_value)
+						{
+							bool success_flag = false;
+
+							/* It's a job for FieldTrials */
+							job_done_flag = true;
+
+							if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIAL_NAME.npt_name_s, &value, true))
+								{
+									SharedType team_value;
+									InitSharedType (&team_value);
+
+									if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIAL_TEAM.npt_name_s, &team_value, true))
+										{
+											if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+												{
+													bson_t *query_p = BCON_NEW (EA_PARENT_FIELD_TRIAL_S, id_s);;
+													bson_t *opts_p =  BCON_NEW ( "sort", "{", "team", BCON_INT32 (1), "}");
+													json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+													if (results_p)
+														{
+															if (json_is_array (results_p))
+																{
+																	const size_t num_results = json_array_size (results_p);
+
+																	if (num_results > 0)
+																		{
+
+																		}
+																}
+														}
+												}
+										}
+
+								}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
+
+
+							SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
+						}		/* if (value.st_boolean_value) */
+				}
+		}
+
 
 	return job_done_flag;
 }
@@ -474,28 +523,39 @@ static bool RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Para
 
 									if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_SOIL.npt_name_s, &soil_value, true))
 										{
-											SharedType year_value;
-											InitSharedType (&year_value);
+											SharedType sowing_year_value;
+											InitSharedType (&sowing_year_value);
 
-											if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, &year_value, true))
+											if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, &sowing_year_value, true))
 												{
-													SharedType parent_field_trial_value;
-													InitSharedType (&parent_field_trial_value);
+													SharedType harvest_year_value;
+													InitSharedType (&harvest_year_value);
 
-													if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true))
+													if (GetParameterValueFromParameterSet (param_set_p, DFTS_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, &harvest_year_value, true))
 														{
-															ExperimentalArea *area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, location_value.st_string_value_s, soil_value.st_string_value_s, year_value.st_ulong_value, parent_field_trial_value.st_string_value_s);
+															SharedType parent_field_trial_value;
+															InitSharedType (&parent_field_trial_value);
 
-															if (area_p)
+															if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true))
 																{
-																	success_flag = SaveExperimentalArea (area_p, data_p);
+																	FieldTrial *trial_p = GetFieldTrialByIdString (parent_field_trial_value.st_string_value_s, data_p);
 
-																	FreeExperimentalArea (area_p);
+																	if (trial_p)
+																		{
+																			ExperimentalArea *area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, location_value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_ulong_value, harvest_year_value.st_ulong_value, trial_p, data_p);
+
+																			if (area_p)
+																				{
+																					success_flag = SaveExperimentalArea (area_p, data_p);
+
+																					FreeExperimentalArea (area_p);
+																				}
+																		}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true)) */
+
 																}
-														}		/* if (GetParameterValueFromParameterSet (param_set_p, DFTS_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true)) */
 
+														}
 												}
-
 										}
 
 								}
@@ -529,9 +589,12 @@ static bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_ADD_FIELD_TRIAL.npt_type, DFTS_ADD_FIELD_TRIAL.npt_name_s, "Add", "Add a new Field Trial", def, PL_BASIC)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_GET_ALL_FIELD_TRIALS.npt_type, DFTS_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_SEARCH_FIELD_TRIALS.npt_type, DFTS_SEARCH_FIELD_TRIALS.npt_name_s, "Search", "Search for matching Field Trials", def, PL_BASIC)) != NULL)
 								{
-									success_flag = true;
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_GET_ALL_FIELD_TRIALS.npt_type, DFTS_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
+										{
+											success_flag = true;
+										}
 								}
 						}
 				}
@@ -558,18 +621,21 @@ static bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_
 						{
 							def.st_ulong_value = 2017;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_YEAR.npt_type, DFTS_EXPERIMENTAL_AREA_YEAR.npt_name_s, "Year", "The year of the Experimental Area", def, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_SOWING_YEAR.npt_type, DFTS_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, "Year", "The sowing year of the Experimental Area", def, PL_BASIC)) != NULL)
 								{
-									if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_set_p, group_p))
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_type, DFTS_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, "Year", "The harvest year of the Experimental Area", def, PL_BASIC)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_ADD_EXPERIMENTAL_AREA.npt_type, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
+											if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_set_p, group_p))
 												{
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_type, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_ADD_EXPERIMENTAL_AREA.npt_type, DFTS_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
 														{
-															success_flag = true;
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_type, DFTS_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
+																{
+																	success_flag = true;
+																}
 														}
-												}
 
+												}
 										}
 								}
 						}

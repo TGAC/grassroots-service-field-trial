@@ -39,55 +39,69 @@
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 year, const char *parent_field_trial_id_s, DFWFieldTrialServiceData *data_p)
+ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, FieldTrial *parent_field_trial_p, DFWFieldTrialServiceData *data_p)
 {
-	FieldTrial *parent_field_trial_p = GetFieldTrialById (parent_field_trial_id_s, data_p);
+	char *copied_name_s = EasyCopyToNewString (name_s);
 
-	if (parent_field_trial_p)
+	if (copied_name_s)
 		{
-			char *copied_name_s = EasyCopyToNewString (name_s);
+			char *copied_location_s = EasyCopyToNewString (location_s);
 
-			if (copied_name_s)
+			if (copied_location_s)
 				{
-					char *copied_location_s = EasyCopyToNewString (location_s);
+					char *copied_soil_s = EasyCopyToNewString (soil_s);
 
-					if (copied_location_s)
+					if (copied_soil_s)
 						{
-							char *copied_soil_s = EasyCopyToNewString (soil_s);
+							ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
 
-							if (copied_soil_s)
+							if (area_p)
 								{
-									ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+									area_p -> ea_id_p = id_p;
+									area_p -> ea_location_s = copied_location_s;
+									area_p -> ea_name_s = copied_name_s;
+									area_p -> ea_soil_type_s = copied_soil_s;
+									area_p -> ea_sowing_year = sowing_year;
+									area_p -> ea_harvest_year = harvest_year;
+									area_p -> ea_parent_p = parent_field_trial_p;
+									area_p -> ea_plots_p = NULL;
 
-									if (area_p)
-										{
-											area_p -> ea_id_p = id_p;
-											area_p -> ea_location_s = copied_location_s;
-											area_p -> ea_name_s = copied_name_s;
-											area_p -> ea_soil_type_s = copied_soil_s;
-											area_p -> ea_year = year;
-											area_p -> ea_parent_p = parent_field_trial_p;
-											area_p -> ea_plots_p = NULL;
-
-											return area_p;
-										}
-
-								}		/* if (copied_soil_s) */
-							else
-								{
-
+									return area_p;
 								}
 
-						}		/* if (copied_location_s) */
+						}		/* if (copied_soil_s) */
 					else
 						{
 
 						}
 
-				}		/* if (copied_name_s) */
+				}		/* if (copied_location_s) */
 			else
 				{
 
+				}
+
+		}		/* if (copied_name_s) */
+	else
+		{
+
+		}
+
+	return NULL;
+}
+
+
+ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, DFWFieldTrialServiceData *data_p)
+{
+	FieldTrial *parent_field_trial_p = GetFieldTrialByIdString (parent_field_trial_id_s, data_p);
+
+	if (parent_field_trial_p)
+		{
+			ExperimentalArea *area_p = AllocateExperimentalArea (id_p, name_s, location_s, soil_s, sowing_year, harvest_year, parent_field_trial_p, data_p);
+
+			if (area_p)
+				{
+					return area_p;
 				}
 
 			FreeFieldTrial (parent_field_trial_p);
@@ -204,12 +218,6 @@ ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServic
 }
 
 
-
-
-/*
- * STATIC FUNCTIONS
- */
-
 json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 {
 	json_t *area_json_p = json_object ();
@@ -222,9 +230,18 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 						{
 							if (json_object_set_new (area_json_p, EA_LOCATION_S, json_string (area_p -> ea_location_s)) == 0)
 								{
-									if (json_object_set_new (area_json_p, EA_YEAR_S, json_integer (area_p -> ea_year)) == 0)
+									if ((area_p -> ea_sowing_year == 0) || json_object_set_new (area_json_p, EA_SOWING_YEAR_S, json_integer (area_p -> ea_sowing_year)) == 0)
 										{
-
+											if ((area_p -> ea_harvest_year == 0) || json_object_set_new (area_json_p, EA_HARVEST_YEAR_S, json_integer (area_p -> ea_harvest_year)) == 0)
+												{
+													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
+														{
+															if (AdIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S))
+																{
+																	return area_json_p;
+																}
+														}
+												}
 										}
 								}
 						}
@@ -232,6 +249,53 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 
 			json_decref (area_json_p);
 		}		/* if (area_json_p) */
+
+	return NULL;
+}
+
+
+
+ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTrialServiceData *data_p)
+{
+	const char *name_s = GetJSONString (json_p, EA_NAME_S);
+
+	if (name_s)
+		{
+			const char *soil_s = GetJSONString (json_p, EA_SOIL_S);
+
+			if (soil_s)
+				{
+					const char *location_s = GetJSONString (json_p, EA_LOCATION_S);
+
+					if (location_s)
+						{
+							bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+
+							if (id_p)
+								{
+									if (GetCompoundIdFromJSON (json_p, id_p))
+										{
+											ExperimentalArea *area_p = NULL;
+											uint32 sowing_year = 0;
+											uint32 harvest_year = 0;
+											const char *parent_field_trial_id_s = NULL;
+
+											GetJSONInteger (json_p, EA_SOWING_YEAR_S, (int *) &sowing_year);
+											GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
+
+											area_p = AllocateExperimentalArea (id_p, name_s, location_s, soil_s, sowing_year, harvest_year, NULL, data_p);
+
+											return area_p;
+										}
+
+									FreeMemory (id_p);
+								}
+
+						}		/* if (location_s) */
+
+				}		/* if (soil_s) */
+
+		}		/* if (name_s) */
 
 	return NULL;
 }

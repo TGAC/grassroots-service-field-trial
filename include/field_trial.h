@@ -107,7 +107,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_areas_flag, DFWFieldTrialServiceData *data_p);
 
 
 
@@ -124,8 +124,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *tr
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialById (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

@@ -146,7 +146,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 
 	if (trial_p -> ft_id_p)
 		{
-			field_trial_json_p = GetFieldTrialAsJSON (trial_p);
+			field_trial_json_p = GetFieldTrialAsJSON (trial_p, false, data_p);
 
 			if (field_trial_json_p)
 				{
@@ -200,7 +200,7 @@ LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *
 
 
 
-json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p)
+json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_areas_flag, DFWFieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
 
@@ -210,9 +210,23 @@ json_t *GetFieldTrialAsJSON (const FieldTrial *trial_p)
 				{
 					if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0)
 						{
-							if (AddIdToJSON (trial_json_p, trial_p -> ft_id_p))
+							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 								{
-									return trial_json_p;
+									bool success_flag = true;
+
+									if (get_experimental_areas_flag)
+										{
+
+											if (!GetAllFieldTrialExperimentalAreas (trial_p, data_p))
+												{
+													success_flag = false;
+												}
+										}
+
+									if (success_flag)
+										{
+											return trial_json_p;
+										}
 								}
 
 						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
@@ -240,12 +254,14 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServ
 
 					if (id_p)
 						{
-							if (GetIdFromJSON (json_p, id_p))
+							if (GetCompoundIdFromJSON (json_p, id_p))
 								{
 									FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
 
 									return trial_p;
 								}
+
+							FreeMemory (id_p);
 						}
 				}
 		}
@@ -281,7 +297,7 @@ void FreeFieldTrialNode (ListItem *node_p)
 }
 
 
-FieldTrial *GetFieldTrialById (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -372,14 +388,79 @@ FieldTrial *GetFieldTrialById (const char *field_trial_id_s, DFWFieldTrialServic
 bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *area_json_p = GetExperimentalAreaAsJSON (area_p);
+	bson_oid_t *area_id_p = area_p -> ea_id_p;
 
-	if (area_json_p)
+
+
+	return success_flag;
+}
+
+
+bool GetAllFieldTrialExperimentalAreaIds (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
+
+bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+
+	if (id_s)
 		{
+			if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
+				{
+					bson_t *query_p = BCON_NEW (EA_PARENT_FIELD_TRIAL_S, id_s);
+					bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_YEAR_S, BCON_INT32 (1), "}");
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
+					if (results_p)
+						{
+							if (json_is_array (results_p))
+								{
+									const size_t num_results = json_array_size (results_p);
 
-			json_decref (area_json_p);
-		}		/* if (area_json_p) */
+									success_flag = true;
+
+									if (num_results > 0)
+										{
+											size_t i;
+											json_t *area_json_p;
+
+											json_array_foreach (results_p, i, area_json_p)
+												{
+													ExperimentalArea *area_p = GetExperimentalAreaFromJSON (area_json_p, data_p);
+
+													if (area_p)
+														{
+															ExperimentalAreaNode *node_p = AllocateExperimentalAreaNode (area_p);
+
+															if (node_p)
+																{
+																	LinkedListAddTail (trial_p -> ft_experimental_areas_p, & (node_p -> ean_node));
+																}
+															else
+																{
+																	success_flag = false;
+																}
+														}
+													else
+														{
+															success_flag = false;
+														}
+												}
+
+										}
+								}
+						}
+				}
+
+			FreeMemory (id_s);
+		}		/* if (id_s) */
+
 
 	return success_flag;
 }
