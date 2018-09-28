@@ -45,6 +45,9 @@ SRCS 	= \
 	experimental_area.c \
 	field_trial.c \
 	field_trial_mongodb.c \
+	plot.c \
+	row.c
+	
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

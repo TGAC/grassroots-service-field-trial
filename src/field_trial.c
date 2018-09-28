@@ -57,6 +57,7 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid
 									return trial_p;
 								}
 
+							FreeLinkedList (areas_p);
 						}		/* if (areas_p) */
 
 					FreeCopiedString (copied_team_s);
@@ -169,7 +170,7 @@ void FreeFieldTrial (FieldTrial *trial_p)
 
 	if (trial_p -> ft_id_p)
 		{
-			FreeMemory (trial_p -> ft_id_p);
+			FreeBSONOid (trial_p -> ft_id_p);
 		}
 
 	if (trial_p -> ft_experimental_areas_p)

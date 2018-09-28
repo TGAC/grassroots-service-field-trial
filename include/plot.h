@@ -27,13 +27,54 @@
 
 
 #include "linked_list.h"
-#include "experimental_area.h"
 #include "dfw_field_trial_service_library.h"
+#include "experimental_area.h"
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_PLOT_TAGS
+	#define PLOT_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define PLOT_VAL(x)	= x
+	#define PLOT_CONCAT_VAL(x,y)	= x y
+#else
+	#define PLOT_PREFIX extern
+	#define PLOT_VAL(x)
+	#define PLOT_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+PLOT_PREFIX const char *PL_ID_S PLOT_VAL ("id");
+
+PLOT_PREFIX const char *PL_PARENT_FIELD_TRIAL_S PLOT_VAL ("parent_experimental_area_id");
+
+PLOT_PREFIX const char *PL_SOWING_DATE_S PLOT_VAL ("sowing_date");
+
+PLOT_PREFIX const char *PL_HARVEST_DATE_S PLOT_VAL ("harvest_date");
+
+PLOT_PREFIX const char *PL_WIDTH_S PLOT_VAL ("width");
+
+PLOT_PREFIX const char *PL_LENGTH_S PLOT_VAL ("length");
+
+PLOT_PREFIX const char *PL_TRIAL_DESIGN_S PLOT_VAL ("trial_desgin");
+
+PLOT_PREFIX const char *PL_GROWING_CONDITION_S PLOT_VAL ("growing_condition");
+
+PLOT_PREFIX const char *PL_TREATMENT_S PLOT_VAL ("treatment");
+
+PLOT_PREFIX const char *PL_ROW_INDEX_S PLOT_VAL ("row_index");
+
+PLOT_PREFIX const char *PL_COLUMN_INDEX_S PLOT_VAL ("column_index");
+
+
+
 
 
 typedef struct Plot
 {
-	uint32 pl_id;
+	bson_oid_t *pl_id_p;
 
 	ExperimentalArea *pl_parent_p;
 
@@ -43,11 +84,11 @@ typedef struct Plot
 
 	double64 pl_width;
 
-	double64 pl_height;
+	double64 pl_length;
 
-	uint32 pl_x;
+	uint32 pl_row_index;
 
-	uint32 pl_y;
+	uint32 pl_column_index;
 
 	char *pl_trial_design_s;
 
@@ -80,11 +121,19 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot ();
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const uint32 sowing_date, const uint32 harvest_date, const double64 width, const double64 height, const uint32 row_index,
+																									const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (const Plot *plot_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL PlotNode *AllocatePlotNode (Plot *plot_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotNode (ListItem *node_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPlotRows (Plot *plot_p);
 

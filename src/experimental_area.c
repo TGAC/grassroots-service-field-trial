@@ -24,6 +24,7 @@
 #include "experimental_area.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
+#include "plot.h"
 
 /*
  * DB COLUMN NAMES
@@ -53,34 +54,45 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 
 					if (copied_soil_s)
 						{
-							ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+							LinkedList *plots_p = AllocateLinkedList (FreePlotNode);
 
-							if (area_p)
+							if (plots_p)
 								{
-									area_p -> ea_id_p = id_p;
-									area_p -> ea_location_s = copied_location_s;
-									area_p -> ea_name_s = copied_name_s;
-									area_p -> ea_soil_type_s = copied_soil_s;
-									area_p -> ea_sowing_year = sowing_year;
-									area_p -> ea_harvest_year = harvest_year;
-									area_p -> ea_parent_p = parent_field_trial_p;
-									area_p -> ea_plots_p = NULL;
+									ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
 
-									return area_p;
-								}
+									if (area_p)
+										{
+											area_p -> ea_id_p = id_p;
+											area_p -> ea_location_s = copied_location_s;
+											area_p -> ea_name_s = copied_name_s;
+											area_p -> ea_soil_type_s = copied_soil_s;
+											area_p -> ea_sowing_year = sowing_year;
+											area_p -> ea_harvest_year = harvest_year;
+											area_p -> ea_parent_p = parent_field_trial_p;
+											area_p -> ea_plots_p = NULL;
 
+											return area_p;
+										}
+
+									FreeLinkedList (plots_p);
+								}		/* if (plots_p) */
+
+
+							FreeCopiedString (copied_soil_s);
 						}		/* if (copied_soil_s) */
 					else
 						{
 
 						}
 
+					FreeCopiedString (copied_location_s);
 				}		/* if (copied_location_s) */
 			else
 				{
 
 				}
 
+			FreeCopiedString (copied_name_s);
 		}		/* if (copied_name_s) */
 	else
 		{
@@ -113,6 +125,11 @@ ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const ch
 
 void FreeExperimentalArea (ExperimentalArea *area_p)
 {
+	if (area_p -> ea_id_p)
+		{
+			FreeBSONOid (area_p -> ea_id_p);
+		}
+
 	if (area_p -> ea_name_s)
 		{
 			FreeCopiedString (area_p -> ea_name_s);
