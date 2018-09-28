@@ -199,7 +199,6 @@ LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *
 }
 
 
-
 json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_areas_flag, DFWFieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
@@ -212,18 +211,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_ar
 						{
 							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 								{
-									bool success_flag = true;
-
-									if (get_experimental_areas_flag)
-										{
-
-											if (!GetAllFieldTrialExperimentalAreas (trial_p, data_p))
-												{
-													success_flag = false;
-												}
-										}
-
-									if (success_flag)
+									if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p))
 										{
 											return trial_json_p;
 										}
@@ -239,6 +227,83 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_ar
 	return NULL;
 }
 
+
+
+bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p)
+{
+	bool success_flag = true;
+
+	if (trial_p -> ft_experimental_areas_p -> ll_size > 0)
+		{
+			json_t *exp_areas_p = json_array ();
+
+			if (exp_areas_p)
+				{
+					ExperimentalAreaNode *node_p = (ExperimentalAreaNode *) (trial_p -> ft_experimental_areas_p -> ll_head_p);
+					bool ok_flag = true;
+
+					while (node_p && ok_flag)
+						{
+							json_t *area_p = GetExperimentalAreaAsJSON (node_p -> ean_experimental_area_p);
+
+							if (area_p)
+								{
+									if (json_array_append_new (exp_areas_p, area_p) == 0)
+										{
+											node_p = (ExperimentalAreaNode *) (node_p -> ean_node.ln_next_p);
+										}
+									else
+										{
+											ok_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, area_p, "Failed to add ExperimentalArea json to array for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
+										}
+								}
+							else
+								{
+									char buffer_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									ok_flag = false;
+									bson_oid_to_string (node_p -> ean_experimental_area_p -> ea_id_p, buffer_s);
+
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, area_p, "Failed to get ExperimentalArea json for area \"%s\"", buffer_s);
+								}
+						}		/* while (node_p && success_flag) */
+
+					if (ok_flag)
+						{
+							if (json_object_set_new (trial_json_p, FT_EXPERIMENTAL_AREAS_S, exp_areas_p) == 0)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									char buffer_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									ok_flag = false;
+
+									json_decref (exp_areas_p);
+
+									bson_oid_to_string (trial_p -> ft_id_p, buffer_s);
+
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, exp_areas_p, "Failed to add ExperimentalArea json to trial \"%s\"", buffer_s);
+								}
+						}
+
+				}		/* if (exp_areas_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate ExperimentalAreas json object for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
+				}
+
+		}		/* if (trial_p -> ft_experimental_areas_p -> ll_size > 0) */
+	else
+		{
+			/* nothing to add */
+			success_flag = true;
+		}
+
+	return success_flag;
+}
 
 FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
 {
@@ -385,12 +450,17 @@ FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, DFWFieldTrial
 
 
 
-bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
+bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_p)
 {
 	bool success_flag = false;
-	bson_oid_t *area_id_p = area_p -> ea_id_p;
+	ExperimentalAreaNode *node_p = AllocateExperimentalAreaNode (area_p);
 
-
+	if (node_p)
+		{
+			area_p -> ea_parent_p = trial_p;
+			LinkedListAddTail (trial_p -> ft_experimental_areas_p, & (node_p -> ean_node));
+			success_flag  = true;
+		}
 
 	return success_flag;
 }
@@ -436,14 +506,9 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, DFWFieldTrialServic
 
 													if (area_p)
 														{
-															ExperimentalAreaNode *node_p = AllocateExperimentalAreaNode (area_p);
-
-															if (node_p)
+															if (!AddFieldTrialExperimentalArea (trial_p, area_p))
 																{
-																	LinkedListAddTail (trial_p -> ft_experimental_areas_p, & (node_p -> ean_node));
-																}
-															else
-																{
+																	FreeExperimentalArea (area_p);
 																	success_flag = false;
 																}
 														}
@@ -465,4 +530,12 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, DFWFieldTrialServic
 	return success_flag;
 }
 
+
+
+char *GetFieldTrialAsString (const FieldTrial *trial_p)
+{
+	char *trial_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+
+	return trial_s;
+}
 
