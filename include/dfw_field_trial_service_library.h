@@ -22,6 +22,7 @@
 #define DFW_FIELD_TRIAL_SERVICE_LIBRARY_H
 
 #include "library.h"
+#include "typedefs.h"
 
 /*
 ** Now we use the generic helper definitions above to define LIB_API and LIB_LOCAL.
