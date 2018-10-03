@@ -356,7 +356,10 @@ static ParameterSet *GetDFWFieldTrialServiceParameters (Service *service_p, Reso
 				{
 					if (AddExperimentalAreaParams (service_p -> se_data_p, params_p))
 						{
-							return params_p;
+							if (AddPlotParams (service_p -> se_data_p, params_p))
+								{
+									return params_p;
+								}
 						}
 				}
 

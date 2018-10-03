@@ -23,60 +23,99 @@
 
 #include "plot_jobs.h"
 #include "plot.h"
+#include "time_util.h"
+#include "string_utils.h"
+
+
+static const char * const S_SOWING_TITLE_S = "Sowing date";
+static const char * const S_HARVEST_TITLE_S = "Harvest date";
+static const char * const S_WIDTH_TITLE_S = "Width";
+static const char * const S_LENGTH_TITLE_S = "Length";
+static const char * const S_ROW_TITLE_S = "Row";
+static const char * const S_COLUMN_TITLE_S = "Column";
+static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
+static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
+static const char * const S_TREATMENT_TITLE_S = "Treatment";
 
 static NamedParameterType S_PLOT_SOWING_DATE = { "PL Sowing Year", PT_TIME };
 static NamedParameterType S_PLOT_HARVEST_DATE = { "PL Harvest Year", PT_TIME };
 static NamedParameterType S_PLOT_WIDTH = { "PL Width", PT_UNSIGNED_REAL };
-static NamedParameterType S_PLOT_HEIGHT = { "PL Height", PT_UNSIGNED_REAL };
+static NamedParameterType S_PLOT_LENGTH = { "PL Length", PT_UNSIGNED_REAL };
 
 
 static NamedParameterType S_PLOT_TRIAL_DESIGN = { "PL Trial Design", PT_STRING };
 static NamedParameterType S_PLOT_GROWING_CONDITION = { "PL Growing Condition", PT_STRING };
 static NamedParameterType S_PLOT_TREATMENT = { "PL Treatment", PT_STRING };
 
-static NamedParameterType S_ADD_PLOT = { "Add Experimental Area", PT_BOOLEAN };
-static NamedParameterType S_GET_ALL_PLOTS = { "Get all Experimental Areas", PT_BOOLEAN };
+static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
+static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_TABLE};
 
-static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "Field Trials", PT_STRING };
+static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 
 bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
+
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", NULL, false, data_p, param_set_p);
+	SharedType date_def;
 	SharedType def;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Experimental Area", NULL, false, data_p, param_set_p);
 
-	def.st_ulong_value = 0;
+	def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_SOWING_DATE.npt_type, S_PLOT_SOWING_DATE.npt_name_s, "Sowing date", "The date when the seeds were sown", def, PL_BASIC)) != NULL)
+	if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_type, false, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_HARVEST_DATE.npt_type, S_PLOT_HARVEST_DATE.npt_name_s, "Harvest date", "TThe date when the seeds were harvested", def, PL_BASIC)) != NULL)
-				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_WIDTH.npt_type, S_PLOT_WIDTH.npt_name_s, "Width", "The soil of the Experimental Area", def, PL_BASIC)) != NULL)
-						{
-							def.st_ulong_value = 2017;
+			const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+			char *headers_s = ConcatenateVarargsStrings (S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
+																									 S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_type, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, "Year", "The sowing year of the Experimental Area", def, PL_BASIC)) != NULL)
+			if (headers_s)
+				{
+					def.st_string_value_s = headers_s;
+
+					if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
+						{
+							InitSharedType (&date_def);
+							if ((date_def.st_time_p = AllocateTime ()) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_type, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, "Year", "The harvest year of the Experimental Area", def, PL_BASIC)) != NULL)
+									SetDateValuesForTime (date_def.st_time_p, 2017, 1, 1);
+
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_SOWING_DATE.npt_type, S_PLOT_SOWING_DATE.npt_name_s, S_SOWING_TITLE_S, "The date when the seeds were sown", date_def, PL_BASIC)) != NULL)
 										{
-											if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_set_p, group_p))
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_HARVEST_DATE.npt_type, S_PLOT_HARVEST_DATE.npt_name_s, S_HARVEST_TITLE_S, "The date when the seeds were harvested", date_def, PL_BASIC)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_EXPERIMENTAL_AREA.npt_type, S_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
+													InitSharedType (&def);
+													def.st_ulong_value = 0;
+
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_WIDTH.npt_type, S_PLOT_WIDTH.npt_name_s, S_WIDTH_TITLE_S, "The width of the plot", def, PL_BASIC)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_EXPERIMENTAL_AREAS.npt_type, S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_LENGTH.npt_type, S_PLOT_LENGTH.npt_name_s, S_LENGTH_TITLE_S, "The length of the plot", def, PL_BASIC)) != NULL)
 																{
-																	success_flag = true;
+																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TRIAL_DESIGN.npt_type, S_PLOT_TRIAL_DESIGN.npt_name_s, S_TRIAL_DESIGN_TITLE_S, "The trial desgin of the plot", def, PL_BASIC)) != NULL)
+																		{
+																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TREATMENT.npt_type, S_PLOT_TREATMENT.npt_name_s, S_TREATMENT_TITLE_S, "The treatments of the plot", def, PL_BASIC)) != NULL)
+																				{
+																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_GROWING_CONDITION.npt_type, S_PLOT_GROWING_CONDITION.npt_name_s, S_GROWING_CONDITION_TITLE_S, "The growing condtions of the plot", def, PL_BASIC)) != NULL)
+																						{
+																							success_flag = true;
+																						}
+																				}
+																		}
 																}
 														}
-
 												}
 										}
-								}
+
+									ClearSharedType (&date_def, PT_TIME);
+								}		/* if ((sowing_date.st_time_p = AllocateTime ()) != NULL) */
+
 						}
-				}
+
+					FreeCopiedString (headers_s);
+				}		/* if (headers_s) */
 		}
+
 
 	return success_flag;
 }
