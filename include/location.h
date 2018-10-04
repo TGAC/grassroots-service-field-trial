@@ -23,26 +23,74 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_H_
 
+#include "jansson.h"
 
 #include "experimental_area.h"
 
+#include "address.h"
 
 typedef struct Location
 {
-	uint32 lo_id;
+	bson_oid_t *lo_id_p;
 
-	ExperimentalArea *lo_area_p;
+	ExperimentalArea *lo_parent_area_p;
 
 	uint32 lo_order;
 
-	double64 lo_latitude;
-
-	double64 lo_longitude;
-
-	double64 lo_elevation;
-
+	Address *lo_address_p;
 } Location;
 
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_LOCATION_TAGS
+	#define LOCATION_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define LOCATION_VAL(x)	= x
+	#define LOCATION_CONCAT_VAL(x,y)	= x y
+#else
+	#define LOCATION_PREFIX extern
+	#define LOCATION_VAL(x)
+	#define LOCATION_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+
+
+/* Location */
+
+
+
+LOCATION_PREFIX const char *LO_ADDRESS_S LOCATION_VAL ("address");
+
+LOCATION_PREFIX const char *LO_ORDER_S LOCATION_VAL ("order");
+
+LOCATION_PREFIX const char *LO_PARENT_EXPERIMENTAL_AREA_S LOCATION_VAL ("parent_experimental_area_id");
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, ExperimentalArea *area_p, bson_oid_t *id_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocation (Location *location_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetLocationAsJSON (Location *location_p, DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_H_ */

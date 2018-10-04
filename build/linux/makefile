@@ -47,6 +47,7 @@ SRCS 	= \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \
+	location.c \
 	plot.c \
 	plot_jobs.c \
 	row.c

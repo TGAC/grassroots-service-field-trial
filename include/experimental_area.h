@@ -30,7 +30,7 @@
 #include "field_trial.h"
 #include "dfw_field_trial_service_library.h"
 #include "dfw_field_trial_service_data.h"
-
+#include "address.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -72,7 +72,9 @@ typedef struct ExperimentalArea
 
 	FieldTrial *ea_parent_p;
 
-	char *ea_location_s;
+	//char *ea_location_s;
+
+	Address *ea_address_p;
 
 	char *ea_soil_type_s;
 
@@ -110,7 +112,7 @@ extern "C"
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL	ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil__s, const uint32 sowing_year, const uint32 harvest_year, FieldTrial *parent_field_trial_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, Address *address_p, FieldTrial *parent_field_trial_p, DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
 
