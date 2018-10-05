@@ -24,6 +24,8 @@
 #include "experimental_area.h"
 #include "string_utils.h"
 
+#include "location.h"
+
 /*
  * Experimental Area parameters
  */
@@ -35,12 +37,10 @@ static NamedParameterType S_EXPERIMENTAL_AREA_HARVEST_YEAR = { "EA Harvest Year"
 static NamedParameterType S_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
 
-static NamedParameterType S_EXPERIMENTAL_AREA_USE_GPS = { "EA Use GPS", PT_BOOLEAN };
-static NamedParameterType S_EXPERIMENTAL_AREA_LATITUDE = { "EA Latitude", PT_SIGNED_REAL };
-static NamedParameterType S_EXPERIMENTAL_AREA_LONGITUDE = { "EA Longitude", PT_SIGNED_REAL };
-static NamedParameterType S_EXPERIMENTAL_AREA_ALTITUDE = { "EA Altitude", PT_SIGNED_REAL };
+
 
 static NamedParameterType S_FIELD_TRIALS_LIST = { "Field Trials", PT_STRING };
+static NamedParameterType S_LOCATIONS_LIST = { "Locations", PT_STRING };
 
 
 static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
@@ -71,30 +71,13 @@ bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 								{
 									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_type, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, "Harvest Year", "The harvest year of the Experimental Area", def, PL_BASIC)) != NULL)
 										{
-											def.st_boolean_value = true;
-
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_USE_GPS.npt_type, S_EXPERIMENTAL_AREA_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", def, PL_BASIC)) != NULL)
+											if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_set_p, group_p))
 												{
-													def.st_data_value = 0.0;
-
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_LATITUDE.npt_type, S_EXPERIMENTAL_AREA_LATITUDE.npt_name_s, "Latitude", "The latitude of the Experimental Area", def, PL_BASIC)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_EXPERIMENTAL_AREA.npt_type, S_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_LONGITUDE.npt_type, S_EXPERIMENTAL_AREA_LONGITUDE.npt_name_s, "Longitude", "The longitude of the Experimental Area", def, PL_BASIC)) != NULL)
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_EXPERIMENTAL_AREAS.npt_type, S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
 																{
-																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_ALTITUDE.npt_type, S_EXPERIMENTAL_AREA_ALTITUDE.npt_name_s, "Altitude", "The altitude of the Experimental Area", def, PL_BASIC)) != NULL)
-																		{
-																			if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_set_p, group_p))
-																				{
-																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_EXPERIMENTAL_AREA.npt_type, S_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_BASIC)) != NULL)
-																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_EXPERIMENTAL_AREAS.npt_type, S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_BASIC)) != NULL)
-																								{
-																									success_flag = true;
-																								}
-																						}
-
-																				}
-																		}
+																	success_flag = true;
 																}
 														}
 												}
@@ -172,12 +155,15 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 													if (trial_p)
 														{
-															ExperimentalArea *area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, location_value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_ulong_value, harvest_year_value.st_ulong_value, trial_p, data_p);
+															SharedType use_gps_value;
+															Address *address_p = NULL;
+															ExperimentalArea *area_p = NULL;
+
+															area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_ulong_value, harvest_year_value.st_ulong_value, address_p, trial_p, data_p);
 
 															if (area_p)
 																{
 																	success_flag = SaveExperimentalArea (area_p, data_p);
-
 
 																	FreeExperimentalArea (area_p);
 																}
@@ -267,7 +253,7 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 
 													if (trial_p)
 														{
-															char *name_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+															char *name_s = GetFieldTrialAsString (trial_p);
 
 															if (name_s)
 																{
@@ -316,5 +302,120 @@ static bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
 
 	return success_flag;
+}
+
+
+
+static bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION]))
+		{
+			bson_t *query_p = NULL;
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							const size_t num_results = json_array_size (results_p);
+
+							if (num_results > 0)
+								{
+									size_t i = 0;
+									json_t *entry_p = json_array_get (results_p, i);
+									Location *location_p = GetLocationFromJSON (entry_p, data_p);
+
+									if (location_p)
+										{
+											char *name_s = GetLocationAsString (location_p);
+
+											if (name_s)
+												{
+													SharedType def;
+													char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+
+													if (id_s)
+														{
+															def.st_string_value_s = id_s;
+
+															param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL);
+
+															if (param_p)
+																{
+																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
+																}
+
+															FreeCopiedString (id_s);
+														}
+
+													FreeCopiedString (name_s);
+												}
+
+											FreeLocation (location_p);
+										}		/* if (location_p) */
+
+									if (success_flag)
+										{
+											for (++ i; i < num_results; ++ i)
+												{
+													entry_p = json_array_get (results_p, i);
+													location_p = GetLocationFromJSON (entry_p, data_p);
+
+													if (location_p)
+														{
+															char *name_s = GetLocationAsString (location_p);
+
+															if (name_s)
+																{
+																	SharedType def;
+																	char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+
+																	if (id_s)
+																		{
+																			def.st_string_value_s = id_s;
+
+																			if (param_p)
+																				{
+																					success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
+																				}
+
+																			FreeCopiedString (id_s);
+																		}
+
+																	FreeCopiedString (name_s);
+																}		/* if (name_s) */
+
+															FreeLocation (location_p);
+														}		/* if (location_p) */
+
+												}		/* for (++ i; i < num_results; ++ i) */
+
+											if (!success_flag)
+												{
+													FreeParameter (param_p);
+													param_p = NULL;
+												}
+
+										}		/* if (param_p) */
+
+								}		/* if (num_results > 0) */
+							else
+								{
+									/* nothing to add */
+									success_flag = true;
+								}
+
+						}		/* if (json_is_array (results_p)) */
+
+				}		/* if (results_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
+
+	return success_flag;
+
 }
 

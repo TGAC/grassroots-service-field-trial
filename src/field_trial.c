@@ -320,7 +320,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServ
 
 					if (id_p)
 						{
-							if (GetCompoundIdFromJSON (json_p, id_p))
+							if (GetMongoIdFromJSON (json_p, id_p))
 								{
 									FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
 

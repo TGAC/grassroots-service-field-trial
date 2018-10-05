@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-
+#define ALLOCATE_LOCATION_TAGS (1)
 #include "location.h"
 #include "memory_allocations.h"
 
@@ -108,7 +108,7 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 			if (id_p)
 				{
-					if (GetCompoundIdFromJSON (location_json_p, id_p))
+					if (GetMongoIdFromJSON (location_json_p, id_p))
 						{
 							const json_t *address_json_p = json_object_get (location_json_p, LO_ADDRESS_S);
 
@@ -139,4 +139,19 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 		}		/* if (GetJSONInteger (location_json_p, LO_ORDER_S, (int *) &order)) */
 
 	return NULL;
+}
+
+
+
+
+char *GetLocationAsString (const Location *location_p)
+{
+	char *location_s = NULL;
+
+	if (location_p -> lo_address_p)
+		{
+			location_s = GetAddressAsString (location_p -> lo_address_p);
+		}
+
+	return location_s;
 }

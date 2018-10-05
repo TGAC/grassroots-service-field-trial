@@ -98,7 +98,8 @@ ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const ch
 
 	if (parent_field_trial_p)
 		{
-			ExperimentalArea *area_p = AllocateExperimentalArea (id_p, name_s, location_s, soil_s, sowing_year, harvest_year, parent_field_trial_p, data_p);
+			Address *address_p = NULL;
+			ExperimentalArea *area_p = NULL; // AllocateExperimentalArea (id_p, name_s, location_s, soil_s, sowing_year, harvest_year,address_p,  parent_field_trial_p, data_p);
 
 			if (area_p)
 				{
@@ -282,33 +283,39 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTri
 
 			if (soil_s)
 				{
-					const char *location_s = GetJSONString (json_p, EA_LOCATION_S);
+					Address *address_p = NULL;
+					bson_oid_t *address_id_p =  AllocMemory (sizeof (bson_oid_t));
 
-					if (location_s)
+					if (address_id_p)
 						{
-							bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
-
-							if (id_p)
+							if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p))
 								{
-									if (GetCompoundIdFromJSON (json_p, id_p))
+									bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+
+									if (id_p)
 										{
-											ExperimentalArea *area_p = NULL;
-											uint32 sowing_year = 0;
-											uint32 harvest_year = 0;
-											const char *parent_field_trial_id_s = NULL;
+											if (GetMongoIdFromJSON (json_p, id_p))
+												{
+													ExperimentalArea *area_p = NULL;
+													uint32 sowing_year = 0;
+													uint32 harvest_year = 0;
+													const char *parent_field_trial_id_s = NULL;
 
-											GetJSONInteger (json_p, EA_SOWING_YEAR_S, (int *) &sowing_year);
-											GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
+													GetJSONInteger (json_p, EA_SOWING_YEAR_S, (int *) &sowing_year);
+													GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
 
-											area_p = AllocateExperimentalArea (id_p, name_s, location_s, soil_s, sowing_year, harvest_year, NULL, data_p);
 
-											return area_p;
+
+													area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_year, harvest_year, address_p, NULL, data_p);
+
+													return area_p;
+												}
+
+											FreeMemory (id_p);
 										}
+								}		/* if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p)) */
 
-									FreeMemory (id_p);
-								}
-
-						}		/* if (location_s) */
+						}		/* if (address_id_p) */
 
 				}		/* if (soil_s) */
 

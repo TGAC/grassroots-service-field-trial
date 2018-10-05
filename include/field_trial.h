@@ -39,6 +39,9 @@ typedef struct FieldTrial
 {
 	bson_oid_t *ft_id_p;
 
+	/**
+	 * Name of the field trial
+	 */
 	char *ft_name_s;
 
 	char *ft_team_s;

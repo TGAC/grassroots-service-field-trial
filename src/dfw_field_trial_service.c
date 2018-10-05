@@ -36,6 +36,7 @@
 
 #include "field_trial_jobs.h"
 #include "experimental_area_jobs.h"
+#include "plot_jobs.h"
 
 
 #ifdef _DEBUG
@@ -47,9 +48,6 @@
 
 
 static const char *s_data_names_pp [DFTD_NUM_TYPES];
-
-
-static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 
 /*

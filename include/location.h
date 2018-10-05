@@ -88,6 +88,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetLocationAsJSON (Location *location_p, D
 DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetLocationAsString (const Location *location_p);
+
 #ifdef __cplusplus
 }
 #endif
