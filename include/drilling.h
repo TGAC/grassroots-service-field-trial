@@ -24,9 +24,9 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_DRILLING_H_
 
 
-#include "typedefs.h"
 #include "dfw_field_trial_service_library.h"
 #include "germplasm.h"
+#include "typedefs.h"
 #include "coordinate.h"
 
 

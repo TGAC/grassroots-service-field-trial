@@ -9,8 +9,8 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_TRIAL_SQLITE_H_
 
 
-#include "field_trial.h"
 #include "dfw_field_trial_service_data.h"
+#include "field_trial.h"
 
 #ifdef __cplusplus
 extern "C"

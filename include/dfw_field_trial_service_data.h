@@ -28,11 +28,11 @@
 #ifndef DFW_FIELD_TRIAL_SERVICE_DATA_H_
 #define DFW_FIELD_TRIAL_SERVICE_DATA_H_
 
+#include "dfw_field_trial_service_library.h"
 #include "jansson.h"
 
 #include "service.h"
 #include "mongodb_tool.h"
-#include "dfw_field_trial_service_library.h"
 #include "sqlite_tool.h"
 
 typedef enum

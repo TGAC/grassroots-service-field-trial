@@ -23,11 +23,11 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_TRIAL_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_FIELD_TRIAL_H_
 
+#include "dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_library.h"
 #include "jansson.h"
 
 #include "typedefs.h"
-#include "dfw_field_trial_service_library.h"
-#include "dfw_field_trial_service_data.h"
 #include "linked_list.h"
 
 /* forward declarations */

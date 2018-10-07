@@ -21,10 +21,11 @@
  */
 
 #include "experimental_area_jobs.h"
+
 #include "experimental_area.h"
+#include "location.h"
 #include "string_utils.h"
 
-#include "location.h"
 
 /*
  * Experimental Area parameters

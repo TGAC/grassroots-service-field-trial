@@ -24,9 +24,9 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_
 
 
+#include "instrument.h"
 #include "typedefs.h"
 
-#include "instrument.h"
 
 
 

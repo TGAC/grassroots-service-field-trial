@@ -24,9 +24,9 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_PHENOTYPE_H_
 
 
-#include "typedefs.h"
 #include "phenotype.h"
 #include "row.h"
+#include "typedefs.h"
 
 
 typedef struct RowPhenotype

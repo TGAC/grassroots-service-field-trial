@@ -24,9 +24,8 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_
 
 
-#include "typedefs.h"
-
 #include "dfw_field_trial_service_library.h"
+#include "typedefs.h"
 
 #include "jansson.h"
 

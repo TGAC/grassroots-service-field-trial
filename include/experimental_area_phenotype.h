@@ -24,9 +24,9 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_PHENOTYPE_H_
 
 
-#include "typedefs.h"
-#include "phenotype.h"
 #include "experimental_area.h"
+#include "phenotype.h"
+#include "typedefs.h"
 
 
 typedef struct ExperimentalAreaPhenotype

@@ -24,8 +24,8 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_H_
 
 
-#include "plot.h"
 #include "material.h"
+#include "plot.h"
 
 
 typedef struct Row

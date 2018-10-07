@@ -24,8 +24,8 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_JOBS_H_
 
 
-#include "dfw_field_trial_service_library.h"
 #include "dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_library.h"
 
 
 

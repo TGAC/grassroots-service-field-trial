@@ -24,12 +24,12 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_
 
 
+#include "dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_library.h"
+#include "field_trial.h"
 #include "jansson.h"
 
 #include "typedefs.h"
-#include "field_trial.h"
-#include "dfw_field_trial_service_library.h"
-#include "dfw_field_trial_service_data.h"
 #include "address.h"
 
 

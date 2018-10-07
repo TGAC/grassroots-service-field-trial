@@ -9,9 +9,9 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_DFW_FIELD_TRIAL_SERVICE_H_
 
 
+#include "dfw_field_trial_service_library.h"
 #include "service.h"
 
-#include "dfw_field_trial_service_library.h"
 
 
 

@@ -23,12 +23,12 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
 
+#include "dfw_field_trial_service_library.h"
+#include "experimental_area.h"
 #include "jansson.h"
 
 
 #include "linked_list.h"
-#include "dfw_field_trial_service_library.h"
-#include "experimental_area.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS

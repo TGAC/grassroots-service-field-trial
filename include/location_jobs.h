@@ -23,9 +23,8 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_JOBS_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_JOBS_H_
 
-#include "dfw_field_trial_service_library.h"
 #include "dfw_field_trial_service_data.h"
-
+#include "dfw_field_trial_service_library.h"
 #include "address.h"
 
 #ifdef __cplusplus
