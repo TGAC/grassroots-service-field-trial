@@ -84,85 +84,75 @@ static LinkedList *GetMatchingFieldTrialsFromMongoDB (DFWFieldTrialServiceData *
 
 	if (field_trials_list_p)
 		{
-			switch (data_p -> dftsd_backend)
+			bson_t *query_p = bson_new ();
+
+			if (query_p)
 				{
-					case DB_MONGO_DB:
+					const char **key_ss = keys_ss;
+					const char **value_ss = values_ss;
+					bool success_flag = true;
+
+					while (success_flag && (*key_ss != NULL) && (*value_ss != NULL))
 						{
-							bson_t *query_p = bson_new ();
-
-							if (query_p)
+							if (BSON_APPEND_UTF8 (query_p, *key_ss, *value_ss))
 								{
-									const char **key_ss = keys_ss;
-									const char **value_ss = values_ss;
-									bool success_flag = true;
+									++ key_ss;
+									++ value_ss;
+								}
+							else
+								{
+									success_flag = false;
+								}
+						}
 
-									while (success_flag && (*key_ss != NULL) && (*value_ss != NULL))
+					if (success_flag)
+						{
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+							if (results_p)
+								{
+									const size_t size = json_array_size (results_p);
+									size_t i = 0;
+
+									for (i = 0; i < size; ++ i)
 										{
-											if (BSON_APPEND_UTF8 (query_p, *key_ss, *value_ss))
+											json_t *result_p = json_array_get (results_p, i);
+											FieldTrial *trial_p = GetFieldTrialFromJSON (result_p, data_p);
+
+											if (trial_p)
 												{
-													++ key_ss;
-													++ value_ss;
-												}
+													FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p);
+
+													if (node_p)
+														{
+															LinkedListAddTail (field_trials_list_p, & (node_p -> ftn_node));
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to create FieldTrialNode");
+														}
+
+												}		/* if (trial_p) */
 											else
 												{
-													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get FieldTrial from JSON");
 												}
-										}
 
-									if (success_flag)
-										{
-											json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-											if (results_p)
-												{
-													const size_t size = json_array_size (results_p);
-													size_t i = 0;
-
-													for (i = 0; i < size; ++ i)
-														{
-															json_t *result_p = json_array_get (results_p, i);
-															FieldTrial *trial_p = GetFieldTrialFromJSON (result_p, data_p);
-
-															if (trial_p)
-																{
-																	FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p);
-
-																	if (node_p)
-																		{
-																			LinkedListAddTail (field_trials_list_p, & (node_p -> ftn_node));
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to create FieldTrialNode");
-																		}
-
-																}		/* if (trial_p) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get FieldTrial from JSON");
-																}
-
-														}		/* for (i = 0; i < size; ++ i) */
+										}		/* for (i = 0; i < size; ++ i) */
 
 
-													json_decref (results_p);
-												}		/* if (results_p) */
+									json_decref (results_p);
+								}		/* if (results_p) */
 
-										}		/* if (success_flag) */
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add query");
-										}
+						}		/* if (success_flag) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add query");
+						}
 
-									bson_destroy (query_p);
-								}		/* if (query_p) */
+					bson_destroy (query_p);
+				}		/* if (query_p) */
 
-						}		/* case DB_MONGO_DB: */
-						break;
-
-					default:
-						break;
-				}
 
 		}		/* if (field_trials_list_p) */
 

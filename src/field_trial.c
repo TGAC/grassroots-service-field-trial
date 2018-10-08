@@ -184,17 +184,7 @@ void FreeFieldTrial (FieldTrial *trial_p)
 
 LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *name_s)
 {
-	LinkedList *trials_p = NULL;
-
-	switch (data_p -> dftsd_backend)
-		{
-			case DB_MONGO_DB:
-				trials_p = GetFieldTrialsByNameFromMongoDB (data_p, name_s);
-				break;
-
-			default:
-				break;
-		}
+	LinkedList *trials_p = GetFieldTrialsByNameFromMongoDB (data_p, name_s);
 
 	return trials_p;
 }

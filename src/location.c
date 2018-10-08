@@ -23,6 +23,9 @@
 #define ALLOCATE_LOCATION_TAGS (1)
 #include "location.h"
 #include "memory_allocations.h"
+#include "experimental_area.h"
+#include "dfw_util.h"
+
 
 
 Location *AllocateLocation (Address *address_p, const uint32 order, ExperimentalArea *parent_area_p, bson_oid_t *id_p)
@@ -58,7 +61,7 @@ void FreeLocation (Location *location_p)
 
 
 
-json_t *GetLocationAsJSON (Location *location_p, DFWFieldTrialServiceData *data_p)
+json_t *GetLocationAsJSON (Location *location_p)
 {
 	json_t *location_json_p = json_object ();
 
@@ -142,6 +145,46 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 }
 
 
+
+
+bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bool insert_flag = false;
+
+	if (! (location_p -> lo_id_p))
+		{
+			location_p -> lo_id_p  = GetNewId ();
+
+			if (location_p -> lo_id_p)
+				{
+					insert_flag = true;
+				}
+		}
+
+	if (location_p -> lo_id_p)
+		{
+			json_t *location_p_json_p = GetLocationAsJSON (location_p);
+
+			if (location_p_json_p)
+				{
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, location_p_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], insert_flag);
+
+					json_decref (location_p_json_p);
+				}		/* if (area_json_p) */
+
+		}		/* if (location_p -> lo_id_p) */
+
+	return success_flag;
+}
+
+
+Location *GetLocationByIdString (const char *location_id_s, DFWFieldTrialServiceData *data_p)
+{
+	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSON, data_p);
+
+	return location_p;
+}
 
 
 char *GetLocationAsString (const Location *location_p)

@@ -42,6 +42,7 @@ INCLUDES = \
 SRCS 	= \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
+	dfw_util.c \
 	experimental_area.c \
 	experimental_area_jobs.c \
 	field_trial.c \

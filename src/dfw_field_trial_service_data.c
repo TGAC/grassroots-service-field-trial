@@ -20,12 +20,47 @@
  *      Author: billy
  */
 
-
+#define ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS (1)
 #include "dfw_field_trial_service_data.h"
 
 #include "streams.h"
 #include "string_utils.h"
 
+
+DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
+{
+	MongoTool *tool_p = AllocateMongoTool (NULL);
+
+	if (tool_p)
+		{
+			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
+
+			if (data_p)
+				{
+					data_p -> dftsd_mongo_p = tool_p;
+					data_p -> dftsd_database_s = NULL;
+
+					memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
+
+					return data_p;
+				}
+
+			FreeMongoTool (tool_p);
+		}		/* if (tool_p) */
+
+	return NULL;
+}
+
+
+void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p)
+{
+	if (data_p -> dftsd_mongo_p)
+		{
+			FreeMongoTool (data_p -> dftsd_mongo_p);
+		}
+
+	FreeMemory (data_p);
+}
 
 
 bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
@@ -37,180 +72,40 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 	if (data_p -> dftsd_database_s)
 		{
-			if ((* (data_p -> dftsd_collection_ss + DFTD_FIELD_TRIAL) = GetJSONString (service_config_p, "field_trials_collection")) != NULL)
+			const char *value_s = GetJSONString (service_config_p, "database_type");
+
+			if (value_s)
 				{
-					success_flag = true;
+					data_p -> dftsd_mongo_p = AllocateMongoTool (NULL);
+
+					if (data_p -> dftsd_mongo_p)
+						{
+							if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
+								}
+						}
+
+					if (success_flag)
+						{
+							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_EXPERIMENTAL_AREA) = DFT_EXPERMIENTAL_AREA_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_RAW_PHENOTYPE) = DFT_RAW_PHENOTYPE_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_CORRECTED_PHENOTYPE) = DFT_CORRECTED_PHENOTYPE_S;
+						}
+
 				}
 
-		} /* if (data_p -> dftsd_database_s) */
+		} /* if (data_p -> psd_database_s) */
 
 	return success_flag;
 }
 
 
-
-//void InitialiseId (DFWId *id_p)
-//{
-//	id_p -> di_index = UINT32_MAX;
-//	id_p -> di_id_s = NULL;
-//}
-//
-//void ClearId (DFWId *id_p)
-//{
-//	if (id_p -> di_id_s)
-//		{
-//			FreeCopiedString (id_p -> di_id_s);
-//		}
-//
-//	InitialiseId (id_p);
-//}
-//
-//
-//
-//bool SetIdString (DFWId *id_p, const char *id_s)
-//{
-//	bool success_flag = false;
-//	char *copied_id_s = EasyCopyToNewString (id_s);
-//
-//	if (copied_id_s)
-//		{
-//			if (id_p -> di_id_s)
-//				{
-//					FreeCopiedString (id_p -> di_id_s);
-//				}
-//
-//			id_p -> di_id_s = copied_id_s;
-//		}		/* if (copied_id_s) */
-//
-//	return success_flag;
-//}
-
-
-//void SetIdIndex (DFWId *id_p, const uint32 id_index)
-//{
-//	id_p -> di_index = id_index;
-//}
-//
-//
-//bool AddIdToJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p)
-//{
-//	bool success_flag = false;
-//	json_t *value_p = NULL;
-//
-//	switch (data_p -> dftsd_backend)
-//		{
-//			case DB_MONGO_DB:
-//				value_p = json_integer (id_p -> di_index);
-//				if (!value_p)
-//					{
-//
-//					}
-//				break;
-//
-//			case DB_SQLITE:
-//				value_p = json_string (id_p -> di_id_s);
-//				if (!value_p)
-//					{
-//
-//					}
-//				break;
-//
-//			default:
-//				break;
-//		}
-//
-//
-//	if (value_p)
-//		{
-//			if (json_object_set_new (json_p, key_s, value_p) == 0)
-//				{
-//					success_flag = true;
-//				}
-//			else
-//				{
-//
-//				}
-//		}
-//
-//	return success_flag;
-//}
-//
-//
-//
-//bool GetIdFromJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p)
-//{
-//	bool success_flag = false;
-//
-//	switch (data_p -> dftsd_backend)
-//		{
-//			case DB_MONGO_DB:
-//				{
-//					int i = 0;
-//
-//					if (GetJSONInteger (json_p, key_s, &i))
-//						{
-//							id_p -> di_index = (uint32) i;
-//							success_flag = true;
-//						}
-//				}
-//				break;
-//
-//			case DB_SQLITE:
-//				{
-//					const char *value_s = GetJSONString (json_p, key_s);
-//
-//					if (value_s)
-//						{
-//							if (SetIdString (id_p, value_s))
-//								{
-//									success_flag = true;
-//								}
-//
-//						}
-//				}
-//				break;
-//
-//			default:
-//				break;
-//		}
-//
-//
-//	return success_flag;
-//
-//}
-//
-//
-//
-//
-//bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p)
-//{
-//	bool set_flag = false;
-//
-//	switch (data_p -> dftsd_backend)
-//		{
-//			case DB_MONGO_DB:
-//				{
-//					if (id_p -> di_id_s)
-//						{
-//							set_flag = true;
-//						}
-//				}
-//				break;
-//
-//			case DB_SQLITE:
-//				{
-//					if (id_p -> di_index != UINT32_MAX)
-//						{
-//							set_flag = true;
-//						}
-//				}
-//				break;
-//
-//			default:
-//				break;
-//		}
-//
-//
-//	return set_flag;
-//
-//}

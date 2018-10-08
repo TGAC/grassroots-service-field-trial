@@ -25,6 +25,7 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "plot.h"
+#include "location.h"
 
 /*
  * DB COLUMN NAMES
@@ -40,7 +41,7 @@
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, Address *address_p, FieldTrial *parent_field_trial_p, DFWFieldTrialServiceData *data_p)
+ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, Location *location_p, FieldTrial *parent_field_trial_p, DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -59,12 +60,12 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 							if (area_p)
 								{
 									area_p -> ea_id_p = id_p;
-									area_p -> ea_address_p = address_p;
 									area_p -> ea_name_s = copied_name_s;
 									area_p -> ea_soil_type_s = copied_soil_s;
 									area_p -> ea_sowing_year = sowing_year;
 									area_p -> ea_harvest_year = harvest_year;
 									area_p -> ea_parent_p = parent_field_trial_p;
+									area_p -> ea_location_p = location_p;
 									area_p -> ea_plots_p = NULL;
 
 									return area_p;
@@ -130,9 +131,9 @@ void FreeExperimentalArea (ExperimentalArea *area_p)
 			FreeCopiedString (area_p -> ea_soil_type_s);
 		}
 
-	if (area_p -> ea_address_p)
+	if (area_p -> ea_location_p)
 		{
-			FreeAddress (area_p -> ea_address_p);
+			FreeLocation (area_p -> ea_location_p);
 		}
 
 	if (area_p -> ea_plots_p)
@@ -235,11 +236,11 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 				{
 					if (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0)
 						{
-							json_t *address_json_p = GetAddressAsJSON (area_p -> ea_address_p);
+							json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
 
-							if (address_json_p)
+							if (location_json_p)
 								{
-									if (json_object_set_new (area_json_p, EA_LOCATION_S, address_json_p) == 0)
+									if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
 										{
 											if ((area_p -> ea_sowing_year == 0) || json_object_set_new (area_json_p, EA_SOWING_YEAR_S, json_integer (area_p -> ea_sowing_year)) == 0)
 												{
@@ -254,10 +255,10 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 																}
 														}
 												}
-										}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, address_json_p) == 0) */
+										}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
 									else
 										{
-											json_decref (address_json_p);
+											json_decref (location_json_p);
 										}
 
 								}		/* if (address_json_p) */
@@ -283,12 +284,12 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTri
 
 			if (soil_s)
 				{
-					Address *address_p = NULL;
-					bson_oid_t *address_id_p =  AllocMemory (sizeof (bson_oid_t));
+					Location *location_p = NULL;
+					bson_oid_t *location_id_p =  AllocMemory (sizeof (bson_oid_t));
 
-					if (address_id_p)
+					if (location_id_p)
 						{
-							if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p))
+							if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, location_id_p))
 								{
 									bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
 
@@ -297,6 +298,7 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTri
 											if (GetMongoIdFromJSON (json_p, id_p))
 												{
 													ExperimentalArea *area_p = NULL;
+													FieldTrial *trial_p = NULL;
 													uint32 sowing_year = 0;
 													uint32 harvest_year = 0;
 													const char *parent_field_trial_id_s = NULL;
@@ -305,8 +307,7 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTri
 													GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
 
 
-
-													area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_year, harvest_year, address_p, NULL, data_p);
+													area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_year, harvest_year, location_p, trial_p, data_p);
 
 													return area_p;
 												}

@@ -17,7 +17,7 @@
 
 #include "jansson.h"
 
-#define ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS (1)
+
 #include "dfw_field_trial_service.h"
 #include "dfw_field_trial_service_data.h"
 #include "memory_allocations.h"
@@ -36,6 +36,7 @@
 
 #include "field_trial_jobs.h"
 #include "experimental_area_jobs.h"
+#include "location_jobs.h"
 #include "plot_jobs.h"
 
 
@@ -45,9 +46,6 @@
 #define DFW_FIELD_TRIAL_SERVICE_DEBUG	(STM_LEVEL_NONE)
 #endif
 
-
-
-static const char *s_data_names_pp [DFTD_NUM_TYPES];
 
 
 /*
@@ -71,14 +69,8 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 static  ParameterSet *IsResourceForDFWFieldTrialService (Service *service_p, Resource *resource_p, Handler *handler_p);
 
 
-static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void);
-
 static json_t *GetDFWFieldTrialServiceResults (Service *service_p, const uuid_t job_id);
 
-static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p);
-
-
-static void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p);
 
 static bool CloseDFWFieldTrialService (Service *service_p);
 
@@ -186,12 +178,6 @@ static Service *GetDFWFieldTrialService (void)
 
 							if (ConfigureDFWFieldTrialService (data_p))
 								{
-									* (s_data_names_pp + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
-									* (s_data_names_pp + DFTD_PLOT) = DFT_PLOT_S;
-									* (s_data_names_pp + DFTD_DRILLING) = DFT_DRILLING_S;
-									* (s_data_names_pp + DFTD_RAW_PHENOTYPE) = DFT_RAW_PHENOTYPE_S;
-									* (s_data_names_pp + DFTD_CORRECTED_PHENOTYPE) = DFT_CORRECTED_PHENOTYPE_S;
-
 									return service_p;
 								}
 
@@ -204,125 +190,6 @@ static Service *GetDFWFieldTrialService (void)
 		}		/* if (service_p) */
 
 	return NULL;
-}
-
-
-static bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-	const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
-
-	data_p -> dftsd_database_s = GetJSONString (service_config_p, "database");
-
-	if (data_p -> dftsd_database_s)
-		{
-			const char *value_s = GetJSONString (service_config_p, "database_type");
-
-			if (value_s)
-				{
-					if (strcmp (value_s, "mongodb") == 0)
-						{
-							data_p -> dftsd_backend = DB_MONGO_DB;
-							data_p -> dftsd_mongo_p = AllocateMongoTool (NULL);
-
-							if (data_p -> dftsd_mongo_p)
-								{
-									if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
-										{
-											success_flag = true;
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
-										}
-								}
-						}
-					else if (strcmp (value_s, "sqlite") == 0)
-						{
-							data_p -> dftsd_backend = DB_SQLITE;
-
-							data_p -> dftsd_sqlite_p = AllocateSQLiteTool (data_p -> dftsd_database_s, SQLITE_OPEN_READWRITE);
-
-							if (data_p -> dftsd_sqlite_p)
-								{
-									success_flag = true;
-								}
-
-						}
-					else
-						{
-							data_p -> dftsd_backend = DB_NUM_BACKENDS;
-						}
-
-					if (success_flag)
-						{
-							value_s = GetJSONString (service_config_p, "field_trial_table");
-
-							if (value_s)
-								{
-									* (data_p -> dftsd_collection_ss + DFTD_FIELD_TRIAL) = value_s;
-								}
-
-							if ((value_s = GetJSONString (service_config_p, "plot_table")) != NULL)
-								{
-									* (data_p -> dftsd_collection_ss + DFTD_PLOT) = value_s;
-								}
-
-						}
-
-				}
-
-		} /* if (data_p -> psd_database_s) */
-
-	return success_flag;
-}
-
-
-static DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
-{
-	MongoTool *tool_p = AllocateMongoTool (NULL);
-
-	if (tool_p)
-		{
-			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
-
-			if (data_p)
-				{
-					data_p -> dftsd_mongo_p = tool_p;
-					data_p -> dftsd_database_s = NULL;
-					data_p -> dftsd_sqlite_p = NULL;
-					data_p -> dftsd_backend = DB_NUM_BACKENDS;
-
-					data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL] = "FieldTrial";
-					data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA] = "ExperimentalArea";
-					data_p -> dftsd_collection_ss [DFTD_PLOT] = "Plot";
-					data_p -> dftsd_collection_ss [DFTD_ROW] = "Row";
-					data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE] = "Phenotype";
-
-					return data_p;
-				}
-
-			FreeMongoTool (tool_p);
-		}		/* if (tool_p) */
-
-	return NULL;
-}
-
-
-static void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p)
-{
-	if (data_p -> dftsd_mongo_p)
-		{
-			FreeMongoTool (data_p -> dftsd_mongo_p);
-		}
-
-	if (data_p -> dftsd_sqlite_p)
-		{
-			FreeSQLiteTool (data_p -> dftsd_sqlite_p);
-		}
-
-
-	FreeMemory (data_p);
 }
 
 
@@ -350,13 +217,18 @@ static ParameterSet *GetDFWFieldTrialServiceParameters (Service *service_p, Reso
 
 	if (params_p)
 		{
-			if (AddFieldTrialParams (service_p -> se_data_p, params_p))
+			ServiceData *data_p = service_p -> se_data_p;
+
+			if (AddFieldTrialParams (data_p, params_p))
 				{
-					if (AddExperimentalAreaParams (service_p -> se_data_p, params_p))
+					if (AddExperimentalAreaParams (data_p, params_p))
 						{
-							if (AddPlotParams (service_p -> se_data_p, params_p))
+							if (AddLocationParams (data_p, params_p))
 								{
-									return params_p;
+									if (AddPlotParams (service_p -> se_data_p, params_p))
+										{
+											return params_p;
+										}
 								}
 						}
 				}
@@ -410,7 +282,11 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 				{
 					if (!RunForFieldTrialParams (data_p, param_set_p, job_p))
 						{
-							RunForExperimentalAreaParams (data_p, param_set_p, job_p);
+							if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p))
+								{
+									RunForLocationParams (data_p, param_set_p, job_p);
+								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+
 						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
 				}		/* if (param_set_p) */

@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * location_jobs.c
  *
@@ -23,6 +23,8 @@
 
 
 #include "location_jobs.h"
+#include "location.h"
+
 
 /*
  * Experimental Area parameters
@@ -37,6 +39,17 @@ static NamedParameterType S_LOCATION_USE_GPS = { "LO Use GPS", PT_BOOLEAN };
 static NamedParameterType S_LOCATION_LATITUDE = { "LO Latitude", PT_SIGNED_REAL };
 static NamedParameterType S_LOCATION_LONGITUDE = { "LO Longitude", PT_SIGNED_REAL };
 static NamedParameterType S_LOCATION_ALTITUDE = { "LO Altitude", PT_SIGNED_REAL };
+
+
+static NamedParameterType S_ADD_LOCATION = { "Add Location", PT_BOOLEAN };
+static NamedParameterType S_GET_ALL_LOCATIONS = { "Get all Locations", PT_BOOLEAN };
+
+
+/*
+ * static declarations
+ */
+static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
+
 
 
 bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
@@ -92,16 +105,113 @@ bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 				}
 		}
 
-	return false;
+	return success_flag;
 }
 
 
 bool RunForLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
-	return false;
+	bool job_done_flag = false;
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_LOCATION.npt_name_s, &value, true))
+		{
+			if (value.st_boolean_value)
+				{
+					bool success_flag = AddLocation (job_p, param_set_p, data_p);
+
+					job_done_flag = true;
+				}		/* if (value.st_boolean_value) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_LOCATION.npt_name_s, &value, true)) */
+
+	return job_done_flag;
 }
+
 
 Address *GetAddressFromLocationString (const char *location_s)
 {
 	return NULL;
+}
+
+
+
+static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	SharedType name_value;
+	InitSharedType (&name_value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_NAME.npt_name_s, &name_value, true))
+		{
+			SharedType street_value;
+			InitSharedType (&street_value);
+
+			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_STREET.npt_name_s, &street_value, true))
+				{
+					SharedType town_value;
+					InitSharedType (&town_value);
+
+					if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_TOWN.npt_name_s, &town_value, true))
+						{
+							SharedType county_value;
+							InitSharedType (&county_value);
+
+							if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_COUNTY.npt_name_s, &county_value, true))
+								{
+									SharedType country_value;
+									InitSharedType (&country_value);
+
+									if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_COUNTRY.npt_name_s, &country_value, true))
+										{
+											SharedType postcode_value;
+											InitSharedType (&postcode_value);
+
+											if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_POSTCODE.npt_name_s, &postcode_value, true))
+												{
+													SharedType use_gps_value;
+													InitSharedType (&use_gps_value);
+
+													if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_USE_GPS.npt_name_s, &use_gps_value, true))
+														{
+															const char *country_code_s = NULL;
+															const char *gps_s = NULL;
+
+															Address *address_p = AllocateAddress (name_value.st_string_value_s, street_value.st_string_value_s, town_value.st_string_value_s, county_value.st_string_value_s,
+																																		country_value.st_string_value_s, postcode_value.st_string_value_s, country_code_s, gps_s);
+
+															if (!use_gps_value.st_boolean_value)
+																{
+
+																}
+
+															if (address_p)
+																{
+																	const uint32 order = 0;
+																	ExperimentalArea *area_p = NULL;
+																	bson_oid_t *id_p = NULL;
+
+																	Location *location_p = AllocateLocation (address_p, order, area_p, id_p);
+
+																	if (location_p)
+																		{
+																			success_flag = SaveLocation (location_p, data_p);
+																		}
+																	else
+																		{
+																			FreeAddress (address_p);
+																		}
+																}
+														}
+												}
+										}
+								}
+						}
+				}
+		}
+
+	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
+
+	return success_flag;
 }

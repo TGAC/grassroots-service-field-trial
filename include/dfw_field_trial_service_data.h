@@ -71,19 +71,12 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 	ServiceData dftsd_base_data;
 
 
-
-	DFWBackend dftsd_backend;
-
 	/**
 	 * @private
 	 *
 	 * The MongoTool to connect to the database where our data is stored.
 	 */
 	MongoTool *dftsd_mongo_p;
-
-
-
-	SQLiteTool *dftsd_sqlite_p;
 
 
 	/**
@@ -103,33 +96,91 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 } DFWFieldTrialServiceData;
 
 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS
+	#define DFW_FIELD_TRIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define DFW_FIELD_TRIAL_VAL(x)	= x
+	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
+#else
+	#define DFW_FIELD_TRIAL_PREFIX extern
+	#define DFW_FIELD_TRIAL_VAL(x)
+	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+/**
+ * The key for specifying the object containing the fields data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_S DFW_FIELD_TRIAL_VAL ("field");
+
+/**
+ * The key for specifying the object containing the experimental area data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_EXPERMIENTAL_AREA_S DFW_FIELD_TRIAL_VAL ("experimental_area");
+
+
+/**
+ * The key for specifying the object containing the location data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("location");
+
+
+/**
+ * The key for specifying the object containing the plot data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("plot");
+
+/**
+ * The key for specifying the object containing the drilling data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("drilling");
+
+
+/**
+ * The key for specifying the object containing the raw phenotype data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("raw_phenotype");
+
+
+/**
+ * The key for specifying the object containing the corrected phenotype data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("corrected_phenotype");
+
+
+
+
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-
-/*
-DFW_FIELD_TRIAL_SERVICE_LOCAL void InitialiseId (DFWId *id_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearId (DFWId *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIdString (DFWId *id_p, const char *id_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void SetIdIndex (DFWId *id_p, const uint32 id_index);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsIdSet (const DFWId *id_p, const DFWFieldTrialServiceData *data_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddIdToJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetIdFromJSON (json_t *json_p, const char * const key_s, DFWId *id_p, DFWFieldTrialServiceData *data_p);
-
-*/
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }

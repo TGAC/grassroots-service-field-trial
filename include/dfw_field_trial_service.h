@@ -15,62 +15,6 @@
 
 
 
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-#ifdef ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS
-	#define DFW_FIELD_TRIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
-	#define DFW_FIELD_TRIAL_VAL(x)	= x
-	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
-#else
-	#define DFW_FIELD_TRIAL_PREFIX extern
-	#define DFW_FIELD_TRIAL_VAL(x)
-	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
-#endif
-
-#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
-
-
-/**
- * The key for specifying the object containing the fields data
- *
- * @ingroup dfw_field_trial_service
- */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_S DFW_FIELD_TRIAL_VAL ("field");
-
-/**
- * The key for specifying the object containing the plot data
- *
- * @ingroup dfw_field_trial_service
- */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("plot");
-
-/**
- * The key for specifying the object containing the drilling data
- *
- * @ingroup dfw_field_trial_service
- */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("drilling");
-
-
-/**
- * The key for specifying the object containing the raw phenotype data
- *
- * @ingroup dfw_field_trial_service
- */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("raw_phenotype");
-
-
-/**
- * The key for specifying the object containing the corrected phenotype data
- *
- * @ingroup dfw_field_trial_service
- */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("corrected_phenotype");
-
-
-
-
 #ifdef __cplusplus
 extern "C"
 {

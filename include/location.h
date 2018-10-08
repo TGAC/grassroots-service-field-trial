@@ -28,11 +28,13 @@
 
 #include "address.h"
 
+struct ExperimentalArea;
+
 typedef struct Location
 {
 	bson_oid_t *lo_id_p;
 
-	ExperimentalArea *lo_parent_area_p;
+	struct ExperimentalArea *lo_parent_area_p;
 
 	uint32 lo_order;
 
@@ -75,19 +77,25 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, ExperimentalArea *area_p, bson_oid_t *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, struct ExperimentalArea *area_p, bson_oid_t *id_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocation (Location *location_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetLocationAsJSON (Location *location_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetLocationAsJSON (Location *location_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetLocationAsString (const Location *location_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationByIdString (const char *location_id_s, DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }
