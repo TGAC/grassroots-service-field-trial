@@ -66,7 +66,7 @@ json_t *GetLocationAsJSON (Location *location_p)
 
 	if (location_json_p)
 		{
-			if (AddIdToJSON (location_json_p, location_p -> lo_id_p, MONGO_ID_S))
+			if (AddCompoundIdToJSON (location_json_p, location_p -> lo_id_p))
 				{
 					if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order))
 						{
@@ -87,8 +87,7 @@ json_t *GetLocationAsJSON (Location *location_p)
 
 						}		/* if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order)) */
 
-
-				}		/* if (AddIdToJSON (location_json_p, location_p -> lo_id_p, MONGO_ID_S)) */
+				}		/* if (AddCompoundIdToJSON (location_json_p, location_p -> lo_id_p)) */
 
 			json_decref (location_json_p);
 		}		/* if (location_json_p) */

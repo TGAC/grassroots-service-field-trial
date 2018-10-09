@@ -26,6 +26,10 @@
 #include "location.h"
 #include "geocoder_util.h"
 
+
+
+static const char *S_DEFAULT_COORD_PRECISION_S = "6";
+
 /*
  * Experimental Area parameters
  */
@@ -73,6 +77,8 @@ bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTRY.npt_type, S_LOCATION_COUNTRY.npt_name_s, "Country", "The country", def, PL_ALL)) != NULL)
 										{
+											def.st_string_value_s = NULL;
+
 											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_POSTCODE.npt_type, S_LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", def, PL_ALL)) != NULL)
 												{
 													def.st_boolean_value = true;
@@ -83,7 +89,7 @@ bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LATITUDE.npt_type, S_LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", def, PL_ALL)) != NULL)
 																{
-																	const char *precision_s = "6";
+																	const char *precision_s = S_DEFAULT_COORD_PRECISION_S;
 
 																	if (AddParameterKeyValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																		{

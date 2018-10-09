@@ -47,9 +47,15 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 
 	if (copied_name_s)
 		{
-			char *copied_soil_s = EasyCopyToNewString (soil_s);
+			char *copied_soil_s = NULL;
+			bool empty_flag = IsStringEmpty (soil_s);
 
-			if (copied_soil_s)
+			if (empty_flag)
+				{
+					copied_soil_s = EasyCopyToNewString (soil_s);
+				}
+
+			if (empty_flag || copied_soil_s)
 				{
 					LinkedList *plots_p = AllocateLinkedList (FreePlotNode);
 
@@ -234,7 +240,7 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 		{
 			if (json_object_set_new (area_json_p, EA_NAME_S, json_string (area_p -> ea_name_s)) == 0)
 				{
-					if (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0)
+					if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0))
 						{
 							json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
 
