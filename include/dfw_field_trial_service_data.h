@@ -117,14 +117,14 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_S DFW_FIELD_TRIAL_VAL ("field");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_S DFW_FIELD_TRIAL_VAL ("FieldTrials");
 
 /**
  * The key for specifying the object containing the experimental area data
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_EXPERMIENTAL_AREA_S DFW_FIELD_TRIAL_VAL ("experimental_area");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_EXPERMIENTAL_AREA_S DFW_FIELD_TRIAL_VAL ("ExperimentalAreas");
 
 
 /**
@@ -132,7 +132,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_EXPERMIENTAL_AREA_S DFW_FIELD_TRIAL_VAL (
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("location");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("Locations");
 
 
 /**
@@ -140,14 +140,14 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("location
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("plot");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("Plots");
 
 /**
  * The key for specifying the object containing the drilling data
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("drilling");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("Drillings");
 
 
 /**
@@ -155,7 +155,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("drilling
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("raw_phenotype");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("RawPhenotypes");
 
 
 /**
@@ -163,7 +163,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("raw
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("corrected_phenotype");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("CorrectedPhenotypes");
 
 
 

@@ -34,7 +34,7 @@ typedef struct Location
 {
 	bson_oid_t *lo_id_p;
 
-	struct ExperimentalArea *lo_parent_area_p;
+	// struct ExperimentalArea *lo_parent_area_p;
 
 	uint32 lo_order;
 
@@ -77,7 +77,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, struct ExperimentalArea *area_p, bson_oid_t *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, bson_oid_t *id_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocation (Location *location_p);

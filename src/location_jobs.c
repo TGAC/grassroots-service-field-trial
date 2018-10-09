@@ -24,7 +24,7 @@
 
 #include "location_jobs.h"
 #include "location.h"
-
+#include "geocoder_util.h"
 
 /*
  * Experimental Area parameters
@@ -61,37 +61,45 @@ bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_NAME.npt_type, S_LOCATION_NAME.npt_name_s, "Name", "The building name or number", def, PL_BASIC)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_NAME.npt_type, S_LOCATION_NAME.npt_name_s, "Name", "The building name or number", def, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_STREET.npt_type, S_LOCATION_STREET.npt_name_s, "Street", "The street", def, PL_BASIC)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_STREET.npt_type, S_LOCATION_STREET.npt_name_s, "Street", "The street", def, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_TOWN.npt_type, S_LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", def, PL_BASIC)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_TOWN.npt_type, S_LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", def, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTY.npt_type, S_LOCATION_COUNTY.npt_name_s, "County", "The county or state", def, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTY.npt_type, S_LOCATION_COUNTY.npt_name_s, "County", "The county or state", def, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTRY.npt_type, S_LOCATION_COUNTRY.npt_name_s, "Country", "The country", def, PL_BASIC)) != NULL)
+									def.st_string_value_s = (char *) "GB";
+
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTRY.npt_type, S_LOCATION_COUNTRY.npt_name_s, "Country", "The country", def, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_POSTCODE.npt_type, S_LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", def, PL_BASIC)) != NULL)
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_POSTCODE.npt_type, S_LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", def, PL_ALL)) != NULL)
 												{
 													def.st_boolean_value = true;
 
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_USE_GPS.npt_type, S_LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", def, PL_BASIC)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_USE_GPS.npt_type, S_LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", def, PL_ALL)) != NULL)
 														{
 															def.st_data_value = 0.0;
 
-															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LATITUDE.npt_type, S_LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the Experimental Area", def, PL_BASIC)) != NULL)
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LATITUDE.npt_type, S_LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", def, PL_ALL)) != NULL)
 																{
 																	const char *precision_s = "6";
 
 																	if (AddParameterKeyValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																		{
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LONGITUDE.npt_type, S_LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the Experimental Area", def, PL_BASIC)) != NULL)
+																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LONGITUDE.npt_type, S_LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", def, PL_ALL)) != NULL)
 																				{
 																					if (AddParameterKeyValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ALTITUDE.npt_type, S_LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the Experimental Area", def, PL_BASIC)) != NULL)
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ALTITUDE.npt_type, S_LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", def, PL_ALL)) != NULL)
 																								{
-																									success_flag = true;
+																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_LOCATION.npt_type, S_ADD_LOCATION.npt_name_s, "Add", "Add a new Location", def, PL_ALL)) != NULL)
+																										{
+																											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_LOCATIONS.npt_type, S_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ALL)) != NULL)
+																												{
+																													success_flag = true;
+																												}
+																										}
 																								}
 																						}
 																				}
@@ -181,26 +189,34 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 															Address *address_p = AllocateAddress (name_value.st_string_value_s, street_value.st_string_value_s, town_value.st_string_value_s, county_value.st_string_value_s,
 																																		country_value.st_string_value_s, postcode_value.st_string_value_s, country_code_s, gps_s);
 
-															if (!use_gps_value.st_boolean_value)
-																{
-
-																}
-
 															if (address_p)
 																{
 																	const uint32 order = 0;
 																	ExperimentalArea *area_p = NULL;
 																	bson_oid_t *id_p = NULL;
 
-																	Location *location_p = AllocateLocation (address_p, order, area_p, id_p);
-
-																	if (location_p)
+																	if (use_gps_value.st_boolean_value)
 																		{
-																			success_flag = SaveLocation (location_p, data_p);
+																			success_flag = true;
 																		}
 																	else
 																		{
-																			FreeAddress (address_p);
+																			success_flag = DetermineGPSLocationForAddress (address_p, NULL);
+																		}
+
+																	if (success_flag)
+																		{
+																			Location *location_p = AllocateLocation (address_p, order, id_p);
+
+																			if (location_p)
+																				{
+																					success_flag = SaveLocation (location_p, data_p);
+																				}
+																			else
+																				{
+																					FreeAddress (address_p);
+																					success_flag = false;
+																				}
 																		}
 																}
 														}

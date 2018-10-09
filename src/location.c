@@ -28,13 +28,12 @@
 
 
 
-Location *AllocateLocation (Address *address_p, const uint32 order, ExperimentalArea *parent_area_p, bson_oid_t *id_p)
+Location *AllocateLocation (Address *address_p, const uint32 order, bson_oid_t *id_p)
 {
 	Location *location_p = (Location *) AllocMemory (sizeof (Location));
 
 	if (location_p)
 		{
-			location_p -> lo_parent_area_p = parent_area_p;
 			location_p -> lo_address_p = address_p;
 			location_p -> lo_order = order;
 			location_p -> lo_id_p = id_p;
@@ -69,28 +68,25 @@ json_t *GetLocationAsJSON (Location *location_p)
 		{
 			if (AddIdToJSON (location_json_p, location_p -> lo_id_p, MONGO_ID_S))
 				{
-					if (AddIdToJSON (location_json_p, location_p -> lo_parent_area_p -> ea_id_p, LO_PARENT_EXPERIMENTAL_AREA_S))
+					if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order))
 						{
-							if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order))
+							json_t *address_json_p = GetAddressAsJSON (location_p -> lo_address_p);
+
+							if (address_json_p)
 								{
-									json_t *address_json_p = GetAddressAsJSON (location_p -> lo_address_p);
-
-									if (address_json_p)
+									if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0)
 										{
-											if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0)
-												{
-													return location_json_p;
-												}		/* if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0) */
-											else
-												{
-													json_decref (address_json_p);
-												}
+											return location_json_p;
+										}		/* if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0) */
+									else
+										{
+											json_decref (address_json_p);
+										}
 
-										}		/* if (geo_json_p) */
+								}		/* if (geo_json_p) */
 
-								}		/* if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order)) */
+						}		/* if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order)) */
 
-						}		/* if (AddIdToJSON (location_json_p, location_p -> lo_parent_area_p -> ea_id_p, LO_PARENT_EXPERIMENTAL_AREA_S)) */
 
 				}		/* if (AddIdToJSON (location_json_p, location_p -> lo_id_p, MONGO_ID_S)) */
 
@@ -121,7 +117,7 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 									if (address_p)
 										{
-											Location *location_p = AllocateLocation (address_p, order, NULL, id_p);
+											Location *location_p = AllocateLocation (address_p, order, id_p);
 
 											if (location_p)
 												{
