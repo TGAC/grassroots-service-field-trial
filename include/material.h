@@ -23,14 +23,21 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_H_
 
+
+
+
+
+#include "dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_library.h"
+#include "jansson.h"
 #include "typedefs.h"
 
 
 typedef struct Material
 {
-	uint32 ma_id;
+	bson_oid_t *ma_id_p;
 
-	uint32 ma_germplasm_id;
+	bson_oid_t *ma_germplasm_id_p;
 
 	char *ma_source_s;
 
@@ -43,6 +50,70 @@ typedef struct Material
 	bool ma_in_gru_flag;
 
 } Material;
+
+
+
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_MATERIAL_TAGS
+	#define MATERIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define MATERIAL_VAL(x)	= x
+	#define MATERIAL_CONCAT_VAL(x,y)	= x y
+#else
+	#define MATERIAL_PREFIX extern
+	#define MATERIAL_VAL(x)
+	#define MATERIAL_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+MATERIAL_PREFIX const char *MA_ID_S MATERIAL_VAL ("id");
+
+MATERIAL_PREFIX const char *MA_ACCESSION_S MATERIAL_VAL ("accession");
+
+MATERIAL_PREFIX const char *MA_BARCODE_S MATERIAL_VAL ("barcode");
+
+MATERIAL_PREFIX const char *MA_SOURCE_S MATERIAL_VAL ("source");
+
+
+MATERIAL_PREFIX const char *MA_PEDIGREE_S MATERIAL_VAL ("pedigree");
+
+MATERIAL_PREFIX const char *MA_IN_GRU_S MATERIAL_VAL ("in_gru");
+
+MATERIAL_PREFIX const char *MA_GERMPLASM_ID_S MATERIAL_VAL ("germplasm_id");
+
+
+
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, const bool in_gru_flag, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMaterial (Material *material_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMaterialAsJSON (const Material *material_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveMaterial (Material *material_p, DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, DFWFieldTrialServiceData *data_p);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_H_ */
