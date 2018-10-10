@@ -353,7 +353,7 @@ void FreeFieldTrialNode (ListItem *node_p)
 }
 
 
-FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -457,7 +457,7 @@ bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_
 }
 
 
-bool GetAllFieldTrialExperimentalAreaIds (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+bool GetAllFieldTrialExperimentalAreaIds (FieldTrial *trial_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -465,7 +465,7 @@ bool GetAllFieldTrialExperimentalAreaIds (FieldTrial *trial_p, DFWFieldTrialServ
 }
 
 
-bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 

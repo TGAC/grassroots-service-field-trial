@@ -25,7 +25,7 @@
 #include "location_jobs.h"
 #include "location.h"
 #include "geocoder_util.h"
-
+#include "string_utils.h"
 
 
 static const char *S_DEFAULT_COORD_PRECISION_S = "6";
@@ -237,3 +237,117 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 	return success_flag;
 }
+
+
+bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
+{
+	bool success_flag = false;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION]))
+		{
+			bson_t *query_p = NULL;
+			bson_t *opts_p =  NULL; // BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							const size_t num_results = json_array_size (results_p);
+
+							if (num_results > 0)
+								{
+									size_t i = 0;
+									json_t *entry_p = json_array_get (results_p, i);
+									Location *location_p = GetLocationFromJSON (entry_p, data_p);
+
+									if (location_p)
+										{
+											char *name_s = GetLocationAsString (location_p);
+
+											if (name_s)
+												{
+													SharedType def;
+													char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+
+													if (id_s)
+														{
+															def.st_string_value_s = id_s;
+
+															if (SetParameterValueFromSharedType (param_p, &def, false))
+																{
+																	if (SetParameterValueFromSharedType (param_p, &def, true))
+																		{
+																			success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
+																		}
+																}
+
+															FreeCopiedString (id_s);
+														}
+
+													FreeCopiedString (name_s);
+												}
+
+											FreeLocation (location_p);
+										}		/* if (location_p) */
+
+									if (success_flag)
+										{
+											for (++ i; i < num_results; ++ i)
+												{
+													entry_p = json_array_get (results_p, i);
+													location_p = GetLocationFromJSON (entry_p, data_p);
+
+													if (location_p)
+														{
+															char *name_s = GetLocationAsString (location_p);
+
+															if (name_s)
+																{
+																	SharedType def;
+																	char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+
+																	if (id_s)
+																		{
+																			def.st_string_value_s = id_s;
+
+																			if (param_p)
+																				{
+																					success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
+																				}
+
+																			FreeCopiedString (id_s);
+																		}
+
+																	FreeCopiedString (name_s);
+																}		/* if (name_s) */
+
+															FreeLocation (location_p);
+														}		/* if (location_p) */
+
+												}		/* for (++ i; i < num_results; ++ i) */
+
+											if (!success_flag)
+												{
+													FreeParameter (param_p);
+													param_p = NULL;
+												}
+
+										}		/* if (param_p) */
+
+								}		/* if (num_results > 0) */
+							else
+								{
+									/* nothing to add */
+									success_flag = true;
+								}
+
+						}		/* if (json_is_array (results_p)) */
+
+				}		/* if (results_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
+
+	return success_flag;
+}
+

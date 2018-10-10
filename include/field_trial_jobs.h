@@ -39,6 +39,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialParams (ServiceData *data_p, Par
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
+
 
 #ifdef __cplusplus
 }

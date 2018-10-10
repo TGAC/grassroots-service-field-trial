@@ -41,7 +41,7 @@
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, Location *location_p, FieldTrial *parent_field_trial_p, DFWFieldTrialServiceData *data_p)
+ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -99,7 +99,7 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 }
 
 
-ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, DFWFieldTrialServiceData *data_p)
+ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *parent_field_trial_p = GetFieldTrialByIdString (parent_field_trial_id_s, data_p);
 
@@ -189,7 +189,6 @@ LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p)
 
 	return plots_list_p;
 }
-
 
 
 bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
@@ -296,7 +295,7 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool ex
 
 
 
-ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool full_location_flag, DFWFieldTrialServiceData *data_p)
+ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool full_location_flag, const DFWFieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, EA_NAME_S);
 
