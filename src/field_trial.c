@@ -235,7 +235,7 @@ bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_js
 
 					while (node_p && ok_flag)
 						{
-							json_t *area_p = GetExperimentalAreaAsJSON (node_p -> ean_experimental_area_p);
+							json_t *area_p = GetExperimentalAreaAsJSON (node_p -> ean_experimental_area_p, true);
 
 							if (area_p)
 								{

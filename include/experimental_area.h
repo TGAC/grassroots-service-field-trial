@@ -122,7 +122,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalAreaNode *AllocateExperimentalAreaNode
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalAreaNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool expand_fields_flag);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTrialServiceData *data_p);
 

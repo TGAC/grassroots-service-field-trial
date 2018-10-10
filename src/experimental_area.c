@@ -209,7 +209,7 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 
 	if (area_p -> ea_id_p)
 		{
-			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p);
+			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, false);
 
 			if (area_json_p)
 				{
@@ -232,7 +232,7 @@ ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServic
 }
 
 
-json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
+json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool expand_fields_flag)
 {
 	json_t *area_json_p = json_object ();
 
@@ -242,32 +242,48 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p)
 				{
 					if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0))
 						{
-							json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
+							bool add_location_flag = false;
 
-							if (location_json_p)
+							if (expand_fields_flag)
 								{
-									if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
+									json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
+
+									if (location_json_p)
 										{
-											if ((area_p -> ea_sowing_year == 0) || json_object_set_new (area_json_p, EA_SOWING_YEAR_S, json_integer (area_p -> ea_sowing_year)) == 0)
+											if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
 												{
-													if ((area_p -> ea_harvest_year == 0) || json_object_set_new (area_json_p, EA_HARVEST_YEAR_S, json_integer (area_p -> ea_harvest_year)) == 0)
+													add_location_flag = true;
+												}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
+											else
+												{
+													json_decref (location_json_p);
+												}
+										}
+								}
+							else
+								{
+									if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_S))
+										{
+											add_location_flag = true;
+										}
+								}
+
+							if (add_location_flag)
+								{
+									if ((area_p -> ea_sowing_year == 0) || json_object_set_new (area_json_p, EA_SOWING_YEAR_S, json_integer (area_p -> ea_sowing_year)) == 0)
+										{
+											if ((area_p -> ea_harvest_year == 0) || json_object_set_new (area_json_p, EA_HARVEST_YEAR_S, json_integer (area_p -> ea_harvest_year)) == 0)
+												{
+													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
 														{
-															if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
+															if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S))
 																{
-																	if (AddIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S))
-																		{
-																			return area_json_p;
-																		}
+																	return area_json_p;
 																}
 														}
 												}
-										}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
-									else
-										{
-											json_decref (location_json_p);
 										}
-
-								}		/* if (address_json_p) */
+								}
 
 						}
 				}

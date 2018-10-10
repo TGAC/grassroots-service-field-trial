@@ -72,35 +72,29 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 	if (data_p -> dftsd_database_s)
 		{
-			const char *value_s = GetJSONString (service_config_p, "database_type");
+			data_p -> dftsd_mongo_p = AllocateMongoTool (NULL);
 
-			if (value_s)
+			if (data_p -> dftsd_mongo_p)
 				{
-					data_p -> dftsd_mongo_p = AllocateMongoTool (NULL);
-
-					if (data_p -> dftsd_mongo_p)
+					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
 						{
-							if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
-								}
+							success_flag = true;
 						}
-
-					if (success_flag)
+					else
 						{
-							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_EXPERIMENTAL_AREA) = DFT_EXPERMIENTAL_AREA_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_RAW_PHENOTYPE) = DFT_RAW_PHENOTYPE_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_CORRECTED_PHENOTYPE) = DFT_CORRECTED_PHENOTYPE_S;
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
 						}
+				}
 
+			if (success_flag)
+				{
+					* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_EXPERIMENTAL_AREA) = DFT_EXPERMIENTAL_AREA_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_RAW_PHENOTYPE) = DFT_RAW_PHENOTYPE_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_CORRECTED_PHENOTYPE) = DFT_CORRECTED_PHENOTYPE_S;
 				}
 
 		} /* if (data_p -> psd_database_s) */
