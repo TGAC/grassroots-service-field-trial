@@ -112,6 +112,22 @@ bool RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSe
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
 
+
+	if (!job_done_flag)
+		{
+			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, &value, true))
+				{
+					if (value.st_boolean_value)
+						{
+							bool success_flag = AddExperimentalArea (job_p, param_set_p, data_p);
+
+							job_done_flag = true;
+						}		/* if (value.st_boolean_value) */
+
+				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
+
+		}
+
 	return job_done_flag;
 }
 
@@ -168,8 +184,10 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 																			FreeExperimentalArea (area_p);
 																		}
-
-																	FreeLocation (location_p);
+																	else
+																		{
+																			FreeLocation (location_p);
+																		}
 																}		/* if (location_p) */
 														}
 												}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true)) */
@@ -416,5 +434,130 @@ static bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p,
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
 
 	return success_flag;
+}
+
+
+static bool SearchExperimentalAreas (ServiceJob *job_p, const char * const name_s, const Location * const location_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	OperationStatus status = OS_FAILED_TO_START;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+		{
+			bson_t *query_p = bson_new ();
+
+			/*
+			 * Make the query to get the matching field trials
+			 */
+			if (query_p)
+				{
+					bool ok_flag = AddQueryTerm (query_p, FT_NAME_S, name_s, false);
+
+					if (ok_flag)
+						{
+							if (location_p)
+								{
+									//ok_flag = AddQueryTerm (query_p, FT_TEAM_S, team_s, false);
+								}
+						}
+
+					if (ok_flag)
+						{
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_YEAR_S, BCON_INT32 (1), "}");
+
+							if (opts_p)
+								{
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+									if (results_p)
+										{
+											if (json_is_array (results_p))
+												{
+													size_t i;
+													const size_t num_results = json_array_size (results_p);
+
+													success_flag = true;
+
+													if (num_results > 0)
+														{
+															json_t *trial_json_p;
+
+															json_array_foreach (results_p, i, trial_json_p)
+																{
+																	FieldTrial *trial_p = GetFieldTrialFromJSON (trial_json_p, data_p);
+
+																	if (trial_p)
+																		{
+																			if (GetAllFieldTrialExperimentalAreas (trial_p, data_p))
+																				{
+																					if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p))
+																						{
+																							char *title_s = GetFieldTrialAsString (trial_p);
+
+																							if (title_s)
+																								{
+																									json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+
+																									if (dest_record_p)
+																										{
+																											if (!AddResultToServiceJob (job_p, dest_record_p))
+																												{
+																													json_decref (dest_record_p);
+																												}
+																										}
+
+																									FreeCopiedString (title_s);
+																								}
+
+																						}
+																				}
+
+																			FreeFieldTrial (trial_p);
+																		}
+
+																}		/* json_array_foreach (results_p, i, entry_p) */
+
+															i = GetNumberOfServiceJobResults (job_p);
+
+
+														}		/* if (num_results > 0) */
+
+													if (i == num_results)
+														{
+															status = OS_SUCCEEDED;
+														}
+													else if (i == 0)
+														{
+															status = OS_FAILED;
+														}
+													else
+														{
+															status = OS_PARTIALLY_SUCCEEDED;
+														}
+
+
+												}		/* if (json_is_array (results_p)) */
+
+											json_decref (results_p);
+										}		/* if (results_p) */
+
+									bson_destroy (opts_p);
+								}		/* if (opts_p) */
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}
+
+	if (!success_flag)
+		{
+			status = OS_FAILED;
+		}
+
+	SetServiceJobStatus (job_p, status);
+
+	return success_flag;
+
 }
 

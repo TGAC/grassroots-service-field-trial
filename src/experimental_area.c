@@ -50,7 +50,7 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 			char *copied_soil_s = NULL;
 			bool empty_flag = IsStringEmpty (soil_s);
 
-			if (empty_flag)
+			if (!empty_flag)
 				{
 					copied_soil_s = EasyCopyToNewString (soil_s);
 				}
@@ -262,7 +262,7 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool ex
 								}
 							else
 								{
-									if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_S))
+									if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_ID_S))
 										{
 											add_location_flag = true;
 										}
@@ -296,7 +296,7 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool ex
 
 
 
-ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTrialServiceData *data_p)
+ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool full_location_flag, DFWFieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, EA_NAME_S);
 
@@ -306,12 +306,11 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTri
 
 			if (soil_s)
 				{
-					Location *location_p = NULL;
 					bson_oid_t *location_id_p =  AllocMemory (sizeof (bson_oid_t));
 
 					if (location_id_p)
 						{
-							if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, location_id_p))
+							if (GetNamedIdFromJSON (json_p, EA_LOCATION_ID_S, location_id_p))
 								{
 									bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
 
@@ -324,14 +323,26 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, DFWFieldTri
 													uint32 sowing_year = 0;
 													uint32 harvest_year = 0;
 													const char *parent_field_trial_id_s = NULL;
+													Location *location_p = NULL;
+													bool success_flag = true;
 
-													GetJSONInteger (json_p, EA_SOWING_YEAR_S, (int *) &sowing_year);
-													GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
+													if (full_location_flag)
+														{
+															if (! (location_p = GetLocationById (location_id_p, data_p)))
+																{
+																	success_flag = false;
+																}
+														}
 
+													if (success_flag)
+														{
+															GetJSONInteger (json_p, EA_SOWING_YEAR_S, (int *) &sowing_year);
+															GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
 
-													area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_year, harvest_year, location_p, trial_p, data_p);
+															area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_year, harvest_year, location_p, trial_p, data_p);
 
-													return area_p;
+															return area_p;
+														}
 												}
 
 											FreeMemory (id_p);

@@ -134,6 +134,21 @@ bool RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *par
 		}
 
 
+
+	if (!job_done_flag)
+		{
+			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_FIELD_TRIALS.npt_name_s, &value, true))
+				{
+					if (value.st_boolean_value)
+						{
+							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, data_p);
+
+							job_done_flag = true;
+						}		/* if (value.st_boolean_value) */
+				}
+		}
+
+
 	return job_done_flag;
 }
 
@@ -180,7 +195,7 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 					if (ok_flag)
 						{
-							bson_t *opts_p =  BCON_NEW ( "sort", "{", "team", BCON_INT32 (1), "}");
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", FT_TEAM_S, BCON_INT32 (1), "}");
 
 							if (opts_p)
 								{

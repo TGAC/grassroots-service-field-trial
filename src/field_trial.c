@@ -468,54 +468,67 @@ bool GetAllFieldTrialExperimentalAreaIds (FieldTrial *trial_p, DFWFieldTrialServ
 bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
-	if (id_s)
+	bson_t *query_p = bson_new ();
+
+	if (query_p)
 		{
-			if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
+			if (BSON_APPEND_OID (query_p, EA_PARENT_FIELD_TRIAL_S, trial_p -> ft_id_p))
 				{
-					bson_t *query_p = BCON_NEW (EA_PARENT_FIELD_TRIAL_S, id_s);
-					bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_YEAR_S, BCON_INT32 (1), "}");
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
-
-					if (results_p)
+					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
 						{
-							if (json_is_array (results_p))
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_YEAR_S, BCON_INT32 (1), "}");
+
+							if (opts_p)
 								{
-									const size_t num_results = json_array_size (results_p);
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
-									success_flag = true;
-
-									if (num_results > 0)
+									if (results_p)
 										{
-											size_t i;
-											json_t *area_json_p;
-
-											json_array_foreach (results_p, i, area_json_p)
+											if (json_is_array (results_p))
 												{
-													ExperimentalArea *area_p = GetExperimentalAreaFromJSON (area_json_p, data_p);
+													const size_t num_results = json_array_size (results_p);
 
-													if (area_p)
+													success_flag = true;
+
+													if (num_results > 0)
 														{
-															if (!AddFieldTrialExperimentalArea (trial_p, area_p))
+															size_t i;
+															json_t *area_json_p;
+
+															json_array_foreach (results_p, i, area_json_p)
 																{
-																	FreeExperimentalArea (area_p);
-																	success_flag = false;
+																	ExperimentalArea *area_p = GetExperimentalAreaFromJSON (area_json_p, true, data_p);
+
+																	if (area_p)
+																		{
+																			if (!AddFieldTrialExperimentalArea (trial_p, area_p))
+																				{
+																					FreeExperimentalArea (area_p);
+																					success_flag = false;
+																				}
+																		}
+																	else
+																		{
+																			success_flag = false;
+																		}
 																}
-														}
-													else
-														{
-															success_flag = false;
+
 														}
 												}
 
-										}
-								}
-						}
-				}
+											json_decref (results_p);
+										}		/* if (results_p) */
 
-			FreeMemory (id_s);
-		}		/* if (id_s) */
+									bson_destroy (opts_p);
+								}		/* if (opts_p) */
+
+						}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA])) */
+
+				}		/* if (BSON_APPEND_OID (query_p, EA_PARENT_FIELD_TRIAL_S, trial_p -> ft_id_p)) */
+
+			bson_destroy (query_p);
+		}		/* if (query_p) */
 
 
 	return success_flag;

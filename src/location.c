@@ -174,6 +174,15 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 }
 
 
+
+Location *GetLocationById (bson_oid_t *id_p, DFWFieldTrialServiceData *data_p)
+{
+	Location *location_p = GetDFWObjectById (id_p, DFTD_LOCATION, GetLocationFromJSON, data_p);
+
+	return location_p;
+}
+
+
 Location *GetLocationByIdString (const char *location_id_s, DFWFieldTrialServiceData *data_p)
 {
 	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSON, data_p);
