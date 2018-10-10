@@ -59,6 +59,13 @@ static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "PL Experimental Area", 
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 
+/*
+ * static declarations
+ */
+
+static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const char delimiter, const DFWFieldTrialServiceData *data_p);
+
+
 
 bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
@@ -151,5 +158,62 @@ bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set
 {
 	bool job_done_flag = false;
 
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &value, true))
+		{
+			/*
+			 * Has a spreadsheet been uploaded?
+			 */
+			if (! (IsStringEmpty (value.st_string_value_s)))
+				{
+					SharedType delimiter;
+					InitSharedType (&delimiter);
+
+					delimiter.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+
+					GetParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter, true);
+
+					bool success_flag = AddPlotsTable (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
+
+					job_done_flag = true;
+				}		/* if (value.st_boolean_value) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
+
+
 	return job_done_flag;
+}
+
+
+static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const char column_delimiter, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag	= true;
+	const char *current_row_s = table_data_s;
+	const char *next_row_s = strchr (current_row_s, '\n');
+
+
+	/*
+	 * column headings are S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
+	 * S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s
+	 *
+	 */
+	while (success_flag && (*current_row_s != '\0'))
+		{
+
+
+			/*
+			 * move onto the next row
+			 */
+			current_row_s = next_row_s + 1;
+
+			if (*current_row_s != '\0')
+				{
+					next_row_s = strchr (current_row_s, '\n');
+				}
+		}		/* while (success_flag && (*current_row_s != '\0')) */
+
+
+	return success_flag;
 }
