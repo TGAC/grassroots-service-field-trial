@@ -129,7 +129,7 @@ void FreeMaterial (Material *material_p)
 }
 
 
-json_t *GetMaterialAsJSON (Material *material_p)
+json_t *GetMaterialAsJSON (const Material *material_p)
 {
 	json_t *material_json_p = json_object ();
 

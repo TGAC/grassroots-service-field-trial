@@ -217,3 +217,11 @@ static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const ch
 
 	return success_flag;
 }
+
+
+static Plot *GetPlotFromTableRow (const char *row_s, const char delimiter)
+{
+
+
+	return NULL;
+}
