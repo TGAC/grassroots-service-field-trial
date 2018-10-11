@@ -201,7 +201,7 @@ static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const ch
 	 */
 	while (success_flag && (*current_row_s != '\0'))
 		{
-
+			Plot *plot_p = GetPlotFromTableRow (current_row_s, column_delimiter);
 
 			/*
 			 * move onto the next row
@@ -217,3 +217,36 @@ static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const ch
 
 	return success_flag;
 }
+
+
+static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_delimiter)
+{
+	bool success_flag	= true;
+	const char *current_column_s = current_row_s;
+	const char *next_column_s = strchr (current_column_s, '\n');
+
+	/*
+	 * column headings are S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
+	 * S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s
+	 *
+	 */
+	while (success_flag && (*current_column_s != '\0'))
+		{
+
+			const char *sowing_s =
+
+			/*
+			 * move onto the next column
+			 */
+			current_column_s = next_column_s + 1;
+
+			if (*current_column_s != '\0')
+				{
+					next_column_s = strchr (current_column_s, '\n');
+				}
+		}		/* while (success_flag && (*current_column_s != '\0')) */
+
+
+	return NULL;
+}
+

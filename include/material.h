@@ -47,8 +47,6 @@ typedef struct Material
 
 	char *ma_barcode_s;
 
-	bool ma_in_gru_flag;
-
 } Material;
 
 
@@ -81,7 +79,6 @@ MATERIAL_PREFIX const char *MA_SOURCE_S MATERIAL_VAL ("source");
 
 MATERIAL_PREFIX const char *MA_PEDIGREE_S MATERIAL_VAL ("pedigree");
 
-MATERIAL_PREFIX const char *MA_IN_GRU_S MATERIAL_VAL ("in_gru");
 
 MATERIAL_PREFIX const char *MA_GERMPLASM_ID_S MATERIAL_VAL ("germplasm_id");
 
@@ -96,7 +93,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, const bool in_gru_flag, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, bson_oid_t *germplasm_id_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMaterial (Material *material_p);

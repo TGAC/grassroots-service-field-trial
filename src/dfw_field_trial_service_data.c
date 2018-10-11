@@ -92,6 +92,7 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 					* ((data_p -> dftsd_collection_ss) + DFTD_EXPERIMENTAL_AREA) = DFT_EXPERMIENTAL_AREA_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_MATERIAL) = DFT_MATERIAL_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_RAW_PHENOTYPE) = DFT_RAW_PHENOTYPE_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_CORRECTED_PHENOTYPE) = DFT_CORRECTED_PHENOTYPE_S;

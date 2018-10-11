@@ -31,7 +31,7 @@
  */
 
 
-Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, const bool in_gru_flag, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, bson_oid_t *germplasm_id_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_source_s = EasyCopyToNewString (source_s);
 
@@ -58,8 +58,7 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *
 											material_p -> ma_accession_s = copied_accession_s;
 											material_p -> ma_pedigree_s = copied_pedigree_s;
 											material_p -> ma_barcode_s = copied_barcode_s;
-											material_p -> ma_in_gru_flag = in_gru_flag;
-											material_p -> ma_germplasm_id_p = NULL;
+											material_p -> ma_germplasm_id_p = germplasm_id_p;
 
 											return material_p;
 										}		/* if (material_p) */
@@ -105,6 +104,11 @@ void FreeMaterial (Material *material_p)
 			FreeBSONOid (material_p -> ma_id_p);
 		}
 
+	if (material_p -> ma_germplasm_id_p)
+		{
+			FreeBSONOid (material_p -> ma_germplasm_id_p);
+		}
+
 	if (material_p -> ma_accession_s)
 		{
 			FreeCopiedString (material_p -> ma_accession_s);
@@ -129,7 +133,7 @@ void FreeMaterial (Material *material_p)
 }
 
 
-json_t *GetMaterialAsJSON (Material *material_p)
+json_t *GetMaterialAsJSON (const Material *material_p)
 {
 	json_t *material_json_p = json_object ();
 
@@ -137,27 +141,23 @@ json_t *GetMaterialAsJSON (Material *material_p)
 		{
 			if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p))
 				{
-					if (SetJSONString (material_json_p, MA_SOURCE_S, material_p -> ma_source_s))
+					if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_germplasm_id_p, MA_GERMPLASM_ID_S))
 						{
-							if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
+							if (SetJSONString (material_json_p, MA_SOURCE_S, material_p -> ma_source_s))
 								{
-									if (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))
+									if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
 										{
-											if (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))
+											if (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))
 												{
-													if (SetJSONBoolean (material_json_p, MA_IN_GRU_S, material_p -> ma_in_gru_flag))
+													if (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))
 														{
 															return material_json_p;
 														}
-
 												}
-
 										}
-
 								}
 
 						}
-
 				}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
 
 			json_decref (material_json_p);
@@ -166,3 +166,92 @@ json_t *GetMaterialAsJSON (Material *material_p)
 	return NULL;
 }
 
+
+
+Material *GetMaterialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
+{
+	const char *source_s = GetJSONString (json_p, MA_SOURCE_S);
+
+	if (source_s)
+		{
+			const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
+
+			if (accession_s)
+				{
+					const char *barcode_s = GetJSONString (json_p, MA_BARCODE_S);
+
+					if (barcode_s)
+						{
+							const char *pedigree_s = GetJSONString (json_p, MA_PEDIGREE_S);
+
+							if (pedigree_s)
+								{
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+									if (id_p)
+										{
+											if (GetMongoIdFromJSON (json_p, id_p))
+												{
+													bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
+
+													if (germplasm_id_p)
+														{
+															if (GetNamedIdFromJSON (json_p, MA_GERMPLASM_ID_S, germplasm_id_p))
+																{
+																	Material *material_p = AllocateMaterial (id_p, source_s, accession_s, pedigree_s, barcode_s, germplasm_id_p, data_p);
+
+																	if (material_p)
+																		{
+																			return material_p;
+																		}
+																}
+
+															FreeBSONOid (germplasm_id_p);
+														}
+												}
+
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
+
+								}		/* pedigree_s */
+
+						}		/* if (barcode_s) */
+
+				}		/* if (accession_s) */
+
+		}		/* if (source_s) */
+
+	return NULL;
+}
+
+
+bool SaveMaterial (Material *material_p, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bool insert_flag = false;
+
+	if (! (material_p -> ma_id_p))
+		{
+			material_p -> ma_id_p  = GetNewBSONOid ();
+
+			if (material_p -> ma_id_p)
+				{
+					insert_flag = true;
+				}
+		}
+
+	if (material_p -> ma_id_p)
+		{
+			json_t *material_json_p = GetMaterialAsJSON (material_p);
+
+			if (material_json_p)
+				{
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, material_json_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL], insert_flag);
+
+					json_decref (material_json_p);
+				}		/* if (material_json_p) */
+
+		}		/* if (material_p -> ma_id_p) */
+
+	return success_flag;
+}
