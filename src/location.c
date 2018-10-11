@@ -102,7 +102,7 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 	if (GetJSONInteger (location_json_p, LO_ORDER_S, (int *) &order))
 		{
-			bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+			bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
 			if (id_p)
 				{
@@ -131,7 +131,7 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 						}		/* if (GetCompoundIdFromJSON (location_json_p, id_p)) */
 
-					FreeMemory (id_p);
+					FreeBSONOid (id_p);
 				}		/* if (id_p) */
 
 		}		/* if (GetJSONInteger (location_json_p, LO_ORDER_S, (int *) &order)) */
@@ -149,7 +149,7 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 
 	if (! (location_p -> lo_id_p))
 		{
-			location_p -> lo_id_p  = GetNewId ();
+			location_p -> lo_id_p  = GetNewBSONOid ();
 
 			if (location_p -> lo_id_p)
 				{

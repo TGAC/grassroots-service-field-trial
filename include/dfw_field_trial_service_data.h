@@ -42,6 +42,7 @@ typedef enum
 	DFTD_LOCATION,
 	DFTD_PLOT,
 	DFTD_ROW,
+	DFTD_MATERIAL,
 	DFTD_DRILLING,
 	DFTD_RAW_PHENOTYPE,
 	DFTD_CORRECTED_PHENOTYPE,
@@ -142,12 +143,22 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("Location
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("Plots");
 
+
 /**
  * The key for specifying the object containing the drilling data
  *
  * @ingroup dfw_field_trial_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("Drillings");
+
+
+
+/**
+ * The key for specifying the object containing the materials data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_MATERIAL_S DFW_FIELD_TRIAL_VAL ("Materials");
 
 
 /**

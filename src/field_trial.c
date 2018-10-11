@@ -102,7 +102,7 @@ bool GenerateIdFromString (bson_oid_t **id_pp, const char *id_s)
 
 	if (bson_oid_is_valid (id_s, strlen (id_s)))
 		{
-			bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+			bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
 			if (id_p)
 				{
@@ -137,7 +137,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 
 	if (! (trial_p -> ft_id_p))
 		{
-			trial_p -> ft_id_p  = GetNewId ();
+			trial_p -> ft_id_p  = GetNewBSONOid ();
 
 			if (trial_p -> ft_id_p)
 				{
@@ -306,7 +306,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServ
 
 			if (team_s)
 				{
-					bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+					bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
 					if (id_p)
 						{
@@ -317,7 +317,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServ
 									return trial_p;
 								}
 
-							FreeMemory (id_p);
+							FreeBSONOid (id_p);
 						}
 				}
 		}

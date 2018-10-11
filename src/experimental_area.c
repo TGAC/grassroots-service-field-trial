@@ -198,7 +198,7 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 
 	if (! (area_p -> ea_id_p))
 		{
-			area_p -> ea_id_p  = GetNewId ();
+			area_p -> ea_id_p  = GetNewBSONOid ();
 
 			if (area_p -> ea_id_p)
 				{
@@ -221,6 +221,7 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 
 	return success_flag;
 }
+
 
 ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p)
 {
@@ -305,13 +306,13 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 
 			if (soil_s)
 				{
-					bson_oid_t *location_id_p =  AllocMemory (sizeof (bson_oid_t));
+					bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
 
 					if (location_id_p)
 						{
 							if (GetNamedIdFromJSON (json_p, EA_LOCATION_ID_S, location_id_p))
 								{
-									bson_oid_t *id_p = AllocMemory (sizeof (bson_oid_t));
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
 									if (id_p)
 										{
@@ -344,7 +345,7 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 														}
 												}
 
-											FreeMemory (id_p);
+											FreeBSONOid (id_p);
 										}
 								}		/* if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p)) */
 
