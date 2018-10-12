@@ -48,6 +48,32 @@ typedef struct RowNode
 } RowNode;
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_ROW_TAGS
+	#define ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define ROW_VAL(x)	= x
+	#define ROW_CONCAT_VAL(x,y)	= x y
+#else
+	#define ROW_PREFIX extern
+	#define ROW_VAL(x)
+	#define ROW_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+ROW_PREFIX const char *RO_ID_S ROW_VAL ("id");
+
+ROW_PREFIX const char *RO_INDEX_S ROW_VAL ("index");
+
+ROW_PREFIX const char *RO_PLOT_ID_S ROW_VAL ("plot_id");
+
+ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
+
+
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -62,8 +88,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL RowNode *AllocateRowNode (Row *row_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
 
-
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p);
 
 
 #ifdef __cplusplus

@@ -75,3 +75,37 @@ void FreeRowNode (ListItem *node_p)
 
 	FreeMemory (ro_node_p);
 }
+
+
+
+json_t *GetRowAsJSON (const Row *row_p)
+{
+	json_t *row_json_p = json_object ();
+
+	if (row_json_p)
+		{
+			if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_material_p -> ma_id_p, RO_MATERIAL_ID_S))
+				{
+					if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
+						{
+							if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+								{
+									if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
+										{
+											return row_json_p;
+										}
+								}
+						}
+				}
+
+			json_decref (row_json_p);
+		}		/* if (row_json_p) */
+
+	return NULL;
+}
+
+
+Row *GetRowFromJSON (const json_t *json_p)
+{
+
+}

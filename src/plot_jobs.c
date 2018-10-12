@@ -29,6 +29,21 @@
 #include "experimental_area_jobs.h"
 
 
+static typedef enum
+{
+	PP_SOWING_DATE,
+	PP_HARVEST_DATE,
+	PP_WIDTH,
+	PP_LENGTH,
+	PP_ROW,
+	PP_COLUMN,
+	PP_TRIAL_DESIGN,
+	PP_GROWING_CONDITION,
+	PP_TREATMENT,
+	PP_NUM_PARAMS
+} PlotParam;
+
+
 static const char * const S_SOWING_TITLE_S = "Sowing date";
 static const char * const S_HARVEST_TITLE_S = "Harvest date";
 static const char * const S_WIDTH_TITLE_S = "Width";
@@ -63,9 +78,14 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
  * static declarations
  */
 
-static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const char delimiter, const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char delimiter, const DFWFieldTrialServiceData *data_p);
+
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, const DFWFieldTrialServiceData *data_p);
 
 
+/*
+ * API definitions
+ */
 
 bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
@@ -86,7 +106,8 @@ bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 						{
 							def.st_string_value_s = NULL;
 
-							if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
+							if ((pastatic bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, const DFWFieldTrialServiceData *data_p);
+ram_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
 								{
 									const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
 									char *headers_s = ConcatenateVarargsStrings (S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
@@ -168,14 +189,31 @@ bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set
 			 */
 			if (! (IsStringEmpty (value.st_string_value_s)))
 				{
-					SharedType delimiter;
-					InitSharedType (&delimiter);
+					bool success_flag = false;
+					json_error_t e;
+					json_t *plots_json_p = NULL;
 
-					delimiter.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+					/*
+					 * The data could be either an array of json objects
+					 * or a tabular string. so try it as json array first
+					 */
+					plots_json_p = json_loads (value.st_string_value_s, 0, &e);
 
-					GetParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter, true);
+					if (plots_json_p)
+						{
+							success_flag = AddPlotsFromJSON (job_p, plots_json_p, data_p);
 
-					bool success_flag = AddPlotsTable (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
+						}		/* if (value_as_json_p) */
+					else
+						{
+							SharedType delimiter;
+							InitSharedType (&delimiter);
+
+							delimiter.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+							GetParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter, true);
+
+							success_flag = AddPlotsTableFromTabularString (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
+						}
 
 					job_done_flag = true;
 				}		/* if (value.st_boolean_value) */
@@ -187,7 +225,37 @@ bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set
 }
 
 
-static bool AddPlotsTable (ServiceJob *job_p, const char *table_data_s, const char column_delimiter, const DFWFieldTrialServiceData *data_p)
+/*
+ * static definitions
+ */
+
+
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag	= true;
+
+	if (json_is_array (plots_json_p))
+		{
+			const size_t num_rows = json_array_size (plots_json_p);
+			size_t i;
+
+			for (i = 0; i < num_rows; ++ i)
+				{
+					json_t *row_p = json_array_get (i);
+
+
+
+				}		/* for (i = 0; i < num_rows; ++ i) */
+
+		}		/* if (json_is_array (plots_json_p)) */
+
+
+	return success_flag;
+}
+
+
+
+static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char column_delimiter, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	const char *current_row_s = table_data_s;
@@ -223,7 +291,11 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 {
 	bool success_flag	= true;
 	const char *current_column_s = current_row_s;
-	const char *next_column_s = strchr (current_column_s, '\n');
+	const char *next_column_s = strchr (current_column_s, column_delimiter);
+	PlotParam i;
+
+	char *column_values_s []
+///	char *
 
 	/*
 	 * column headings are S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
@@ -233,17 +305,27 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 	while (success_flag && (*current_column_s != '\0'))
 		{
 
-			const char *sowing_s =
+			const char *sowing_s = NULL;
 
-			/*
-			 * move onto the next column
-			 */
-			current_column_s = next_column_s + 1;
 
-			if (*current_column_s != '\0')
+			if (next_column_s)
 				{
-					next_column_s = strchr (current_column_s, '\n');
+					/*
+					 * move onto the next column
+					 */
+					current_column_s = next_column_s + 1;
+
+					if (*current_column_s != '\0')
+						{
+							next_column_s = strchr (current_column_s, column_delimiter);
+						}
+
+				}		/* if (next_column_s) */
+			else
+				{
+					*current_column_s = '\0';
 				}
+
 		}		/* while (success_flag && (*current_column_s != '\0')) */
 
 	return NULL;
