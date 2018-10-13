@@ -29,7 +29,7 @@
 #include "experimental_area_jobs.h"
 
 
-static typedef enum
+typedef enum
 {
 	PP_SOWING_DATE,
 	PP_HARVEST_DATE,
@@ -60,6 +60,9 @@ static NamedParameterType S_PLOT_WIDTH = { "PL Width", PT_UNSIGNED_REAL };
 static NamedParameterType S_PLOT_LENGTH = { "PL Length", PT_UNSIGNED_REAL };
 
 
+static NamedParameterType S_PLOT_ROW = { "PL Row", PT_UNSIGNED_INT };
+static NamedParameterType S_PLOT_COLUMN = { "PL Column", PT_UNSIGNED_INT };
+
 static NamedParameterType S_PLOT_TRIAL_DESIGN = { "PL Trial Design", PT_STRING };
 static NamedParameterType S_PLOT_GROWING_CONDITION = { "PL Growing Condition", PT_STRING };
 static NamedParameterType S_PLOT_TREATMENT = { "PL Treatment", PT_STRING };
@@ -80,7 +83,9 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char delimiter, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, ExperimentalArea *area_p,  const DFWFieldTrialServiceData *data_p);
+
+static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_delimiter);
 
 
 /*
@@ -106,8 +111,7 @@ bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 						{
 							def.st_string_value_s = NULL;
 
-							if ((pastatic bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, const DFWFieldTrialServiceData *data_p);
-ram_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
+							if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
 								{
 									const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
 									char *headers_s = ConcatenateVarargsStrings (S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
@@ -201,7 +205,20 @@ bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set
 
 					if (plots_json_p)
 						{
-							success_flag = AddPlotsFromJSON (job_p, plots_json_p, data_p);
+							SharedType parent_experimental_area_value;
+							InitSharedType (&parent_experimental_area_value);
+
+							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true))
+								{
+									ExperimentalArea *area_p = GetExperimentalAreaByIdString (parent_experimental_area_value.st_string_value_s, data_p);
+
+									if (area_p)
+										{
+											success_flag = AddPlotsFromJSON (job_p, plots_json_p, area_p, data_p);
+
+											FreeExperimentalArea (area_p);
+										}
+								}
 
 						}		/* if (value_as_json_p) */
 					else
@@ -230,7 +247,7 @@ bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set
  */
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, ExperimentalArea *area_p,  const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 
@@ -241,7 +258,27 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, con
 
 			for (i = 0; i < num_rows; ++ i)
 				{
-					json_t *row_p = json_array_get (i);
+					json_t *row_p = json_array_get (plots_json_p, i);
+					Plot *plot_p = NULL;
+
+					const char *sowing_date_s = GetJSONString (plots_json_p, S_PLOT_SOWING_DATE.npt_name_s);
+					const char *harvest_date_s = GetJSONString (plots_json_p, S_PLOT_HARVEST_DATE.npt_name_s);
+					const char *growing_condition_s = GetJSONString (plots_json_p, S_PLOT_GROWING_CONDITION.npt_name_s);
+					const char *treatment_s = GetJSONString (plots_json_p, S_PLOT_TREATMENT.npt_name_s);
+					const char *trial_design_s = GetJSONString (plots_json_p, S_PLOT_TRIAL_DESIGN.npt_name_s);
+					const char *width_s = GetJSONString (plots_json_p, S_PLOT_WIDTH.npt_name_s);
+					const char *length_s = GetJSONString (plots_json_p, S_PLOT_LENGTH.npt_name_s);
+					const char *row_s = GetJSONString (plots_json_p, S_PLOT_ROW.npt_name_s);
+					const char *column_s = GetJSONString (plots_json_p, S_PLOT_COLUMN.npt_name_s);
+
+
+
+
+					/*
+					Plot *AllocatePlot (bson_oid_t *id_p, const uint32 sowing_date, const uint32 harvest_date, const double64 width, const double64 height, const uint32 row_index,
+					const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p);
+					 */
+
 
 
 
@@ -294,7 +331,7 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 	const char *next_column_s = strchr (current_column_s, column_delimiter);
 	PlotParam i;
 
-	char *column_values_s []
+	char *column_values_s [PP_NUM_PARAMS];
 ///	char *
 
 	/*
@@ -323,7 +360,7 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 				}		/* if (next_column_s) */
 			else
 				{
-					*current_column_s = '\0';
+					//*current_column_s = '\0';
 				}
 
 		}		/* while (success_flag && (*current_column_s != '\0')) */

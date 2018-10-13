@@ -33,7 +33,7 @@
 
 
 
-void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), DFWFieldTrialServiceData *data_p)
+void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), const DFWFieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -119,7 +119,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 }
 
 
-void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), DFWFieldTrialServiceData *data_p)
+void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), const DFWFieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 

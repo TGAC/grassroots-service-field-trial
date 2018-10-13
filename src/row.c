@@ -107,5 +107,5 @@ json_t *GetRowAsJSON (const Row *row_p)
 
 Row *GetRowFromJSON (const json_t *json_p)
 {
-
+	return NULL;
 }

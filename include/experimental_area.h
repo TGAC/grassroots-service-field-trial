@@ -135,6 +135,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveExperimentalArea (ExperimentalArea *area_
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const DFWFieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }

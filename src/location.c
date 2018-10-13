@@ -27,6 +27,9 @@
 #include "dfw_util.h"
 
 
+static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
+
+
 
 Location *AllocateLocation (Address *address_p, const uint32 order, bson_oid_t *id_p)
 {
@@ -175,17 +178,17 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 
 
 
-Location *GetLocationById (bson_oid_t *id_p, DFWFieldTrialServiceData *data_p)
+Location *GetLocationById (bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p)
 {
-	Location *location_p = GetDFWObjectById (id_p, DFTD_LOCATION, GetLocationFromJSON, data_p);
+	Location *location_p = GetDFWObjectById (id_p, DFTD_LOCATION, GetLocationFromJSONCallback, data_p);
 
 	return location_p;
 }
 
 
-Location *GetLocationByIdString (const char *location_id_s, DFWFieldTrialServiceData *data_p)
+Location *GetLocationByIdString (const char *location_id_s, const DFWFieldTrialServiceData *data_p)
 {
-	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSON, data_p);
+	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSONCallback, data_p);
 
 	return location_p;
 }
@@ -202,3 +205,11 @@ char *GetLocationAsString (const Location *location_p)
 
 	return location_s;
 }
+
+
+
+static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p)
+{
+	return GetLocationFromJSON (location_json_p, data_p);
+}
+

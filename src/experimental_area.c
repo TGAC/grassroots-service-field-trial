@@ -26,6 +26,7 @@
 #include "string_utils.h"
 #include "plot.h"
 #include "location.h"
+#include "dfw_util.h"
 
 /*
  * DB COLUMN NAMES
@@ -34,6 +35,7 @@
 /*
  * STATIC PROTOTYPES
  */
+static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
 
 
@@ -125,6 +127,7 @@ void FreeExperimentalArea (ExperimentalArea *area_p)
 	if (area_p -> ea_id_p)
 		{
 			FreeBSONOid (area_p -> ea_id_p);
+
 		}
 
 	if (area_p -> ea_name_s)
@@ -211,6 +214,7 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, false);
 
 			if (area_json_p)
+
 				{
 					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], insert_flag);
 
@@ -356,4 +360,18 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 		}		/* if (name_s) */
 
 	return NULL;
+}
+
+
+ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const DFWFieldTrialServiceData *data_p)
+{
+	ExperimentalArea *area_p = GetDFWObjectByIdString (area_id_s, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, data_p);
+
+	return area_p;
+}
+
+
+static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
+{
+	return GetExperimentalAreaFromJSON (json_p, false, data_p);
 }
