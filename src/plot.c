@@ -102,7 +102,7 @@ void FreePlot (Plot *plot_p)
 		}
 
 	if (plot_p -> pl_trial_design_s)
-		{
+		{https://www.gamesradar.com/uk/sfx/
 			FreeCopiedString (plot_p -> pl_trial_design_s);
 		}
 
