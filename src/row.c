@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-
+#define ALLOCATE_ROW_TAGS (1)
 #include "row.h"
 
 #include "memory_allocations.h"

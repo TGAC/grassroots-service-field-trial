@@ -203,7 +203,33 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 																	if (use_gps_value.st_boolean_value)
 																		{
-																			success_flag = true;
+																			SharedType latitude_value;
+																			InitSharedType (&latitude_value);
+
+																			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_LATITUDE.npt_name_s, &latitude_value, true))
+																				{
+																					SharedType longitude_value;
+																					InitSharedType (&longitude_value);
+
+																					if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_LONGITUDE.npt_name_s, &longitude_value, true))
+																						{
+																							double64 *elevation_p = NULL;
+																							SharedType elevation_value;
+																							InitSharedType (&elevation_value);
+
+																							if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_ALTITUDE.npt_name_s, &elevation_value, true))
+																								{
+																									elevation_p = elevation_value.st_data_value;
+																								}
+
+
+																							if (SetAddressCentreCoordinate (address_p, latitude_value.st_data_value, longitude_value.st_data_value, elevation_p))
+																								{
+																									success_flag = true;
+																								}
+																						}
+
+																				}
 																		}
 																	else
 																		{

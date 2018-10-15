@@ -90,6 +90,11 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
 
+static bool GetJSONStringAsInteger (const json_t *json_p, const char * const key_s, int *answer_p);
+
+static bool GetJSONStringAsDouble (const json_t *json_p, const char * const key_s, double *answer_p);
+
+
 /*
  * API definitions
  */
@@ -298,43 +303,56 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 				{
 					json_t *row_p = json_array_get (plots_json_p, i);
 					Plot *plot_p = NULL;
-					uint32 sowing_date;
-					uint32 harvest_date;
+					uint32 sowing_date = 0;
+					uint32 harvest_date = 0;
+					double width = 0.0;
+					double length = 0.0;
+					int32 row = -1;
+					int32 column = -1;
 
-					const char *sowing_date_s = GetJSONString (plots_json_p, S_PLOT_SOWING_DATE.npt_name_s);
-					const char *harvest_date_s = GetJSONString (plots_json_p, S_PLOT_HARVEST_DATE.npt_name_s);
-					const char *growing_condition_s = GetJSONString (plots_json_p, S_PLOT_GROWING_CONDITION.npt_name_s);
-					const char *treatment_s = GetJSONString (plots_json_p, S_PLOT_TREATMENT.npt_name_s);
-					const char *trial_design_s = GetJSONString (plots_json_p, S_PLOT_TRIAL_DESIGN.npt_name_s);
-					const char *width_s = GetJSONString (plots_json_p, S_PLOT_WIDTH.npt_name_s);
-					const char *length_s = GetJSONString (plots_json_p, S_PLOT_LENGTH.npt_name_s);
-					const char *row_s = GetJSONString (plots_json_p, S_PLOT_ROW.npt_name_s);
-					const char *column_s = GetJSONString (plots_json_p, S_PLOT_COLUMN.npt_name_s);
+					const char *growing_condition_s = GetJSONString (plots_json_p, S_GROWING_CONDITION_TITLE_S);
+					const char *treatment_s = GetJSONString (plots_json_p, S_TREATMENT_TITLE_S);
+					const char *trial_design_s = GetJSONString (plots_json_p, S_TRIAL_DESIGN_TITLE_S);
 
-
-					if (sowing_date_s)
+					if (GetJSONStringAsInteger (row_p, S_SOWING_TITLE_S, &sowing_date))
 						{
-							if (!GetValidInteger (&sowing_date_s, &sowing_date))
-								{
 
-								}
-						}
+						}		/* if (GetJSONStringAsInteger (row_p, S_SOWING_TITLE_S, &sowing_date)) */
 
-					if (harvest_date_s)
+					if (GetJSONStringAsInteger (row_p, S_HARVEST_TITLE_S, &harvest_date))
 						{
-							if (!GetValidInteger (&harvest_date_s, &harvest_date))
-								{
 
-								}
+						}		/* if (GetJSONStringAsInteger (row_p, S_HARVEST_TITLE_S, &harvest_date)) */
+
+					if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row))
+						{
+
+						}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
+
+					if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column))
+						{
+
+						}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
+
+					if (GetJSONStringAsDouble (row_p, S_WIDTH_TITLE_S, &width))
+						{
+
+						}		/* if (GetJSONStringAsDouble (row_p, S_WIDTH_TITLE_S, &width)) */
+
+					if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length))
+						{
+
+						}		/* if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length)) */
+
+
+					plot_p = AllocatePlot (NULL, sowing_date, harvest_date, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
+
+					if (plot_p)
+						{
+							success_flag = SavePlot (plot_p, data_p);
+
+							FreePlot (plot_p);
 						}
-
-					/*
-					Plot *AllocatePlot (bson_oid_t *id_p, const uint32 sowing_date, const uint32 harvest_date, const double64 width, const double64 height, const uint32 row_index,
-					const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p);
-					 */
-
-					plot_p = AllocatePlot (NULL, );
-
 
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
@@ -344,6 +362,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 	return success_flag;
 }
 
+
 static bool GetJSONStringAsInteger (const json_t *json_p, const char * const key_s, int *answer_p)
 {
 	bool success_flag = false;
@@ -352,6 +371,21 @@ static bool GetJSONStringAsInteger (const json_t *json_p, const char * const key
 	if (value_s)
 		{
 			success_flag = GetValidInteger (&value_s, answer_p);
+		}		/* if (value_s) */
+
+	return success_flag;
+}
+
+
+
+static bool GetJSONStringAsDouble (const json_t *json_p, const char * const key_s, double *answer_p)
+{
+	bool success_flag = false;
+	const char *value_s = GetJSONString (json_p, key_s);
+
+	if (value_s)
+		{
+			success_flag = GetValidDouble (&value_s, answer_p);
 		}		/* if (value_s) */
 
 	return success_flag;

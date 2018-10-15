@@ -275,7 +275,15 @@ static ServiceJobSet *RunDFWFieldTrialService (Service *service_p, ParameterSet 
 						{
 							if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p))
 								{
-									RunForLocationParams (data_p, param_set_p, job_p);
+									if (!RunForLocationParams (data_p, param_set_p, job_p))
+										{
+											if (!RunForPlotParams (data_p, param_set_p, job_p))
+												{
+
+												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
+
+										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+
 								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
 
 						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
