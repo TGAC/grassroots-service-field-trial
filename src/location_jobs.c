@@ -219,7 +219,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 																							if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_ALTITUDE.npt_name_s, &elevation_value, true))
 																								{
-																									elevation_p = elevation_value.st_data_value;
+																									*elevation_p = elevation_value.st_data_value;
 																								}
 
 
