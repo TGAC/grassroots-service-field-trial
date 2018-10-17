@@ -403,7 +403,7 @@ static bool GetJSONStringAsDouble (const json_t *json_p, const char * const key_
 
 	if (value_s)
 		{
-			success_flag = GetValidDouble (&value_s, answer_p);
+			success_flag = GetValidRealNumber (&value_s, answer_p, NULL);
 		}		/* if (value_s) */
 
 	return success_flag;

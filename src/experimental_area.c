@@ -148,7 +148,6 @@ void FreeExperimentalArea (ExperimentalArea *area_p)
 	if (area_p -> ea_id_p)
 		{
 			FreeBSONOid (area_p -> ea_id_p);
-
 		}
 
 	if (area_p -> ea_name_s)

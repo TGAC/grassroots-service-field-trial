@@ -23,16 +23,19 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_
 
+#include <time.h>
 
+#include "dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_library.h"
 #include "instrument.h"
 #include "typedefs.h"
-
+#include "jansson.h"
 
 
 
 typedef struct Phenotype
 {
-	uint32 ph_id;
+	bson_oid_t *ph_id_p;
 
 	char *ph_trait_s;
 
@@ -42,12 +45,74 @@ typedef struct Phenotype
 
 	char *ph_unit_s;
 
-	char *ph_date_s;
+	struct tm *ph_date_p;
 
 	Instrument *ph_instrument_p;
 
-	char *growth_stage_s;
+	char *ph_growth_stage_s;
 
 } Phenotype;
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_PHENOTYPE_TAGS
+	#define PHENOTYPE_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define PHENOTYPE_VAL(x)	= x
+	#define PHENOTYPE_CONCAT_VAL(x,y)	= x y
+#else
+	#define PHENOTYPE_PREFIX extern
+	#define PHENOTYPE_VAL(x)
+	#define PHENOTYPE_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+PHENOTYPE_PREFIX const char *PH_TRAIT_S PHENOTYPE_VAL ("trait");
+
+PHENOTYPE_PREFIX const char *PH_TRAIT_ABBREVIATION_S PHENOTYPE_VAL ("trait_abbreviation");
+
+PHENOTYPE_PREFIX const char *PH_MEASUREMENT_S PHENOTYPE_VAL ("measurement");
+
+PHENOTYPE_PREFIX const char *PH_UNIT_S PHENOTYPE_VAL ("unit");
+
+PHENOTYPE_PREFIX const char *PH_DATE_S PHENOTYPE_VAL ("date");
+
+PHENOTYPE_PREFIX const char *PH_INSTRUMENT_ID_S PHENOTYPE_VAL ("instrument_id");
+
+PHENOTYPE_PREFIX const char *PH_GROWTH_STAGE_S PHENOTYPE_VAL ("growth_stage");
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, const char *trait_s, const char *trait_abbreviation_s, const char *measurement_s,
+																														const char *unit_s, const char *growth_stage_s, Instrument *instrument_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotype (Phenotype *phenotype_p);
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPhenotypeRows (Phenotype *phenotype_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
 
 #endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PHENOTYPE_H_ */

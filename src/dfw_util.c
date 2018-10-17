@@ -100,7 +100,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 						}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, id_p)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for object_id_s with id \"%s\"", id_s);
+							PrintErrowors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for object_id_s with id \"%s\"", id_s);
 						}
 
 					bson_destroy (query_p);

@@ -182,12 +182,9 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 															if (location_p)
 																{
-																	SharedType use_gps_value;
-																	struct tm *s
-
 																	ExperimentalArea *area_p = NULL;
 
-																	area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_ulong_value, harvest_year_value.st_ulong_value, location_p, trial_p, data_p);
+																	area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_time_p, harvest_year_value.st_time_p, location_p, trial_p, data_p);
 
 																	if (area_p)
 																		{
