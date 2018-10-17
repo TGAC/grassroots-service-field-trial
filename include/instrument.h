@@ -42,6 +42,26 @@ typedef struct Instrument
 
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_INSTRUMENT_TAGS
+	#define INSTRUMENT_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define INSTRUMENT_VAL(x)	= x
+	#define INSTRUMENT_CONCAT_VAL(x,y)	= x y
+#else
+	#define INSTRUMENT_PREFIX extern
+	#define INSTRUMENT_VAL(x)
+	#define INSTRUMENT_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+INSTRUMENT_PREFIX const char *IN_NAME_S INSTRUMENT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
+
+INSTRUMENT_PREFIX const char *IN_MODEL_S INSTRUMENT_VAL ("model");
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -59,7 +79,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetInstrumentAsJSON (const Instrument *ins
 DFW_FIELD_TRIAL_SERVICE_LOCAL Instrument *GetInstrumentFromJSON (const json_t *phenotype_json_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

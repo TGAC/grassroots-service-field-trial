@@ -46,6 +46,7 @@ typedef enum
 	DFTD_DRILLING,
 	DFTD_RAW_PHENOTYPE,
 	DFTD_CORRECTED_PHENOTYPE,
+	DFTD_INSTRUMENT,
 	DFTD_NUM_TYPES
 } DFWFieldTrialData;
 
@@ -176,7 +177,12 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("Raw
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("CorrectedPhenotypes");
 
-
+/**
+ * The key for specifying the object containing the instruments
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_S DFW_FIELD_TRIAL_VAL ("Instruments");
 
 
 

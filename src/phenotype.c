@@ -99,7 +99,6 @@ json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fiel
 
 																	if (phenotype_p -> ph_instrument_p)
 																		{
-
 																			if (expand_fields_flag)
 																				{
 																					json_t *instrument_json_p = GetInstrumentAsJSON (phenotype_p -> ph_instrument_p);
