@@ -81,6 +81,8 @@ PHENOTYPE_PREFIX const char *PH_DATE_S PHENOTYPE_VAL ("date");
 
 PHENOTYPE_PREFIX const char *PH_INSTRUMENT_ID_S PHENOTYPE_VAL ("instrument_id");
 
+PHENOTYPE_PREFIX const char *PH_INSTRUMENT_S PHENOTYPE_VAL ("instrument");
+
 PHENOTYPE_PREFIX const char *PH_GROWTH_STAGE_S PHENOTYPE_VAL ("growth_stage");
 
 
@@ -97,13 +99,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, co
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotype (Phenotype *phenotype_p);
 
 
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fields_flag);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPhenotypeRows (Phenotype *phenotype_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag);

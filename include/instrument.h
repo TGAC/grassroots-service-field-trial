@@ -24,18 +24,49 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_INSTRUMENT_H_
 
 
+
+#include "dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_library.h"
 #include "typedefs.h"
 
 
 typedef struct Instrument
 {
-	uint32 in_id;
+	bson_oid_t *in_id_p;
 
 	char *in_name_s;
 
 	char *in_model_s;
 
 } Instrument;
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Instrument *AllocateInstrument (bson_oid_t *id_p, const char *name_s, const char *model_s);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeInstrument (Instrument *instrument_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetInstrumentAsJSON (const Instrument *instrument_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Instrument *GetInstrumentFromJSON (const json_t *phenotype_json_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
 
 
 #endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_INSTRUMENT_H_ */

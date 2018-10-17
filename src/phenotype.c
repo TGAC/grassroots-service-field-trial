@@ -25,7 +25,7 @@
 #include "phenotype.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
-
+#include "dfw_util.h"
 
 
 /*
@@ -39,7 +39,6 @@ void FreePhenotype (Phenotype *phenotype_p)
 		{
 			FreeBSONOid (phenotype_p -> ph_id_p);
 		}
-
 
 	if (phenotype_p -> ph_growth_stage_s)
 		{
@@ -75,14 +74,98 @@ void FreePhenotype (Phenotype *phenotype_p)
 }
 
 
-/*
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p);
+json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fields_flag)
+{
+	json_t *phenotype_json_p = json_object ();
+
+	if (phenotype_json_p)
+		{
+			if (AddValidDateToJSON (phenotype_p -> ph_date_p, phenotype_json_p, PH_DATE_S))
+				{
+					if (SetJSONString (phenotype_json_p, PH_TRAIT_S, phenotype_p -> ph_trait_s))
+						{
+							if (SetJSONString (phenotype_json_p, PH_MEASUREMENT_S, phenotype_p -> ph_measurement_s))
+								{
+									if (SetJSONString (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_s))
+										{
+											if ((IsStringEmpty (phenotype_p -> ph_growth_stage_s)) || SetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S, phenotype_p -> ph_growth_stage_s))
+												{
+													if ((IsStringEmpty (phenotype_p -> ph_trait_abbreviation_s)) || SetJSONString (phenotype_json_p, PH_TRAIT_ABBREVIATION_S, phenotype_p -> ph_trait_abbreviation_s))
+														{
+															if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
+																{
+																	bool done_instrument_flag = false;
+
+																	if (phenotype_p -> ph_instrument_p)
+																		{
+
+																			if (expand_fields_flag)
+																				{
+																					json_t *instrument_json_p = GetInstrumentAsJSON (phenotype_p -> ph_instrument_p);
+
+																					if (instrument_json_p)
+																						{
+																							if (json_object_set_new (phenotype_json_p, PH_INSTRUMENT_S, instrument_json_p) == 0)
+																								{
+																									done_instrument_flag = true;
+																								}		/* if (json_object_set_new (phenotype_json_p, PH_INSTRUMENT_S, instrument_json_p) == 0) */
+																							else
+																								{
+																									json_decref (phenotype_json_p);
+																								}
+																						}
+																				}		/* if (expand_fields_flag) */
+																			else
+																				{
+																					if (AddNamedCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_instrument_p -> in_id_p, PH_INSTRUMENT_ID_S))
+																						{
+																							done_instrument_flag = true;
+																						}
+																				}
+
+																		}		/* if (phenotype_p -> ph_instrument_p) */
+																	else
+																		{
+																			done_instrument_flag = true;
+																		}
+
+																	if (done_instrument_flag)
+																		{
+																			return phenotype_json_p;
+																		}
+
+																}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
+
+														}		/* if ((IsStringEmpty (phenotype_p -> ph_trait_abbreviation_s)) || SetJSONString (phenotype_json_p, PH_TRAIT_ABBREVIATION_S, phenotype_p -> ph_trait_abbreviation_s)) */
+
+												}		/* if ((IsStringEmpty (phenotype_p -> ph_growth_stage_s)) || SetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S, phenotype_p -> ph_growth_stage_s)) */
+
+										}		/* if (SetJSONString (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_s)) */
+
+								}		/* if (SetJSONString (phenotype_json_p, PH_MEASUREMENT_S, phenotype_p -> ph_measurement_s)) */
+
+						}		/* if (SetJSONString (phenotype_json_p, PH_TRAIT_S, phenotype_p -> ph_trait_s)) */
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPhenotypeRows (Phenotype *phenotype_p);
-*/
+				}		/* if (AddValidDateToJSON (phenotype_p -> ph_date_p, phenotype_json_p, PH_DATE_S)) */
+
+
+			json_decref (phenotype_json_p);
+		}		/* if (phenotype_json_p) */
+
+	return NULL;
+}
+
+
+Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p)
+{
+
+	return NULL;
+}
+
+
+
 
 bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag)
 {
@@ -101,7 +184,7 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 
 	if (phenotype_p -> ph_id_p)
 		{
-			json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p);
+			json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p, false);
 
 			if (phenotype_json_p)
 				{
