@@ -26,9 +26,11 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "row.h"
+#include "dfw_util.h"
+#include "time_util.h"
 
 
-Plot *AllocatePlot (bson_oid_t *id_p, const uint32 sowing_date, const uint32 harvest_date, const double64 width, const double64 length, const uint32 row_index,
+Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
 										const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p)
 {
 	char *copied_trial_design_s = EasyCopyToNewString (trial_design_s);
@@ -43,29 +45,52 @@ Plot *AllocatePlot (bson_oid_t *id_p, const uint32 sowing_date, const uint32 har
 
 					if (copied_treatments_s)
 						{
-							LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
+							struct tm *copied_sowing_date_p = NULL;
 
-							if (rows_p)
+							if (CopyValidDate (sowing_date_p, &copied_sowing_date_p))
 								{
-									Plot *plot_p = (Plot *) AllocMemory (sizeof (Plot));
+									struct tm *copied_harvest_date_p = NULL;
 
-									if (plot_p)
+									if (CopyValidDate (harvest_date_p, &copied_harvest_date_p))
 										{
-											plot_p -> pl_id_p = id_p;
-											plot_p -> pl_sowing_date = sowing_date;
-											plot_p -> pl_harvest_date = harvest_date;
-											plot_p -> pl_width = width;
-											plot_p -> pl_length = length;
-											plot_p -> pl_row_index = row_index;
-											plot_p -> pl_column_index = column_index;
-											plot_p -> pl_parent_p = parent_p;
-											plot_p -> pl_rows_p = rows_p;
+											LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
 
-											return plot_p;
-										}		/* if (plot_p) */
+											if (rows_p)
+												{
+													Plot *plot_p = (Plot *) AllocMemory (sizeof (Plot));
 
-									FreeLinkedList (rows_p);
-								}		/* if (rows_p) */
+													if (plot_p)
+														{
+															plot_p -> pl_id_p = id_p;
+															plot_p -> pl_sowing_date_p = copied_sowing_date_p;
+															plot_p -> pl_harvest_date_p = copied_harvest_date_p;
+															plot_p -> pl_width = width;
+															plot_p -> pl_length = length;
+															plot_p -> pl_row_index = row_index;
+															plot_p -> pl_column_index = column_index;
+															plot_p -> pl_parent_p = parent_p;
+															plot_p -> pl_rows_p = rows_p;
+
+															return plot_p;
+														}		/* if (plot_p) */
+
+													FreeLinkedList (rows_p);
+												}		/* if (rows_p) */
+
+											if (copied_harvest_date_p)
+												{
+													FreeTime (copied_harvest_date_p);
+												}
+
+										}		/* if (CopyValidDate (harvest_date_p, &copied_harvest_date_p)) */
+
+									if (copied_sowing_date_p)
+										{
+											FreeTime (copied_sowing_date_p);
+										}
+
+								}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
+
 
 							FreeCopiedString (copied_treatments_s);
 						}		/* if (copied_treatments_s) */
@@ -102,7 +127,7 @@ void FreePlot (Plot *plot_p)
 		}
 
 	if (plot_p -> pl_trial_design_s)
-		{https://www.gamesradar.com/uk/sfx/
+		{
 			FreeCopiedString (plot_p -> pl_trial_design_s);
 		}
 
@@ -118,6 +143,18 @@ void FreePlot (Plot *plot_p)
 		}
 
 	FreeLinkedList (plot_p -> pl_rows_p);
+
+	if (plot_p -> pl_sowing_date_p)
+		{
+			FreeTime (plot_p -> pl_sowing_date_p);
+		}
+
+
+	if (plot_p -> pl_harvest_date_p)
+		{
+			FreeTime (plot_p -> pl_harvest_date_p);
+		}
+
 
 	FreeMemory (plot_p);
 }
@@ -150,3 +187,56 @@ void FreePlotNode (ListItem *node_p)
 
 	FreeMemory (pl_node_p);
 }
+
+
+
+
+bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bool insert_flag = false;
+
+	if (! (plot_p -> pl_id_p))
+		{
+			plot_p -> pl_id_p  = GetNewBSONOid ();
+
+			if (plot_p -> pl_id_p)
+				{
+					insert_flag = true;
+				}
+		}
+
+	if (plot_p -> pl_id_p)
+		{
+			json_t *plot_json_p = GetPlotAsJSON (plot_p);
+
+			if (plot_json_p)
+				{
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], insert_flag);
+
+					json_decref (plot_json_p);
+				}		/* if (plot_json_p) */
+
+		}		/* if (plot_p -> pl_id_p) */
+
+	return success_flag;
+}
+
+
+json_t *GetPlotAsJSON (const Plot *plot_p)
+{
+	json_t *plot_json_p = NULL;
+
+
+	return plot_json_p;
+}
+
+
+Plot *GetPlotFromJSON (const json_t *plot_json_p)
+{
+	Plot *plot_p = NULL;
+
+	return plot_p;
+}
+
+

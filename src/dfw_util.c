@@ -22,6 +22,8 @@
 
 #include "dfw_util.h"
 #include "streams.h"
+#include "time_util.h"
+#include "string_utils.h"
 
 
 #ifdef _DEBUG
@@ -138,3 +140,87 @@ void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collect
 
 	return result_p;
 }
+
+
+bool CopyValidDate (const struct tm *src_p, struct tm **dest_pp)
+{
+	bool success_flag = true;
+
+	if (src_p)
+		{
+			struct tm *dest_p = DuplicateTime (src_p);
+
+			if (dest_p)
+				{
+					*dest_pp = dest_p;
+					success_flag = true;
+				}
+			else
+				{
+					success_flag = false;
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s)
+{
+	bool success_flag = false;
+
+	if (time_p)
+		{
+			char *time_s = GetTimeAsString (time_p, false);
+
+			if (time_s)
+				{
+					if (SetJSONString (json_p, key_s, time_s))
+						{
+							success_flag = true;
+						}
+
+					FreeCopiedString (time_s);
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm **time_pp)
+{
+	bool success_flag = false;
+	const char *time_s = GetJSONString (json_p, key_s);
+
+	if (time_s)
+		{
+			struct tm *time_p = GetTimeFromString (time_s);
+
+			if (time_p)
+				{
+					*time_pp = time_p;
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to convert \"%s\" to a time", time_s);
+				}
+
+		}		/* if (time_s) */
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
+

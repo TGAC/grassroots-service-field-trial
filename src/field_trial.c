@@ -477,7 +477,7 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const DFWFieldTrial
 				{
 					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
 						{
-							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_YEAR_S, BCON_INT32 (1), "}");
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_DATE_S, BCON_INT32 (1), "}");
 
 							if (opts_p)
 								{

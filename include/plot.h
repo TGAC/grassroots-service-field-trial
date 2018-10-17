@@ -78,9 +78,9 @@ typedef struct Plot
 
 	ExperimentalArea *pl_parent_p;
 
-	uint32 pl_sowing_date;
+	struct tm *pl_sowing_date_p;
 
-	uint32 pl_harvest_date;
+	struct tm *pl_harvest_date_p;
 
 	double64 pl_width;
 
@@ -121,7 +121,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const uint32 sowing_date, const uint32 harvest_date, const double64 width, const double64 height, const uint32 row_index,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
 																									const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
@@ -137,6 +137,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPlotRows (Plot *plot_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

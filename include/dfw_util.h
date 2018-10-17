@@ -39,6 +39,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL	void *GetDFWObjectById (const bson_oid_t *id_p, DF
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), const DFWFieldTrialServiceData *data_p);
 
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyValidDate (const struct tm *src_p, struct tm **dest_pp);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm **time_pp);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s);
+
 #ifdef __cplusplus
 }
 #endif

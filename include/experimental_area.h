@@ -24,6 +24,8 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_EXPERIMENTAL_AREA_H_
 
 
+#include <time.h>
+
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 #include "field_trial.h"
@@ -60,9 +62,9 @@ EXPERIMENTAL_AREA_PREFIX const char *EA_LOCATION_S EXPERIMENTAL_AREA_VAL ("addre
 
 EXPERIMENTAL_AREA_PREFIX const char *EA_SOIL_S EXPERIMENTAL_AREA_VAL ("soil");
 
-EXPERIMENTAL_AREA_PREFIX const char *EA_SOWING_YEAR_S EXPERIMENTAL_AREA_VAL ("sowing_year");
+EXPERIMENTAL_AREA_PREFIX const char *EA_SOWING_DATE_S EXPERIMENTAL_AREA_VAL ("sowing_date");
 
-EXPERIMENTAL_AREA_PREFIX const char *EA_HARVEST_YEAR_S EXPERIMENTAL_AREA_VAL ("harvest_year");
+EXPERIMENTAL_AREA_PREFIX const char *EA_HARVEST_DATE_S EXPERIMENTAL_AREA_VAL ("harvest_date");
 
 
 EXPERIMENTAL_AREA_PREFIX const char *EA_PARENT_FIELD_TRIAL_S EXPERIMENTAL_AREA_VAL ("parent_field_trial_id");
@@ -85,9 +87,10 @@ typedef struct ExperimentalArea
 
 	char *ea_name_s;
 
-	uint32 ea_sowing_year;
+	struct tm *ea_sowing_date_p;
 
-	uint32 ea_harvest_year;
+	struct tm *ea_harvest_date_p;
+
 	/**
 	 * A LinkedList of PlotNodes
 	 * for all of the Plots in this
@@ -117,7 +120,7 @@ extern "C"
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL	ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
 

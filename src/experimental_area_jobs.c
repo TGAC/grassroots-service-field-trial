@@ -34,8 +34,8 @@
  */
 static NamedParameterType S_EXPERIMENTAL_AREA_NAME = { "EA Name", PT_STRING };
 static NamedParameterType S_EXPERIMENTAL_AREA_SOIL = { "EA Soil", PT_STRING };
-static NamedParameterType S_EXPERIMENTAL_AREA_SOWING_YEAR = { "EA Sowing Year", PT_UNSIGNED_INT };
-static NamedParameterType S_EXPERIMENTAL_AREA_HARVEST_YEAR = { "EA Harvest Year", PT_UNSIGNED_INT };
+static NamedParameterType S_EXPERIMENTAL_AREA_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
+static NamedParameterType S_EXPERIMENTAL_AREA_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
 static NamedParameterType S_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
 
@@ -183,6 +183,8 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 															if (location_p)
 																{
 																	SharedType use_gps_value;
+																	struct tm *s
+
 																	ExperimentalArea *area_p = NULL;
 
 																	area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_ulong_value, harvest_year_value.st_ulong_value, location_p, trial_p, data_p);
@@ -342,7 +344,7 @@ static bool SearchExperimentalAreas (ServiceJob *job_p, const char * const name_
 
 					if (ok_flag)
 						{
-							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_YEAR_S, BCON_INT32 (1), "}");
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_DATE_S, BCON_INT32 (1), "}");
 
 							if (opts_p)
 								{

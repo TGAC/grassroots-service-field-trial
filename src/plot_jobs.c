@@ -27,6 +27,7 @@
 #include "time_util.h"
 #include "string_utils.h"
 #include "experimental_area_jobs.h"
+#include "math_utils.h"
 
 
 typedef enum
@@ -110,15 +111,17 @@ bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREAS_LIST.npt_type, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 		{
-			if (SetUpExperimentalAreasListParameter ((DFWFieldTrialServiceData *) data_p, param_p))
+			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+
+			if (SetUpExperimentalAreasListParameter (dfw_service_data_p, param_p))
 				{
 					def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
-					if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_type, false, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ALL, NULL)) != NULL)
+					if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_type, false, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
 						{
 							def.st_string_value_s = NULL;
 
-							if ((param_p = GetTableParameter (param_set_p, group_p, data_p)) != NULL)
+							if ((param_p = GetTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 								{
 									SharedType date_def;
 
@@ -128,23 +131,23 @@ bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 										{
 											SetDateValuesForTime (date_def.st_time_p, 2017, 1, 1);
 
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_SOWING_DATE.npt_type, S_PLOT_SOWING_DATE.npt_name_s, S_SOWING_TITLE_S, "The date when the seeds were sown", date_def, PL_BASIC)) != NULL)
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_SOWING_DATE.npt_type, S_PLOT_SOWING_DATE.npt_name_s, S_SOWING_TITLE_S, "The date when the seeds were sown", date_def, PL_ADVANCED)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_HARVEST_DATE.npt_type, S_PLOT_HARVEST_DATE.npt_name_s, S_HARVEST_TITLE_S, "The date when the seeds were harvested", date_def, PL_BASIC)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_HARVEST_DATE.npt_type, S_PLOT_HARVEST_DATE.npt_name_s, S_HARVEST_TITLE_S, "The date when the seeds were harvested", date_def, PL_ADVANCED)) != NULL)
 														{
 															InitSharedType (&def);
 
 															def.st_ulong_value = 0;
 
-															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_WIDTH.npt_type, S_PLOT_WIDTH.npt_name_s, S_WIDTH_TITLE_S, "The width of the plot", def, PL_BASIC)) != NULL)
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_WIDTH.npt_type, S_PLOT_WIDTH.npt_name_s, S_WIDTH_TITLE_S, "The width of the plot", def, PL_ADVANCED)) != NULL)
 																{
-																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_LENGTH.npt_type, S_PLOT_LENGTH.npt_name_s, S_LENGTH_TITLE_S, "The length of the plot", def, PL_BASIC)) != NULL)
+																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_LENGTH.npt_type, S_PLOT_LENGTH.npt_name_s, S_LENGTH_TITLE_S, "The length of the plot", def, PL_ADVANCED)) != NULL)
 																		{
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TRIAL_DESIGN.npt_type, S_PLOT_TRIAL_DESIGN.npt_name_s, S_TRIAL_DESIGN_TITLE_S, "The trial desgin of the plot", def, PL_BASIC)) != NULL)
+																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TRIAL_DESIGN.npt_type, S_PLOT_TRIAL_DESIGN.npt_name_s, S_TRIAL_DESIGN_TITLE_S, "The trial desgin of the plot", def, PL_ADVANCED)) != NULL)
 																				{
-																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TREATMENT.npt_type, S_PLOT_TREATMENT.npt_name_s, S_TREATMENT_TITLE_S, "The treatments of the plot", def, PL_BASIC)) != NULL)
+																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TREATMENT.npt_type, S_PLOT_TREATMENT.npt_name_s, S_TREATMENT_TITLE_S, "The treatments of the plot", def, PL_ADVANCED)) != NULL)
 																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_GROWING_CONDITION.npt_type, S_PLOT_GROWING_CONDITION.npt_name_s, S_GROWING_CONDITION_TITLE_S, "The growing condtions of the plot", def, PL_BASIC)) != NULL)
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_GROWING_CONDITION.npt_type, S_PLOT_GROWING_CONDITION.npt_name_s, S_GROWING_CONDITION_TITLE_S, "The growing condtions of the plot", def, PL_ADVANCED)) != NULL)
 																								{
 																									success_flag = true;
 																								}
@@ -249,7 +252,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 	if (headers_s)
 		{
-			param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
 
 			if (param_p)
 				{
@@ -303,8 +306,8 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 				{
 					json_t *row_p = json_array_get (plots_json_p, i);
 					Plot *plot_p = NULL;
-					uint32 sowing_date = 0;
-					uint32 harvest_date = 0;
+					struct tm *sowing_date_p = NULL;
+					struct tm *harvest_date_p = NULL;
 					double width = 0.0;
 					double length = 0.0;
 					int32 row = -1;
@@ -314,15 +317,30 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 					const char *treatment_s = GetJSONString (plots_json_p, S_TREATMENT_TITLE_S);
 					const char *trial_design_s = GetJSONString (plots_json_p, S_TRIAL_DESIGN_TITLE_S);
 
-					if (GetJSONStringAsInteger (row_p, S_SOWING_TITLE_S, &sowing_date))
+					const char *date_s = GetJSONString (plots_json_p, S_SOWING_TITLE_S);
+
+					if (date_s)
 						{
+							sowing_date_p = GetTimeFromString (date_s);
 
-						}		/* if (GetJSONStringAsInteger (row_p, S_SOWING_TITLE_S, &sowing_date)) */
+							if (!sowing_date_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
+								}
+						}
 
-					if (GetJSONStringAsInteger (row_p, S_HARVEST_TITLE_S, &harvest_date))
+
+					date_s = GetJSONString (plots_json_p, S_HARVEST_TITLE_S);
+					if (date_s)
 						{
+							harvest_date_p = GetTimeFromString (date_s);
 
-						}		/* if (GetJSONStringAsInteger (row_p, S_HARVEST_TITLE_S, &harvest_date)) */
+							if (!harvest_date_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
+								}
+						}
+
 
 					if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row))
 						{
@@ -345,7 +363,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 						}		/* if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length)) */
 
 
-					plot_p = AllocatePlot (NULL, sowing_date, harvest_date, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
+					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
 
 					if (plot_p)
 						{

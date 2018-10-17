@@ -27,6 +27,7 @@
 #include "plot.h"
 #include "location.h"
 #include "dfw_util.h"
+#include "time_util.h"
 
 /*
  * DB COLUMN NAMES
@@ -38,12 +39,11 @@
 static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
 
-
 /*
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
+ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -59,29 +59,50 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 
 			if (empty_flag || copied_soil_s)
 				{
-					LinkedList *plots_p = AllocateLinkedList (FreePlotNode);
+					struct tm *copied_sowing_date_p = NULL;
 
-					if (plots_p)
+					if (CopyValidDate (sowing_date_p, &copied_sowing_date_p))
 						{
-							ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+							struct tm *copied_harvest_date_p = NULL;
 
-							if (area_p)
+							if (CopyValidDate (harvest_date_p, &copied_harvest_date_p))
 								{
-									area_p -> ea_id_p = id_p;
-									area_p -> ea_name_s = copied_name_s;
-									area_p -> ea_soil_type_s = copied_soil_s;
-									area_p -> ea_sowing_year = sowing_year;
-									area_p -> ea_harvest_year = harvest_year;
-									area_p -> ea_parent_p = parent_field_trial_p;
-									area_p -> ea_location_p = location_p;
-									area_p -> ea_plots_p = NULL;
+									LinkedList *plots_p = AllocateLinkedList (FreePlotNode);
 
-									return area_p;
+									if (plots_p)
+										{
+											ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+
+											if (area_p)
+												{
+													area_p -> ea_id_p = id_p;
+													area_p -> ea_name_s = copied_name_s;
+													area_p -> ea_soil_type_s = copied_soil_s;
+													area_p -> ea_sowing_date_p = copied_sowing_date_p;
+													area_p -> ea_harvest_date_p = copied_harvest_date_p;
+													area_p -> ea_parent_p = parent_field_trial_p;
+													area_p -> ea_location_p = location_p;
+													area_p -> ea_plots_p = NULL;
+
+													return area_p;
+												}
+
+											FreeLinkedList (plots_p);
+										}		/* if (plots_p) */
+
+									if (copied_harvest_date_p)
+										{
+											FreeTime (copied_harvest_date_p);
+										}
+
+								}		/* if (CopyValidDate (harvest_date_p, &copied_harvest_date_p)) */
+
+							if (copied_sowing_date_p)
+								{
+									FreeTime (copied_sowing_date_p);
 								}
 
-							FreeLinkedList (plots_p);
-						}		/* if (plots_p) */
-
+						}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
 
 					FreeCopiedString (copied_soil_s);
 				}		/* if (copied_soil_s) */
@@ -148,6 +169,17 @@ void FreeExperimentalArea (ExperimentalArea *area_p)
 	if (area_p -> ea_plots_p)
 		{
 			FreeLinkedList (area_p -> ea_plots_p);
+		}
+
+
+	if (area_p -> ea_sowing_date_p)
+		{
+			FreeTime (area_p -> ea_sowing_date_p);
+		}
+
+	if (area_p -> ea_harvest_date_p)
+		{
+			FreeTime (area_p -> ea_harvest_date_p);
 		}
 
 	FreeMemory (area_p);
@@ -274,9 +306,9 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool ex
 
 							if (add_location_flag)
 								{
-									if ((area_p -> ea_sowing_year == 0) || json_object_set_new (area_json_p, EA_SOWING_YEAR_S, json_integer (area_p -> ea_sowing_year)) == 0)
+									if (AddValidDateToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
 										{
-											if ((area_p -> ea_harvest_year == 0) || json_object_set_new (area_json_p, EA_HARVEST_YEAR_S, json_integer (area_p -> ea_harvest_year)) == 0)
+											if (AddValidDateToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
 												{
 													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
 														{
@@ -286,6 +318,7 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool ex
 																}
 														}
 												}
+
 										}
 								}
 
@@ -324,8 +357,6 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 												{
 													ExperimentalArea *area_p = NULL;
 													FieldTrial *trial_p = NULL;
-													uint32 sowing_year = 0;
-													uint32 harvest_year = 0;
 													const char *parent_field_trial_id_s = NULL;
 													Location *location_p = NULL;
 													bool success_flag = true;
@@ -340,13 +371,37 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 
 													if (success_flag)
 														{
-															GetJSONInteger (json_p, EA_SOWING_YEAR_S, (int *) &sowing_year);
-															GetJSONInteger (json_p, EA_HARVEST_YEAR_S,(int *) &harvest_year);
+															struct tm *sowing_date_p = NULL;
 
-															area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_year, harvest_year, location_p, trial_p, data_p);
+															if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p))
+																{
+																	struct tm *harvest_date_p = NULL;
 
-															return area_p;
-														}
+																	if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p))
+																		{
+																			area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+
+																			if (area_p)
+																				{
+																					return area_p;
+																				}
+
+																			if (harvest_date_p)
+																				{
+																					FreeTime (harvest_date_p);
+																				}
+
+																		}		/* if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p)) */
+
+																	if (sowing_date_p)
+																		{
+																			FreeTime (sowing_date_p);
+																		}
+
+																}		/* if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p)) */
+
+														}		/* if (success_flag) */
+
 												}
 
 											FreeBSONOid (id_p);
@@ -375,3 +430,4 @@ static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTr
 {
 	return GetExperimentalAreaFromJSON (json_p, false, data_p);
 }
+
