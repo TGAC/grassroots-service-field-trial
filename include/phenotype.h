@@ -51,6 +51,10 @@ typedef struct Phenotype
 
 	char *ph_growth_stage_s;
 
+	bool ph_corrected_flag;
+
+	char *ph_method_s;
+
 } Phenotype;
 
 
@@ -85,6 +89,9 @@ PHENOTYPE_PREFIX const char *PH_INSTRUMENT_S PHENOTYPE_VAL ("instrument");
 
 PHENOTYPE_PREFIX const char *PH_GROWTH_STAGE_S PHENOTYPE_VAL ("growth_stage");
 
+PHENOTYPE_PREFIX const char *PH_CORRECTED_S PHENOTYPE_VAL ("corrected");
+
+PHENOTYPE_PREFIX const char *PH_METHOD_S PHENOTYPE_VAL ("method");
 
 #ifdef __cplusplus
 extern "C"
@@ -94,7 +101,7 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, const char *trait_s, const char *trait_abbreviation_s, const char *measurement_s,
-																														const char *unit_s, const char *growth_stage_s, Instrument *instrument_p);
+																														const char *unit_s, const char *growth_stage_s, const bool corrected_value_flag, const char *method_s, Instrument *instrument_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotype (Phenotype *phenotype_p);
 
