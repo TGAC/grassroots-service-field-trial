@@ -26,9 +26,10 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "dfw_util.h"
+#include "time_util.h"
 
 
-static Instrument *GetInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p);
+static bool CreateInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p);
 
 
 
@@ -260,8 +261,9 @@ json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fiel
 }
 
 
-Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p)
+Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldTrialServiceData *data_p)
 {
+	Phenotype *phenotype_p = NULL;
 	const char *trait_s = GetJSONString (phenotype_json_p, PH_TRAIT_S);
 
 	if (trait_s)
@@ -278,36 +280,30 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p)
 
 							if (CreateValidDateFromJSON (phenotype_json_p, PH_DATE_S, &date_p))
 								{
-									bool corrected_flag;
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-									if (GetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, &corrected_flag))
+									if (id_p)
 										{
-											bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
-
-											if (id_p)
+											if (GetMongoIdFromJSON (phenotype_json_p, id_p))
 												{
-													if (GetMongoIdFromJSON (phenotype_json_p, id_p))
+													Instrument *instrument_p = NULL;
+
+													if (CreateInstrumentFromPhenotypeJSON (phenotype_json_p, &instrument_p, data_p))
 														{
 															bool corrected_flag;
 															const char *growth_stage_s = GetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S);
 															const char *trait_abbreviation_s = GetJSONString (phenotype_json_p, PH_TRAIT_ABBREVIATION_S);
 															const char *method_s = GetJSONString (phenotype_json_p, PH_METHOD_S);
-															Instrument *instrument_p = NULL;
 
 															GetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, &corrected_flag);
 
+															phenotype_p = AllocatePhenotype (id_p, date_p, trait_s, trait_abbreviation_s, measurement_s, unit_s, growth_stage_s, corrected_flag, method_s, instrument_p);
+														}
 
+												}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
 
-
-															AllocatePhenotype (id_p, date_p, trait_s, trait_abbreviation_s, measurement_s, unit_s, growth_stage_s, corrected_flag, method_s, instrument_p);
-
-
-														}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
-
-													FreeBSONOid (id_p);
-												}		/* if (id_p) */
-
-										}		/* if (GetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, &corrected_flag)) */
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
 
 								}		/* if (CreateValidDateFromJSON (phenotype_json_p, PH_DATE_S, &date_p)) */
 
@@ -317,7 +313,7 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p)
 
 		}		/* if (trait_s) */
 
-	return NULL;
+	return phenotype_p;
 }
 
 
@@ -357,16 +353,50 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 
 
 
-static Instrument *GetInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p)
+static bool CreateInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p)
 {
+	bool success_flag = false;
 	Instrument *instrument_p = NULL;
 	const json_t *val_p = json_object_get (phenotype_json_p, PH_INSTRUMENT_S);
 
 	if (val_p)
 		{
+			instrument_p = GetInstrumentFromJSON (val_p);
 
+			if (instrument_p)
+				{
+					*instrument_pp = instrument_p;
+					success_flag = true;
+				}
+		}
+	else
+		{
+			bson_oid_t *instrument_id_p = GetNewUnitialisedBSONOid ();
+
+			if (instrument_id_p)
+				{
+					if (GetNamedIdFromJSON (phenotype_json_p, PH_INSTRUMENT_ID_S, instrument_id_p))
+						{
+							instrument_p = GetInstrumentById (instrument_id_p, data_p);
+
+							if (instrument_p)
+								{
+									*instrument_pp = instrument_p;
+									success_flag = true;
+								}
+
+						}
+					else
+						{
+							/* no instrument in json */
+							success_flag = true;
+						}
+
+					FreeBSONOid (instrument_id_p);
+				}
 		}
 
-	return instrument_p;
+
+	return success_flag;
 }
 

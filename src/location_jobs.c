@@ -370,6 +370,7 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 
 						}		/* if (json_is_array (results_p)) */
 
+					json_decref (results_p);
 				}		/* if (results_p) */
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */

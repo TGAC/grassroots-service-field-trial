@@ -161,3 +161,49 @@ bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *d
 
 	return success_flag;
 }
+
+
+
+Instrument *GetInstrumentById (const bson_oid_t *instrument_id_p, const DFWFieldTrialServiceData *data_p)
+{
+	Instrument *instrument_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_INSTRUMENT]))
+		{
+			bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (instrument_id_p));
+
+			if (query_p)
+				{
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+					if (results_p)
+						{
+							if (json_is_array (results_p))
+								{
+									const size_t num_results = json_array_size (results_p);
+
+									if (num_results == 1)
+										{
+											json_t *entry_p = json_array_get (results_p, 0);
+
+											instrument_p = GetInstrumentFromJSON (entry_p);
+
+											if (!instrument_p)
+												{
+
+												}		/* if (!instrument_p) */
+
+										}		/* if (num_results == 1) */
+
+								}		/* if (json_is_array (results_p)) */
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
+
+	return instrument_p;
+}

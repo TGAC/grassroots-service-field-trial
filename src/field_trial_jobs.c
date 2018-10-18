@@ -259,7 +259,13 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Para
 
 						}		/* if (json_is_array (results_p)) */
 
+					json_decref (results_p);
 				}		/* if (results_p) */
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
 
