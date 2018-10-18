@@ -105,20 +105,74 @@ bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 																												{
 																													success_flag = true;
 																												}
+																											else
+																												{
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_LOCATIONS.npt_name_s);
+																												}
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_LOCATION.npt_name_s);
 																										}
 																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_ALTITUDE.npt_name_s);
+																								}
+																						}
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddParameterKeyValuePair failed for \"%s\": \"%s\"", PA_DOUBLE_PRECISION_S, precision_s);
 																						}
 																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_LATITUDE.npt_name_s);
+																				}
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddParameterKeyValuePair failed for \"%s\": \"%s\"", PA_DOUBLE_PRECISION_S, precision_s);
 																		}
 																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_LATITUDE.npt_name_s);
+																}														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_USE_GPS.npt_name_s);
 														}
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_POSTCODE.npt_name_s);
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_COUNTRY.npt_name_s);
 										}
 								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_COUNTY.npt_name_s);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_TOWN.npt_name_s);
 						}
 				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_STREET.npt_name_s);
+				}
 		}
-
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_NAME.npt_name_s);
+		}
 	return success_flag;
 }
 
@@ -219,7 +273,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 																							if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_ALTITUDE.npt_name_s, &elevation_value, true))
 																								{
-																									*elevation_p = elevation_value.st_data_value;
+																									elevation_p = &elevation_value.st_data_value;
 																								}
 
 

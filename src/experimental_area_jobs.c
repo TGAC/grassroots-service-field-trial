@@ -27,7 +27,7 @@
 #include "string_utils.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
-
+#include "time_util.h"
 
 /*
  * Experimental Area parameters
@@ -66,11 +66,18 @@ bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 		{
 			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_SOIL.npt_type, S_EXPERIMENTAL_AREA_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_ALL)) != NULL)
 				{
-					def.st_ulong_value = 2017;
+					struct tm t;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_type, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, "Sowing Year", "The sowing year of the Experimental Area", def, PL_ALL)) != NULL)
+					ClearTime (&t);
+					SetDateValuesForTime (&t, 2017, 1, 1);
+
+					def.st_time_p = &t;
+
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_type, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Experimental Area", def, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_type, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, "Harvest Year", "The harvest year of the Experimental Area", def, PL_ALL)) != NULL)
+							ClearTime (&t);
+
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_type, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Experimental Area", def, PL_ALL)) != NULL)
 								{
 									def.st_string_value_s = NULL;
 
@@ -90,15 +97,59 @@ bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 																				{
 																					success_flag = true;
 																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s);
+																				}
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_EXPERIMENTAL_AREA.npt_name_s);
 																		}
 																}
+															else
+																{
+																	FreeParameter (param_p);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpLocationsListParameter failed");
+																}
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIALS_LIST.npt_name_s);
 														}
 												}
+											else
+												{
+													FreeParameter (param_p);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpFieldTrialsListParameter failed");
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIALS_LIST.npt_name_s);
 										}
 								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s);
 						}
 				}
+			else
+				{													FreeParameter (param_p);
+
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_SOIL.npt_name_s);
+				}
 		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_NAME.npt_name_s);
+		}
+
 
 	return success_flag;
 }
@@ -128,7 +179,7 @@ bool RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSe
 				{
 					if (value.st_boolean_value)
 						{
-							bool success_flag = AddExperimentalArea (job_p, param_set_p, data_p);
+							//bool success_flag = AddExperimentalArea (job_p, param_set_p, data_p);
 
 							job_done_flag = true;
 						}		/* if (value.st_boolean_value) */
@@ -183,8 +234,20 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 															if (location_p)
 																{
 																	ExperimentalArea *area_p = NULL;
+																	struct tm *sowing_date_p = NULL;
+																	struct tm *harvest_date_p = NULL;
 
-																	area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, sowing_year_value.st_time_p, harvest_year_value.st_time_p, location_p, trial_p, data_p);
+																	if (IsValidDate (sowing_year_value.st_time_p))
+																		{
+																			sowing_date_p = sowing_year_value.st_time_p;
+																		}
+
+																	if (IsValidDate (harvest_year_value.st_time_p))
+																		{
+																			harvest_date_p = harvest_year_value.st_time_p;
+																		}
+
+																	area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
 
 																	if (area_p)
 																		{

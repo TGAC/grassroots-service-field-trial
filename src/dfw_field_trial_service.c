@@ -204,7 +204,7 @@ static const char *GetDFWFieldTrialServiceInformationUri (Service * UNUSED_PARAM
 
 static ParameterSet *GetDFWFieldTrialServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p  = AllocateParameterSet ("DFWFieldTrial service parameters", "The parameters used for the DFWFieldTrial service");
+	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial service parameters", "The parameters used for the DFWFieldTrial service");
 
 	if (params_p)
 		{
@@ -216,15 +216,35 @@ static ParameterSet *GetDFWFieldTrialServiceParameters (Service *service_p, Reso
 						{
 							if (AddLocationParams (data_p, params_p))
 								{
-									if (AddPlotParams (service_p -> se_data_p, params_p))
+									if (AddPlotParams (data_p, params_p))
 										{
 											return params_p;
 										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPlotParams failed");
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddLocationParams failed");
 								}
 						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddExperimentalAreaParams failed");
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialParams failed");
 				}
 
 			FreeParameterSet (params_p);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetDFWFieldTrialServiceName (service_p));
 		}
 
 	return NULL;
