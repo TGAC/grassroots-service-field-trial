@@ -28,6 +28,9 @@
 #include "dfw_util.h"
 
 
+static Instrument *GetInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p);
+
+
 
 Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, const char *trait_s, const char *trait_abbreviation_s, const char *measurement_s,
 															const char *unit_s, const char *growth_stage_s, const bool corrected_value_flag, const char *method_s, Instrument *instrument_p)
@@ -285,10 +288,23 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p)
 												{
 													if (GetMongoIdFromJSON (phenotype_json_p, id_p))
 														{
+															bool corrected_flag;
+															const char *growth_stage_s = GetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S);
+															const char *trait_abbreviation_s = GetJSONString (phenotype_json_p, PH_TRAIT_ABBREVIATION_S);
+															const char *method_s = GetJSONString (phenotype_json_p, PH_METHOD_S);
+															Instrument *instrument_p = NULL;
+
+															GetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, &corrected_flag);
+
+
+
+
+															AllocatePhenotype (id_p, date_p, trait_s, trait_abbreviation_s, measurement_s, unit_s, growth_stage_s, corrected_flag, method_s, instrument_p);
 
 
 														}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
 
+													FreeBSONOid (id_p);
 												}		/* if (id_p) */
 
 										}		/* if (GetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, &corrected_flag)) */
@@ -337,5 +353,20 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 		}		/* if (phenotype_p -> ph_id_p) */
 
 	return success_flag;
+}
+
+
+
+static Instrument *GetInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p)
+{
+	Instrument *instrument_p = NULL;
+	const json_t *val_p = json_object_get (phenotype_json_p, PH_INSTRUMENT_S);
+
+	if (val_p)
+		{
+
+		}
+
+	return instrument_p;
 }
 
