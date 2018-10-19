@@ -289,10 +289,10 @@ Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *a
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Materials array does not contain just a single item");
 										}
 
-								}		/* if (json_is_array (results_p)) */data_p -> dftsd_collection_ss [DFTD_MATERIAL]
+								}		/* if (json_is_array (results_p)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Materials array does not contain just a single item");
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
 								}
 
 							json_decref (results_p);

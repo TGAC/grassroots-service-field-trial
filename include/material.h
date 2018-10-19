@@ -31,6 +31,7 @@
 #include "dfw_field_trial_service_library.h"
 #include "jansson.h"
 #include "typedefs.h"
+#include "experimental_area.h"
 
 
 typedef struct Material
