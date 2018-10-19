@@ -30,8 +30,7 @@
  * API FUNCTIONS
  */
 
-
-Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, bson_oid_t *germplasm_id_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const ExperimentalArea *area_p, bson_oid_t *germplasm_id_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_source_s = EasyCopyToNewString (source_s);
 
@@ -254,4 +253,67 @@ bool SaveMaterial (Material *material_p, DFWFieldTrialServiceData *data_p)
 		}		/* if (material_p -> ma_id_p) */
 
 	return success_flag;
+}
+
+
+Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+{
+	Material *material_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL]))
+		{
+			bson_t *query_p = BCON_NEW ( MA_INTERNAL_NAME_S, material_s, MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> ea_id_p));
+
+			if (query_p)
+				{
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+					if (results_p)
+						{
+							if (json_is_array (results_p))
+								{
+									if (json_array_size (results_p) == 1)
+										{
+											json_t *result_p = json_array_get (results_p, 0);
+
+											material_p = GetMaterialFromJSON (result_p, data_p);
+
+											if (!material_p)
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get Material from JSON");
+												}
+
+										}		/* if (json_array_size (results_p) == 1) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Materials array does not contain just a single item");
+										}
+
+								}		/* if (json_is_array (results_p)) */data_p -> dftsd_collection_ss [DFTD_MATERIAL]
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Materials array does not contain just a single item");
+								}
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query");
+				}
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MATERIAL]);
+		}
+
+	return material_p;
 }

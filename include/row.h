@@ -37,6 +37,8 @@ typedef struct Row
 	uint32 ro_index;
 
 	Material *ro_material_p;
+
+	char *ro_material_s;
 } Row;
 
 
@@ -71,6 +73,12 @@ ROW_PREFIX const char *RO_PLOT_ID_S ROW_VAL ("plot_id");
 
 ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
 
+/**
+ * The internal name for a field trial's material. This is
+ * used as a temporary holding value until the material pointer
+ * has been linked up
+ */
+ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("trial_material_s");
 
 
 
@@ -80,7 +88,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, const char *internal_material_s, Plot *parent_plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
 
@@ -90,7 +98,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, const bool expand_fields_flag);
 
 
 #ifdef __cplusplus

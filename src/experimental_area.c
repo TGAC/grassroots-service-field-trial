@@ -338,78 +338,74 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 
 	if (name_s)
 		{
-			const char *soil_s = GetJSONString (json_p, EA_SOIL_S);
+			bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
 
-			if (soil_s)
+			if (location_id_p)
 				{
-					bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
-
-					if (location_id_p)
+					if (GetNamedIdFromJSON (json_p, EA_LOCATION_ID_S, location_id_p))
 						{
-							if (GetNamedIdFromJSON (json_p, EA_LOCATION_ID_S, location_id_p))
+							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+							if (id_p)
 								{
-									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
-
-									if (id_p)
+									if (GetMongoIdFromJSON (json_p, id_p))
 										{
-											if (GetMongoIdFromJSON (json_p, id_p))
+											ExperimentalArea *area_p = NULL;
+											FieldTrial *trial_p = NULL;
+											const char *parent_field_trial_id_s = NULL;
+											Location *location_p = NULL;
+											bool success_flag = true;
+
+											if (full_location_flag)
 												{
-													ExperimentalArea *area_p = NULL;
-													FieldTrial *trial_p = NULL;
-													const char *parent_field_trial_id_s = NULL;
-													Location *location_p = NULL;
-													bool success_flag = true;
-
-													if (full_location_flag)
+													if (! (location_p = GetLocationById (location_id_p, data_p)))
 														{
-															if (! (location_p = GetLocationById (location_id_p, data_p)))
-																{
-																	success_flag = false;
-																}
+															success_flag = false;
 														}
-
-													if (success_flag)
-														{
-															struct tm *sowing_date_p = NULL;
-
-															if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p))
-																{
-																	struct tm *harvest_date_p = NULL;
-
-																	if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p))
-																		{
-																			area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
-
-																			if (area_p)
-																				{
-																					return area_p;
-																				}
-
-																			if (harvest_date_p)
-																				{
-																					FreeTime (harvest_date_p);
-																				}
-
-																		}		/* if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p)) */
-
-																	if (sowing_date_p)
-																		{
-																			FreeTime (sowing_date_p);
-																		}
-
-																}		/* if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p)) */
-
-														}		/* if (success_flag) */
-
 												}
 
-											FreeBSONOid (id_p);
+											if (success_flag)
+												{
+													struct tm *sowing_date_p = NULL;
+
+													if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p))
+														{
+															struct tm *harvest_date_p = NULL;
+
+															if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p))
+																{
+																	const char *soil_s = GetJSONString (json_p, EA_SOIL_S);
+
+																	area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+
+																	if (area_p)
+																		{
+																			return area_p;
+																		}
+
+																	if (harvest_date_p)
+																		{
+																			FreeTime (harvest_date_p);
+																		}
+
+																}		/* if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p)) */
+
+															if (sowing_date_p)
+																{
+																	FreeTime (sowing_date_p);
+																}
+
+														}		/* if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p)) */
+
+												}		/* if (success_flag) */
+
 										}
-								}		/* if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p)) */
 
-						}		/* if (address_id_p) */
+									FreeBSONOid (id_p);
+								}
+						}		/* if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p)) */
 
-				}		/* if (soil_s) */
+				}		/* if (address_id_p) */
 
 		}		/* if (name_s) */
 

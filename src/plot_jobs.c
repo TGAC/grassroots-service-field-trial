@@ -38,6 +38,8 @@ typedef enum
 	PP_LENGTH,
 	PP_ROW,
 	PP_COLUMN,
+	PP_RACK_INDEX,
+	PP_MATERIAL,
 	PP_TRIAL_DESIGN,
 	PP_GROWING_CONDITION,
 	PP_TREATMENT,
@@ -51,6 +53,8 @@ static const char * const S_WIDTH_TITLE_S = "Width";
 static const char * const S_LENGTH_TITLE_S = "Length";
 static const char * const S_ROW_TITLE_S = "Row";
 static const char * const S_COLUMN_TITLE_S = "Column";
+static const char * const S_RACK_TITLE_S = "Rack";
+static const char * const S_MATERIAL_TITLE_S = "Material";
 static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
 static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
@@ -294,7 +298,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 	InitSharedType (&def);
 
 	headers_s = ConcatenateVarargsStrings (S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
-																							 S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
+																				 S_RACK_TITLE_S, delim_s, S_MATERIAL_TITLE_S, delim_s, S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
 
 
 	if (headers_s)
@@ -355,10 +359,16 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 					Plot *plot_p = NULL;
 					struct tm *sowing_date_p = NULL;
 					struct tm *harvest_date_p = NULL;
-					double width = 0.0;
-					double length = 0.0;
+
+
 					int32 row = -1;
-					int32 column = -1;
+
+					const char *material_s = GetJSONString (plots_json_p, S_MATERIAL_TITLE_S);
+
+					if (material_s)
+						{
+
+						}		/* if (material_s) */
 
 					const char *growing_condition_s = GetJSONString (plots_json_p, S_GROWING_CONDITION_TITLE_S);
 					const char *treatment_s = GetJSONString (plots_json_p, S_TREATMENT_TITLE_S);
@@ -391,33 +401,50 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 
 					if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row))
 						{
+							int32 column = -1;
+
+							if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column))
+								{
+									int32 rack = -1;
+
+									if (GetJSONStringAsInteger (row_p, S_RACK_TITLE_S, &rack))
+										{
+											double width = 0.0;
+
+											if (GetJSONStringAsDouble (row_p, S_WIDTH_TITLE_S, &width))
+												{
+													double length = 0.0;
+
+													if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length))
+														{
+															plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
+
+															if (plot_p)
+																{
+																	if (SavePlot (plot_p, data_p))
+																		{
+																			/*
+																			 * plot_p now has an id, so we can add the row/rack.
+																			 *
+																			 * We can check to see if the material has already been saved.
+																			 * If not, we'll use the internal material name temporarily.
+																			 */
+
+
+																		}		/* if (SavePlot (plot_p, data_p)) */
+
+																	FreePlot (plot_p);
+																}
+
+														}		/* if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length)) */
+
+												}		/* if (GetJSONStringAsDouble (row_p, S_WIDTH_TITLE_S, &width)) */
+
+										}		/* if (GetJSONStringAsInteger (row_p, S_RACK_TITLE_S, &rack)) */
+
+								}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
 
 						}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
-
-					if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column))
-						{
-
-						}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
-
-					if (GetJSONStringAsDouble (row_p, S_WIDTH_TITLE_S, &width))
-						{
-
-						}		/* if (GetJSONStringAsDouble (row_p, S_WIDTH_TITLE_S, &width)) */
-
-					if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length))
-						{
-
-						}		/* if (GetJSONStringAsDouble (row_p, S_LENGTH_TITLE_S, &length)) */
-
-
-					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
-
-					if (plot_p)
-						{
-							success_flag = SavePlot (plot_p, data_p);
-
-							FreePlot (plot_p);
-						}
 
 				}		/* for (i = 0; i < num_rows; ++ i) */
 

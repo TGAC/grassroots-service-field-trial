@@ -24,26 +24,75 @@
 #include "row.h"
 
 #include "memory_allocations.h"
+#include "string_utils.h"
+#include "streams.h"
 
 
-Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Plot *parent_plot_p)
+Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p,  const char *internal_material_s, Plot *parent_plot_p)
 {
-	Row *row_p = (Row *) AllocMemory (sizeof (Row));
+	char *copied_internal_material_s = NULL;
 
-	if (row_p)
+	/*
+	 * Make sure we have a valid material
+	 */
+	bool valid_material_flag = (material_p != NULL);
+
+	if (!valid_material_flag)
 		{
-			row_p -> ro_id_p = id_p;
-			row_p -> ro_index = index;
-			row_p -> ro_material_p = material_p;
-			row_p -> ro_plot_p = parent_plot_p;
+			if (internal_material_s)
+				{
+					if ((copied_internal_material_s = EasyCopyToNewString (internal_material_s)) != NULL)
+						{
+							valid_material_flag = true;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy material name \"%s\"", internal_material_s);
+						}
+				}
 		}
 
-	return row_p;
+
+	if (valid_material_flag)
+		{
+			Row *row_p = (Row *) AllocMemory (sizeof (Row));
+
+			if (row_p)
+				{
+					row_p -> ro_id_p = id_p;
+					row_p -> ro_index = index;
+					row_p -> ro_material_p = material_p;
+					row_p -> ro_material_s = copied_internal_material_s;
+					row_p -> ro_plot_p = parent_plot_p;
+
+					return row_p;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No valid material for row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+		}
+
+	if (copied_internal_material_s)
+		{
+			FreeCopiedString (copied_internal_material_s);
+		}
+
+	return NULL;
 }
 
 
 void FreeRow (Row *row_p)
 {
+	if (row_p -> ro_material_s)
+		{
+			FreeCopiedString (row_p -> ro_material_s);
+		}
+
 	FreeMemory (row_p);
 }
 
@@ -84,15 +133,18 @@ json_t *GetRowAsJSON (const Row *row_p)
 
 	if (row_json_p)
 		{
-			if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_material_p -> ma_id_p, RO_MATERIAL_ID_S))
+			if ((row_p -> ro_material_p == NULL) || (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_material_p -> ma_id_p, RO_MATERIAL_ID_S)))
 				{
-					if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
+					if ((row_p -> ro_material_s == NULL) || (SetJSONString (row_json_p, RO_MATERIAL_S, row_p -> ro_material_s)))
 						{
-							if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+							if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
 								{
-									if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
+									if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
 										{
-											return row_json_p;
+											if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
+												{
+													return row_json_p;
+												}
 										}
 								}
 						}
@@ -105,7 +157,69 @@ json_t *GetRowAsJSON (const Row *row_p)
 }
 
 
-Row *GetRowFromJSON (const json_t *json_p)
+Row *GetRowFromJSON (const json_t *json_p, const bool expand_fields_flag)
 {
+	bson_oid_t *plot_id_p = GetNewUnitialisedBSONOid ();
+
+	if (plot_id_p)
+		{
+			if (GetNamedIdFromJSON (json_p, RO_PLOT_ID_S, plot_id_p))
+				{
+					bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+					if (id_p)
+						{
+							if (GetMongoIdFromJSON (json_p, id_p))
+								{
+									bool valid_material_flag = false;
+									bson_oid_t *material_id_p = GetNewUnitialisedBSONOid ();
+									const char *material_s = NULL;
+
+									if (material_id_p)
+										{
+											if (GetNamedIdFromJSON (json_p, RO_MATERIAL_ID_S, material_id_p))
+												{
+													valid_material_flag = true;
+												}
+											else
+												{
+													FreeBSONOid (material_id_p);
+													material_id_p = NULL;
+												}
+										}
+
+									if (!valid_material_flag)
+										{
+											material_s = GetJSONString (json_p, RO_MATERIAL_S);
+
+											if (material_s)
+												{
+													valid_material_flag = true;
+												}
+										}
+
+									if (valid_material_flag)
+										{
+											int index = -1;
+
+											if (GetJSONInteger (json_p, RO_INDEX_S, &index))
+												{
+
+												}
+										}
+
+									if (material_id_p)
+										{
+											FreeBSONOid (material_id_p);
+										}
+								}
+
+							FreeBSONOid (id_p);
+						}
+				}
+
+			FreeBSONOid (plot_id_p);
+		}
+
 	return NULL;
 }
