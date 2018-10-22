@@ -88,7 +88,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, const char *internal_material_s, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Plot *parent_plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
 

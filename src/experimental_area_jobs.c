@@ -213,7 +213,7 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 							SharedType harvest_year_value;
 							InitSharedType (&harvest_year_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, &harvest_year_value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, &harvest_year_value, true))
 								{
 									SharedType parent_field_trial_value;
 									InitSharedType (&parent_field_trial_value);

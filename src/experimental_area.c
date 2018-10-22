@@ -421,6 +421,14 @@ ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const DF
 }
 
 
+ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const DFWFieldTrialServiceData *data_p)
+{
+	ExperimentalArea *area_p = GetDFWObjectById (area_id_p, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, data_p);
+
+	return area_p;
+}
+
+
 static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
 {
 	return GetExperimentalAreaFromJSON (json_p, false, data_p);

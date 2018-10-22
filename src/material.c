@@ -48,19 +48,28 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *
 
 							if (copied_barcode_s)
 								{
-									Material *material_p = (Material *) AllocMemory (sizeof (Material));
+									char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
 
-									if (material_p)
+									if (copied_internal_name_s)
 										{
-											material_p -> ma_id_p = id_p;
-											material_p -> ma_source_s = copied_source_s;
-											material_p -> ma_accession_s = copied_accession_s;
-											material_p -> ma_pedigree_s = copied_pedigree_s;
-											material_p -> ma_barcode_s = copied_barcode_s;
-											material_p -> ma_germplasm_id_p = germplasm_id_p;
+											Material *material_p = (Material *) AllocMemory (sizeof (Material));
 
-											return material_p;
-										}		/* if (material_p) */
+											if (material_p)
+												{
+													material_p -> ma_id_p = id_p;
+													material_p -> ma_source_s = copied_source_s;
+													material_p -> ma_accession_s = copied_accession_s;
+													material_p -> ma_pedigree_s = copied_pedigree_s;
+													material_p -> ma_barcode_s = copied_barcode_s;
+													material_p -> ma_germplasm_id_p = germplasm_id_p;
+													material_p -> ma_parent_area_p = area_p;
+													material_p -> ma_internal_name_s = copied_internal_name_s;
+
+													return material_p;
+												}		/* if (material_p) */
+
+											FreeCopiedString (copied_internal_name_s);
+										}		/* if (copied_internal_name_s) */
 
 									FreeCopiedString (copied_barcode_s);
 								}		/* if (copied_barcode_s) */
@@ -89,6 +98,35 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *
 	else
 		{
 
+		}
+
+	return NULL;
+}
+
+
+Material *AllocateMaterialByInternalName (bson_oid_t *id_p, const char *internal_name_s, const ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+{
+	char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
+
+	if (copied_internal_name_s)
+		{
+			Material *material_p = (Material *) AllocMemory (sizeof (Material));
+
+			if (material_p)
+				{
+					material_p -> ma_id_p = id_p;
+					material_p -> ma_source_s = NULL;
+					material_p -> ma_accession_s = NULL;
+					material_p -> ma_pedigree_s = NULL;
+					material_p -> ma_barcode_s = NULL;
+					material_p -> ma_germplasm_id_p = NULL;
+					material_p -> ma_parent_area_p = area_p;
+					material_p -> ma_internal_name_s = copied_internal_name_s;
+
+					return material_p;
+				}		/* if (material_p) */
+
+			FreeCopiedString (copied_internal_name_s);
 		}
 
 	return NULL;
@@ -167,7 +205,7 @@ json_t *GetMaterialAsJSON (const Material *material_p)
 
 
 
-Material *GetMaterialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimental_area_flag, const DFWFieldTrialServiceData *data_p)
 {
 	const char *source_s = GetJSONString (json_p, MA_SOURCE_S);
 
@@ -185,32 +223,63 @@ Material *GetMaterialFromJSON (const json_t *json_p, const DFWFieldTrialServiceD
 
 							if (pedigree_s)
 								{
-									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+									const char *internal_name_s = GetJSONString (json_p, MA_INTERNAL_NAME_S);
 
-									if (id_p)
+									if (internal_name_s)
 										{
-											if (GetMongoIdFromJSON (json_p, id_p))
+											bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+											if (id_p)
 												{
-													bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
-
-													if (germplasm_id_p)
+													if (GetMongoIdFromJSON (json_p, id_p))
 														{
-															if (GetNamedIdFromJSON (json_p, MA_GERMPLASM_ID_S, germplasm_id_p))
+															bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
+
+															if (germplasm_id_p)
 																{
-																	Material *material_p = AllocateMaterial (id_p, source_s, accession_s, pedigree_s, barcode_s, germplasm_id_p, data_p);
-
-																	if (material_p)
+																	if (GetNamedIdFromJSON (json_p, MA_GERMPLASM_ID_S, germplasm_id_p))
 																		{
-																			return material_p;
+																			ExperimentalArea *area_p = NULL;
+																			bool success_flag = !expand_experimental_area_flag;
+
+																			if (expand_experimental_area_flag)
+																				{
+																					bson_oid_t *exp_area_id_p = GetNewUnitialisedBSONOid ();
+
+																					if (exp_area_id_p)
+																						{
+																							if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
+																								{
+																									area_p = GetExperimentalAreaById (exp_area_id_p, data_p);
+																								}
+
+																							FreeBSONOid (exp_area_id_p);
+																						}
+																				}
+
+																			if (success_flag)
+																				{
+																					Material *material_p = AllocateMaterial (id_p, source_s, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, germplasm_id_p, data_p);
+
+																					if (material_p)
+																						{
+																							return material_p;
+																						}
+																				}
+
+																			if (area_p)
+																				{
+																					FreeExperimentalArea (area_p);
+																				}
 																		}
+
+																	FreeBSONOid (germplasm_id_p);
 																}
-
-															FreeBSONOid (germplasm_id_p);
 														}
-												}
 
-											FreeBSONOid (id_p);
-										}		/* if (id_p) */
+													FreeBSONOid (id_p);
+												}		/* if (id_p) */
+										}		/* if (internal_name_s) */
 
 								}		/* pedigree_s */
 
@@ -256,6 +325,25 @@ bool SaveMaterial (Material *material_p, DFWFieldTrialServiceData *data_p)
 }
 
 
+Material *GetOrCreateMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+{
+	Material *material_p = GetMaterialByInternalName (material_s, area_p, data_p);
+
+	if (!material_p)
+		{
+			material_p  = AllocateMaterialByInternalName (NULL, material_s, area_p, data_p);
+
+			if (!material_p)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Material with internal name of \"%s\" for area \"%s\"", material_s, area_p -> ea_name_s);
+				}
+
+		}		/* if (!material_p) */
+
+	return material_p;
+}
+
+
 Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
@@ -276,7 +364,7 @@ Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *a
 										{
 											json_t *result_p = json_array_get (results_p, 0);
 
-											material_p = GetMaterialFromJSON (result_p, data_p);
+											material_p = GetMaterialFromJSON (result_p, false, data_p);
 
 											if (!material_p)
 												{

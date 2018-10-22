@@ -55,7 +55,8 @@ SRCS 	= \
 	phenotype.c \
 	plot.c \
 	plot_jobs.c \
-	row.c
+	row.c \
+	submission_service.c
 	
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 

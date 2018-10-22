@@ -48,6 +48,10 @@ typedef struct Material
 
 	char *ma_barcode_s;
 
+	char *ma_internal_name_s;
+
+	const ExperimentalArea *ma_parent_area_p;
+
 } Material;
 
 
@@ -98,18 +102,22 @@ extern "C"
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const ExperimentalArea *area_p, bson_oid_t *germplasm_id_p, const DFWFieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByInternalName (bson_oid_t *id_p, const char *internal_name_s, const ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMaterial (Material *material_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMaterialAsJSON (const Material *material_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimental_area_flag, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveMaterial (Material *material_p, DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 

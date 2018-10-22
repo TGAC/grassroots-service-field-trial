@@ -14,21 +14,18 @@
 ** limitations under the License.
 */
 /*
- * plot_jobs.h
+ * submission_service.h
  *
- *  Created on: 1 Oct 2018
+ *  Created on: 22 Oct 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_JOBS_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_JOBS_H_
-
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SUBMISSION_SERVICE_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SUBMISSION_SERVICE_H_
 
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-#include "experimental_area.h"
-#include "plot.h"
 
 
 #ifdef __cplusplus
@@ -37,14 +34,8 @@ extern "C"
 #endif
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetDFWFieldTrialSubmissionService (void);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, const ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }
@@ -52,4 +43,4 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, con
 
 
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_JOBS_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SUBMISSION_SERVICE_H_ */

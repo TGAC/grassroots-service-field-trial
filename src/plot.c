@@ -70,6 +70,9 @@ Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const stru
 															plot_p -> pl_column_index = column_index;
 															plot_p -> pl_parent_p = parent_p;
 															plot_p -> pl_rows_p = rows_p;
+															plot_p -> pl_growing_conditions_s = copied_growing_conditions_s;
+															plot_p -> pl_treatments_s = copied_treatments_s;
+															plot_p -> pl_trial_design_s = copied_trial_design_s;
 
 															return plot_p;
 														}		/* if (plot_p) */
@@ -225,10 +228,126 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 
 json_t *GetPlotAsJSON (const Plot *plot_p)
 {
-	json_t *plot_json_p = NULL;
+	json_t *plot_json_p = json_object ();
 
+	if (plot_json_p)
+		{
+			if (SetJSONInteger (plot_json_p, PL_ROW_INDEX_S, plot_p -> pl_row_index))
+				{
+					if (SetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, plot_p -> pl_column_index))
+						{
+							if (SetJSONReal (plot_json_p, PL_WIDTH_S, plot_p -> pl_width))
+								{
+									if (SetJSONReal (plot_json_p, PL_LENGTH_S, plot_p -> pl_length))
+										{
+											if ((IsStringEmpty (plot_p -> pl_growing_conditions_s)) || (SetJSONString (plot_json_p, PL_GROWING_CONDITION_S, plot_p -> pl_growing_conditions_s)))
+												{
+													if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s)))
+														{
+															if ((IsStringEmpty (plot_p -> pl_trial_design_s)) || (SetJSONString (plot_json_p, PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s)))
+																{
+																	if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S))
+																		{
+																			if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S))
+																				{
+																					if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
+																						{
+																							if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S))
+																								{
+																									return plot_json_p;
+																								}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S)) */
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_FIELD_TRIAL_S);
+																								}
 
-	return plot_json_p;
+																						}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id");
+																						}
+
+																				}		/* if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S)) */
+																			else
+																				{
+																					char *time_s = NULL;
+
+																					if (plot_p -> pl_harvest_date_p)
+																						{
+																							time_s = GetTimeAsString (plot_p -> pl_harvest_date_p, false);
+																						}
+
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_HARVEST_DATE_S, time_s ? time_s : "");
+
+																					if (time_s)
+																						{
+																							FreeCopiedString (time_s);
+																						}
+																				}
+
+																		}		/* if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S)) */
+																	else
+																		{
+																			char *time_s = NULL;
+
+																			if (plot_p -> pl_sowing_date_p)
+																				{
+																					time_s = GetTimeAsString (plot_p -> pl_sowing_date_p, false);
+																				}
+
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_SOWING_DATE_S, time_s ? time_s : "");
+
+																			if (time_s)
+																				{
+																					FreeCopiedString (time_s);
+																				}
+																		}
+
+																}		/* if ((IsStringEmpty (plot_p -> pl_trial_design_s)) || (SetJSONString (plot_json_p, PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s))) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s);
+																}
+
+														}		/* if ((IsStringEmpty (plot_p -> pl_growing_conditions_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s))) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TREATMENT_S, plot_p -> pl_treatments_s);
+														}
+
+												}		/* if ((IsStringEmpty (plot_p -> pl_growing_conditions_s)) || (SetJSONString (plot_json_p, PL_GROWING_CONDITION_S, plot_p -> pl_growing_conditions_s))) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_GROWING_CONDITION_S, plot_p -> pl_growing_conditions_s);
+												}
+
+										}		/* if (SetJSONReal (plot_json_p, PL_LENGTH_S, plot_p -> pl_length)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " DOUBLE64_FMT, PL_LENGTH_S, plot_p -> pl_length);
+										}
+
+								}		/* if (SetJSONReal (plot_json_p, PL_WIDTH_S, plot_p -> pl_width)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " DOUBLE64_FMT, PL_WIDTH_S, plot_p -> pl_width);
+								}
+						}		/* if (SetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, plot_p -> pl_column_index)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT, PL_COLUMN_INDEX_S, plot_p -> pl_column_index);
+						}
+
+				}		/* if (SetJSONInteger (plot_json_p, PL_ROW_INDEX_S, plot_p -> pl_row_index)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT, PL_ROW_INDEX_S, plot_p -> pl_row_index);
+				}
+
+			json_decref (plot_json_p);
+		}		/* if (plot_json_p) */
+
+	return NULL;
 }
 
 
