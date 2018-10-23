@@ -101,6 +101,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, const bool expand_fields_flag);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

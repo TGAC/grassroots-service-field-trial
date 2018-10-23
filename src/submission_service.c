@@ -20,16 +20,19 @@
  *      Author: billy
  */
 
-#include "audit.h"
+
 #include "submission_service.h"
-#include "streams.h"
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
 #include "experimental_area_jobs.h"
+#include "material_jobs.h"
 #include "location_jobs.h"
+#include "gene_bank_jobs.h"
+
+#include "audit.h"
+#include "streams.h"
 #include "math_utils.h"
 #include "string_utils.h"
-#include "material_jobs.h"
 
 /*
  * Static declarations

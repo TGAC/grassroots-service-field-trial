@@ -186,3 +186,35 @@ Row *GetRowFromJSON (const json_t *json_p, const bool expand_fields_flag)
 
 	return NULL;
 }
+
+
+bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bool insert_flag = false;
+
+	if (! (row_p -> ro_id_p))
+		{
+			row_p -> ro_id_p  = GetNewBSONOid ();
+
+			if (row_p -> ro_id_p)
+				{
+					insert_flag = true;
+				}
+		}
+
+	if (row_p -> ro_id_p)
+		{
+			json_t *row_json_p = GetRowAsJSON (row_p);
+
+			if (row_json_p)
+				{
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], insert_flag);
+
+					json_decref (row_json_p);
+				}		/* if (row_json_p) */
+
+		}		/* if (row_p -> ro_id_p) */
+
+	return success_flag;
+}

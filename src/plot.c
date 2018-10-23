@@ -192,8 +192,6 @@ void FreePlotNode (ListItem *node_p)
 }
 
 
-
-
 bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;

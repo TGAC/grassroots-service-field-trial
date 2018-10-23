@@ -22,13 +22,23 @@
 
 #define ALLOCATE_GENE_BANK_TAGS (1)
 #include "gene_bank.h"
+#include "dfw_util.h"
 
 #include "memory_allocations.h"
 #include "string_utils.h"
 
 
+/*
+ * static declarations
+ */
+
+static void *GetGeneBankCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
 
+
+/*
+ * API definitions
+ */
 
 GeneBank *AllocateGeneBank (bson_oid_t *id_p, const char *name_s, const char *url_s, const char *api_url_s)
 {
@@ -239,3 +249,15 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 }
 
 
+GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const DFWFieldTrialServiceData *data_p)
+{
+	GeneBank *gene_bank_p = GetDFWObjectByIdString (gene_bank_id_s, DFTD_GENE_BANK, GetGeneBankCallback, data_p);
+
+	return gene_bank_p;
+}
+
+
+static void *GetGeneBankCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
+{
+	return GetGeneBankFromJSON (json_p);
+}

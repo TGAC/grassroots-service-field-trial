@@ -41,6 +41,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddGeneBankParams (ServiceData *data_p, Param
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForGeneBankParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
+
 
 #ifdef __cplusplus
 }

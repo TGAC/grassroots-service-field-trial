@@ -33,75 +33,71 @@ static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);
  * API FUNCTIONS
  */
 
-Material *AllocateMaterial (bson_oid_t *id_p, const char *source_s, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const ExperimentalArea *area_p, bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const ExperimentalArea *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
 {
-	char *copied_source_s = EasyCopyToNewString (source_s);
+	char *copied_accession_s = EasyCopyToNewString (accession_s);
 
-	if (copied_source_s)
+	if (copied_accession_s)
 		{
-			char *copied_accession_s = EasyCopyToNewString (accession_s);
+			char *copied_pedigree_s = EasyCopyToNewString (pedigree_s);
 
-			if (copied_accession_s)
+			if (copied_pedigree_s)
 				{
-					char *copied_pedigree_s = EasyCopyToNewString (pedigree_s);
+					char *copied_barcode_s = EasyCopyToNewString (barcode_s);
 
-					if (copied_pedigree_s)
+					if (copied_barcode_s)
 						{
-							char *copied_barcode_s = EasyCopyToNewString (barcode_s);
+							char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
 
-							if (copied_barcode_s)
+							if (copied_internal_name_s)
 								{
-									char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
+									bson_oid_t *copied_gene_bank_id_p = CopyBSONOid (gene_bank_id_p);
 
-									if (copied_internal_name_s)
+									if (copied_gene_bank_id_p)
 										{
 											Material *material_p = (Material *) AllocMemory (sizeof (Material));
 
 											if (material_p)
 												{
 													material_p -> ma_id_p = id_p;
-													material_p -> ma_source_s = copied_source_s;
 													material_p -> ma_accession_s = copied_accession_s;
 													material_p -> ma_pedigree_s = copied_pedigree_s;
 													material_p -> ma_barcode_s = copied_barcode_s;
-													material_p -> ma_gene_bank_id_p = gene_bank_id_p;
+													material_p -> ma_gene_bank_id_p = copied_gene_bank_id_p;
 													material_p -> ma_parent_area_p = area_p;
 													material_p -> ma_internal_name_s = copied_internal_name_s;
 
 													return material_p;
 												}		/* if (material_p) */
 
-											FreeCopiedString (copied_internal_name_s);
-										}		/* if (copied_internal_name_s) */
+											FreeBSONOid (copied_gene_bank_id_p);
+										}
 
-									FreeCopiedString (copied_barcode_s);
-								}		/* if (copied_barcode_s) */
-							else
-								{
+									FreeCopiedString (copied_internal_name_s);
+								}		/* if (copied_internal_name_s) */
 
-								}
-
-							FreeCopiedString (copied_pedigree_s);
-						}		/* if (copied_pedigree_s) */
+							FreeCopiedString (copied_barcode_s);
+						}		/* if (copied_barcode_s) */
 					else
 						{
 
 						}
 
-
-					FreeCopiedString (copied_accession_s);
-				}		/* if (copied_accession_s) */
+					FreeCopiedString (copied_pedigree_s);
+				}		/* if (copied_pedigree_s) */
 			else
 				{
 
 				}
 
-			FreeCopiedString (copied_source_s);
-		}		/* if (copied_source_s) */
+
+			FreeCopiedString (copied_accession_s);
+		}		/* if (copied_accession_s) */
 	else
 		{
 
 		}
+
 
 	return NULL;
 }
@@ -118,7 +114,6 @@ Material *AllocateMaterialByInternalName (bson_oid_t *id_p, const char *internal
 			if (material_p)
 				{
 					material_p -> ma_id_p = id_p;
-					material_p -> ma_source_s = NULL;
 					material_p -> ma_accession_s = NULL;
 					material_p -> ma_pedigree_s = NULL;
 					material_p -> ma_barcode_s = NULL;
@@ -159,11 +154,6 @@ void FreeMaterial (Material *material_p)
 			FreeCopiedString (material_p -> ma_barcode_s);
 		}
 
-	if (material_p -> ma_source_s)
-		{
-			FreeCopiedString (material_p -> ma_source_s);
-		}
-
 	if (material_p -> ma_pedigree_s)
 		{
 			FreeCopiedString (material_p -> ma_pedigree_s);
@@ -181,22 +171,18 @@ json_t *GetMaterialAsJSON (const Material *material_p)
 		{
 			if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p))
 				{
-					if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GERMPLASM_ID_S))
+					if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GENE_BANK_ID_S))
 						{
-							if (SetJSONString (material_json_p, MA_SOURCE_S, material_p -> ma_source_s))
+							if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
 								{
-									if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
+									if (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))
 										{
-											if (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))
+											if (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))
 												{
-													if (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))
-														{
-															return material_json_p;
-														}
+													return material_json_p;
 												}
 										}
 								}
-
 						}
 				}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
 
@@ -210,86 +196,81 @@ json_t *GetMaterialAsJSON (const Material *material_p)
 
 Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimental_area_flag, const DFWFieldTrialServiceData *data_p)
 {
-	const char *source_s = GetJSONString (json_p, MA_SOURCE_S);
+	const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
 
-	if (source_s)
+	if (accession_s)
 		{
-			const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
+			const char *barcode_s = GetJSONString (json_p, MA_BARCODE_S);
 
-			if (accession_s)
+			if (barcode_s)
 				{
-					const char *barcode_s = GetJSONString (json_p, MA_BARCODE_S);
+					const char *pedigree_s = GetJSONString (json_p, MA_PEDIGREE_S);
 
-					if (barcode_s)
+					if (pedigree_s)
 						{
-							const char *pedigree_s = GetJSONString (json_p, MA_PEDIGREE_S);
+							const char *internal_name_s = GetJSONString (json_p, MA_INTERNAL_NAME_S);
 
-							if (pedigree_s)
+							if (internal_name_s)
 								{
-									const char *internal_name_s = GetJSONString (json_p, MA_INTERNAL_NAME_S);
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-									if (internal_name_s)
+									if (id_p)
 										{
-											bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
-
-											if (id_p)
+											if (GetMongoIdFromJSON (json_p, id_p))
 												{
-													if (GetMongoIdFromJSON (json_p, id_p))
+													bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
+
+													if (germplasm_id_p)
 														{
-															bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
-
-															if (germplasm_id_p)
+															if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p))
 																{
-																	if (GetNamedIdFromJSON (json_p, MA_GERMPLASM_ID_S, germplasm_id_p))
+																	ExperimentalArea *area_p = NULL;
+																	bool success_flag = !expand_experimental_area_flag;
+
+																	if (expand_experimental_area_flag)
 																		{
-																			ExperimentalArea *area_p = NULL;
-																			bool success_flag = !expand_experimental_area_flag;
+																			bson_oid_t *exp_area_id_p = GetNewUnitialisedBSONOid ();
 
-																			if (expand_experimental_area_flag)
+																			if (exp_area_id_p)
 																				{
-																					bson_oid_t *exp_area_id_p = GetNewUnitialisedBSONOid ();
-
-																					if (exp_area_id_p)
+																					if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
 																						{
-																							if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
-																								{
-																									area_p = GetExperimentalAreaById (exp_area_id_p, data_p);
-																								}
-
-																							FreeBSONOid (exp_area_id_p);
+																							area_p = GetExperimentalAreaById (exp_area_id_p, data_p);
 																						}
-																				}
 
-																			if (success_flag)
-																				{
-																					Material *material_p = AllocateMaterial (id_p, source_s, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, germplasm_id_p, data_p);
-
-																					if (material_p)
-																						{
-																							return material_p;
-																						}
-																				}
-																			if (area_p)
-																				{
-																					FreeExperimentalArea (area_p);
+																					FreeBSONOid (exp_area_id_p);
 																				}
 																		}
 
-																	FreeBSONOid (germplasm_id_p);
+																	if (success_flag)
+																		{
+																			Material *material_p = AllocateMaterial (id_p, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, germplasm_id_p, data_p);
+
+																			if (material_p)
+																				{
+																					return material_p;
+																				}
+																		}
+																	if (area_p)
+																		{
+																			FreeExperimentalArea (area_p);
+																		}
 																}
+
+															FreeBSONOid (germplasm_id_p);
 														}
+												}
 
-													FreeBSONOid (id_p);
-												}		/* if (id_p) */
-										}		/* if (internal_name_s) */
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
+								}		/* if (internal_name_s) */
 
-								}		/* pedigree_s */
+						}		/* pedigree_s */
 
-						}		/* if (barcode_s) */
+				}		/* if (barcode_s) */
 
-				}		/* if (accession_s) */
+		}		/* if (accession_s) */
 
-		}		/* if (source_s) */
 
 	return NULL;
 }
@@ -411,13 +392,7 @@ Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *a
 
 bool IsMaterialComplete (const Material * const material_p)
 {
-	return ((material_p -> ma_pedigree_s) && (material_p -> ma_source_s));
-}
-
-
-bool SetMaterialSource (Material *material_p, const char * const source_s)
-{
-	return ReplaceMaterialField (source_s, & (material_p -> ma_source_s));
+	return ((material_p -> ma_pedigree_s) && (material_p -> ma_accession_s));
 }
 
 

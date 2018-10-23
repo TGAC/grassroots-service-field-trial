@@ -93,7 +93,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetGeneBankAsJSON (const GeneBank *germpla
 DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankFromJSON (const json_t *germplasm_json_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL  bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
