@@ -252,13 +252,13 @@ json_t *GetPlotAsJSON (const Plot *plot_p)
 																				{
 																					if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
 																						{
-																							if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S))
+																							if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_EXPERIMENTAL_AREA_S))
 																								{
 																									return plot_json_p;
 																								}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S)) */
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_FIELD_TRIAL_S);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
 																								}
 
 																						}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
@@ -354,6 +354,112 @@ json_t *GetPlotAsJSON (const Plot *plot_p)
 Plot *GetPlotFromJSON (const json_t *plot_json_p)
 {
 	Plot *plot_p = NULL;
+	int32 row;
+
+	if (GetJSONInteger (plot_json_p, PL_ROW_INDEX_S, &row))
+		{
+			int32 column;
+
+			if (GetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, &column))
+				{
+					double64 width;
+
+					if (GetJSONReal (plot_json_p, PL_WIDTH_S, &width))
+						{
+							double64 length;
+
+							if (GetJSONReal (plot_json_p, PL_LENGTH_S, &length))
+								{
+									const char *growing_conditions_s = GetJSONString (plot_json_p, PL_GROWING_CONDITION_S);
+									const char *treatments_s = GetJSONString (plot_json_p, PL_TREATMENT_S);
+									const char *trial_design_s = GetJSONString (plot_json_p, PL_TRIAL_DESIGN_S);
+									struct tm *sowing_date_p = NULL;
+
+									if (CreateValidDateFromJSON (plot_json_p, PL_SOWING_DATE_S, &sowing_date_p))
+										{
+											struct tm *harvest_date_p = NULL;
+
+											if (CreateValidDateFromJSON (plot_json_p, PL_HARVEST_DATE_S, &harvest_date_p))
+												{
+													bson_oid_t *field_trial_id_p = GetNewUnitialisedBSONOid ();
+
+													if (field_trial_id_p)
+														{
+															if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_EXPERIMENTAL_AREA_S, field_trial_id_p))
+																{
+																	ExperimentalArea *area_p = NULL;
+																	bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+																	if (id_p)
+																		{
+																			if (GetMongoIdFromJSON (plot_json_p, id_p))
+																				{
+																					plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_conditions_s, treatments_s, area_p);
+
+																					if (!plot_p)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get create Plot");
+																						}
+
+																				}		/* if (GetMongoIdFromJSON (plot_json_p, id_p)) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", MONGO_ID_S);
+																				}
+
+																		}		/* if (id_p) */
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																		}
+
+																}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																}
+
+														}		/* if (field_trial_id_p) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+														}
+
+												}		/* if (CreateValidDateFromJSON (plot_json_p, PL_HARVEST_DATE_S, &harvest_date_p)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get time from \"%s\"", PL_HARVEST_DATE_S);
+												}
+
+										}		/* if (CreateValidDateFromJSON (plot_json_p, PL_SOWING_DATE_S, &sowing_date_p)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get time from \"%s\"", PL_HARVEST_DATE_S);
+										}
+
+								}		/* if (GetJSONReal (plot_json_p, PL_LENGTH_S, &length)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get \"%s\": ", PL_LENGTH_S);
+								}
+
+						}		/* if (GetJSONReal (plot_json_p, PL_WIDTH_S, &width)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get \"%s\": ", PL_WIDTH_S);
+						}
+
+				}		/* if (GetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, plot_p -> pl_column_index)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get \"%s\": ", PL_COLUMN_INDEX_S);
+				}
+
+		}		/* if (GetJSONInteger (plot_json_p, PL_ROW_INDEX_S, &row)) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get \"%s\": ", PL_ROW_INDEX_S);
+		}
 
 	return plot_p;
 }

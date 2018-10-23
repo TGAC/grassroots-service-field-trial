@@ -29,7 +29,7 @@
 #include "location_jobs.h"
 #include "math_utils.h"
 #include "string_utils.h"
-
+#include "material_jobs.h"
 
 /*
  * Static declarations
@@ -146,7 +146,22 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 								{
 									if (AddPlotParams (data_p, params_p))
 										{
-											return params_p;
+											if (AddGeneBankParams (data_p, params_p))
+												{
+													if (AddMaterialParams (data_p, params_p))
+														{
+															return params_p;
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMaterialParams failed");
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddGeneBankParams failed");
+												}
+
 										}
 									else
 										{
@@ -226,6 +241,14 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 										{
 											if (!RunForPlotParams (data_p, param_set_p, job_p))
 												{
+													if (!RunForGeneBankParams (data_p, param_set_p, job_p))
+														{
+															if (!RunForMaterialParams (data_p, param_set_p, job_p))
+																{
+
+																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
+
+														}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
 
 												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
 

@@ -14,30 +14,17 @@
 ** limitations under the License.
 */
 /*
- * germplasm.h
+ * material_jobs.h
  *
- *  Created on: 23 Jul 2018
+ *  Created on: 23 Oct 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_JOBS_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_JOBS_H_
 
-
+#include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
-#include "typedefs.h"
-
-#include "jansson.h"
-
-
-typedef struct Germplasm
-{
-	char **ge_sources_ss;
-
-	char **ge_accessions_ss;
-
-	uint32 ge_num_crosses;
-} Germplasm;
 
 
 
@@ -46,17 +33,18 @@ extern "C"
 {
 #endif
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Germplasm *AllocateGermplasm ();
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeGermplasm (Germplasm *germplasm_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMaterialParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetGermplasmAsJSON (const Germplasm *germplasm_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_GERMPLASM_H_ */
+
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_MATERIAL_JOBS_H_ */

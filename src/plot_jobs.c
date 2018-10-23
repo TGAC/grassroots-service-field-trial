@@ -61,6 +61,7 @@ static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
 static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
 
+/*
 static NamedParameterType S_PLOT_SOWING_DATE = { "PL Sowing Year", PT_TIME };
 static NamedParameterType S_PLOT_HARVEST_DATE = { "PL Harvest Year", PT_TIME };
 static NamedParameterType S_PLOT_WIDTH = { "PL Width", PT_UNSIGNED_REAL };
@@ -73,6 +74,7 @@ static NamedParameterType S_PLOT_COLUMN = { "PL Column", PT_UNSIGNED_INT };
 static NamedParameterType S_PLOT_TRIAL_DESIGN = { "PL Trial Design", PT_STRING };
 static NamedParameterType S_PLOT_GROWING_CONDITION = { "PL Growing Condition", PT_STRING };
 static NamedParameterType S_PLOT_TREATMENT = { "PL Treatment", PT_STRING };
+*/
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
 static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_TABLE};
@@ -266,7 +268,8 @@ bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set
 										}
 								}
 
-						}		/* if (value_as_json_p) */
+							json_decref (plots_json_p);
+						}		/* if (plots_json_p) */
 					else
 						{
 							SharedType delimiter;
@@ -593,7 +596,7 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, const Experi
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
-			bson_t *query_p = BCON_NEW ("{", PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_FIELD_TRIAL_S, BCON_OID (area_p -> ea_id_p), "}");
+			bson_t *query_p = BCON_NEW ("{", PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_EXPERIMENTAL_AREA_S, BCON_OID (area_p -> ea_id_p), "}");
 
 			if (query_p)
 				{

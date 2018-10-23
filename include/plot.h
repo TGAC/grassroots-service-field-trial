@@ -48,7 +48,7 @@
 
 PLOT_PREFIX const char *PL_ID_S PLOT_VAL ("id");
 
-PLOT_PREFIX const char *PL_PARENT_FIELD_TRIAL_S PLOT_VAL ("parent_experimental_area_id");
+PLOT_PREFIX const char *PL_PARENT_EXPERIMENTAL_AREA_S PLOT_VAL ("parent_experimental_area_id");
 
 PLOT_PREFIX const char *PL_SOWING_DATE_S PLOT_VAL ("sowing_date");
 

@@ -47,6 +47,7 @@ typedef enum
 	DFTD_RAW_PHENOTYPE,
 	DFTD_CORRECTED_PHENOTYPE,
 	DFTD_INSTRUMENT,
+	DFTD_GENE_BANK,
 	DFTD_NUM_TYPES
 } DFWFieldTrialData;
 
@@ -183,6 +184,15 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_PHENOTYPE_S DFW_FIELD_TRIAL_VAL
  * @ingroup dfw_field_trial_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_S DFW_FIELD_TRIAL_VAL ("Instruments");
+
+
+/**
+ * The key for specifying the object containing the Gene Banks
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBanks");
+
 
 
 

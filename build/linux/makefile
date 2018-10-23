@@ -48,10 +48,13 @@ SRCS 	= \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \
+	gene_bank.c \
+	gene_bank_jobs.c \
 	instrument.c \
 	location.c \
 	location_jobs.c \
 	material.c \
+	material_jobs.c \
 	phenotype.c \
 	plot.c \
 	plot_jobs.c \

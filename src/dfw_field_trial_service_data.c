@@ -97,7 +97,9 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 					* ((data_p -> dftsd_collection_ss) + DFTD_RAW_PHENOTYPE) = DFT_RAW_PHENOTYPE_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_CORRECTED_PHENOTYPE) = DFT_CORRECTED_PHENOTYPE_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_INSTRUMENT) = DFT_INSTRUMENT_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;
 				}
+
 
 		} /* if (data_p -> psd_database_s) */
 

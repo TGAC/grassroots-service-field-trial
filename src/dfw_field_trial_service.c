@@ -97,15 +97,6 @@ void ReleaseServices (ServicesArray *services_p)
 
 
 
-
-static char *CheckDataIsValid (const json_t *row_p, DFWFieldTrialServiceData *data_p)
-{
-	char *errors_s = NULL;
-
-	return errors_s;
-}
-
-
 /*
 bool AddErrorMessage (json_t *errors_p, const json_t *values_p, const size_t row, const char * const error_s)
 {
