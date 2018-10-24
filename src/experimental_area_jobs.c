@@ -432,7 +432,7 @@ static bool SearchExperimentalAreas (ServiceJob *job_p, const char * const name_
 																		{
 																			if (GetAllFieldTrialExperimentalAreas (trial_p, data_p))
 																				{
-																					if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p))
+																					if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, data_p))
 																						{
 																							char *title_s = GetFieldTrialAsString (trial_p);
 

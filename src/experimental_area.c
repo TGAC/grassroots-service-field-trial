@@ -82,7 +82,7 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 													area_p -> ea_harvest_date_p = copied_harvest_date_p;
 													area_p -> ea_parent_p = parent_field_trial_p;
 													area_p -> ea_location_p = location_p;
-													area_p -> ea_plots_p = NULL;
+													area_p -> ea_plots_p = plots_p;
 
 													return area_p;
 												}
@@ -212,16 +212,76 @@ void FreeExperimentalAreaNode (ListItem *node_p)
 }
 
 
-LinkedList *GetExperimentalAreaPlots (ExperimentalArea *area_p)
+bool GetExperimentalAreaPlots (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
 {
-	LinkedList *plots_list_p = NULL;
+	bool success_flag = false;
 
-	if (! (area_p -> ea_plots_p))
+	ClearLinkedList (area_p -> ea_plots_p);
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
+			bson_t *query_p = BCON_NEW (PL_PARENT_EXPERIMENTAL_AREA_S, BCON_OID (area_p -> ea_id_p));
 
-		}		/* if (! (area_p -> ea_plots_p)) */
+			/*
+			 * Make the query to get the matching plots
+			 */
+			if (query_p)
+				{
+					bson_t *opts_p =  BCON_NEW ( "sort", "{", PL_ROW_INDEX_S, BCON_INT32 (1), PL_COLUMN_INDEX_S, BCON_INT32 (1), "}");
 
-	return plots_list_p;
+					if (opts_p)
+						{
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+							if (results_p)
+								{
+									if (json_is_array (results_p))
+										{
+											size_t i;
+											const size_t num_results = json_array_size (results_p);
+
+											if (num_results > 0)
+												{
+													json_t *plot_json_p;
+
+													json_array_foreach (results_p, i, plot_json_p)
+														{
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, data_p);
+
+															if (plot_p)
+																{
+																	PlotNode *node_p = AllocatePlotNode (plot_p);
+
+																	if (node_p)
+																		{
+																			LinkedListAddTail (area_p -> ea_plots_p, & (node_p -> pn_node));
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add plot to experimental area's list");
+																			FreePlot (plot_p);
+																		}
+																}
+
+														}		/* json_array_foreach (results_p, i, entry_p) */
+
+												}		/* if (num_results > 0) */
+
+
+										}		/* if (json_is_array (results_p)) */
+
+									json_decref (results_p);
+								}		/* if (results_p) */
+
+							bson_destroy (opts_p);
+						}		/* if (opts_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}
+
+	return success_flag;
 }
 
 
@@ -242,7 +302,7 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 
 	if (area_p -> ea_id_p)
 		{
-			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, false);
+			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, false, data_p);
 
 			if (area_json_p)
 
@@ -267,7 +327,7 @@ ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServic
 }
 
 
-json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool expand_fields_flag)
+json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_fields_flag, DFWFieldTrialServiceData *data_p)
 {
 	json_t *area_json_p = json_object ();
 
@@ -313,6 +373,11 @@ json_t *GetExperimentalAreaAsJSON (const ExperimentalArea *area_p, const bool ex
 														{
 															if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S))
 																{
+																	if (expand_fields_flag)
+																		{
+																			GetExperimentalAreaPlots (area_p, data_p);
+																		}
+
 																	return area_json_p;
 																}
 														}

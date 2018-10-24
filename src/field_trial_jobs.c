@@ -34,6 +34,7 @@ static NamedParameterType S_FIELD_TRIAL_NAME = { "FT Name", PT_STRING };
 static NamedParameterType S_FIELD_TRIAL_TEAM = { "FT Team", PT_STRING };
 static NamedParameterType S_ADD_FIELD_TRIAL = { "Add Field Trial", PT_BOOLEAN };
 static NamedParameterType S_SEARCH_FIELD_TRIALS = { "Search Field Trials", PT_BOOLEAN };
+static NamedParameterType S_FUZZY_SEARCH_FIELD_TRIALS = { "Fuzzy Search", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_FIELD_TRIALS = { "Get all Field Trials", PT_BOOLEAN };
 
 
@@ -42,8 +43,7 @@ static NamedParameterType S_GET_ALL_FIELD_TRIALS = { "Get all Field Trials", PT_
 static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p);
 
 
-static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, DFWFieldTrialServiceData *data);
-
+static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s,const bool regex_flag, DFWFieldTrialServiceData *data_p);
 
 
 
@@ -148,7 +148,7 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 				{
 					if (value.st_boolean_value)
 						{
-							bool success_flag = SearchFieldTrials (job_p, name_s, team_s, data_p);
+							bool success_flag = SearchFieldTrials (job_p, name_s, team_s, false, data_p);
 
 							job_done_flag = true;
 						}		/* if (value.st_boolean_value) */
@@ -163,7 +163,7 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 				{
 					if (value.st_boolean_value)
 						{
-							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, data_p);
+							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, false, data_p);
 
 							job_done_flag = true;
 						}		/* if (value.st_boolean_value) */
@@ -191,13 +191,20 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 				{
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_FIELD_TRIALS.npt_type, S_SEARCH_FIELD_TRIALS.npt_name_s, "Search", "Search for matching Field Trials", def, PL_BASIC)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_FIELD_TRIALS.npt_type, S_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_FUZZY_SEARCH_FIELD_TRIALS.npt_type, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s, "Fuzzy search", "When doing a search, do a fuzzy search", def, PL_BASIC)) != NULL)
 								{
-									success_flag = true;
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_FIELD_TRIALS.npt_type, S_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_FIELD_TRIALS.npt_name_s);
+										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_FIELD_TRIALS.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s);
 								}
 						}
 					else
@@ -248,7 +255,10 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 		{
 			if (value.st_boolean_value)
 				{
-					bool success_flag = SearchFieldTrials (job_p, name_s, team_s, data_p);
+					bool success_flag;
+
+					GetParameterValueFromParameterSet (param_set_p, S_SEARCH_FIELD_TRIALS.npt_name_s, &value, true);
+					success_flag = SearchFieldTrials (job_p, name_s, team_s, value.st_boolean_value, data_p);
 
 					job_done_flag = true;
 				}		/* if (value.st_boolean_value) */
@@ -260,7 +270,7 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 				{
 					if (value.st_boolean_value)
 						{
-							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, data_p);
+							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, false, data_p);
 
 							job_done_flag = true;
 						}		/* if (value.st_boolean_value) */
@@ -409,7 +419,7 @@ static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *te
 }
 
 
-static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, DFWFieldTrialServiceData *data_p)
+static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	OperationStatus status = OS_FAILED_TO_START;
@@ -423,11 +433,11 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 			 */
 			if (query_p)
 				{
-					bool ok_flag = AddQueryTerm (query_p, FT_NAME_S, name_s, false);
+					bool ok_flag = AddQueryTerm (query_p, FT_NAME_S, name_s, regex_flag);
 
 					if (ok_flag)
 						{
-							ok_flag = AddQueryTerm (query_p, FT_TEAM_S, team_s, false);
+							ok_flag = AddQueryTerm (query_p, FT_TEAM_S, team_s, regex_flag);
 						}
 
 					if (ok_flag)
@@ -459,7 +469,7 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 																		{
 																			if (GetAllFieldTrialExperimentalAreas (trial_p, data_p))
 																				{
-																					if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p))
+																					if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, data_p))
 																						{
 																							char *title_s = GetFieldTrialAsString (trial_p);
 

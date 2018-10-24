@@ -673,7 +673,7 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, const Experi
 											size_t i = 0;
 											json_t *entry_p = json_array_get (results_p, i);
 
-											plot_p = GetPlotFromJSON (entry_p);
+											plot_p = GetPlotFromJSON (entry_p, data_p);
 
 											if (!plot_p)
 												{

@@ -349,7 +349,7 @@ json_t *GetPlotAsJSON (const Plot *plot_p)
 }
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row;

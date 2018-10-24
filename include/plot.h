@@ -133,7 +133,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (const Plot *plot_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPlotRows (Plot *plot_p);
