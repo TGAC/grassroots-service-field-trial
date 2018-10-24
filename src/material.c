@@ -306,7 +306,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 																					bson_oid_to_string (exp_area_id_p, id_s);
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find ExperimentalArea with id \"%s\"", id_s);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find ExperimentalArea with id \"%s\"", id_s);
 																				}
 																		}
 																	else
@@ -346,7 +346,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 												}		/* if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p)) */
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_GENE_BANK_ID_S);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_GENE_BANK_ID_S);
 												}
 
 											FreeBSONOid (germplasm_id_p);

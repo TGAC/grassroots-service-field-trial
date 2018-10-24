@@ -55,7 +55,7 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
  * API definitions
  */
 
-bool AddMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 
@@ -101,7 +101,7 @@ bool AddMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 

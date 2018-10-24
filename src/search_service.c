@@ -14,12 +14,11 @@
 ** limitations under the License.
 */
 /*
- * submission_service.c
+ * search_service.c
  *
- *  Created on: 22 Oct 2018
+ *  Created on: 24 Oct 2018
  *      Author: billy
  */
-
 
 #include "submission_service.h"
 #include "plot_jobs.h"
@@ -40,30 +39,36 @@
 
 
 
-static const char *GetDFWFieldTrialSubmissionServiceName (Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceName (Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceDesciption (Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceInformationUri (Service *service_p);
 
-static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
+static void ReleaseDFWFieldTrialSearchServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
-static ParameterSet *IsResourceForDFWFieldTrialSubmissionService (Service *service_p, Resource *resource_p, Handler *handler_p);
+static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service *service_p, Resource *resource_p, Handler *handler_p);
 
-static bool CloseDFWFieldTrialSubmissionService (Service *service_p);
 
-static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *service_p);
+
+static bool CloseDFWFieldTrialSearchService (Service *service_p);
+
+
+static json_t *ConvertToResource (const size_t i, json_t *src_record_p);
+
+
+static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p);
 
 /*
  * API definitions
  */
 
 
-Service *GetDFWFieldTrialSubmissionService (void)
+Service *GetDFWFieldTrialSearchService (void)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -74,19 +79,19 @@ Service *GetDFWFieldTrialSubmissionService (void)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetDFWFieldTrialSubmissionServiceName,
-														 GetDFWFieldTrialSubmissionServiceDesciption,
-														 GetDFWFieldTrialSubmissionServiceInformationUri,
-														 RunDFWFieldTrialSubmissionService,
-														 IsResourceForDFWFieldTrialSubmissionService,
-														 GetDFWFieldTrialSubmissionServiceParameters,
-														 ReleaseDFWFieldTrialSubmissionServiceParameters,
-														 CloseDFWFieldTrialSubmissionService,
+														 GetDFWFieldTrialSearchServiceName,
+														 GetDFWFieldTrialSearchServiceDesciption,
+														 GetDFWFieldTrialSearchServiceInformationUri,
+														 RunDFWFieldTrialSearchService,
+														 IsResourceForDFWFieldTrialSearchService,
+														 GetDFWFieldTrialSearchServiceParameters,
+														 ReleaseDFWFieldTrialSearchServiceParameters,
+														 CloseDFWFieldTrialSearchService,
 														 NULL,
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetDFWFieldTrialSubmissionServiceMetadata))
+														 GetDFWFieldTrialSearchServiceMetadata))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))
@@ -107,27 +112,27 @@ Service *GetDFWFieldTrialSubmissionService (void)
 
 
 
-static const char *GetDFWFieldTrialSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "DFWFieldTrial submission service";
+	return "DFWFieldTrial search service";
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceDesciption (Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial data";
+	return "A service to search field trial data";
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceInformationUri (Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
-static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial submission service parameters", "The parameters used for the DFWFieldTrial submission service");
+	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial search service parameters", "The parameters used for the DFWFieldTrial search service");
 
 	if (params_p)
 		{
@@ -182,7 +187,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetDFWFieldTrialSubmissionServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetDFWFieldTrialSearchServiceName (service_p));
 		}
 
 	return NULL;
@@ -193,7 +198,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 
 
 
-static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
+static void ReleaseDFWFieldTrialSearchServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
@@ -201,7 +206,7 @@ static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service * UNUSED_PA
 
 
 
-static bool CloseDFWFieldTrialSubmissionService (Service *service_p)
+static bool CloseDFWFieldTrialSearchService (Service *service_p)
 {
 	bool success_flag = true;
 
@@ -212,7 +217,7 @@ static bool CloseDFWFieldTrialSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -266,7 +271,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 }
 
 
-static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *service_p)
+static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p)
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
@@ -444,8 +449,25 @@ static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *serv
 
 
 
-static ParameterSet *IsResourceForDFWFieldTrialSubmissionService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
+static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
+}
+
+
+
+static json_t *ConvertToResource (const size_t i, json_t *src_record_p)
+{
+	json_t *resource_p = NULL;
+	char *title_s = ConvertUnsignedIntegerToString (i);
+
+	if (title_s)
+		{
+			resource_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, src_record_p);
+
+			FreeCopiedString (title_s);
+		}		/* if (raw_result_p) */
+
+	return resource_p;
 }
 

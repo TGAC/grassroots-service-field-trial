@@ -39,7 +39,7 @@ static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
  * API definitions
  */
 
-bool AddGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Gene Bank", NULL, false, data_p, param_set_p);
@@ -95,7 +95,7 @@ bool AddGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForGeneBankParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionGeneBankParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;

@@ -59,8 +59,8 @@ SRCS 	= \
 	plot.c \
 	plot_jobs.c \
 	row.c \
-	submission_service.c
-	
+	search_service.c \
+	submission_service.c 
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

@@ -53,7 +53,7 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 
 
-bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -155,7 +155,7 @@ bool AddExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;

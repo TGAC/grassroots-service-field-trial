@@ -56,7 +56,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 
 
-bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -177,7 +177,7 @@ bool AddLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;

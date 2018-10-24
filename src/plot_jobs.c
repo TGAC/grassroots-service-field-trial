@@ -110,7 +110,7 @@ static bool GetJSONStringAsDouble (const json_t *json_p, const char * const key_
  * API definitions
  */
 
-bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -228,7 +228,7 @@ bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 

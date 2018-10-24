@@ -14,18 +14,21 @@
 ** limitations under the License.
 */
 /*
- * location_jobs.h
+ * search_service.h
  *
- *  Created on: 5 Oct 2018
+ *  Created on: 24 Oct 2018
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_JOBS_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_JOBS_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SEARCH_SERVICE_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SEARCH_SERVICE_H_
+
+
 
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
-#include "address.h"
+
+
 
 #ifdef __cplusplus
 extern "C"
@@ -33,18 +36,7 @@ extern "C"
 #endif
 
 
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Address *GetAddressFromLocationString (const char *location_s);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetDFWFieldTrialSearchService (void);
 
 
 #ifdef __cplusplus
@@ -53,5 +45,4 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const DFWFieldTr
 
 
 
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_JOBS_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SEARCH_SERVICE_H_ */

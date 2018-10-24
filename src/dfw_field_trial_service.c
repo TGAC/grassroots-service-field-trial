@@ -34,6 +34,7 @@
 #include "io_utils.h"
 #include "audit.h"
 
+#include "search_service.h"
 #include "submission_service.h"
 #include "field_trial_jobs.h"
 #include "experimental_area_jobs.h"
@@ -54,15 +55,6 @@
  */
 
 
-
-/*
-static const char *InsertFieldData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
-static const char *InsertPlotData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
-static const char *InsertDrillingData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
-static const char *InsertRawPhenotypeData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
-static const char *InsertCorrectedPhenotypeData (MongoTool *tool_p, json_t *values_p, DFWFieldTrialServiceData *data_p);
-*/
-
 /*
  * API FUNCTIONS
  */
@@ -70,20 +62,57 @@ static const char *InsertCorrectedPhenotypeData (MongoTool *tool_p, json_t *valu
 
 ServicesArray *GetServices (UserDetails *user_p)
 {
-	ServicesArray *services_p = AllocateServicesArray (1);
+	uint32 num_services = 0;
+	Service *submission_service_p = GetDFWFieldTrialSubmissionService ();
+	Service *search_service_p = GetDFWFieldTrialSearchService ();
 
-	if (services_p)
+	if (submission_service_p)
 		{
-			Service *submission_service_p = GetDFWFieldTrialSubmissionService ();
+			++ num_services;
+		}
 
-			if (submission_service_p)
+	if (search_service_p)
+		{
+			++ num_services;
+		}
+
+
+	if (num_services)
+		{
+			ServicesArray *services_p = AllocateServicesArray (num_services);
+
+			if (services_p)
 				{
-					* (services_p -> sa_services_pp) = submission_service_p;
+					num_services = 0;
+
+					if (submission_service_p)
+						{
+							* (services_p -> sa_services_pp) = submission_service_p;
+							++ num_services;
+						}
+
+
+					if (search_service_p)
+						{
+							* ((services_p -> sa_services_pp) + num_services) = search_service_p;
+						}
+
+
 					return services_p;
 				}
-
-			FreeServicesArray (services_p);
 		}
+
+
+	if (submission_service_p)
+		{
+			FreeService (submission_service_p);
+		}
+
+	if (search_service_p)
+		{
+			FreeService (submission_service_p);
+		}
+
 
 	return NULL;
 }

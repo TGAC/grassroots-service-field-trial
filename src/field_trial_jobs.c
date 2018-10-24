@@ -47,7 +47,7 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 
 
-bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -101,7 +101,7 @@ bool AddFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 
 
-bool RunForFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;
