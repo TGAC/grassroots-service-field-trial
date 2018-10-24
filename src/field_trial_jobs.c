@@ -64,6 +64,8 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_FIELD_TRIAL.npt_type, S_ADD_FIELD_TRIAL.npt_name_s, "Add", "Add a new Field Trial", def, PL_BASIC)) != NULL)
 						{
+							def.st_string_value_s = NULL;
+
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_FIELD_TRIALS.npt_type, S_SEARCH_FIELD_TRIALS.npt_name_s, "Search", "Search for matching Field Trials", def, PL_BASIC)) != NULL)
 								{
 									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_FIELD_TRIALS.npt_type, S_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
@@ -154,6 +156,103 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 		}
 
 
+
+	if (!job_done_flag)
+		{
+			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_FIELD_TRIALS.npt_name_s, &value, true))
+				{
+					if (value.st_boolean_value)
+						{
+							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, data_p);
+
+							job_done_flag = true;
+						}		/* if (value.st_boolean_value) */
+				}
+		}
+
+
+	return job_done_flag;
+}
+
+
+
+bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+	SharedType def;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Field Trials", NULL, false, data_p, param_set_p);
+
+	def.st_string_value_s = NULL;
+
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_FIELD_TRIAL_NAME.npt_type, S_FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_BASIC)) != NULL)
+		{
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_FIELD_TRIAL_TEAM.npt_type, S_FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_BASIC)) != NULL)
+				{
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_FIELD_TRIALS.npt_type, S_SEARCH_FIELD_TRIALS.npt_name_s, "Search", "Search for matching Field Trials", def, PL_BASIC)) != NULL)
+						{
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_FIELD_TRIALS.npt_type, S_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_FIELD_TRIALS.npt_name_s);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_FIELD_TRIALS.npt_name_s);
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIAL_TEAM.npt_name_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIAL_NAME.npt_name_s);
+		}
+
+	return success_flag;
+}
+
+
+bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	SharedType value;
+	SharedType name_value;
+	InitSharedType (&name_value);
+	const char *name_s = NULL;
+	const char *team_s = NULL;
+
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &name_value, true))
+		{
+			SharedType team_value;
+			InitSharedType (&team_value);
+
+			name_s = name_value.st_string_value_s;
+
+			if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_TEAM.npt_name_s, &team_value, true))
+				{
+					team_s = team_value.st_string_value_s;
+				}
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
+
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_SEARCH_FIELD_TRIALS.npt_name_s, &value, true))
+		{
+			if (value.st_boolean_value)
+				{
+					bool success_flag = SearchFieldTrials (job_p, name_s, team_s, data_p);
+
+					job_done_flag = true;
+				}		/* if (value.st_boolean_value) */
+		}
 
 	if (!job_done_flag)
 		{

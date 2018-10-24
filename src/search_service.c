@@ -138,49 +138,13 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionFieldTrialParams (data_p, params_p))
+			if (AddSearchFieldTrialParams (data_p, params_p))
 				{
-					if (AddSubmissionExperimentalAreaParams (data_p, params_p))
-						{
-							if (AddSubmissionLocationParams (data_p, params_p))
-								{
-									if (AddSubmissionPlotParams (data_p, params_p))
-										{
-											if (AddSubmissionGeneBankParams (data_p, params_p))
-												{
-													if (AddSubmissionMaterialParams (data_p, params_p))
-														{
-															return params_p;
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMaterialParams failed");
-														}
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddGeneBankParams failed");
-												}
-
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPlotParams failed");
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddLocationParams failed");
-								}
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddExperimentalAreaParams failed");
-						}
+					return params_p;
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialParams failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchFieldTrialParams failed");
 				}
 
 			FreeParameterSet (params_p);
@@ -233,28 +197,28 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 
 			if (param_set_p)
 				{
-					if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
+					if (!RunForSearchFieldTrialParams (data_p, param_set_p, job_p))
 						{
-							if (!RunForSubmissionExperimentalAreaParams (data_p, param_set_p, job_p))
-								{
-									if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p))
-										{
-											if (!RunForSubmissionPlotParams (data_p, param_set_p, job_p))
-												{
-													if (!RunForSubmissionGeneBankParams (data_p, param_set_p, job_p))
-														{
-															if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
-																{
-
-																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
-
-														}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
-
-												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
-
-										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
-
-								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+//							if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
+//								{
+//									if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
+//										{
+//											if (!RunForSearchPlotParams (data_p, param_set_p, job_p))
+//												{
+//													if (!RunForSearchGeneBankParams (data_p, param_set_p, job_p))
+//														{
+//															if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
+//																{
+//
+//																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
+//
+//														}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
+//
+//												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
+//
+//										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+//
+//								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
 
 						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
