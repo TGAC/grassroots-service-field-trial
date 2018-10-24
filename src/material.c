@@ -39,13 +39,27 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const cha
 
 	if (copied_accession_s)
 		{
-			char *copied_pedigree_s = EasyCopyToNewString (pedigree_s);
+			bool success_flag = true;
+			char *copied_pedigree_s = NULL;
 
-			if (copied_pedigree_s)
+			if (!IsStringEmpty (pedigree_s))
 				{
-					char *copied_barcode_s = EasyCopyToNewString (barcode_s);
+					copied_pedigree_s = EasyCopyToNewString (pedigree_s);
+					success_flag = (copied_pedigree_s != NULL);
+				}
 
-					if (copied_barcode_s)
+			if (success_flag)
+				{
+					char *copied_barcode_s = NULL;
+
+
+					if (!IsStringEmpty (barcode_s))
+						{
+							copied_barcode_s = EasyCopyToNewString (barcode_s);
+							success_flag = (copied_barcode_s != NULL);
+						}
+
+					if (success_flag)
 						{
 							char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
 
@@ -76,14 +90,21 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const cha
 									FreeCopiedString (copied_internal_name_s);
 								}		/* if (copied_internal_name_s) */
 
-							FreeCopiedString (copied_barcode_s);
+							if (copied_barcode_s)
+								{
+									FreeCopiedString (copied_barcode_s);
+								}
+
 						}		/* if (copied_barcode_s) */
 					else
 						{
 
 						}
 
-					FreeCopiedString (copied_pedigree_s);
+					if (copied_pedigree_s)
+						{
+							FreeCopiedString (copied_pedigree_s);
+						}
 				}		/* if (copied_pedigree_s) */
 			else
 				{
@@ -173,21 +194,72 @@ json_t *GetMaterialAsJSON (const Material *material_p)
 				{
 					if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GENE_BANK_ID_S))
 						{
-							if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
+							if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S))
 								{
-									if (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))
+									if (SetJSONString (material_json_p, MA_INTERNAL_NAME_S, material_p -> ma_internal_name_s))
 										{
-											if (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))
+											if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
 												{
-													return material_json_p;
+													if ((IsStringEmpty (material_p -> ma_barcode_s)) || (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s)))
+														{
+															if ((IsStringEmpty (material_p -> ma_pedigree_s)) || (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s)))
+																{
+																	return material_json_p;
+																}		/* if ((IsStringEmpty (material_p -> ma_pedigree_s)) || (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_PEDIGREE_S, material_p -> ma_pedigree_s);
+																}
+
+														}		/* if ((IsStringEmpty (material_p -> ma_barcode_s)) || (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_BARCODE_S, material_p -> ma_barcode_s);
+														}
+
+												}		/* if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_ACCESSION_S, material_p -> ma_accession_s);
 												}
+
+										}		/* if (SetJSONString (material_json_p, MA_INTERNAL_NAME_S, material_p -> ma_internal_name_s) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_INTERNAL_NAME_S, material_p -> ma_internal_name_s);
 										}
+
+								}		/* if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S) */
+							else
+								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (material_p -> ma_parent_area_p -> ea_id_p, id_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_EXPERIMENTAL_AREA_ID_S, id_s);
 								}
+						}		/* if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GENE_BANK_ID_S)) */
+					else
+						{
+							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+							bson_oid_to_string (material_p -> ma_gene_bank_id_p, id_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_GENE_BANK_ID_S, id_s);
 						}
 				}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
+			else
+				{
+					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+					bson_oid_to_string (material_p -> ma_id_p, id_s);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MONGO_ID_S, id_s);
+				}
 
 			json_decref (material_json_p);
 		}		/* if (material_json_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate JSON object for Material \"%s\"", material_p -> ma_accession_s);
+		}
 
 	return NULL;
 }
@@ -200,77 +272,114 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 
 	if (accession_s)
 		{
-			const char *barcode_s = GetJSONString (json_p, MA_BARCODE_S);
+			const char *internal_name_s = GetJSONString (json_p, MA_INTERNAL_NAME_S);
 
-			if (barcode_s)
+			if (internal_name_s)
 				{
-					const char *pedigree_s = GetJSONString (json_p, MA_PEDIGREE_S);
+					bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-					if (pedigree_s)
+					if (id_p)
 						{
-							const char *internal_name_s = GetJSONString (json_p, MA_INTERNAL_NAME_S);
-
-							if (internal_name_s)
+							if (GetMongoIdFromJSON (json_p, id_p))
 								{
-									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+									bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
 
-									if (id_p)
+									if (germplasm_id_p)
 										{
-											if (GetMongoIdFromJSON (json_p, id_p))
+											if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p))
 												{
-													bson_oid_t *germplasm_id_p = GetNewUnitialisedBSONOid ();
+													ExperimentalArea *area_p = NULL;
+													bool success_flag = !expand_experimental_area_flag;
 
-													if (germplasm_id_p)
+													if (expand_experimental_area_flag)
 														{
-															if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p))
+															bson_oid_t *exp_area_id_p = GetNewUnitialisedBSONOid ();
+
+															if (exp_area_id_p)
 																{
-																	ExperimentalArea *area_p = NULL;
-																	bool success_flag = !expand_experimental_area_flag;
-
-																	if (expand_experimental_area_flag)
+																	if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
 																		{
-																			bson_oid_t *exp_area_id_p = GetNewUnitialisedBSONOid ();
+																			area_p = GetExperimentalAreaById (exp_area_id_p, data_p);
 
-																			if (exp_area_id_p)
+																			if (!area_p)
 																				{
-																					if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
-																						{
-																							area_p = GetExperimentalAreaById (exp_area_id_p, data_p);
-																						}
+																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-																					FreeBSONOid (exp_area_id_p);
+																					bson_oid_to_string (exp_area_id_p, id_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find ExperimentalArea with id \"%s\"", id_s);
 																				}
 																		}
-
-																	if (success_flag)
+																	else
 																		{
-																			Material *material_p = AllocateMaterial (id_p, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, germplasm_id_p, data_p);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
+																		}
 
-																			if (material_p)
-																				{
-																					return material_p;
-																				}
-																		}
-																	if (area_p)
-																		{
-																			FreeExperimentalArea (area_p);
-																		}
+																	FreeBSONOid (exp_area_id_p);
+																}		/* if (exp_area_id_p) */
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
 																}
-
-															FreeBSONOid (germplasm_id_p);
 														}
+
+													if (success_flag)
+														{
+															const char *barcode_s = GetJSONString (json_p, MA_BARCODE_S);
+															const char *pedigree_s = GetJSONString (json_p, MA_PEDIGREE_S);
+															Material *material_p = AllocateMaterial (id_p, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, germplasm_id_p, data_p);
+
+															if (material_p)
+																{
+																	return material_p;
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to allocate Material");
+																}
+														}
+
+													if (area_p)
+														{
+															FreeExperimentalArea (area_p);
+														}
+
+												}		/* if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p)) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_GENE_BANK_ID_S);
 												}
 
-											FreeBSONOid (id_p);
-										}		/* if (id_p) */
-								}		/* if (internal_name_s) */
+											FreeBSONOid (germplasm_id_p);
+										}		/* if (germplasm_id_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_GENE_BANK_ID_S);
+										}
 
-						}		/* pedigree_s */
+								}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MONGO_ID_S);
+								}
 
-				}		/* if (barcode_s) */
+							FreeBSONOid (id_p);
+						}		/* if (id_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed tp allocate id for \"%s\"", MONGO_ID_S);
+						}
+
+				}		/* if (internal_name_s) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_INTERNAL_NAME_S);
+				}
 
 		}		/* if (accession_s) */
-
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_ACCESSION_S);
+		}
 
 	return NULL;
 }

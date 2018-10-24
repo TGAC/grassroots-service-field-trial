@@ -227,6 +227,7 @@ bool AddPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 	return success_flag;
 }
 
+
 bool RunForPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
@@ -354,12 +355,14 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
 
 	if (json_is_array (plots_json_p))
 		{
 			const size_t num_rows = json_array_size (plots_json_p);
 			size_t i;
+			size_t num_imported = 0;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
@@ -429,15 +432,31 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 
 																			plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
 
-																			if (!SavePlot (plot_p, data_p))
+																			if (plot_p)
 																				{
+																					if (!SavePlot (plot_p, data_p))
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
+																							plot_p = NULL;
+																						}		/* if (!SavePlot (plot_p, data_p)) */
 
-																					plot_p = NULL;
-																				}		/* if (!SavePlot (plot_p, data_p)) */
+																				}		/* if (plot_p) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
+																				}
 
 																		}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
+																		}
 
 																}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
+																}
 
 														}		/* if (!plot_p) */
 
@@ -457,27 +476,68 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 																		{
 																			if (SaveRow (row_p, data_p))
 																				{
-
+																					++ num_imported;
 																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																				}
+
+																			FreeRow (row_p);
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
 																		}
 
-																}		/* if (GetJSONStringAsInteger (row_p, S_RACK_TITLE_S, &rack)) */
+																}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
+																}
 
 															FreePlot (plot_p);
 														}		/* if (plot_p) */
 
 												}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
+												}
 
 										}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
+										}
 
 								}		/* if (material_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", material_s, area_p -> ea_name_s);
+								}
 
 						}		/* if (material_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_MATERIAL_TITLE_S);
+						}
 
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
+			if (num_imported == num_rows)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_imported > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+
 		}		/* if (json_is_array (plots_json_p)) */
 
+
+	SetServiceJobStatus (job_p, status);
 
 	return success_flag;
 }
@@ -596,7 +656,7 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, const Experi
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
-			bson_t *query_p = BCON_NEW ("{", PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_EXPERIMENTAL_AREA_S, BCON_OID (area_p -> ea_id_p), "}");
+			bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_EXPERIMENTAL_AREA_S, BCON_OID (area_p -> ea_id_p));
 
 			if (query_p)
 				{

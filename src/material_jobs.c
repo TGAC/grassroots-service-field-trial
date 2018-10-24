@@ -249,66 +249,76 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, ExperimentalArea *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
+	OperationStatus status = OS_FAILED;
 
 	if (json_is_array (materials_json_p))
 		{
 			const size_t num_rows = json_array_size (materials_json_p);
+			size_t i;
+			size_t num_imported = 0;
 
-			if (num_rows > 0)
+			for (i = 0; i < num_rows; ++ i)
 				{
-					size_t i;
+					json_t *table_row_json_p = json_array_get (materials_json_p, i);
+					const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
 
-					for (i = 0; i < num_rows; ++ i)
+					if (!IsStringEmpty (internal_name_s))
 						{
-							json_t *table_row_json_p = json_array_get (materials_json_p, i);
-							const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
+							const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
 
-							if (!IsStringEmpty (internal_name_s))
+							if (!IsStringEmpty (accession_s))
 								{
-									const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
+									const char *pedigree_s = GetJSONString (table_row_json_p, S_PEDIGREE_TITLE_S);
+									const char *barcode_s = GetJSONString (table_row_json_p, S_BARCODE_TITLE_S);
 
-									if (!IsStringEmpty (accession_s))
+									Material *material_p = AllocateMaterial (NULL, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, gene_bank_p -> gb_id_p, data_p);
+
+									if (material_p)
 										{
-											const char *pedigree_s = GetJSONString (table_row_json_p, S_PEDIGREE_TITLE_S);
-											const char *barcode_s = GetJSONString (table_row_json_p, S_BARCODE_TITLE_S);
-
-											Material *material_p = AllocateMaterial (NULL, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, gene_bank_p -> gb_id_p, data_p);
-
-											if (material_p)
+											if (SaveMaterial (material_p, data_p))
 												{
-													if (!SaveMaterial (material_p, data_p))
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Material");
-															success_flag = false;
-														}
-
-													FreeMaterial (material_p);
-												}		/* if (material_p) */
+													++ num_imported;
+												}
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Material");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Material");
+													success_flag = false;
 												}
 
-										}		/* if (!IsStringEmpty (accession_s)) */
+											FreeMaterial (material_p);
+										}		/* if (material_p) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Material");
 										}
 
-								}		/* if (!IsStringEmpty (internal_name_s)) */
+								}		/* if (!IsStringEmpty (accession_s)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INTERNAL_NAME_TITLE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
 								}
 
-						}		/* for (i = 0; i < num_rows; ++ i) */
+						}		/* if (!IsStringEmpty (internal_name_s)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INTERNAL_NAME_TITLE_S);
+						}
 
-					success_flag	= false;
-				}		/* if (num_rows > 0) */
+				}		/* for (i = 0; i < num_rows; ++ i) */
 
+
+			if (num_imported == num_rows)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_imported > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
 
 		}		/* if (json_is_array (plots_json_p)) */
 
+	SetServiceJobStatus (job_p, status);
 
 	return success_flag;
 }
