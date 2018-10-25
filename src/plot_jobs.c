@@ -60,6 +60,7 @@ static const char * const S_MATERIAL_TITLE_S = "Material";
 static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
 static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
+static const char * const S_REPLICATE_TITLE_S = "Replicate";
 
 /*
 static NamedParameterType S_PLOT_SOWING_DATE = { "PL Sowing Year", PT_TIME };
@@ -307,7 +308,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 	InitSharedType (&def);
 
 	headers_s = ConcatenateVarargsStrings (S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
-																				 S_RACK_TITLE_S, delim_s, S_MATERIAL_TITLE_S, delim_s, S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
+																				 S_REPLICATE_TITLE_S, delim_s, S_RACK_TITLE_S, delim_s, S_MATERIAL_TITLE_S, delim_s, S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
 
 
 	if (headers_s)
@@ -406,8 +407,10 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 																			const char *trial_design_s = GetJSONString (table_row_json_p, S_TRIAL_DESIGN_TITLE_S);
 																			struct tm *sowing_date_p = NULL;
 																			struct tm *harvest_date_p = NULL;
-
 																			const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
+																			int32 replicate = 1;
+
+																			GetJSONStringAsInteger (table_row_json_p, S_REPLICATE_TITLE_S, &replicate);
 
 																			if (date_s)
 																				{
@@ -430,7 +433,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 																						}
 																				}
 
-																			plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_condition_s, treatment_s, area_p);
+																			plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, area_p);
 
 																			if (plot_p)
 																				{
