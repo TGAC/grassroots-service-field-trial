@@ -81,6 +81,8 @@ MATERIAL_PREFIX const char *MA_PEDIGREE_S MATERIAL_VAL ("pedigree");
 
 MATERIAL_PREFIX const char *MA_GENE_BANK_ID_S MATERIAL_VAL ("gene_bank_id");
 
+MATERIAL_PREFIX const char *MA_GENE_BANK_S MATERIAL_VAL ("gene_bank");
+
 MATERIAL_PREFIX const char *MA_EXPERIMENTAL_AREA_ID_S MATERIAL_VAL ("area_id");
 
 MATERIAL_PREFIX const char *MA_INTERNAL_NAME_S MATERIAL_VAL ("internal_name");
@@ -109,7 +111,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialInternalName (Material *material_p
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMaterial (Material *material_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMaterialAsJSON (const Material *material_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMaterialAsJSON (const Material *material_p, const bool expand_gene_bank_flag, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimental_area_flag, const DFWFieldTrialServiceData *data_p);
 
@@ -122,6 +124,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, D
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsMaterialComplete (const Material * const material_p);

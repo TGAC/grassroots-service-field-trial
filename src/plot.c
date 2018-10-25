@@ -30,6 +30,11 @@
 #include "time_util.h"
 
 
+static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFieldTrialServiceData *data_p);
+
+
+
+
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
 										const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p)
 {
@@ -208,7 +213,7 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 
 	if (plot_p -> pl_id_p)
 		{
-			json_t *plot_json_p = GetPlotAsJSON (plot_p);
+			json_t *plot_json_p = GetPlotAsJSON (plot_p, false, data_p);
 
 			if (plot_json_p)
 				{
@@ -223,7 +228,7 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-json_t *GetPlotAsJSON (const Plot *plot_p)
+json_t *GetPlotAsJSON (Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *plot_json_p = json_object ();
 
@@ -251,6 +256,19 @@ json_t *GetPlotAsJSON (const Plot *plot_p)
 																						{
 																							if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_EXPERIMENTAL_AREA_S))
 																								{
+																									if (expand_fields_flag)
+																										{
+																											if (GetPlotRows (plot_p, data_p))
+																												{
+																													if (AddRowsToJSON (plot_p, plot_json_p, data_p))
+																														{
+
+																														}
+																												}
+
+																										}
+
+
 																									return plot_json_p;
 																								}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S)) */
 																							else
@@ -348,7 +366,8 @@ json_t *GetPlotAsJSON (const Plot *plot_p)
 }
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, DFWFieldTrialServiceData *data_p)
+
+Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row;
@@ -466,6 +485,140 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_
 		}
 
 	return plot_p;
+}
+
+
+bool GetPlotRows (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	ClearLinkedList (plot_p -> pl_rows_p);
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
+		{
+			bson_t *query_p = BCON_NEW (RO_PLOT_ID_S, BCON_OID (plot_p -> pl_id_p));
+
+			/*
+			 * Make the query to get the matching plots
+			 */
+			if (query_p)
+				{
+					bson_t *opts_p = BCON_NEW ( "sort", "{", RO_INDEX_S, BCON_INT32 (1), "}");
+
+					if (opts_p)
+						{
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+							if (results_p)
+								{
+									if (json_is_array (results_p))
+										{
+											size_t i;
+											const size_t num_results = json_array_size (results_p);
+
+											success_flag = true;
+
+											if (num_results > 0)
+												{
+													json_t *row_json_p;
+
+													json_array_foreach (results_p, i, row_json_p)
+														{
+															Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, true, data_p);
+
+															if (row_p)
+																{
+																	RowNode *node_p = AllocateRowNode (row_p);
+
+																	if (node_p)
+																		{
+																			LinkedListAddTail (plot_p -> pl_rows_p, & (node_p -> rn_node));
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row to plot's list");
+																			FreePlot (plot_p);
+																		}
+																}
+
+														}		/* json_array_foreach (results_p, i, entry_p) */
+
+												}		/* if (num_results > 0) */
+
+
+										}		/* if (json_is_array (results_p)) */
+
+									json_decref (results_p);
+								}		/* if (results_p) */
+
+							bson_destroy (opts_p);
+						}		/* if (opts_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}
+
+	return success_flag;
+}
+
+
+
+
+static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *rows_json_p = json_array ();
+
+	if (rows_json_p)
+		{
+			if (json_object_set_new (plot_json_p, PL_ROWS_S, rows_json_p) == 0)
+				{
+					RowNode *node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
+
+					success_flag = true;
+
+					while (node_p && success_flag)
+						{
+							json_t *row_json_p = GetRowAsJSON (node_p -> rn_row_p, true, data_p);
+
+							if (row_json_p)
+								{
+									if (json_array_append_new (rows_json_p, row_json_p) == 0)
+										{
+											node_p = (RowNode *) (node_p -> rn_node.ln_next_p);
+										}
+									else
+										{
+											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add row json to results");
+										}
+								}
+							else
+								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									success_flag = false;
+									bson_oid_to_string (node_p -> rn_row_p -> ro_id_p, id_s);
+
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to create row json for \"%s\"", id_s);
+								}
+
+						}		/* while (node_p && &success_flag) */
+
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add rows array");
+					json_decref (rows_json_p);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create plots array");
+		}
+
+	return success_flag;
 }
 
 

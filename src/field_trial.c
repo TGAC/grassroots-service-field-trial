@@ -190,7 +190,7 @@ LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *
 }
 
 
-json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_areas_flag, DFWFieldTrialServiceData *data_p)
+json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_areas_flag, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
 
@@ -220,7 +220,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_ar
 
 
 
-bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, DFWFieldTrialServiceData *data_p)
+bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 

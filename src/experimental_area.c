@@ -214,7 +214,7 @@ void FreeExperimentalAreaNode (ListItem *node_p)
 }
 
 
-bool GetExperimentalAreaPlots (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
+bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -331,7 +331,7 @@ ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServic
 }
 
 
-json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_fields_flag, DFWFieldTrialServiceData *data_p)
+json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *area_json_p = json_object ();
 
@@ -526,7 +526,7 @@ static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const
 
 					while (node_p && success_flag)
 						{
-							json_t *plot_json_p = GetPlotAsJSON (node_p -> pn_plot_p);
+							json_t *plot_json_p = GetPlotAsJSON (node_p -> pn_plot_p, true, data_p);
 
 							if (plot_json_p)
 								{

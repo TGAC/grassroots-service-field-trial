@@ -68,7 +68,7 @@ PLOT_PREFIX const char *PL_ROW_INDEX_S PLOT_VAL ("row_index");
 
 PLOT_PREFIX const char *PL_COLUMN_INDEX_S PLOT_VAL ("column_index");
 
-
+PLOT_PREFIX const char *PL_ROWS_S PLOT_VAL ("rows");
 
 
 
@@ -131,12 +131,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL PlotNode *AllocatePlotNode (Plot *plot_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotNode (ListItem *node_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (const Plot *plot_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetPlotRows (Plot *plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPlotRows (Plot *plot_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p);

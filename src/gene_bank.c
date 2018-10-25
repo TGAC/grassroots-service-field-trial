@@ -106,7 +106,7 @@ void FreeGeneBank (GeneBank *germplasm_p)
 }
 
 
-json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p)
+json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p, const char * const api_query_s)
 {
 	json_t *res_p = json_object ();
 
@@ -116,7 +116,29 @@ json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p)
 				{
 					if (SetJSONString (res_p, GB_URL_S, gene_bank_p -> gb_url_s))
 						{
-							if (SetJSONString (res_p, GB_API_URL_S, gene_bank_p -> gb_api_url_s))
+							bool success_flag = false;
+
+							if (api_query_s)
+								{
+									char *value_s = ConcatenateStrings (gene_bank_p -> gb_api_url_s, api_query_s);
+
+									if (value_s)
+										{
+											success_flag = SetJSONString (res_p, GB_API_URL_S, value_s);
+											FreeCopiedString (value_s);
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to join \"%s\" and \"%s\"", gene_bank_p -> gb_api_url_s, api_query_s);
+										}
+
+								}
+							else
+								{
+									success_flag = SetJSONString (res_p, GB_API_URL_S, gene_bank_p -> gb_api_url_s);
+								}
+
+							if (success_flag)
 								{
 									if (AddCompoundIdToJSON (res_p, gene_bank_p -> gb_id_p))
 										{
@@ -234,7 +256,7 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 
 	if (gene_bank_p -> gb_id_p)
 		{
-			json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p);
+			json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, NULL);
 
 			if (gene_bank_json_p)
 				{
@@ -246,6 +268,16 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 		}		/* if (gene_bank_p -> gb_id_p) */
 
 	return success_flag;
+}
+
+
+
+GeneBank *GetGeneBankById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p)
+{
+	GeneBank *gene_bank_p = GetDFWObjectById (id_p, DFTD_GENE_BANK, GetGeneBankCallback, data_p);
+
+	return gene_bank_p;
+
 }
 
 

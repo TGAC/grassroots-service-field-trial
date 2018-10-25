@@ -78,7 +78,10 @@ ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
  * used as a temporary holding value until the material pointer
  * has been linked up
  */
-ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("trial_material_s");
+ROW_PREFIX const char *RO_TRIAL_MATERIAL_S ROW_VAL ("trial_material_s");
+
+
+ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material_s");
 
 
 
@@ -96,9 +99,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL RowNode *AllocateRowNode (Row *row_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p, const bool expand_material_flag, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, const bool expand_fields_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p);

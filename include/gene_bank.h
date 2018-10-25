@@ -87,8 +87,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *AllocateGeneBank (bson_oid_t *id_p, cons
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeGeneBank (GeneBank *germplasm_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetGeneBankAsJSON (const GeneBank *germplasm_p);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p, const char * const api_query_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankFromJSON (const json_t *germplasm_json_p);
 
@@ -97,6 +96,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveGeneBank (GeneBank *gene_bank_p, DFWField
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p);
+
 
 
 #ifdef __cplusplus

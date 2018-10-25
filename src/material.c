@@ -24,10 +24,12 @@
 #include "material.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
+#include "gene_bank.h"
 
 
 static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);
 
+static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
 
 /*
  * API FUNCTIONS
@@ -184,7 +186,7 @@ void FreeMaterial (Material *material_p)
 }
 
 
-json_t *GetMaterialAsJSON (const Material *material_p)
+json_t *GetMaterialAsJSON (const Material *material_p, const bool expand_gene_bank_flag, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *material_json_p = json_object ();
 
@@ -192,7 +194,52 @@ json_t *GetMaterialAsJSON (const Material *material_p)
 		{
 			if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p))
 				{
-					if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GENE_BANK_ID_S))
+					bool success_flag = false;
+
+					if (material_p -> ma_gene_bank_id_p)
+						{
+							if (expand_gene_bank_flag)
+								{
+									GeneBank *gene_bank_p = GetGeneBankById (material_p -> ma_gene_bank_id_p, data_p);
+
+									if (gene_bank_p)
+										{
+											json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, material_p -> ma_accession_s);
+
+											if (gene_bank_json_p)
+												{
+													if (json_object_set_new (material_json_p, MA_GENE_BANK_S, gene_bank_json_p) == 0)
+														{
+															success_flag = true;
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add gene bank json to material");
+															json_decref (gene_bank_json_p);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get gene bank \"%s\"", gene_bank_p -> gb_name_s);
+												}
+
+											FreeGeneBank (gene_bank_p);
+										}
+									else
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (material_p -> ma_gene_bank_id_p, id_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find gene bank with id \"%s\"", id_s);
+										}
+								}
+							else
+								{
+									success_flag = AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GENE_BANK_ID_S);
+								}
+						}
+
+					if (success_flag)
 						{
 							if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S))
 								{
@@ -237,13 +284,13 @@ json_t *GetMaterialAsJSON (const Material *material_p)
 									bson_oid_to_string (material_p -> ma_parent_area_p -> ea_id_p, id_s);
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_EXPERIMENTAL_AREA_ID_S, id_s);
 								}
-						}		/* if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_gene_bank_id_p, MA_GENE_BANK_ID_S)) */
+						}		/* if (success_flag)) */
 					else
 						{
 							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 							bson_oid_to_string (material_p -> ma_gene_bank_id_p, id_s);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_GENE_BANK_ID_S, id_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add gene with id for \"%s\": \"%s\", expanded = %c", MA_GENE_BANK_ID_S, id_s, expand_gene_bank_flag);
 						}
 				}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
 			else
@@ -402,7 +449,7 @@ bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 
 	if (material_p -> ma_id_p)
 		{
-			json_t *material_json_p = GetMaterialAsJSON (material_p);
+			json_t *material_json_p = GetMaterialAsJSON (material_p, false, data_p);
 
 			if (material_json_p)
 				{
@@ -439,56 +486,86 @@ Material *GetOrCreateMaterialByInternalName (const char *material_s, Experimenta
 Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
+	bson_t *query_p = BCON_NEW (MA_INTERNAL_NAME_S, BCON_UTF8 (material_s), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> ea_id_p));
+
+	if (query_p)
+		{
+			material_p = SearchForMaterial (query_p, data_p);
+
+			if (material_p)
+				{
+					material_p -> ma_parent_area_p = area_p;
+				}
+
+			bson_destroy (query_p);
+		}		/* if (query_p) */
+
+	return material_p;
+}
+
+
+Material *GetMaterialById (const bson_oid_t *material_id_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+{
+	Material *material_p = NULL;
+	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> ea_id_p));
+
+	if (query_p)
+		{
+			material_p = SearchForMaterial (query_p, data_p);
+
+			if (material_p)
+				{
+					material_p -> ma_parent_area_p = area_p;
+				}
+
+			bson_destroy (query_p);
+		}		/* if (query_p) */
+
+	return material_p;
+}
+
+
+static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+{
+	Material *material_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL]))
 		{
-			bson_t *query_p = BCON_NEW ( MA_INTERNAL_NAME_S, material_s, MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> ea_id_p));
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
-			if (query_p)
+			if (results_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-					if (results_p)
+					if (json_is_array (results_p))
 						{
-							if (json_is_array (results_p))
+							if (json_array_size (results_p) == 1)
 								{
-									if (json_array_size (results_p) == 1)
+									json_t *result_p = json_array_get (results_p, 0);
+
+									material_p = GetMaterialFromJSON (result_p, false, data_p);
+
+									if (!material_p)
 										{
-											json_t *result_p = json_array_get (results_p, 0);
-
-											material_p = GetMaterialFromJSON (result_p, false, data_p);
-
-											if (!material_p)
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get Material from JSON");
-												}
-
-										}		/* if (json_array_size (results_p) == 1) */
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Materials array does not contain just a single item");
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get Material from JSON");
 										}
 
-								}		/* if (json_is_array (results_p)) */
+								}		/* if (json_array_size (results_p) == 1) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Materials array does not contain just a single item");
 								}
 
-							json_decref (results_p);
-						}		/* if (results_p) */
+						}		/* if (json_is_array (results_p)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
 						}
 
-					bson_destroy (query_p);
-				}		/* if (query_p) */
+					json_decref (results_p);
+				}		/* if (results_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
 				}
-
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
 	else
 		{
