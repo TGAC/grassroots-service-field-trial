@@ -38,6 +38,8 @@
  */
 static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
+static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const DFWFieldTrialServiceData *data_p);
+
 
 /*
  * API FUNCTIONS
@@ -240,13 +242,15 @@ bool GetExperimentalAreaPlots (ExperimentalArea *area_p, DFWFieldTrialServiceDat
 											size_t i;
 											const size_t num_results = json_array_size (results_p);
 
+											success_flag = true;
+
 											if (num_results > 0)
 												{
 													json_t *plot_json_p;
 
 													json_array_foreach (results_p, i, plot_json_p)
 														{
-															Plot *plot_p = GetPlotFromJSON (plot_json_p, data_p);
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, area_p, data_p);
 
 															if (plot_p)
 																{
@@ -375,7 +379,14 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_f
 																{
 																	if (expand_fields_flag)
 																		{
-																			GetExperimentalAreaPlots (area_p, data_p);
+																			if (GetExperimentalAreaPlots (area_p, data_p))
+																				{
+																					if (AddPlotsToJSON (area_p, area_json_p, data_p))
+																						{
+
+																						}
+																				}
+
 																		}
 
 																	return area_json_p;
@@ -497,5 +508,62 @@ ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const DFWField
 static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
 {
 	return GetExperimentalAreaFromJSON (json_p, false, data_p);
+}
+
+
+static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *plots_json_p = json_array ();
+
+	if (plots_json_p)
+		{
+			if (json_object_set_new (area_json_p, EA_PLOTS_S, plots_json_p) == 0)
+				{
+					PlotNode *node_p = (PlotNode *) (area_p -> ea_plots_p -> ll_head_p);
+
+					success_flag = true;
+
+					while (node_p && success_flag)
+						{
+							json_t *plot_json_p = GetPlotAsJSON (node_p -> pn_plot_p);
+
+							if (plot_json_p)
+								{
+									if (json_array_append_new (plots_json_p, plot_json_p) == 0)
+										{
+											node_p = (PlotNode *) (node_p -> pn_node.ln_next_p);
+										}
+									else
+										{
+											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add plot json to results");
+										}
+								}
+							else
+								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									success_flag = false;
+									bson_oid_to_string (node_p -> pn_plot_p -> pl_id_p, id_s);
+
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to create plot json for \"%s\"", id_s);
+								}
+
+						}		/* while (node_p && &success_flag) */
+
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add plots array");
+					json_decref (plots_json_p);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create plots array");
+		}
+
+	return success_flag;
 }
 

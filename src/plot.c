@@ -33,17 +33,17 @@
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
 										const uint32 column_index, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p)
 {
-	char *copied_trial_design_s = EasyCopyToNewString (trial_design_s);
+	char *copied_trial_design_s = NULL;
 
-	if (copied_trial_design_s)
+	if ((IsStringEmpty (trial_design_s)) || ((copied_trial_design_s = EasyCopyToNewString (trial_design_s)) != NULL))
 		{
-			char *copied_growing_conditions_s = EasyCopyToNewString (growing_conditions_s);
+			char *copied_growing_conditions_s = NULL;
 
-			if (copied_growing_conditions_s)
+			if ((IsStringEmpty (growing_conditions_s)) || ((copied_growing_conditions_s = EasyCopyToNewString (growing_conditions_s)) != NULL))
 				{
-					char *copied_treatments_s = EasyCopyToNewString (treatments_s);
+					char *copied_treatments_s = NULL;
 
-					if (copied_treatments_s)
+					if ((IsStringEmpty (treatments_s)) || ((copied_trial_design_s = EasyCopyToNewString (treatments_s)) != NULL))
 						{
 							struct tm *copied_sowing_date_p = NULL;
 
@@ -94,27 +94,26 @@ Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const stru
 
 								}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
 
+							if (copied_treatments_s)
+								{
+									FreeCopiedString (copied_treatments_s);
+								}
 
-							FreeCopiedString (copied_treatments_s);
-						}		/* if (copied_treatments_s) */
-					else
+						}		/* if ((IsStringEmpty (treatments_s)) || ((copied_treatments_s = EasyCopyToNewString (treatments_s)) != NULL)) */
+
+					if (copied_growing_conditions_s)
 						{
-
+							FreeCopiedString (copied_growing_conditions_s);
 						}
 
-					FreeCopiedString (copied_growing_conditions_s);
-				}		/* if (copied_growing_conditions_s) */
-			else
-				{
+				}		/* if ((IsStringEmpty (growing_conditions_)) || ((copied_growing_conditions_s = EasyCopyToNewString (growing_conditions_)) != NULL)) */
 
+			if (copied_trial_design_s)
+				{
+					FreeCopiedString (copied_trial_design_s);
 				}
 
-			FreeCopiedString (copied_trial_design_s);
-		}		/* if (copied_trial_design_s) */
-	else
-		{
-
-		}
+		}		/* if ((IsStringEmpty (trial_design_s)) || ((copied_trial_design_s = EasyCopyToNewString (trial_design_s)) != NULL)) */
 
 	return NULL;
 }
@@ -349,7 +348,7 @@ json_t *GetPlotAsJSON (const Plot *plot_p)
 }
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, DFWFieldTrialServiceData *data_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row;
@@ -379,49 +378,56 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, DFWFieldTrialServiceData *data
 
 											if (CreateValidDateFromJSON (plot_json_p, PL_HARVEST_DATE_S, &harvest_date_p))
 												{
-													bson_oid_t *field_trial_id_p = GetNewUnitialisedBSONOid ();
+													bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-													if (field_trial_id_p)
+													if (id_p)
 														{
-															if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_EXPERIMENTAL_AREA_S, field_trial_id_p))
+															if (GetMongoIdFromJSON (plot_json_p, id_p))
 																{
-																	ExperimentalArea *area_p = NULL;
-																	bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
-
-																	if (id_p)
+																	if (!parent_area_p)
 																		{
-																			if (GetMongoIdFromJSON (plot_json_p, id_p))
-																				{
-																					plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_conditions_s, treatments_s, area_p);
+																			bson_oid_t *parent_area_id_p = GetNewUnitialisedBSONOid ();
 
-																					if (!plot_p)
+																			if (parent_area_id_p)
+																				{
+																					if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_EXPERIMENTAL_AREA_S, parent_area_id_p))
 																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get create Plot");
+
+
+																						}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
 																						}
 
-																				}		/* if (GetMongoIdFromJSON (plot_json_p, id_p)) */
+																				}		/* if (parent_area_id_p) */
 																			else
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", MONGO_ID_S);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
 																				}
 
-																		}		/* if (id_p) */
-																	else
+																		}		/* if (!parent_area_p) */
+
+																	plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, row, column, trial_design_s, growing_conditions_s, treatments_s, parent_area_p);
+
+																	if (!plot_p)
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get create Plot");
 																		}
 
-																}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
+																}		/* if (GetMongoIdFromJSON (plot_json_p, id_p)) */
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", MONGO_ID_S);
 																}
 
-														}		/* if (field_trial_id_p) */
+														}		/* if (id_p) */
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MONGO_ID_S);
 														}
+
+
 
 												}		/* if (CreateValidDateFromJSON (plot_json_p, PL_HARVEST_DATE_S, &harvest_date_p)) */
 											else

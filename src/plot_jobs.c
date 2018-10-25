@@ -650,7 +650,7 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 
 
 
-Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, const ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
@@ -673,7 +673,7 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, const Experi
 											size_t i = 0;
 											json_t *entry_p = json_array_get (results_p, i);
 
-											plot_p = GetPlotFromJSON (entry_p, data_p);
+											plot_p = GetPlotFromJSON (entry_p, area_p, data_p);
 
 											if (!plot_p)
 												{
