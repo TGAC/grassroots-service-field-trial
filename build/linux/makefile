@@ -40,6 +40,7 @@ INCLUDES = \
 	-I$(DIR_SQLITE_INC)
 	
 SRCS 	= \
+	crop_ontology_tool.c \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
 	dfw_util.c \
