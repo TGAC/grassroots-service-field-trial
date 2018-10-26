@@ -81,7 +81,7 @@
 ]
 */
 
-
+#include <string.h>
 
 #include "curl_tools.h"
 #include "jansson.h"
@@ -103,6 +103,7 @@ static const char *GetCropOntologyTraitName (const json_t *co_data_p);
 
 static const char *GetCropOntologyTraitDescription (const json_t *co_data_p);
 
+static const char *GetCropOntologyTraitAbbreviation (const json_t *co_data_p);
 
 /*
  * API definitions
@@ -111,7 +112,20 @@ static const char *GetCropOntologyTraitDescription (const json_t *co_data_p);
 SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 {
 	SchemaTerm *term_p = NULL;
-	char *url_s = ConcatenateStrings (S_CROP_ONTOLOGY_API_URL_S, crop_ontology_term_s);
+	char *url_s = NULL;
+	const size_t TERMS_URL_LENGTH = strlen (CONTEXT_URL_CROP_ONOTOLOGY_S);
+	const char *term_s = NULL;
+
+	if (strncmp (crop_ontology_term_s, CONTEXT_URL_CROP_ONOTOLOGY_S, TERMS_URL_LENGTH) == 0)
+		{
+			term_s = crop_ontology_term_s + TERMS_URL_LENGTH;
+		}
+	else
+		{
+			term_s = crop_ontology_term_s;
+		}
+
+	url_s = ConcatenateStrings (S_CROP_ONTOLOGY_API_URL_S, term_s);
 
 	if (url_s)
 		{
@@ -142,6 +156,14 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 
 															if (trait_description_s)
 																{
+																	const char *abbreviation_s = GetCropOntologyTraitAbbreviation (res_p);
+
+																	term_p = AllocateExtendedSchemaTerm (term_s, trait_name_s, trait_description_s, abbreviation_s);
+
+																	if (!term_p)
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to allocate SchemaTerm");
+																		}
 
 																}		/* if (trait_description_s) */
 															else
@@ -214,6 +236,12 @@ static const char *GetCropOntologyTraitName (const json_t *co_data_p)
 static const char *GetCropOntologyTraitDescription (const json_t *co_data_p)
 {
 	return GetTermEnglishValue (co_data_p, "description");
+}
+
+
+static const char *GetCropOntologyTraitAbbreviation (const json_t *co_data_p)
+{
+	return GetTermEnglishValue (co_data_p, "Main trait abbreviation");
 }
 
 
