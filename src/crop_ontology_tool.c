@@ -87,6 +87,9 @@
 #include "jansson.h"
 #include "string_utils.h"
 #include "streams.h"
+#include "schema_term.h"
+#include "json_util.h"
+
 
 /*
  * static declarations
@@ -96,6 +99,10 @@ static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.o
 
 static const char *GetTermEnglishValue (const json_t *co_data_p, const char *key_s);
 
+static const char *GetCropOntologyTraitName (const json_t *co_data_p);
+
+static const char *GetCropOntologyTraitDescription (const json_t *co_data_p);
+
 
 /*
  * API definitions
@@ -103,7 +110,7 @@ static const char *GetTermEnglishValue (const json_t *co_data_p, const char *key
 
 SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 {
-	json_t *res_p = NULL;
+	SchemaTerm *term_p = NULL;
 	char *url_s = ConcatenateStrings (S_CROP_ONTOLOGY_API_URL_S, crop_ontology_term_s);
 
 	if (url_s)
@@ -123,8 +130,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 									if (results_s)
 										{
 											json_error_t err;
-
-											res_p = json_loads (results_s, JSON_DECODE_ANY, &err);
+											json_t *res_p = json_loads (results_s, JSON_DECODE_ANY, &err);
 
 											if (res_p)
 												{
@@ -132,7 +138,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 
 													if (trait_name_s)
 														{
-															const char *trait_description_s = GetCropOntologyTraitDescritpion (res_p);
+															const char *trait_description_s = GetCropOntologyTraitDescription (res_p);
 
 															if (trait_description_s)
 																{
@@ -148,6 +154,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to get trait name");
 														}
 
+													json_decref (res_p);
 												}		/* if (res_p) */
 											else
 												{
@@ -189,7 +196,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 		}
 
 
-	return res_p;
+	return term_p;
 }
 
 
