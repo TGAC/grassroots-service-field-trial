@@ -395,7 +395,7 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 }
 
 
-bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag)
+bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	bool insert_flag = false;
@@ -416,7 +416,7 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 
 			if (phenotype_json_p)
 				{
-					const char *collection_s = corrected_value_flag ? data_p -> dftsd_collection_ss [DFTD_CORRECTED_PHENOTYPE] : data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE];
+					const char *collection_s = phenotype_p -> ph_corrected_flag ? data_p -> dftsd_collection_ss [DFTD_CORRECTED_PHENOTYPE] : data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE];
 					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, collection_s, insert_flag);
 
 					json_decref (phenotype_json_p);

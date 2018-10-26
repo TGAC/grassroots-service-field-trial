@@ -57,6 +57,7 @@ SRCS 	= \
 	material.c \
 	material_jobs.c \
 	phenotype.c \
+	phenotype_jobs.c \
 	plot.c \
 	plot_jobs.c \
 	row.c \

@@ -116,7 +116,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *pheno
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p, bool corrected_value_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
