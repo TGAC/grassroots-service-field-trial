@@ -193,14 +193,7 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 						{
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_FUZZY_SEARCH_FIELD_TRIALS.npt_type, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s, "Fuzzy search", "When doing a search, do a fuzzy search", def, PL_BASIC)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_FIELD_TRIALS.npt_type, S_GET_ALL_FIELD_TRIALS.npt_name_s, "List", "Get all of the existing Field Trials", def, PL_BASIC)) != NULL)
-										{
-											success_flag = true;
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_FIELD_TRIALS.npt_name_s);
-										}
+									success_flag = true;
 								}
 							else
 								{
@@ -263,20 +256,6 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 					job_done_flag = true;
 				}		/* if (value.st_boolean_value) */
 		}
-
-	if (!job_done_flag)
-		{
-			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_FIELD_TRIALS.npt_name_s, &value, true))
-				{
-					if (value.st_boolean_value)
-						{
-							bool success_flag = SearchFieldTrials (job_p, NULL, NULL, false, data_p);
-
-							job_done_flag = true;
-						}		/* if (value.st_boolean_value) */
-				}
-		}
-
 
 	return job_done_flag;
 }

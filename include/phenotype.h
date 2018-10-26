@@ -37,13 +37,13 @@ typedef struct Phenotype
 {
 	bson_oid_t *ph_id_p;
 
-	char *ph_trait_s;
+	SchemaTerm *ph_trait_term_p;
 
-	char *ph_trait_abbreviation_s;
+	SchemaTerm *ph_measurement_term_p;
 
-	char *ph_measurement_s;
+	SchemaTerm *ph_unit_term_p;
 
-	char *ph_unit_s;
+	char *ph_measured_value_s;
 
 	struct tm *ph_date_p;
 
@@ -75,11 +75,11 @@ typedef struct Phenotype
 
 PHENOTYPE_PREFIX const char *PH_TRAIT_S PHENOTYPE_VAL ("trait");
 
-PHENOTYPE_PREFIX const char *PH_TRAIT_ABBREVIATION_S PHENOTYPE_VAL ("trait_abbreviation");
-
 PHENOTYPE_PREFIX const char *PH_MEASUREMENT_S PHENOTYPE_VAL ("measurement");
 
 PHENOTYPE_PREFIX const char *PH_UNIT_S PHENOTYPE_VAL ("unit");
+
+PHENOTYPE_PREFIX const char *PH_VALUE_S PHENOTYPE_VAL ("value");
 
 PHENOTYPE_PREFIX const char *PH_DATE_S PHENOTYPE_VAL ("date");
 

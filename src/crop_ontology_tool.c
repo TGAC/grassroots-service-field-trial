@@ -68,61 +68,7 @@
   },
   {
     "key": "Attribute",
-    "value": "{\"english\":\"Heading time\"}"[
-  {
-    "key": "name",
     "value": "{\"english\":\"Heading time\"}"
-  },
-  {
-    "key": "Trait description",
-    "value": "{\"english\":\"Heading time extends from the time of emergence of the tip of the spike from the flag leaf sheath to when the spike has completely emerged but has not yet started to flower.\"}"
-  },
-  {
-    "key": "Trait class",
-    "value": "{\"english\":\"Phenological traits\"}"
-  },
-  {
-    "key": "created_at",
-    "value": "Fri Dec 02 08:20:19 UTC 2016"
-  },
-  {
-    "key": "ontology_id",
-    "value": "CO_321"
-  },
-  {
-    "key": "ontology_name",
-    "value": "Wheat"
-  },
-  {
-    "key": "Main trait abbreviation",
-    "value": "{\"english\":\"Hd\"}"
-  },
-  {
-    "key": "Trait name",
-    "value": "{\"english\":\"Heading time\"}"
-  },
-  {
-    "key": "Alternative trait abbreviations",
-    "value": "{\"english\":\"Head, Heading, H\"}"
-  },
-  {
-    "key": "ibfieldbook",
-    "value": "{\"english\":\"Obsolete/legacy\"}"
-  },
-  {
-    "key": "Attribute",
-    "value": "{\"english\":\"Heading time\"}"
-  },
-  {
-    "key": "language",
-    "value": "EN"
-  },
-  {
-    "key": "Entity",
-    "value": "{\"english\":\"Plant\"}"
-  }
-]
-
   },
   {
     "key": "language",
@@ -140,18 +86,25 @@
 #include "curl_tools.h"
 #include "jansson.h"
 #include "string_utils.h"
+#include "streams.h"
 
+/*
+ * static declarations
+ */
 
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
 static const char *GetTermEnglishValue (const json_t *co_data_p, const char *key_s);
 
 
+/*
+ * API definitions
+ */
 
-json_t *GetCropOnotologyAttributes (const char *term_s)
+SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 {
 	json_t *res_p = NULL;
-	char *url_s = ConcatenateStrings (S_CROP_ONTOLOGY_API_URL_S, term_s);
+	char *url_s = ConcatenateStrings (S_CROP_ONTOLOGY_API_URL_S, crop_ontology_term_s);
 
 	if (url_s)
 		{
@@ -175,41 +128,87 @@ json_t *GetCropOnotologyAttributes (const char *term_s)
 
 											if (res_p)
 												{
+													const char *trait_name_s = GetCropOntologyTraitName (res_p);
+
+													if (trait_name_s)
+														{
+															const char *trait_description_s = GetCropOntologyTraitDescritpion (res_p);
+
+															if (trait_description_s)
+																{
+
+																}		/* if (trait_description_s) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to get trait description");
+																}
+														}		/* if (trait_name_s) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to get trait name");
+														}
 
 												}		/* if (res_p) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to load \"%s\" as JSON, err at %d, %d", results_s, err.line, err.column);
+												}
 
 										}		/* if (results_s) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to get data for \"%s\"", url_s);
+										}
 
 								}		/* if (c == CURLE_OK) */
+							else
+								{
+									const char *error_s = curl_easy_strerror (c);
+
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to run \"%s\": \"%s\"", url_s, error_s);
+								}
 
 						}		/* if (SetUriForCurlTool (tool_p, url_s)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to get set curl tool's url to \"%s\"", url_s);
+						}
 
 					FreeCurlTool (tool_p);
 				}		/* if (tool_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to allocate curl tool for \"%s\"", url_s);
+				}
 
 			FreeCopiedString (url_s);
 		}		/* if (url_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to make url from \"%s\" and \"%s\"", S_CROP_ONTOLOGY_API_URL_S, crop_ontology_term_s);
+		}
 
 
 	return res_p;
 }
 
 
-const char *GetCropOntologyTraitName (const json_t *co_data_p)
+/*
+ * static definitions
+ */
+
+
+static const char *GetCropOntologyTraitName (const json_t *co_data_p)
 {
 	return GetTermEnglishValue (co_data_p, "name");
 }
 
 
-const char *GetCropOntologyTraitDescription (const json_t *co_data_p)
+static const char *GetCropOntologyTraitDescription (const json_t *co_data_p)
 {
 	return GetTermEnglishValue (co_data_p, "description");
 }
 
-
-/*
- * Static definitions
- */
 
 static const char *GetTermEnglishValue (const json_t *co_data_p, const char *key_s)
 {
