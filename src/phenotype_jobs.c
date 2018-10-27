@@ -24,7 +24,7 @@
 #include "phenotype_jobs.h"
 #include "phenotype.h"
 #include "string_utils.h"
-
+#include "crop_ontology_tool.h"
 
 /*
  * static declarations
@@ -33,10 +33,10 @@
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 static const char * const S_INTERNAL_NAME_TITLE_S = "Accession";
-static const char * const S_UNIT_ID_S = "Trait Identifier";
-static const char * const S_UNIT_ABBREVIATION_S = "Trait Abbreviation";
-static const char * const S_UNIT_NAME_S = "Trait Name";
-static const char * const S_UNIT_DESCRIPTION_S = "Trait Description";
+static const char * const S_TRAIT_ID_S = "Trait Identifier";
+static const char * const S_TRAIT_ABBREVIATION_S = "Trait Abbreviation";
+static const char * const S_TRAIT_NAME_S = "Trait Name";
+static const char * const S_TRAIT_DESCRIPTION_S = "Trait Description";
 static const char * const S_METHOD_ID_S = "Method Identifier";
 static const char * const S_METHOD_ABBREVIATION_S = "Method Abbreviation";
 static const char * const S_METHOD_NAME_S = "Method Name";
@@ -55,6 +55,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
 
+static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s);
 
 
 
@@ -71,6 +72,7 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 			SharedType def;
 
 			InitSharedType (&def);
+			def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
 			if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
 				{
@@ -152,36 +154,24 @@ bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, Paramete
  */
 
 
-static const char * const S_INTERNAL_NAME_TITLE_S = "Accession";
-static const char * const S_UNIT_ID_S = "Trait Identifier";
-static const char * const S_UNIT_ABBREVIATION_S = "Trait Abbreviation";
-static const char * const S_UNIT_NAME_S = "Trait Name";
-static const char * const S_UNIT_DESCRIPTION_S = "Trait Description";
-static const char * const S_METHOD_ID_S = "Method Identifier";
-static const char * const S_METHOD_ABBREVIATION_S = "Method Abbreviation";
-static const char * const S_METHOD_NAME_S = "Method Name";
-static const char * const S_METHOD_DESCRIPTION_S = "Method Description";
-static const char * const S_UNIT_ID_S = "Unit Identifier";
-static const char * const S_UNIT_ABBREVIATION_S = "Unit Abbreviation";
-static const char * const S_UNIT_NAME_S = "Unit Name";
-static const char * const S_UNIT_DESCRIPTION_S = "Unit Description";
-
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
 	char *headers_s = NULL;
-	SharedType def;
 
-	InitSharedType (&def);
-
-	headers_s = ConcatenateVarargsStrings (S_INTERNAL_NAME_TITLE_S, delim_s, S_UNIT_ID_S, delim_s, S_UNIT_ABBREVIATION_S, delim_s, S_UNIT_NAME_S, delim_s, S_UNIT_DESCRIPTION_S, delim_s,
+	headers_s = ConcatenateVarargsStrings (S_INTERNAL_NAME_TITLE_S, delim_s, S_TRAIT_ID_S, delim_s, S_TRAIT_ABBREVIATION_S, delim_s, S_TRAIT_NAME_S, delim_s, S_TRAIT_DESCRIPTION_S, delim_s,
 																				 S_METHOD_ID_S, delim_s, S_METHOD_ABBREVIATION_S, delim_s, S_METHOD_NAME_S, delim_s, S_METHOD_DESCRIPTION_S, delim_s,
 																				 S_UNIT_ID_S, delim_s, S_UNIT_ABBREVIATION_S, delim_s, S_UNIT_NAME_S, delim_s, S_UNIT_DESCRIPTION_S, delim_s,
 																				 NULL);
 
 	if (headers_s)
 		{
+			SharedType def;
+
+			InitSharedType (&def);
+			def.st_string_value_s = NULL;
+
 			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, false, S_PHENOTYPE_TABLE.npt_name_s, "Phenotype data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
 
 			if (param_p)
@@ -211,6 +201,22 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
+/*
+{
+	"Accession": "EM",
+	"Trait Identifier": "CO_321:0000007",
+	"Trait Abbreviation": "Hd",
+	"Trait Name": "Heading time",
+	"Trait Description": "Heading time extends from the time of emergence of the tip of the spike from the flag leaf sheath to when the spike has completely emerged but has not yet started to flower.",
+	"Method Identifier": "CO_321:0000840",
+	"Method Abbreviation": "",
+	"Method Name": "Hd DS55 date Estimation",
+	"Method Description": "Record date of heading (DS55) when 50% of the spike is emerged (i.e., middle of the spike at the flag leaf ligule) on 50% of all stems.",
+	"Unit Identifier": "CO_321:0000855",
+	"Unit Abbreviation": "",
+	"Unit Name": "Julian date (JD)"
+}
+ */
 static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
@@ -221,40 +227,85 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 			const size_t num_rows = json_array_size (phenotypes_json_p);
 			size_t i;
 			size_t num_imported = 0;
+			size_t num_empty_rows = 0;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
 					json_t *table_row_json_p = json_array_get (phenotypes_json_p, i);
-					const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
 
-					if (!IsStringEmpty (internal_name_s))
+					const size_t row_size =  json_object_size (table_row_json_p);
+
+					if (row_size > 0)
 						{
-							Phenotype *phenotype_p = NULL;
+							const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
 
-							if (phenotype_p)
+							if (!IsStringEmpty (internal_name_s))
 								{
-									if (SavePhenotype (phenotype_p, data_p))
+									Phenotype *phenotype_p = NULL;
+									SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S);
+
+									if (trait_p)
 										{
-											++ num_imported;
-										}
+											SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S);
+
+											if (method_p)
+												{
+													SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S);
+
+													if (unit_p)
+														{
+															phenotype_p = AllocatePhenotypeFromDefinition (NULL, trait_p, method_p, unit_p, internal_name_s);
+
+															if (!phenotype_p)
+																{
+																	FreeSchemaTerm (unit_p);
+																}
+
+														}		/* if (unit_p) */
+
+													if (!phenotype_p)
+														{
+															FreeSchemaTerm (method_p);
+														}
+
+												}		/* if (method_p) */
+
+											if (!phenotype_p)
+												{
+													FreeSchemaTerm (trait_p);
+												}
+
+										}		/* if (trait_p) */
+
+									if (phenotype_p)
+										{
+											if (SavePhenotype (phenotype_p, data_p))
+												{
+													++ num_imported;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Phenotype");
+													success_flag = false;
+												}
+
+											FreePhenotype (phenotype_p);
+										}		/* if (material_p) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Phenotype");
-											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Phenotype");
 										}
-
-									FreePhenotype (phenotype_p);
-								}		/* if (material_p) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Phenotype");
 								}
-						}
 
+						}		/* if (row_size > 0) */
+					else
+						{
+							++ num_empty_rows;
+						}
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
 
-			if (num_imported == num_rows)
+			if (num_imported + num_empty_rows == num_rows)
 				{
 					status = OS_SUCCEEDED;
 				}
@@ -268,6 +319,43 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 	SetServiceJobStatus (job_p, status);
 
 	return success_flag;
+}
+
+
+static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s)
+{
+	SchemaTerm *term_p = NULL;
+	const char *id_s = GetJSONString (json_p, id_key_s);
+
+	if (id_s)
+		{
+			const char *name_s =  GetJSONString (json_p, name_key_s);
+			const char *description_s =  GetJSONString (json_p, description_key_s);
+			const char *abbreviation_s =  GetJSONString (json_p, abbreviation_key_s);
+
+			if (!name_s || !description_s || !abbreviation_s)
+				{
+					if (strncmp (id_s, "CO_", strlen (CONTEXT_PREFIX_CROP_ONTOLOGY_S)) == 0)
+						{
+							term_p = GetCropOnotologySchemaTerm (id_s);
+						}
+				}
+
+			if (!term_p)
+				{
+					if (name_s && description_s)
+						{
+							term_p = AllocateExtendedSchemaTerm (id_s, name_s, description_s, abbreviation_s);
+						}
+				}
+
+		}		/* if (id_s) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", id_key_s);
+		}
+
+	return term_p;
 }
 
 

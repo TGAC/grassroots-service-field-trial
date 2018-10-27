@@ -97,13 +97,8 @@
 
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
-static const char *GetTermEnglishValue (const json_t *co_data_p, const char *key_s);
+static char *GetTermEnglishValue (const json_t *entry_p);
 
-static const char *GetCropOntologyTraitName (const json_t *co_data_p);
-
-static const char *GetCropOntologyTraitDescription (const json_t *co_data_p);
-
-static const char *GetCropOntologyTraitAbbreviation (const json_t *co_data_p);
 
 /*
  * API definitions
@@ -148,33 +143,70 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 
 											if (res_p)
 												{
-													const char *trait_name_s = GetCropOntologyTraitName (res_p);
-
-													if (trait_name_s)
+													if (json_is_array (res_p))
 														{
-															const char *trait_description_s = GetCropOntologyTraitDescription (res_p);
+															const size_t num_results = json_array_size (res_p);
+															size_t i = 0;
+															const size_t NUM_VALUES_NEEDED = 3;
+															size_t matched_count = 0;
+															char *trait_name_s = NULL;
+															char *trait_description_s = NULL;
+															char *trait_abbreviation_s = NULL;
 
-															if (trait_description_s)
+															while ((i < num_results) && (matched_count < NUM_VALUES_NEEDED))
 																{
-																	const char *abbreviation_s = GetCropOntologyTraitAbbreviation (res_p);
+																	json_t *entry_p = json_array_get (res_p, i);
+																	const char *key_s = GetJSONString (entry_p, "key");
 
-																	term_p = AllocateExtendedSchemaTerm (term_s, trait_name_s, trait_description_s, abbreviation_s);
+																	if (key_s)
+																		{
+																			if (strcmp (key_s, "name") == 0)
+																				{
+																					trait_name_s = GetTermEnglishValue (entry_p);
+																					++ matched_count;
+																				}
+																			else if (strcmp (key_s, "description") == 0)
+																				{
+																					trait_description_s = GetTermEnglishValue (entry_p);
+																					++ matched_count;
+																				}
+																			else if (strcmp (key_s, "Main trait abbreviation") == 0)
+																				{
+																					trait_abbreviation_s = GetTermEnglishValue (entry_p);
+																					++ matched_count;
+																				}
+																		}
+
+																	++ i;
+																}		/* while ((i < num_results) && (matched_count < 3)) */
+
+															if (trait_name_s)
+																{
+																	term_p = AllocateExtendedSchemaTerm (term_s, trait_name_s, trait_description_s, trait_abbreviation_s);
 
 																	if (!term_p)
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to allocate SchemaTerm");
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to allocate term for \"%s\", \"%s\", \"%s\", \"%s\"", term_s, trait_name_s, trait_description_s, trait_abbreviation_s);
 																		}
 
-																}		/* if (trait_description_s) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to get trait description");
+																	if (trait_name_s)
+																		{
+																			FreeCopiedString (trait_name_s);
+																		}
+
+																	if (trait_description_s)
+																		{
+																			FreeCopiedString (trait_description_s);
+																		}
+
+																	if (trait_abbreviation_s)
+																		{
+																			FreeCopiedString (trait_abbreviation_s);
+																		}
+
 																}
-														}		/* if (trait_name_s) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to get trait name");
-														}
+
+														}		/* if (json_is_array (res_p)) */
 
 													json_decref (res_p);
 												}		/* if (res_p) */
@@ -227,33 +259,29 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
  */
 
 
-static const char *GetCropOntologyTraitName (const json_t *co_data_p)
+static char *GetTermEnglishValue (const json_t *entry_p)
 {
-	return GetTermEnglishValue (co_data_p, "name");
-}
+	char *term_value_s = NULL;
+	const char *value_s = GetJSONString (entry_p, "value");
 
-
-static const char *GetCropOntologyTraitDescription (const json_t *co_data_p)
-{
-	return GetTermEnglishValue (co_data_p, "description");
-}
-
-
-static const char *GetCropOntologyTraitAbbreviation (const json_t *co_data_p)
-{
-	return GetTermEnglishValue (co_data_p, "Main trait abbreviation");
-}
-
-
-static const char *GetTermEnglishValue (const json_t *co_data_p, const char *key_s)
-{
-	const char *value_s = NULL;
-	const json_t *value_p = json_object_get (co_data_p, key_s);
-
-	if (value_p)
+	if (value_s)
 		{
-			value_s = GetJSONString (value_p, "english");
+			json_error_t err;
+			json_t *data_p = json_loads (value_s, 0, &err);
+
+			if (data_p)
+				{
+					value_s = GetJSONString (data_p, "english");
+
+					if (value_s)
+						{
+							term_value_s = EasyCopyToNewString (value_s);
+						}
+
+					json_decref (data_p);
+				}
+
 		}
 
-	return value_s;
+	return term_value_s;
 }

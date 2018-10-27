@@ -28,6 +28,8 @@
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
+#include "phenotype_jobs.h"
+
 
 #include "audit.h"
 #include "streams.h"
@@ -57,6 +59,7 @@ static ParameterSet *IsResourceForDFWFieldTrialSubmissionService (Service *servi
 static bool CloseDFWFieldTrialSubmissionService (Service *service_p);
 
 static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *service_p);
+
 
 /*
  * API definitions
@@ -145,37 +148,44 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 												{
 													if (AddSubmissionMaterialParams (data_p, params_p))
 														{
-															return params_p;
+															if (AddSubmissionPhenotypeParams (data_p, params_p))
+																{
+																	return params_p;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionPhenotypeParams failed");
+																}
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMaterialParams failed");
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionMaterialParams failed");
 														}
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddGeneBankParams failed");
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionGeneBankParams failed");
 												}
 
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPlotParams failed");
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionPlotParams failed");
 										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddLocationParams failed");
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionLocationParams failed");
 								}
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddExperimentalAreaParams failed");
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionExperimentalAreaParams failed");
 						}
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialParams failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionFieldTrialParams failed");
 				}
 
 			FreeParameterSet (params_p);
@@ -240,6 +250,10 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 														{
 															if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
 																{
+																	if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
+																		{
+
+																		}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
 
 																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
 
@@ -255,9 +269,6 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 				}		/* if (param_set_p) */
 
-#if DFW_FIELD_TRIAL_SERVICE_DEBUG >= STM_LEVEL_FINE
-			PrintJSONToLog (STM_LEVEL_FINE, __FILE__, __LINE__, job_p -> sj_metadata_p, "metadata 3: ");
-#endif
 
 			LogServiceJob (job_p);
 		}		/* if (service_p -> se_jobs_p) */

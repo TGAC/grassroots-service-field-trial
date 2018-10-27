@@ -119,6 +119,41 @@ Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, SchemaT
 }
 
 
+Phenotype *AllocatePhenotypeFromDefinition (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s)
+{
+	char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
+
+	if (copied_internal_name_s)
+		{
+			Phenotype *phenotype_p = (Phenotype *) AllocMemory (sizeof (Phenotype));
+
+			if (phenotype_p)
+				{
+					phenotype_p -> ph_id_p = id_p;
+					phenotype_p -> ph_trait_term_p = trait_p;
+					phenotype_p -> ph_measurement_term_p = measurement_p;
+					phenotype_p -> ph_unit_term_p = unit_p;
+					phenotype_p -> ph_measured_value_s = NULL;
+					phenotype_p -> ph_date_p = NULL;
+					phenotype_p -> ph_instrument_p = NULL;
+					phenotype_p -> ph_growth_stage_s = NULL;
+					phenotype_p -> ph_corrected_flag = false;
+					phenotype_p -> ph_method_s = NULL;
+					phenotype_p -> ph_internal_name_s = copied_internal_name_s;
+
+					return phenotype_p;
+				}		/* if (phenotype_p) */
+
+			if (copied_internal_name_s)
+				{
+					FreeCopiedString (copied_internal_name_s);
+				}
+		}
+
+	return NULL;
+}
+
+
 void FreePhenotype (Phenotype *phenotype_p)
 {
 	if (phenotype_p -> ph_id_p)
@@ -191,13 +226,13 @@ json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fiel
 								{
 									if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p))
 										{
-											if (SetJSONString (phenotype_json_p, PH_VALUE_S, phenotype_p -> ph_measured_value_s))
+											if ((IsStringEmpty (phenotype_p -> ph_measured_value_s)) || (SetJSONString (phenotype_json_p, PH_VALUE_S, phenotype_p -> ph_measured_value_s)))
 												{
-													if ((IsStringEmpty (phenotype_p -> ph_growth_stage_s)) || SetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S, phenotype_p -> ph_growth_stage_s))
+													if ((IsStringEmpty (phenotype_p -> ph_growth_stage_s)) || (SetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S, phenotype_p -> ph_growth_stage_s)))
 														{
-															if ((IsStringEmpty (phenotype_p -> ph_method_s)) || SetJSONString (phenotype_json_p, PH_METHOD_S, phenotype_p -> ph_method_s))
+															if ((IsStringEmpty (phenotype_p -> ph_method_s)) || (SetJSONString (phenotype_json_p, PH_METHOD_S, phenotype_p -> ph_method_s)))
 																{
-																	if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s))
+																	if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
 																		{
 																			if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
 																				{
