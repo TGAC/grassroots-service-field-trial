@@ -193,7 +193,7 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 
 
 
-static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -213,7 +213,51 @@ static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenoty
 
 					if (row_size > 0)
 						{
+							int32 row = -1;
 
+							if (GetJSONInteger (table_row_json_p, S_ROW_S, &row))
+								{
+									int32 column = -1;
+
+									if (GetJSONInteger (table_row_json_p, S_COLUMN_S, &column))
+										{
+											int32 rack = -1;
+
+											if (GetJSONInteger (table_row_json_p, S_RACK_S, &rack))
+												{
+													Plot *plot_p = GetPlotByRowAndColumn (row, column, area_p, data_p);
+
+													if (plot_p)
+														{
+
+															FreePlot (plot_p);
+														}		/* if (plot_p) */
+													else
+														{
+															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+															bson_oid_to_string (area_p -> ea_id_p, id_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plot at [" INT32_FMT ", " INT32_FMT "] for area \"%s\"");
+														}
+
+
+												}		/* if (GetJSONInteger (table_row_json_p, S_RACK_S, &rack)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get %s", S_RACK_S);
+												}
+
+										}		/* if (GetJSONInteger (table_row_json_p, S_COLUMN_S, &column)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get %s", S_COLUMN_S);
+										}
+
+								}		/* if (GetJSONInteger (table_row_json_p, S_ROW_S, &row)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get %s", S_ROW_S);
+								}
 
 						}		/* if (row_size > 0) */
 					else
@@ -237,4 +281,51 @@ static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenoty
 	SetServiceJobStatus (job_p, status);
 
 	return success_flag;
+}
+
+
+
+Row *GetRowByIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
+{
+	Row *row_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
+		{
+			bson_t *query_p = BCON_NEW (RO_INDEX_S, BCON_INT32 (row), RO_PLOT_ID_S, BCON_OID (plot_p -> pl_id_p));
+
+			if (query_p)
+				{
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+					if (results_p)
+						{
+							if (json_is_array (results_p))
+								{
+									const size_t num_results = json_array_size (results_p);
+
+									if (num_results == 1)
+										{
+											size_t i = 0;
+											json_t *entry_p = json_array_get (results_p, i);
+
+											row_p = GetRowFromJSON (entry_p, plot_p, NULL, expand_fields_flag, data_p);
+
+											if (!row_p)
+												{
+
+												}
+
+										}		/* if (num_results == 1) */
+
+								}		/* if (json_is_array (results_p)) */
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
+
+	return row_p;
 }

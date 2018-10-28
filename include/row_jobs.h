@@ -41,6 +41,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionRowPhenotypeParams (ServiceData 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }
