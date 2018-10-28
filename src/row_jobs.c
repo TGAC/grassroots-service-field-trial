@@ -22,8 +22,10 @@
 
 
 #include "row_jobs.h"
-#include "row.h"
+#include "plot_jobs.h"
 #include "phenotype.h"
+#include "string_utils.h"
+#include "experimental_area_jobs.h"
 
 
 
@@ -40,10 +42,12 @@ static const char * const S_RACK_S = "Rack";
 
 static NamedParameterType S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "RO Data delimiter", PT_CHAR };
 static NamedParameterType S_ROW_PHENOTYPE_TABLE = { "RO Upload", PT_TABLE};
+static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "RO Experimental Area", PT_STRING };
+
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 
 
 /*
@@ -61,20 +65,28 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 		{
 			Parameter *param_p = NULL;
 			SharedType def;
+			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
 			InitSharedType (&def);
-			def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
-			if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREAS_LIST.npt_type, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 				{
-					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
-
-					def.st_string_value_s = NULL;
-
-					if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+					if (SetUpExperimentalAreasListParameter (dfw_service_data_p, param_p))
 						{
-							success_flag = true;
+							def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+
+							if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+								{
+									def.st_string_value_s = NULL;
+
+									if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+										{
+											success_flag = true;
+										}
+								}
+
 						}
+
 				}
 
 		}		/* if (group_p) */
@@ -112,16 +124,30 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 
 					if (phenotypes_json_p)
 						{
-							if (AddPhenotypeValuesFromJSON (job_p, phenotypes_json_p, data_p))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+							SharedType parent_experimental_area_value;
+							InitSharedType (&parent_experimental_area_value);
 
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddPhenotypesFromJSON for failed");
-								}
+							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true))
+								{
+									ExperimentalArea *area_p = GetExperimentalAreaByIdString (parent_experimental_area_value.st_string_value_s, data_p);
+
+									if (area_p)
+										{
+											if (AddPhenotypeValuesFromJSON (job_p, phenotypes_json_p, area_p, data_p))
+												{
+													success_flag = true;
+												}
+											else
+												{
+													char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddPhenotypesFromJSON for failed");
+												}
+
+											FreeExperimentalArea (area_p);
+										}		/* if (area_p) */
+
+								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true)) */
 
 							json_decref (phenotypes_json_p);
 						}		/* if (phenotpnes_json_p) */
@@ -229,6 +255,24 @@ static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenoty
 
 													if (plot_p)
 														{
+															Row *row_p = GetRowByIndex (rack, plot_p, false, data_p);
+
+															if (row_p)
+																{
+																	/*
+																	 * now we can add the phenotypes for this row.
+																	 */
+
+
+																	FreeRow (row_p);
+																}		/* if (row_p) */
+															else
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (plot_p -> pl_id_p, id_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row " INT32_FMT " for plot_p \"%s\"", rack, id_s);
+																}
 
 															FreePlot (plot_p);
 														}		/* if (plot_p) */
@@ -237,7 +281,7 @@ static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenoty
 															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 															bson_oid_to_string (area_p -> ea_id_p, id_s);
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plot at [" INT32_FMT ", " INT32_FMT "] for area \"%s\"");
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plot at [" INT32_FMT ", " INT32_FMT "] for area \"%s\"", row, column, id_s);
 														}
 
 

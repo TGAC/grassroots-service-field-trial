@@ -26,7 +26,8 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-
+#include "row.h"
+#include "plot.h"
 
 #ifdef __cplusplus
 extern "C"

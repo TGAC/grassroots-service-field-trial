@@ -107,9 +107,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *p
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const , const DFWFieldTrialServiceData *data_p);
-
-
 #ifdef __cplusplus
 }
 #endif

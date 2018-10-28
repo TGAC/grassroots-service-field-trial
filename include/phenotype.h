@@ -33,6 +33,15 @@
 #include "schema_term.h"
 
 
+typedef enum PhenotypeNature
+{
+	PN_ROW,
+	PN_EXPERIMENTAL_AREA,
+	PN_NUM_PHNEOTYPE_NATURES
+} PhenotypeNature;
+
+
+
 typedef struct Phenotype
 {
 	bson_oid_t *ph_id_p;
@@ -56,6 +65,8 @@ typedef struct Phenotype
 	char *ph_method_s;
 
 	char *ph_internal_name_s;
+
+	PhenotypeNature ph_type;
 
 } Phenotype;
 
@@ -96,6 +107,8 @@ PHENOTYPE_PREFIX const char *PH_CORRECTED_S PHENOTYPE_VAL ("corrected");
 PHENOTYPE_PREFIX const char *PH_METHOD_S PHENOTYPE_VAL ("method");
 
 PHENOTYPE_PREFIX const char *PH_INTERNAL_NAME_S PHENOTYPE_VAL ("internal_name");
+
+PHENOTYPE_PREFIX const char *PH_NATURE_S PHENOTYPE_VAL ("nature");
 
 #ifdef __cplusplus
 extern "C"

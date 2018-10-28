@@ -568,3 +568,11 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 }
 
 
+
+static bool AddPhenotypeNatureToJSON (const Phenotype *phenotype_p, json_t *doc_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
