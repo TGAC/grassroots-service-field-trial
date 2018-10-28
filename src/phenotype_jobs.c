@@ -53,8 +53,6 @@ static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_TABLE};
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
-static Parameter *GetRowPhenotypesTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
-
 
 static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
 

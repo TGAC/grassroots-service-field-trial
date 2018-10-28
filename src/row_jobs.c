@@ -27,17 +27,214 @@
 
 
 
+/*
+ * static declarations
+ */
 
+static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
+
+static const char * const S_ROW_S = "Row";
+static const char * const S_COLUMN_S = "Column";
+static const char * const S_RACK_S = "Rack";
+
+
+static NamedParameterType S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "RO Data delimiter", PT_CHAR };
+static NamedParameterType S_ROW_PHENOTYPE_TABLE = { "RO Upload", PT_TABLE};
+
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+
+static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
+
+
+/*
+ * API Definitions
+ */
 
 
 bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
+	bool success_flag = false;
 
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Row Phenotypes", NULL, false, data_p, param_set_p);
+
+	if (group_p)
+		{
+			Parameter *param_p = NULL;
+			SharedType def;
+
+			InitSharedType (&def);
+			def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+
+			if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+				{
+					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+
+					def.st_string_value_s = NULL;
+
+					if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+						{
+							success_flag = true;
+						}
+				}
+
+		}		/* if (group_p) */
+
+
+	return success_flag;
 }
 
 
 bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
+	bool job_done_flag = false;
 
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_TABLE.npt_name_s, &value, true))
+		{
+			/*
+			 * Has a spreadsheet been uploaded?
+			 */
+			if (! (IsStringEmpty (value.st_string_value_s)))
+				{
+					bool success_flag = false;
+					json_error_t e;
+					json_t *phenotypes_json_p = NULL;
+
+					job_done_flag = true;
+
+					/*
+					 * The data could be either an array of json objects
+					 * or a tabular string. so try it as json array first
+					 */
+					phenotypes_json_p = json_loads (value.st_string_value_s, 0, &e);
+
+					if (phenotypes_json_p)
+						{
+							if (AddPhenotypeValuesFromJSON (job_p, phenotypes_json_p, data_p))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddPhenotypesFromJSON for failed");
+								}
+
+							json_decref (phenotypes_json_p);
+						}		/* if (phenotpnes_json_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load \"%s\" as JSON", value.st_string_value_s);
+						}
+
+					job_done_flag = true;
+				}		/* if (! (IsStringEmpty (value.st_string_value_s))) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true)) */
+
+
+	return job_done_flag;
 }
 
+
+
+
+/*
+ * static definitions
+ */
+
+
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+{
+	Parameter *param_p = NULL;
+	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+	char *headers_s = NULL;
+
+	headers_s = ConcatenateVarargsStrings (S_ROW_S, delim_s, S_COLUMN_S, delim_s, S_RACK_S, delim_s, NULL);
+
+	if (headers_s)
+		{
+			SharedType def;
+
+			InitSharedType (&def);
+			def.st_string_value_s = NULL;
+
+			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_TABLE.npt_type, false, S_ROW_PHENOTYPE_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+
+			if (param_p)
+				{
+					bool success_flag = false;
+
+					if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, headers_s))
+						{
+							if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
+								{
+									success_flag = true;
+								}
+						}
+
+					if (!success_flag)
+						{
+							FreeParameter (param_p);
+							param_p = NULL;
+						}
+
+				}		/* if (param_p) */
+
+			FreeCopiedString (headers_s);
+		}		/* if (headers_s) */
+
+	return param_p;
+}
+
+
+
+
+static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag	= true;
+	OperationStatus status = OS_FAILED;
+
+	if (json_is_array (phenotypes_json_p))
+		{
+			const size_t num_rows = json_array_size (phenotypes_json_p);
+			size_t i;
+			size_t num_imported = 0;
+			size_t num_empty_rows = 0;
+
+			for (i = 0; i < num_rows; ++ i)
+				{
+					json_t *table_row_json_p = json_array_get (phenotypes_json_p, i);
+
+					const size_t row_size =  json_object_size (table_row_json_p);
+
+					if (row_size > 0)
+						{
+
+
+						}		/* if (row_size > 0) */
+					else
+						{
+							++ num_empty_rows;
+						}
+				}		/* for (i = 0; i < num_rows; ++ i) */
+
+
+			if (num_imported + num_empty_rows == num_rows)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_imported > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+
+		}		/* if (json_is_array (plots_json_p)) */
+
+	SetServiceJobStatus (job_p, status);
+
+	return success_flag;
+}
