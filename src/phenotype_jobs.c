@@ -51,7 +51,10 @@ static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimi
 static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_TABLE};
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+
+static Parameter *GetRowPhenotypesTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+
 
 static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
 
@@ -80,7 +83,7 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 
 					def.st_string_value_s = NULL;
 
-					if ((param_p = GetTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+					if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
 							success_flag = true;
 						}
@@ -154,7 +157,7 @@ bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, Paramete
  */
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };

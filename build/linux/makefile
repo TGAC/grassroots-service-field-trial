@@ -61,6 +61,7 @@ SRCS 	= \
 	plot.c \
 	plot_jobs.c \
 	row.c \
+	row_jobs.c \
 	search_service.c \
 	submission_service.c 
 
