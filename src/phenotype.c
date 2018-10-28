@@ -38,6 +38,11 @@ static bool AddSchemTermToJSON (json_t *doc_p, const char * const key_s, const S
 
 static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * const key_s);
 
+static bool AddPhenotypeNatureToJSON (const PhenotypeNature *phenotype__nature_p, json_t *doc_p);
+
+static bool GetPhenotypeNatureFromJSON (PhenotypeNature *phenotype_nature_p, const json_t *doc_p);
+
+
 /*
  * API definitions
  */
@@ -569,7 +574,15 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 
 
 
-static bool AddPhenotypeNatureToJSON (const Phenotype *phenotype_p, json_t *doc_p)
+static bool AddPhenotypeNatureToJSON (const PhenotypeNature *phenotype__nature_p, json_t *doc_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
+
+static bool GetPhenotypeNatureFromJSON (PhenotypeNature *phenotype_nature_p, const json_t *doc_p)
 {
 	bool success_flag = false;
 
