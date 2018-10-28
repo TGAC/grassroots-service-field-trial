@@ -28,6 +28,8 @@
 #include "plot.h"
 
 
+
+
 typedef struct Row
 {
 	bson_oid_t *ro_id_p;
@@ -39,6 +41,9 @@ typedef struct Row
 	Material *ro_material_p;
 
 	char *ro_material_s;
+
+	LinkedList *ro_phenotypes_p;
+
 } Row;
 
 

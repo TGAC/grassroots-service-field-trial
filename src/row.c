@@ -32,21 +32,31 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Pl
 {
 	if (material_p)
 		{
-			Row *row_p = (Row *) AllocMemory (sizeof (Row));
+			LinkedList *phenotypes_p = AllocateLinkedList (FreePhenotypeNode);
 
-			if (row_p)
+			if (phenotypes_p)
 				{
-					row_p -> ro_id_p = id_p;
-					row_p -> ro_index = index;
-					row_p -> ro_material_p = material_p;
-					row_p -> ro_plot_p = parent_plot_p;
-					row_p -> ro_material_s = NULL;
+					Row *row_p = (Row *) AllocMemory (sizeof (Row));
 
-					return row_p;
+					if (row_p)
+						{
+							row_p -> ro_id_p = id_p;
+							row_p -> ro_index = index;
+							row_p -> ro_material_p = material_p;
+							row_p -> ro_plot_p = parent_plot_p;
+							row_p -> ro_material_s = NULL;
+							row_p -> ro_phenotypes_p = phenotypes_p;
+
+							return row_p;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+						}
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate phenotypes list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
 				}
 		}
 	else
@@ -64,6 +74,8 @@ void FreeRow (Row *row_p)
 		{
 			FreeCopiedString (row_p -> ro_material_s);
 		}
+
+	FreeLinkedList (row_p -> ro_phenotypes_p);
 
 	FreeMemory (row_p);
 }

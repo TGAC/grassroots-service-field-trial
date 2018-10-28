@@ -35,9 +35,10 @@
 
 typedef enum PhenotypeNature
 {
+	PN_UNSET = -1,
 	PN_ROW,
 	PN_EXPERIMENTAL_AREA,
-	PN_NUM_PHNEOTYPE_NATURES
+	PN_NUM_PHENOTYPE_NATURES
 } PhenotypeNature;
 
 
@@ -69,6 +70,14 @@ typedef struct Phenotype
 	PhenotypeNature ph_type;
 
 } Phenotype;
+
+
+typedef struct PhenotypeNode
+{
+	ListItem pn_node;
+
+	Phenotype *pn_phenotype_p;
+} PhenotypeNode;
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -116,21 +125,20 @@ extern "C"
 #endif
 
 
-
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *value_s,
-															const char *growth_stage_s, const bool corrected_value_flag, const char *method_s, const char *internal_name_s, Instrument *instrument_p);
-
+															const char *growth_stage_s, const bool corrected_value_flag, const char *method_s, const char *internal_name_s, Instrument *instrument_p, const PhenotypeNature nature);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotypeFromDefinition (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s);
 
-
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotype (Phenotype *phenotype_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL PhenotypeNode *AllocatePhenotypeNode (Phenotype *phenotype_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotypeNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fields_flag);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldTrialServiceData *data_p);
-
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p);
 
