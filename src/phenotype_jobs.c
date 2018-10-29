@@ -22,7 +22,6 @@
 
 
 #include "phenotype_jobs.h"
-#include "phenotype.h"
 #include "string_utils.h"
 #include "crop_ontology_tool.h"
 
@@ -148,6 +147,55 @@ bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, Paramete
 
 	return job_done_flag;
 }
+
+
+Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p)
+{
+	Phenotype *phenotype_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE]))
+		{
+			bson_t *query_p = BCON_NEW (PH_INTERNAL_NAME_S, BCON_UTF8 (name_s));
+
+			if (query_p)
+				{
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+					if (results_p)
+						{
+							if (json_is_array (results_p))
+								{
+									const size_t num_results = json_array_size (results_p);
+
+									if (num_results == 1)
+										{
+											size_t i = 0;
+											json_t *entry_p = json_array_get (results_p, i);
+
+											phenotype_p = GetPhenotypeFromJSON (entry_p, data_p);
+
+											if (!phenotype_p)
+												{
+
+												}
+
+										}		/* if (num_results == 1) */
+
+								}		/* if (json_is_array (results_p)) */
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
+
+
+	return phenotype_p;
+
+}
+
 
 
 /*

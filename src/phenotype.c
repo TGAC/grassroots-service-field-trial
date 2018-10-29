@@ -244,7 +244,7 @@ void FreePhenotypeNode (ListItem *node_p)
 
 	if (ph_node_p -> pn_phenotype_p)
 		{
-			FreeRow (ph_node_p -> pn_phenotype_p);
+			FreePhenotype (ph_node_p -> pn_phenotype_p);
 		}
 
 	FreeMemory (ph_node_p);
@@ -517,6 +517,41 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 
 	return success_flag;
 }
+
+
+bool SetPhenotypeValue (Phenotype *phenotype_p, const char *value_s)
+{
+	bool success_flag = false;
+
+	if (value_s)
+		{
+			char *copied_value_s = EasyCopyToNewString (value_s);
+
+			if (copied_value_s)
+				{
+					if (phenotype_p -> ph_measured_value_s)
+						{
+							FreeCopiedString (phenotype_p -> ph_measured_value_s);
+						}
+
+					phenotype_p -> ph_measured_value_s = copied_value_s;
+					success_flag = true;
+				}
+		}
+	else
+		{
+			if (phenotype_p -> ph_measured_value_s)
+				{
+					FreeCopiedString (phenotype_p -> ph_measured_value_s);
+					phenotype_p -> ph_measured_value_s = NULL;
+				}
+
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
 
 
 /*

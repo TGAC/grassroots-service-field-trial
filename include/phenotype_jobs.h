@@ -27,6 +27,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
+#include "phenotype.h"
 
 
 #ifdef __cplusplus
@@ -41,6 +42,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionPhenotypeParams (ServiceData *da
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

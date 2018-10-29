@@ -26,7 +26,7 @@
 
 #include "material.h"
 #include "plot.h"
-
+#include "phenotype.h"
 
 
 
@@ -89,6 +89,8 @@ ROW_PREFIX const char *RO_TRIAL_MATERIAL_S ROW_VAL ("trial_material_s");
 ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material_s");
 
 
+ROW_PREFIX const char *RO_PHENOTYPES_S ROW_VAL ("phenotypes");
+
 
 #ifdef __cplusplus
 extern "C"
@@ -110,6 +112,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *p
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeToRow (Row *row_p, Phenotype *phenotype_p);
 
 
 #ifdef __cplusplus

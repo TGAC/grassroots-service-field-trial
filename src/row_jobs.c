@@ -23,7 +23,7 @@
 
 #include "row_jobs.h"
 #include "plot_jobs.h"
-#include "phenotype.h"
+#include "phenotype_jobs.h"
 #include "string_utils.h"
 #include "experimental_area_jobs.h"
 
@@ -40,14 +40,16 @@ static const char * const S_COLUMN_S = "Column";
 static const char * const S_RACK_S = "Rack";
 
 
-static NamedParameterType S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "RO Data delimiter", PT_CHAR };
-static NamedParameterType S_ROW_PHENOTYPE_TABLE = { "RO Upload", PT_TABLE};
+static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER = { "RO phenotype data delimiter", PT_CHAR };
+static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE = { "RO phenotype data upload", PT_TABLE};
 static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "RO Experimental Area", PT_STRING };
 
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
 static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
+
+static bool GetIntegerFromJSON (const json_t * const json_p, const char * const key_s, int *value_p);
 
 
 /*
@@ -75,7 +77,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 						{
 							def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
-							if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_ROW_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+							if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_type, false, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
 								{
 									def.st_string_value_s = NULL;
 
@@ -103,7 +105,7 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_TABLE.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, &value, true))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
@@ -188,7 +190,7 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 			InitSharedType (&def);
 			def.st_string_value_s = NULL;
 
-			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_TABLE.npt_type, false, S_ROW_PHENOTYPE_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, false, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
 
 			if (param_p)
 				{
@@ -231,38 +233,130 @@ static bool AddPhenotypeValuesFromJSON (ServiceJob *job_p, const json_t *phenoty
 			size_t num_imported = 0;
 			size_t num_empty_rows = 0;
 
-			for (i = 0; i < num_rows; ++ i)
+			/*
+			 * first row contains the phenotype names
+			 */
+			const json_t *header_row_json_p = json_array_get (phenotypes_json_p, 0);
+
+
+			for (i = 1; i < num_rows; ++ i)
 				{
 					json_t *table_row_json_p = json_array_get (phenotypes_json_p, i);
 
-					const size_t row_size =  json_object_size (table_row_json_p);
+					const size_t row_size = json_object_size (table_row_json_p);
 
 					if (row_size > 0)
 						{
 							int32 row = -1;
 
-							if (GetJSONInteger (table_row_json_p, S_ROW_S, &row))
+							if (GetIntegerFromJSON (table_row_json_p, S_ROW_S, &row))
 								{
 									int32 column = -1;
 
-									if (GetJSONInteger (table_row_json_p, S_COLUMN_S, &column))
+									if (GetIntegerFromJSON (table_row_json_p, S_COLUMN_S, &column))
 										{
 											int32 rack = -1;
 
-											if (GetJSONInteger (table_row_json_p, S_RACK_S, &rack))
+											if (GetIntegerFromJSON (table_row_json_p, S_RACK_S, &rack))
 												{
 													Plot *plot_p = GetPlotByRowAndColumn (row, column, area_p, data_p);
 
 													if (plot_p)
 														{
-															Row *row_p = GetRowByIndex (rack, plot_p, false, data_p);
+															const bool expand_fields_flag = true;
+															Row *row_p = GetRowByIndex (rack, plot_p, expand_fields_flag, data_p);
 
 															if (row_p)
 																{
-																	/*
-																	 * now we can add the phenotypes for this row.
-																	 */
+																	bool loop_success_flag = true;
+																	void *iterator_p = json_object_iter (table_row_json_p);
 
+																	while (iterator_p && loop_success_flag)
+																		{
+																			const char *key_s = json_object_iter_key (iterator_p);
+																			json_t *value_p = json_object_iter_value (iterator_p);
+
+																			const char *mapped_key_s = GetJSONString (header_row_json_p, key_s);
+
+																			if (mapped_key_s)
+																				{
+																					/*
+																					 * ignore our column names
+																					 */
+																					if ((strcmp (key_s, S_ROW_S) != 0) && (strcmp (key_s, S_COLUMN_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
+																						{
+																							Phenotype *phenotype_p = GetPhenotypeByInternalName (mapped_key_s, data_p);
+
+																							if (phenotype_p)
+																								{
+																									bool added_phenotype_flag = false;
+
+																									if (json_is_string (value_p))
+																										{
+																											const char *value_s = json_string_value (value_p);
+
+																											if (SetPhenotypeValue (phenotype_p, value_s))
+																												{
+																													if (AddPhenotypeToRow (row_p, phenotype_p))
+																														{
+																															added_phenotype_flag = true;
+																														}
+																													else
+																														{
+																															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																															bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set  value for row \"%s\" to \"%s\"", id_s, value_s);
+																														}
+
+																												}		/* if (SetPhenotypeValue (phenotype_p, value_s)) */
+																											else
+																												{
+																													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																													bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set  value for row \"%s\" to \"%s\"", id_s, value_s);
+																												}
+
+																										}		/* if (json_is_string (value_p)) */
+																									else
+																										{
+																											PrinJSONTotErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Value for \"%s\" is not a string", key_s);
+																										}
+
+																									if (!added_phenotype_flag)
+																										{
+																											loop_success_flag = false;
+																											FreePhenotype (phenotype_p);
+																										}
+
+																								}		/* if (phenotype_p) */
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get phenotype with internal name \"%s\"", key_s);
+																								}
+
+																						}		/* if ((strcmp (key_s, S_ROW_S) != 0) && (strcmp (key_s, S_COLUMN_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
+
+																				}		/* if (mapped_key_s) */
+																			else
+																				{
+																					PrinJSONTotErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get mapped key \"%s\" on row %d", key_s, i);
+																				}
+
+
+																			iterator_p = json_object_iter_next (table_row_json_p, iterator_p);
+																		}
+
+																	if (loop_success_flag)
+																		{
+																			if (!SaveRow (row_p, data_p))
+																				{
+
+																				}
+																		}
 
 																	FreeRow (row_p);
 																}		/* if (row_p) */
@@ -372,4 +466,29 @@ Row *GetRowByIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
 
 	return row_p;
+}
+
+
+static bool GetIntegerFromJSON (const json_t * const json_p, const char * const key_s, int *value_p)
+{
+	bool success_flag = false;
+
+	if (GetJSONInteger (json_p, key_s, value_p))
+		{
+			success_flag = true;
+		}
+	else
+		{
+			const char *value_s = GetJSONString (json_p, key_s);
+
+			if (value_s)
+				{
+					if (GetValidInteger (&value_s, value_p))
+						{
+							success_flag = true;
+						}
+				}
+		}
+
+	return success_flag;
 }

@@ -142,6 +142,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phe
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetPhenotypeValue (Phenotype *phenotype_p, const char *value_s);
+
 
 #ifdef __cplusplus
 }

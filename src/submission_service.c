@@ -150,7 +150,14 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 														{
 															if (AddSubmissionPhenotypeParams (data_p, params_p))
 																{
-																	return params_p;
+																	if (AddSubmissionRowPhenotypeParams (data_p, params_p))
+																		{
+																			return params_p;
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionRowPhenotypeParams failed");
+																		}
 																}
 															else
 																{
@@ -252,6 +259,10 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 																{
 																	if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
 																		{
+																			if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
+																				{
+
+																				}		/* if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p)) */
 
 																		}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
 

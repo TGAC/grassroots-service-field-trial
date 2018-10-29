@@ -26,6 +26,13 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "streams.h"
+#include "phenotype.h"
+
+
+static bool AddPhenotypesToJSON (json_t *row_json_p, LinkedList *phenotypes_p);
+
+static bool GetPhenotypesFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p);
+
 
 
 Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Plot *parent_plot_p)
@@ -159,7 +166,11 @@ json_t *GetRowAsJSON (const Row *row_p, const bool expand_material_flag, const D
 								{
 									if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
 										{
-											return row_json_p;
+											if (AddPhenotypesToJSON (row_json_p, row_p -> ro_phenotypes_p))
+												{
+													return row_json_p;
+												}
+
 										}
 								}
 						}
@@ -260,7 +271,12 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 											if (row_p)
 												{
-													return row_p;
+													if (GetPhenotypesFromJSON (json_p, row_p -> ro_phenotypes_p, data_p))
+														{
+															return row_p;
+														}
+
+													FreeRow (row_p);
 												}
 										}
 								}
@@ -305,3 +321,134 @@ bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p)
 
 	return success_flag;
 }
+
+
+bool AddPhenotypeToRow (Row *row_p, Phenotype *phenotype_p)
+{
+	bool success_flag = false;
+	PhenotypeNode *node_p = AllocatePhenotypeNode (phenotype_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (row_p -> ro_phenotypes_p, & (node_p -> pn_node));
+			success_flag = true;
+		}
+	else
+		{
+			char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+			char phenotype_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+			bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+			bson_oid_to_string (phenotype_p -> ph_id_p, phenotype_id_s);
+
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add phenotype \"%s\" to row \"%s\"", phenotype_id_s, row_id_s);
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
+
+static bool AddPhenotypesToJSON (json_t *row_json_p, LinkedList *phenotypes_p)
+{
+	bool success_flag = false;
+
+	if (phenotypes_p -> ll_size > 0)
+		{
+			json_t *phenotypes_array_p = json_array ();
+
+			if (phenotypes_array_p)
+				{
+					if (json_object_set_new (row_json_p, RO_PHENOTYPES_S, phenotypes_array_p) == 0)
+						{
+							PhenotypeNode *node_p = (PhenotypeNode *) (phenotypes_p -> ll_head_p);
+
+							success_flag = true;
+
+							while (node_p && success_flag)
+								{
+									const Phenotype *phenotype_p = node_p -> pn_phenotype_p;
+									json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p, true);
+
+									if (phenotype_json_p)
+										{
+											if (json_array_append_new (phenotypes_array_p, phenotype_json_p) == 0)
+												{
+													node_p = (PhenotypeNode *) (node_p -> pn_node.ln_next_p);
+												}
+											else
+												{
+													success_flag = false;
+													json_decref (phenotype_json_p);
+												}
+										}
+									else
+										{
+											success_flag = false;
+										}
+								}		/* while (node_p && success_flag) */
+
+						}		/* if (json_object_set_new (row_json_p, RO_PHENOTYPES_S, phenotypes_array_p) == 0) */
+					else
+						{
+							json_decref (phenotypes_array_p);
+						}
+
+				}		/* if (phenotypes_array_p) */
+
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
+static bool GetPhenotypesFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	const json_t *phenotypes_json_p = json_object_get (row_json_p, RO_PHENOTYPES_S);
+
+	if (phenotypes_json_p)
+		{
+			size_t size = json_array_size (phenotypes_json_p);
+			size_t i;
+
+			success_flag = true;
+
+			for (i = 0; i < size; ++ i)
+				{
+					const json_t *phenotype_json_p = json_array_get (phenotypes_json_p, i);
+					Phenotype *phenotype_p = GetPhenotypeFromJSON (phenotype_json_p, data_p);
+
+					if (phenotype_p)
+						{
+							if (!AddPhenotypeToRow (row_p, phenotype_p))
+								{
+									FreePhenotype (phenotype_p);
+									success_flag = false;
+									i = size;		/* force exit from loop */
+								}
+
+						}		/* if (phenotype_p) */
+					else
+						{
+							success_flag = false;
+							i = size;		/* force exit from loop */
+						}
+
+				}		/* for (i = 0; i < size; ++ i) */
+
+		}		/* if (phenotypes_json_p) */
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
