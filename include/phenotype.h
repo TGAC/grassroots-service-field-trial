@@ -33,14 +33,6 @@
 #include "schema_term.h"
 
 
-typedef enum PhenotypeNature
-{
-	PN_UNSET = -1,
-	PN_ROW,
-	PN_EXPERIMENTAL_AREA,
-	PN_NUM_PHENOTYPE_NATURES
-} PhenotypeNature;
-
 
 
 typedef struct Phenotype
@@ -53,31 +45,9 @@ typedef struct Phenotype
 
 	SchemaTerm *ph_unit_term_p;
 
-	char *ph_measured_value_s;
-
-	struct tm *ph_date_p;
-
-	Instrument *ph_instrument_p;
-
-	char *ph_growth_stage_s;
-
-	bool ph_corrected_flag;
-
-	char *ph_method_s;
-
 	char *ph_internal_name_s;
 
-	PhenotypeNature ph_type;
-
 } Phenotype;
-
-
-typedef struct PhenotypeNode
-{
-	ListItem pn_node;
-
-	Phenotype *pn_phenotype_p;
-} PhenotypeNode;
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -103,21 +73,9 @@ PHENOTYPE_PREFIX const char *PH_UNIT_S PHENOTYPE_VAL ("unit");
 
 PHENOTYPE_PREFIX const char *PH_VALUE_S PHENOTYPE_VAL ("value");
 
-PHENOTYPE_PREFIX const char *PH_DATE_S PHENOTYPE_VAL ("date");
-
-PHENOTYPE_PREFIX const char *PH_INSTRUMENT_ID_S PHENOTYPE_VAL ("instrument_id");
-
-PHENOTYPE_PREFIX const char *PH_INSTRUMENT_S PHENOTYPE_VAL ("instrument");
-
-PHENOTYPE_PREFIX const char *PH_GROWTH_STAGE_S PHENOTYPE_VAL ("growth_stage");
-
-PHENOTYPE_PREFIX const char *PH_CORRECTED_S PHENOTYPE_VAL ("corrected");
-
-PHENOTYPE_PREFIX const char *PH_METHOD_S PHENOTYPE_VAL ("method");
-
 PHENOTYPE_PREFIX const char *PH_INTERNAL_NAME_S PHENOTYPE_VAL ("internal_name");
 
-PHENOTYPE_PREFIX const char *PH_NATURE_S PHENOTYPE_VAL ("nature");
+
 
 #ifdef __cplusplus
 extern "C"
@@ -125,25 +83,18 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *value_s,
-															const char *growth_stage_s, const bool corrected_value_flag, const char *method_s, const char *internal_name_s, Instrument *instrument_p, const PhenotypeNature nature);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotypeFromDefinition (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotype (Phenotype *phenotype_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL PhenotypeNode *AllocatePhenotypeNode (Phenotype *phenotype_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotypeNode (ListItem *node_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fields_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetPhenotypeValue (Phenotype *phenotype_p, const char *value_s);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }

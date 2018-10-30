@@ -29,7 +29,7 @@
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
 #include "phenotype_jobs.h"
-
+#include "row_jobs.h"
 
 #include "audit.h"
 #include "streams.h"

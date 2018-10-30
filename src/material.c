@@ -25,6 +25,7 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "gene_bank.h"
+#include "dfw_util.h"
 
 
 static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);
@@ -434,26 +435,16 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 
 bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (material_p -> ma_id_p), &selector_p);
 
-	if (! (material_p -> ma_id_p))
-		{
-			material_p -> ma_id_p = GetNewBSONOid ();
-
-			if (material_p -> ma_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (material_p -> ma_id_p)
+	if (success_flag)
 		{
 			json_t *material_json_p = GetMaterialAsJSON (material_p, false, data_p);
 
 			if (material_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, material_json_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, material_json_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL], selector_p);
 
 					json_decref (material_json_p);
 				}		/* if (material_json_p) */

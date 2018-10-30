@@ -147,26 +147,16 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (location_p -> lo_id_p), &selector_p);
 
-	if (! (location_p -> lo_id_p))
-		{
-			location_p -> lo_id_p  = GetNewBSONOid ();
-
-			if (location_p -> lo_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (location_p -> lo_id_p)
+	if (success_flag)
 		{
 			json_t *location_p_json_p = GetLocationAsJSON (location_p);
 
 			if (location_p_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, location_p_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, location_p_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], selector_p);
 
 					json_decref (location_p_json_p);
 				}		/* if (area_json_p) */

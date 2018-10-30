@@ -223,4 +223,28 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 
 
 
+bool PrepareSaveData (bson_oid_t **id_pp, bson_t **selector_pp)
+{
+	bool success_flag = false;
+
+	if (*id_pp)
+		{
+			*selector_pp = BCON_NEW (MONGO_ID_S, BCON_OID (*id_pp));
+
+			if (*selector_pp)
+				{
+					success_flag = true;
+				}
+		}
+	else
+		{
+			if ((*id_pp = GetNewBSONOid ()) != NULL)
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
 

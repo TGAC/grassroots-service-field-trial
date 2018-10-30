@@ -291,32 +291,21 @@ bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServ
 
 bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (area_p -> ea_id_p), &selector_p);
 
-	if (! (area_p -> ea_id_p))
-		{
-			area_p -> ea_id_p  = GetNewBSONOid ();
-
-			if (area_p -> ea_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (area_p -> ea_id_p)
+	if (success_flag)
 		{
 			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, false, data_p);
 
 			if (area_json_p)
-
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], selector_p);
 
 					json_decref (area_json_p);
 				}		/* if (area_json_p) */
 
-		}		/* if (area_p -> ea_id_p) */
+		}		/* if (success_flag) */
 
 	return success_flag;
 }

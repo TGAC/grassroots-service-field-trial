@@ -153,7 +153,7 @@ Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialSe
 {
 	Phenotype *phenotype_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE]))
 		{
 			bson_t *query_p = BCON_NEW (PH_INTERNAL_NAME_S, BCON_UTF8 (name_s));
 
@@ -303,7 +303,7 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 													if (unit_p)
 														{
-															phenotype_p = AllocatePhenotypeFromDefinition (NULL, trait_p, method_p, unit_p, internal_name_s);
+															phenotype_p = AllocatePhenotype (NULL, trait_p, method_p, unit_p, internal_name_s);
 
 															if (!phenotype_p)
 																{

@@ -38,102 +38,15 @@ static bool AddSchemTermToJSON (json_t *doc_p, const char * const key_s, const S
 
 static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * const key_s);
 
-static bool AddPhenotypeNatureToJSON (const PhenotypeNature phenotype_nature, json_t *doc_p);
-
-static bool GetPhenotypeNatureFromJSON (PhenotypeNature *phenotype_nature_p, const json_t *doc_p);
-
-
-static const char *S_PHENOTYPE_NATURES_SS [PN_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
-
 
 /*
  * API definitions
  */
-
-Phenotype *AllocatePhenotype (bson_oid_t *id_p, const struct tm *date_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *value_s,
-															const char *growth_stage_s, const bool corrected_value_flag, const char *method_s, const char *internal_name_s, Instrument *instrument_p,
-															const PhenotypeNature nature)
+Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s)
 {
-	if (date_p)
-		{
-			struct tm *copied_date_p = DuplicateTime (date_p);
+	char *copied_internal_name_s = NULL;
 
-			if (copied_date_p)
-				{
-					char *copied_value_s = EasyCopyToNewString (value_s);
-
-					if (copied_value_s)
-						{
-							char *copied_growth_stage_s = NULL;
-
-							if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
-								{
-									char *copied_method_s = NULL;
-
-									if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
-										{
-											char *copied_internal_name_s = NULL;
-
-											if ((IsStringEmpty (internal_name_s)) || ((copied_internal_name_s = EasyCopyToNewString (internal_name_s)) != NULL))
-												{
-													Phenotype *phenotype_p = (Phenotype *) AllocMemory (sizeof (Phenotype));
-
-													if (phenotype_p)
-														{
-															phenotype_p -> ph_id_p = id_p;
-															phenotype_p -> ph_trait_term_p = trait_p;
-															phenotype_p -> ph_measurement_term_p = measurement_p;
-															phenotype_p -> ph_unit_term_p = unit_p;
-															phenotype_p -> ph_measured_value_s = copied_value_s;
-															phenotype_p -> ph_date_p = copied_date_p;
-															phenotype_p -> ph_instrument_p = instrument_p;
-															phenotype_p -> ph_growth_stage_s = copied_growth_stage_s;
-															phenotype_p -> ph_corrected_flag = corrected_value_flag;
-															phenotype_p -> ph_method_s = copied_method_s;
-															phenotype_p -> ph_internal_name_s = copied_internal_name_s;
-															phenotype_p -> ph_type = nature;
-
-															return phenotype_p;
-														}		/* if (phenotype_p) */
-
-													if (copied_internal_name_s)
-														{
-															FreeCopiedString (copied_internal_name_s);
-														}
-
-												}		/* if ((IsStringEmpty (internal_name_s)) || ((copied_internal_name_s = EasyCopyToNewString (internal_name_s)) != NULL)) */
-
-											if (copied_method_s)
-												{
-													FreeCopiedString (copied_method_s);
-												}
-
-										}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
-
-									if (copied_growth_stage_s)
-										{
-											FreeCopiedString (copied_growth_stage_s);
-										}
-
-								}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
-
-							FreeCopiedString (copied_value_s);
-						}		/* if (copied_value_s) */
-
-					FreeTime (copied_date_p);
-				}		/* if (copied_date_p) */
-
-		}		/* if (date_p) */
-
-	return NULL;
-}
-
-
-Phenotype *AllocatePhenotypeFromDefinition (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s)
-{
-	char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
-
-	if (copied_internal_name_s)
+	if ((IsStringEmpty (internal_name_s)) || ((copied_internal_name_s = EasyCopyToNewString (internal_name_s)) != NULL))
 		{
 			Phenotype *phenotype_p = (Phenotype *) AllocMemory (sizeof (Phenotype));
 
@@ -143,14 +56,7 @@ Phenotype *AllocatePhenotypeFromDefinition (bson_oid_t *id_p, SchemaTerm *trait_
 					phenotype_p -> ph_trait_term_p = trait_p;
 					phenotype_p -> ph_measurement_term_p = measurement_p;
 					phenotype_p -> ph_unit_term_p = unit_p;
-					phenotype_p -> ph_measured_value_s = NULL;
-					phenotype_p -> ph_date_p = NULL;
-					phenotype_p -> ph_instrument_p = NULL;
-					phenotype_p -> ph_growth_stage_s = NULL;
-					phenotype_p -> ph_corrected_flag = false;
-					phenotype_p -> ph_method_s = NULL;
 					phenotype_p -> ph_internal_name_s = copied_internal_name_s;
-					phenotype_p -> ph_type = PN_UNSET;
 
 					return phenotype_p;
 				}		/* if (phenotype_p) */
@@ -159,10 +65,12 @@ Phenotype *AllocatePhenotypeFromDefinition (bson_oid_t *id_p, SchemaTerm *trait_
 				{
 					FreeCopiedString (copied_internal_name_s);
 				}
-		}
+
+		}		/* if ((IsStringEmpty (internal_name_s)) || ((copied_internal_name_s = EasyCopyToNewString (internal_name_s)) != NULL)) */
 
 	return NULL;
 }
+
 
 
 void FreePhenotype (Phenotype *phenotype_p)
@@ -187,26 +95,6 @@ void FreePhenotype (Phenotype *phenotype_p)
 			FreeSchemaTerm (phenotype_p -> ph_unit_term_p);
 		}
 
-	if (phenotype_p -> ph_growth_stage_s)
-		{
-			FreeCopiedString (phenotype_p -> ph_growth_stage_s);
-		}
-
-	if (phenotype_p -> ph_measured_value_s)
-		{
-			FreeCopiedString (phenotype_p -> ph_measured_value_s);
-		}
-
-	if (phenotype_p -> ph_date_p)
-		{
-			FreeTime (phenotype_p -> ph_date_p);
-		}
-
-	if (phenotype_p -> ph_method_s)
-		{
-			FreeCopiedString (phenotype_p -> ph_method_s);
-		}
-
 	if (phenotype_p -> ph_internal_name_s)
 		{
 			FreeCopiedString (phenotype_p -> ph_internal_name_s);
@@ -223,144 +111,45 @@ void FreePhenotype (Phenotype *phenotype_p)
 }
 
 
-PhenotypeNode *AllocatePhenotypeNode (Phenotype *phenotype_p)
-{
-	PhenotypeNode *ph_node_p = (PhenotypeNode *) AllocMemory (sizeof (PhenotypeNode));
 
-	if (ph_node_p)
-		{
-			InitListItem (& (ph_node_p -> pn_node));
-
-			ph_node_p -> pn_phenotype_p = phenotype_p;
-		}
-
-	return ph_node_p;
-}
-
-
-void FreePhenotypeNode (ListItem *node_p)
-{
-	PhenotypeNode *ph_node_p = (PhenotypeNode *) node_p;
-
-	if (ph_node_p -> pn_phenotype_p)
-		{
-			FreePhenotype (ph_node_p -> pn_phenotype_p);
-		}
-
-	FreeMemory (ph_node_p);
-}
-
-
-json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const bool expand_fields_flag)
+json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p)
 {
 	json_t *phenotype_json_p = json_object ();
 
 	if (phenotype_json_p)
 		{
-			if (AddValidDateToJSON (phenotype_p -> ph_date_p, phenotype_json_p, PH_DATE_S))
+			if (AddSchemTermToJSON (phenotype_json_p, PH_TRAIT_S, phenotype_p -> ph_trait_term_p))
 				{
-					if (AddSchemTermToJSON (phenotype_json_p, PH_TRAIT_S, phenotype_p -> ph_trait_term_p))
+					if (AddSchemTermToJSON (phenotype_json_p, PH_MEASUREMENT_S, phenotype_p -> ph_measurement_term_p))
 						{
-							if (AddSchemTermToJSON (phenotype_json_p, PH_MEASUREMENT_S, phenotype_p -> ph_measurement_term_p))
+							if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p))
 								{
-									if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p))
+									if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
 										{
-											if ((IsStringEmpty (phenotype_p -> ph_measured_value_s)) || (SetJSONString (phenotype_json_p, PH_VALUE_S, phenotype_p -> ph_measured_value_s)))
+											if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
 												{
-													if ((IsStringEmpty (phenotype_p -> ph_growth_stage_s)) || (SetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S, phenotype_p -> ph_growth_stage_s)))
-														{
-															if ((IsStringEmpty (phenotype_p -> ph_method_s)) || (SetJSONString (phenotype_json_p, PH_METHOD_S, phenotype_p -> ph_method_s)))
-																{
-																	if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
-																		{
-																			if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
-																				{
-																					if (SetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, phenotype_p -> ph_corrected_flag))
-																						{
-																							bool done_instrument_flag = false;
+													return phenotype_json_p;
+												}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
 
-																							if (phenotype_p -> ph_instrument_p)
-																								{
-																									if (expand_fields_flag)
-																										{
-																											json_t *instrument_json_p = GetInstrumentAsJSON (phenotype_p -> ph_instrument_p);
+										}		/* if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)) */
 
-																											if (instrument_json_p)
-																												{
-																													if (json_object_set_new (phenotype_json_p, PH_INSTRUMENT_S, instrument_json_p) == 0)
-																														{
-																															done_instrument_flag = true;
-																														}		/* if (json_object_set_new (phenotype_json_p, PH_INSTRUMENT_S, instrument_json_p) == 0) */
-																													else
-																														{
-																															json_decref (phenotype_json_p);
-																														}
-																												}
-																										}		/* if (expand_fields_flag) */
-																									else
-																										{
-																											if (AddNamedCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_instrument_p -> in_id_p, PH_INSTRUMENT_ID_S))
-																												{
-																													done_instrument_flag = true;
-																												}
-																										}
-
-																								}		/* if (phenotype_p -> ph_instrument_p) */
-																							else
-																								{
-																									done_instrument_flag = true;
-																								}
-
-																							if (done_instrument_flag)
-																								{
-																									if (AddPhenotypeNatureToJSON (phenotype_p -> ph_type, phenotype_json_p))
-																										{
-																											return phenotype_json_p;
-																										}
-																									else
-																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add \"%s\": %d to JSON", PH_NATURE_S, phenotype_p -> ph_type);
-																										}
-																								}
-
-																						}		/* if (SetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, phenotype_p -> ph_corrected_flag)) */
-
-
-																				}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
-
-																		}		/* if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)) */
-
-
-																}		/* if ((IsStringEmpty (phenotype_p -> ph_method_s)) || SetJSONString (phenotype_json_p, PH_METHOD_S, phenotype_p -> ph_method_s)) */
-
-														}		/* if ((IsStringEmpty (phenotype_p -> ph_growth_stage_s)) || SetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S, phenotype_p -> ph_growth_stage_s)) */
-
-												}		/* if (SetJSONString (phenotype_json_p, PH_VALUE_S, phenotype_p -> ph_measured_value_s)) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add \"%s\": \"%s\" to JSON", PH_VALUE_S, phenotype_p -> ph_measured_value_s);
-												}
-
-										}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p)) */
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_unit_term_p -> st_url_s);
-										}
-
-								}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_MEASUREMENT_S, phenotype_p -> ph_measurement_term_p)) */
+								}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_measurement_term_p -> st_url_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_unit_term_p -> st_url_s);
 								}
 
-						}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_TRAIT_S, phenotype_p -> ph_trait_term_p)) */
+						}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_MEASUREMENT_S, phenotype_p -> ph_measurement_term_p)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_trait_term_p -> st_url_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_measurement_term_p -> st_url_s);
 						}
 
-				}		/* if (AddValidDateToJSON (phenotype_p -> ph_date_p, phenotype_json_p, PH_DATE_S)) */
-
+				}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_TRAIT_S, phenotype_p -> ph_trait_term_p)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_trait_term_p -> st_url_s);
+				}
 
 			json_decref (phenotype_json_p);
 		}		/* if (phenotype_json_p) */
@@ -383,82 +172,45 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 
 					if (measurement_p)
 						{
-							const char *value_s = GetJSONString (phenotype_json_p, PH_VALUE_S);
+							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-							if (value_s)
+							if (id_p)
 								{
-									struct tm *date_p = NULL;
-
-									if (CreateValidDateFromJSON (phenotype_json_p, PH_DATE_S, &date_p))
+									if (GetMongoIdFromJSON (phenotype_json_p, id_p))
 										{
-											bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+											const char *internal_name_s = GetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S);
 
-											if (id_p)
+											if (internal_name_s)
 												{
-													if (GetMongoIdFromJSON (phenotype_json_p, id_p))
+													Phenotype *phenotype_p = AllocatePhenotype (id_p, trait_p, measurement_p, unit_p, internal_name_s);
+
+													if (phenotype_p)
 														{
-															Instrument *instrument_p = NULL;
-
-															if (CreateInstrumentFromPhenotypeJSON (phenotype_json_p, &instrument_p, data_p))
-																{
-																	PhenotypeNature nature = PN_NUM_PHENOTYPE_NATURES;
-
-																	if (GetPhenotypeNatureFromJSON (&nature, phenotype_json_p))
-																		{
-																			Phenotype *phenotype_p = NULL;
-																			bool corrected_flag;
-																			const char *growth_stage_s = GetJSONString (phenotype_json_p, PH_GROWTH_STAGE_S);
-																			const char *method_s = GetJSONString (phenotype_json_p, PH_METHOD_S);
-																			const char *internal_name_s = GetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S);
-
-																			GetJSONBoolean (phenotype_json_p, PH_CORRECTED_S, &corrected_flag);
-
-																			phenotype_p = AllocatePhenotype (id_p, date_p, trait_p, measurement_p, unit_p, value_s, growth_stage_s, corrected_flag, method_s, internal_name_s, instrument_p, nature);
-
-																			if (phenotype_p)
-																				{
-																					return phenotype_p;
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate Phenotype");
-																				}
-
-																		}		/* if (GetPhenotypeNatureFromJSON (phenotype_json_p, &nature)) */
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get \"%s\"", PH_NATURE_S);
-																		}
-
-																}		/* if (CreateInstrumentFromPhenotypeJSON (phenotype_json_p, &instrument_p, data_p)) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to create instrument from \"%s\"", PH_DATE_S);
-																}
-
-														}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
+															return phenotype_p;
+														}
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get id \"%s\"", MONGO_ID_S);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate Phenotype");
 														}
 
-													FreeBSONOid (id_p);
-												}		/* if (id_p) */
+												}		/* if (internal_name_s) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate id");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get internal name \"%s\"", PH_INTERNAL_NAME_S);
 												}
 
-										}		/* if (CreateValidDateFromJSON (phenotype_json_p, PH_DATE_S, &date_p)) */
+
+										}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to create date from \"%s\"", PH_DATE_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get id \"%s\"", MONGO_ID_S);
 										}
 
-								}		/* if (value_s) */
+									FreeBSONOid (id_p);
+								}		/* if (id_p) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get \"%s\" from JSON", PH_VALUE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate id");
 								}
 
 							FreeSchemaTerm (measurement_p);
@@ -488,27 +240,16 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 
 bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (phenotype_p -> ph_id_p), &selector_p);
 
-	if (! (phenotype_p -> ph_id_p))
+	if (success_flag)
 		{
-			phenotype_p -> ph_id_p  = GetNewBSONOid ();
-
-			if (phenotype_p -> ph_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (phenotype_p -> ph_id_p)
-		{
-			json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p, false);
+			json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p);
 
 			if (phenotype_json_p)
 				{
-					const char *collection_s = phenotype_p -> ph_corrected_flag ? data_p -> dftsd_collection_ss [DFTD_CORRECTED_PHENOTYPE] : data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE];
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, collection_s, insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE], selector_p);
 
 					json_decref (phenotype_json_p);
 				}		/* if (phenotype_json_p) */
@@ -519,37 +260,49 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 }
 
 
-bool SetPhenotypeValue (Phenotype *phenotype_p, const char *value_s)
+
+Phenotype *GetPhenotypeById (const bson_oid_t *phenotype_id_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
+	Phenotype *phenotype_p = NULL;
 
-	if (value_s)
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE]))
 		{
-			char *copied_value_s = EasyCopyToNewString (value_s);
+			bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (phenotype_id_p));
 
-			if (copied_value_s)
+			if (query_p)
 				{
-					if (phenotype_p -> ph_measured_value_s)
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+					if (results_p)
 						{
-							FreeCopiedString (phenotype_p -> ph_measured_value_s);
-						}
+							if (json_is_array (results_p))
+								{
+									const size_t num_results = json_array_size (results_p);
 
-					phenotype_p -> ph_measured_value_s = copied_value_s;
-					success_flag = true;
-				}
-		}
-	else
-		{
-			if (phenotype_p -> ph_measured_value_s)
-				{
-					FreeCopiedString (phenotype_p -> ph_measured_value_s);
-					phenotype_p -> ph_measured_value_s = NULL;
-				}
+									if (num_results == 1)
+										{
+											json_t *entry_p = json_array_get (results_p, 0);
 
-			success_flag = true;
-		}
+											phenotype_p = GetPhenotypeFromJSON (entry_p, data_p);
 
-	return success_flag;
+											if (!DFTD_PHENOTYPE)
+												{
+
+												}		/* if (!instrument_p) */
+
+										}		/* if (num_results == 1) */
+
+								}		/* if (json_is_array (results_p)) */
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE])) */
+
+	return phenotype_p;
 }
 
 
@@ -557,53 +310,6 @@ bool SetPhenotypeValue (Phenotype *phenotype_p, const char *value_s)
 /*
  * static definitions
  */
-
-static bool CreateInstrumentFromPhenotypeJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-	Instrument *instrument_p = NULL;
-	const json_t *val_p = json_object_get (phenotype_json_p, PH_INSTRUMENT_S);
-
-	if (val_p)
-		{
-			instrument_p = GetInstrumentFromJSON (val_p);
-
-			if (instrument_p)
-				{
-					*instrument_pp = instrument_p;
-					success_flag = true;
-				}
-		}
-	else
-		{
-			bson_oid_t *instrument_id_p = GetNewUnitialisedBSONOid ();
-
-			if (instrument_id_p)
-				{
-					if (GetNamedIdFromJSON (phenotype_json_p, PH_INSTRUMENT_ID_S, instrument_id_p))
-						{
-							instrument_p = GetInstrumentById (instrument_id_p, data_p);
-
-							if (instrument_p)
-								{
-									*instrument_pp = instrument_p;
-									success_flag = true;
-								}
-
-						}
-					else
-						{
-							/* no instrument in json */
-							success_flag = true;
-						}
-
-					FreeBSONOid (instrument_id_p);
-				}
-		}
-
-
-	return success_flag;
-}
 
 
 static bool AddSchemTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p)
@@ -658,45 +364,4 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 	return NULL;
 }
 
-
-
-static bool AddPhenotypeNatureToJSON (const PhenotypeNature phenotype_nature, json_t *doc_p)
-{
-	bool success_flag = false;
-
-	if (phenotype_nature < PN_NUM_PHENOTYPE_NATURES)
-		{
-			success_flag = SetJSONString (doc_p, PH_NATURE_S, * (S_PHENOTYPE_NATURES_SS + phenotype_nature));
-		}
-
-	return success_flag;
-}
-
-
-static bool GetPhenotypeNatureFromJSON (PhenotypeNature *phenotype_nature_p, const json_t *doc_p)
-{
-	bool success_flag = false;
-	const char *value_s = GetJSONString (doc_p, PH_NATURE_S);
-
-	if (value_s)
-		{
-			PhenotypeNature i = PN_ROW;
-
-			while (i < PN_NUM_PHENOTYPE_NATURES)
-				{
-					if (strcmp (value_s, * (S_PHENOTYPE_NATURES_SS + i)) == 0)
-						{
-							*phenotype_nature_p = i;
-							return true;
-						}
-					else
-						{
-							++ i;
-						}
-
-				}
-		}
-
-	return success_flag;
-}
 

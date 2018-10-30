@@ -199,26 +199,16 @@ void FreePlotNode (ListItem *node_p)
 
 bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (plot_p -> pl_id_p), &selector_p);
 
-	if (! (plot_p -> pl_id_p))
-		{
-			plot_p -> pl_id_p  = GetNewBSONOid ();
-
-			if (plot_p -> pl_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (plot_p -> pl_id_p)
+	if (success_flag)
 		{
 			json_t *plot_json_p = GetPlotAsJSON (plot_p, false, data_p);
 
 			if (plot_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], selector_p);
 
 					json_decref (plot_json_p);
 				}		/* if (plot_json_p) */

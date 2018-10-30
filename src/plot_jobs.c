@@ -477,7 +477,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 
 																	if (row_p)
 																		{
-																			if (SaveRow (row_p, data_p))
+																			if (SaveRow (row_p, data_p, true))
 																				{
 																					++ num_imported;
 																				}

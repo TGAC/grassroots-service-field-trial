@@ -26,7 +26,7 @@
 
 #include "material.h"
 #include "plot.h"
-#include "phenotype.h"
+#include "observation.h"
 
 
 
@@ -42,7 +42,7 @@ typedef struct Row
 
 	char *ro_material_s;
 
-	LinkedList *ro_phenotypes_p;
+	LinkedList *ro_observations_p;
 
 } Row;
 
@@ -89,7 +89,7 @@ ROW_PREFIX const char *RO_TRIAL_MATERIAL_S ROW_VAL ("trial_material_s");
 ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material_s");
 
 
-ROW_PREFIX const char *RO_PHENOTYPES_S ROW_VAL ("phenotypes");
+ROW_PREFIX const char *RO_OBSERVATIONS_S  ROW_VAL ("observations");
 
 
 #ifdef __cplusplus
@@ -106,15 +106,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL RowNode *AllocateRowNode (Row *row_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p, const bool expand_material_flag, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeToRow (Row *row_p, Phenotype *phenotype_p);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationToRow (Row *row_p, Observation *observation_p);
 
 #ifdef __cplusplus
 }

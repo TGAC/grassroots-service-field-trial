@@ -29,6 +29,7 @@
 #include "experimental_area.h"
 #include "memory_allocations.h"
 #include "streams.h"
+#include "dfw_util.h"
 
 
 FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p)
@@ -131,32 +132,21 @@ char *GetFieldTrialIdAsString (const FieldTrial *trial_p)
 
 bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
-	json_t *field_trial_json_p = NULL;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (trial_p -> ft_id_p), &selector_p);
 
-	if (! (trial_p -> ft_id_p))
+	if (success_flag)
 		{
-			trial_p -> ft_id_p  = GetNewBSONOid ();
-
-			if (trial_p -> ft_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (trial_p -> ft_id_p)
-		{
-			field_trial_json_p = GetFieldTrialAsJSON (trial_p, false, data_p);
+			json_t *field_trial_json_p = GetFieldTrialAsJSON (trial_p, false, data_p);
 
 			if (field_trial_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p);
 
 					json_decref (field_trial_json_p);
 				}		/* if (field_trial_json_p) */
 
-		}		/* if (trial_p -> ft_id_p) */
+		}		/* if (success_flag) */
 
 	return success_flag;
 }

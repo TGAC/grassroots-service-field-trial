@@ -24,6 +24,7 @@
 #include "instrument.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
+#include "dfw_util.h"
 
 
 
@@ -133,18 +134,8 @@ Instrument *GetInstrumentFromJSON (const json_t *instrument_json_p)
 
 bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
-
-	if (! (instrument_p -> in_id_p))
-		{
-			instrument_p -> in_id_p  = GetNewBSONOid ();
-
-			if (instrument_p -> in_id_p)
-				{
-					insert_flag = true;
-				}
-		}
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (instrument_p -> in_id_p), &selector_p);
 
 	if (instrument_p -> in_id_p)
 		{
@@ -152,7 +143,7 @@ bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *d
 
 			if (instrument_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, instrument_json_p, data_p -> dftsd_collection_ss [DFTD_INSTRUMENT], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, instrument_json_p, data_p -> dftsd_collection_ss [DFTD_INSTRUMENT], selector_p);
 
 					json_decref (instrument_json_p);
 				}		/* if (instrument_json_p) */

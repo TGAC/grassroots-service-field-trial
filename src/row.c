@@ -26,12 +26,13 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "streams.h"
-#include "phenotype.h"
+#include "observation.h"
+#include "dfw_util.h"
 
 
-static bool AddPhenotypesToJSON (json_t *row_json_p, LinkedList *phenotypes_p);
+static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const bool expand_fields_flag);
 
-static bool GetPhenotypesFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p);
+static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p);
 
 
 
@@ -39,9 +40,9 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Pl
 {
 	if (material_p)
 		{
-			LinkedList *phenotypes_p = AllocateLinkedList (FreePhenotypeNode);
+			LinkedList *observations_p = AllocateLinkedList (FreeObservationNode);
 
-			if (phenotypes_p)
+			if (observations_p)
 				{
 					Row *row_p = (Row *) AllocMemory (sizeof (Row));
 
@@ -52,7 +53,7 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Pl
 							row_p -> ro_material_p = material_p;
 							row_p -> ro_plot_p = parent_plot_p;
 							row_p -> ro_material_s = NULL;
-							row_p -> ro_phenotypes_p = phenotypes_p;
+							row_p -> ro_observations_p = observations_p;
 
 							return row_p;
 						}
@@ -63,7 +64,7 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Pl
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate phenotypes list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observations list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
 				}
 		}
 	else
@@ -82,7 +83,7 @@ void FreeRow (Row *row_p)
 			FreeCopiedString (row_p -> ro_material_s);
 		}
 
-	FreeLinkedList (row_p -> ro_phenotypes_p);
+	FreeLinkedList (row_p -> ro_observations_p);
 
 	FreeMemory (row_p);
 }
@@ -118,7 +119,7 @@ void FreeRowNode (ListItem *node_p)
 
 
 
-json_t *GetRowAsJSON (const Row *row_p, const bool expand_material_flag, const DFWFieldTrialServiceData *data_p)
+json_t *GetRowAsJSON (const Row *row_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *row_json_p = json_object ();
 
@@ -128,7 +129,7 @@ json_t *GetRowAsJSON (const Row *row_p, const bool expand_material_flag, const D
 
 			if (row_p -> ro_material_p)
 				{
-					if (expand_material_flag)
+					if (expand_fields_flag)
 						{
 							json_t *material_json_p = GetMaterialAsJSON (row_p -> ro_material_p, true, data_p);
 
@@ -166,7 +167,7 @@ json_t *GetRowAsJSON (const Row *row_p, const bool expand_material_flag, const D
 								{
 									if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
 										{
-											if (AddPhenotypesToJSON (row_json_p, row_p -> ro_phenotypes_p))
+											if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, expand_fields_flag))
 												{
 													return row_json_p;
 												}
@@ -271,7 +272,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 											if (row_p)
 												{
-													if (GetPhenotypesFromJSON (json_p, row_p -> ro_phenotypes_p, data_p))
+													if (GetObservationsFromJSON (json_p, row_p, data_p))
 														{
 															return row_p;
 														}
@@ -291,28 +292,18 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 }
 
 
-bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p)
+bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (row_p -> ro_id_p), &selector_p);
 
-	if (! (row_p -> ro_id_p))
-		{
-			row_p -> ro_id_p  = GetNewBSONOid ();
-
-			if (row_p -> ro_id_p)
-				{
-					insert_flag = true;
-				}
-		}
-
-	if (row_p -> ro_id_p)
+	if (success_flag)
 		{
 			json_t *row_json_p = GetRowAsJSON (row_p, false, data_p);
 
 			if (row_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], selector_p);
 
 					json_decref (row_json_p);
 				}		/* if (row_json_p) */
@@ -323,25 +314,25 @@ bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-bool AddPhenotypeToRow (Row *row_p, Phenotype *phenotype_p)
+bool AddObservationToRow (Row *row_p, Observation *observation_p)
 {
 	bool success_flag = false;
-	PhenotypeNode *node_p = AllocatePhenotypeNode (phenotype_p);
+	ObservationNode *node_p = AllocateObservationNode (observation_p);
 
 	if (node_p)
 		{
-			LinkedListAddTail (row_p -> ro_phenotypes_p, & (node_p -> pn_node));
+			LinkedListAddTail (row_p -> ro_observations_p, & (node_p -> on_node));
 			success_flag = true;
 		}
 	else
 		{
 			char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-			char phenotype_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+			char observation_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 			bson_oid_to_string (row_p -> ro_id_p, row_id_s);
-			bson_oid_to_string (phenotype_p -> ph_id_p, phenotype_id_s);
+			bson_oid_to_string (observation_p -> ob_id_p, observation_id_s);
 
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add phenotype \"%s\" to row \"%s\"", phenotype_id_s, row_id_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", observation_id_s, row_id_s);
 			success_flag = false;
 		}
 
@@ -350,37 +341,37 @@ bool AddPhenotypeToRow (Row *row_p, Phenotype *phenotype_p)
 
 
 
-static bool AddPhenotypesToJSON (json_t *row_json_p, LinkedList *phenotypes_p)
+static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const bool expand_fields_flag)
 {
 	bool success_flag = false;
 
-	if (phenotypes_p -> ll_size > 0)
+	if (observations_p -> ll_size > 0)
 		{
-			json_t *phenotypes_array_p = json_array ();
+			json_t *observations_json_p = json_array ();
 
-			if (phenotypes_array_p)
+			if (observations_json_p)
 				{
-					if (json_object_set_new (row_json_p, RO_PHENOTYPES_S, phenotypes_array_p) == 0)
+					if (json_object_set_new (row_json_p, RO_OBSERVATIONS_S, observations_json_p) == 0)
 						{
-							PhenotypeNode *node_p = (PhenotypeNode *) (phenotypes_p -> ll_head_p);
+							ObservationNode *node_p = (ObservationNode *) (observations_p -> ll_head_p);
 
 							success_flag = true;
 
 							while (node_p && success_flag)
 								{
-									const Phenotype *phenotype_p = node_p -> pn_phenotype_p;
-									json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p, true);
+									const Observation *observation_p = node_p -> on_observation_p;
+									json_t *observation_json_p = GetObservationAsJSON (observation_p, expand_fields_flag);
 
-									if (phenotype_json_p)
+									if (observation_json_p)
 										{
-											if (json_array_append_new (phenotypes_array_p, phenotype_json_p) == 0)
+											if (json_array_append_new (observations_json_p, observation_json_p) == 0)
 												{
-													node_p = (PhenotypeNode *) (node_p -> pn_node.ln_next_p);
+													node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
 												}
 											else
 												{
 													success_flag = false;
-													json_decref (phenotype_json_p);
+													json_decref (observation_json_p);
 												}
 										}
 									else
@@ -392,7 +383,7 @@ static bool AddPhenotypesToJSON (json_t *row_json_p, LinkedList *phenotypes_p)
 						}		/* if (json_object_set_new (row_json_p, RO_PHENOTYPES_S, phenotypes_array_p) == 0) */
 					else
 						{
-							json_decref (phenotypes_array_p);
+							json_decref (observations_json_p);
 						}
 
 				}		/* if (phenotypes_array_p) */
@@ -408,33 +399,33 @@ static bool AddPhenotypesToJSON (json_t *row_json_p, LinkedList *phenotypes_p)
 
 
 
-static bool GetPhenotypesFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p)
+static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	const json_t *phenotypes_json_p = json_object_get (row_json_p, RO_PHENOTYPES_S);
+	const json_t *observations_json_p = json_object_get (row_json_p, RO_OBSERVATIONS_S);
 
-	if (phenotypes_json_p)
+	if (observations_json_p)
 		{
-			size_t size = json_array_size (phenotypes_json_p);
+			size_t size = json_array_size (observations_json_p);
 			size_t i;
 
 			success_flag = true;
 
 			for (i = 0; i < size; ++ i)
 				{
-					const json_t *phenotype_json_p = json_array_get (phenotypes_json_p, i);
-					Phenotype *phenotype_p = GetPhenotypeFromJSON (phenotype_json_p, data_p);
+					const json_t *observation_json_p = json_array_get (observations_json_p, i);
+					Observation *observation_p = GetObservationFromJSON (observation_json_p, data_p);
 
-					if (phenotype_p)
+					if (observation_p)
 						{
-							if (!AddPhenotypeToRow (row_p, phenotype_p))
+							if (!AddObservationToRow (row_p, observation_p))
 								{
-									FreePhenotype (phenotype_p);
+									FreeObservation (observation_p);
 									success_flag = false;
 									i = size;		/* force exit from loop */
 								}
 
-						}		/* if (phenotype_p) */
+						}		/* if (observation_p) */
 					else
 						{
 							success_flag = false;

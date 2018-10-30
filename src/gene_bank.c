@@ -241,18 +241,8 @@ GeneBank *GetGeneBankFromJSON (const json_t *gene_bank_json_p)
 
 bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	bool insert_flag = false;
-
-	if (! (gene_bank_p -> gb_id_p))
-		{
-			gene_bank_p -> gb_id_p  = GetNewBSONOid ();
-
-			if (gene_bank_p -> gb_id_p)
-				{
-					insert_flag = true;
-				}
-		}
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (gene_bank_p -> gb_id_p), &selector_p);
 
 	if (gene_bank_p -> gb_id_p)
 		{
@@ -260,7 +250,7 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 
 			if (gene_bank_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, gene_bank_json_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK], insert_flag);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, gene_bank_json_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK], selector_p);
 
 					json_decref (gene_bank_json_p);
 				}		/* if (area_json_p) */
