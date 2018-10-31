@@ -60,6 +60,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, Phe
 
 			if (!copied_date_p)
 				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy date");
 					success_flag = false;
 				}
 		}
@@ -94,7 +95,10 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, Phe
 
 											return observation_p;
 										}		/* if (observation_p) */
-
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation");
+										}
 
 									if (copied_method_s)
 										{
@@ -102,6 +106,10 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, Phe
 										}
 
 								}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
+								}
 
 							if (copied_growth_stage_s)
 								{
@@ -109,9 +117,17 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, Phe
 								}
 
 						}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
+						}
 
 					FreeCopiedString (copied_value_s);
 				}		/* if (copied_value_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy value \"%s\"", value_s ? value_s : NULL);
+				}
 
 			if (copied_date_p)
 				{

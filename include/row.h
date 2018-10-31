@@ -83,10 +83,10 @@ ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
  * used as a temporary holding value until the material pointer
  * has been linked up
  */
-ROW_PREFIX const char *RO_TRIAL_MATERIAL_S ROW_VAL ("trial_material_s");
+ROW_PREFIX const char *RO_TRIAL_MATERIAL_S ROW_VAL ("trial_material");
 
 
-ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material_s");
+ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material");
 
 
 ROW_PREFIX const char *RO_OBSERVATIONS_S  ROW_VAL ("observations");

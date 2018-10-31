@@ -554,7 +554,13 @@ bool GetPlotRows (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 														}		/* json_array_foreach (results_p, i, entry_p) */
 
 												}		/* if (num_results > 0) */
+											else
+												{
+													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
+													bson_oid_to_string (plot_p -> pl_id_p, id_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No rows found for plot with id \"%s\"");
+												}
 
 										}		/* if (json_is_array (results_p)) */
 

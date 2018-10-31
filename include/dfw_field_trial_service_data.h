@@ -53,12 +53,32 @@ typedef enum
 } DFWFieldTrialData;
 
 
+/**
+ * An indicator of what the output destination
+ * is for the JSON data values. This lets us
+ * know whether we need to e.g. expand fields
+ * to full objects from their ids, or omit
+ * certain fields entirely
+ */
 typedef enum
 {
-	DB_MONGO_DB,
-	DB_SQLITE,
-	DB_NUM_BACKENDS
-} DFWBackend;
+	/**
+	 * This is for generating JSON to be stored in the
+	 * server-side mongo db.
+	 */
+	VF_STORAGE,
+
+	/**
+	 * This is for generating the data for displaying
+	 * within a client.
+	 */
+	VF_CLIENT_FULL,
+
+	/**
+	 * The number of avaialble formats
+	 */
+	VF_NUM_FORMATS
+} ViewFormat;
 
 
 

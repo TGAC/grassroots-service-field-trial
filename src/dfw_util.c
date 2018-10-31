@@ -27,7 +27,7 @@
 
 
 #ifdef _DEBUG
-	#define DFW_UTIL_DEBUG	(STM_LEVEL_FINEST)
+	#define DFW_UTIL_DEBUG	(STM_LEVEL_INFO)
 #else
 	#define DFW_UTIL_DEBUG	(STM_LEVEL_NONE)
 #endif

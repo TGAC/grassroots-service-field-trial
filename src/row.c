@@ -234,12 +234,29 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 													bson_oid_to_string (plot_p -> pl_id_p, id_s);
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Plot %s has no parent id", id_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row's material, Plot %s has no parent id", id_s);
 												}
+
+										}		/* if (GetNamedIdFromJSON (json_p, RO_MATERIAL_ID_S, material_id_p)) */
+									else
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (plot_p -> pl_id_p, id_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
 										}
 
+
 									FreeBSONOid (material_id_p);
+								}		/* if (material_id_p) */
+							else
+								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (plot_p -> pl_id_p, id_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
 								}
+
 
 							if (!material_p)
 								{
@@ -286,6 +303,13 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 						}		/* if (id_p) */
 
 				}		/* if (success_flag) */
+			else
+				{
+					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+					bson_oid_to_string (plot_p -> pl_id_p, id_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row's material for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
+				}
 		}
 
 	return NULL;
@@ -420,6 +444,11 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 						{
 							if (!AddObservationToRow (row_p, observation_p))
 								{
+									char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add observation to for row \"%s\"", row_id_s);
+
 									FreeObservation (observation_p);
 									success_flag = false;
 									i = size;		/* force exit from loop */
@@ -428,6 +457,12 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 						}		/* if (observation_p) */
 					else
 						{
+							char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+							bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetObservationFromJSON failed for row \"%s\"", row_id_s);
+
+
 							success_flag = false;
 							i = size;		/* force exit from loop */
 						}
