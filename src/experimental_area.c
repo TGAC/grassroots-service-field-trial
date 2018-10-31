@@ -320,7 +320,7 @@ ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServic
 }
 
 
-json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
+json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *area_json_p = json_object ();
 
@@ -332,7 +332,7 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_f
 						{
 							bool add_location_flag = false;
 
-							if (expand_fields_flag)
+							if (format == VF_CLIENT_FULL)
 								{
 									json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
 
@@ -364,9 +364,10 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_f
 												{
 													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
 														{
+
 															if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S))
 																{
-																	if (expand_fields_flag)
+																	if (format == VF_CLIENT_FULL)
 																		{
 																			if (GetExperimentalAreaPlots (area_p, data_p))
 																				{
@@ -397,7 +398,7 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const bool expand_f
 
 
 
-ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool full_location_flag, const DFWFieldTrialServiceData *data_p)
+ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, EA_NAME_S);
 
@@ -421,7 +422,7 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const bool 
 											Location *location_p = NULL;
 											bool success_flag = true;
 
-											if (full_location_flag)
+											if (format == VF_CLIENT_FULL)
 												{
 													if (! (location_p = GetLocationById (location_id_p, data_p)))
 														{

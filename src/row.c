@@ -119,7 +119,7 @@ void FreeRowNode (ListItem *node_p)
 
 
 
-json_t *GetRowAsJSON (const Row *row_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
+json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *row_json_p = json_object ();
 
@@ -129,29 +129,38 @@ json_t *GetRowAsJSON (const Row *row_p, const bool expand_fields_flag, const DFW
 
 			if (row_p -> ro_material_p)
 				{
-					if (expand_fields_flag)
+					switch (format)
 						{
-							json_t *material_json_p = GetMaterialAsJSON (row_p -> ro_material_p, true, data_p);
-
-							if (material_json_p)
+							case VF_CLIENT_FULL:
 								{
-									if (json_object_set_new (row_json_p, RO_MATERIAL_S, material_json_p) == 0)
+									json_t *material_json_p = GetMaterialAsJSON (row_p -> ro_material_p, true, data_p);
+
+									if (material_json_p)
+										{
+											if (json_object_set_new (row_json_p, RO_MATERIAL_S, material_json_p) == 0)
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add material to row json");
+													json_decref (material_json_p);
+												}
+										}
+								}
+								break;
+
+							case VF_STORAGE:
+								{
+									if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_material_p -> ma_id_p, RO_MATERIAL_ID_S))
 										{
 											success_flag = true;
 										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add material to row json");
-											json_decref (material_json_p);
-										}
 								}
-						}
-					else
-						{
-							if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_material_p -> ma_id_p, RO_MATERIAL_ID_S))
-								{
-									success_flag = true;
-								}
+								break;
+
+							default:
+								break;
 						}
 				}
 			else
@@ -161,17 +170,27 @@ json_t *GetRowAsJSON (const Row *row_p, const bool expand_fields_flag, const DFW
 
 			if (success_flag)
 				{
-					if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
+					if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
 						{
-							if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+							/*
+							 * We only need to store the parent plot id if the JSON is for the backend
+							 */
+							if (format == VF_STORAGE)
 								{
-									if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
+									if (!AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
 										{
-											if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, expand_fields_flag))
+											success_flag = false;
+										}
+								}		/* if (format == VF_STORAGE) */
+
+							if (success_flag)
+								{
+									if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+										{
+											if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
 												{
 													return row_json_p;
 												}
-
 										}
 								}
 						}
@@ -184,7 +203,7 @@ json_t *GetRowAsJSON (const Row *row_p, const bool expand_fields_flag, const DFW
 }
 
 
-Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
+Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	if (!plot_p)
 		{
@@ -203,7 +222,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 		{
 			bool success_flag = true;
 
-			if (expand_fields_flag)
+			if (format == VF_CLIENT_FULL)
 				{
 					/*
 					 * If we haven't already got the material, get it!

@@ -135,7 +135,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL PlotNode *AllocatePlotNode (Plot *plot_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotNode (ListItem *node_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, const DFWFieldTrialServiceData *data_p);

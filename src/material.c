@@ -187,7 +187,7 @@ void FreeMaterial (Material *material_p)
 }
 
 
-json_t *GetMaterialAsJSON (const Material *material_p, const bool expand_gene_bank_flag, const DFWFieldTrialServiceData *data_p)
+json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *material_json_p = json_object ();
 
@@ -199,7 +199,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const bool expand_gene_ba
 
 					if (material_p -> ma_gene_bank_id_p)
 						{
-							if (expand_gene_bank_flag)
+							if (format == VF_CLIENT_FULL)
 								{
 									GeneBank *gene_bank_p = GetGeneBankById (material_p -> ma_gene_bank_id_p, data_p);
 
@@ -242,7 +242,20 @@ json_t *GetMaterialAsJSON (const Material *material_p, const bool expand_gene_ba
 
 					if (success_flag)
 						{
-							if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S))
+							if (format == VF_STORAGE)
+								{
+									if (!AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S))
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (material_p -> ma_parent_area_p -> ea_id_p, id_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_EXPERIMENTAL_AREA_ID_S, id_s);
+
+											success_flag = false;
+										}
+								}
+
+							if (success_flag)
 								{
 									if (SetJSONString (material_json_p, MA_INTERNAL_NAME_S, material_p -> ma_internal_name_s))
 										{
@@ -277,21 +290,15 @@ json_t *GetMaterialAsJSON (const Material *material_p, const bool expand_gene_ba
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_INTERNAL_NAME_S, material_p -> ma_internal_name_s);
 										}
 
-								}		/* if (AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S) */
-							else
-								{
-									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+								}		/* if (success_flag) */
 
-									bson_oid_to_string (material_p -> ma_parent_area_p -> ea_id_p, id_s);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_EXPERIMENTAL_AREA_ID_S, id_s);
-								}
 						}		/* if (success_flag)) */
 					else
 						{
 							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 							bson_oid_to_string (material_p -> ma_gene_bank_id_p, id_s);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add gene with id for \"%s\": \"%s\", expanded = %c", MA_GENE_BANK_ID_S, id_s, expand_gene_bank_flag);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add gene with id for \"%s\": \"%s\", expanded = %d", MA_GENE_BANK_ID_S, id_s, format);
 						}
 				}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
 			else

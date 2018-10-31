@@ -137,7 +137,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 
 	if (success_flag)
 		{
-			json_t *field_trial_json_p = GetFieldTrialAsJSON (trial_p, false, data_p);
+			json_t *field_trial_json_p = GetFieldTrialAsJSON (trial_p, VF_STORAGE, data_p);
 
 			if (field_trial_json_p)
 				{
@@ -180,7 +180,7 @@ LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *
 }
 
 
-json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const bool get_experimental_areas_flag, const DFWFieldTrialServiceData *data_p)
+json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
 

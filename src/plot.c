@@ -219,7 +219,7 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-json_t *GetPlotAsJSON (Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
+json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *plot_json_p = json_object ();
 
@@ -247,26 +247,43 @@ json_t *GetPlotAsJSON (Plot *plot_p, const bool expand_fields_flag, const DFWFie
 																						{
 																							if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
 																								{
-																									if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_EXPERIMENTAL_AREA_S))
+																									bool success_flag = false;
+
+																									switch (format)
 																										{
-																											if (expand_fields_flag)
+																											case VF_CLIENT_FULL:
 																												{
 																													if (GetPlotRows (plot_p, data_p))
 																														{
 																															if (AddRowsToJSON (plot_p, plot_json_p, data_p))
 																																{
-
+																																	success_flag = true;
 																																}
 																														}
+																												}		/* case VF_CLIENT_FULL: */
+																												break;
 
-																												}
+																											case VF_STORAGE:
+																												{
+																													if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_EXPERIMENTAL_AREA_S))
+																														{
+																															success_flag = true;
+																														}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S)) */
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																														}
+																												}		/* case VF_STORAGE */
+																												break;
 
+																											default:
+																												break;
 
-																											return plot_json_p;
-																										}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S)) */
-																									else
+																										}		/* switch (format) */
+
+																									if (success_flag)
 																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																											return plot_json_p;
 																										}
 
 																								}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
