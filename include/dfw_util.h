@@ -51,6 +51,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddValidDateToJSON (struct tm *time_p, json_t
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool PrepareSaveData (bson_oid_t **id_pp, bson_t **selector_pp);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddContext (json_t *data_p);
+
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -24,7 +24,7 @@
 
 #include "field_trial.h"
 #include "string_utils.h"
-
+#include "dfw_util.h"
 
 
 /*
@@ -454,24 +454,30 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 																							if (title_s)
 																								{
-																									json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
-
-																									if (dest_record_p)
+																									if (AddContext (trial_json_p))
 																										{
-																											if (!AddResultToServiceJob (job_p, dest_record_p))
+																											json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+
+																											if (dest_record_p)
 																												{
-																													json_decref (dest_record_p);
-																												}
-																										}
+																													if (!AddResultToServiceJob (job_p, dest_record_p))
+																														{
+																															json_decref (dest_record_p);
+																														}
+
+																												}		/* if (dest_record_p) */
+
+																										}		/* if (AddContext (trial_json_p)) */
 
 																									FreeCopiedString (title_s);
-																								}
+																								}		/* if (title_s) */
 
-																						}
+																						}		/* if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
+
 																				}
 
 																			FreeFieldTrial (trial_p);
-																		}
+																		}		/* if (trial_p) */
 
 																}		/* json_array_foreach (results_p, i, entry_p) */
 

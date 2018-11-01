@@ -108,10 +108,10 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 {
 	SchemaTerm *term_p = NULL;
 	char *url_s = NULL;
-	const size_t TERMS_URL_LENGTH = strlen (CONTEXT_URL_CROP_ONOTOLOGY_S);
+	const size_t TERMS_URL_LENGTH = strlen (CONTEXT_URL_CROP_ONTOLOGY_S);
 	const char *term_s = NULL;
 
-	if (strncmp (crop_ontology_term_s, CONTEXT_URL_CROP_ONOTOLOGY_S, TERMS_URL_LENGTH) == 0)
+	if (strncmp (crop_ontology_term_s, CONTEXT_URL_CROP_ONTOLOGY_S, TERMS_URL_LENGTH) == 0)
 		{
 			term_s = crop_ontology_term_s + TERMS_URL_LENGTH;
 		}

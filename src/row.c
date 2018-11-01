@@ -30,7 +30,7 @@
 #include "dfw_util.h"
 
 
-static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const bool expand_fields_flag);
+static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
 
 static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p);
 
@@ -384,7 +384,7 @@ bool AddObservationToRow (Row *row_p, Observation *observation_p)
 
 
 
-static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const bool expand_fields_flag)
+static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format)
 {
 	bool success_flag = false;
 
@@ -403,7 +403,7 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 							while (node_p && success_flag)
 								{
 									const Observation *observation_p = node_p -> on_observation_p;
-									json_t *observation_json_p = GetObservationAsJSON (observation_p, expand_fields_flag);
+									json_t *observation_json_p = GetObservationAsJSON (observation_p, format);
 
 									if (observation_json_p)
 										{

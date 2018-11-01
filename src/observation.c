@@ -212,7 +212,7 @@ void FreeObservationNode (ListItem *node_p)
 }
 
 
-json_t *GetObservationAsJSON (const Observation *observation_p, const bool expand_fields_flag)
+json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat format)
 {
 	json_t *observation_json_p = json_object ();
 
@@ -232,7 +232,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const bool expan
 														{
 															bool done_objects_flag = false;
 
-															if (expand_fields_flag)
+															if (format == VF_CLIENT_FULL)
 																{
 																	bool done_instrument_flag = false;
 
@@ -274,28 +274,28 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const bool expan
 																				}
 																		}
 
-																}		/* if (expand_fields_flag) */
-															else
+																}		/* iif (format == VF_CLIENT_FULL) */
+															else if (format == VF_STORAGE)
 																{
 																	if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
 																		{
 																			if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> ph_id_p, OB_PHENOTYPE_ID_S)))
 																				{
-																					done_objects_flag = true;
+																					if (AddObservationNatureToJSON (observation_p -> ob_type, observation_json_p))
+																						{
+																							done_objects_flag = true;
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_type);
+																						}
 																				}
 																		}
 																}
 
 															if (done_objects_flag)
 																{
-																	if (AddObservationNatureToJSON (observation_p -> ob_type, observation_json_p))
-																		{
-																			return observation_json_p;
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_type);
-																		}
+																	return observation_json_p;
 																}
 
 														}		/* if (SetJSONBoolean (observation_json_p, OB_CORRECTED_S, observation_p -> ob_corrected_flag)) */

@@ -122,7 +122,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL ObservationNode *AllocateObservationNode (Observat
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservationNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetObservationAsJSON (const Observation *observation_p, const bool expand_fields_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat format);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *GetObservationFromJSON (const json_t *phenotype_json_p, const DFWFieldTrialServiceData *data_p);
 

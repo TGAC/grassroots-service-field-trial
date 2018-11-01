@@ -248,3 +248,31 @@ bool PrepareSaveData (bson_oid_t **id_pp, bson_t **selector_pp)
 }
 
 
+bool AddContext (json_t *data_p)
+{
+	bool success_flag = false;
+	json_t *context_p = json_object ();
+
+	if (context_p)
+		{
+			if (json_object_set_new (data_p, "@context", context_p) == 0)
+				{
+					if (SetJSONString (context_p, CONTEXT_PREFIX_SCHEMA_ORG_S, CONTEXT_URL_SCHEMA_ORG_S))
+						{
+							if (SetJSONString (context_p, CONTEXT_PREFIX_CROP_ONTOLOGY_S, CONTEXT_URL_CROP_ONTOLOGY_S))
+								{
+									success_flag = true;
+								}
+						}
+
+				}		/* if (json_object_set_new (data_p, "@context", context_p) == 0) */
+			else
+				{
+					json_decref (context_p);
+				}
+
+		}		/* if (context_p) */
+
+	return success_flag;
+}
+
