@@ -112,7 +112,7 @@ void FreePhenotype (Phenotype *phenotype_p)
 
 
 
-json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p)
+json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const ViewFormat format)
 {
 	json_t *phenotype_json_p = json_object ();
 
@@ -124,14 +124,28 @@ json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p)
 						{
 							if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p))
 								{
-									if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
+									bool success_flag = false;
+
+									if (format == VF_STORAGE)
+										{
+											if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
+												{
+													success_flag = true;
+												}		/* if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)) */
+										}
+									else
+										{
+											success_flag = true;
+										}
+
+									if (success_flag)
 										{
 											if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
 												{
 													return phenotype_json_p;
 												}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
 
-										}		/* if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)) */
+										}		/* if (success_flag) */
 
 								}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p)) */
 							else
@@ -245,7 +259,7 @@ bool SavePhenotype (Phenotype *phenotype_p, const DFWFieldTrialServiceData *data
 
 	if (success_flag)
 		{
-			json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p);
+			json_t *phenotype_json_p = GetPhenotypeAsJSON (phenotype_p, VF_STORAGE);
 
 			if (phenotype_json_p)
 				{

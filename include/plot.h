@@ -58,7 +58,7 @@ PLOT_PREFIX const char *PL_WIDTH_S PLOT_VAL ("width");
 
 PLOT_PREFIX const char *PL_LENGTH_S PLOT_VAL ("length");
 
-PLOT_PREFIX const char *PL_TRIAL_DESIGN_S PLOT_VAL ("trial_desgin");
+PLOT_PREFIX const char *PL_TRIAL_DESIGN_S PLOT_VAL ("trial_design");
 
 PLOT_PREFIX const char *PL_GROWING_CONDITION_S PLOT_VAL ("growing_condition");
 

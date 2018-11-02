@@ -259,7 +259,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 																	if (done_instrument_flag)
 																		{
-																			json_t *phenotype_json_p = GetPhenotypeAsJSON (observation_p -> ob_phenotype_p);
+																			json_t *phenotype_json_p = GetPhenotypeAsJSON (observation_p -> ob_phenotype_p, format);
 
 																			if (phenotype_json_p)
 																				{
