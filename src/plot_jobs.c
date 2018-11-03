@@ -625,9 +625,6 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 	while (success_flag && (*current_column_s != '\0'))
 		{
 
-			const char *sowing_s = NULL;
-
-
 			if (next_column_s)
 				{
 					/*

@@ -53,13 +53,7 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 
 static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service *service_p, Resource *resource_p, Handler *handler_p);
 
-
-
 static bool CloseDFWFieldTrialSearchService (Service *service_p);
-
-
-static json_t *ConvertToResource (const size_t i, json_t *src_record_p);
-
 
 static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p);
 
@@ -158,16 +152,10 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 }
 
 
-
-
-
-
 static void ReleaseDFWFieldTrialSearchServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
-
-
 
 
 static bool CloseDFWFieldTrialSearchService (Service *service_p)
@@ -178,7 +166,6 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p)
 
 	return success_flag;
 }
-
 
 
 static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
@@ -235,7 +222,7 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 }
 
 
-static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p)
+static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service * UNUSED_PARAM (service_p))
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
@@ -411,27 +398,7 @@ static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_
 }
 
 
-
-
 static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
 }
-
-
-
-static json_t *ConvertToResource (const size_t i, json_t *src_record_p)
-{
-	json_t *resource_p = NULL;
-	char *title_s = ConvertUnsignedIntegerToString (i);
-
-	if (title_s)
-		{
-			resource_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, src_record_p);
-
-			FreeCopiedString (title_s);
-		}		/* if (raw_result_p) */
-
-	return resource_p;
-}
-

@@ -119,8 +119,6 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL	ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, const DFWFieldTrialServiceData *data_p);
-
 DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
@@ -136,8 +134,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaFromJSON (con
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const DFWFieldTrialServiceData *data_p);
 

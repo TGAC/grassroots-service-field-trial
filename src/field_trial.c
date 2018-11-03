@@ -286,7 +286,8 @@ bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_js
 	return success_flag;
 }
 
-FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
+
+FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
 {
 	const char *name_s = GetJSONString (json_p, FT_NAME_S);
 
@@ -446,13 +447,6 @@ bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_
 	return success_flag;
 }
 
-
-bool GetAllFieldTrialExperimentalAreaIds (FieldTrial *trial_p, const DFWFieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-
-	return success_flag;
-}
 
 
 bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const DFWFieldTrialServiceData *data_p)

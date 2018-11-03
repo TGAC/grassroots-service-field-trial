@@ -124,27 +124,6 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 }
 
 
-ExperimentalArea *AllocateExperimentalAreaByIDString (bson_oid_t *id_p, const char *name_s, const char *location_s, const char *soil_s, const uint32 sowing_year, const uint32 harvest_year, const char *parent_field_trial_id_s, const DFWFieldTrialServiceData *data_p)
-{
-	FieldTrial *parent_field_trial_p = GetFieldTrialByIdString (parent_field_trial_id_s, data_p);
-
-	if (parent_field_trial_p)
-		{
-			Address *address_p = NULL;
-			ExperimentalArea *area_p = NULL; // AllocateExperimentalArea (id_p, name_s, location_s, soil_s, sowing_year, harvest_year,address_p,  parent_field_trial_p, data_p);
-
-			if (area_p)
-				{
-					return area_p;
-				}
-
-			FreeFieldTrial (parent_field_trial_p);
-		}		/* if (parent_field_trial_p) */
-
-	return NULL;
-}
-
-
 void FreeExperimentalArea (ExperimentalArea *area_p)
 {
 	if (area_p -> ea_id_p)
@@ -308,15 +287,6 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 		}		/* if (success_flag) */
 
 	return success_flag;
-}
-
-
-ExperimentalArea *LoadExperimentalArea (const int32 area_id, DFWFieldTrialServiceData *data_p)
-{
-	ExperimentalArea *area_p = NULL;
-
-
-	return area_p;
 }
 
 

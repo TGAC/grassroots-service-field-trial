@@ -99,7 +99,7 @@ json_t *GetLocationAsJSON (Location *location_p)
 }
 
 
-Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p)
+Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
 {
 	uint32 order;
 

@@ -45,8 +45,7 @@ typedef enum
 	DFTD_MATERIAL,
 	DFTD_DRILLING,
 	DFTD_PHENOTYPE,
-	DFTD_RAW_OBSERVATION,
-	DFTD_CORRECTED_OBSERVATION,
+	DFTD_OBSERVATION,
 	DFTD_INSTRUMENT,
 	DFTD_GENE_BANK,
 	DFTD_NUM_TYPES
@@ -193,19 +192,12 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("Phenoty
 
 
 /**
- * The key for specifying the object containing the raw observation data
+ * The key for specifying the object containing the observation data
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_RAW_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("RawObservations");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("Observations");
 
-
-/**
- * The key for specifying the object containing the corrected observation data
- *
- * @ingroup dfw_field_trial_service
- */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_CORRECTED_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("CorrectedObservations");
 
 /**
  * The key for specifying the object containing the instruments

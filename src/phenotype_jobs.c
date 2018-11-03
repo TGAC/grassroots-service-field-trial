@@ -127,8 +127,6 @@ bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, Paramete
 								}
 							else
 								{
-									char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddPhenotypesFromJSON for failed");
 								}
 
