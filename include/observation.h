@@ -132,6 +132,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveObservation (Observation *observation_p, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationValue (Observation *observation_p, const char *value_s);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p);
+
+
 #ifdef __cplusplus
 }
 #endif

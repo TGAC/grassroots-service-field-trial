@@ -38,7 +38,7 @@
  */
 static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 /*
@@ -275,7 +275,7 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 
 	if (success_flag)
 		{
-			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, false, data_p);
+			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, VF_STORAGE, data_p);
 
 			if (area_json_p)
 				{
@@ -471,7 +471,7 @@ static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTr
 }
 
 
-static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *plots_json_p = json_array ();
@@ -486,7 +486,7 @@ static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const
 
 					while (node_p && success_flag)
 						{
-							json_t *plot_json_p = GetPlotAsJSON (node_p -> pn_plot_p, true, data_p);
+							json_t *plot_json_p = GetPlotAsJSON (node_p -> pn_plot_p, format, data_p);
 
 							if (plot_json_p)
 								{

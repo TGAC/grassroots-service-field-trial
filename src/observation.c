@@ -516,6 +516,22 @@ bool SetObservationValue (Observation *observation_p, const char *value_s)
 }
 
 
+bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p)
+{
+	bool match_flag = false;
+
+	if (bson_oid_equal (observation_0_p -> ob_phenotype_p -> ph_id_p, observation_1_p -> ob_phenotype_p -> ph_id_p))
+		{
+			if (CompareDates (observation_0_p -> ob_date_p, observation_1_p -> ob_date_p, true))
+				{
+					match_flag = true;
+				}
+		}
+
+	return match_flag;
+}
+
+
 
 /*
  * static definitions

@@ -68,18 +68,23 @@ typedef enum
 	VF_STORAGE,
 
 	/**
-	 * This is for generating the data for displaying
+	 * This is for generating a full data set for displaying
 	 * within a client.
 	 */
 	VF_CLIENT_FULL,
 
 	/**
-	 * The number of avaialble formats
+	 * This is for generating a minimal data set for displaying
+	 * within a client. This is used when doing LinkedService
+	 * calls to get subsequent child data.
+	 */
+	VF_CLIENT_MINIMAL,
+
+	/**
+	 * The number of available formats
 	 */
 	VF_NUM_FORMATS
 } ViewFormat;
-
-
 
 
 

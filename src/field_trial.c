@@ -192,7 +192,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 						{
 							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 								{
-									if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, data_p))
+									if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 										{
 											return trial_json_p;
 										}
@@ -210,7 +210,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 
 
 
-bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const DFWFieldTrialServiceData *data_p)
+bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
@@ -225,7 +225,7 @@ bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_js
 
 					while (node_p && ok_flag)
 						{
-							json_t *area_p = GetExperimentalAreaAsJSON (node_p -> ean_experimental_area_p, true, data_p);
+							json_t *area_p = GetExperimentalAreaAsJSON (node_p -> ean_experimental_area_p, format, data_p);
 
 							if (area_p)
 								{
@@ -449,7 +449,7 @@ bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_
 
 
 
-bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const DFWFieldTrialServiceData *data_p)
+bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -482,7 +482,7 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const DFWFieldTrial
 
 															json_array_foreach (results_p, i, area_json_p)
 																{
-																	ExperimentalArea *area_p = GetExperimentalAreaFromJSON (area_json_p, true, data_p);
+																	ExperimentalArea *area_p = GetExperimentalAreaFromJSON (area_json_p, format, data_p);
 
 																	if (area_p)
 																		{

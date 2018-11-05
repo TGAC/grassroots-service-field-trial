@@ -132,13 +132,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, DFWField
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialAsString (const FieldTrial *trial_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

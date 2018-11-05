@@ -360,23 +360,49 @@ bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_fl
 bool AddObservationToRow (Row *row_p, Observation *observation_p)
 {
 	bool success_flag = false;
-	ObservationNode *node_p = AllocateObservationNode (observation_p);
+	ObservationNode *node_p = NULL;
 
-	if (node_p)
+	/*
+	 * If the observation has the same phenotype and date as an existing one,
+	 * then replace it. If not, then simply add it.
+	 */
+	node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
+	while (node_p)
 		{
-			LinkedListAddTail (row_p -> ro_observations_p, & (node_p -> on_node));
-			success_flag = true;
+			Observation *existing_observation_p = node_p -> on_observation_p;
+
+			if (AreObservationsMatching (existing_observation_p, observation_p))
+				{
+					node_p -> on_observation_p = observation_p;
+					FreeObservation (existing_observation_p);
+					success_flag = true;
+					node_p = NULL;		/* force exit from loop */
+				}
+			else
+				{
+					node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
+				}
 		}
-	else
+
+	if (!success_flag)
 		{
-			char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-			char observation_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+			node_p = AllocateObservationNode (observation_p);
 
-			bson_oid_to_string (row_p -> ro_id_p, row_id_s);
-			bson_oid_to_string (observation_p -> ob_id_p, observation_id_s);
+			if (node_p)
+				{
+					LinkedListAddTail (row_p -> ro_observations_p, & (node_p -> on_node));
+					success_flag = true;
+				}
+			else
+				{
+					char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+					char observation_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", observation_id_s, row_id_s);
-			success_flag = false;
+					bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+					bson_oid_to_string (observation_p -> ob_id_p, observation_id_s);
+
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", observation_id_s, row_id_s);
+				}
 		}
 
 	return success_flag;
