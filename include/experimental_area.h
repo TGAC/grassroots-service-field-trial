@@ -135,9 +135,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetExperimentalAreaPlots (ExperimentalArea *a
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

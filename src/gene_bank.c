@@ -262,18 +262,18 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 
 
 
-GeneBank *GetGeneBankById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p)
+GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	GeneBank *gene_bank_p = GetDFWObjectById (id_p, DFTD_GENE_BANK, GetGeneBankCallback, data_p);
+	GeneBank *gene_bank_p = GetDFWObjectById (id_p, DFTD_GENE_BANK, GetGeneBankCallback, format, data_p);
 
 	return gene_bank_p;
 
 }
 
 
-GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const DFWFieldTrialServiceData *data_p)
+GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	GeneBank *gene_bank_p = GetDFWObjectByIdString (gene_bank_id_s, DFTD_GENE_BANK, GetGeneBankCallback, data_p);
+	GeneBank *gene_bank_p = GetDFWObjectByIdString (gene_bank_id_s, DFTD_GENE_BANK, GetGeneBankCallback, format, data_p);
 
 	return gene_bank_p;
 }

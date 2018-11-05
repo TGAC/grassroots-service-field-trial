@@ -36,7 +36,7 @@
 /*
  * STATIC PROTOTYPES
  */
-static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
+static void *GetExperimentalAreaCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
@@ -302,7 +302,7 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 						{
 							bool add_location_flag = false;
 
-							if (format == VF_CLIENT_FULL)
+							if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 								{
 									json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
 
@@ -334,21 +334,29 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 												{
 													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
 														{
+															bool success_flag = false;
 
-															if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S))
+															if (format == VF_STORAGE)
 																{
-																	if (format == VF_CLIENT_FULL)
+																	success_flag = AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S);
+																}
+															else if (format == VF_CLIENT_FULL)
+																{
+																	if (GetExperimentalAreaPlots (area_p, data_p))
 																		{
-																			if (GetExperimentalAreaPlots (area_p, data_p))
+																			if (AddPlotsToJSON (area_p, area_json_p, format, data_p))
 																				{
-																					if (AddPlotsToJSON (area_p, area_json_p, data_p))
-																						{
-
-																						}
+																					success_flag = true;
 																				}
-
 																		}
+																}
+															else
+																{
+																	success_flag = true;
+																}
 
+															if (success_flag)
+																{
 																	return area_json_p;
 																}
 														}
@@ -392,9 +400,9 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 											Location *location_p = NULL;
 											bool success_flag = true;
 
-											if (format == VF_CLIENT_FULL)
+											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 												{
-													if (! (location_p = GetLocationById (location_id_p, data_p)))
+													if (! (location_p = GetLocationById (location_id_p, format, data_p)))
 														{
 															success_flag = false;
 														}
@@ -449,25 +457,25 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 }
 
 
-ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const DFWFieldTrialServiceData *data_p)
+ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	ExperimentalArea *area_p = GetDFWObjectByIdString (area_id_s, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, data_p);
+	ExperimentalArea *area_p = GetDFWObjectByIdString (area_id_s, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, format, data_p);
 
 	return area_p;
 }
 
 
-ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const DFWFieldTrialServiceData *data_p)
+ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	ExperimentalArea *area_p = GetDFWObjectById (area_id_p, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, data_p);
+	ExperimentalArea *area_p = GetDFWObjectById (area_id_p, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, format, data_p);
 
 	return area_p;
 }
 
 
-static void *GetExperimentalAreaCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p)
+static void *GetExperimentalAreaCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	return GetExperimentalAreaFromJSON (json_p, false, data_p);
+	return GetExperimentalAreaFromJSON (json_p, format, data_p);
 }
 
 

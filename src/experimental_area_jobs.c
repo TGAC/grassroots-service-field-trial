@@ -28,6 +28,8 @@
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
 #include "time_util.h"
+#include "dfw_util.h"
+
 
 /*
  * Experimental Area parameters
@@ -38,6 +40,9 @@ static NamedParameterType S_EXPERIMENTAL_AREA_SOWING_YEAR = { "EA Sowing Year", 
 static NamedParameterType S_EXPERIMENTAL_AREA_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
 static NamedParameterType S_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
+
+static NamedParameterType S_AREA_ID = { "Experimental Area to search for", PT_STRING };
+static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Experimental Area", PT_BOOLEAN };
 
 
 
@@ -192,6 +197,127 @@ bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, P
 }
 
 
+bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+	SharedType def;
+	const char * const group_name_s = "Experimental Area";
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet (group_name_s, NULL, false, data_p, param_set_p);
+
+	if (group_p)
+		{
+			def.st_string_value_s = NULL;
+
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_AREA_ID.npt_type, S_AREA_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ALL)) != NULL)
+				{
+					def.st_boolean_value = false;
+
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ALL)) != NULL)
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_PLOTS.npt_name_s);
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AREA_ID.npt_name_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CreateAndAddParameterGroupToParameterSet failed for %s", group_name_s);
+		}
+
+	return success_flag;
+}
+
+
+bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true))
+		{
+			if (value.st_boolean_value)
+				{
+					if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true))
+						{
+							if (value.st_string_value_s)
+								{
+									bson_oid_t *id_p = GetBSONOidFromString (value.st_string_value_s);
+
+									if (id_p)
+										{
+											OperationStatus status = OS_FAILED;
+											ExperimentalArea *area_p = GetExperimentalAreaById (id_p, VF_CLIENT_FULL, data_p);
+
+											if (area_p)
+												{
+													if (GetExperimentalAreaPlots (area_p, data_p))
+														{
+															const ViewFormat format = VF_CLIENT_FULL;
+															json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, format, data_p);
+
+															if (area_json_p)
+																{
+																	bool added_flag = false;
+
+																	if (AddContext (area_json_p))
+																		{
+																			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, area_p -> ea_name_s, area_json_p);
+
+																			if (dest_record_p)
+																				{
+																					if (AddResultToServiceJob (job_p, dest_record_p))
+																						{
+																							added_flag = true;
+																							status = OS_SUCCEEDED;
+																						}
+																					else
+																						{
+																							json_decref (dest_record_p);
+																						}
+
+																				}		/* if (dest_record_p) */
+
+																		}		/* if (AddContext (trial_json_p)) */
+
+																	if (!added_flag)
+																		{
+																			json_decref (area_json_p);
+																		}
+
+																}		/* if (area_json_p) */
+
+														}		/* if (GetExperimentalAreaPlots (area_p, data_p)) */
+
+
+													FreeExperimentalArea (area_p);
+												}		/* if (area_p) */
+
+											SetServiceJobStatus (job_p, status);
+
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
+
+								}		/* if (value.st_string_value_s)*/
+
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true)) */
+
+				}		/* if (value.st_boolean_value) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
+
+
+	return job_done_flag;
+}
+
 static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -229,7 +355,7 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 													if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &location_value, true))
 														{
-															Location *location_p = GetLocationByIdString (location_value.st_string_value_s, data_p);
+															Location *location_p = GetLocationByIdString (location_value.st_string_value_s, VF_STORAGE, data_p);
 
 															if (location_p)
 																{

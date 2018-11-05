@@ -24,6 +24,8 @@
 #include "streams.h"
 #include "time_util.h"
 #include "string_utils.h"
+#include "schema_keys.h"
+
 
 
 #ifdef _DEBUG
@@ -35,7 +37,7 @@
 
 
 
-void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), const DFWFieldTrialServiceData *data_p)
+void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -71,7 +73,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 												{
 													json_t *res_p = json_array_get (results_p, 0);
 
-													result_p = get_obj_from_json_fn (res_p, data_p);
+													result_p = get_obj_from_json_fn (res_p, format, data_p);
 
 													if (!result_p)
 														{
@@ -121,7 +123,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 }
 
 
-void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const DFWFieldTrialServiceData *data_p), const DFWFieldTrialServiceData *data_p)
+void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 
@@ -131,7 +133,7 @@ void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collect
 
 			bson_oid_init_from_string (&oid, object_id_s);
 
-			result_p = GetDFWObjectById (&oid, collection_type, get_obj_from_json_fn, data_p);
+			result_p = GetDFWObjectById (&oid, collection_type, get_obj_from_json_fn, format, data_p);
 		}		/* if (bson_oid_is_valid (field_trial_id_s, strlen (object_id_s))) */
 	else
 		{

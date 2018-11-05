@@ -168,17 +168,17 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 
 
 
-Location *GetLocationById (bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p)
+Location *GetLocationById (bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	Location *location_p = GetDFWObjectById (id_p, DFTD_LOCATION, GetLocationFromJSONCallback, data_p);
+	Location *location_p = GetDFWObjectById (id_p, DFTD_LOCATION, GetLocationFromJSONCallback, format, data_p);
 
 	return location_p;
 }
 
 
-Location *GetLocationByIdString (const char *location_id_s, const DFWFieldTrialServiceData *data_p)
+Location *GetLocationByIdString (const char *location_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSONCallback, data_p);
+	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSONCallback, format, data_p);
 
 	return location_p;
 }

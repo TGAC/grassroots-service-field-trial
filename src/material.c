@@ -201,7 +201,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 						{
 							if (format == VF_CLIENT_FULL)
 								{
-									GeneBank *gene_bank_p = GetGeneBankById (material_p -> ma_gene_bank_id_p, data_p);
+									GeneBank *gene_bank_p = GetGeneBankById (material_p -> ma_gene_bank_id_p, format, data_p);
 
 									if (gene_bank_p)
 										{
@@ -321,7 +321,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 
 
-Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimental_area_flag, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
 
@@ -344,9 +344,9 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 											if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p))
 												{
 													ExperimentalArea *area_p = NULL;
-													bool success_flag = !expand_experimental_area_flag;
+													bool success_flag = false;
 
-													if (expand_experimental_area_flag)
+													if (format == VF_CLIENT_FULL)
 														{
 															bson_oid_t *exp_area_id_p = GetNewUnitialisedBSONOid ();
 
@@ -354,7 +354,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 																{
 																	if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
 																		{
-																			area_p = GetExperimentalAreaById (exp_area_id_p, data_p);
+																			area_p = GetExperimentalAreaById (exp_area_id_p, format, data_p);
 
 																			if (!area_p)
 																				{
@@ -375,6 +375,10 @@ Material *GetMaterialFromJSON (const json_t *json_p, const bool expand_experimen
 																{
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
 																}
+														}
+													else
+														{
+															success_flag = true;
 														}
 
 													if (success_flag)

@@ -133,7 +133,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 
 							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &value, true))
 								{
-									ExperimentalArea *area_p = GetExperimentalAreaByIdString (value.st_string_value_s, data_p);
+									ExperimentalArea *area_p = GetExperimentalAreaByIdString (value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (area_p)
 										{
@@ -141,7 +141,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 
 											if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &value, true))
 												{
-													GeneBank *gene_bank_p = GetGeneBankByIdString (value.st_string_value_s, data_p);
+													GeneBank *gene_bank_p = GetGeneBankByIdString (value.st_string_value_s, VF_STORAGE, data_p);
 
 													if (gene_bank_p)
 														{

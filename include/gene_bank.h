@@ -95,10 +95,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankFromJSON (const json_t *germp
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+
+
 
 
 

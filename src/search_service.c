@@ -134,7 +134,14 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 
 			if (AddSearchFieldTrialParams (data_p, params_p))
 				{
-					return params_p;
+					if (AddSearchExperimentalAreaParams (data_p, params_p))
+						{
+							return params_p;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchExperimentalAreaParams failed");
+						}
 				}
 			else
 				{
@@ -186,8 +193,8 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 				{
 					if (!RunForSearchFieldTrialParams (data_p, param_set_p, job_p))
 						{
-//							if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
-//								{
+							if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
+								{
 //									if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
 //										{
 //											if (!RunForSearchPlotParams (data_p, param_set_p, job_p))
@@ -205,7 +212,7 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 //
 //										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
 //
-//								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
 
 						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
