@@ -46,6 +46,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Address *GetAddressFromLocationString (const char 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
 
 #ifdef __cplusplus
 }

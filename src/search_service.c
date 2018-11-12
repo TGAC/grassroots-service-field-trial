@@ -136,8 +136,14 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 				{
 					if (AddSearchExperimentalAreaParams (data_p, params_p))
 						{
-							return params_p;
-						}
+							if (AddSearchLocationParams (data_p, params_p))
+								{
+									return params_p;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
+								}						}
 					else
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchExperimentalAreaParams failed");
@@ -195,8 +201,8 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 						{
 							if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
 								{
-//									if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
-//										{
+									if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
+										{
 //											if (!RunForSearchPlotParams (data_p, param_set_p, job_p))
 //												{
 //													if (!RunForSearchGeneBankParams (data_p, param_set_p, job_p))
@@ -210,8 +216,8 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 //
 //												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
 //
-//										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
-//
+										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+
 								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
 
 						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
