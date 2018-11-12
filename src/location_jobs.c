@@ -237,8 +237,7 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 			if (value.st_boolean_value)
 				{
 					bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
-
-					json_t *db_results_p = GetAllLocationsAsJSON (data_p);
+					json_t *db_results_p = GetAllLocationsAsJSON (data_p, opts_p);
 
 					if (db_results_p)
 						{
@@ -296,6 +295,11 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 							json_decref (db_results_p);
 						}		/* if (db_results_p) */
+
+					if (opts_p)
+						{
+							bson_destroy (opts_p);
+						}
 
 					job_done_flag = true;
 				}		/* if (value.st_boolean_value) */
