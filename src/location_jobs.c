@@ -30,6 +30,8 @@
 
 static const char *S_DEFAULT_COORD_PRECISION_S = "6";
 
+static const char * const S_UNSET_LOCATION_S = "Any Location";
+
 /*
  * Experimental Area parameters
  */
@@ -433,7 +435,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 }
 
 
-bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
+bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const bool add_any_flag)
 {
 	bool success_flag = false;
 	bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
@@ -448,54 +450,83 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 					if (num_results > 0)
 						{
 							size_t i = 0;
-							json_t *entry_p = json_array_get (results_p, i);
-							Location *location_p = GetLocationFromJSON (entry_p, data_p);
+							SharedType def;
+							char *id_s = NULL;
+							char *name_s = NULL;
 
-							if (location_p)
+							InitSharedType (&def);
+
+							if (add_any_flag)
 								{
-									char *name_s = GetLocationAsString (location_p);
+									name_s = EasyCopyToNewString (S_UNSET_LOCATION_S);
 
 									if (name_s)
 										{
-											SharedType def;
-											char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+											def.st_string_value_s = name_s;
+										}
+								}
+							else
+								{
+									json_t *entry_p = json_array_get (results_p, i);
+									Location *location_p = GetLocationFromJSON (entry_p, data_p);
 
-											if (id_s)
+									if (location_p)
+										{
+											name_s = GetLocationAsString (location_p);
+
+											if (name_s)
 												{
-													def.st_string_value_s = id_s;
+													id_s = GetBSONOidAsString (location_p -> lo_id_p);
 
-													if (SetParameterValueFromSharedType (param_p, &def, false))
+													if (id_s)
 														{
-															if (SetParameterValueFromSharedType (param_p, &def, true))
-																{
-																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
-																}
+															def.st_string_value_s = id_s;
+															++ i;
 														}
-
-													FreeCopiedString (id_s);
 												}
 
-											FreeCopiedString (name_s);
+											FreeLocation (location_p);
+										}		/* if (location_p) */
+
+								}
+
+							if (name_s)
+								{
+									if (SetParameterValueFromSharedType (param_p, &def, false))
+										{
+											if (SetParameterValueFromSharedType (param_p, &def, true))
+												{
+													if (CreateAndAddParameterOptionToParameter (param_p, def, name_s))
+														{
+															success_flag = true;
+														}
+												}
 										}
 
-									FreeLocation (location_p);
-								}		/* if (location_p) */
+									FreeCopiedString (name_s);
 
-							if (success_flag)
-								{
-									for (++ i; i < num_results; ++ i)
+									if (id_s)
 										{
-											entry_p = json_array_get (results_p, i);
-											location_p = GetLocationFromJSON (entry_p, data_p);
+											FreeCopiedString (id_s);
+										}
+
+									if (success_flag)
+										{
+
+										}		/* if (success_flag) */
+
+									for ( ; i < num_results; ++ i)
+										{
+											json_t *entry_p = json_array_get (results_p, i);
+											Location *location_p = GetLocationFromJSON (entry_p, data_p);
 
 											if (location_p)
 												{
-													char *name_s = GetLocationAsString (location_p);
+													name_s = GetLocationAsString (location_p);
 
 													if (name_s)
 														{
-															SharedType def;
-															char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+															id_s = GetBSONOidAsString (location_p -> lo_id_p);
 
 															if (id_s)
 																{
@@ -523,7 +554,7 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 											param_p = NULL;
 										}
 
-								}		/* if (param_p) */
+								}		/* if (name_s) */
 
 						}		/* if (num_results > 0) */
 					else

@@ -94,7 +94,7 @@ bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *par
 												{
 													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL)) != NULL)
 														{
-															if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p))
+															if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, false))
 																{
 																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_EXPERIMENTAL_AREA.npt_type, S_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_ALL)) != NULL)
 																		{
@@ -197,6 +197,62 @@ bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, P
 }
 
 
+
+
+
+static NamedParameterType S_LOCATION = { "Get studies for a given location", PT_STRING };
+
+
+/*
+Parameters
+
+    commonCropName
+    Common name for the crop associated with this study
+    String
+
+    programDbId
+    Program filter to only return studies associated with given program id.
+    String
+
+    locationDbId
+    Filter by location
+    String
+
+    seasonDbId
+    Filter by season or year
+    String
+
+    trialDbId
+    Filter by trial
+    String
+
+    studyDbId
+    Filter by study DbId
+    String
+
+		active
+    Filter active status true/false.
+    String
+
+    sortBy
+    Name of the field to sort by.
+    String
+
+    sortOrder
+    Sort order direction. Ascending/Descending.
+    String
+
+    page
+    Which result page is requested. The page indexing starts at 0 (the first page is 'page'= 0). Default is 0.
+    String
+
+    pageSize
+    The size of the pages to be returned. Default is 1000.
+    String
+
+ */
+
+
 bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
@@ -215,7 +271,22 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ALL)) != NULL)
 						{
-							success_flag = true;
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL)) != NULL)
+								{
+									if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, true))
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpLocationsListParameter failed");
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATIONS_LIST.npt_name_s);
+								}
+
 						}
 					else
 						{
