@@ -224,6 +224,7 @@ bool AddValidDateAsEpochToJSON (struct tm *time_p, json_t *json_p, const char *k
 bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm **time_pp)
 {
 	bool success_flag = false;
+	struct tm *time_p = NULL;
 
 	/*
 	 * The date could either be stored in ISO-8601 format or as an epoch value
@@ -232,10 +233,12 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 
 	if (time_s)
 		{
-			struct tm *time_p = GetTimeFromString (time_s);
+			time_p = GetTimeFromString (time_s);
 
 			if (time_p)
 				{
+					*time_pp = time_p;
+					success_flag = true;
 				}
 			else
 				{
@@ -245,16 +248,22 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 		}		/* if (time_s) */
 	else
 		{
-			time_t t;
+			int i;
 
-			if (GetJSONInteger (json_p, key_s, (int *) &t))
+			if (GetJSONInteger (json_p, key_s, &i))
 				{
-					struct tm *time_p = gmtime (&t);
+					time_t t = (time_t) i;
+					struct tm *src_p = gmtime (&t);
 
-					if (time_p)
+					if (src_p)
 						{
-							*time_pp = time_p;
-							success_flag = true;
+							time_p = DuplicateTime (src_p);
+
+							if (time_p)
+								{
+									*time_pp = time_p;
+									success_flag = true;
+								}
 						}
 				}
 			else

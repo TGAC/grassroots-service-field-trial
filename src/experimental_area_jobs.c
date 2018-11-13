@@ -64,6 +64,11 @@ static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, Par
 static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *param_set_p);
 
 
+static bool AddExperimentalAreaDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
+
+
+static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
+
 
 /*
  * API DEFINITIONS
@@ -280,7 +285,22 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 								{
 									if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, true))
 										{
-											success_flag = true;
+											struct tm t;
+
+											ClearTime (&t);
+											SetDateValuesForTime (&t, 2017, 1, 1);
+
+											def.st_time_p = &t;
+
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ACTIVE_DATE.npt_type, S_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ALL)) != NULL)
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ACTIVE_DATE.npt_name_s);
+												}
+
 										}
 									else
 										{
@@ -346,6 +366,13 @@ bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Param
 						{
 							if (AddExperimentalAreaDateCriteria (query_p, param_set_p))
 								{
+									/*
+									 * Search with our given criteria
+									 */
+									if (GetMatchingExperimentalAreas (query_p, data_p, job_p, format))
+										{
+											job_done_flag = true;
+										}
 
 								}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
 
@@ -469,7 +496,7 @@ bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p
 								{
 									size_t i = 0;
 									json_t *entry_p = json_array_get (results_p, i);
-									ExperimentalArea *area_p = GetExperimentalAreaFromJSON (entry_p, false, data_p);
+									ExperimentalArea *area_p = GetExperimentalAreaFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
 
 									if (area_p)
 										{
@@ -623,6 +650,96 @@ static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, Par
 }
 
 
+static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
+{
+	bool job_done_flag = false;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
+		{
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_NAME_S, BCON_INT32 (1), "}");
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							OperationStatus status = OS_FAILED;
+							size_t num_added = 0;
+							size_t i = 0;
+							const size_t num_results = json_array_size (results_p);
+
+							job_done_flag = true;
+
+							for (i = 0; i < num_results; ++ i)
+								{
+									json_t *entry_p = json_array_get (results_p, i);
+									ExperimentalArea *area_p = GetExperimentalAreaFromJSON (entry_p, format, data_p);
+
+									if (area_p)
+										{
+											json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, format, data_p);
+
+											if (area_json_p)
+												{
+													bool added_flag = false;
+
+													if (AddContext (area_json_p))
+														{
+															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, area_p -> ea_name_s, area_json_p);
+
+															if (dest_record_p)
+																{
+																	if (AddResultToServiceJob (job_p, dest_record_p))
+																		{
+																			++ num_added;
+																			added_flag = true;
+																		}
+																	else
+																		{
+																			json_decref (dest_record_p);
+																		}
+
+																}		/* if (dest_record_p) */
+
+														}		/* if (AddContext (trial_json_p)) */
+
+													if (!added_flag)
+														{
+															json_decref (area_json_p);
+														}
+
+												}		/* if (area_json_p) */
+
+										}		/* if (area_p) */
+
+								}		/* if (num_results > 0) */
+
+							if (num_added == num_results)
+								{
+									status = OS_SUCCEEDED;
+								}
+							else if (status > 0)
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+								}
+
+							SetServiceJobStatus (job_p, status);
+						}		/* if (json_is_array (results_p)) */
+
+				}		/* if (results_p) */
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]) */
+
+	return job_done_flag;
+}
+
+
+
 static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *param_set_p)
 {
 	bool success_flag = true;
@@ -646,12 +763,12 @@ static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *
 
 							if (id_p)
 								{
-									if (bson_append_oid (query_p, EA_LOCATION_ID_S, id_p))
+									if (BSON_APPEND_OID (query_p, EA_LOCATION_ID_S, id_p))
 										{
 											success_flag = true;
 										}
 
-									bson_destroy (id_p);
+									FreeBSONOid (id_p);
 								}		/* if (id_p) */
 
 						}		/* if (strcmp (value.st_string_value_s, unset_value_s) != 0) */
