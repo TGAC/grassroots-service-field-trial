@@ -300,8 +300,11 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 				{
 					if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0))
 						{
-							bool add_location_flag = false;
+							bool add_item_flag = false;
 
+							/*
+							 * Add the location
+							 */
 							if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 								{
 									json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
@@ -310,7 +313,7 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 										{
 											if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
 												{
-													add_location_flag = true;
+													add_item_flag = true;
 												}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
 											else
 												{
@@ -322,43 +325,67 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 								{
 									if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_ID_S))
 										{
-											add_location_flag = true;
+											add_item_flag = true;
 										}
 								}
 
-							if (add_location_flag)
+							if (add_item_flag)
 								{
-									if (AddValidDateToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
-										{
-											if (AddValidDateToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
-												{
-													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
-														{
-															bool success_flag = false;
+									add_item_flag = false;
 
-															if (format == VF_STORAGE)
+									/*
+									 * Add the dates
+									 */
+									if (format == VF_STORAGE)
+										{
+											if (AddValidDateAsEpochToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
+												{
+													if (AddValidDateAsEpochToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
+														{
+															add_item_flag = true;
+														}
+												}
+										}
+									else
+										{
+											if (AddValidDateToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
+												{
+													if (AddValidDateToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
+														{
+															add_item_flag = true;
+														}
+												}
+										}
+
+									if (add_item_flag)
+										{
+
+											if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
+												{
+													bool success_flag = false;
+
+													if (format == VF_STORAGE)
+														{
+															success_flag = AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S);
+														}
+													else if (format == VF_CLIENT_FULL)
+														{
+															if (GetExperimentalAreaPlots (area_p, data_p))
 																{
-																	success_flag = AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S);
-																}
-															else if (format == VF_CLIENT_FULL)
-																{
-																	if (GetExperimentalAreaPlots (area_p, data_p))
+																	if (AddPlotsToJSON (area_p, area_json_p, format, data_p))
 																		{
-																			if (AddPlotsToJSON (area_p, area_json_p, format, data_p))
-																				{
-																					success_flag = true;
-																				}
+																			success_flag = true;
 																		}
 																}
-															else
-																{
-																	success_flag = true;
-																}
+														}
+													else
+														{
+															success_flag = true;
+														}
 
-															if (success_flag)
-																{
-																	return area_json_p;
-																}
+													if (success_flag)
+														{
+															return area_json_p;
 														}
 												}
 

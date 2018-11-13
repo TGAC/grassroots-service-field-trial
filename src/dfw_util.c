@@ -195,9 +195,39 @@ bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s)
 }
 
 
+bool AddValidDateAsEpochToJSON (struct tm *time_p, json_t *json_p, const char *key_s)
+{
+	bool success_flag = false;
+
+	if (time_p)
+		{
+			time_t t = mktime (time_p);
+
+			if (t != -1)
+				{
+					if (SetJSONInteger (json_p, key_s, t))
+						{
+							success_flag = true;
+						}
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
 bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm **time_pp)
 {
 	bool success_flag = false;
+
+	/*
+	 * The date could either be stored in ISO-8601 format or as an epoch value
+	 */
 	const char *time_s = GetJSONString (json_p, key_s);
 
 	if (time_s)
@@ -206,8 +236,6 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 
 			if (time_p)
 				{
-					*time_pp = time_p;
-					success_flag = true;
 				}
 			else
 				{
@@ -217,7 +245,22 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 		}		/* if (time_s) */
 	else
 		{
-			success_flag = true;
+			time_t t;
+
+			if (GetJSONInteger (json_p, key_s, (int *) &t))
+				{
+					struct tm *time_p = gmtime (&t);
+
+					if (time_p)
+						{
+							*time_pp = time_p;
+							success_flag = true;
+						}
+				}
+			else
+				{
+					success_flag = true;
+				}
 		}
 
 	return success_flag;

@@ -313,6 +313,12 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 
 
+const char *GetUnsetLocationValue (void)
+{
+	return S_UNSET_LOCATION_S;
+}
+
+
 
 Address *GetAddressFromLocationString (const char *location_s)
 {

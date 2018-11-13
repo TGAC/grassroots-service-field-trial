@@ -49,14 +49,25 @@ static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Experimental Ar
 static NamedParameterType S_FIELD_TRIALS_LIST = { "Field Trials", PT_STRING };
 static NamedParameterType S_LOCATIONS_LIST = { "Locations", PT_STRING };
 
+static NamedParameterType S_ACTIVE_DATE = { "Active on date", PT_TIME };
 
-
+/*
+ * STATIC DECLARATIONS
+ */
 
 static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
 
 
+static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format);
 
 
+static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *param_set_p);
+
+
+
+/*
+ * API DEFINITIONS
+ */
 
 bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
@@ -197,12 +208,6 @@ bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, P
 }
 
 
-
-
-
-static NamedParameterType S_LOCATION = { "Get studies for a given location", PT_STRING };
-
-
 /*
 Parameters
 
@@ -312,82 +317,53 @@ bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Param
 	bool job_done_flag = false;
 	SharedType value;
 	InitSharedType (&value);
+	ViewFormat format = VF_CLIENT_MINIMAL;
 
 	if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true))
 		{
 			if (value.st_boolean_value)
 				{
-					if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true))
-						{
-							if (value.st_string_value_s)
-								{
-									bson_oid_t *id_p = GetBSONOidFromString (value.st_string_value_s);
-
-									if (id_p)
-										{
-											OperationStatus status = OS_FAILED;
-											ExperimentalArea *area_p = GetExperimentalAreaById (id_p, VF_CLIENT_FULL, data_p);
-
-											if (area_p)
-												{
-													if (GetExperimentalAreaPlots (area_p, data_p))
-														{
-															const ViewFormat format = VF_CLIENT_FULL;
-															json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, format, data_p);
-
-															if (area_json_p)
-																{
-																	bool added_flag = false;
-
-																	if (AddContext (area_json_p))
-																		{
-																			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, area_p -> ea_name_s, area_json_p);
-
-																			if (dest_record_p)
-																				{
-																					if (AddResultToServiceJob (job_p, dest_record_p))
-																						{
-																							added_flag = true;
-																							status = OS_SUCCEEDED;
-																						}
-																					else
-																						{
-																							json_decref (dest_record_p);
-																						}
-
-																				}		/* if (dest_record_p) */
-
-																		}		/* if (AddContext (trial_json_p)) */
-
-																	if (!added_flag)
-																		{
-																			json_decref (area_json_p);
-																		}
-
-																}		/* if (area_json_p) */
-
-														}		/* if (GetExperimentalAreaPlots (area_p, data_p)) */
-
-
-													FreeExperimentalArea (area_p);
-												}		/* if (area_p) */
-
-											SetServiceJobStatus (job_p, status);
-
-											FreeBSONOid (id_p);
-										}		/* if (id_p) */
-
-								}		/* if (value.st_string_value_s)*/
-
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true)) */
-
+					format = VF_CLIENT_FULL;
 				}		/* if (value.st_boolean_value) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
 
 
+	if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p, format))
+		{
+			job_done_flag = true;
+		}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) */
+	else
+		{
+			/*
+			 * We're building up a query for the given parameters
+			 */
+			bson_t *query_p = bson_new ();
+
+			if (query_p)
+				{
+					if (AddExperimentalAreaLocationCriteria (query_p, param_set_p))
+						{
+							if (AddExperimentalAreaDateCriteria (query_p, param_set_p))
+								{
+
+								}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
+
+						}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+
+		}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) else ... */
+
 	return job_done_flag;
 }
+
+
+/*
+ * STATIC DEFINITIONS
+ */
 
 static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
@@ -568,6 +544,182 @@ bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p
 				}		/* if (results_p) */
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+
+	return success_flag;
+}
+
+
+static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format)
+{
+	bool job_done_flag = false;
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true))
+		{
+			if (value.st_string_value_s)
+				{
+					bson_oid_t *id_p = GetBSONOidFromString (value.st_string_value_s);
+
+					if (id_p)
+						{
+							OperationStatus status = OS_FAILED;
+							ExperimentalArea *area_p = GetExperimentalAreaById (id_p, format, data_p);
+
+							if (area_p)
+								{
+									if (GetExperimentalAreaPlots (area_p, data_p))
+										{
+											json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, format, data_p);
+
+											if (area_json_p)
+												{
+													bool added_flag = false;
+
+													if (AddContext (area_json_p))
+														{
+															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, area_p -> ea_name_s, area_json_p);
+
+															if (dest_record_p)
+																{
+																	if (AddResultToServiceJob (job_p, dest_record_p))
+																		{
+																			added_flag = true;
+																			job_done_flag = true;
+																			status = OS_SUCCEEDED;
+																		}
+																	else
+																		{
+																			json_decref (dest_record_p);
+																		}
+
+																}		/* if (dest_record_p) */
+
+														}		/* if (AddContext (trial_json_p)) */
+
+													if (!added_flag)
+														{
+															json_decref (area_json_p);
+														}
+
+												}		/* if (area_json_p) */
+
+										}		/* if (GetExperimentalAreaPlots (area_p, data_p)) */
+
+
+									FreeExperimentalArea (area_p);
+								}		/* if (area_p) */
+
+							SetServiceJobStatus (job_p, status);
+
+							FreeBSONOid (id_p);
+						}		/* if (id_p) */
+
+				}		/* if (value.st_string_value_s)*/
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true)) */
+
+	return job_done_flag;
+}
+
+
+static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *param_set_p)
+{
+	bool success_flag = true;
+	SharedType value;
+	InitSharedType (&value);
+
+	/*
+	 * Are we looking for a specific location?
+	 */
+	if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &value, true))
+		{
+			if (value.st_string_value_s)
+				{
+					const char *unset_value_s = GetUnsetLocationValue ();
+
+					if (strcmp (value.st_string_value_s, unset_value_s) != 0)
+						{
+							bson_oid_t *id_p = GetBSONOidFromString (value.st_string_value_s);
+
+							success_flag  = false;
+
+							if (id_p)
+								{
+									if (bson_append_oid (query_p, EA_LOCATION_ID_S, id_p))
+										{
+											success_flag = true;
+										}
+
+									bson_destroy (id_p);
+								}		/* if (id_p) */
+
+						}		/* if (strcmp (value.st_string_value_s, unset_value_s) != 0) */
+
+				}		/* if (value.st_string_value_s) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &value, true)) */
+
+	return success_flag;
+}
+
+
+
+
+static bool AddExperimentalAreaDateCriteria (bson_t *query_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	SharedType value;
+	InitSharedType (&value);
+
+	/*
+	 * Are we looking for a specific location?
+	 */
+	if (GetParameterValueFromParameterSet (param_set_p, S_ACTIVE_DATE.npt_name_s, &value, true))
+		{
+			if (value.st_time_p)
+				{
+					time_t t = mktime (value.st_time_p);
+
+					if (t != -1)
+						{
+							bson_t *sowing_date_doc_p = bson_new ();
+
+							if (sowing_date_doc_p)
+								{
+									if (BSON_APPEND_INT32 (sowing_date_doc_p, "$lte", t))
+										{
+											if (BSON_APPEND_DOCUMENT (query_p, EA_SOWING_DATE_S, sowing_date_doc_p))
+												{
+													bson_t *harvest_date_doc_p = bson_new ();
+
+													if (harvest_date_doc_p)
+														{
+															if (BSON_APPEND_INT32 (harvest_date_doc_p, "$gte", t))
+																{
+																	if (BSON_APPEND_DOCUMENT (query_p, EA_HARVEST_DATE_S, harvest_date_doc_p))
+																		{
+																			success_flag = true;
+																		}
+																}
+
+															bson_destroy (harvest_date_doc_p);
+														}
+												}
+										}
+
+									bson_destroy (sowing_date_doc_p);
+								}
+
+						}		/* if (t != -1) */
+
+				}		/* if (value.st_time_p) */
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &value, true)) */
+	else
+		{
+			success_flag = true;
+		}
 
 	return success_flag;
 }
