@@ -72,22 +72,10 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 	if (data_p -> dftsd_database_s)
 		{
-			data_p -> dftsd_mongo_p = AllocateMongoTool (NULL);
-
-			if (data_p -> dftsd_mongo_p)
+			if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
 				{
-					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
-						{
-							success_flag = true;
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
-						}
-				}
+					success_flag = true;
 
-			if (success_flag)
-				{
 					* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_EXPERIMENTAL_AREA) = DFT_EXPERMIENTAL_AREA_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
@@ -100,7 +88,10 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 					* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
 				}
-
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
+				}
 
 		} /* if (data_p -> psd_database_s) */
 
