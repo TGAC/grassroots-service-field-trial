@@ -406,6 +406,7 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, EA_NAME_S);
+	ExperimentalArea *area_p = NULL;
 
 	if (name_s)
 		{
@@ -421,7 +422,6 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 								{
 									if (GetMongoIdFromJSON (json_p, id_p))
 										{
-											ExperimentalArea *area_p = NULL;
 											FieldTrial *trial_p = NULL;
 											const char *parent_field_trial_id_s = NULL;
 											Location *location_p = NULL;
@@ -449,11 +449,9 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 
 																	area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
 
-																	if (area_p)
-																		{
-																			return area_p;
-																		}
-
+																	/*
+																	 * The dates are copied by AllocateExperimentalArea so we can free our values.
+																	 */
 																	if (harvest_date_p)
 																		{
 																			FreeTime (harvest_date_p);
@@ -461,6 +459,9 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 
 																}		/* if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p)) */
 
+															/*
+															 * The dates are copied by AllocateExperimentalArea so we can free our values.
+															 */
 															if (sowing_date_p)
 																{
 																	FreeTime (sowing_date_p);
@@ -472,15 +473,21 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 
 										}
 
-									FreeBSONOid (id_p);
+									if (!area_p)
+										{
+											FreeBSONOid (id_p);
+										}
+
 								}
+
 						}		/* if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p)) */
 
-				}		/* if (address_id_p) */
+					FreeBSONOid (location_id_p);
+				}		/* if (location_id_p) */
 
 		}		/* if (name_s) */
 
-	return NULL;
+	return area_p;
 }
 
 
