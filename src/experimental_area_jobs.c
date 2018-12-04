@@ -275,13 +275,13 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 		{
 			def.st_string_value_s = NULL;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_AREA_ID.npt_type, S_AREA_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_AREA_ID.npt_type, S_AREA_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
 				{
 					def.st_boolean_value = false;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ADVANCED)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ADVANCED)) != NULL)
 								{
 									if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, true))
 										{
@@ -292,7 +292,7 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 
 											def.st_time_p = &t;
 
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ACTIVE_DATE.npt_type, S_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ACTIVE_DATE.npt_type, S_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ADVANCED)) != NULL)
 												{
 													success_flag = true;
 												}

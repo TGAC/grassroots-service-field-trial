@@ -214,7 +214,7 @@ bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	def.st_boolean_value = false;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_LOCATIONS.npt_type, S_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_LOCATIONS.npt_type, S_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ADVANCED)) != NULL)
 		{
 			success_flag = true;
 		}

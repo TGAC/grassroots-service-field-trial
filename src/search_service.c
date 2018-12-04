@@ -38,6 +38,8 @@
  */
 
 
+static NamedParameterType S_KEYWORD = { "FT Keyword Search", PT_KEYWORD };
+
 
 static const char *GetDFWFieldTrialSearchServiceName (Service *service_p);
 
@@ -131,28 +133,42 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
+			Parameter *param_p = NULL;
+			SharedType def;
 
-			if (AddSearchFieldTrialParams (data_p, params_p))
+			def.st_string_value_s = NULL;
+
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, NULL, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL)
 				{
-					if (AddSearchExperimentalAreaParams (data_p, params_p))
+					if (AddSearchFieldTrialParams (data_p, params_p))
 						{
-							if (AddSearchLocationParams (data_p, params_p))
+							if (AddSearchExperimentalAreaParams (data_p, params_p))
 								{
-									return params_p;
+									if (AddSearchLocationParams (data_p, params_p))
+										{
+											return params_p;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
+										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
-								}						}
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchExperimentalAreaParams failed");
+								}
+						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchExperimentalAreaParams failed");
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchFieldTrialParams failed");
 						}
-				}
+
+				}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, NULL, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchFieldTrialParams failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_KEYWORD.npt_name_s);
 				}
+
 
 			FreeParameterSet (params_p);
 		}
