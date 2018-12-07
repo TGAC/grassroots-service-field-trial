@@ -59,6 +59,8 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p);
 
 static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p);
 
+static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
+
 /*
  * API definitions
  */
@@ -133,12 +135,14 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
+			ParameterGroup *group_p = NULL;
+
 			Parameter *param_p = NULL;
 			SharedType def;
 
 			def.st_string_value_s = NULL;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, NULL, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL)
 				{
 					if (AddSearchFieldTrialParams (data_p, params_p))
 						{
@@ -213,30 +217,45 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 
 			if (param_set_p)
 				{
-					if (!RunForSearchFieldTrialParams (data_p, param_set_p, job_p))
+					/*
+					 * check for simple search first
+					 */
+					bool ran_flag = false;
+					SharedType value;
+
+					InitSharedType (&value);
+
+					if (GetParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &value, true))
 						{
-							if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
+							if (!IsStringEmpty (value.st_string_value_s))
 								{
-									if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
+									SearchFieldTrialsForKeyword (value.st_string_value_s, job_p, data_p);
+									ran_flag = true;
+								}		/* if (!IsStringEmpty (value.st_string_value_s)) */
+
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &value, true)) */
+
+
+					if (!ran_flag)
+						{
+							/*
+							 * check for the advanced search
+							 */
+							if (!RunForSearchFieldTrialParams (data_p, param_set_p, job_p))
+								{
+									if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
 										{
-//											if (!RunForSearchPlotParams (data_p, param_set_p, job_p))
-//												{
-//													if (!RunForSearchGeneBankParams (data_p, param_set_p, job_p))
-//														{
-//															if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
-//																{
-//
-//																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
-//
-//														}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
-//
-//												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
-//
-										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+											if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
+												{
 
-								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+												}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
 
-						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
+										}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+
+								}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
+
+						}		/* if (!ran_flag) */
+
 
 				}		/* if (param_set_p) */
 
@@ -431,3 +450,10 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 {
 	return NULL;
 }
+
+
+static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
+{
+
+}
+
