@@ -156,7 +156,7 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FULL_DATA.npt_name_s);
 										}
-																	}
+								}
 							else
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s);
