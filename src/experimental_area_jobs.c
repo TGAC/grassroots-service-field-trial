@@ -51,6 +51,8 @@ static NamedParameterType S_LOCATIONS_LIST = { "Locations", PT_STRING };
 
 static NamedParameterType S_ACTIVE_DATE = { "Active on date", PT_TIME };
 
+static NamedParameterType S_SEARCH_EXPERIMENTAL_AREAS = { "Search Experimental Areas", PT_BOOLEAN };
+
 /*
  * STATIC DECLARATIONS
  */
@@ -273,54 +275,62 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 
 	if (group_p)
 		{
-			def.st_string_value_s = NULL;
+			def.st_boolean_value = false;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_AREA_ID.npt_type, S_AREA_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_EXPERIMENTAL_AREAS.npt_type, S_SEARCH_EXPERIMENTAL_AREAS.npt_name_s, "Search Experimental Areas", "Get the matching Experimental Areas", def, PL_ADVANCED)) != NULL)
 				{
-					def.st_boolean_value = false;
+					def.st_string_value_s = NULL;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_AREA_ID.npt_type, S_AREA_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ADVANCED)) != NULL)
 								{
-									if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, true))
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ADVANCED)) != NULL)
 										{
-											struct tm t;
-
-											ClearTime (&t);
-											SetDateValuesForTime (&t, 2017, 1, 1);
-
-											def.st_time_p = &t;
-
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ACTIVE_DATE.npt_type, S_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ADVANCED)) != NULL)
+											if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, true))
 												{
-													success_flag = true;
+													struct tm t;
+
+													ClearTime (&t);
+													SetDateValuesForTime (&t, 2017, 1, 1);
+
+													def.st_time_p = &t;
+
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ACTIVE_DATE.npt_type, S_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ADVANCED)) != NULL)
+														{
+															success_flag = true;
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ACTIVE_DATE.npt_name_s);
+														}
+
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ACTIVE_DATE.npt_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpLocationsListParameter failed");
 												}
-
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpLocationsListParameter failed");
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATIONS_LIST.npt_name_s);
 										}
+
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATIONS_LIST.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_PLOTS.npt_name_s);
 								}
-
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_PLOTS.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AREA_ID.npt_name_s);
 						}
+
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AREA_ID.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_EXPERIMENTAL_AREAS.npt_name_s);
 				}
 		}
 	else
@@ -339,50 +349,57 @@ bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Param
 	InitSharedType (&value);
 	ViewFormat format = VF_CLIENT_MINIMAL;
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_SEARCH_EXPERIMENTAL_AREAS.npt_name_s, &value, true))
 		{
 			if (value.st_boolean_value)
 				{
-					format = VF_CLIENT_FULL;
-				}		/* if (value.st_boolean_value) */
-
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
-
-
-	if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p, format))
-		{
-			job_done_flag = true;
-		}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) */
-	else
-		{
-			/*
-			 * We're building up a query for the given parameters
-			 */
-			bson_t *query_p = bson_new ();
-
-			if (query_p)
-				{
-					if (AddExperimentalAreaLocationCriteria (query_p, param_set_p))
+					if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true))
 						{
-							if (AddExperimentalAreaDateCriteria (query_p, param_set_p))
+							if (value.st_boolean_value)
 								{
-									/*
-									 * Search with our given criteria
-									 */
-									if (GetMatchingExperimentalAreas (query_p, data_p, job_p, format))
+									format = VF_CLIENT_FULL;
+								}		/* if (value.st_boolean_value) */
+
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
+
+
+					if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p, format))
+						{
+							job_done_flag = true;
+						}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) */
+					else
+						{
+							/*
+							 * We're building up a query for the given parameters
+							 */
+							bson_t *query_p = bson_new ();
+
+							if (query_p)
+								{
+									if (AddExperimentalAreaLocationCriteria (query_p, param_set_p))
 										{
-											job_done_flag = true;
-										}
+											if (AddExperimentalAreaDateCriteria (query_p, param_set_p))
+												{
+													/*
+													 * Search with our given criteria
+													 */
+													if (GetMatchingExperimentalAreas (query_p, data_p, job_p, format))
+														{
+															job_done_flag = true;
+														}
 
-								}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
+												}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
 
-						}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
+										}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
 
-					bson_destroy (query_p);
-				}		/* if (query_p) */
+									bson_destroy (query_p);
+								}		/* if (query_p) */
 
 
-		}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) else ... */
+						}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) else ... */
+				}
+		}
+
 
 	return job_done_flag;
 }
