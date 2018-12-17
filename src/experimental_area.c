@@ -325,11 +325,11 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 
 	if (area_json_p)
 		{
-			if (SetJSONString (area_json_p, EA_NAME_S, area_p -> ea_name_s) == 0)
+			if (SetJSONString (area_json_p, EA_NAME_S, area_p -> ea_name_s))
 				{
-					if ((IsStringEmpty (area_p -> ea_data_url_s)) || (SetJSONString (area_json_p, EA_DATA_LINK_S, area_p -> ea_data_url_s) == 0))
+					if ((IsStringEmpty (area_p -> ea_data_url_s)) || (SetJSONString (area_json_p, EA_DATA_LINK_S, area_p -> ea_data_url_s)))
 						{
-							if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (SetJSONString (area_json_p, EA_SOIL_S, area_p -> ea_soil_type_s) == 0))
+							if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (SetJSONString (area_json_p, EA_SOIL_S, area_p -> ea_soil_type_s)))
 								{
 									bool add_item_flag = false;
 
