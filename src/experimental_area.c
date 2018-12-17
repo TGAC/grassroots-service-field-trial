@@ -45,7 +45,7 @@ static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
+ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -61,52 +61,76 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 
 			if (empty_flag || copied_soil_s)
 				{
-					struct tm *copied_sowing_date_p = NULL;
+					char *copied_url_s = NULL;
 
-					if (CopyValidDate (sowing_date_p, &copied_sowing_date_p))
+					empty_flag = IsStringEmpty (data_url_s);
+
+					if (!empty_flag)
 						{
-							struct tm *copied_harvest_date_p = NULL;
+							copied_url_s = EasyCopyToNewString (data_url_s);
+						}
 
-							if (CopyValidDate (harvest_date_p, &copied_harvest_date_p))
+					if (empty_flag || copied_url_s)
+						{
+							struct tm *copied_sowing_date_p = NULL;
+
+							if (CopyValidDate (sowing_date_p, &copied_sowing_date_p))
 								{
-									LinkedList *plots_p = AllocateLinkedList (FreePlotNode);
+									struct tm *copied_harvest_date_p = NULL;
 
-									if (plots_p)
+									if (CopyValidDate (harvest_date_p, &copied_harvest_date_p))
 										{
-											ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+											LinkedList *plots_p = AllocateLinkedList (FreePlotNode);
 
-											if (area_p)
+											if (plots_p)
 												{
-													area_p -> ea_id_p = id_p;
-													area_p -> ea_name_s = copied_name_s;
-													area_p -> ea_soil_type_s = copied_soil_s;
-													area_p -> ea_sowing_date_p = copied_sowing_date_p;
-													area_p -> ea_harvest_date_p = copied_harvest_date_p;
-													area_p -> ea_parent_p = parent_field_trial_p;
-													area_p -> ea_location_p = location_p;
-													area_p -> ea_plots_p = plots_p;
+													ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
 
-													return area_p;
+													if (area_p)
+														{
+															area_p -> ea_id_p = id_p;
+															area_p -> ea_name_s = copied_name_s;
+															area_p -> ea_data_url_s = copied_url_s;
+															area_p -> ea_soil_type_s = copied_soil_s;
+															area_p -> ea_sowing_date_p = copied_sowing_date_p;
+															area_p -> ea_harvest_date_p = copied_harvest_date_p;
+															area_p -> ea_parent_p = parent_field_trial_p;
+															area_p -> ea_location_p = location_p;
+															area_p -> ea_plots_p = plots_p;
+
+															return area_p;
+														}
+
+													FreeLinkedList (plots_p);
+												}		/* if (plots_p) */
+
+											if (copied_harvest_date_p)
+												{
+													FreeTime (copied_harvest_date_p);
 												}
 
-											FreeLinkedList (plots_p);
-										}		/* if (plots_p) */
+										}		/* if (CopyValidDate (harvest_date_p, &copied_harvest_date_p)) */
 
-									if (copied_harvest_date_p)
+									if (copied_sowing_date_p)
 										{
-											FreeTime (copied_harvest_date_p);
+											FreeTime (copied_sowing_date_p);
 										}
 
-								}		/* if (CopyValidDate (harvest_date_p, &copied_harvest_date_p)) */
+								}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
 
-							if (copied_sowing_date_p)
+							if (copied_url_s)
 								{
-									FreeTime (copied_sowing_date_p);
+									FreeCopiedString (copied_url_s);
 								}
 
-						}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
+						}		/* if (empty_flag || copied_url_s) */
 
-					FreeCopiedString (copied_soil_s);
+
+					if (copied_soil_s)
+						{
+							FreeCopiedString (copied_soil_s);
+						}
+
 				}		/* if (copied_soil_s) */
 			else
 				{
@@ -134,6 +158,11 @@ void FreeExperimentalArea (ExperimentalArea *area_p)
 	if (area_p -> ea_name_s)
 		{
 			FreeCopiedString (area_p -> ea_name_s);
+		}
+
+	if (area_p -> ea_data_url_s)
+		{
+			FreeCopiedString (area_p -> ea_data_url_s);
 		}
 
 	if (area_p -> ea_soil_type_s)
@@ -296,104 +325,109 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 
 	if (area_json_p)
 		{
-			if (json_object_set_new (area_json_p, EA_NAME_S, json_string (area_p -> ea_name_s)) == 0)
+			if (SetJSONString (area_json_p, EA_NAME_S, area_p -> ea_name_s) == 0)
 				{
-					if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (json_object_set_new (area_json_p, EA_SOIL_S, json_string (area_p -> ea_soil_type_s)) == 0))
+					if ((IsStringEmpty (area_p -> ea_data_url_s)) || (SetJSONString (area_json_p, EA_DATA_LINK_S, area_p -> ea_data_url_s) == 0))
 						{
-							bool add_item_flag = false;
-
-							/*
-							 * Add the location
-							 */
-							if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+							if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (SetJSONString (area_json_p, EA_SOIL_S, area_p -> ea_soil_type_s) == 0))
 								{
-									json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
-
-									if (location_json_p)
-										{
-											if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
-												{
-													add_item_flag = true;
-												}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
-											else
-												{
-													json_decref (location_json_p);
-												}
-										}
-								}
-							else
-								{
-									if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_ID_S))
-										{
-											add_item_flag = true;
-										}
-								}
-
-							if (add_item_flag)
-								{
-									add_item_flag = false;
+									bool add_item_flag = false;
 
 									/*
-									 * Add the dates
+									 * Add the location
 									 */
-									if (format == VF_STORAGE)
+									if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 										{
-											if (AddValidDateAsEpochToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
+											json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
+
+											if (location_json_p)
 												{
-													if (AddValidDateAsEpochToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
+													if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
 														{
 															add_item_flag = true;
+														}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
+													else
+														{
+															json_decref (location_json_p);
 														}
 												}
 										}
 									else
 										{
-											if (AddValidDateToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
+											if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_ID_S))
 												{
-													if (AddValidDateToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
-														{
-															add_item_flag = true;
-														}
+													add_item_flag = true;
 												}
 										}
 
 									if (add_item_flag)
 										{
+											add_item_flag = false;
 
-											if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
+											/*
+											 * Add the dates
+											 */
+											if (format == VF_STORAGE)
 												{
-													bool success_flag = false;
-
-													if (format == VF_STORAGE)
+													if (AddValidDateAsEpochToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
 														{
-															success_flag = AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S);
-														}
-													else if (format == VF_CLIENT_FULL)
-														{
-															if (GetExperimentalAreaPlots (area_p, data_p))
+															if (AddValidDateAsEpochToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
 																{
-																	if (AddPlotsToJSON (area_p, area_json_p, format, data_p))
-																		{
-																			success_flag = true;
-																		}
+																	add_item_flag = true;
 																}
 														}
-													else
+												}
+											else
+												{
+													if (AddValidDateToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
 														{
-															success_flag = true;
-														}
-
-													if (success_flag)
-														{
-															return area_json_p;
+															if (AddValidDateToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
+																{
+																	add_item_flag = true;
+																}
 														}
 												}
 
-										}
-								}
+											if (add_item_flag)
+												{
 
-						}
-				}
+													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
+														{
+															bool success_flag = false;
+
+															if (format == VF_STORAGE)
+																{
+																	success_flag = AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S);
+																}
+															else if (format == VF_CLIENT_FULL)
+																{
+																	if (GetExperimentalAreaPlots (area_p, data_p))
+																		{
+																			if (AddPlotsToJSON (area_p, area_json_p, format, data_p))
+																				{
+																					success_flag = true;
+																				}
+																		}
+																}
+															else
+																{
+																	success_flag = true;
+																}
+
+															if (success_flag)
+																{
+																	return area_json_p;
+																}
+														}
+
+												}
+										}
+
+								}		/* if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (SetJSONString (area_json_p, EA_SOIL_S, area_p -> ea_soil_type_s) == 0)) */
+
+						}		/* if ((IsStringEmpty (area_p -> ea_data_url_s)) || (SetJSONString (area_json_p, EA_DATA_LINK_S, area_p -> ea_data_url_s) == 0)) */
+
+				}		/* if (SetJSONString (area_json_p, EA_NAME_S, area_p -> ea_name_s) == 0) */
 
 			json_decref (area_json_p);
 		}		/* if (area_json_p) */
@@ -446,8 +480,9 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 															if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p))
 																{
 																	const char *soil_s = GetJSONString (json_p, EA_SOIL_S);
+																	const char *data_url_s = GetJSONString (json_p, EA_DATA_LINK_S);
 
-																	area_p = AllocateExperimentalArea (id_p, name_s, soil_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+																	area_p = AllocateExperimentalArea (id_p, name_s, soil_s, data_url_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
 
 																	/*
 																	 * The dates are copied by AllocateExperimentalArea so we can free our values.

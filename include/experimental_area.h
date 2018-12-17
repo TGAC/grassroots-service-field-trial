@@ -71,6 +71,7 @@ EXPERIMENTAL_AREA_PREFIX const char *EA_PARENT_FIELD_TRIAL_S EXPERIMENTAL_AREA_V
 
 EXPERIMENTAL_AREA_PREFIX const char *EA_PLOTS_S EXPERIMENTAL_AREA_VAL ("plots");
 
+EXPERIMENTAL_AREA_PREFIX const char *EA_DATA_LINK_S EXPERIMENTAL_AREA_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
 
 
 typedef struct ExperimentalArea
@@ -87,6 +88,8 @@ typedef struct ExperimentalArea
 	char *ea_soil_type_s;
 
 	char *ea_name_s;
+
+	char *ea_data_url_s;
 
 	struct tm *ea_sowing_date_p;
 
@@ -119,7 +122,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeExperimentalArea (ExperimentalArea *area_p);
 
