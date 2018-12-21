@@ -31,7 +31,7 @@
 #include "linked_list.h"
 
 /* forward declarations */
-struct ExperimentalArea;
+struct Study;
 
 
 
@@ -47,11 +47,11 @@ typedef struct FieldTrial
 	char *ft_team_s;
 
 	/**
-	 * A LinkedList of ExperimentalAreaNodes
-	 * for all of the ExperimentalAreas in this
+	 * A LinkedList of StudyNodes
+	 * for all of the Studies in this
 	 * FieldTrial.
 	 */
-	LinkedList *ft_experimental_areas_p;
+	LinkedList *ft_studies_p;
 
 } FieldTrial;
 
@@ -91,7 +91,7 @@ FIELD_TRIAL_PREFIX const char *FT_TEAM_S FIELD_TRIAL_VAL ("team");
 
 FIELD_TRIAL_PREFIX const char *FT_ID_S FIELD_TRIAL_VAL ("_id");
 
-FIELD_TRIAL_PREFIX const char *FT_EXPERIMENTAL_AREAS_S FIELD_TRIAL_VAL ("experimental_areas");
+FIELD_TRIAL_PREFIX const char *FT_STUDIES_S FIELD_TRIAL_VAL ("studies");
 
 
 #ifdef __cplusplus
@@ -118,12 +118,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialExperimentalAreas (FieldTrial *trial_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialStudies (FieldTrial *trial_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialIdAsString (const FieldTrial *trial_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct ExperimentalArea *area_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct Study *area_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p);
@@ -132,13 +132,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, DFWField
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialAsString (const FieldTrial *trial_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

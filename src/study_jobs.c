@@ -14,15 +14,15 @@
  ** limitations under the License.
  */
 /*
- * experimental_area_jobs.c
+ * experimental_arst_jobs.c
  *
  *  Created on: 1 Oct 2018
  *      Author: billy
  */
 
-#include "experimental_area_jobs.h"
+#include "study_jobs.h"
 
-#include "experimental_area.h"
+#include "study.h"
 #include "location.h"
 #include "string_utils.h"
 #include "location_jobs.h"
@@ -34,16 +34,16 @@
 /*
  * Experimental Area parameters
  */
-static NamedParameterType S_EXPERIMENTAL_AREA_NAME = { "EA Name", PT_STRING };
-static NamedParameterType S_EXPERIMENTAL_AREA_SOIL = { "EA Soil", PT_STRING };
+static NamedParameterType S_STUDY_NAME = { "EA Name", PT_STRING };
+static NamedParameterType S_STUDY_SOIL = { "EA Soil", PT_STRING };
 
-static NamedParameterType S_EXPERIMENTAL_AREA_LINK = { "EA Link", PT_STRING };
-static NamedParameterType S_EXPERIMENTAL_AREA_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
-static NamedParameterType S_EXPERIMENTAL_AREA_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
+static NamedParameterType S_STUDY_LINK = { "EA Link", PT_STRING };
+static NamedParameterType S_STUDY_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
+static NamedParameterType S_STUDY_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
 static NamedParameterType S_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
 
-static NamedParameterType S_AREA_ID = { "Experimental Area to search for", PT_STRING };
+static NamedParameterType S_ARST_ID = { "Experimental Area to search for", PT_STRING };
 static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Experimental Area", PT_BOOLEAN };
 
 
@@ -59,26 +59,26 @@ static NamedParameterType S_SEARCH_EXPERIMENTAL_AREAS = { "Search Experimental A
  * STATIC DECLARATIONS
  */
 
-static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
+static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
 
 
-static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format);
+static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format);
 
 
-static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *param_set_p);
+static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p);
 
 
-static bool AddExperimentalAreaDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
+static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
 
 
-static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
+static bool GetMatchingStudys (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
 
 
 /*
  * API DEFINITIONS
  */
 
-bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -87,11 +87,11 @@ bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *par
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_NAME.npt_type, S_EXPERIMENTAL_AREA_NAME.npt_name_s, "Name", "The name of the Experimental Area", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_NAME.npt_type, S_STUDY_NAME.npt_name_s, "Name", "The name of the Experimental Area", def, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_SOIL.npt_type, S_EXPERIMENTAL_AREA_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOIL.npt_type, S_STUDY_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_LINK.npt_type, S_EXPERIMENTAL_AREA_LINK.npt_name_s, "Link", "The url for any downloads relating to this Experimental Area", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Experimental Area", def, PL_ALL)) != NULL)
 						{
 							struct tm t;
 
@@ -100,11 +100,11 @@ bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *par
 
 							def.st_time_p = &t;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_type, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Experimental Area", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOWING_YEAR.npt_type, S_STUDY_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Experimental Area", def, PL_ALL)) != NULL)
 								{
 									ClearTime (&t);
 
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_type, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Experimental Area", def, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_HARVEST_YEAR.npt_type, S_STUDY_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Experimental Area", def, PL_ALL)) != NULL)
 										{
 											def.st_string_value_s = NULL;
 
@@ -158,15 +158,15 @@ bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *par
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDY_HARVEST_YEAR.npt_name_s);
 										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDY_SOWING_YEAR.npt_name_s);
 								}
 
-						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREA_LINK.npt_type, S_EXPERIMENTAL_AREA_LINK.npt_name_s, "Link", "The url for any downloads relating to this Experimental Area", def, PL_ALL)) != NULL) */
+						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Experimental Area", def, PL_ALL)) != NULL) */
 					else
 						{
 
@@ -176,12 +176,12 @@ bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *par
 			else
 				{
 					FreeParameter (param_p);
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_SOIL.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDY_SOIL.npt_name_s);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREA_NAME.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDY_NAME.npt_name_s);
 		}
 
 
@@ -189,7 +189,7 @@ bool AddSubmissionExperimentalAreaParams (ServiceData *data_p, ParameterSet *par
 }
 
 
-bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;
@@ -199,7 +199,7 @@ bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, P
 		{
 			if (value.st_boolean_value)
 				{
-					bool success_flag = AddExperimentalArea (job_p, param_set_p, data_p);
+					bool success_flag = AddStudy (job_p, param_set_p, data_p);
 
 					job_done_flag = true;
 				}		/* if (value.st_boolean_value) */
@@ -213,7 +213,7 @@ bool RunForSubmissionExperimentalAreaParams (DFWFieldTrialServiceData *data_p, P
 				{
 					if (value.st_boolean_value)
 						{
-							//bool success_flag = AddExperimentalArea (job_p, param_set_p, data_p);
+							//bool success_flag = AddStudy (job_p, param_set_p, data_p);
 
 							job_done_flag = true;
 						}		/* if (value.st_boolean_value) */
@@ -276,7 +276,7 @@ Parameters
  */
 
 
-bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -292,7 +292,7 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 				{
 					def.st_string_value_s = NULL;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_AREA_ID.npt_type, S_AREA_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ARST_ID.npt_type, S_ARST_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
 						{
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ADVANCED)) != NULL)
 								{
@@ -335,7 +335,7 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AREA_ID.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ARST_ID.npt_name_s);
 						}
 
 				}
@@ -353,7 +353,7 @@ bool AddSearchExperimentalAreaParams (ServiceData *data_p, ParameterSet *param_s
 }
 
 
-bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;
@@ -374,10 +374,10 @@ bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Param
 						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
 
 
-					if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p, format))
+					if (GetStudyForGivenId (data_p, param_set_p, job_p, format))
 						{
 							job_done_flag = true;
-						}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) */
+						}		/* if (GetStudyForGivenId (data_p, param_set_p, job_p)) */
 					else
 						{
 							/*
@@ -387,27 +387,27 @@ bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Param
 
 							if (query_p)
 								{
-									if (AddExperimentalAreaLocationCriteria (query_p, param_set_p))
+									if (AddStudyLocationCriteria (query_p, param_set_p))
 										{
-											if (AddExperimentalAreaDateCriteria (query_p, param_set_p))
+											if (AddStudyDateCriteria (query_p, param_set_p))
 												{
 													/*
 													 * Search with our given criteria
 													 */
-													if (GetMatchingExperimentalAreas (query_p, data_p, job_p, format))
+													if (GetMatchingStudys (query_p, data_p, job_p, format))
 														{
 															job_done_flag = true;
 														}
 
-												}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
+												}		/* if (AddStudyLocationCriteria (query_p, param_set_p)) */
 
-										}		/* if (AddExperimentalAreaLocationCriteria (query_p, param_set_p)) */
+										}		/* if (AddStudyLocationCriteria (query_p, param_set_p)) */
 
 									bson_destroy (query_p);
 								}		/* if (query_p) */
 
 
-						}		/* if (GetExperimentalAreaForGivenId (data_p, param_set_p, job_p)) else ... */
+						}		/* if (GetStudyForGivenId (data_p, param_set_p, job_p)) else ... */
 				}
 		}
 
@@ -420,33 +420,33 @@ bool RunForSearchExperimentalAreaParams (DFWFieldTrialServiceData *data_p, Param
  * STATIC DEFINITIONS
  */
 
-static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
+static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_NAME.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_NAME.npt_name_s, &value, true))
 		{
 			SharedType soil_value;
 			InitSharedType (&soil_value);
 
-			if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_SOIL.npt_name_s, &soil_value, true))
+			if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_SOIL.npt_name_s, &soil_value, true))
 				{
 					SharedType data_link_value;
 					InitSharedType (&data_link_value);
 
-					if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_LINK.npt_name_s, &data_link_value, true))
+					if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_LINK.npt_name_s, &data_link_value, true))
 						{
 							SharedType sowing_year_value;
 							InitSharedType (&sowing_year_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_SOWING_YEAR.npt_name_s, &sowing_year_value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value, true))
 								{
 									SharedType harvest_year_value;
 									InitSharedType (&harvest_year_value);
 
-									if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_HARVEST_YEAR.npt_name_s, &harvest_year_value, true))
+									if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value, true))
 										{
 											SharedType parent_field_trial_value;
 											InitSharedType (&parent_field_trial_value);
@@ -466,7 +466,7 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 																	if (location_p)
 																		{
-																			ExperimentalArea *area_p = NULL;
+																			Study *study_p = NULL;
 																			struct tm *sowing_date_p = NULL;
 																			struct tm *harvest_date_p = NULL;
 
@@ -480,13 +480,13 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 																					harvest_date_p = harvest_year_value.st_time_p;
 																				}
 
-																			area_p = AllocateExperimentalArea (NULL, value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+																			study_p = AllocateStudy (NULL, value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
 
-																			if (area_p)
+																			if (study_p)
 																				{
-																					success_flag = SaveExperimentalArea (area_p, data_p);
+																					success_flag = SaveStudy (study_p, data_p);
 
-																					FreeExperimentalArea (area_p);
+																					FreeStudy (study_p);
 																				}
 																			else
 																				{
@@ -499,7 +499,7 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 
 										}
 								}
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREA_LINK.npt_name_s, &data_link_value, true)) */
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_LINK.npt_name_s, &data_link_value, true)) */
 
 
 
@@ -514,14 +514,14 @@ static bool AddExperimentalArea (ServiceJob *job_p, ParameterSet *param_set_p, D
 }
 
 
-bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
+bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
 {
 	bool success_flag = false;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
 			bson_t *query_p = NULL;
-			bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_NAME_S, BCON_INT32 (1), "}");
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
 			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (results_p)
@@ -534,12 +534,12 @@ bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p
 								{
 									size_t i = 0;
 									json_t *entry_p = json_array_get (results_p, i);
-									ExperimentalArea *area_p = GetExperimentalAreaFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
+									Study *study_p = GetStudyFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
 
-									if (area_p)
+									if (study_p)
 										{
 											SharedType def;
-											char *id_s = GetBSONOidAsString (area_p -> ea_id_p);
+											char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
 											if (id_s)
 												{
@@ -549,27 +549,27 @@ bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p
 														{
 															if (SetParameterValueFromSharedType (param_p, &def, true))
 																{
-																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, area_p -> ea_name_s);
+																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, study_p -> st_name_s);
 																}
 														}
 
 													FreeCopiedString (id_s);
 												}
 
-											FreeExperimentalArea (area_p);
-										}		/* if (area_p) */
+											FreeStudy (study_p);
+										}		/* if (study_p) */
 
 									if (success_flag)
 										{
 											for (++ i; i < num_results; ++ i)
 												{
 													entry_p = json_array_get (results_p, i);
-													area_p = GetExperimentalAreaFromJSON (entry_p, false, data_p);
+													study_p = GetStudyFromJSON (entry_p, false, data_p);
 
-													if (area_p)
+													if (study_p)
 														{
 															SharedType def;
-															char *id_s = GetBSONOidAsString (area_p -> ea_id_p);
+															char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
 															if (id_s)
 																{
@@ -577,14 +577,14 @@ bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p
 
 																	if (param_p)
 																		{
-																			success_flag = CreateAndAddParameterOptionToParameter (param_p, def, area_p -> ea_name_s);
+																			success_flag = CreateAndAddParameterOptionToParameter (param_p, def, study_p -> st_name_s);
 																		}
 
 																	FreeCopiedString (id_s);
 																}
 
-															FreeExperimentalArea (area_p);
-														}		/* if (area_p) */
+															FreeStudy (study_p);
+														}		/* if (study_p) */
 
 												}		/* for (++ i; i < num_results; ++ i) */
 
@@ -619,13 +619,13 @@ bool SetUpExperimentalAreasListParameter (const DFWFieldTrialServiceData *data_p
 }
 
 
-static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format)
+static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format)
 {
 	bool job_done_flag = false;
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_ARST_ID.npt_name_s, &value, true))
 		{
 			if (value.st_string_value_s)
 				{
@@ -634,21 +634,21 @@ static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, Par
 					if (id_p)
 						{
 							OperationStatus status = OS_FAILED;
-							ExperimentalArea *area_p = GetExperimentalAreaById (id_p, format, data_p);
+							Study *study_p = GetStudyById (id_p, format, data_p);
 
-							if (area_p)
+							if (study_p)
 								{
-									if (GetExperimentalAreaPlots (area_p, data_p))
+									if (GetStudyPlots (study_p, data_p))
 										{
-											json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, format, data_p);
+											json_t *arst_json_p = GetStudyAsJSON (study_p, format, data_p);
 
-											if (area_json_p)
+											if (arst_json_p)
 												{
 													bool added_flag = false;
 
-													if (AddContext (area_json_p))
+													if (AddContext (arst_json_p))
 														{
-															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, area_p -> ea_name_s, area_json_p);
+															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, arst_json_p);
 
 															if (dest_record_p)
 																{
@@ -669,16 +669,16 @@ static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, Par
 
 													if (!added_flag)
 														{
-															json_decref (area_json_p);
+															json_decref (arst_json_p);
 														}
 
-												}		/* if (area_json_p) */
+												}		/* if (arst_json_p) */
 
-										}		/* if (GetExperimentalAreaPlots (area_p, data_p)) */
+										}		/* if (GetStudyPlots (study_p, data_p)) */
 
 
-									FreeExperimentalArea (area_p);
-								}		/* if (area_p) */
+									FreeStudy (study_p);
+								}		/* if (study_p) */
 
 							SetServiceJobStatus (job_p, status);
 
@@ -687,19 +687,19 @@ static bool GetExperimentalAreaForGivenId (DFWFieldTrialServiceData *data_p, Par
 
 				}		/* if (value.st_string_value_s)*/
 
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_AREA_ID.npt_name_s, &value, true)) */
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ARST_ID.npt_name_s, &value, true)) */
 
 	return job_done_flag;
 }
 
 
-static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
+static bool GetMatchingStudys (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
 {
 	bool job_done_flag = false;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
-			bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_NAME_S, BCON_INT32 (1), "}");
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
 			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (results_p)
@@ -716,19 +716,19 @@ static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceD
 							for (i = 0; i < num_results; ++ i)
 								{
 									json_t *entry_p = json_array_get (results_p, i);
-									ExperimentalArea *area_p = GetExperimentalAreaFromJSON (entry_p, format, data_p);
+									Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
 
-									if (area_p)
+									if (study_p)
 										{
-											json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, format, data_p);
+											json_t *study_json_p = GetStudyAsJSON (study_p, format, data_p);
 
-											if (area_json_p)
+											if (study_json_p)
 												{
 													bool added_flag = false;
 
-													if (AddContext (area_json_p))
+													if (AddContext (study_json_p))
 														{
-															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, area_p -> ea_name_s, area_json_p);
+															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
 
 															if (dest_record_p)
 																{
@@ -748,12 +748,12 @@ static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceD
 
 													if (!added_flag)
 														{
-															json_decref (area_json_p);
+															json_decref (study_json_p);
 														}
 
-												}		/* if (area_json_p) */
+												}		/* if (study_json_p) */
 
-										}		/* if (area_p) */
+										}		/* if (study_p) */
 
 								}		/* if (num_results > 0) */
 
@@ -783,7 +783,7 @@ static bool GetMatchingExperimentalAreas (bson_t *query_p, DFWFieldTrialServiceD
 
 
 
-static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *param_set_p)
+static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p)
 {
 	bool success_flag = true;
 	SharedType value;
@@ -806,7 +806,7 @@ static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *
 
 							if (id_p)
 								{
-									if (BSON_APPEND_OID (query_p, EA_LOCATION_ID_S, id_p))
+									if (BSON_APPEND_OID (query_p, ST_LOCATION_ID_S, id_p))
 										{
 											success_flag = true;
 										}
@@ -826,7 +826,7 @@ static bool AddExperimentalAreaLocationCriteria (bson_t *query_p, ParameterSet *
 
 
 
-static bool AddExperimentalAreaDateCriteria (bson_t *query_p, ParameterSet *param_set_p)
+static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	SharedType value;
@@ -849,7 +849,7 @@ static bool AddExperimentalAreaDateCriteria (bson_t *query_p, ParameterSet *para
 								{
 									if (BSON_APPEND_INT32 (sowing_date_doc_p, "$lte", t))
 										{
-											if (BSON_APPEND_DOCUMENT (query_p, EA_SOWING_DATE_S, sowing_date_doc_p))
+											if (BSON_APPEND_DOCUMENT (query_p, ST_SOWING_DATE_S, sowing_date_doc_p))
 												{
 													bson_t *harvest_date_doc_p = bson_new ();
 
@@ -857,7 +857,7 @@ static bool AddExperimentalAreaDateCriteria (bson_t *query_p, ParameterSet *para
 														{
 															if (BSON_APPEND_INT32 (harvest_date_doc_p, "$gte", t))
 																{
-																	if (BSON_APPEND_DOCUMENT (query_p, EA_HARVEST_DATE_S, harvest_date_doc_p))
+																	if (BSON_APPEND_DOCUMENT (query_p, ST_HARVEST_DATE_S, harvest_date_doc_p))
 																		{
 																			success_flag = true;
 																		}

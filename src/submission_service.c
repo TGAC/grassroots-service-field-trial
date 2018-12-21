@@ -24,7 +24,7 @@
 #include "submission_service.h"
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
-#include "experimental_area_jobs.h"
+#include "study_jobs.h"
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
@@ -138,7 +138,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 
 			if (AddSubmissionFieldTrialParams (data_p, params_p))
 				{
-					if (AddSubmissionExperimentalAreaParams (data_p, params_p))
+					if (AddSubmissionStudyParams (data_p, params_p))
 						{
 							if (AddSubmissionLocationParams (data_p, params_p))
 								{
@@ -187,7 +187,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionExperimentalAreaParams failed");
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionStudyParams failed");
 						}
 				}
 			else
@@ -247,7 +247,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 				{
 					if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
 						{
-							if (!RunForSubmissionExperimentalAreaParams (data_p, param_set_p, job_p))
+							if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
 								{
 									if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p))
 										{
@@ -274,7 +274,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
 
-								}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+								}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
 
 						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 

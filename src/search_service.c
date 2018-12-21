@@ -23,7 +23,7 @@
 #include "submission_service.h"
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
-#include "experimental_area_jobs.h"
+#include "study_jobs.h"
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
@@ -146,7 +146,7 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 				{
 					if (AddSearchFieldTrialParams (data_p, params_p))
 						{
-							if (AddSearchExperimentalAreaParams (data_p, params_p))
+							if (AddSearchStudyParams (data_p, params_p))
 								{
 									if (AddSearchLocationParams (data_p, params_p))
 										{
@@ -159,7 +159,7 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchExperimentalAreaParams failed");
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchStudyParams failed");
 								}
 						}
 					else
@@ -243,14 +243,14 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 							 */
 							if (!RunForSearchFieldTrialParams (data_p, param_set_p, job_p))
 								{
-									if (!RunForSearchExperimentalAreaParams (data_p, param_set_p, job_p))
+									if (!RunForSearchStudyParams (data_p, param_set_p, job_p))
 										{
 											if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
 												{
 
 												}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
 
-										}		/* if (!RunForExperimentalAreaParams (data_p, param_set_p, job_p)) */
+										}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
 
 								}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 

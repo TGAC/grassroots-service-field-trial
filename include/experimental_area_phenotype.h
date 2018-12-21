@@ -39,7 +39,7 @@ typedef struct ExperimentalAreaPhenotype
 
 	char *eap_method_s;
 
-	ExperimentalArea *eap_area_p;
+	Study *eap_area_p;
 
 } ExperimentalAreaPhenotype;
 

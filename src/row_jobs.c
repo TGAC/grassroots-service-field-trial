@@ -25,7 +25,7 @@
 #include "plot_jobs.h"
 #include "phenotype_jobs.h"
 #include "string_utils.h"
-#include "experimental_area_jobs.h"
+#include "study_jobs.h"
 #include "math_utils.h"
 #include "time_util.h"
 #include "observation.h"
@@ -49,7 +49,7 @@ static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "RO Experimental Area", 
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
+static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
 static bool GetIntegerFromJSON (const json_t * const json_p, const char * const key_s, int *value_p);
 
@@ -75,7 +75,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 
 			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREAS_LIST.npt_type, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 				{
-					if (SetUpExperimentalAreasListParameter (dfw_service_data_p, param_p))
+					if (SetUpStudiesListParameter (dfw_service_data_p, param_p))
 						{
 							def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
@@ -133,7 +133,7 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 
 							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true))
 								{
-									ExperimentalArea *area_p = GetExperimentalAreaByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
+									Study *area_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (area_p)
 										{
@@ -148,7 +148,7 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "AddObservationValuesFromJSON for failed");
 												}
 
-											FreeExperimentalArea (area_p);
+											FreeStudy (area_p);
 										}		/* if (area_p) */
 
 								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true)) */
@@ -226,7 +226,7 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 
 
 
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -433,7 +433,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 														{
 															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-															bson_oid_to_string (area_p -> ea_id_p, id_s);
+															bson_oid_to_string (area_p -> st_id_p, id_s);
 															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plot at [" INT32_FMT ", " INT32_FMT "] for area \"%s\"", row, column, id_s);
 														}
 

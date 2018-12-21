@@ -44,8 +44,6 @@ SRCS 	= \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
 	dfw_util.c \
-	experimental_area.c \
-	experimental_area_jobs.c \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \
@@ -64,6 +62,8 @@ SRCS 	= \
 	row.c \
 	row_jobs.c \
 	search_service.c \
+	study.c \
+	study_jobs.c \
 	submission_service.c 
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 

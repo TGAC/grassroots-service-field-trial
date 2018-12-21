@@ -23,7 +23,7 @@
 #define ALLOCATE_LOCATION_TAGS (1)
 #include "location.h"
 #include "memory_allocations.h"
-#include "experimental_area.h"
+#include "study.h"
 #include "dfw_util.h"
 
 

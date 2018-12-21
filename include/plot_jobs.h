@@ -27,7 +27,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-#include "experimental_area.h"
+#include "study.h"
 #include "plot.h"
 
 
@@ -44,7 +44,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionPlotParams (ServiceData *data_p,
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }

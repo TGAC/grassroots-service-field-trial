@@ -26,7 +26,7 @@
 #include "field_trial_mongodb.h"
 #include "dfw_field_trial_service_data.h"
 #include "string_utils.h"
-#include "experimental_area.h"
+#include "study.h"
 #include "memory_allocations.h"
 #include "streams.h"
 #include "dfw_util.h"
@@ -42,7 +42,7 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid
 
 			if (copied_team_s)
 				{
-					LinkedList *areas_p = AllocateLinkedList (FreeExperimentalAreaNode);
+					LinkedList *areas_p = AllocateLinkedList (FreeStudyNode);
 
 					if (areas_p)
 						{
@@ -53,7 +53,7 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid
 									trial_p -> ft_name_s = copied_name_s;
 									trial_p -> ft_team_s = copied_team_s;
 									trial_p -> ft_id_p = id_p;
-									trial_p -> ft_experimental_areas_p = areas_p;
+									trial_p -> ft_studies_p = areas_p;
 
 									return trial_p;
 								}
@@ -163,9 +163,9 @@ void FreeFieldTrial (FieldTrial *trial_p)
 			FreeBSONOid (trial_p -> ft_id_p);
 		}
 
-	if (trial_p -> ft_experimental_areas_p)
+	if (trial_p -> ft_studies_p)
 		{
-			FreeLinkedList (trial_p -> ft_experimental_areas_p);
+			FreeLinkedList (trial_p -> ft_studies_p);
 		}
 
 	FreeMemory (trial_p);
@@ -192,7 +192,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 						{
 							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 								{
-									if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+									if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 										{
 											return trial_json_p;
 										}
@@ -210,33 +210,33 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 
 
 
-bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
-	if (trial_p -> ft_experimental_areas_p -> ll_size > 0)
+	if (trial_p -> ft_studies_p -> ll_size > 0)
 		{
-			json_t *exp_areas_p = json_array ();
+			json_t *studies_p = json_array ();
 
-			if (exp_areas_p)
+			if (studies_p)
 				{
-					ExperimentalAreaNode *node_p = (ExperimentalAreaNode *) (trial_p -> ft_experimental_areas_p -> ll_head_p);
+					StudyNode *node_p = (StudyNode *) (trial_p -> ft_studies_p -> ll_head_p);
 					bool ok_flag = true;
 
 					while (node_p && ok_flag)
 						{
-							json_t *area_p = GetExperimentalAreaAsJSON (node_p -> ean_experimental_area_p, format, data_p);
+							json_t *study_p = GetStudyAsJSON (node_p -> stn_study_p, format, data_p);
 
-							if (area_p)
+							if (study_p)
 								{
-									if (json_array_append_new (exp_areas_p, area_p) == 0)
+									if (json_array_append_new (studies_p, study_p) == 0)
 										{
-											node_p = (ExperimentalAreaNode *) (node_p -> ean_node.ln_next_p);
+											node_p = (StudyNode *) (node_p -> stn_node.ln_next_p);
 										}
 									else
 										{
 											ok_flag = false;
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, area_p, "Failed to add ExperimentalArea json to array for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to add Study json to array for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
 										}
 								}
 							else
@@ -244,15 +244,15 @@ bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_js
 									char buffer_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 									ok_flag = false;
-									bson_oid_to_string (node_p -> ean_experimental_area_p -> ea_id_p, buffer_s);
+									bson_oid_to_string (node_p -> stn_study_p -> st_id_p, buffer_s);
 
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, area_p, "Failed to get ExperimentalArea json for area \"%s\"", buffer_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get Study json for area \"%s\"", buffer_s);
 								}
 						}		/* while (node_p && success_flag) */
 
 					if (ok_flag)
 						{
-							if (json_object_set_new (trial_json_p, FT_EXPERIMENTAL_AREAS_S, exp_areas_p) == 0)
+							if (json_object_set_new (trial_json_p, FT_STUDIES_S, studies_p) == 0)
 								{
 									success_flag = true;
 								}
@@ -262,18 +262,18 @@ bool AddExperimentalAreasToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_js
 
 									ok_flag = false;
 
-									json_decref (exp_areas_p);
+									json_decref (studies_p);
 
 									bson_oid_to_string (trial_p -> ft_id_p, buffer_s);
 
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, exp_areas_p, "Failed to add ExperimentalArea json to trial \"%s\"", buffer_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, studies_p, "Failed to add Study json to trial \"%s\"", buffer_s);
 								}
 						}
 
 				}		/* if (exp_areas_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate ExperimentalAreas json object for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Studies json object for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
 				}
 
 		}		/* if (trial_p -> ft_experimental_areas_p -> ll_size > 0) */
@@ -432,15 +432,15 @@ FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFiel
 
 
 
-bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_p)
+bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p)
 {
 	bool success_flag = false;
-	ExperimentalAreaNode *node_p = AllocateExperimentalAreaNode (area_p);
+	StudyNode *node_p = AllocateStudyNode (study_p);
 
 	if (node_p)
 		{
-			area_p -> ea_parent_p = trial_p;
-			LinkedListAddTail (trial_p -> ft_experimental_areas_p, & (node_p -> ean_node));
+			study_p -> st_parent_p = trial_p;
+			LinkedListAddTail (trial_p -> ft_studies_p, & (node_p -> stn_node));
 			success_flag  = true;
 		}
 
@@ -449,7 +449,7 @@ bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, ExperimentalArea *area_
 
 
 
-bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -457,11 +457,11 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat fo
 
 	if (query_p)
 		{
-			if (BSON_APPEND_OID (query_p, EA_PARENT_FIELD_TRIAL_S, trial_p -> ft_id_p))
+			if (BSON_APPEND_OID (query_p, ST_PARENT_FIELD_TRIAL_S, trial_p -> ft_id_p))
 				{
-					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]))
+					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 						{
-							bson_t *opts_p =  BCON_NEW ( "sort", "{", EA_SOWING_DATE_S, BCON_INT32 (1), "}");
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_SOWING_DATE_S, BCON_INT32 (1), "}");
 
 							if (opts_p)
 								{
@@ -482,13 +482,13 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat fo
 
 															json_array_foreach (results_p, i, area_json_p)
 																{
-																	ExperimentalArea *area_p = GetExperimentalAreaFromJSON (area_json_p, format, data_p);
+																	Study *study_p = GetStudyFromJSON (area_json_p, format, data_p);
 
-																	if (area_p)
+																	if (study_p)
 																		{
-																			if (!AddFieldTrialExperimentalArea (trial_p, area_p))
+																			if (!AddFieldTrialStudy (trial_p, study_p))
 																				{
-																					FreeExperimentalArea (area_p);
+																					FreeStudy (study_p);
 																					success_flag = false;
 																				}
 																		}
@@ -509,7 +509,7 @@ bool GetAllFieldTrialExperimentalAreas (FieldTrial *trial_p, const ViewFormat fo
 
 						}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA])) */
 
-				}		/* if (BSON_APPEND_OID (query_p, EA_PARENT_FIELD_TRIAL_S, trial_p -> ft_id_p)) */
+				}		/* if (BSON_APPEND_OID (query_p, ST_PARENT_FIELD_TRIAL_S, trial_p -> ft_id_p)) */
 
 			bson_destroy (query_p);
 		}		/* if (query_p) */

@@ -24,7 +24,7 @@
 #include "material.h"
 #include "material_jobs.h"
 #include "string_utils.h"
-#include "experimental_area_jobs.h"
+#include "study_jobs.h"
 #include "gene_bank.h"
 #include "gene_bank_jobs.h"
 
@@ -47,7 +47,7 @@ static NamedParameterType S_GENE_BANKS_LIST = { "MA Gene Bank", PT_STRING };
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
-static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, ExperimentalArea *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
+static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
 
 
 
@@ -72,7 +72,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-					if (SetUpExperimentalAreasListParameter (dfw_service_data_p, param_p))
+					if (SetUpStudiesListParameter (dfw_service_data_p, param_p))
 						{
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", def, PL_ALL)) != NULL)
 								{
@@ -133,7 +133,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 
 							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &value, true))
 								{
-									ExperimentalArea *area_p = GetExperimentalAreaByIdString (value.st_string_value_s, VF_STORAGE, data_p);
+									Study *area_p = GetStudyByIdString (value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (area_p)
 										{
@@ -153,8 +153,8 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 																{
 																	char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-																	bson_oid_to_string (area_p -> ea_id_p, area_id_s);
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, materials_json_p, "AddMaterialsFromJSON for GeneBank with id \"%s\" and ExperimentalArea with id \"%s\"", value.st_string_value_s,materials_json_p);
+																	bson_oid_to_string (area_p -> st_id_p, area_id_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, materials_json_p, "AddMaterialsFromJSON for GeneBank with id \"%s\" and Study with id \"%s\"", value.st_string_value_s,materials_json_p);
 																}
 
 															FreeGeneBank (gene_bank_p);
@@ -170,11 +170,11 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_GENE_BANKS_LIST.npt_name_s);
 												}
 
-											FreeExperimentalArea (area_p);
+											FreeStudy (area_p);
 										}		/* if (area_p) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get ExperimentalArea with id \"%s\"", value.st_string_value_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Study with id \"%s\"", value.st_string_value_s);
 										}
 
 								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &value, true)) */
@@ -246,7 +246,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, ExperimentalArea *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
+static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;

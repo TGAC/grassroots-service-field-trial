@@ -36,7 +36,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFie
 
 
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
-										const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p)
+										const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, Study *parent_p)
 {
 	char *copied_trial_design_s = NULL;
 
@@ -265,13 +265,13 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 
 																											case VF_STORAGE:
 																												{
-																													if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_EXPERIMENTAL_AREA_S))
+																													if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
 																														{
 																															success_flag = true;
-																														}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> ea_id_p, PL_PARENT_FIELD_TRIAL_S)) */
+																														}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_FIELD_TRIAL_S)) */
 																													else
 																														{
-																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_STUDY_S);
 																														}
 																												}		/* case VF_STORAGE */
 																												break;
@@ -384,7 +384,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row;
@@ -430,20 +430,20 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_
 
 																					if (parent_area_id_p)
 																						{
-																							if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_EXPERIMENTAL_AREA_S, parent_area_id_p))
+																							if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_STUDY_S, parent_area_id_p))
 																								{
 
 
 																								}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_STUDY_S);
 																								}
 
 																						}		/* if (parent_area_id_p) */
 																					else
 																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_EXPERIMENTAL_AREA_S);
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_STUDY_S);
 																						}
 
 																				}		/* if (!parent_area_p) */

@@ -38,7 +38,7 @@
 typedef enum
 {
 	DFTD_FIELD_TRIAL,
-	DFTD_EXPERIMENTAL_AREA,
+	DFTD_STUDY,
 	DFTD_LOCATION,
 	DFTD_PLOT,
 	DFTD_ROW,
@@ -152,7 +152,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_S DFW_FIELD_TRIAL_VAL ("FieldTrials
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_EXPERMIENTAL_AREA_S DFW_FIELD_TRIAL_VAL ("ExperimentalAreas");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_STUDIES_S DFW_FIELD_TRIAL_VAL ("Studies");
 
 
 /**

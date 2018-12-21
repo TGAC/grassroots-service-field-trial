@@ -77,7 +77,7 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 					success_flag = true;
 
 					* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_EXPERIMENTAL_AREA) = DFT_EXPERMIENTAL_AREA_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_MATERIAL) = DFT_MATERIAL_S;

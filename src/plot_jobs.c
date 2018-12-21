@@ -26,7 +26,7 @@
 #include "plot.h"
 #include "time_util.h"
 #include "string_utils.h"
-#include "experimental_area_jobs.h"
+#include "study_jobs.h"
 #include "math_utils.h"
 #include "material.h"
 #include "row.h"
@@ -93,7 +93,7 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char delimiter, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, ExperimentalArea *area_p,  const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *area_p,  const DFWFieldTrialServiceData *data_p);
 
 static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_delimiter);
 
@@ -124,7 +124,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 		{
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-			if (SetUpExperimentalAreasListParameter (dfw_service_data_p, param_p))
+			if (SetUpStudiesListParameter (dfw_service_data_p, param_p))
 				{
 					def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
@@ -217,7 +217,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpExperimentalAreasListParameter failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpStudysListParameter failed");
 				}
 		}
 	else
@@ -260,13 +260,13 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true))
 								{
-									ExperimentalArea *area_p = GetExperimentalAreaByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
+									Study *area_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (area_p)
 										{
 											success_flag = AddPlotsFromJSON (job_p, plots_json_p, area_p, data_p);
 
-											FreeExperimentalArea (area_p);
+											FreeStudy (area_p);
 										}
 								}
 
@@ -354,7 +354,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
@@ -517,7 +517,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Exp
 								}		/* if (material_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", material_s, area_p -> ea_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", material_s, area_p -> st_name_s);
 								}
 
 						}		/* if (material_s) */
@@ -650,13 +650,13 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 
 
 
-Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
-			bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_EXPERIMENTAL_AREA_S, BCON_OID (area_p -> ea_id_p));
+			bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (area_p -> st_id_p));
 
 			if (query_p)
 				{

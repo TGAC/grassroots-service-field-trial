@@ -23,12 +23,12 @@
 #ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_H_
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_LOCATION_H_
 
-#include "experimental_area.h"
+#include "study.h"
 #include "jansson.h"
 
 #include "address.h"
 
-struct ExperimentalArea;
+struct Study;
 
 typedef struct Location
 {

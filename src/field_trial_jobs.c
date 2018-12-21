@@ -420,9 +420,9 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 																	if (trial_p)
 																		{
-																			if (GetAllFieldTrialExperimentalAreas (trial_p, format, data_p))
+																			if (GetAllFieldTrialStudies (trial_p, format, data_p))
 																				{
-																					if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+																					if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 																						{
 																							char *title_s = GetFieldTrialAsString (trial_p);
 
@@ -446,7 +446,7 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 																									FreeCopiedString (title_s);
 																								}		/* if (title_s) */
 
-																						}		/* if (AddExperimentalAreasToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
+																						}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
 
 																				}
 

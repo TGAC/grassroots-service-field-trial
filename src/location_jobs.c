@@ -374,7 +374,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 															if (address_p)
 																{
 																	const uint32 order = 0;
-																	ExperimentalArea *area_p = NULL;
+																	Study *study_p = NULL;
 																	bson_oid_t *id_p = NULL;
 
 																	if (use_gps_value.st_boolean_value)

@@ -24,7 +24,7 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
 
 #include "dfw_field_trial_service_library.h"
-#include "experimental_area.h"
+#include "study.h"
 #include "jansson.h"
 
 
@@ -48,7 +48,7 @@
 
 PLOT_PREFIX const char *PL_ID_S PLOT_VAL ("id");
 
-PLOT_PREFIX const char *PL_PARENT_EXPERIMENTAL_AREA_S PLOT_VAL ("parent_experimental_area_id");
+PLOT_PREFIX const char *PL_PARENT_STUDY_S PLOT_VAL ("parent_study_id");
 
 PLOT_PREFIX const char *PL_SOWING_DATE_S PLOT_VAL ("sowing_date");
 
@@ -78,7 +78,7 @@ typedef struct Plot
 {
 	bson_oid_t *pl_id_p;
 
-	ExperimentalArea *pl_parent_p;
+	Study *pl_parent_p;
 
 	struct tm *pl_sowing_date_p;
 
@@ -126,7 +126,7 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
-																									const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, ExperimentalArea *parent_p);
+																									const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, Study *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 
@@ -138,7 +138,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotNode (ListItem *node_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, ExperimentalArea *parent_area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPlotRows (Plot *plot_p, const DFWFieldTrialServiceData *data_p);

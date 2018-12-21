@@ -36,7 +36,7 @@ static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceD
  * API FUNCTIONS
  */
 
-Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const ExperimentalArea *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_accession_s = EasyCopyToNewString (accession_s);
 
@@ -127,7 +127,7 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const cha
 }
 
 
-Material *AllocateMaterialByInternalName (bson_oid_t *id_p, const char *internal_name_s, const ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterialByInternalName (bson_oid_t *id_p, const char *internal_name_s, const Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_internal_name_s = EasyCopyToNewString (internal_name_s);
 
@@ -244,11 +244,11 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 						{
 							if (format == VF_STORAGE)
 								{
-									if (!AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> ea_id_p, MA_EXPERIMENTAL_AREA_ID_S))
+									if (!AddNamedCompoundIdToJSON (material_json_p, material_p -> ma_parent_area_p -> st_id_p, MA_EXPERIMENTAL_AREA_ID_S))
 										{
 											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-											bson_oid_to_string (material_p -> ma_parent_area_p -> ea_id_p, id_s);
+											bson_oid_to_string (material_p -> ma_parent_area_p -> st_id_p, id_s);
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MA_EXPERIMENTAL_AREA_ID_S, id_s);
 
 											success_flag = false;
@@ -343,7 +343,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 										{
 											if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p))
 												{
-													ExperimentalArea *area_p = NULL;
+													Study *area_p = NULL;
 													bool success_flag = false;
 
 													if (format == VF_CLIENT_FULL)
@@ -354,14 +354,14 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 																{
 																	if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, exp_area_id_p))
 																		{
-																			area_p = GetExperimentalAreaById (exp_area_id_p, format, data_p);
+																			area_p = GetStudyById (exp_area_id_p, format, data_p);
 
 																			if (!area_p)
 																				{
 																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 																					bson_oid_to_string (exp_area_id_p, id_s);
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find ExperimentalArea with id \"%s\"", id_s);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find Study with id \"%s\"", id_s);
 																				}
 																		}
 																	else
@@ -399,7 +399,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 
 													if (area_p)
 														{
-															FreeExperimentalArea (area_p);
+															FreeStudy (area_p);
 														}
 
 												}		/* if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p)) */
@@ -466,7 +466,7 @@ bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-Material *GetOrCreateMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = GetMaterialByInternalName (material_s, area_p, data_p);
 
@@ -476,7 +476,7 @@ Material *GetOrCreateMaterialByInternalName (const char *material_s, Experimenta
 
 			if (!material_p)
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Material with internal name of \"%s\" for area \"%s\"", material_s, area_p -> ea_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Material with internal name of \"%s\" for area \"%s\"", material_s, area_p -> st_name_s);
 				}
 
 		}		/* if (!material_p) */
@@ -485,10 +485,10 @@ Material *GetOrCreateMaterialByInternalName (const char *material_s, Experimenta
 }
 
 
-Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
-	bson_t *query_p = BCON_NEW (MA_INTERNAL_NAME_S, BCON_UTF8 (material_s), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> ea_id_p));
+	bson_t *query_p = BCON_NEW (MA_INTERNAL_NAME_S, BCON_UTF8 (material_s), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> st_id_p));
 
 	if (query_p)
 		{
@@ -506,10 +506,10 @@ Material *GetMaterialByInternalName (const char *material_s, ExperimentalArea *a
 }
 
 
-Material *GetMaterialById (const bson_oid_t *material_id_p, ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialById (const bson_oid_t *material_id_p, Study *area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
-	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> ea_id_p));
+	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> st_id_p));
 
 	if (query_p)
 		{

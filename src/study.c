@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#define ALLOCATE_EXPERIMENTAL_AREA_TAGS (1)
-#include "experimental_area.h"
+#define ALLOCATE_STUDY_TAGS (1)
+#include "study.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "plot.h"
@@ -36,16 +36,16 @@
 /*
  * STATIC PROTOTYPES
  */
-static void *GetExperimentalAreaCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsToJSON (Study *study_p, json_t *arst_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 /*
  * API FUNCTIONS
  */
 
-ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
+Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -84,21 +84,21 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 
 											if (plots_p)
 												{
-													ExperimentalArea *area_p = (ExperimentalArea *) AllocMemory (sizeof (ExperimentalArea));
+													Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-													if (area_p)
+													if (study_p)
 														{
-															area_p -> ea_id_p = id_p;
-															area_p -> ea_name_s = copied_name_s;
-															area_p -> ea_data_url_s = copied_url_s;
-															area_p -> ea_soil_type_s = copied_soil_s;
-															area_p -> ea_sowing_date_p = copied_sowing_date_p;
-															area_p -> ea_harvest_date_p = copied_harvest_date_p;
-															area_p -> ea_parent_p = parent_field_trial_p;
-															area_p -> ea_location_p = location_p;
-															area_p -> ea_plots_p = plots_p;
+															study_p -> st_id_p = id_p;
+															study_p -> st_name_s = copied_name_s;
+															study_p -> st_data_url_s = copied_url_s;
+															study_p -> st_soil_type_s = copied_soil_s;
+															study_p -> st_sowing_date_p = copied_sowing_date_p;
+															study_p -> st_harvest_date_p = copied_harvest_date_p;
+															study_p -> st_parent_p = parent_field_trial_p;
+															study_p -> st_location_p = location_p;
+															study_p -> st_plots_p = plots_p;
 
-															return area_p;
+															return study_p;
 														}
 
 													FreeLinkedList (plots_p);
@@ -148,89 +148,89 @@ ExperimentalArea *AllocateExperimentalArea (bson_oid_t *id_p, const char *name_s
 }
 
 
-void FreeExperimentalArea (ExperimentalArea *area_p)
+void FreeStudy (Study *study_p)
 {
-	if (area_p -> ea_id_p)
+	if (study_p -> st_id_p)
 		{
-			FreeBSONOid (area_p -> ea_id_p);
+			FreeBSONOid (study_p -> st_id_p);
 		}
 
-	if (area_p -> ea_name_s)
+	if (study_p -> st_name_s)
 		{
-			FreeCopiedString (area_p -> ea_name_s);
+			FreeCopiedString (study_p -> st_name_s);
 		}
 
-	if (area_p -> ea_data_url_s)
+	if (study_p -> st_data_url_s)
 		{
-			FreeCopiedString (area_p -> ea_data_url_s);
+			FreeCopiedString (study_p -> st_data_url_s);
 		}
 
-	if (area_p -> ea_soil_type_s)
+	if (study_p -> st_soil_type_s)
 		{
-			FreeCopiedString (area_p -> ea_soil_type_s);
+			FreeCopiedString (study_p -> st_soil_type_s);
 		}
 
-	if (area_p -> ea_location_p)
+	if (study_p -> st_location_p)
 		{
-			FreeLocation (area_p -> ea_location_p);
+			FreeLocation (study_p -> st_location_p);
 		}
 
-	if (area_p -> ea_plots_p)
+	if (study_p -> st_plots_p)
 		{
-			FreeLinkedList (area_p -> ea_plots_p);
+			FreeLinkedList (study_p -> st_plots_p);
 		}
 
 
-	if (area_p -> ea_sowing_date_p)
+	if (study_p -> st_sowing_date_p)
 		{
-			FreeTime (area_p -> ea_sowing_date_p);
+			FreeTime (study_p -> st_sowing_date_p);
 		}
 
-	if (area_p -> ea_harvest_date_p)
+	if (study_p -> st_harvest_date_p)
 		{
-			FreeTime (area_p -> ea_harvest_date_p);
+			FreeTime (study_p -> st_harvest_date_p);
 		}
 
-	FreeMemory (area_p);
+	FreeMemory (study_p);
 }
 
 
-ExperimentalAreaNode *AllocateExperimentalAreaNode (ExperimentalArea *area_p)
+StudyNode *AllocateStudyNode (Study *study_p)
 {
-	ExperimentalAreaNode *ea_node_p = (ExperimentalAreaNode *) AllocMemory (sizeof (ExperimentalAreaNode));
+	StudyNode *st_node_p = (StudyNode *) AllocMemory (sizeof (StudyNode));
 
-	if (ea_node_p)
+	if (st_node_p)
 		{
-			InitListItem (& (ea_node_p -> ean_node));
+			InitListItem (& (st_node_p -> stn_node));
 
-			ea_node_p -> ean_experimental_area_p = area_p;
+			st_node_p -> stn_study_p = study_p;
 		}
 
-	return ea_node_p;
+	return st_node_p;
 }
 
-void FreeExperimentalAreaNode (ListItem *node_p)
+void FreeStudyNode (ListItem *node_p)
 {
-	ExperimentalAreaNode *ea_node_p = (ExperimentalAreaNode *) node_p;
+	StudyNode *st_node_p = (StudyNode *) node_p;
 
-	if (ea_node_p -> ean_experimental_area_p)
+	if (st_node_p -> stn_study_p)
 		{
-			FreeExperimentalArea (ea_node_p -> ean_experimental_area_p);
+			FreeStudy (st_node_p -> stn_study_p);
 		}
 
-	FreeMemory (ea_node_p);
+	FreeMemory (st_node_p);
 }
 
 
-bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServiceData *data_p)
+bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
-	ClearLinkedList (area_p -> ea_plots_p);
+	ClearLinkedList (study_p -> st_plots_p);
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
-			bson_t *query_p = BCON_NEW (PL_PARENT_EXPERIMENTAL_AREA_S, BCON_OID (area_p -> ea_id_p));
+			bson_t *query_p = BCON_NEW (PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
 
 			/*
 			 * Make the query to get the matching plots
@@ -258,7 +258,7 @@ bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServ
 
 													json_array_foreach (results_p, i, plot_json_p)
 														{
-															Plot *plot_p = GetPlotFromJSON (plot_json_p, area_p, data_p);
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
 
 															if (plot_p)
 																{
@@ -266,7 +266,7 @@ bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServ
 
 																	if (node_p)
 																		{
-																			LinkedListAddTail (area_p -> ea_plots_p, & (node_p -> pn_node));
+																			LinkedListAddTail (study_p -> st_plots_p, & (node_p -> pn_node));
 																		}
 																	else
 																		{
@@ -297,21 +297,21 @@ bool GetExperimentalAreaPlots (ExperimentalArea *area_p, const DFWFieldTrialServ
 }
 
 
-bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *data_p)
+bool SaveStudy (Study *study_p, DFWFieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
-	bool success_flag = PrepareSaveData (& (area_p -> ea_id_p), &selector_p);
+	bool success_flag = PrepareSaveData (& (study_p -> st_id_p), &selector_p);
 
 	if (success_flag)
 		{
-			json_t *area_json_p = GetExperimentalAreaAsJSON (area_p, VF_STORAGE, data_p);
+			json_t *arst_json_p = GetStudyAsJSON (study_p, VF_STORAGE, data_p);
 
-			if (area_json_p)
+			if (arst_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, area_json_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA], selector_p);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, arst_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p);
 
-					json_decref (area_json_p);
-				}		/* if (area_json_p) */
+					json_decref (arst_json_p);
+				}		/* if (arst_json_p) */
 
 		}		/* if (success_flag) */
 
@@ -319,17 +319,17 @@ bool SaveExperimentalArea (ExperimentalArea *area_p, DFWFieldTrialServiceData *d
 }
 
 
-json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	json_t *area_json_p = json_object ();
+	json_t *arst_json_p = json_object ();
 
-	if (area_json_p)
+	if (arst_json_p)
 		{
-			if (SetJSONString (area_json_p, EA_NAME_S, area_p -> ea_name_s))
+			if (SetJSONString (arst_json_p, ST_NAME_S, study_p -> st_name_s))
 				{
-					if ((IsStringEmpty (area_p -> ea_data_url_s)) || (SetJSONString (area_json_p, EA_DATA_LINK_S, area_p -> ea_data_url_s)))
+					if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (arst_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s)))
 						{
-							if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (SetJSONString (area_json_p, EA_SOIL_S, area_p -> ea_soil_type_s)))
+							if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (arst_json_p, ST_SOIL_S, study_p -> st_soil_type_s)))
 								{
 									bool add_item_flag = false;
 
@@ -338,14 +338,14 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 									 */
 									if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 										{
-											json_t *location_json_p = GetLocationAsJSON (area_p -> ea_location_p);
+											json_t *location_json_p = GetLocationAsJSON (study_p -> st_location_p);
 
 											if (location_json_p)
 												{
-													if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0)
+													if (json_object_set_new (arst_json_p, ST_LOCATION_S, location_json_p) == 0)
 														{
 															add_item_flag = true;
-														}		/* if (json_object_set_new (area_json_p, EA_LOCATION_S, location_json_p) == 0) */
+														}		/* if (json_object_set_new (arst_json_p, ST_LOCATION_S, location_json_p) == 0) */
 													else
 														{
 															json_decref (location_json_p);
@@ -354,7 +354,7 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 										}
 									else
 										{
-											if (AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_location_p -> lo_id_p, EA_LOCATION_ID_S))
+											if (AddNamedCompoundIdToJSON (arst_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S))
 												{
 													add_item_flag = true;
 												}
@@ -369,9 +369,9 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 											 */
 											if (format == VF_STORAGE)
 												{
-													if (AddValidDateAsEpochToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
+													if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, arst_json_p, ST_SOWING_DATE_S))
 														{
-															if (AddValidDateAsEpochToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
+															if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, arst_json_p, ST_HARVEST_DATE_S))
 																{
 																	add_item_flag = true;
 																}
@@ -379,9 +379,9 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 												}
 											else
 												{
-													if (AddValidDateToJSON (area_p -> ea_sowing_date_p, area_json_p, EA_SOWING_DATE_S))
+													if (AddValidDateToJSON (study_p -> st_sowing_date_p, arst_json_p, ST_SOWING_DATE_S))
 														{
-															if (AddValidDateToJSON (area_p -> ea_harvest_date_p, area_json_p, EA_HARVEST_DATE_S))
+															if (AddValidDateToJSON (study_p -> st_harvest_date_p, arst_json_p, ST_HARVEST_DATE_S))
 																{
 																	add_item_flag = true;
 																}
@@ -391,19 +391,19 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 											if (add_item_flag)
 												{
 
-													if (AddCompoundIdToJSON (area_json_p, area_p -> ea_id_p))
+													if (AddCompoundIdToJSON (arst_json_p, study_p -> st_id_p))
 														{
 															bool success_flag = false;
 
 															if (format == VF_STORAGE)
 																{
-																	success_flag = AddNamedCompoundIdToJSON (area_json_p, area_p -> ea_parent_p -> ft_id_p, EA_PARENT_FIELD_TRIAL_S);
+																	success_flag = AddNamedCompoundIdToJSON (arst_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S);
 																}
 															else if (format == VF_CLIENT_FULL)
 																{
-																	if (GetExperimentalAreaPlots (area_p, data_p))
+																	if (GetStudyPlots (study_p, data_p))
 																		{
-																			if (AddPlotsToJSON (area_p, area_json_p, format, data_p))
+																			if (AddPlotsToJSON (study_p, arst_json_p, format, data_p))
 																				{
 																					success_flag = true;
 																				}
@@ -416,31 +416,31 @@ json_t *GetExperimentalAreaAsJSON (ExperimentalArea *area_p, const ViewFormat fo
 
 															if (success_flag)
 																{
-																	return area_json_p;
+																	return arst_json_p;
 																}
 														}
 
 												}
 										}
 
-								}		/* if ((IsStringEmpty (area_p -> ea_soil_type_s)) || (SetJSONString (area_json_p, EA_SOIL_S, area_p -> ea_soil_type_s) == 0)) */
+								}		/* if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (arst_json_p, ST_SOIL_S, study_p -> st_soil_type_s) == 0)) */
 
-						}		/* if ((IsStringEmpty (area_p -> ea_data_url_s)) || (SetJSONString (area_json_p, EA_DATA_LINK_S, area_p -> ea_data_url_s) == 0)) */
+						}		/* if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (arst_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s) == 0)) */
 
-				}		/* if (SetJSONString (area_json_p, EA_NAME_S, area_p -> ea_name_s) == 0) */
+				}		/* if (SetJSONString (arst_json_p, ST_NAME_S, study_p -> st_name_s) == 0) */
 
-			json_decref (area_json_p);
-		}		/* if (area_json_p) */
+			json_decref (arst_json_p);
+		}		/* if (arst_json_p) */
 
 	return NULL;
 }
 
 
 
-ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	const char *name_s = GetJSONString (json_p, EA_NAME_S);
-	ExperimentalArea *area_p = NULL;
+	const char *name_s = GetJSONString (json_p, ST_NAME_S);
+	Study *study_p = NULL;
 
 	if (name_s)
 		{
@@ -448,7 +448,7 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 
 			if (location_id_p)
 				{
-					if (GetNamedIdFromJSON (json_p, EA_LOCATION_ID_S, location_id_p))
+					if (GetNamedIdFromJSON (json_p, ST_LOCATION_ID_S, location_id_p))
 						{
 							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
@@ -473,91 +473,91 @@ ExperimentalArea *GetExperimentalAreaFromJSON (const json_t *json_p, const ViewF
 												{
 													struct tm *sowing_date_p = NULL;
 
-													if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p))
+													if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p))
 														{
 															struct tm *harvest_date_p = NULL;
 
-															if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p))
+															if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p))
 																{
-																	const char *soil_s = GetJSONString (json_p, EA_SOIL_S);
-																	const char *data_url_s = GetJSONString (json_p, EA_DATA_LINK_S);
+																	const char *soil_s = GetJSONString (json_p, ST_SOIL_S);
+																	const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
 
-																	area_p = AllocateExperimentalArea (id_p, name_s, soil_s, data_url_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+																	study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
 
 																	/*
-																	 * The dates are copied by AllocateExperimentalArea so we can free our values.
+																	 * The dates are copied by AllocateStudy so we can free our values.
 																	 */
 																	if (harvest_date_p)
 																		{
 																			FreeTime (harvest_date_p);
 																		}
 
-																}		/* if (CreateValidDateFromJSON (json_p, EA_HARVEST_DATE_S, &harvest_date_p)) */
+																}		/* if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p)) */
 
 															/*
-															 * The dates are copied by AllocateExperimentalArea so we can free our values.
+															 * The dates are copied by AllocateStudy so we can free our values.
 															 */
 															if (sowing_date_p)
 																{
 																	FreeTime (sowing_date_p);
 																}
 
-														}		/* if (CreateValidDateFromJSON (json_p, EA_SOWING_DATE_S, &sowing_date_p)) */
+														}		/* if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p)) */
 
 												}		/* if (success_flag) */
 
 										}
 
-									if (!area_p)
+									if (!study_p)
 										{
 											FreeBSONOid (id_p);
 										}
 
 								}
 
-						}		/* if (GetNamedIdFromJSON (json_p, EA_LOCATION_S, address_id_p)) */
+						}		/* if (GetNamedIdFromJSON (json_p, ST_LOCATION_S, address_id_p)) */
 
 					FreeBSONOid (location_id_p);
 				}		/* if (location_id_p) */
 
 		}		/* if (name_s) */
 
-	return area_p;
+	return study_p;
 }
 
 
-ExperimentalArea *GetExperimentalAreaByIdString (const char *area_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyByIdString (const char *arst_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	ExperimentalArea *area_p = GetDFWObjectByIdString (area_id_s, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, format, data_p);
+	Study *study_p = GetDFWObjectByIdString (arst_id_s, DFTD_STUDY, GetStudyCallback, format, data_p);
 
-	return area_p;
+	return study_p;
 }
 
 
-ExperimentalArea *GetExperimentalAreaById (bson_oid_t *area_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyById (bson_oid_t *arst_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	ExperimentalArea *area_p = GetDFWObjectById (area_id_p, DFTD_EXPERIMENTAL_AREA, GetExperimentalAreaCallback, format, data_p);
+	Study *study_p = GetDFWObjectById (arst_id_p, DFTD_STUDY, GetStudyCallback, format, data_p);
 
-	return area_p;
+	return study_p;
 }
 
 
-static void *GetExperimentalAreaCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	return GetExperimentalAreaFromJSON (json_p, format, data_p);
+	return GetStudyFromJSON (json_p, format, data_p);
 }
 
 
-static bool AddPlotsToJSON (ExperimentalArea *area_p, json_t *area_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsToJSON (Study *study_p, json_t *arst_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *plots_json_p = json_array ();
 
 	if (plots_json_p)
 		{
-			if (json_object_set_new (area_json_p, EA_PLOTS_S, plots_json_p) == 0)
+			if (json_object_set_new (arst_json_p, ST_PLOTS_S, plots_json_p) == 0)
 				{
-					PlotNode *node_p = (PlotNode *) (area_p -> ea_plots_p -> ll_head_p);
+					PlotNode *node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
 
 					success_flag = true;
 
