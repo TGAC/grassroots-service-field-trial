@@ -44,7 +44,7 @@ static const char * const S_RACK_S = "Rack";
 
 static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER = { "RO phenotype data delimiter", PT_CHAR };
 static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE = { "RO phenotype data upload", PT_TABLE};
-static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "RO Experimental Area", PT_STRING };
+static NamedParameterType S_STUDIES_LIST = { "RO Study", PT_STRING };
 
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
@@ -73,7 +73,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 
 			InitSharedType (&def);
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREAS_LIST.npt_type, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 				{
 					if (SetUpStudiesListParameter (dfw_service_data_p, param_p))
 						{
@@ -131,7 +131,7 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 							SharedType parent_experimental_area_value;
 							InitSharedType (&parent_experimental_area_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true))
 								{
 									Study *area_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
 
@@ -151,7 +151,7 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 											FreeStudy (area_p);
 										}		/* if (area_p) */
 
-								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true)) */
+								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true)) */
 
 							json_decref (observations_json_p);
 						}		/* if (observations_json_p) */

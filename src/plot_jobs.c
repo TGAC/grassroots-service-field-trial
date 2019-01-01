@@ -81,7 +81,7 @@ static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter",
 static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_TABLE};
 
 
-static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "PL Experimental Area", PT_STRING };
+static NamedParameterType S_STUDIES_LIST = { "PL Study", PT_STRING };
 
 
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
@@ -120,7 +120,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	InitSharedType (&def);
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREAS_LIST.npt_type, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 		{
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
@@ -212,7 +212,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREAS_LIST.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDIES_LIST.npt_name_s);
 						}
 				}
 			else
@@ -222,7 +222,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_EXPERIMENTAL_AREAS_LIST.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDIES_LIST.npt_name_s);
 		}
 
 	return success_flag;
@@ -258,7 +258,7 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 							SharedType parent_experimental_area_value;
 							InitSharedType (&parent_experimental_area_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &parent_experimental_area_value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true))
 								{
 									Study *area_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
 

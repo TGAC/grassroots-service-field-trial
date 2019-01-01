@@ -276,7 +276,7 @@ bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, cons
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Studies json object for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
 				}
 
-		}		/* if (trial_p -> ft_experimental_areas_p -> ll_size > 0) */
+		}		/* if (trial_p -> ft_studies_p -> ll_size > 0) */
 	else
 		{
 			/* nothing to add */

@@ -42,7 +42,7 @@ static const char * const S_ACCESSION_TITLE_S = "Store code";
 
 static NamedParameterType S_MATERIAL_TABLE_COLUMN_DELIMITER = { "MA Data delimiter", PT_CHAR };
 static NamedParameterType S_MATERIAL_TABLE = { "MA Upload", PT_TABLE};
-static NamedParameterType S_EXPERIMENTAL_AREAS_LIST = { "MA Experimental Area", PT_STRING };
+static NamedParameterType S_STUDIES_LIST = { "MA Study", PT_STRING };
 static NamedParameterType S_GENE_BANKS_LIST = { "MA Gene Bank", PT_STRING };
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
@@ -68,7 +68,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 
 			InitSharedType (&def);
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_EXPERIMENTAL_AREAS_LIST.npt_type, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, "Experimental Area", "The available experimental areas", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Area", "The available experimental areas", def, PL_ALL)) != NULL)
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
@@ -131,7 +131,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 						{
 							InitSharedType (&value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value, true))
 								{
 									Study *area_p = GetStudyByIdString (value.st_string_value_s, VF_STORAGE, data_p);
 
@@ -177,10 +177,10 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Study with id \"%s\"", value.st_string_value_s);
 										}
 
-								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_EXPERIMENTAL_AREAS_LIST.npt_name_s, &value, true)) */
+								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value, true)) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_EXPERIMENTAL_AREAS_LIST.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_STUDIES_LIST.npt_name_s);
 								}
 
 							json_decref (materials_json_p);

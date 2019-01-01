@@ -40,11 +40,11 @@ static NamedParameterType S_STUDY_SOIL = { "EA Soil", PT_STRING };
 static NamedParameterType S_STUDY_LINK = { "EA Link", PT_STRING };
 static NamedParameterType S_STUDY_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
 static NamedParameterType S_STUDY_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
-static NamedParameterType S_ADD_EXPERIMENTAL_AREA = { "Add Experimental Area", PT_BOOLEAN };
-static NamedParameterType S_GET_ALL_EXPERIMENTAL_AREAS = { "Get all Experimental Areas", PT_BOOLEAN };
+static NamedParameterType S_ADD_STUDY = { "Add Study", PT_BOOLEAN };
+static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
 
-static NamedParameterType S_ARST_ID = { "Experimental Area to search for", PT_STRING };
-static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Experimental Area", PT_BOOLEAN };
+static NamedParameterType S_STUDY_ID = { "Study to search for", PT_STRING };
+static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Study", PT_BOOLEAN };
 
 
 
@@ -53,7 +53,7 @@ static NamedParameterType S_LOCATIONS_LIST = { "Locations", PT_STRING };
 
 static NamedParameterType S_ACTIVE_DATE = { "Active on date", PT_TIME };
 
-static NamedParameterType S_SEARCH_EXPERIMENTAL_AREAS = { "Search Experimental Areas", PT_BOOLEAN };
+static NamedParameterType S_SEARCH_STUDIES = { "Search Studies", PT_BOOLEAN };
 
 /*
  * STATIC DECLARATIONS
@@ -83,7 +83,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	SharedType def;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Experimental Area", NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", NULL, false, data_p, param_set_p);
 
 	def.st_string_value_s = NULL;
 
@@ -118,20 +118,20 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 																{
 																	if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, false))
 																		{
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_EXPERIMENTAL_AREA.npt_type, S_ADD_EXPERIMENTAL_AREA.npt_name_s, "Add", "Add a new Experimental Area", def, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Experimental Area", def, PL_ALL)) != NULL)
 																				{
-																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_EXPERIMENTAL_AREAS.npt_type, S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_ALL)) != NULL)
+																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_ALL)) != NULL)
 																						{
 																							success_flag = true;
 																						}
 																					else
 																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s);
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
 																						}
 																				}
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_EXPERIMENTAL_AREA.npt_name_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
 																				}
 																		}
 																	else
@@ -195,7 +195,7 @@ bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_STUDY.npt_name_s, &value, true))
 		{
 			if (value.st_boolean_value)
 				{
@@ -209,7 +209,7 @@ bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet
 
 	if (!job_done_flag)
 		{
-			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_EXPERIMENTAL_AREAS.npt_name_s, &value, true))
+			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_STUDIES.npt_name_s, &value, true))
 				{
 					if (value.st_boolean_value)
 						{
@@ -288,11 +288,11 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 		{
 			def.st_boolean_value = false;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_EXPERIMENTAL_AREAS.npt_type, S_SEARCH_EXPERIMENTAL_AREAS.npt_name_s, "Search Experimental Areas", "Get the matching Experimental Areas", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_STUDIES.npt_type, S_SEARCH_STUDIES.npt_name_s, "Search Experimental Areas", "Get the matching Experimental Areas", def, PL_ADVANCED)) != NULL)
 				{
 					def.st_string_value_s = NULL;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ARST_ID.npt_type, S_ARST_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_ID.npt_type, S_STUDY_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
 						{
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ADVANCED)) != NULL)
 								{
@@ -335,13 +335,13 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ARST_ID.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDY_ID.npt_name_s);
 						}
 
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_EXPERIMENTAL_AREAS.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_STUDIES.npt_name_s);
 				}
 		}
 	else
@@ -360,7 +360,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 	InitSharedType (&value);
 	ViewFormat format = VF_CLIENT_MINIMAL;
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_SEARCH_EXPERIMENTAL_AREAS.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_SEARCH_STUDIES.npt_name_s, &value, true))
 		{
 			if (value.st_boolean_value)
 				{
@@ -625,7 +625,7 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ARST_ID.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_ID.npt_name_s, &value, true))
 		{
 			if (value.st_string_value_s)
 				{
