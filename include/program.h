@@ -55,6 +55,8 @@ typedef struct Program
 
 	char *pr_common_crop_name_s;
 
+	char *pr_documentation_url_s;
+
 	char *pr_abbreviation_s;
 
 	char *pr_name_s;

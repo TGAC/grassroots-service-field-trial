@@ -27,6 +27,7 @@
 #include "dfw_field_trial_service_library.h"
 #include "jansson.h"
 
+#include "address.h"
 #include "typedefs.h"
 
 /*
@@ -57,6 +58,7 @@ typedef struct Person
 
 	char *pe_phone_s;
 
+	Address *pe_mailing_address_p;
 
 } Person;
 
