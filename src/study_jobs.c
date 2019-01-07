@@ -281,18 +281,18 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	SharedType def;
-	const char * const group_name_s = "Experimental Area";
+	const char * const group_name_s = "Studies";
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet (group_name_s, NULL, false, data_p, param_set_p);
 
 	if (group_p)
 		{
 			def.st_boolean_value = false;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_STUDIES.npt_type, S_SEARCH_STUDIES.npt_name_s, "Search Experimental Areas", "Get the matching Experimental Areas", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_STUDIES.npt_type, S_SEARCH_STUDIES.npt_name_s, "Search Studies", "Get the matching Experimental Areas", def, PL_ADVANCED)) != NULL)
 				{
 					def.st_string_value_s = NULL;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_ID.npt_type, S_STUDY_ID.npt_name_s, "id", "The id of the Experimental Area", def, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_ID.npt_type, S_STUDY_ID.npt_name_s, "id", "The id of the Study", def, PL_ADVANCED)) != NULL)
 						{
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_PLOTS.npt_type, S_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", def, PL_ADVANCED)) != NULL)
 								{
