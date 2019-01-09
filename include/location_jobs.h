@@ -40,6 +40,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionLocationParams (ServiceData *dat
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL Address *GetAddressFromLocationString (const char *location_s);
 
 
@@ -50,6 +53,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchLocationParams (ServiceData *data_p,
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetUnsetLocationValue (void);

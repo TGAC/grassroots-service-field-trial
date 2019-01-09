@@ -226,6 +226,55 @@ bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet
 }
 
 
+bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_STUDY_NAME.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDY_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, S_STUDY_SOIL.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDY_SOIL.npt_type;
+		}
+	else if (strcmp (param_name_s, S_STUDY_LINK.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDY_LINK.npt_type;
+		}
+	else if (strcmp (param_name_s, S_STUDY_SOWING_YEAR.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDY_SOWING_YEAR.npt_type;
+		}
+	else if (strcmp (param_name_s, S_STUDY_HARVEST_YEAR.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDY_HARVEST_YEAR.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FIELD_TRIALS_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_FIELD_TRIALS_LIST.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATIONS_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATIONS_LIST.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ADD_STUDY.npt_name_s) == 0)
+		{
+			*pt_p = S_ADD_STUDY.npt_type;
+		}
+	else if (strcmp (param_name_s, S_GET_ALL_STUDIES.npt_name_s) == 0)
+		{
+			*pt_p = S_GET_ALL_STUDIES.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
 /*
 Parameters
 
@@ -274,6 +323,41 @@ Parameters
     String
 
  */
+
+
+
+bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_SEARCH_STUDIES.npt_name_s) == 0)
+		{
+			*pt_p = S_SEARCH_STUDIES.npt_type;
+		}
+	else if (strcmp (param_name_s, S_STUDY_ID.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDY_ID.npt_type;
+		}
+	else if (strcmp (param_name_s, S_GET_ALL_PLOTS.npt_name_s) == 0)
+		{
+			*pt_p = S_GET_ALL_PLOTS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATIONS_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATIONS_LIST.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ACTIVE_DATE.npt_name_s) == 0)
+		{
+			*pt_p = S_ACTIVE_DATE.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
 
 
 bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)

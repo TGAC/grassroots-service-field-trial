@@ -200,6 +200,30 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 }
 
 
+bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_STUDIES_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDIES_LIST.npt_type;
+		}
+	else if (strcmp (param_name_s, S_GENE_BANKS_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_GENE_BANKS_LIST.npt_type;
+		}
+	else if (strcmp (param_name_s, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
+		{
+			*pt_p = S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
 /*
  * static definitions
  */

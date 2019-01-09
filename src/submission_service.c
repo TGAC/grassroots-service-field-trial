@@ -50,6 +50,8 @@ static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service *ser
 
 static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
+static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+
 static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
 static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
@@ -83,6 +85,7 @@ Service *GetDFWFieldTrialSubmissionService (void)
 														 RunDFWFieldTrialSubmissionService,
 														 IsResourceForDFWFieldTrialSubmissionService,
 														 GetDFWFieldTrialSubmissionServiceParameters,
+														 GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters,
 														 ReleaseDFWFieldTrialSubmissionServiceParameters,
 														 CloseDFWFieldTrialSubmissionService,
 														 NULL,
@@ -126,6 +129,48 @@ static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service * UN
 {
 	return NULL;
 }
+
+
+static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (!GetSubmissionFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
+		{
+			if (!GetSubmissionStudyParameterTypeForNamedParameter (param_name_s, pt_p))
+				{
+					if (!GetSubmissionLocationParameterTypeForNamedParameter (param_name_s, pt_p))
+						{
+							if (!GetSubmissionPlotParameterTypeForNamedParameter (param_name_s, pt_p))
+								{
+									if (!GetSubmissionGeneBankParameterTypeForNamedParameter (param_name_s, pt_p))
+										{
+											if (!GetSubmissionMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
+												{
+													if (!GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
+														{
+															if (!GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
+																{
+																	success_flag = false;
+																}		/* if (!GetSearchRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+														}		/* if (!GetSearchPhenotypParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+												}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+										}		/* if (!GetSearchGeneBankParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+								}		/* if (!GetSearchPlotParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+						}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+				}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+		}		/* if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+	return success_flag;
+}
+
 
 
 static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))

@@ -128,6 +128,30 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 }
 
 
+bool GetSubmissionFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_FIELD_TRIAL_NAME.npt_name_s) == 0)
+		{
+			*pt_p = S_FIELD_TRIAL_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FIELD_TRIAL_TEAM.npt_name_s) == 0)
+		{
+			*pt_p = S_FIELD_TRIAL_TEAM.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ADD_FIELD_TRIAL.npt_name_s) == 0)
+		{
+			*pt_p = S_ADD_FIELD_TRIAL.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
 
 bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
@@ -179,6 +203,41 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	return success_flag;
 }
+
+
+
+bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_FIELD_TRIAL_NAME.npt_name_s) == 0)
+		{
+			*pt_p = S_FIELD_TRIAL_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FIELD_TRIAL_TEAM.npt_name_s) == 0)
+		{
+			*pt_p = S_FIELD_TRIAL_TEAM.npt_type;
+		}
+	else if (strcmp (param_name_s, S_SEARCH_FIELD_TRIALS.npt_name_s) == 0)
+		{
+			*pt_p = S_SEARCH_FIELD_TRIALS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s) == 0)
+		{
+			*pt_p = S_FUZZY_SEARCH_FIELD_TRIALS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FULL_DATA.npt_name_s) == 0)
+		{
+			*pt_p = S_FULL_DATA.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
 
 
 bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)

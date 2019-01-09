@@ -49,6 +49,9 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (Service *service
 
 static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
+static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+
+
 static void ReleaseDFWFieldTrialSearchServiceParameters (Service *service_p, ParameterSet *params_p);
 
 static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
@@ -83,6 +86,7 @@ Service *GetDFWFieldTrialSearchService (void)
 														 RunDFWFieldTrialSearchService,
 														 IsResourceForDFWFieldTrialSearchService,
 														 GetDFWFieldTrialSearchServiceParameters,
+														 GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters,
 														 ReleaseDFWFieldTrialSearchServiceParameters,
 														 CloseDFWFieldTrialSearchService,
 														 NULL,
@@ -183,6 +187,28 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 
 	return NULL;
 }
+
+
+static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
+		{
+			if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p))
+				{
+					if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
+						{
+							success_flag = false;
+						}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+				}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+		}		/* if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+	return success_flag;
+}
+
 
 
 static void ReleaseDFWFieldTrialSearchServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)

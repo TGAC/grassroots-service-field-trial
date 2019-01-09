@@ -116,6 +116,35 @@ bool RunForSubmissionGeneBankParams (DFWFieldTrialServiceData *data_p, Parameter
 }
 
 
+bool GetSubmissionGeneBankParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_GENE_BANK_NAME.npt_name_s) == 0)
+		{
+			*pt_p = S_GENE_BANK_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, S_GENE_BANK_URL.npt_name_s) == 0)
+		{
+			*pt_p = S_GENE_BANK_URL.npt_type;
+		}
+	else if (strcmp (param_name_s, S_GENE_BANK_API_URL.npt_name_s) == 0)
+		{
+			*pt_p = S_GENE_BANK_API_URL.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ADD_GENE_BANK.npt_name_s) == 0)
+		{
+			*pt_p = S_ADD_GENE_BANK.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
 
 bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
 {

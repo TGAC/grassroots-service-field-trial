@@ -203,6 +203,67 @@ bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, Parameter
 }
 
 
+bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_LOCATION_NAME.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_STREET.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_STREET.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_TOWN.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_TOWN.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_COUNTY.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_COUNTY.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_COUNTRY.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_COUNTRY.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_POSTCODE.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_POSTCODE.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_USE_GPS.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_USE_GPS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_LATITUDE.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_LATITUDE.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_LONGITUDE.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_LONGITUDE.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_ALTITUDE.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_ALTITUDE.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ADD_LOCATION.npt_name_s) == 0)
+		{
+			*pt_p = S_ADD_LOCATION.npt_type;
+		}
+	else if (strcmp (param_name_s, S_GET_ALL_LOCATIONS.npt_name_s) == 0)
+		{
+			*pt_p = S_GET_ALL_LOCATIONS.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
 
 
 bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
@@ -226,6 +287,22 @@ bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 	return success_flag;
 }
 
+
+bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_GET_ALL_LOCATIONS.npt_name_s) == 0)
+		{
+			*pt_p = S_GET_ALL_LOCATIONS.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
 
 
 bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)

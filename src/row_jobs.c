@@ -170,6 +170,30 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 }
 
 
+bool GetSubmissionRowPhenotypeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_STUDIES_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_STUDIES_LIST.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
+		{
+			*pt_p = S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s) == 0)
+		{
+			*pt_p = S_ROW_PHENOTYPE_DATA_TABLE.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
 
 
 /*

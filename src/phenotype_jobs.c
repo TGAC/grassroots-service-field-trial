@@ -147,6 +147,27 @@ bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, Paramete
 }
 
 
+bool GetSubmissionPhenotypeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
+		{
+			*pt_p = S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type;
+		}
+	else if (strcmp (param_name_s, S_PHENOTYPE_TABLE.npt_name_s) == 0)
+		{
+			*pt_p = S_PHENOTYPE_TABLE.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
 Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p)
 {
 	Phenotype *phenotype_p = NULL;

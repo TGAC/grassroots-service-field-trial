@@ -42,10 +42,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionStudyParams (ServiceData *data_p
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);

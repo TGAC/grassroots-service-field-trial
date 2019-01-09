@@ -43,6 +43,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionPhenotypeParams (ServiceData *da
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionPhenotypeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p);
 
 

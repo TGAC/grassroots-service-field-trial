@@ -41,6 +41,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionMaterialParams (ServiceData *dat
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
 
 #ifdef __cplusplus
 }
