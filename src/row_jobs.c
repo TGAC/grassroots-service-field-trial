@@ -79,7 +79,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 						{
 							def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_type, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_type, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", def, PL_ADVANCED)) != NULL)
 								{
 									def.st_string_value_s = NULL;
 
