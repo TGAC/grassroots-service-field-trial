@@ -193,18 +193,25 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struc
 {
 	bool success_flag = true;
 
-	if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
+	if (strcmp (param_name_s, S_KEYWORD.npt_name_s) == 0)
 		{
-			if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p))
+			*pt_p = S_KEYWORD.npt_type;
+		}
+	else
+		{
+			if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
 				{
-					if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
+					if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p))
 						{
-							success_flag = false;
-						}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+							if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
+								{
+									success_flag = false;
+								}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
-				}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
+						}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
-		}		/* if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+				}		/* if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+		}
 
 	return success_flag;
 }
