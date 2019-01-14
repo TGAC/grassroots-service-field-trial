@@ -212,6 +212,10 @@ bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name
 		{
 			*pt_p = S_GENE_BANKS_LIST.npt_type;
 		}
+	else if (strcmp (param_name_s, S_MATERIAL_TABLE.npt_name_s) == 0)
+		{
+			*pt_p = S_MATERIAL_TABLE.npt_type;
+		}
 	else if (strcmp (param_name_s, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
 		{
 			*pt_p = S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_type;

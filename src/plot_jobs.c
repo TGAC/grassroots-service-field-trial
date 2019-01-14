@@ -306,6 +306,10 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 		{
 			*pt_p = S_PLOT_TABLE_COLUMN_DELIMITER.npt_type;
 		}
+	else if (strcmp (param_name_s, S_PLOT_TABLE.npt_name_s) == 0)
+		{
+			*pt_p = S_PLOT_TABLE.npt_type;
+		}
 	else
 		{
 			success_flag = false;
