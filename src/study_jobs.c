@@ -83,7 +83,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	SharedType def;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
 
 	def.st_string_value_s = NULL;
 
@@ -366,7 +366,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 	Parameter *param_p = NULL;
 	SharedType def;
 	const char * const group_name_s = "Studies";
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet (group_name_s, NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet (group_name_s, false, data_p, param_set_p);
 
 	if (group_p)
 		{

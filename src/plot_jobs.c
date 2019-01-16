@@ -115,7 +115,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", false, data_p, param_set_p);
 	SharedType def;
 
 	InitSharedType (&def);

@@ -42,7 +42,7 @@ static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Gene Bank", NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Gene Bank", false, data_p, param_set_p);
 
 	if (group_p)
 		{

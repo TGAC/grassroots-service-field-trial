@@ -59,7 +59,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 {
 	bool success_flag = false;
 
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Materials", NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Materials", false, data_p, param_set_p);
 
 	if (group_p)
 		{

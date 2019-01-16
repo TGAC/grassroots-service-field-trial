@@ -64,7 +64,7 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 {
 	bool success_flag = false;
 
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Phenotypes", NULL, false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Phenotypes", false, data_p, param_set_p);
 
 	if (group_p)
 		{
