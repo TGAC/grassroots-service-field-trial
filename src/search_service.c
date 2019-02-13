@@ -67,6 +67,9 @@ static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_
 
 static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
 
+static bool GetIdsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
+
+
 /*
  * API definitions
  */
@@ -595,7 +598,7 @@ static bool GetIdsFromLuceneResults (LuceneDocument *document_p, const uint32 in
 
 			if (success_flag)
 				{
-					success_flag = AppendToByteBuffer (buffer_p, "ObjectId(\"", id_s, "\")");
+					success_flag = AppendStringsToByteBuffer (buffer_p, "ObjectId(\"", id_s, "\")", NULL);
 				}
 		}		/* if (id_s) */
 	else
@@ -606,5 +609,3 @@ static bool GetIdsFromLuceneResults (LuceneDocument *document_p, const uint32 in
 	return success_flag;
 }
 
-
-{

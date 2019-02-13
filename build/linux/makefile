@@ -38,7 +38,7 @@ INCLUDES = \
 	-I$(DIR_MONGODB_INC) \
 	-I$(DIR_BSON_INC) \
 	-I$(DIR_SQLITE_INC) \
-	-I$(DIR_LUCENE_INC)
+	-I$(DIR_GRASSROOTS_LUCENE_INC)
 	
 SRCS 	= \
 	crop_ontology_tool.c \
