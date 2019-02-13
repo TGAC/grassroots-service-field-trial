@@ -33,6 +33,9 @@
 #include "math_utils.h"
 #include "string_utils.h"
 
+#include "lucene_tool.h"
+#include "key_value_pair.h"
+
 /*
  * Static declarations
  */
@@ -487,6 +490,121 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 
 static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED_TO_START;
+	LuceneTool *lucene_p = AllocateLuceneTool (job_p -> sj_id);
 
+	if (lucene_p)
+		{
+			LinkedList *facets_p = AllocateLinkedList (FreeKeyValuePairNode);
+
+			if (facets_p)
+				{
+					KeyValuePairNode *facet_p = AllocateKeyValuePairNode ("type", "Field Trial");
+
+					if (facet_p)
+						{
+							LinkedListAddTail (facets_p, & (facet_p -> kvpn_node));
+
+							if (RunLuceneTool (lucene_p, keyword_s, facets_p))
+								{
+									ByteBuffer *buffer_p = AllocateByteBuffer (1024);
+
+									if (buffer_p)
+										{
+											if (AppendStringsToByteBuffer (buffer_p, "{ ", MONGO_ID_S, " : {\"$in\" : [", NULL))
+												{
+													if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, buffer_p))
+														{
+															if (AppendStringToByteBuffer (buffer_p, "]}}"))
+																{
+																	bson_t *query_p = NULL;
+																	const char *data_s = GetByteBufferData (buffer_p);
+																	size_t l = GetByteBufferSize (buffer_p);
+																	bson_error_t err;
+
+																	if (bson_init_from_json (query_p, data_s, l, &err))
+																		{
+																			json_t *docs_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+																			if (docs_p)
+																				{
+																					if (json_is_array (docs_p))
+																						{
+																							size_t i = 0;
+																							const size_t num_docs = json_array_size (docs_p);
+
+																							for ( ; i < num_docs; ++ i)
+																								{
+																									json_t *doc_p = json_array_get (docs_p, i);
+
+																									const char *type_s = GetJSONString (doc_p, "type");
+
+																									if (type_s)
+																										{
+
+
+																										}
+
+																								}
+
+																						}		/* if (json_is_array (docs_p)) */
+
+																				}		/* if (docs_p) */
+
+																			bson_destroy (query_p);
+																		}		/* if (bson_init_from_json (query_p, data_s, l, &err)) */
+
+																}		/* if (AppendStringToByteBuffer (buffer_p, "]}}")) */
+
+														}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, ids_p)) */
+
+												}
+
+											FreeByteBuffer (buffer_p);
+										}		/* if (buffer_p) */
+
+								}		/* if (RunLuceneTool (lucene_p, keyword_s, facets_p)) */
+
+						}		/* if (facet_p) */
+
+					FreeLinkedList (facets_p);
+				}		/* if (facets_p) */
+
+			FreeLuceneTool (lucene_p);
+		}		/* if (lucene_p) */
+
+
+	SetServiceJobStatus (job_p, status);
 }
 
+
+static bool GetIdsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p)
+{
+	bool success_flag = false;
+	ByteBuffer *buffer_p = (ByteBuffer *) data_p;
+	const char *id_s = GetDocumentFieldValue (document_p, "_id");
+
+	if (id_s)
+		{
+			success_flag = true;
+
+			if (index != 0)
+				{
+					success_flag = AppendStringToByteBuffer (buffer_p, ", ");
+				}
+
+			if (success_flag)
+				{
+					success_flag = AppendToByteBuffer (buffer_p, "ObjectId(\"", id_s, "\")");
+				}
+		}		/* if (id_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"_id\" from document");
+		}
+
+	return success_flag;
+}
+
+
+{

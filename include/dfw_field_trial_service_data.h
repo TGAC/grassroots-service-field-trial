@@ -52,6 +52,7 @@ typedef enum
 } DFWFieldTrialData;
 
 
+
 /**
  * An indicator of what the output destination
  * is for the JSON data values. This lets us
@@ -244,6 +245,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeDFWFieldTrialServiceData (DFWFieldTrialSe
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const DFWFieldTrialData data_type);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const char *type_s);
 
 #ifdef __cplusplus
 }

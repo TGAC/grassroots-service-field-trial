@@ -27,6 +27,22 @@
 #include "string_utils.h"
 
 
+static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
+{
+	"Grassroots:FieldTrial",
+	"Grassroots:Study",
+	"Grassroots:Location",
+	"Grassroots:Plot",
+	"Grassroots:Row",
+	"Grassroots:Material",
+	"Grassroots:Drilling",
+	"Grassroots:Phenotype",
+	"Grassroots:Observation",
+	"Grassroots:Instrument",
+	"Grassroots:GeneBank"
+};
+
+
 DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 {
 	MongoTool *tool_p = AllocateMongoTool (NULL);
@@ -96,6 +112,40 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 		} /* if (data_p -> psd_database_s) */
 
 	return success_flag;
+}
+
+
+
+const char *GetDatatypeAsString (const DFWFieldTrialData data_type)
+{
+	const char *type_s = NULL;
+
+	if (data_type < DFTD_NUM_TYPES)
+		{
+			type_s =  * (S_TYPES_SS + data_type);
+		}
+
+	return type_s;
+}
+
+
+DFWFieldTrialData GetDatatypeFromString (const char *type_s)
+{
+	if (type_s)
+		{
+			DFWFieldTrialData i = 0;
+
+			for ( ; i < DFTD_NUM_TYPES; ++ i)
+				{
+					if (strcmp (* (S_TYPES_SS + i), type_s) == 0)
+						{
+							return i;
+						}
+				}
+
+		}		/* if (type_s) */
+
+	return DFTD_NUM_TYPES;
 }
 
 
