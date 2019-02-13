@@ -38,7 +38,7 @@
  */
 static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsToJSON (Study *study_p, json_t *arst_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 /*
@@ -304,14 +304,14 @@ bool SaveStudy (Study *study_p, DFWFieldTrialServiceData *data_p)
 
 	if (success_flag)
 		{
-			json_t *arst_json_p = GetStudyAsJSON (study_p, VF_STORAGE, data_p);
+			json_t *study_json_p = GetStudyAsJSON (study_p, VF_STORAGE, data_p);
 
-			if (arst_json_p)
+			if (study_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, arst_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p);
 
-					json_decref (arst_json_p);
-				}		/* if (arst_json_p) */
+					json_decref (study_json_p);
+				}		/* if (study_json_p) */
 
 		}		/* if (success_flag) */
 
@@ -321,15 +321,15 @@ bool SaveStudy (Study *study_p, DFWFieldTrialServiceData *data_p)
 
 json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	json_t *arst_json_p = json_object ();
+	json_t *study_json_p = json_object ();
 
-	if (arst_json_p)
+	if (study_json_p)
 		{
-			if (SetJSONString (arst_json_p, ST_NAME_S, study_p -> st_name_s))
+			if (SetJSONString (study_json_p, ST_NAME_S, study_p -> st_name_s))
 				{
-					if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (arst_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s)))
+					if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s)))
 						{
-							if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (arst_json_p, ST_SOIL_S, study_p -> st_soil_type_s)))
+							if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s)))
 								{
 									bool add_item_flag = false;
 
@@ -342,10 +342,10 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 
 											if (location_json_p)
 												{
-													if (json_object_set_new (arst_json_p, ST_LOCATION_S, location_json_p) == 0)
+													if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
 														{
 															add_item_flag = true;
-														}		/* if (json_object_set_new (arst_json_p, ST_LOCATION_S, location_json_p) == 0) */
+														}		/* if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0) */
 													else
 														{
 															json_decref (location_json_p);
@@ -354,7 +354,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 										}
 									else
 										{
-											if (AddNamedCompoundIdToJSON (arst_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S))
+											if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S))
 												{
 													add_item_flag = true;
 												}
@@ -369,9 +369,9 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 											 */
 											if (format == VF_STORAGE)
 												{
-													if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, arst_json_p, ST_SOWING_DATE_S))
+													if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
 														{
-															if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, arst_json_p, ST_HARVEST_DATE_S))
+															if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
 																{
 																	add_item_flag = true;
 																}
@@ -379,9 +379,9 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 												}
 											else
 												{
-													if (AddValidDateToJSON (study_p -> st_sowing_date_p, arst_json_p, ST_SOWING_DATE_S))
+													if (AddValidDateToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
 														{
-															if (AddValidDateToJSON (study_p -> st_harvest_date_p, arst_json_p, ST_HARVEST_DATE_S))
+															if (AddValidDateToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
 																{
 																	add_item_flag = true;
 																}
@@ -391,19 +391,19 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 											if (add_item_flag)
 												{
 
-													if (AddCompoundIdToJSON (arst_json_p, study_p -> st_id_p))
+													if (AddCompoundIdToJSON (study_json_p, study_p -> st_id_p))
 														{
 															bool success_flag = false;
 
 															if (format == VF_STORAGE)
 																{
-																	success_flag = AddNamedCompoundIdToJSON (arst_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S);
+																	success_flag = AddNamedCompoundIdToJSON (study_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S);
 																}
 															else if (format == VF_CLIENT_FULL)
 																{
 																	if (GetStudyPlots (study_p, data_p))
 																		{
-																			if (AddPlotsToJSON (study_p, arst_json_p, format, data_p))
+																			if (AddPlotsToJSON (study_p, study_json_p, format, data_p))
 																				{
 																					success_flag = true;
 																				}
@@ -416,21 +416,21 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 
 															if (success_flag)
 																{
-																	return arst_json_p;
+																	return study_json_p;
 																}
 														}
 
 												}
 										}
 
-								}		/* if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (arst_json_p, ST_SOIL_S, study_p -> st_soil_type_s) == 0)) */
+								}		/* if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s) == 0)) */
 
-						}		/* if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (arst_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s) == 0)) */
+						}		/* if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s) == 0)) */
 
-				}		/* if (SetJSONString (arst_json_p, ST_NAME_S, study_p -> st_name_s) == 0) */
+				}		/* if (SetJSONString (study_json_p, ST_NAME_S, study_p -> st_name_s) == 0) */
 
-			json_decref (arst_json_p);
-		}		/* if (arst_json_p) */
+			json_decref (study_json_p);
+		}		/* if (study_json_p) */
 
 	return NULL;
 }
@@ -526,17 +526,17 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 }
 
 
-Study *GetStudyByIdString (const char *arst_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyByIdString (const char *study_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	Study *study_p = GetDFWObjectByIdString (arst_id_s, DFTD_STUDY, GetStudyCallback, format, data_p);
+	Study *study_p = GetDFWObjectByIdString (study_id_s, DFTD_STUDY, GetStudyCallback, format, data_p);
 
 	return study_p;
 }
 
 
-Study *GetStudyById (bson_oid_t *arst_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyById (bson_oid_t *study_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	Study *study_p = GetDFWObjectById (arst_id_p, DFTD_STUDY, GetStudyCallback, format, data_p);
+	Study *study_p = GetDFWObjectById (study_id_p, DFTD_STUDY, GetStudyCallback, format, data_p);
 
 	return study_p;
 }
@@ -548,14 +548,14 @@ static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, co
 }
 
 
-static bool AddPlotsToJSON (Study *study_p, json_t *arst_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *plots_json_p = json_array ();
 
 	if (plots_json_p)
 		{
-			if (json_object_set_new (arst_json_p, ST_PLOTS_S, plots_json_p) == 0)
+			if (json_object_set_new (study_json_p, ST_PLOTS_S, plots_json_p) == 0)
 				{
 					PlotNode *node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
 

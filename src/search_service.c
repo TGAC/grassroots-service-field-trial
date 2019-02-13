@@ -491,7 +491,7 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 }
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
+static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, const ViewFormat fmt, DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
 	LuceneTool *lucene_p = AllocateLuceneTool (job_p -> sj_id);
@@ -544,9 +544,41 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_
 
 																									if (type_s)
 																										{
+																											const char *id_s = GetJSONString (doc_p, MONGO_ID_S);
 
+																											if (id_s)
+																												{
+																													DFWFieldTrialData datatype = GetDatatypeFromString (type_s);
 
-																										}
+																													switch (datatype)
+																														{
+																															case DFTD_FIELD_TRIAL:
+																																{
+																																	FieldTrial *trial_p = GetFieldTrialByIdString (id_s, fmt);
+
+																																	if (trial_p)
+																																		{
+																																			//AddFieldTrialToServiceJobFromJSON()
+																																		}
+																																}
+																																break;
+
+																														case DFTD_STUDY:
+																																{
+																																	Study *study_p = GetStudyByIdString (id_s, fmt);
+
+																																	if (study_p)
+																																		{
+
+																																		}
+																																}
+																																break;
+
+																														}		/* switch (datatype) */
+
+																												}		/* if (id_s) */
+
+																										}		/* if (type_s) */
 
 																								}
 
