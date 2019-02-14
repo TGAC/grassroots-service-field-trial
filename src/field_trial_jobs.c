@@ -435,45 +435,36 @@ static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *te
 bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	FieldTrial *trial_p = GetFieldTrialFromJSON (trial_json_p, data_p);
+	json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, format, data_p);
 
-	if (trial_p)
+	if (trial_json_p)
 		{
-			if (GetAllFieldTrialStudies (trial_p, format, data_p))
+			char *title_s = GetFieldTrialAsString (trial_p);
+
+			if (title_s)
 				{
-					if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+					if (AddContext (trial_json_p))
 						{
-							char *title_s = GetFieldTrialAsString (trial_p);
+							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
 
-							if (title_s)
+							if (dest_record_p)
 								{
-									if (AddContext (trial_json_p))
+									if (AddResultToServiceJob (job_p, dest_record_p))
 										{
-											json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+											success_flag = true;
+										}
+									else
+										{
+											json_decref (dest_record_p);
+										}
 
-											if (dest_record_p)
-												{
-													if (AddResultToServiceJob (job_p, dest_record_p))
-														{
-															success_flag = true;
-														}
-													else
-														{
-															json_decref (dest_record_p);
-														}
+								}		/* if (dest_record_p) */
 
-												}		/* if (dest_record_p) */
+						}		/* if (AddContext (trial_json_p)) */
 
-										}		/* if (AddContext (trial_json_p)) */
+					FreeCopiedString (title_s);
+				}		/* if (title_s) */
 
-									FreeCopiedString (title_s);
-								}		/* if (title_s) */
-
-						}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
-
-				}
-
-			FreeFieldTrial (trial_p);
 		}		/* if (trial_p) */
 
 	return success_flag;
