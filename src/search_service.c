@@ -531,7 +531,10 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_
 
 																			if (bson_init_from_json (query_p, data_s, l, &err))
 																				{
-																					json_t *docs_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+																					json_t *docs_p = NULL;
+
+																					SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]);
+																					docs_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
 																					if (docs_p)
 																						{
