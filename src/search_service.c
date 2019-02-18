@@ -565,7 +565,12 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_
 
 																																			if (trial_p)
 																																				{
-																																					//AddFieldTrialToServiceJobFromJSON()
+																																					if (!AddFieldTrialToServiceJob (job_p, trial_p, fmt, data_p))
+																																						{
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add field trial %s to ServiceJob", trial_p -> ft_name_s);
+																																						}
+
+																																					FreeFieldTrial (trial_p);
 																																				}
 																																		}
 																																		break;
