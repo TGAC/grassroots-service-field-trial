@@ -68,7 +68,15 @@ static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_
 
 static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_p, const ViewFormat fmt, DFWFieldTrialServiceData *data_p);
 
-static bool GetIdsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
+static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
+
+
+typedef struct
+{
+	DFWFieldTrialServiceData *sd_service_data_p;
+	ServiceJob *sd_job_p;
+	ViewFormat sd_format;
+} SearchData;
 
 
 /*
@@ -511,115 +519,17 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_
 
 							if (RunLuceneTool (lucene_p, keyword_s, facets_p))
 								{
-									ByteBuffer *buffer_p = AllocateByteBuffer (1024);
 
-									if (buffer_p)
+									SearchData sd;
+
+									sd.sd_service_data_p = data_p;
+									sd.sd_job_p = job_p;
+									sd.sd_format = fmt;
+
+									if (ParseLuceneResults (lucene_p, AddResultsFromLuceneResults, &sd))
 										{
-											if (AppendStringsToByteBuffer (buffer_p, "{ \"", MONGO_ID_S, "\" : {\"$in\" : [", NULL))
-												{
-													if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, buffer_p))
-														{
-															if (AppendStringToByteBuffer (buffer_p, "]}}"))
-																{
-																	bson_t *query_p = bson_new ();
-
-																	if (query_p)
-																		{
-																			const char *data_s = GetByteBufferData (buffer_p);
-																			size_t l = GetByteBufferSize (buffer_p);
-																			bson_error_t err;
-
-																			if (bson_init_from_json (query_p, data_s, l, &err))
-																				{
-																					json_t *docs_p = NULL;
-
-																					SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]);
-																					docs_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-																					if (docs_p)
-																						{
-																							if (json_is_array (docs_p))
-																								{
-																									size_t i = 0;
-																									const size_t num_docs = json_array_size (docs_p);
-
-																									for ( ; i < num_docs; ++ i)
-																										{
-																											json_t *doc_p = json_array_get (docs_p, i);
-
-																											const char *type_s = GetJSONString (doc_p, "type");
-
-																											if (type_s)
-																												{
-																													const char *id_s = GetJSONString (doc_p, MONGO_ID_S);
-
-																													if (id_s)
-																														{
-																															DFWFieldTrialData datatype = GetDatatypeFromString (type_s);
-
-																															switch (datatype)
-																																{
-																																	case DFTD_FIELD_TRIAL:
-																																		{
-																																			FieldTrial *trial_p = GetFieldTrialByIdString (id_s, data_p);
-
-																																			if (trial_p)
-																																				{
-																																					if (!AddFieldTrialToServiceJob (job_p, trial_p, fmt, data_p))
-																																						{
-																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add field trial %s to ServiceJob", trial_p -> ft_name_s);
-																																						}
-
-																																					FreeFieldTrial (trial_p);
-																																				}
-																																		}
-																																		break;
-
-																																case DFTD_STUDY:
-																																		{
-																																			Study *study_p = GetStudyByIdString (id_s, fmt, data_p);
-
-																																			if (study_p)
-																																				{
-
-																																				}
-																																		}
-																																		break;
-
-																																default:
-																																	break;
-
-																																}		/* switch (datatype) */
-
-																														}		/* if (id_s) */
-
-																												}		/* if (type_s) */
-
-																										}
-
-																								}		/* if (json_is_array (docs_p)) */
-
-																						}		/* if (docs_p) */
-
-																				}		/* if (bson_init_from_json (query_p, data_s, l, &err)) */
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create bson from \"%s\", %d %d %s", data_s, err.domain, err.code, err.message);
-																				}
-
-																			bson_destroy (query_p);
-																		}		/* if (query_p) */
-
-
-
-																}		/* if (AppendStringToByteBuffer (buffer_p, "]}}")) */
-
-														}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, ids_p)) */
-
-												}
-
-											FreeByteBuffer (buffer_p);
-										}		/* if (buffer_p) */
+											status = OS_SUCCEEDED;
+										}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, &sd)) */
 
 								}		/* if (RunLuceneTool (lucene_p, keyword_s, facets_p)) */
 
@@ -636,25 +546,69 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_
 }
 
 
-static bool GetIdsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p)
+static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p)
 {
 	bool success_flag = false;
-	ByteBuffer *buffer_p = (ByteBuffer *) data_p;
-	const char *id_s = GetDocumentFieldValue (document_p, "_id");
+	SearchData *search_data_p = (SearchData *) data_p;
+	const char *id_s = GetDocumentFieldValue (document_p, MONGO_ID_S);
 
 	if (id_s)
 		{
-			success_flag = true;
+			const char *type_s = GetDocumentFieldValue (document_p, "@type");
 
-			if (index != 0)
+			if (type_s)
 				{
-					success_flag = AppendStringToByteBuffer (buffer_p, ", ");
-				}
+					DFWFieldTrialData datatype = GetDatatypeFromString (type_s);
 
-			if (success_flag)
-				{
-					success_flag = AppendStringsToByteBuffer (buffer_p, "{ \"$oid\": \"", id_s, "\"}", NULL);
-				}
+					switch (datatype)
+						{
+							case DFTD_FIELD_TRIAL:
+								{
+									FieldTrial *trial_p = GetFieldTrialByIdString (id_s, search_data_p -> sd_service_data_p);
+
+									if (trial_p)
+										{
+											if (AddFieldTrialToServiceJob (search_data_p -> sd_job_p, trial_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add field trial %s to ServiceJob", trial_p -> ft_name_s);
+												}
+
+											FreeFieldTrial (trial_p);
+										}
+								}
+								break;
+
+						case DFTD_STUDY:
+								{
+									Study *study_p = GetStudyByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+
+									if (study_p)
+										{
+											if (AddStudyToServiceJob (search_data_p -> sd_job_p, study_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study %s to ServiceJob", study_p -> st_name_s);
+												}
+
+											FreeStudy (study_p);
+										}
+								}
+								break;
+
+						default:
+							break;
+
+						}		/* switch (datatype) */
+
+				}		/* if (type_s) */
+
 		}		/* if (id_s) */
 	else
 		{

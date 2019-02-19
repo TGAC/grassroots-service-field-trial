@@ -27,6 +27,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
+#include "field_trial.h"
 
 
 #ifdef __cplusplus
@@ -52,6 +53,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const DFWField
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

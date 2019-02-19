@@ -598,6 +598,47 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 }
 
 
+bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *study_json_p = GetStudyAsJSON (study_p, format, data_p);
+
+	if (study_json_p)
+		{
+			char *title_s = GetStudyAsString (study_p);
+
+			if (title_s)
+				{
+					if (AddContext (study_json_p))
+						{
+							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, study_json_p);
+
+							if (dest_record_p)
+								{
+									if (AddResultToServiceJob (job_p, dest_record_p))
+										{
+											success_flag = true;
+										}
+									else
+										{
+											json_decref (dest_record_p);
+										}
+
+								}		/* if (dest_record_p) */
+
+						}		/* if (AddContext (trial_json_p)) */
+
+					FreeCopiedString (title_s);
+				}		/* if (title_s) */
+
+		}		/* if (trial_p) */
+
+	return success_flag;
+}
+
+
+
+
 bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
 {
 	bool success_flag = false;
@@ -966,6 +1007,30 @@ static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p)
 		}
 
 	return success_flag;
+}
+
+
+char *GetStudyAsString (const Study *study_p)
+{
+	char *study_s = NULL;
+
+	if (study_p -> st_parent_p)
+		{
+			char *trial_s = GetFieldTrialAsString (study_p -> st_parent_p);
+
+			if (trial_s)
+				{
+					study_s = ConcatenateVarargsStrings (trial_s, ": ", study_p -> st_name_s, NULL);
+
+					FreeCopiedString (trial_s);
+				}
+		}
+	else
+		{
+			study_s = EasyCopyToNewString (study_p -> st_name_s);
+		}
+
+	return study_s;
 }
 
 
