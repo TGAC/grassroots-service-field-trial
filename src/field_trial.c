@@ -186,15 +186,18 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 
 	if (trial_json_p)
 		{
-			if (json_object_set_new (trial_json_p, FT_NAME_S, json_string (trial_p -> ft_name_s)) == 0)
+			if (SetJSONString (trial_json_p, FT_NAME_S, trial_p -> ft_name_s))
 				{
-					if (json_object_set_new (trial_json_p, FT_TEAM_S, json_string (trial_p -> ft_team_s)) == 0)
+					if (SetJSONString (trial_json_p, FT_TEAM_S, trial_p -> ft_team_s))
 						{
 							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 								{
 									if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 										{
-											return trial_json_p;
+											if (AddDatatype (trial_json_p, DFTD_FIELD_TRIAL))
+												{
+													return trial_json_p;
+												}
 										}
 								}
 

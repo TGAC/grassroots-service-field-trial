@@ -416,7 +416,10 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 
 															if (success_flag)
 																{
-																	return study_json_p;
+																	if (AddDatatype (study_json_p, DFTD_STUDY))
+																		{
+																			return study_json_p;
+																		}
 																}
 														}
 

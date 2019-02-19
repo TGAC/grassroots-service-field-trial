@@ -320,7 +320,11 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 															if (done_objects_flag)
 																{
-																	return observation_json_p;
+																	if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
+																		{
+																			return observation_json_p;
+																		}
+
 																}
 
 														}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */

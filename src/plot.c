@@ -283,7 +283,10 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 
 																									if (success_flag)
 																										{
-																											return plot_json_p;
+																											if (AddDatatype (plot_json_p, DFTD_PLOT))
+																												{
+																													return plot_json_p;
+																												}
 																										}
 
 																								}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */

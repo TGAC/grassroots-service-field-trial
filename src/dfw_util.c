@@ -330,3 +330,19 @@ bool AddContext (json_t *data_p)
 	return success_flag;
 }
 
+
+bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
+{
+	bool success_flag = false;
+	const char *type_s = GetDatatypeAsString (data_type);
+
+	if (type_s)
+		{
+			if (SetJSONString (doc_p, "@type", type_s))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}

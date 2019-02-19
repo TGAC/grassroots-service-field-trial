@@ -55,6 +55,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool PrepareSaveData (bson_oid_t **id_pp, bson_t *
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddContext (json_t *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type);
+
 
 #ifdef __cplusplus
 }

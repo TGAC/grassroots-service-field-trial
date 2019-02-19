@@ -79,7 +79,11 @@ json_t *GetLocationAsJSON (Location *location_p)
 								{
 									if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0)
 										{
-											return location_json_p;
+											if (AddDatatype (location_json_p, DFTD_LOCATION))
+												{
+													return location_json_p;
+												}
+
 										}		/* if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0) */
 									else
 										{

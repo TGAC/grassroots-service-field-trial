@@ -142,6 +142,11 @@ json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const ViewFormat forma
 										{
 											if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
 												{
+													if (AddDatatype (phenotype_json_p, DFTD_PHENOTYPE))
+														{
+															return phenotype_json_p;
+														}
+
 													return phenotype_json_p;
 												}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
 

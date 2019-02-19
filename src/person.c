@@ -25,5 +25,5 @@
 
 Person *AllocatePerson ()
 {
-
+	return NULL;
 }

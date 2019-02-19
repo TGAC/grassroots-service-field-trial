@@ -86,7 +86,10 @@ json_t *GetInstrumentAsJSON (const Instrument *instrument_p)
 						{
 							if (AddCompoundIdToJSON (instrument_json_p, instrument_p -> in_id_p))
 								{
-									return instrument_json_p;
+									if (AddDatatype (instrument_json_p, DFTD_INSTRUMENT))
+										{
+											return instrument_json_p;
+										}
 								}
 						}
 				}

@@ -265,7 +265,11 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 														{
 															if ((IsStringEmpty (material_p -> ma_pedigree_s)) || (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s)))
 																{
-																	return material_json_p;
+																	if (AddDatatype (material_json_p, DFTD_MATERIAL))
+																		{
+																			return material_json_p;
+																		}
+
 																}		/* if ((IsStringEmpty (material_p -> ma_pedigree_s)) || (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))) */
 															else
 																{

@@ -189,7 +189,10 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 										{
 											if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
 												{
-													return row_json_p;
+													if (AddDatatype (row_json_p, DFTD_ROW))
+														{
+															return row_json_p;
+														}
 												}
 										}
 								}

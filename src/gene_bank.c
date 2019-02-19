@@ -142,7 +142,11 @@ json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p, const char * const api_q
 								{
 									if (AddCompoundIdToJSON (res_p, gene_bank_p -> gb_id_p))
 										{
-											return res_p;
+											if (AddDatatype (res_p, DFTD_GENE_BANK))
+												{
+													return res_p;
+												}
+
 										}		/* if (AddCompoundIdToJSON (res_p, gene_bank_p -> gb_id_p)) */
 									else
 										{
