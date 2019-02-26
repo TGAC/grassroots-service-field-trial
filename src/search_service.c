@@ -517,9 +517,8 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, ServiceJob *job_
 						{
 							LinkedListAddTail (facets_p, & (facet_p -> kvpn_node));
 
-							if (RunLuceneTool (lucene_p, keyword_s, facets_p))
+							if (RunLuceneTool (lucene_p, keyword_s, facets_p, "drill-down"))
 								{
-
 									SearchData sd;
 
 									sd.sd_service_data_p = data_p;
