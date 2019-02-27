@@ -46,6 +46,7 @@ static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *te
 
 static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
+static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
 bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
@@ -432,6 +433,47 @@ static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *te
 
 
 
+static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (GetAllFieldTrialStudies (trial_p, format, data_p))
+		{
+			if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+				{
+					char *title_s = GetFieldTrialAsString (trial_p);
+
+					if (title_s)
+						{
+							if (AddContext (trial_json_p))
+								{
+									json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+
+									if (dest_record_p)
+										{
+											if (AddResultToServiceJob (job_p, dest_record_p))
+												{
+													success_flag = true;
+												}
+											else
+												{
+													json_decref (dest_record_p);
+												}
+
+										}		/* if (dest_record_p) */
+
+								}		/* if (AddContext (trial_json_p)) */
+
+							FreeCopiedString (title_s);
+						}		/* if (title_s) */
+
+				}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
+
+		}
+
+	return success_flag;
+}
+
 bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -439,33 +481,13 @@ bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const Vi
 
 	if (trial_json_p)
 		{
-			char *title_s = GetFieldTrialAsString (trial_p);
-
-			if (title_s)
+			if (AddFieldTrialToServiceJobResult (job_p, trial_p, trial_json_p, format, data_p))
 				{
-					if (AddContext (trial_json_p))
-						{
-							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+					success_flag = true;
+				}
 
-							if (dest_record_p)
-								{
-									if (AddResultToServiceJob (job_p, dest_record_p))
-										{
-											success_flag = true;
-										}
-									else
-										{
-											json_decref (dest_record_p);
-										}
-
-								}		/* if (dest_record_p) */
-
-						}		/* if (AddContext (trial_json_p)) */
-
-					FreeCopiedString (title_s);
-				}		/* if (title_s) */
-
-		}		/* if (trial_p) */
+			json_decref (trial_json_p);
+		}		/* if (trial_json_p) */
 
 	return success_flag;
 }
@@ -478,38 +500,9 @@ bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p,
 
 	if (trial_p)
 		{
-			if (GetAllFieldTrialStudies (trial_p, format, data_p))
+			if (AddFieldTrialToServiceJobResult (job_p, trial_p, trial_json_p, format, data_p))
 				{
-					if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
-						{
-							char *title_s = GetFieldTrialAsString (trial_p);
-
-							if (title_s)
-								{
-									if (AddContext (trial_json_p))
-										{
-											json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
-
-											if (dest_record_p)
-												{
-													if (AddResultToServiceJob (job_p, dest_record_p))
-														{
-															success_flag = true;
-														}
-													else
-														{
-															json_decref (dest_record_p);
-														}
-
-												}		/* if (dest_record_p) */
-
-										}		/* if (AddContext (trial_json_p)) */
-
-									FreeCopiedString (title_s);
-								}		/* if (title_s) */
-
-						}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
-
+					success_flag = true;
 				}
 
 			FreeFieldTrial (trial_p);
