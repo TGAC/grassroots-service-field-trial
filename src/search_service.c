@@ -108,7 +108,8 @@ Service *GetDFWFieldTrialSearchService (void)
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetDFWFieldTrialSearchServiceMetadata))
+														 GetDFWFieldTrialSearchServiceMetadata,
+														 NULL))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

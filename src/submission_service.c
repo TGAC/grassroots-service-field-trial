@@ -92,7 +92,8 @@ Service *GetDFWFieldTrialSubmissionService (void)
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetDFWFieldTrialSubmissionServiceMetadata))
+														 GetDFWFieldTrialSubmissionServiceMetadata,
+														 NULL))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))
