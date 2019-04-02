@@ -116,7 +116,7 @@ Service *GetDFWFieldTrialSubmissionService (void)
 
 static const char *GetDFWFieldTrialSubmissionServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "DFWFieldTrial submission service";
+	return "Submit Field Trials";
 }
 
 

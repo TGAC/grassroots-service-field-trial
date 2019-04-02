@@ -132,7 +132,7 @@ Service *GetDFWFieldTrialSearchService (void)
 
 static const char *GetDFWFieldTrialSearchServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "DFWFieldTrial search service";
+	return "Search Field Trials";
 }
 
 
