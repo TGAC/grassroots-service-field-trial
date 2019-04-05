@@ -65,7 +65,9 @@ SRCS 	= \
 	search_service.c \
 	study.c \
 	study_jobs.c \
-	submission_service.c 
+	submission_service.c \
+	submit_field_trial.c \
+	submit_study.c \
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

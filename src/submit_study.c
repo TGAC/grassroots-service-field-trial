@@ -14,27 +14,19 @@
 ** limitations under the License.
 */
 /*
- * submission_service.c
+ * submit_study.c
  *
- *  Created on: 22 Oct 2018
+ *  Created on: 5 Apr 2019
  *      Author: billy
  */
 
 
-#include "submission_service.h"
-#include "plot_jobs.h"
-#include "field_trial_jobs.h"
-#include "study_jobs.h"
-#include "material_jobs.h"
-#include "location_jobs.h"
-#include "gene_bank_jobs.h"
-#include "phenotype_jobs.h"
-#include "row_jobs.h"
+#include "submit_field_trial.h"
 
 #include "audit.h"
-#include "streams.h"
-#include "math_utils.h"
-#include "string_utils.h"
+
+#include "study_jobs.h"
+
 
 /*
  * Static declarations
@@ -42,25 +34,24 @@
 
 
 
-static const char *GetDFWFieldTrialSubmissionServiceName (Service *service_p);
+static const char *GetStudySubmissionServiceName (Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (Service *service_p);
+static const char *GetStudySubmissionServiceDesciption (Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service *service_p);
+static const char *GetStudySubmissionServiceInformationUri (Service *service_p);
 
-static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
+static void ReleaseStudySubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
-static ParameterSet *IsResourceForDFWFieldTrialSubmissionService (Service *service_p, Resource *resource_p, Handler *handler_p);
 
-static bool CloseDFWFieldTrialSubmissionService (Service *service_p);
+static bool CloseStudySubmissionService (Service *service_p);
 
-static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *service_p);
+static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p);
 
 
 /*
@@ -68,7 +59,7 @@ static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *serv
  */
 
 
-Service *GetDFWFieldTrialSubmissionService (void)
+Service *GetStudySubmissionService (void)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -79,20 +70,20 @@ Service *GetDFWFieldTrialSubmissionService (void)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetDFWFieldTrialSubmissionServiceName,
-														 GetDFWFieldTrialSubmissionServiceDesciption,
-														 GetDFWFieldTrialSubmissionServiceInformationUri,
-														 RunDFWFieldTrialSubmissionService,
-														 IsResourceForDFWFieldTrialSubmissionService,
-														 GetDFWFieldTrialSubmissionServiceParameters,
-														 GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters,
-														 ReleaseDFWFieldTrialSubmissionServiceParameters,
-														 CloseDFWFieldTrialSubmissionService,
+														 GetStudySubmissionServiceName,
+														 GetStudySubmissionServiceDesciption,
+														 GetStudySubmissionServiceInformationUri,
+														 RunStudySubmissionService,
+														 NULL,
+														 GetStudySubmissionServiceParameters,
+														 GetStudySubmissionServiceParameterTypesForNamedParameters,
+														 ReleaseStudySubmissionServiceParameters,
+														 CloseStudySubmissionService,
 														 NULL,
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetDFWFieldTrialSubmissionServiceMetadata,
+														 GetStudySubmissionServiceMetadata,
 														 NULL))
 						{
 
@@ -114,127 +105,45 @@ Service *GetDFWFieldTrialSubmissionService (void)
 
 
 
-static const char *GetDFWFieldTrialSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+
+
+static const char *GetStudySubmissionServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "Submit any Field Trial data";
+	return "Submit Field Trial Study";
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetStudySubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial data";
+	return "A service to submit field trial studies";
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetStudySubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
-static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+
+static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
-
-	if (!GetSubmissionFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
-		{
-			if (!GetSubmissionStudyParameterTypeForNamedParameter (param_name_s, pt_p))
-				{
-					if (!GetSubmissionLocationParameterTypeForNamedParameter (param_name_s, pt_p))
-						{
-							if (!GetSubmissionPlotParameterTypeForNamedParameter (param_name_s, pt_p))
-								{
-									if (!GetSubmissionGeneBankParameterTypeForNamedParameter (param_name_s, pt_p))
-										{
-											if (!GetSubmissionMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
-												{
-													if (!GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
-														{
-															if (!GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
-																{
-																	success_flag = false;
-																}		/* if (!GetSearchRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-														}		/* if (!GetSearchPhenotypParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-												}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-										}		/* if (!GetSearchGeneBankParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-								}		/* if (!GetSearchPlotParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-						}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-				}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-		}		/* if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p)) */
-
-	return success_flag;
+	return GetSubmissionFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
 
-static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial submission service parameters", "The parameters used for the DFWFieldTrial submission service");
+	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionFieldTrialParams (data_p, params_p))
+			if (AddSubmissionStudyParams (data_p, params_p))
 				{
-					if (AddSubmissionStudyParams (data_p, params_p))
-						{
-							if (AddSubmissionLocationParams (data_p, params_p))
-								{
-									if (AddSubmissionPlotParams (data_p, params_p))
-										{
-											if (AddSubmissionGeneBankParams (data_p, params_p))
-												{
-													if (AddSubmissionMaterialParams (data_p, params_p))
-														{
-															if (AddSubmissionPhenotypeParams (data_p, params_p))
-																{
-																	if (AddSubmissionRowPhenotypeParams (data_p, params_p))
-																		{
-																			return params_p;
-																		}
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionRowPhenotypeParams failed");
-																		}
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionPhenotypeParams failed");
-																}
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionMaterialParams failed");
-														}
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionGeneBankParams failed");
-												}
-
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionPlotParams failed");
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionLocationParams failed");
-								}
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionStudyParams failed");
-						}
+					return params_p;
 				}
 			else
 				{
@@ -245,7 +154,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetDFWFieldTrialSubmissionServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetStudySubmissionServiceName (service_p));
 		}
 
 	return NULL;
@@ -256,7 +165,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 
 
 
-static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
+static void ReleaseStudySubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
@@ -264,22 +173,22 @@ static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service * UNUSED_PA
 
 
 
-static bool CloseDFWFieldTrialSubmissionService (Service *service_p)
+static bool CloseStudySubmissionService (Service *service_p)
 {
 	bool success_flag = true;
 
-	FreeDFWFieldTrialServiceData ((DFWFieldTrialServiceData *) (service_p -> se_data_p));;
+	FreeDFWFieldTrialServiceData ((DFWFieldTrialServiceData *) (service_p -> se_data_p));
 
 	return success_flag;
 }
 
 
 
-static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "DFWFieldTrial");
+	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Study");
 
 	if (service_p -> se_jobs_p)
 		{
@@ -289,42 +198,10 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (param_set_p)
+			if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
 				{
-					if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
-						{
-							if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
-								{
-									if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p))
-										{
-											if (!RunForSubmissionPlotParams (data_p, param_set_p, job_p))
-												{
-													if (!RunForSubmissionGeneBankParams (data_p, param_set_p, job_p))
-														{
-															if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
-																{
-																	if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
-																		{
-																			if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
-																				{
 
-																				}		/* if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p)) */
-
-																		}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
-
-																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
-
-														}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
-
-												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
-
-										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
-
-								}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
-
-						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
-
-				}		/* if (param_set_p) */
+				}		/* if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
@@ -334,7 +211,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 }
 
 
-static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *service_p)
+static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p)
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
@@ -509,11 +386,4 @@ static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *serv
 	return NULL;
 }
 
-
-
-
-static ParameterSet *IsResourceForDFWFieldTrialSubmissionService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
-{
-	return NULL;
-}
 
