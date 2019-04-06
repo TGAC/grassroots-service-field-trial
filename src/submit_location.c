@@ -14,18 +14,17 @@
 ** limitations under the License.
 */
 /*
- * submit_study.c
+ * submit_location.c
  *
- *  Created on: 5 Apr 2019
+ *  Created on: 6 Apr 2019
  *      Author: billy
  */
 
-
-#include "submit_study.h"
+#include "submit_location.h"
 
 #include "audit.h"
 
-#include "study_jobs.h"
+#include "location_jobs.h"
 
 
 /*
@@ -34,24 +33,24 @@
 
 
 
-static const char *GetStudySubmissionServiceName (Service *service_p);
+static const char *GetLocationSubmissionServiceName (Service *service_p);
 
-static const char *GetStudySubmissionServiceDesciption (Service *service_p);
+static const char *GetLocationSubmissionServiceDesciption (Service *service_p);
 
-static const char *GetStudySubmissionServiceInformationUri (Service *service_p);
+static const char *GetLocationSubmissionServiceInformationUri (Service *service_p);
 
-static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static void ReleaseStudySubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
+static void ReleaseLocationSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunLocationSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
 
-static bool CloseStudySubmissionService (Service *service_p);
+static bool CloseLocationSubmissionService (Service *service_p);
 
-static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p);
+static ServiceMetadata *GetLocationSubmissionServiceMetadata (Service *service_p);
 
 
 /*
@@ -59,7 +58,7 @@ static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p);
  */
 
 
-Service *GetStudySubmissionService (void)
+Service *GetLocationSubmissionService (void)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -70,20 +69,20 @@ Service *GetStudySubmissionService (void)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetStudySubmissionServiceName,
-														 GetStudySubmissionServiceDesciption,
-														 GetStudySubmissionServiceInformationUri,
-														 RunStudySubmissionService,
+														 GetLocationSubmissionServiceName,
+														 GetLocationSubmissionServiceDesciption,
+														 GetLocationSubmissionServiceInformationUri,
+														 RunLocationSubmissionService,
 														 NULL,
-														 GetStudySubmissionServiceParameters,
-														 GetStudySubmissionServiceParameterTypesForNamedParameters,
-														 ReleaseStudySubmissionServiceParameters,
-														 CloseStudySubmissionService,
+														 GetLocationSubmissionServiceParameters,
+														 GetLocationSubmissionServiceParameterTypesForNamedParameters,
+														 ReleaseLocationSubmissionServiceParameters,
+														 CloseLocationSubmissionService,
 														 NULL,
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetStudySubmissionServiceMetadata,
+														 GetLocationSubmissionServiceMetadata,
 														 NULL))
 						{
 
@@ -104,36 +103,33 @@ Service *GetStudySubmissionService (void)
 }
 
 
-
-
-
-static const char *GetStudySubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "Submit Field Trial Study";
+	return "Submit Field Trial Location";
 }
 
 
-static const char *GetStudySubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial studies";
+	return "A service to submit field trial locations";
 }
 
 
-static const char *GetStudySubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionStudyParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionLocationParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
 
-static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -141,7 +137,7 @@ static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Re
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionStudyParams (data_p, params_p))
+			if (AddSubmissionLocationParams (data_p, params_p))
 				{
 					return params_p;
 				}
@@ -154,7 +150,7 @@ static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Re
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetStudySubmissionServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetLocationSubmissionServiceName (service_p));
 		}
 
 	return NULL;
@@ -165,7 +161,7 @@ static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Re
 
 
 
-static void ReleaseStudySubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
+static void ReleaseLocationSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
@@ -173,7 +169,7 @@ static void ReleaseStudySubmissionServiceParameters (Service * UNUSED_PARAM (ser
 
 
 
-static bool CloseStudySubmissionService (Service *service_p)
+static bool CloseLocationSubmissionService (Service *service_p)
 {
 	bool success_flag = true;
 
@@ -184,11 +180,11 @@ static bool CloseStudySubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunLocationSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Study");
+	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Location");
 
 	if (service_p -> se_jobs_p)
 		{
@@ -198,10 +194,10 @@ static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSe
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p))
 				{
 
-				}		/* if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p)) */
+				}		/* if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
@@ -211,7 +207,7 @@ static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSe
 }
 
 
-static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p)
+static ServiceMetadata *GetLocationSubmissionServiceMetadata (Service *service_p)
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",

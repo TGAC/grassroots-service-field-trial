@@ -37,6 +37,7 @@
 #include "search_service.h"
 #include "submission_service.h"
 #include "submit_field_trial.h"
+#include "submit_location.h"
 #include "submit_study.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
@@ -69,6 +70,8 @@ ServicesArray *GetServices (UserDetails *user_p)
 	Service *search_service_p = GetDFWFieldTrialSearchService ();
 	Service *field_trial_submission_service_p = GetFieldTrialSubmissionService ();
 	Service *study_submission_service_p = GetStudySubmissionService ();
+	Service *location_submission_service_p = GetLocationSubmissionService ();
+
 
 	if (submission_service_p)
 		{
@@ -87,6 +90,11 @@ ServicesArray *GetServices (UserDetails *user_p)
 
 
 	if (field_trial_submission_service_p)
+		{
+			++ num_services;
+		}
+
+	if (location_submission_service_p)
 		{
 			++ num_services;
 		}
@@ -123,6 +131,13 @@ ServicesArray *GetServices (UserDetails *user_p)
 							* ((services_p -> sa_services_pp) + num_services) = study_submission_service_p;
 							++ num_services;
 						}
+
+					if (location_submission_service_p)
+						{
+							* ((services_p -> sa_services_pp) + num_services) = location_submission_service_p;
+							++ num_services;
+						}
+
 
 					return services_p;
 				}
