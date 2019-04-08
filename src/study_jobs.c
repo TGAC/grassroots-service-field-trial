@@ -29,7 +29,7 @@
 #include "field_trial_jobs.h"
 #include "time_util.h"
 #include "dfw_util.h"
-#include "key_value+_pair.h"
+#include "key_value_pair.h"
 
 
 /*
@@ -62,9 +62,9 @@ static NamedParameterType S_SEARCH_STUDIES = { "Search Studies", PT_BOOLEAN };
 
 
 
-static const uint32 S_NUM_DIRECTIONS = 8;
+static const uint32 S_NUM_DIRECTIONS = 9;
 
-static const KeyValuePair S_DIRECTIONS_P [S_NUM_DIRECTIONS] =
+static KeyValuePair S_DIRECTIONS_P [] =
 {
 	{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
 	{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
@@ -73,7 +73,8 @@ static const KeyValuePair S_DIRECTIONS_P [S_NUM_DIRECTIONS] =
 	{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
 	{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
 	{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
-	{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" }
+	{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
+	{ "Unknown", NULL }
 };
 
 
@@ -143,20 +144,28 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 																{
 																	if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, false))
 																		{
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Experimental Area", def, PL_ALL)) != NULL)
+																			if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL)
 																				{
-																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_ALL)) != NULL)
+																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Experimental Area", def, PL_ALL)) != NULL)
 																						{
-																							success_flag = true;
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_ALL)) != NULL)
+																								{
+																									success_flag = true;
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																								}
 																						}
 																					else
 																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
 																						}
-																				}
+
+																				}		/* if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL) */
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed");
 																				}
 																		}
 																	else
@@ -430,6 +439,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 												{
 													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpLocationsListParameter failed");
 												}
+
 										}
 									else
 										{
@@ -934,9 +944,62 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 
 static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p)
 {
-	Parameter *param_p = NULL;
+	LinkedList *options_p = CreateParameterOptionsList ();
 
-	return param_p;
+	if (options_p)
+		{
+			uint32 i = S_NUM_DIRECTIONS;
+			const KeyValuePair *direction_p = S_DIRECTIONS_P;
+			bool success_flag = true;
+			SharedType def;
+
+			InitSharedType (&def);
+
+			/*
+			 * Set up the direction options
+			 */
+			while (success_flag & (i > 0))
+				{
+					def.st_string_value_s = direction_p -> kvp_value_s;
+
+					if (CreateAndAddParameterOption (options_p, def, direction_p -> kvp_key_s, PT_STRING))
+						{
+							-- i;
+							++ direction_p;
+						}
+					else
+						{
+							success_flag = false;
+						}
+				}
+
+			if (success_flag)
+				{
+					Parameter *param_p = NULL;
+
+					/* default to grassroots */
+					def.st_string_value_s = CopyToNewString ("", 0, false);
+
+					param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, NULL, S_ASPECT.npt_type, false, S_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", options_p, def, NULL, NULL, PL_ALL, NULL);
+
+					if (def.st_string_value_s)
+						{
+							FreeCopiedString (def.st_string_value_s);
+						}
+
+
+					if (param_p)
+						{
+							return param_p;
+						}
+				}
+
+			FreeLinkedList (options_p);
+		}		/* if (options_p) */
+
+
+
+	return NULL;
 }
 
 
