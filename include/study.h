@@ -62,6 +62,9 @@ STUDY_PREFIX const char *ST_LOCATION_S STUDY_VAL ("address");
 
 STUDY_PREFIX const char *ST_SOIL_S STUDY_VAL ("soil");
 
+STUDY_PREFIX const char *ST_ASPECT_S STUDY_VAL ("http://purl.obolibrary.org/obo/NCIT_C42677");
+
+
 STUDY_PREFIX const char *ST_SOWING_DATE_S STUDY_VAL ("sowing_date");
 
 STUDY_PREFIX const char *ST_HARVEST_DATE_S STUDY_VAL ("harvest_date");
@@ -94,6 +97,8 @@ typedef struct Study
 	struct tm *st_sowing_date_p;
 
 	struct tm *st_harvest_date_p;
+
+	char *st_aspect_s;
 
 	/**
 	 * A LinkedList of PlotNodes

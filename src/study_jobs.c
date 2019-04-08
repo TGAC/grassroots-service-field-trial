@@ -29,6 +29,7 @@
 #include "field_trial_jobs.h"
 #include "time_util.h"
 #include "dfw_util.h"
+#include "key_value+_pair.h"
 
 
 /*
@@ -40,6 +41,9 @@ static NamedParameterType S_STUDY_SOIL = { "EA Soil", PT_STRING };
 static NamedParameterType S_STUDY_LINK = { "EA Link", PT_STRING };
 static NamedParameterType S_STUDY_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
 static NamedParameterType S_STUDY_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
+
+static NamedParameterType S_ASPECT = { "EA Field Aspect", PT_STRING };
+
 static NamedParameterType S_ADD_STUDY = { "Add Study", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
 
@@ -54,6 +58,24 @@ static NamedParameterType S_LOCATIONS_LIST = { "Locations", PT_STRING };
 static NamedParameterType S_ACTIVE_DATE = { "Active on date", PT_TIME };
 
 static NamedParameterType S_SEARCH_STUDIES = { "Search Studies", PT_BOOLEAN };
+
+
+
+
+static const uint32 S_NUM_DIRECTIONS = 8;
+
+static const KeyValuePair S_DIRECTIONS_P [S_NUM_DIRECTIONS] =
+{
+	{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
+	{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
+	{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
+	{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
+	{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
+	{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
+	{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
+	{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" }
+};
+
 
 /*
  * STATIC DECLARATIONS
@@ -71,7 +93,10 @@ static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p
 static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
 
 
-static bool GetMatchingStudys (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
+static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
+
+
+static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p);
 
 
 /*
@@ -478,7 +503,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 													/*
 													 * Search with our given criteria
 													 */
-													if (GetMatchingStudys (query_p, data_p, job_p, format))
+													if (GetMatchingStudies (query_p, data_p, job_p, format))
 														{
 															job_done_flag = true;
 														}
@@ -818,7 +843,7 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 }
 
 
-static bool GetMatchingStudys (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
+static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
 {
 	bool job_done_flag = false;
 
@@ -904,6 +929,14 @@ static bool GetMatchingStudys (bson_t *query_p, DFWFieldTrialServiceData *data_p
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_EXPERIMENTAL_AREA]) */
 
 	return job_done_flag;
+}
+
+
+static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p)
+{
+	Parameter *param_p = NULL;
+
+	return param_p;
 }
 
 
