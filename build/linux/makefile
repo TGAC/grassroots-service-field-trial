@@ -67,7 +67,9 @@ SRCS 	= \
 	study_jobs.c \
 	submission_service.c \
 	submit_field_trial.c \
+	submit_gene_bank.c \
 	submit_location.c \
+	submit_material.c \
 	submit_study.c \
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
