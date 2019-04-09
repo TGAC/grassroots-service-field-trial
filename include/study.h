@@ -31,6 +31,7 @@
 #include "field_trial.h"
 #include "location.h"
 #include "jansson.h"
+#include "key_value_pair.h"
 
 #include "typedefs.h"
 #include "address.h"
@@ -42,10 +43,12 @@
 	#define STUDY_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
 	#define STUDY_VAL(x)	= x
 	#define STUDY_CONCAT_VAL(x,y)	= x y
+	#define STUDY_KEY_VALUE_PAIR_VAL(x,y) = {x, y}
 #else
 	#define STUDY_PREFIX extern
 	#define STUDY_VAL(x)
 	#define STUDY_CONCAT_VAL(x,y)
+	#define STUDY_KEY_VALUE_PAIR_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
@@ -64,6 +67,7 @@ STUDY_PREFIX const char *ST_SOIL_S STUDY_VAL ("soil");
 
 STUDY_PREFIX const char *ST_ASPECT_S STUDY_VAL ("http://purl.obolibrary.org/obo/NCIT_C42677");
 
+STUDY_PREFIX const char *ST_SLOPE_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_ENVIRONMENT_ONTOLOGY_S, "00002000");
 
 STUDY_PREFIX const char *ST_SOWING_DATE_S STUDY_VAL ("sowing_date");
 
@@ -75,6 +79,11 @@ STUDY_PREFIX const char *ST_PARENT_FIELD_TRIAL_S STUDY_VAL ("parent_field_trial_
 STUDY_PREFIX const char *ST_PLOTS_S STUDY_VAL ("plots");
 
 STUDY_PREFIX const char *ST_DATA_LINK_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
+
+/**
+ * The value to specify that the aspect parameter is not set.
+ */
+#define ST_UNKNOWN_DIRECTION_S "Unknown"
 
 
 typedef struct Study
@@ -99,6 +108,8 @@ typedef struct Study
 	struct tm *st_harvest_date_p;
 
 	char *st_aspect_s;
+
+	char *st_slope_s;
 
 	/**
 	 * A LinkedList of PlotNodes
@@ -127,7 +138,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 

@@ -43,6 +43,7 @@ static NamedParameterType S_STUDY_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
 static NamedParameterType S_STUDY_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
 
 static NamedParameterType S_ASPECT = { "EA Field Aspect", PT_STRING };
+static NamedParameterType S_SLOPE = { "EA Slope", PT_STRING };
 
 static NamedParameterType S_ADD_STUDY = { "Add Study", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
@@ -62,19 +63,21 @@ static NamedParameterType S_SEARCH_STUDIES = { "Search Studies", PT_BOOLEAN };
 
 
 
-static const uint32 S_NUM_DIRECTIONS = 9;
+#define S_NUM_DIRECTIONS (9)
 
-static KeyValuePair S_DIRECTIONS_P [] =
+static const uint32 S_UNKNOWN_DIRECTION_INDEX = S_NUM_DIRECTIONS - 1;
+
+static const KeyValuePair S_DIRECTIONS_P [] =
 {
-	{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
-	{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
-	{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
-	{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
-	{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
-	{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
-	{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
-	{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
-	{ "Unknown", NULL }
+		{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
+		{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
+		{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
+		{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
+		{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
+		{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
+		{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
+		{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
+		{ ST_UNKNOWN_DIRECTION_S, ST_UNKNOWN_DIRECTION_S},
 };
 
 
@@ -97,7 +100,7 @@ static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
 static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
 
 
-static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p);
+static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
 
 
 /*
@@ -117,7 +120,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 		{
 			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOIL.npt_type, S_STUDY_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Experimental Area", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", def, PL_ALL)) != NULL)
 						{
 							struct tm t;
 
@@ -126,11 +129,11 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 							def.st_time_p = &t;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOWING_YEAR.npt_type, S_STUDY_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Experimental Area", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOWING_YEAR.npt_type, S_STUDY_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Study", def, PL_ALL)) != NULL)
 								{
 									ClearTime (&t);
 
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_HARVEST_YEAR.npt_type, S_STUDY_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Experimental Area", def, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_HARVEST_YEAR.npt_type, S_STUDY_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Study", def, PL_ALL)) != NULL)
 										{
 											def.st_string_value_s = NULL;
 
@@ -138,28 +141,38 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 											if (param_p)
 												{
-													if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, param_p))
+													DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+
+													if (SetUpFieldTrialsListParameter (dfw_data_p, param_p))
 														{
 															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATIONS_LIST.npt_type, S_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL)) != NULL)
 																{
-																	if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, param_p, false))
+																	if (SetUpLocationsListParameter (dfw_data_p, param_p, false))
 																		{
-																			if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL)
+																			if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
 																				{
-																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Experimental Area", def, PL_ALL)) != NULL)
+																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SLOPE.npt_type, S_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL)
 																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Experimental Areas", def, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Study", def, PL_ALL)) != NULL)
 																								{
-																									success_flag = true;
+																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Studies", def, PL_ALL)) != NULL)
+																										{
+																											success_flag = true;
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																										}
 																								}
 																							else
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
 																								}
-																						}
+
+																						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SLOPE.npt_type, S_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL) */
 																					else
 																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SLOPE.npt_name_s);
 																						}
 
 																				}		/* if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL) */
@@ -552,75 +565,86 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 			if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_SOIL.npt_name_s, &soil_value, true))
 				{
-					SharedType data_link_value;
-					InitSharedType (&data_link_value);
+					SharedType aspect_value;
+					InitSharedType (&aspect_value);
 
-					if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_LINK.npt_name_s, &data_link_value, true))
+					if (GetParameterValueFromParameterSet (param_set_p, S_ASPECT.npt_name_s, &aspect_value, true))
 						{
-							SharedType sowing_year_value;
-							InitSharedType (&sowing_year_value);
+							SharedType slope_value;
+							InitSharedType (&slope_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, S_SLOPE.npt_name_s, &slope_value, true))
 								{
-									SharedType harvest_year_value;
-									InitSharedType (&harvest_year_value);
+									SharedType data_link_value;
+									InitSharedType (&data_link_value);
 
-									if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value, true))
+									if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_LINK.npt_name_s, &data_link_value, true))
 										{
-											SharedType parent_field_trial_value;
-											InitSharedType (&parent_field_trial_value);
+											SharedType sowing_year_value;
+											InitSharedType (&sowing_year_value);
 
-											if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true))
+											if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value, true))
 												{
-													FieldTrial *trial_p = GetFieldTrialByIdString (parent_field_trial_value.st_string_value_s, data_p);
+													SharedType harvest_year_value;
+													InitSharedType (&harvest_year_value);
 
-													if (trial_p)
+													if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value, true))
 														{
-															SharedType location_value;
-															InitSharedType (&location_value);
+															SharedType parent_field_trial_value;
+															InitSharedType (&parent_field_trial_value);
 
-															if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &location_value, true))
+															if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true))
 																{
-																	Location *location_p = GetLocationByIdString (location_value.st_string_value_s, VF_STORAGE, data_p);
+																	FieldTrial *trial_p = GetFieldTrialByIdString (parent_field_trial_value.st_string_value_s, data_p);
 
-																	if (location_p)
+																	if (trial_p)
 																		{
-																			Study *study_p = NULL;
-																			struct tm *sowing_date_p = NULL;
-																			struct tm *harvest_date_p = NULL;
+																			SharedType location_value;
+																			InitSharedType (&location_value);
 
-																			if (IsValidDate (sowing_year_value.st_time_p))
+																			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &location_value, true))
 																				{
-																					sowing_date_p = sowing_year_value.st_time_p;
-																				}
+																					Location *location_p = GetLocationByIdString (location_value.st_string_value_s, VF_STORAGE, data_p);
 
-																			if (IsValidDate (harvest_year_value.st_time_p))
-																				{
-																					harvest_date_p = harvest_year_value.st_time_p;
-																				}
+																					if (location_p)
+																						{
+																							Study *study_p = NULL;
+																							struct tm *sowing_date_p = NULL;
+																							struct tm *harvest_date_p = NULL;
 
-																			study_p = AllocateStudy (NULL, value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+																							if (IsValidDate (sowing_year_value.st_time_p))
+																								{
+																									sowing_date_p = sowing_year_value.st_time_p;
+																								}
 
-																			if (study_p)
-																				{
-																					success_flag = SaveStudy (study_p, data_p);
+																							if (IsValidDate (harvest_year_value.st_time_p))
+																								{
+																									harvest_date_p = harvest_year_value.st_time_p;
+																								}
 
-																					FreeStudy (study_p);
+																							study_p = AllocateStudy (NULL, value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, data_p);
+
+																							if (study_p)
+																								{
+																									success_flag = SaveStudy (study_p, data_p);
+
+																									FreeStudy (study_p);
+																								}
+																							else
+																								{
+																									FreeLocation (location_p);
+																								}
+																						}		/* if (location_p) */
 																				}
-																			else
-																				{
-																					FreeLocation (location_p);
-																				}
-																		}		/* if (location_p) */
+																		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true)) */
 																}
-														}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true)) */
+
+														}
 												}
+										}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_LINK.npt_name_s, &data_link_value, true)) */
 
-										}
 								}
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDY_LINK.npt_name_s, &data_link_value, true)) */
-
-
+						}
 
 
 				}
@@ -776,6 +800,23 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Paramete
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
 
 	return success_flag;
+}
+
+
+const KeyValuePair *GetAspect (const char *aspect_value_s)
+{
+	const KeyValuePair *aspect_p = S_DIRECTIONS_P;
+	uint32 i;
+
+	for (i = S_NUM_DIRECTIONS; i > 0; -- i, ++ aspect_p)
+		{
+			if ((Stricmp (aspect_p -> kvp_key_s, aspect_value_s) == 0) || (strcmp (aspect_p -> kvp_key_s, aspect_value_s) == 0))
+				{
+					return aspect_p;
+				}
+		}
+
+	return NULL;
 }
 
 
@@ -942,7 +983,7 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 }
 
 
-static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p)
+static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
 {
 	LinkedList *options_p = CreateParameterOptionsList ();
 
@@ -978,9 +1019,9 @@ static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, Pa
 					Parameter *param_p = NULL;
 
 					/* default to grassroots */
-					def.st_string_value_s = CopyToNewString ("", 0, false);
+					def.st_string_value_s = CopyToNewString ((S_DIRECTIONS_P + S_UNKNOWN_DIRECTION_INDEX) -> kvp_value_s, 0, false);
 
-					param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, NULL, S_ASPECT.npt_type, false, S_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", options_p, def, NULL, NULL, PL_ALL, NULL);
+					param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ASPECT.npt_type, false, S_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", options_p, def, NULL, NULL, PL_ALL, NULL);
 
 					if (def.st_string_value_s)
 						{
