@@ -33,17 +33,17 @@
 
 
 /*
- * Experimental Area parameters
+ * Study parameters
  */
-static NamedParameterType S_STUDY_NAME = { "EA Name", PT_STRING };
-static NamedParameterType S_STUDY_SOIL = { "EA Soil", PT_STRING };
+static NamedParameterType S_STUDY_NAME = { "ST Name", PT_STRING };
+static NamedParameterType S_STUDY_SOIL = { "ST Soil", PT_STRING };
 
-static NamedParameterType S_STUDY_LINK = { "EA Link", PT_STRING };
-static NamedParameterType S_STUDY_SOWING_YEAR = { "EA Sowing Year", PT_TIME };
-static NamedParameterType S_STUDY_HARVEST_YEAR = { "EA Harvest Year", PT_TIME };
+static NamedParameterType S_STUDY_LINK = { "ST Link", PT_STRING };
+static NamedParameterType S_STUDY_SOWING_YEAR = { "ST Sowing Year", PT_TIME };
+static NamedParameterType S_STUDY_HARVEST_YEAR = { "ST Harvest Year", PT_TIME };
 
-static NamedParameterType S_ASPECT = { "EA Field Aspect", PT_STRING };
-static NamedParameterType S_SLOPE = { "EA Slope", PT_STRING };
+static NamedParameterType S_ASPECT = { "ST Field Aspect", PT_STRING };
+static NamedParameterType S_SLOPE = { "ST Slope", PT_STRING };
 
 static NamedParameterType S_ADD_STUDY = { "Add Study", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
@@ -116,9 +116,9 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_NAME.npt_type, S_STUDY_NAME.npt_name_s, "Name", "The name of the Experimental Area", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_NAME.npt_type, S_STUDY_NAME.npt_name_s, "Name", "The name of the Study", def, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOIL.npt_type, S_STUDY_SOIL.npt_name_s, "Soil", "The soil of the Experimental Area", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_SOIL.npt_type, S_STUDY_SOIL.npt_name_s, "Soil", "The soil of the Study", def, PL_ALL)) != NULL)
 				{
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", def, PL_ALL)) != NULL)
 						{
@@ -213,7 +213,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDY_SOWING_YEAR.npt_name_s);
 								}
 
-						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Experimental Area", def, PL_ALL)) != NULL) */
+						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_LINK.npt_type, S_STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", def, PL_ALL)) != NULL) */
 					else
 						{
 
@@ -419,7 +419,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 		{
 			def.st_boolean_value = false;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_STUDIES.npt_type, S_SEARCH_STUDIES.npt_name_s, "Search Studies", "Get the matching Experimental Areas", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_STUDIES.npt_type, S_SEARCH_STUDIES.npt_name_s, "Search Studies", "Get the matching Studies", def, PL_ADVANCED)) != NULL)
 				{
 					def.st_string_value_s = NULL;
 
