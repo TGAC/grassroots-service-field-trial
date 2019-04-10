@@ -71,6 +71,7 @@ SRCS 	= \
 	submit_location.c \
 	submit_material.c \
 	submit_study.c \
+	submit_treatments.c \
 
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

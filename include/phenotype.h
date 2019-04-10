@@ -45,6 +45,8 @@ typedef struct Phenotype
 
 	SchemaTerm *ph_unit_term_p;
 
+	SchemaTerm *ph_form_term_p;
+
 	char *ph_internal_name_s;
 
 } Phenotype;
@@ -71,6 +73,8 @@ PHENOTYPE_PREFIX const char *PH_MEASUREMENT_S PHENOTYPE_VAL ("measurement");
 
 PHENOTYPE_PREFIX const char *PH_UNIT_S PHENOTYPE_VAL ("unit");
 
+PHENOTYPE_PREFIX const char *PH_FORM_S PHENOTYPE_VAL ("form");
+
 PHENOTYPE_PREFIX const char *PH_VALUE_S PHENOTYPE_VAL ("value");
 
 PHENOTYPE_PREFIX const char *PH_INTERNAL_NAME_S PHENOTYPE_VAL ("internal_name");
@@ -84,7 +88,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *form_p, const char *internal_name_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotype (Phenotype *phenotype_p);
 

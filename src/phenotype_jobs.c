@@ -44,6 +44,10 @@ static const char * const S_UNIT_ID_S = "Unit Identifier";
 static const char * const S_UNIT_ABBREVIATION_S = "Unit Abbreviation";
 static const char * const S_UNIT_NAME_S = "Unit Name";
 static const char * const S_UNIT_DESCRIPTION_S = "Unit Description";
+static const char * const S_FORM_ID_S = "Form Identifier";
+static const char * const S_FORM_ABBREVIATION_S = "Form Abbreviation";
+static const char * const S_FORM_NAME_S = "Form Name";
+static const char * const S_FORM_DESCRIPTION_S = "Form Description";
 
 
 static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimiter", PT_CHAR };
@@ -231,6 +235,7 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 	headers_s = ConcatenateVarargsStrings (S_INTERNAL_NAME_TITLE_S, delim_s, S_TRAIT_ID_S, delim_s, S_TRAIT_ABBREVIATION_S, delim_s, S_TRAIT_NAME_S, delim_s, S_TRAIT_DESCRIPTION_S, delim_s,
 																				 S_METHOD_ID_S, delim_s, S_METHOD_ABBREVIATION_S, delim_s, S_METHOD_NAME_S, delim_s, S_METHOD_DESCRIPTION_S, delim_s,
 																				 S_UNIT_ID_S, delim_s, S_UNIT_ABBREVIATION_S, delim_s, S_UNIT_NAME_S, delim_s, S_UNIT_DESCRIPTION_S, delim_s,
+																				 S_FORM_ID_S, delim_s, S_FORM_ABBREVIATION_S, delim_s, S_FORM_NAME_S, delim_s, S_FORM_DESCRIPTION_S, delim_s,
 																				 NULL);
 
 	if (headers_s)
@@ -322,10 +327,17 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 													if (unit_p)
 														{
-															phenotype_p = AllocatePhenotype (NULL, trait_p, method_p, unit_p, internal_name_s);
+															SchemaTerm *form_p = GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
+
+															phenotype_p = AllocatePhenotype (NULL, trait_p, method_p, unit_p, form_p, internal_name_s);
 
 															if (!phenotype_p)
 																{
+																	if (form_p)
+																		{
+																			FreeSchemaTerm (form_p);
+																		}
+
 																	FreeSchemaTerm (unit_p);
 																}
 

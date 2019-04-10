@@ -42,7 +42,7 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 /*
  * API definitions
  */
-Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, const char *internal_name_s)
+Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *form_p, const char *internal_name_s)
 {
 	char *copied_internal_name_s = NULL;
 
@@ -56,6 +56,7 @@ Phenotype *AllocatePhenotype (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm 
 					phenotype_p -> ph_trait_term_p = trait_p;
 					phenotype_p -> ph_measurement_term_p = measurement_p;
 					phenotype_p -> ph_unit_term_p = unit_p;
+					phenotype_p -> ph_form_term_p = form_p;
 					phenotype_p -> ph_internal_name_s = copied_internal_name_s;
 
 					return phenotype_p;
@@ -124,33 +125,44 @@ json_t *GetPhenotypeAsJSON (const Phenotype *phenotype_p, const ViewFormat forma
 						{
 							if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p))
 								{
-									bool success_flag = false;
-
-									if (format == VF_STORAGE)
+									/*
+									 * The form term is optional
+									 */
+									if ((! (phenotype_p -> ph_form_term_p)) || (AddSchemTermToJSON (phenotype_json_p, PH_FORM_S, phenotype_p -> ph_form_term_p)))
 										{
-											if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
+											bool success_flag = false;
+
+											if (format == VF_STORAGE)
+												{
+													if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || (SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)))
+														{
+															success_flag = true;
+														}		/* if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)) */
+												}
+											else
 												{
 													success_flag = true;
-												}		/* if ((IsStringEmpty (phenotype_p -> ph_internal_name_s)) || SetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S, phenotype_p -> ph_internal_name_s)) */
-										}
+												}
+
+											if (success_flag)
+												{
+													if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
+														{
+															if (AddDatatype (phenotype_json_p, DFTD_PHENOTYPE))
+																{
+																	return phenotype_json_p;
+																}
+
+															return phenotype_json_p;
+														}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
+
+												}		/* if (success_flag) */
+
+										}		/* if ((! (phenotype_p -> ph_form_term_p)) || (AddSchemTermToJSON (phenotype_json_p, PH_FORM_S, phenotype_p -> ph_form_term_p))) */
 									else
 										{
-											success_flag = true;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", phenotype_p -> ph_form_term_p -> st_url_s);
 										}
-
-									if (success_flag)
-										{
-											if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p))
-												{
-													if (AddDatatype (phenotype_json_p, DFTD_PHENOTYPE))
-														{
-															return phenotype_json_p;
-														}
-
-													return phenotype_json_p;
-												}		/* if (AddCompoundIdToJSON (phenotype_json_p, phenotype_p -> ph_id_p)) */
-
-										}		/* if (success_flag) */
 
 								}		/* if (AddSchemTermToJSON (phenotype_json_p, PH_UNIT_S, phenotype_p -> ph_unit_term_p)) */
 							else
@@ -191,45 +203,74 @@ Phenotype *GetPhenotypeFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 
 					if (measurement_p)
 						{
-							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+							/*
+							 * The form is optional
+							 */
+							bool success_flag = true;
+							SchemaTerm *form_p = NULL;
+							const json_t *form_json_p = json_object_get (phenotype_json_p, PH_FORM_S);
 
-							if (id_p)
+							if (form_json_p)
 								{
-									if (GetMongoIdFromJSON (phenotype_json_p, id_p))
+									form_p = GetSchemaTermFromJSON (form_json_p);
+
+									if (!form_p)
 										{
-											const char *internal_name_s = GetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S);
-
-											if (internal_name_s)
-												{
-													Phenotype *phenotype_p = AllocatePhenotype (id_p, trait_p, measurement_p, unit_p, internal_name_s);
-
-													if (phenotype_p)
-														{
-															return phenotype_p;
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate Phenotype");
-														}
-
-												}		/* if (internal_name_s) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get internal name \"%s\"", PH_INTERNAL_NAME_S);
-												}
-
-
-										}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get id \"%s\"", MONGO_ID_S);
+											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, form_json_p, "Failed to get SchemaTerm for form from JSON");
 										}
 
-									FreeBSONOid (id_p);
-								}		/* if (id_p) */
-							else
+								}		/* if (form_json_p) */
+
+							if (success_flag)
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate id");
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+									if (id_p)
+										{
+											if (GetMongoIdFromJSON (phenotype_json_p, id_p))
+												{
+													const char *internal_name_s = GetJSONString (phenotype_json_p, PH_INTERNAL_NAME_S);
+
+													if (internal_name_s)
+														{
+															Phenotype *phenotype_p = AllocatePhenotype (id_p, trait_p, measurement_p, unit_p, form_p, internal_name_s);
+
+															if (phenotype_p)
+																{
+																	return phenotype_p;
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate Phenotype");
+																}
+
+														}		/* if (internal_name_s) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get internal name \"%s\"", PH_INTERNAL_NAME_S);
+														}
+
+
+												}		/* if (GetMongoIdFromJSON (phenotype_json_p, id_p)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to get id \"%s\"", MONGO_ID_S);
+												}
+
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to allocate id");
+										}
+
+								}		/* if (success_flag) */
+
+
+							if (form_p)
+								{
+									FreeSchemaTerm (form_p);
 								}
 
 							FreeSchemaTerm (measurement_p);
@@ -382,5 +423,4 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 
 	return NULL;
 }
-
 

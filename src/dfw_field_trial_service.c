@@ -41,6 +41,7 @@
 #include "submit_location.h"
 #include "submit_material.h"
 #include "submit_study.h"
+#include "submit_treatments.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -75,6 +76,7 @@ ServicesArray *GetServices (UserDetails *user_p)
 	Service *location_submission_service_p = GetLocationSubmissionService ();
 	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService ();
 	Service *material_submission_service_p = GetMaterialSubmissionService ();
+	Service *treatments_submission_service_p = GetTreatmentsSubmissionService ();
 
 	if (submission_service_p)
 		{
@@ -90,7 +92,6 @@ ServicesArray *GetServices (UserDetails *user_p)
 		{
 			++ num_services;
 		}
-
 
 	if (field_trial_submission_service_p)
 		{
@@ -108,13 +109,15 @@ ServicesArray *GetServices (UserDetails *user_p)
 			++ num_services;
 		}
 
-
 	if (material_submission_service_p)
 		{
 			++ num_services;
 		}
 
-
+	if (treatments_submission_service_p)
+		{
+			++ num_services;
+		}
 
 	if (num_services)
 		{
@@ -129,7 +132,6 @@ ServicesArray *GetServices (UserDetails *user_p)
 							* (services_p -> sa_services_pp) = submission_service_p;
 							++ num_services;
 						}
-
 
 					if (search_service_p)
 						{
@@ -164,6 +166,12 @@ ServicesArray *GetServices (UserDetails *user_p)
 					if (material_submission_service_p)
 						{
 							* ((services_p -> sa_services_pp) + num_services) = material_submission_service_p;
+							++ num_services;
+						}
+
+					if (treatments_submission_service_p)
+						{
+							* ((services_p -> sa_services_pp) + num_services) = treatments_submission_service_p;
 							++ num_services;
 						}
 
