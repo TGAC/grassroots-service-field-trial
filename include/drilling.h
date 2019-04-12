@@ -32,17 +32,20 @@
 
 typedef struct Drilling
 {
-	uint32 dr_plot_id;
+	bson_oid_t *dr_plot_id_p;
 
-	uint32 dr_field_id;
+	bson_oid_t *dr_study_p;
 
 	Germplasm *dr_germplasm_p;
 
-	uint32 dr_date;
+	uint32 dr_row_index;
 
-	Coordinate *dr_gps_north_east_p;
+	uint32 dr_column_index;
 
-	Coordinate *dr_gps_south_west_p;
+	uint32 dr_replicate_index;
+
+	struct tm *dr_sowing_date_p;
+
 
 } Drilling;
 
