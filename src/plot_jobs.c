@@ -388,7 +388,6 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	char *headers_s = NULL;
 	SharedType def;
 
 	InitSharedType (&def);
