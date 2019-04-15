@@ -96,11 +96,11 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																{
 																	const char *precision_s = S_DEFAULT_COORD_PRECISION_S;
 
-																	if (AddParameterKeyValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
+																	if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																		{
 																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LONGITUDE.npt_type, S_LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", def, PL_ALL)) != NULL)
 																				{
-																					if (AddParameterKeyValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
+																					if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																						{
 																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ALTITUDE.npt_type, S_LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", def, PL_ALL)) != NULL)
 																								{

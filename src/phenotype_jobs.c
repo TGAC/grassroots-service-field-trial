@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * phenotype_jobs.c
  *
@@ -61,6 +61,7 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s);
 
+static json_t *GetTableParameterHints (void);
 
 
 
@@ -226,49 +227,118 @@ Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialSe
  */
 
 
-static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
-{
-	Parameter *param_p = NULL;
-	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	char *headers_s = NULL;
 
+static json_t *GetTableParameterHints (void)
+{
+	/*
 	headers_s = ConcatenateVarargsStrings (S_INTERNAL_NAME_TITLE_S, delim_s, S_TRAIT_ID_S, delim_s, S_TRAIT_ABBREVIATION_S, delim_s, S_TRAIT_NAME_S, delim_s, S_TRAIT_DESCRIPTION_S, delim_s,
 																				 S_METHOD_ID_S, delim_s, S_METHOD_ABBREVIATION_S, delim_s, S_METHOD_NAME_S, delim_s, S_METHOD_DESCRIPTION_S, delim_s,
 																				 S_UNIT_ID_S, delim_s, S_UNIT_ABBREVIATION_S, delim_s, S_UNIT_NAME_S, delim_s, S_UNIT_DESCRIPTION_S, delim_s,
 																				 S_FORM_ID_S, delim_s, S_FORM_ABBREVIATION_S, delim_s, S_FORM_NAME_S, delim_s, S_FORM_DESCRIPTION_S, delim_s,
 																				 NULL);
 
-	if (headers_s)
+	 */
+	json_t *hints_p = json_array ();
+
+	if (hints_p)
 		{
-			SharedType def;
-
-			InitSharedType (&def);
-			def.st_string_value_s = NULL;
-
-			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, false, S_PHENOTYPE_TABLE.npt_name_s, "Phenotype data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
-
-			if (param_p)
+			if (AddColumnParameterHint (S_INTERNAL_NAME_TITLE_S, PT_STRING, hints_p))
 				{
-					bool success_flag = false;
-
-					if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, headers_s))
+					if (AddColumnParameterHint (S_TRAIT_ID_S, PT_STRING, hints_p))
 						{
-							if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
+							if (AddColumnParameterHint (S_TRAIT_ABBREVIATION_S, PT_STRING, hints_p))
+								{
+									if (AddColumnParameterHint (S_TRAIT_NAME_S, PT_STRING, hints_p))
+										{
+											if (AddColumnParameterHint (S_TRAIT_DESCRIPTION_S, PT_STRING, hints_p))
+												{
+													if (AddColumnParameterHint (S_METHOD_ID_S, PT_STRING, hints_p))
+														{
+															if (AddColumnParameterHint (S_METHOD_ABBREVIATION_S, PT_STRING, hints_p))
+																{
+																	if (AddColumnParameterHint (S_METHOD_NAME_S, PT_STRING, hints_p))
+																		{
+																			if (AddColumnParameterHint (S_METHOD_DESCRIPTION_S, PT_STRING, hints_p))
+																				{
+																					if (AddColumnParameterHint (S_UNIT_ID_S, PT_STRING, hints_p))
+																						{
+																							if (AddColumnParameterHint (S_UNIT_ABBREVIATION_S, PT_STRING, hints_p))
+																								{
+																									if (AddColumnParameterHint (S_UNIT_NAME_S, PT_STRING, hints_p))
+																										{
+																											if (AddColumnParameterHint (S_UNIT_DESCRIPTION_S, PT_STRING, hints_p))
+																												{
+																													if (AddColumnParameterHint (S_FORM_ID_S, PT_STRING, hints_p))
+																														{
+																															if (AddColumnParameterHint (S_FORM_ABBREVIATION_S, PT_STRING, hints_p))
+																																{
+																																	if (AddColumnParameterHint (S_FORM_NAME_S, PT_STRING, hints_p))
+																																		{
+																																			if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, PT_STRING, hints_p))
+																																				{
+																																					return hints_p;
+																																				}
+																																		}
+																																}
+																														}
+																												}
+																										}
+																								}
+																						}
+																				}
+																		}
+																}
+														}
+
+												}
+										}
+								}
+
+						}
+				}
+			json_decref (hints_p);
+		}
+
+	return NULL;
+}
+
+
+
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+{
+	Parameter *param_p = NULL;
+	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+	SharedType def;
+
+	InitSharedType (&def);
+	def.st_string_value_s = NULL;
+
+	param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, false, S_PHENOTYPE_TABLE.npt_name_s, "Phenotype data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+
+	if (param_p)
+		{
+			bool success_flag = false;
+
+			json_t *hints_p = GetTableParameterHints ();
+
+			if (hints_p)
+				{
+					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
+						{
+							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
 									success_flag = true;
 								}
 						}
+				}
 
-					if (!success_flag)
-						{
-							FreeParameter (param_p);
-							param_p = NULL;
-						}
+			if (!success_flag)
+				{
+					FreeParameter (param_p);
+					param_p = NULL;
+				}
 
-				}		/* if (param_p) */
-
-			FreeCopiedString (headers_s);
-		}		/* if (headers_s) */
+		}		/* if (param_p) */
 
 	return param_p;
 }

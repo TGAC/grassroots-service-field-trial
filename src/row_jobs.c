@@ -53,6 +53,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 static bool GetIntegerFromJSON (const json_t * const json_p, const char * const key_s, int *value_p);
 
+static json_t *GetTableParameterHints (void);
 
 /*
  * API Definitions
@@ -201,48 +202,70 @@ bool GetSubmissionRowPhenotypeParameterTypeForNamedParameter (const char *param_
  */
 
 
+
+static json_t *GetTableParameterHints (void)
+{
+	json_t *hints_p = json_array ();
+
+	if (hints_p)
+		{
+			if (AddColumnParameterHint (S_ROW_S, PT_UNSIGNED_INT, hints_p))
+				{
+					if (AddColumnParameterHint (S_COLUMN_S, PT_UNSIGNED_INT, hints_p))
+						{
+							if (AddColumnParameterHint (S_RACK_S, PT_UNSIGNED_INT, hints_p))
+								{
+									return hints_p;
+								}
+						}
+				}
+
+			json_decref (hints_p);
+		}
+
+	return NULL;
+}
+
+
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	char *headers_s = NULL;
+	SharedType def;
 
-	headers_s = ConcatenateVarargsStrings (S_ROW_S, delim_s, S_COLUMN_S, delim_s, S_RACK_S, delim_s, NULL);
+	InitSharedType (&def);
+	def.st_string_value_s = NULL;
 
-	if (headers_s)
+	param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, false, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+
+	if (param_p)
 		{
-			SharedType def;
+			bool success_flag = false;
+			json_t *hints_p = GetTableParameterHints ();
 
-			InitSharedType (&def);
-			def.st_string_value_s = NULL;
-
-			param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, false, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
-
-			if (param_p)
+			if (hints_p)
 				{
-					bool success_flag = false;
-
-					if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, headers_s))
+					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
-							if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
+							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
-									if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_HEADERS_PLACEMENT_S, PA_TABLE_COLUMN_HEADERS_PLACEMENT_FIRST_ROW_S))
+									if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_HEADERS_PLACEMENT_S, PA_TABLE_COLUMN_HEADERS_PLACEMENT_FIRST_ROW_S))
 										{
 											success_flag = true;
 										}
 								}
 						}
 
-					if (!success_flag)
-						{
-							FreeParameter (param_p);
-							param_p = NULL;
-						}
+					json_decref (hints_p);
+				}
 
-				}		/* if (param_p) */
+			if (!success_flag)
+				{
+					FreeParameter (param_p);
+					param_p = NULL;
+				}
 
-			FreeCopiedString (headers_s);
-		}		/* if (headers_s) */
+		}		/* if (param_p) */
 
 	return param_p;
 }

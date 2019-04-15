@@ -232,6 +232,34 @@ bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name
  * static definitions
  */
 
+
+static json_t *GetTableParameterHints (void)
+{
+	json_t *hints_p = json_array ();
+
+	if (hints_p)
+		{
+			if (AddColumnParameterHint (S_INTERNAL_NAME_TITLE_S, PT_STRING, hints_p))
+				{
+					if (AddColumnParameterHint (S_PEDIGREE_TITLE_S, PT_STRING, hints_p))
+						{
+							if (AddColumnParameterHint (S_BARCODE_TITLE_S, PT_STRING, hints_p))
+								{
+									if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
+										{
+											return hints_p;
+										}
+								}
+						}
+				}
+
+			json_decref (hints_p);
+		}
+
+	return NULL;
+}
+
+
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
@@ -241,34 +269,33 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 	InitSharedType (&def);
 
-	headers_s = ConcatenateVarargsStrings (S_INTERNAL_NAME_TITLE_S, delim_s, S_PEDIGREE_TITLE_S, delim_s, S_BARCODE_TITLE_S, delim_s, S_ACCESSION_TITLE_S, delim_s, NULL);
+	param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_MATERIAL_TABLE.npt_type, S_MATERIAL_TABLE.npt_name_s, "Material data to upload", "The data to upload", def, PL_ALL);
 
-	if (headers_s)
+	if (param_p)
 		{
-			param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_MATERIAL_TABLE.npt_type, S_MATERIAL_TABLE.npt_name_s, "Material data to upload", "The data to upload", def, PL_ALL);
+			bool success_flag = false;
+			json_t *hints_p = GetTableParameterHints ();
 
-			if (param_p)
+			if (hints_p)
 				{
-					bool success_flag = false;
-
-					if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, headers_s))
+					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
-							if (AddParameterKeyValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
+							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
 									success_flag = true;
 								}
 						}
 
-					if (!success_flag)
-						{
-							FreeParameter (param_p);
-							param_p = NULL;
-						}
+					json_decref (hints_p);
+				}
 
-				}		/* if (param_p) */
+			if (!success_flag)
+				{
+					FreeParameter (param_p);
+					param_p = NULL;
+				}
 
-			FreeCopiedString (headers_s);
-		}		/* if (headers_s) */
+		}		/* if (param_p) */
 
 	return param_p;
 }
