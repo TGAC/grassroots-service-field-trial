@@ -231,6 +231,12 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBan
 DFW_FIELD_TRIAL_PREFIX const char *DFT_ROW_S DFW_FIELD_TRIAL_VAL ("Rows");
 
 
+/**
+ * The key for specifying the object containing the crops.
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
 
 
 

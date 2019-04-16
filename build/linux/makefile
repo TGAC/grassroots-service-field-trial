@@ -42,6 +42,7 @@ INCLUDES = \
 	
 SRCS 	= \
 	crop.c \
+	crop_jobs.c \
 	crop_ontology_tool.c \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
@@ -67,6 +68,7 @@ SRCS 	= \
 	study.c \
 	study_jobs.c \
 	submission_service.c \
+	submit_crop.c \
 	submit_field_trial.c \
 	submit_gene_bank.c \
 	submit_location.c \

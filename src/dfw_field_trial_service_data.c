@@ -39,7 +39,8 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 	"Grassroots:Phenotype",
 	"Grassroots:Observation",
 	"Grassroots:Instrument",
-	"Grassroots:GeneBank"
+	"Grassroots:GeneBank",
+	"Grassroots:Crop"
 };
 
 
@@ -103,6 +104,7 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 					* ((data_p -> dftsd_collection_ss) + DFTD_INSTRUMENT) = DFT_INSTRUMENT_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;
 					* ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
+					* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
 				}
 			else
 				{

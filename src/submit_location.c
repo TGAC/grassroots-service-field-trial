@@ -131,7 +131,7 @@ static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (struct
 
 static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
+	ParameterSet *params_p = AllocateParameterSet ("Field Trial Location submission service parameters", "The parameters used for the Field Trial Location submission service");
 
 	if (params_p)
 		{

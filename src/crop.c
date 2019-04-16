@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-
+#define ALLOCATE_CROP_TAGS (1)
 #include "crop.h"
 #include "dfw_util.h"
 

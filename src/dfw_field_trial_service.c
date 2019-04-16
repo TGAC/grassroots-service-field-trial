@@ -42,6 +42,7 @@
 #include "submit_material.h"
 #include "submit_study.h"
 #include "submit_treatments.h"
+#include "submit_crop.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -60,6 +61,7 @@
  * STATIC PROTOTYPES
  */
 
+static Service **AddValidService (Service **service_pp, Service *service_p);
 
 /*
  * API FUNCTIONS
@@ -77,6 +79,7 @@ ServicesArray *GetServices (UserDetails *user_p)
 	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService ();
 	Service *material_submission_service_p = GetMaterialSubmissionService ();
 	Service *treatments_submission_service_p = GetTreatmentsSubmissionService ();
+	Service *crop_submission_service_p = GetCropSubmissionService ();
 
 	if (submission_service_p)
 		{
@@ -103,7 +106,6 @@ ServicesArray *GetServices (UserDetails *user_p)
 			++ num_services;
 		}
 
-
 	if (gene_bank_submission_service_p)
 		{
 			++ num_services;
@@ -119,6 +121,11 @@ ServicesArray *GetServices (UserDetails *user_p)
 			++ num_services;
 		}
 
+	if (crop_submission_service_p)
+		{
+			++ num_services;
+		}
+
 	if (num_services)
 		{
 			ServicesArray *services_p = AllocateServicesArray (num_services);
@@ -126,54 +133,17 @@ ServicesArray *GetServices (UserDetails *user_p)
 			if (services_p)
 				{
 					num_services = 0;
+					Service **service_pp = services_p -> sa_services_pp;
 
-					if (submission_service_p)
-						{
-							* (services_p -> sa_services_pp) = submission_service_p;
-							++ num_services;
-						}
-
-					if (search_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = search_service_p;
-							++ num_services;
-						}
-
-					if (field_trial_submission_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = field_trial_submission_service_p;
-							++ num_services;
-						}
-
-					if (study_submission_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = study_submission_service_p;
-							++ num_services;
-						}
-
-					if (location_submission_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = location_submission_service_p;
-							++ num_services;
-						}
-
-					if (gene_bank_submission_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = gene_bank_submission_service_p;
-							++ num_services;
-						}
-
-					if (material_submission_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = material_submission_service_p;
-							++ num_services;
-						}
-
-					if (treatments_submission_service_p)
-						{
-							* ((services_p -> sa_services_pp) + num_services) = treatments_submission_service_p;
-							++ num_services;
-						}
+					service_pp = AddValidService (service_pp, submission_service_p);
+					service_pp = AddValidService (service_pp, search_service_p);
+					service_pp = AddValidService (service_pp, field_trial_submission_service_p);
+					service_pp = AddValidService (service_pp, study_submission_service_p);
+					service_pp = AddValidService (service_pp, location_submission_service_p);
+					service_pp = AddValidService (service_pp, gene_bank_submission_service_p);
+					service_pp = AddValidService (service_pp, material_submission_service_p);
+					service_pp = AddValidService (service_pp, treatments_submission_service_p);
+					service_pp = AddValidService (service_pp, crop_submission_service_p);
 
 					return services_p;
 				}
@@ -285,3 +255,13 @@ bool AddErrorMessage (ServiceJob *job_p, const json_t *value_p, const char *erro
 
 
 
+static Service **AddValidService (Service **service_pp, Service *service_p)
+{
+	if (service_p)
+		{
+			*service_pp = service_p;
+			++ service_pp;
+		}
+
+	return service_pp;
+}
