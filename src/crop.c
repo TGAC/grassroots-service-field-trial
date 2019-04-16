@@ -154,12 +154,6 @@ void FreeCrop (Crop *crop_p)
 			FreeCopiedString (crop_p -> cr_agrovoc_uri_s);
 		}
 
-	if (crop_p -> cr_argovoc_preferred_term_s)
-		{
-			FreeCopiedString (crop_p -> cr_argovoc_preferred_term_s);
-		}
-
-
 	FreeCopiedString (crop_p -> cr_name_s);
 
 	if (crop_p -> cr_synonyms_ss)
