@@ -41,6 +41,7 @@ INCLUDES = \
 	-I$(DIR_GRASSROOTS_LUCENE_INC)
 	
 SRCS 	= \
+	crop.c \
 	crop_ontology_tool.c \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \

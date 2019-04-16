@@ -48,13 +48,37 @@ typedef struct Crop
 } Crop;
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_CROP_TAGS
+	#define CROP_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define CROP_VAL(x)	= x
+	#define CROP_CONCAT_VAL(x,y)	= x y
+#else
+	#define CROP_PREFIX extern
+	#define CROP_VAL(x)
+	#define CROP_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+CROP_PREFIX const char *CR_NAME_S CROP_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
+
+CROP_PREFIX const char *CR_AGROVOC_URL_S CROP_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
+
+CROP_PREFIX const char *CR_AGROVOC_PREFERRED_TERM_S CROP_VAL ("preferred_term");
+
+CROP_PREFIX const char *CR_SYNONYMS_S CROP_VAL ("synonyms");
+
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *AllocateCrop (bson_oid_t *id_p, const char *name_s, const char *argovoc_preferred_term_s, const char *agrovoc_uri_s, const char **synonyms_ss);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *AllocateCrop (bson_oid_t *id_p, const char *name_s, const char *argovoc_preferred_term_s, const char *agrovoc_uri_s, char **synonyms_ss);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeCrop (Crop *crop_p);
@@ -63,7 +87,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeCrop (Crop *crop_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropFromJSON (const json_t *crop__json_p, Study *parent_area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropFromJSON (const json_t *crop_json_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p);
