@@ -32,32 +32,11 @@
  * static declarations
  */
 
-
-typedef struct Crop
-{
-	bson_oid_t *cr_id_p;
-
-	char *cr_name_s;
-
-	char *cr_argovoc_preferred_term_s;
-
-	char *cr_agrovoc_uri_s;
-
-	/*
-	 * A NULL-terminated array of synonyms for this crop variety.
-	 * This can be NULL meaning there are no synonyms.
-	 */
-	char **cr_synonyms_ss;
-
-} Crop;
-
 static NamedParameterType S_NAME = { "CR Name", PT_KEYWORD };
 static NamedParameterType S_PREFERRED_TERM = { "CR Preferred Term", PT_KEYWORD};
 static NamedParameterType S_ONTOLOGY_URL = { "CR Ontology URL", PT_STRING };
 static NamedParameterType S_SYNONYMS = { "CR Synonyms", PT_LARGE_STRING };
 
-
-static bool AddCropsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -114,6 +93,7 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 				{
 					SharedType term_value;
 					InitSharedType (&term_value);
+					OperationStatus status = OS_FAILED_TO_START;
 
 					if (GetParameterValueFromParameterSet (param_set_p, S_PREFERRED_TERM.npt_name_s, &term_value, true))
 						{
@@ -127,13 +107,70 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 									if (GetParameterValueFromParameterSet (param_set_p, S_SYNONYMS.npt_name_s, &synonyms_value, true))
 										{
+											bool success_flag = true;
 											char **synonyms_ss = NULL;
-
 
 											if (!IsStringEmpty (synonyms_value.st_string_value_s))
 												{
+													LinkedList *synonyms_p = ParseStringToStringLinkedList (synonyms_value.st_string_value_s, ",", false);
+
+													if (synonyms_p)
+														{
+															synonyms_ss = (char **) AllocMemoryArray (1 + synonyms_p -> ll_size, sizeof (char *));
+
+															if (synonyms_ss)
+																{
+																	StringListNode *node_p = (StringListNode *) synonyms_p -> ll_head_p;
+																	char **synonym_ss = synonyms_ss;
+
+																	while (node_p)
+																		{
+																			*synonym_ss = DetachStringFromStringListNode (node_p);
+
+																			++ synonym_ss;
+																			node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+																		}
+
+																}
+
+															FreeLinkedList (synonyms_p);
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to parse \"%s\" for synonyms", synonyms_value.st_string_value_s);
+															success_flag = false;
+														}
 
 												}		/* if (!IsStringEmpty (synonyms_value.st_string_value_s)) */
+
+											if (success_flag)
+												{
+													Crop *crop_p = AllocateCrop (NULL, name_value.st_string_value_s, term_value.st_string_value_s, ontology_value.st_string_value_s, synonyms_ss);
+
+													if (crop_p)
+														{
+															if (SaveCrop (crop_p, data_p))
+																{
+																	status = OS_SUCCEEDED;
+																}
+														}
+													else
+														{
+
+															status = OS_FAILED;
+															if (synonyms_ss)
+																{
+																	char **synonym_ss = synonyms_ss;
+
+																	while (*synonym_ss)
+																		{
+																			FreeCopiedString (*synonym_ss);
+																			++ synonym_ss;
+																		}
+																}
+														}
+
+												}
 
 										}		/* if (GetParameterValueFromParameterSet (param_set_p, S_SYNONYMS.npt_name_s, &synonyms_value, true)) */
 									else
@@ -154,6 +191,9 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 						}
 
 					job_done_flag = true;
+
+					SetServiceJobStatus (job_p, status);
+
 				}		/* if (! (IsStringEmpty (value.st_string_value_s))) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_NAME.npt_name_s, &name_value, true)) */
@@ -161,6 +201,7 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_NAME.npt_name_s);
 		}
+
 
 	return job_done_flag;
 }
@@ -193,85 +234,3 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 
 	return success_flag;
 }
-
-/*
- * static definitions
- */
-
-static bool AddCropsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
-{
-	bool success_flag	= true;
-	OperationStatus status = OS_FAILED;
-
-	if (json_is_array (materials_json_p))
-		{
-			const size_t num_rows = json_array_size (materials_json_p);
-			size_t i;
-			size_t num_imported = 0;
-
-			for (i = 0; i < num_rows; ++ i)
-				{
-					json_t *table_row_json_p = json_array_get (materials_json_p, i);
-					const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
-
-					if (!IsStringEmpty (internal_name_s))
-						{
-							const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
-
-							if (!IsStringEmpty (accession_s))
-								{
-									const char *pedigree_s = GetJSONString (table_row_json_p, S_PEDIGREE_TITLE_S);
-									const char *barcode_s = GetJSONString (table_row_json_p, S_BARCODE_TITLE_S);
-
-									Crop *material_p = AllocateCrop (NULL, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, gene_bank_p -> gb_id_p, data_p);
-
-									if (material_p)
-										{
-											if (SaveCrop (material_p, data_p))
-												{
-													++ num_imported;
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Crop");
-													success_flag = false;
-												}
-
-											FreeCrop (material_p);
-										}		/* if (material_p) */
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Crop");
-										}
-
-								}		/* if (!IsStringEmpty (accession_s)) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
-								}
-
-						}		/* if (!IsStringEmpty (internal_name_s)) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INTERNAL_NAME_TITLE_S);
-						}
-
-				}		/* for (i = 0; i < num_rows; ++ i) */
-
-
-			if (num_imported == num_rows)
-				{
-					status = OS_SUCCEEDED;
-				}
-			else if (num_imported > 0)
-				{
-					status = OS_PARTIALLY_SUCCEEDED;
-				}
-
-		}		/* if (json_is_array (plots_json_p)) */
-
-	SetServiceJobStatus (job_p, status);
-
-	return success_flag;
-}
-

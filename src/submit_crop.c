@@ -14,20 +14,19 @@
 ** limitations under the License.
 */
 /*
- * submit_treatments.c
+ * submit_crop.c
  *
- *  Created on: 10 Apr 2019
+ *  Created on: 17 Apr 2019
  *      Author: billy
  */
 
 
 
-
-#include "submit_treatments.h"
+#include "submit_crop.h"
 
 #include "audit.h"
 
-#include "phenotype_jobs.h"
+#include "crop_jobs.h"
 
 
 /*
@@ -36,24 +35,24 @@
 
 
 
-static const char *GetTreatmentSubmissionServiceName (Service *service_p);
+static const char *GetCropSubmissionServiceName (Service *service_p);
 
-static const char *GetTreatmentSubmissionServiceDesciption (Service *service_p);
+static const char *GetCropSubmissionServiceDesciption (Service *service_p);
 
-static const char *GetTreatmentSubmissionServiceInformationUri (Service *service_p);
+static const char *GetCropSubmissionServiceInformationUri (Service *service_p);
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetCropSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static void ReleaseTreatmentSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
+static void ReleaseCropSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunCropSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
 
-static bool CloseTreatmentSubmissionService (Service *service_p);
+static bool CloseCropSubmissionService (Service *service_p);
 
-static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_p);
+static ServiceMetadata *GetCropSubmissionServiceMetadata (Service *service_p);
 
 
 /*
@@ -61,7 +60,7 @@ static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_
  */
 
 
-Service *GetTreatmentsSubmissionService (void)
+Service *GetCropSubmissionService (void)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -72,20 +71,20 @@ Service *GetTreatmentsSubmissionService (void)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetTreatmentSubmissionServiceName,
-														 GetTreatmentSubmissionServiceDesciption,
-														 GetTreatmentSubmissionServiceInformationUri,
-														 RunTreatmentSubmissionService,
+														 GetCropSubmissionServiceName,
+														 GetCropSubmissionServiceDesciption,
+														 GetCropSubmissionServiceInformationUri,
+														 RunCropSubmissionService,
 														 NULL,
-														 GetTreatmentSubmissionServiceParameters,
-														 GetTreatmentSubmissionServiceParameterTypesForNamedParameters,
-														 ReleaseTreatmentSubmissionServiceParameters,
-														 CloseTreatmentSubmissionService,
+														 GetCropSubmissionServiceParameters,
+														 GetCropSubmissionServiceParameterTypesForNamedParameters,
+														 ReleaseCropSubmissionServiceParameters,
+														 CloseCropSubmissionService,
 														 NULL,
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetTreatmentSubmissionServiceMetadata,
+														 GetCropSubmissionServiceMetadata,
 														 NULL))
 						{
 
@@ -106,41 +105,41 @@ Service *GetTreatmentsSubmissionService (void)
 }
 
 
-static const char *GetTreatmentSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "Submit Field Trial Treatments";
+	return "Submit Field Trial Crop";
 }
 
 
-static const char *GetTreatmentSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial Treatments";
+	return "A service to submit field trial locations";
 }
 
 
-static const char *GetTreatmentSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetCropSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionCropParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
+	ParameterSet *params_p = AllocateParameterSet ("Field Trial Crop submission service parameters", "The parameters used for the Field Trial Crop submission service");
 
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionPhenotypeParams (data_p, params_p))
+			if (AddSubmissionCropParams (data_p, params_p))
 				{
 					return params_p;
 				}
@@ -153,7 +152,7 @@ static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetTreatmentSubmissionServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetCropSubmissionServiceName (service_p));
 		}
 
 	return NULL;
@@ -164,7 +163,7 @@ static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p
 
 
 
-static void ReleaseTreatmentSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
+static void ReleaseCropSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
@@ -172,7 +171,7 @@ static void ReleaseTreatmentSubmissionServiceParameters (Service * UNUSED_PARAM 
 
 
 
-static bool CloseTreatmentSubmissionService (Service *service_p)
+static bool CloseCropSubmissionService (Service *service_p)
 {
 	bool success_flag = true;
 
@@ -183,11 +182,11 @@ static bool CloseTreatmentSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunCropSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Treatment");
+	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Crop");
 
 	if (service_p -> se_jobs_p)
 		{
@@ -197,10 +196,10 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-		//	if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionCropParams (data_p, param_set_p, job_p))
 				{
 
-				}		/* if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p)) */
+				}		/* if (!RunForSubmissionCropParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
@@ -210,7 +209,7 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 }
 
 
-static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_p)
+static ServiceMetadata *GetCropSubmissionServiceMetadata (Service *service_p)
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
