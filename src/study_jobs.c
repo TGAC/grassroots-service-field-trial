@@ -52,6 +52,9 @@ static NamedParameterType S_STUDY_ID = { "Study to search for", PT_STRING };
 static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Study", PT_BOOLEAN };
 
 
+static NamedParameterType S_THIS_CROP = { "This Crop", PT_STRING };
+static NamedParameterType S_PREVIOUS_CROP = { "Previous Crop", PT_STRING };
+
 
 static NamedParameterType S_FIELD_TRIALS_LIST = { "Field Trials", PT_STRING };
 static NamedParameterType S_LOCATIONS_LIST = { "Locations", PT_STRING };
@@ -153,21 +156,52 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 																				{
 																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SLOPE.npt_type, S_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL)
 																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Study", def, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_THIS_CROP.npt_type, S_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", def, PL_ALL)) != NULL)
 																								{
-																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Studies", def, PL_ALL)) != NULL)
+																									if (SetUpCropsListParameter (dfw_data_p, param_p))
 																										{
-																											success_flag = true;
-																										}
+																											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PREVIOUS_CROP.npt_type, S_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", def, PL_ALL)) != NULL)
+																												{
+																													if (SetUpCropsListParameter (dfw_data_p, param_p))
+																														{
+																															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Study", def, PL_ALL)) != NULL)
+																																{
+																																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Studies", def, PL_ALL)) != NULL)
+																																		{
+																																			success_flag = true;
+																																		}
+																																	else
+																																		{
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																																		}
+																																}
+																															else
+																																{
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
+																																}
+																														}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
+																													else
+																														{
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", S_PREVIOUS_CROP.npt_name_s);;
+																														}
+
+																												}		/* if (param_p) */
+																											else
+																												{
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PREVIOUS_CROP.npt_name_s);
+																												}
+																										}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 																									else
 																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", S_THIS_CROP.npt_name_s);
 																										}
-																								}
+
+																								}		/* if (param_p) */
 																							else
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_THIS_CROP.npt_name_s);
 																								}
+
 
 																						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SLOPE.npt_type, S_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL) */
 																					else

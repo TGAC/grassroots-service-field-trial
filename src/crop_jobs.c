@@ -38,6 +38,8 @@ static NamedParameterType S_ONTOLOGY_URL = { "CR Ontology URL", PT_STRING };
 static NamedParameterType S_SYNONYMS = { "CR Synonyms", PT_LARGE_STRING };
 
 
+static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s);
+
 /*
  * API definitions
  */
@@ -230,6 +232,118 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 	else
 		{
 			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
+bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
+{
+	bool success_flag = false;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_CROP]))
+		{
+			bson_t *query_p = NULL;
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", CR_NAME_S, BCON_INT32 (1), "}", "collation", "{", "locale", BCON_UTF8 ("en"), "}");
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							const size_t num_results = json_array_size (results_p);
+
+							if (num_results > 0)
+								{
+									size_t i;
+									const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
+									const char *default_crop_s = GetJSONString (service_config_p, "default_crop");
+
+									for (i = 0; i < num_results; ++ i)
+										{
+											json_t *entry_p = json_array_get (results_p, i);
+											Crop *crop_p = GetCropFromJSON (entry_p, data_p);
+
+											if (crop_p)
+												{
+													char *id_s = GetBSONOidAsString (crop_p -> cr_id_p);
+
+													if (id_s)
+														{
+															SharedType def;
+
+															InitSharedType (&def);
+
+															def.st_string_value_s = id_s;
+
+															if (param_p)
+																{
+																	success_flag  = true;
+
+																	if ((!default_crop_s) && (i == 0))
+																		{
+																			success_flag = SetDefaultCropValue (param_p, crop_p -> cr_name_s);
+																		}
+
+																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, crop_p -> cr_name_s);
+																}
+
+															FreeCopiedString (id_s);
+														}
+
+													FreeCrop (crop_p);
+												}		/* if (crop_p) */
+
+										}		/* for (i = 0; i < num_results; ++ i)) */
+
+
+									if (success_flag)
+										{
+											if (default_crop_s)
+												{
+													success_flag = SetDefaultCropValue (param_p, default_crop_s);
+												}
+										}
+
+								}		/* if (num_results > 0) */
+							else
+								{
+									/* nothing to add */
+									success_flag = true;
+								}
+
+						}		/* if (json_is_array (results_p)) */
+
+					json_decref (results_p);
+				}		/* if (results_p) */
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+
+	return success_flag;
+}
+
+
+static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s)
+{
+	bool success_flag = false;
+	SharedType def;
+
+	InitSharedType (&def);
+
+	def.st_string_value_s = crop_s;
+
+	if (SetParameterValueFromSharedType (param_p, &def, false))
+		{
+			if (SetParameterValueFromSharedType (param_p, &def, true))
+				{
+					success_flag = true;
+				}
 		}
 
 	return success_flag;

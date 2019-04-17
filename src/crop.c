@@ -87,7 +87,7 @@ Crop *AllocateCrop (bson_oid_t *id_p, const char *name_s, const char *argovoc_pr
 													if (!success_flag)
 														{
 															/*
-															 * The last synoym copy failed, so go back to the previous one
+															 * The last synonym copy failed, so go back to the previous one
 															 */
 															-- copied_synonym_ss;
 
@@ -163,7 +163,7 @@ void FreeCrop (Crop *crop_p)
 			while (*synonym_ss)
 				{
 					FreeCopiedString (*synonym_ss);
-					++ *synonym_ss;
+					++ synonym_ss;
 				}
 
 			FreeMemory (crop_p -> cr_synonyms_ss);
