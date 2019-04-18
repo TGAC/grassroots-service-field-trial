@@ -25,6 +25,7 @@
 #include "study.h"
 #include "location.h"
 #include "string_utils.h"
+#include "crop_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
 #include "time_util.h"
@@ -54,6 +55,10 @@ static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Study", PT_BOOL
 
 static NamedParameterType S_THIS_CROP = { "This Crop", PT_STRING };
 static NamedParameterType S_PREVIOUS_CROP = { "Previous Crop", PT_STRING };
+
+
+static NamedParameterType S_PH_MIN = { "pH Minimum", PT_UNSIGNED_REAL };
+static NamedParameterType S_PH_MAX = { "pH Maximum", PT_UNSIGNED_REAL };
 
 
 static NamedParameterType S_FIELD_TRIALS_LIST = { "Field Trials", PT_STRING };
@@ -104,6 +109,9 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 
 
 static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
+
+
+static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s);
 
 
 /*
@@ -164,21 +172,37 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 																												{
 																													if (SetUpCropsListParameter (dfw_data_p, param_p))
 																														{
-																															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Study", def, PL_ALL)) != NULL)
+																															if (AddPhParameter (data_p, param_set_p, group_p, &S_PH_MIN, "pH Minimum", "The lower bound of the soil's pH range"))
 																																{
-																																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Studies", def, PL_ALL)) != NULL)
+																																	if (AddPhParameter (data_p, param_set_p, group_p, &S_PH_MAX, "pH Maximum", "The upper bound of the soil's pH range"))
 																																		{
-																																			success_flag = true;
-																																		}
+																																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Study", def, PL_ALL)) != NULL)
+																																				{
+																																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Studies", def, PL_ALL)) != NULL)
+																																						{
+																																							success_flag = true;
+																																						}
+																																					else
+																																						{
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																																						}
+																																				}
+																																			else
+																																				{
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
+																																				}
+
+																																		}		/* if (AddPhParameter (data_p, param_set_p, group_p, &S_PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
 																																	else
 																																		{
-																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PH_MIN.npt_name_s);
 																																		}
-																																}
+																																}		/* if (AddPhParameter (data_p, param_set_p, group_p, &S_PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
 																															else
 																																{
-																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PH_MIN.npt_name_s);
 																																}
+
 																														}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 																													else
 																														{
@@ -346,6 +370,30 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	else if (strcmp (param_name_s, S_GET_ALL_STUDIES.npt_name_s) == 0)
 		{
 			*pt_p = S_GET_ALL_STUDIES.npt_type;
+		}
+	else if (strcmp (param_name_s, S_ASPECT.npt_name_s) == 0)
+		{
+			*pt_p = S_ASPECT.npt_type;
+		}
+	else if (strcmp (param_name_s, S_SLOPE.npt_name_s) == 0)
+		{
+			*pt_p = S_SLOPE.npt_type;
+		}
+	else if (strcmp (param_name_s, S_THIS_CROP.npt_name_s) == 0)
+		{
+			*pt_p = S_THIS_CROP.npt_type;
+		}
+	else if (strcmp (param_name_s, S_PREVIOUS_CROP.npt_name_s) == 0)
+		{
+			*pt_p = S_PREVIOUS_CROP.npt_type;
+		}
+	else if (strcmp (param_name_s, S_PH_MIN.npt_name_s) == 0)
+		{
+			*pt_p = S_PH_MIN.npt_type;
+		}
+	else if (strcmp (param_name_s, S_PH_MAX.npt_name_s) == 0)
+		{
+			*pt_p = S_PH_MAX.npt_type;
 		}
 	else
 		{
@@ -688,6 +736,36 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
 
 	return success_flag;
+}
+
+
+
+static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s)
+{
+	bool success_flag = false;
+	ParameterBounds *bounds_p = AllocateParameterBounds ();
+
+	if (bounds_p)
+		{
+			Parameter *param_p = NULL;
+			SharedType def;
+
+			bounds_p -> pb_lower.st_data_value  = 0.0;
+			bounds_p -> pb_upper.st_data_value  = 14.0;
+
+			def.st_data_value = 7.0;
+
+			param_p = CreateAndAddParameterToParameterSet (service_data_p, params_p, group_p, param_type_p -> npt_type, false, param_type_p -> npt_name_s, display_name_s, description_s, NULL, def, NULL, bounds_p, PL_ALL, NULL);
+
+			if (param_p)
+				{
+					return param_p;
+				}
+
+			FreeParameterBounds (bounds_p, param_type_p -> npt_type);
+		}		/* if (bounds_p) */
+
+	return NULL;
 }
 
 
