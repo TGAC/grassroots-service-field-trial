@@ -34,6 +34,16 @@
 #include "study.h"
 
 
+/*
+ *
+ * Species name	Germplasm ID	Type of Material	Reason for selection	Generation	Seed Supplier	Source of Seed	Germplasm Origin	In GRU?	GRU Accession	TGW	Seed Treatment	Cleaned
+			keyword list	F2, F3 etc	Organisation	Trial or Organisation	Organisation	Y/N	ID	Number	Treatment 	Y/N
+Triticum aestivum	BT1604	Synthetic Derived	yield, drought tolerance		Rothamsted	17/18 Trial	NIAB
+Triticum aestivum	Skyfall	Elite	control		RAGT	Commercial	RAGT			150	Azole fungicide X
+
+ *
+ */
+
 typedef struct Material
 {
 	bson_oid_t *ma_id_p;
@@ -49,6 +59,29 @@ typedef struct Material
 	char *ma_internal_name_s;
 
 	const Study *ma_parent_area_p;
+
+	char *ma_species_name_s;
+
+	char *ma_type_s;
+
+	char *ma_selection_reason_s;
+
+	char *ma_generation_s;
+
+	char *ma_seed_supplier_s;
+
+	char *ma_seed_source_s;
+
+	char *ma_germplasm_origin_s;
+
+	bool ma_in_gru_flag;
+
+	uint32 ma_tgw;
+
+	char *ma_seed_treatment_s;
+
+	bool ma_cleaned_flag;
+
 
 } Material;
 
