@@ -35,15 +35,36 @@
 
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
+/*
 static const char * const S_INTERNAL_NAME_TITLE_S = "Accession";
 static const char * const S_PEDIGREE_TITLE_S = "Pedigree";
 static const char * const S_BARCODE_TITLE_S = "Barcode";
 static const char * const S_ACCESSION_TITLE_S = "Store code";
+*/
+
+static const char * const S_SPECIES_NAME_TITLE_S = "Species Name";
+static const char * const S_GERMPLASM_ID_TITLE_S = "Germplasm ID";
+static const char * const S_TYPE_TITLE_S = "Material Type";
+static const char * const S_SELECTION_REASON_TITLE_S = "Selection Reason";
+static const char * const S_GENERATION_TITLE_S = "Generation";
+static const char * const S_SEED_SUPPLIER_TITLE_S = "Seed Supplier";
+static const char * const S_SEED_SOURCE_TITLE_S = "Seed Source";
+static const char * const S_GERMPLASM_ORIGIN_TITLE_S = "Germplasm Origin";
+static const char * const S_IN_GRU_TITLE_S = "In GRU?";
+static const char * const S_GRU_ACCESISON_TITLE_S = "GRU Accession";
+static const char * const S_TGW_TITLE_S = "TGW";
+static const char * const S_SEED_TREATMENT_TITLE_S = "Seed Treatment";
+static const char * const S_CLEANED_TITLE_S = "Cleaned?";
+
+
 
 static NamedParameterType S_MATERIAL_TABLE_COLUMN_DELIMITER = { "MA Data delimiter", PT_CHAR };
 static NamedParameterType S_MATERIAL_TABLE = { "MA Upload", PT_TABLE};
 static NamedParameterType S_STUDIES_LIST = { "MA Study", PT_STRING };
 static NamedParameterType S_GENE_BANKS_LIST = { "MA Gene Bank", PT_STRING };
+
+
+static json_t *GetTableParameterHints (void);
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
@@ -239,15 +260,42 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_INTERNAL_NAME_TITLE_S, PT_STRING, hints_p))
+			if (AddColumnParameterHint (S_SPECIES_NAME_TITLE_S, PT_STRING, hints_p))
 				{
-					if (AddColumnParameterHint (S_PEDIGREE_TITLE_S, PT_STRING, hints_p))
+					if (AddColumnParameterHint (S_GERMPLASM_ID_TITLE_S, PT_STRING, hints_p))
 						{
-							if (AddColumnParameterHint (S_BARCODE_TITLE_S, PT_STRING, hints_p))
+							if (AddColumnParameterHint (S_TYPE_TITLE_S, PT_STRING, hints_p))
 								{
-									if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
+									if (AddColumnParameterHint (S_SELECTION_REASON_TITLE_S, PT_STRING, hints_p))
 										{
-											return hints_p;
+											if (AddColumnParameterHint (S_GENERATION_TITLE_S, PT_STRING, hints_p))
+												{
+													if (AddColumnParameterHint (S_SEED_SUPPLIER_TITLE_S, PT_STRING, hints_p))
+														{
+															if (AddColumnParameterHint (S_SEED_SOURCE_TITLE_S, PT_STRING, hints_p))
+																{
+																	if (AddColumnParameterHint (S_GERMPLASM_ORIGIN_TITLE_S, PT_STRING, hints_p))
+																		{
+																			if (AddColumnParameterHint (S_IN_GRU_TITLE_S, PT_BOOLEAN, hints_p))
+																				{
+																					if (AddColumnParameterHint (S_GRU_ACCESISON_TITLE_S, PT_STRING, hints_p))
+																						{
+																							if (AddColumnParameterHint (S_TGW_TITLE_S, PT_UNSIGNED_INT, hints_p))
+																								{
+																									if (AddColumnParameterHint (S_SEED_TREATMENT_TITLE_S, PT_STRING, hints_p))
+																										{
+																											if (AddColumnParameterHint (S_CLEANED_TITLE_S, PT_BOOLEAN, hints_p))
+																												{
+																													return hints_p;
+																												}
+																										}
+																								}
+																						}
+																				}
+																		}
+																}
+														}
+												}
 										}
 								}
 						}

@@ -104,6 +104,7 @@ typedef struct Material
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
+
 MATERIAL_PREFIX const char *MA_ID_S MATERIAL_VAL ("id");
 
 MATERIAL_PREFIX const char *MA_ACCESSION_S MATERIAL_VAL ("accession");
@@ -119,6 +120,24 @@ MATERIAL_PREFIX const char *MA_GENE_BANK_S MATERIAL_VAL ("gene_bank");
 MATERIAL_PREFIX const char *MA_EXPERIMENTAL_AREA_ID_S MATERIAL_VAL ("area_id");
 
 MATERIAL_PREFIX const char *MA_INTERNAL_NAME_S MATERIAL_VAL ("internal_name");
+
+
+
+
+MATERIAL_PREFIX const char *MA_SPECIES_S MATERIAL_VAL ("http://purl.obolibrary.org/obo/NCIT_C45293");
+
+MATERIAL_PREFIX const char *MA_TYPE_S MATERIAL_VAL ("type");
+MATERIAL_PREFIX const char *MA_SELECTION_REASON_S MATERIAL_VAL ("selection_reason");
+MATERIAL_PREFIX const char *MA_GENERATION_S MATERIAL_VAL ("generation");
+MATERIAL_PREFIX const char *MA_SEED_SUPPLIER_S MATERIAL_VAL ("seed_supplier");
+MATERIAL_PREFIX const char *MA_SEED_SOURCE_S MATERIAL_VAL ("seed_source");
+MATERIAL_PREFIX const char *MA_GERMPLASM_ORIGIN_S MATERIAL_VAL ("germplasm_origin");
+MATERIAL_PREFIX const char *MA_IN_GRU_S MATERIAL_VAL ("in_gru");
+MATERIAL_PREFIX const char *MA_TGW_S MATERIAL_VAL ("tgw");
+MATERIAL_PREFIX const char *MA_SEED_TREATMENT_S MATERIAL_VAL ("seed_treatment");
+
+
+MATERIAL_PREFIX const char *MA_CLEANED_NAME_S MATERIAL_VAL ("cleaned");
 
 
 

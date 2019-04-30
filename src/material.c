@@ -32,6 +32,8 @@ static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);
 
 static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
 
+static bool SetValidJSONString (json_t *material_json_p, const char *key_s, const char *value_s);
+
 /*
  * API FUNCTIONS
  */
@@ -257,14 +259,100 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 							if (success_flag)
 								{
+									success_flag = false;
+
 									if (SetJSONString (material_json_p, MA_INTERNAL_NAME_S, material_p -> ma_internal_name_s))
 										{
 											if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
 												{
-													if ((IsStringEmpty (material_p -> ma_barcode_s)) || (SetJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s)))
+													if (SetValidJSONString (material_json_p, MA_BARCODE_S, material_p -> ma_barcode_s))
 														{
-															if ((IsStringEmpty (material_p -> ma_pedigree_s)) || (SetJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s)))
+															if (SetValidJSONString (material_json_p, MA_PEDIGREE_S, material_p -> ma_pedigree_s))
 																{
+																	if (SetValidJSONString (material_json_p, MA_GERMPLASM_ORIGIN_S, material_p -> ma_germplasm_origin_s))
+																		{
+																			if (SetValidJSONString (material_json_p, MA_SEED_SOURCE_S, material_p -> ma_seed_source_s))
+																				{
+																					if (SetValidJSONString (material_json_p, MA_SEED_SUPPLIER_S, material_p -> ma_seed_supplier_s))
+																						{
+																							if (SetValidJSONString (material_json_p, MA_SELECTION_REASON_S, material_p -> ma_selection_reason_s))
+																								{
+																									if (SetValidJSONString (material_json_p, MA_SEED_TREATMENT_S, material_p -> ma_seed_treatment_s))
+																										{
+																											if (SetValidJSONString (material_json_p, MA_GENERATION_S, material_p -> ma_generation_s))
+																												{
+																													if (SetValidJSONString (material_json_p, MA_SPECIES_S, material_p -> ma_species_name_s))
+																														{
+																															if (SetValidJSONString (material_json_p, MA_TYPE_S, material_p -> ma_type_s))
+																																{
+																																	if (SetJSONBoolean (material_json_p, MA_IN_GRU_S, material_p -> ma_in_gru_flag))
+																																		{
+																																			if (SetJSONBoolean (material_json_p, MA_CLEANED_NAME_S, material_p -> ma_cleaned_flag))
+																																				{
+																																					if (SetJSONInteger (material_json_p, MA_TGW_S, material_p -> ma_tgw))
+																																						{
+																																							success_flag = true;
+																																						}
+																																					else
+																																						{
+																																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": " UINT32_FMT, MA_TGW_S, material_p -> ma_tgw);
+																																						}
+
+																																				}
+																																			else
+																																				{
+																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_CLEANED_NAME_S, material_p -> ma_cleaned_flag ? "true" : "false");
+																																				}
+																																		}
+																																	else
+																																		{
+																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_IN_GRU_S, material_p -> ma_in_gru_flag ? "true" : "false");
+
+																																		}
+																																}
+																															else
+																																{
+																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_TYPE_S, material_p -> ma_type_s);
+																																}
+
+																														}
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_SPECIES_S, material_p -> ma_species_name_s);
+																														}
+																												}
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_GENERATION_S, material_p -> ma_generation_s);
+																												}
+
+																										}
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_SEED_TREATMENT_S, material_p -> ma_seed_treatment_s);
+																										}
+																								}
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_SELECTION_REASON_S, material_p -> ma_selection_reason_s);
+																								}
+
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_SEED_SUPPLIER_S, material_p -> ma_seed_supplier_s);
+																						}
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_SEED_SOURCE_S, material_p -> ma_seed_source_s);
+																				}
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_GERMPLASM_ORIGIN_S, material_p -> ma_germplasm_origin_s);
+																		}
+
 																	if (AddDatatype (material_json_p, DFTD_MATERIAL))
 																		{
 																			return material_json_p;
@@ -322,6 +410,8 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 	return NULL;
 }
+
+
 
 
 
@@ -389,6 +479,23 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 														{
 															const char *barcode_s = GetJSONString (json_p, MA_BARCODE_S);
 															const char *pedigree_s = GetJSONString (json_p, MA_PEDIGREE_S);
+															const char *barcode_s = GetJSONString (json_p, MA_SPECIES_S);
+															const char *type_s = GetJSONString (json_p, MA_TYPE_S);
+															const char *selection_reason_s = GetJSONString (json_p, MA_SELECTION_REASON_S);
+															const char *generation_ = GetJSONString (json_p, MA_GENERATION_S);
+															const char *seed_supplier_s = GetJSONString (json_p, MA_SEED_SUPPLIER_S);
+															const char *seed_source_s = GetJSONString (json_p, MA_SEED_SOURCE_S);
+															const char *germplasm_origin_s = GetJSONString (json_p, MA_GERMPLASM_ORIGIN_S);
+															const char *seed_treatment_s = GetJSONString (json_p, MA_SEED_TREATMENT_S);
+															bool in_gru_flag;
+															bool cleaned_flag;
+															uint32 tgw = 0;
+
+
+															GetJSONBoolean (json_p, MA_IN_GRU_S, &in_gru_flag);
+															GetJSONBoolean (json_p, MA_CLEANED_NAME_S, &cleaned_flag);
+															GetJSONInteger (json_p, MA_TGW_S, (int *) &tgw);
+
 															Material *material_p = AllocateMaterial (id_p, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, germplasm_id_p, data_p);
 
 															if (material_p)
@@ -642,3 +749,10 @@ static bool ReplaceMaterialField (const char *new_value_s, char **value_ss)
 
 	return success_flag;
 }
+
+
+static bool SetValidJSONString (json_t *material_json_p, const char *key_s, const char *value_s)
+{
+	return ((IsStringEmpty (value_s)) || (SetJSONString (material_json_p, key_s, value_s)));
+}
+
