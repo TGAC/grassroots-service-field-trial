@@ -38,20 +38,72 @@ static bool SetValidJSONString (json_t *material_json_p, const char *key_s, cons
  * API FUNCTIONS
  */
 
-Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
+
+
+Material *AllocateMaterial (bson_oid_t *id_p, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
 {
-	char *copied_accession_s = EasyCopyToNewString (accession_s);
+	char *copied_species_s = NULL;
 
-	if (copied_accession_s)
+	if ((IsStringEmpty (species_s)) || ((copied_species_s = EasyCopyToNewString (species_s)) != NULL))
 		{
-			bool success_flag = true;
-			char *copied_pedigree_s = NULL;
+			char *copied_type_s = NULL;
 
-			if (!IsStringEmpty (pedigree_s))
+			if ((IsStringEmpty (type_s)) || ((copied_type_s = EasyCopyToNewString (type_s)) != NULL))
 				{
-					copied_pedigree_s = EasyCopyToNewString (pedigree_s);
-					success_flag = (copied_pedigree_s != NULL);
+					char *copied_selection_reason_s = NULL;
+
+					if ((IsStringEmpty (selection_reason_s)) || ((copied_selection_reason_s = EasyCopyToNewString (selection_reason_s)) != NULL))
+						{
+							char *copied_generation_s = NULL;
+
+							if ((IsStringEmpty (generation_s)) || ((copied_generation_s = EasyCopyToNewString (generation_s)) != NULL))
+								{
+
+
+
+									if (copied_generation_s)
+										{
+											FreeCopiedString (copied_generation_s);
+										}
+								}		/* if ((IsStringEmpty (generation_s)) || ((copied_generation_s = EasyCopyToNewString (generation_s)) != NULL)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy generation \"%s\"", generation_s);
+								}
+
+
+							if (copied_selection_reason_s)
+								{
+									FreeCopiedString (copied_selection_reason_s);
+								}
+						}		/* if ((IsStringEmpty (selection_reason_s)) || ((copied_selection_reason_s = EasyCopyToNewString (selection_reason_s)) != NULL)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy selection reason \"%s\"", selection_reason_s);
+						}
+
+					if (copied_type_s)
+						{
+							FreeCopiedString (copied_type_s);
+						}
+				}		/* if ((IsStringEmpty (pedigree_s)) || ((copied_type_s = EasyCopyToNewString (pedigree_s)) != NULL)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy type \"%s\"", type_s);
 				}
+
+
+
+			if (copied_species_s)
+				{
+					FreeCopiedString (copied_species_s);
+				}
+		}		/* if ((IsStringEmpty (species_s)) || ((copied_species_s = EasyCopyToNewString (species_s)) != NULL)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy species \"%s\"", species_s);
+		}
+
 
 			if (success_flag)
 				{
