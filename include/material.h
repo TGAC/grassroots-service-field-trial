@@ -34,6 +34,16 @@
 #include "study.h"
 
 
+/*
+ *
+ * Species name	Germplasm ID	Type of Material	Reason for selection	Generation	Seed Supplier	Source of Seed	Germplasm Origin	In GRU?	GRU Accession	TGW	Seed Treatment	Cleaned
+			keyword list	F2, F3 etc	Organisation	Trial or Organisation	Organisation	Y/N	ID	Number	Treatment 	Y/N
+Triticum aestivum	BT1604	Synthetic Derived	yield, drought tolerance		Rothamsted	17/18 Trial	NIAB
+Triticum aestivum	Skyfall	Elite	control		RAGT	Commercial	RAGT			150	Azole fungicide X
+
+ *
+ */
+
 typedef struct Material
 {
 	bson_oid_t *ma_id_p;
@@ -42,13 +52,38 @@ typedef struct Material
 
 	char *ma_accession_s;
 
+	/*
 	char *ma_pedigree_s;
 
 	char *ma_barcode_s;
 
-	char *ma_internal_name_s;
+	*/
+	char *ma_germplasm_id_s;
 
 	const Study *ma_parent_area_p;
+
+	char *ma_species_name_s;
+
+	char *ma_type_s;
+
+	char *ma_selection_reason_s;
+
+	char *ma_generation_s;
+
+	char *ma_seed_supplier_s;
+
+	char *ma_seed_source_s;
+
+	char *ma_germplasm_origin_s;
+
+	bool ma_in_gru_flag;
+
+	uint32 ma_tgw;
+
+	char *ma_seed_treatment_s;
+
+	bool ma_cleaned_flag;
+
 
 } Material;
 
@@ -71,6 +106,7 @@ typedef struct Material
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
+
 MATERIAL_PREFIX const char *MA_ID_S MATERIAL_VAL ("id");
 
 MATERIAL_PREFIX const char *MA_ACCESSION_S MATERIAL_VAL ("accession");
@@ -85,7 +121,25 @@ MATERIAL_PREFIX const char *MA_GENE_BANK_S MATERIAL_VAL ("gene_bank");
 
 MATERIAL_PREFIX const char *MA_EXPERIMENTAL_AREA_ID_S MATERIAL_VAL ("area_id");
 
-MATERIAL_PREFIX const char *MA_INTERNAL_NAME_S MATERIAL_VAL ("internal_name");
+MATERIAL_PREFIX const char *MA_GERMPLASM_ID_S MATERIAL_VAL ("germplasm_id");
+
+
+
+
+MATERIAL_PREFIX const char *MA_SPECIES_S MATERIAL_VAL ("http://purl.obolibrary.org/obo/NCIT_C45293");
+
+MATERIAL_PREFIX const char *MA_TYPE_S MATERIAL_VAL ("type");
+MATERIAL_PREFIX const char *MA_SELECTION_REASON_S MATERIAL_VAL ("selection_reason");
+MATERIAL_PREFIX const char *MA_GENERATION_S MATERIAL_VAL ("generation");
+MATERIAL_PREFIX const char *MA_SEED_SUPPLIER_S MATERIAL_VAL ("seed_supplier");
+MATERIAL_PREFIX const char *MA_SEED_SOURCE_S MATERIAL_VAL ("seed_source");
+MATERIAL_PREFIX const char *MA_GERMPLASM_ORIGIN_S MATERIAL_VAL ("germplasm_origin");
+MATERIAL_PREFIX const char *MA_IN_GRU_S MATERIAL_VAL ("in_gru");
+MATERIAL_PREFIX const char *MA_TGW_S MATERIAL_VAL ("tgw");
+MATERIAL_PREFIX const char *MA_SEED_TREATMENT_S MATERIAL_VAL ("seed_treatment");
+
+
+MATERIAL_PREFIX const char *MA_CLEANED_NAME_S MATERIAL_VAL ("cleaned");
 
 
 
@@ -96,18 +150,20 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *pedigree_s, const char *barcode_s, const char *internal_name_s, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL	Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, bool gru_flag, bool cleaned_flag, uint32 tgw, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByInternalName (bson_oid_t *id_p, const char *internal_name_s, const Study *area_p, const DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm_id_s, const Study *area_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialAccession (Material *material_p, const char * const accession_s);
 
+/*
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialPedigree (Material *material_p, const char * const pedigree_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialBarcode (Material *material_p, const char * const barcode_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialInternalName (Material *material_p, const char * const internal_name_s);
-
+*/
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMaterial (Material *material_p);
 
@@ -123,7 +179,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, D
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
