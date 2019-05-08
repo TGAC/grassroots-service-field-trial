@@ -51,11 +51,10 @@ static const char * const S_SEED_SUPPLIER_TITLE_S = "Seed Supplier";
 static const char * const S_SEED_SOURCE_TITLE_S = "Seed Source";
 static const char * const S_GERMPLASM_ORIGIN_TITLE_S = "Germplasm Origin";
 static const char * const S_IN_GRU_TITLE_S = "In GRU?";
-static const char * const S_GRU_ACCESISON_TITLE_S = "GRU Accession";
+static const char * const S_GRU_ACCESSION_TITLE_S = "GRU Accession";
 static const char * const S_TGW_TITLE_S = "TGW";
 static const char * const S_SEED_TREATMENT_TITLE_S = "Seed Treatment";
 static const char * const S_CLEANED_TITLE_S = "Cleaned?";
-
 
 
 static NamedParameterType S_MATERIAL_TABLE_COLUMN_DELIMITER = { "MA Data delimiter", PT_CHAR };
@@ -278,7 +277,7 @@ static json_t *GetTableParameterHints (void)
 																		{
 																			if (AddColumnParameterHint (S_IN_GRU_TITLE_S, PT_BOOLEAN, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_GRU_ACCESISON_TITLE_S, PT_STRING, hints_p))
+																					if (AddColumnParameterHint (S_GRU_ACCESSION_TITLE_S, PT_STRING, hints_p))
 																						{
 																							if (AddColumnParameterHint (S_TGW_TITLE_S, PT_UNSIGNED_INT, hints_p))
 																								{
@@ -349,6 +348,8 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
+
+
 static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
@@ -363,50 +364,153 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
 			for (i = 0; i < num_rows; ++ i)
 				{
 					json_t *table_row_json_p = json_array_get (materials_json_p, i);
-					const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
 
-					if (!IsStringEmpty (internal_name_s))
+
+					const char *species_name_s = GetJSONString (table_row_json_p, S_SPECIES_NAME_TITLE_S);
+
+					if (!IsStringEmpty (species_name_s))
 						{
-							const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
+							const char *germplasm_id_s = GetJSONString (table_row_json_p, S_GERMPLASM_ID_TITLE_S);
 
-							if (!IsStringEmpty (accession_s))
+							if (!IsStringEmpty (germplasm_id_s))
 								{
-									const char *pedigree_s = GetJSONString (table_row_json_p, S_PEDIGREE_TITLE_S);
-									const char *barcode_s = GetJSONString (table_row_json_p, S_BARCODE_TITLE_S);
+									const char *type_s = GetJSONString (table_row_json_p, S_TYPE_TITLE_S);
 
-									Material *material_p = AllocateMaterial (NULL, accession_s, pedigree_s, barcode_s, internal_name_s, area_p, gene_bank_p -> gb_id_p, data_p);
-
-									if (material_p)
+									if (!IsStringEmpty (type_s))
 										{
-											if (SaveMaterial (material_p, data_p))
+											const char *reason_s = GetJSONString (table_row_json_p, S_SELECTION_REASON_TITLE_S);
+
+											if (!IsStringEmpty (reason_s))
 												{
-													++ num_imported;
-												}
+													const char *generation_s = GetJSONString (table_row_json_p, S_GENERATION_TITLE_S);
+
+													if (!IsStringEmpty (generation_s))
+														{
+															const char *supplier_s = GetJSONString (table_row_json_p, S_SEED_SUPPLIER_TITLE_S);
+
+															if (!IsStringEmpty (supplier_s))
+																{
+																	const char *source_s = GetJSONString (table_row_json_p, S_SEED_SOURCE_TITLE_S);
+
+																	if (!IsStringEmpty (source_s))
+																		{
+																			const char *germplasm_origin_s = GetJSONString (table_row_json_p, S_GERMPLASM_ORIGIN_TITLE_S);
+
+																			if (!IsStringEmpty (germplasm_origin_s))
+																				{
+																					bool in_gru_flag;
+
+																					if (GetJSONBoolean (table_row_json_p, S_IN_GRU_TITLE_S, &in_gru_flag))
+																						{
+																							const char *accession_s = GetJSONString (table_row_json_p, S_GRU_ACCESSION_TITLE_S);
+
+																							if (!IsStringEmpty (accession_s))
+																								{
+																									uint32 tgw;
+
+																									if (GetJSONInteger (table_row_json_p, S_TGW_TITLE_S, (int *) &tgw))
+																										{
+																											const char *treatment_s = GetJSONString (table_row_json_p, S_SEED_TREATMENT_TITLE_S);
+
+																											if (!IsStringEmpty (treatment_s))
+																												{
+																													bool cleaned_flag;
+
+																													if (GetJSONBoolean (table_row_json_p, S_CLEANED_TITLE_S, &cleaned_flag))
+																														{
+																															Material *material_p = AllocateMaterial (NULL, accession_s, species_name_s, type_s, reason_s, generation_s, supplier_s, source_s, germplasm_origin_s, treatment_s, in_gru_flag, cleaned_flag, tgw, area_p, gene_bank_p -> gb_id_p, data_p);
+
+																															if (material_p)
+																																{
+																																	if (SaveMaterial (material_p, data_p))
+																																		{
+																																			++ num_imported;
+																																		}
+																																	else
+																																		{
+																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Material");
+																																			success_flag = false;
+																																		}
+
+																																	FreeMaterial (material_p);
+																																}		/* if (material_p) */
+
+																														}		/* if (GetJSONBoolean (table_row_json_p, S_CLEANED_TITLE_S, &cleaned_flag)) */
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_CLEANED_TITLE_S);
+																														}
+
+																												}		/* if (!IsStringEmpty (treatment_s)) */
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_CLEANED_TITLE_S);
+																												}
+																										}		/* if (GetJSONInteger (table_row_json_p, S_TGW_TITLE_S, (int *) &tgw)) */
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_TGW_TITLE_S);
+																										}
+
+																								}		/* if (!IsStringEmpty (accession_s)) */
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_GRU_ACCESSION_TITLE_S);
+																								}
+
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_CLEANED_TITLE_S);
+																						}
+
+																				}		/* if (!IsStringEmpty (germplasm_origin_s)) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_GERMPLASM_ORIGIN_TITLE_S);
+																				}
+
+																		}		/* if (!IsStringEmpty (source_s)) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_SEED_SOURCE_TITLE_S);
+																		}
+
+																}		/* if (!IsStringEmpty (supplier_s)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_SEED_SUPPLIER_TITLE_S);
+																}
+
+														}		/* if (!IsStringEmpty (generation_s)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_GENERATION_TITLE_S);
+														}
+
+												}		/* if (!IsStringEmpty (reason_s)) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Material");
-													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_SELECTION_REASON_TITLE_S);
 												}
 
-											FreeMaterial (material_p);
-										}		/* if (material_p) */
+										}		/* if (!IsStringEmpty (type_s)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Material");
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_TYPE_TITLE_S);
 										}
 
-								}		/* if (!IsStringEmpty (accession_s)) */
+								}		/* if (!IsStringEmpty (germplasm_id_s)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_GERMPLASM_ID_TITLE_S);
 								}
 
-						}		/* if (!IsStringEmpty (internal_name_s)) */
+						}		/* if (!IsStringEmpty (species_name_s)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INTERNAL_NAME_TITLE_S);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_SPECIES_NAME_TITLE_S);
 						}
-
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
 
