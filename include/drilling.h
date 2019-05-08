@@ -30,11 +30,10 @@
 #include "coordinate.h"
 
 
-typedef struct Drilling
-{
-	bson_oid_t *dr_plot_id_p;
 
-	bson_oid_t *dr_study_p;
+typedef struct DrillingPlot
+{
+	bson_oid_t *dp_id_p;
 
 	Germplasm *dr_germplasm_p;
 
@@ -46,8 +45,53 @@ typedef struct Drilling
 
 	struct tm *dr_sowing_date_p;
 
+	double64 dr_sowing_rate;
+
+} DrillingPlot;
+
+
+
+typedef struct Drilling
+{
+	bson_oid_t *dr_plot_id_p;
+
+	bson_oid_t *dr_parent_study_p;
+
+	Germplasm *dr_germplasm_p;
+
+	uint32 dr_row_index;
+
+	uint32 dr_column_index;
+
+	uint32 dr_replicate_index;
+
+	struct tm *dr_sowing_date_p;
+
+	double64 dr_sowing_rate;
 
 } Drilling;
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_DRILLING_TAGS
+	#define DRILLING_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define DRILLING_VAL(x)	= x
+	#define DRILLING_CONCAT_VAL(x,y)	= x y
+#else
+	#define DRILLING_PREFIX extern
+	#define DRILLING_VAL(x)
+	#define DRILLING_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+DRILLING_PREFIX const char *DR_SOWING_RATE_S DRILLING_CONCAT_VAL (CONTEXT_PREFIX_AGRONOMY_ONTOLOGY_S, "00000202");
+
+DRILLING_PREFIX const char *IN_MODEL_S DRILLING_VAL ("model");
+
+
 
 
 #ifdef __cplusplus

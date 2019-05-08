@@ -45,6 +45,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionCropParams (DFWFieldTrialServ
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
+
+
 #ifdef __cplusplus
 }
 #endif
