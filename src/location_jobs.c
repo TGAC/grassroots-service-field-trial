@@ -104,21 +104,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																						{
 																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ALTITUDE.npt_type, S_LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", def, PL_ALL)) != NULL)
 																								{
-																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_LOCATION.npt_type, S_ADD_LOCATION.npt_name_s, "Add", "Add a new Location", def, PL_ALL)) != NULL)
-																										{
-																											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_LOCATIONS.npt_type, S_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ALL)) != NULL)
-																												{
-																													success_flag = true;
-																												}
-																											else
-																												{
-																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_LOCATIONS.npt_name_s);
-																												}
-																										}
-																									else
-																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_LOCATION.npt_name_s);
-																										}
+																									success_flag = true;
 																								}
 																							else
 																								{
@@ -184,22 +170,9 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 
 bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
-	bool job_done_flag = false;
-	SharedType value;
-	InitSharedType (&value);
+	bool success_flag = AddLocation (job_p, param_set_p, data_p);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_LOCATION.npt_name_s, &value, true))
-		{
-			if (value.st_boolean_value)
-				{
-					bool success_flag = AddLocation (job_p, param_set_p, data_p);
-
-					job_done_flag = true;
-				}		/* if (value.st_boolean_value) */
-
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_LOCATION.npt_name_s, &value, true)) */
-
-	return job_done_flag;
+	return success_flag;
 }
 
 

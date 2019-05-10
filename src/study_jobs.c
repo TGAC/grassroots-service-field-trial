@@ -46,12 +46,12 @@ static NamedParameterType S_STUDY_HARVEST_YEAR = { "ST Harvest Year", PT_TIME };
 static NamedParameterType S_ASPECT = { "ST Field Aspect", PT_STRING };
 static NamedParameterType S_SLOPE = { "ST Slope", PT_STRING };
 
-static NamedParameterType S_ADD_STUDY = { "Add Study", PT_BOOLEAN };
-static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
-
 static NamedParameterType S_STUDY_ID = { "Study to search for", PT_STRING };
 static NamedParameterType S_GET_ALL_PLOTS = { "Get all Plots for Study", PT_BOOLEAN };
 
+
+static NamedParameterType S_ADD_STUDY = { "Add Study", PT_BOOLEAN };
+static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
 
 static NamedParameterType S_THIS_CROP = { "This Crop", PT_STRING };
 static NamedParameterType S_PREVIOUS_CROP = { "Previous Crop", PT_STRING };
@@ -176,22 +176,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 																																{
 																																	if (AddPhParameter (data_p, param_set_p, group_p, &S_PH_MAX, "pH Maximum", "The upper bound of the soil's pH range"))
 																																		{
-																																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_STUDY.npt_type, S_ADD_STUDY.npt_name_s, "Add", "Add a new Study", def, PL_ALL)) != NULL)
-																																				{
-																																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_STUDIES.npt_type, S_GET_ALL_STUDIES.npt_name_s, "List", "Get all of the existing Studies", def, PL_ALL)) != NULL)
-																																						{
-																																							success_flag = true;
-																																						}
-																																					else
-																																						{
-																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_STUDIES.npt_name_s);
-																																						}
-																																				}
-																																			else
-																																				{
-																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_STUDY.npt_name_s);
-																																				}
-
+																																			success_flag = true;
 																																		}		/* if (AddPhParameter (data_p, param_set_p, group_p, &S_PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
 																																	else
 																																		{
@@ -296,38 +281,9 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
-	bool job_done_flag = false;
-	SharedType value;
-	InitSharedType (&value);
+	bool success_flag = AddStudy (job_p, param_set_p, data_p);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_STUDY.npt_name_s, &value, true))
-		{
-			if (value.st_boolean_value)
-				{
-					bool success_flag = AddStudy (job_p, param_set_p, data_p);
-
-					job_done_flag = true;
-				}		/* if (value.st_boolean_value) */
-
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
-
-
-	if (!job_done_flag)
-		{
-			if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_STUDIES.npt_name_s, &value, true))
-				{
-					if (value.st_boolean_value)
-						{
-							//bool success_flag = AddStudy (job_p, param_set_p, data_p);
-
-							job_done_flag = true;
-						}		/* if (value.st_boolean_value) */
-
-				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
-
-		}
-
-	return job_done_flag;
+	return success_flag;
 }
 
 
@@ -362,14 +318,6 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	else if (strcmp (param_name_s, S_LOCATIONS_LIST.npt_name_s) == 0)
 		{
 			*pt_p = S_LOCATIONS_LIST.npt_type;
-		}
-	else if (strcmp (param_name_s, S_ADD_STUDY.npt_name_s) == 0)
-		{
-			*pt_p = S_ADD_STUDY.npt_type;
-		}
-	else if (strcmp (param_name_s, S_GET_ALL_STUDIES.npt_name_s) == 0)
-		{
-			*pt_p = S_GET_ALL_STUDIES.npt_type;
 		}
 	else if (strcmp (param_name_s, S_ASPECT.npt_name_s) == 0)
 		{
