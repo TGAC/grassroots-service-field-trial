@@ -382,70 +382,86 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 						{
 							const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
 
-							if (!IsStringEmpty (internal_name_s))
+
+							Phenotype *phenotype_p = NULL;
+							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S);
+
+							if (trait_p)
 								{
-									Phenotype *phenotype_p = NULL;
-									SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S);
+									SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S);
 
-									if (trait_p)
+									if (method_p)
 										{
-											SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S);
+											SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S);
 
-											if (method_p)
+											if (unit_p)
 												{
-													SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S);
+													SchemaTerm *form_p = GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
 
-													if (unit_p)
-														{
-															SchemaTerm *form_p = GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
+													if (!form_p)
+													{
+														PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get Form");
+													}
 
-															phenotype_p = AllocatePhenotype (NULL, trait_p, method_p, unit_p, form_p, internal_name_s);
-
-															if (!phenotype_p)
-																{
-																	if (form_p)
-																		{
-																			FreeSchemaTerm (form_p);
-																		}
-
-																	FreeSchemaTerm (unit_p);
-																}
-
-														}		/* if (unit_p) */
+													phenotype_p = AllocatePhenotype (NULL, trait_p, method_p, unit_p, form_p, internal_name_s);
 
 													if (!phenotype_p)
 														{
-															FreeSchemaTerm (method_p);
+															if (form_p)
+																{
+																	FreeSchemaTerm (form_p);
+																}
+
+															FreeSchemaTerm (unit_p);
 														}
 
-												}		/* if (method_p) */
+												}		/* if (unit_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Unit");
+												}
 
 											if (!phenotype_p)
 												{
-													FreeSchemaTerm (trait_p);
+													FreeSchemaTerm (method_p);
 												}
 
-										}		/* if (trait_p) */
-
-									if (phenotype_p)
-										{
-											if (SavePhenotype (phenotype_p, data_p))
-												{
-													++ num_imported;
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Phenotype");
-													success_flag = false;
-												}
-
-											FreePhenotype (phenotype_p);
-										}		/* if (material_p) */
+										}		/* if (method_p) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Phenotype");
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Method");
 										}
+
+									if (!phenotype_p)
+										{
+											FreeSchemaTerm (trait_p);
+										}
+
+								}		/* if (trait_p) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Trait");
 								}
+
+							if (phenotype_p)
+								{
+									if (SavePhenotype (phenotype_p, data_p))
+										{
+											++ num_imported;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Phenotype");
+											success_flag = false;
+										}
+
+									FreePhenotype (phenotype_p);
+								}		/* if (material_p) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Phenotype");
+								}
+
 
 						}		/* if (row_size > 0) */
 					else

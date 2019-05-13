@@ -197,10 +197,10 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-		//	if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
 				{
 
-				}		/* if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p)) */
+				}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
