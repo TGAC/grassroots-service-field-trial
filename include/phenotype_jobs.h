@@ -49,6 +49,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionPhenotypeParameterTypeForNamedPa
 DFW_FIELD_TRIAL_SERVICE_LOCAL Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllTreatmentsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
+
+
 #ifdef __cplusplus
 }
 #endif

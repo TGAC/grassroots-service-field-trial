@@ -221,6 +221,23 @@ Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialSe
 }
 
 
+json_t *GetAllTreatmentsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
+{
+	json_t *results_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE]))
+		{
+			bson_t *query_p = NULL;
+
+			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE])) */
+
+	return results_p;
+}
+
+
+
+
 
 /*
  * static definitions
