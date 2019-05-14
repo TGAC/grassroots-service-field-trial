@@ -165,7 +165,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s)
 																					trait_name_s = GetTermEnglishValue (entry_p);
 																					++ matched_count;
 																				}
-																			else if (strcmp (key_s, "description") == 0)
+																			else if (strcmp (key_s, "Trait description") == 0)
 																				{
 																					trait_description_s = GetTermEnglishValue (entry_p);
 																					++ matched_count;

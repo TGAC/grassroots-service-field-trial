@@ -553,11 +553,11 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 			if (facet_s)
 				{
-					LinkedList *facets_p = AllocateLinkedList (FreeKeyValuePairNode);
+					facets_p = AllocateLinkedList (FreeKeyValuePairNode);
 
 					if (facets_p)
 						{
-							KeyValuePairNode *facet_p = AllocateKeyValuePairNode ("type", "Field Trial");
+							KeyValuePairNode *facet_p = AllocateKeyValuePairNode ("type", facet_s);
 
 							if (facet_p)
 								{
@@ -565,12 +565,14 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 								}		/* if (facet_p) */
 							else
 								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateKeyValuePairNode for facet \"type\": \"%s\" failed", facet_s);
 									success_flag = false;
 								}
 
 						}		/* if (facets_p) */
 					else
 						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateLinkedList for facet \"%s\" failed", facet_s);
 							success_flag = false;
 						}
 

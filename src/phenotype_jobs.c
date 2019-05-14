@@ -215,9 +215,7 @@ Phenotype *GetPhenotypeByInternalName (const char *name_s, const DFWFieldTrialSe
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
 
-
 	return phenotype_p;
-
 }
 
 
@@ -398,8 +396,6 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 					if (row_size > 0)
 						{
 							const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
-
-
 							Phenotype *phenotype_p = NULL;
 							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S);
 
@@ -413,14 +409,51 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 											if (unit_p)
 												{
-													SchemaTerm *form_p = GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
+													SchemaTerm *form_p = NULL; //GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
+													char *created_internal_name_s = NULL;
 
 													if (!form_p)
-													{
-														PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get Form");
-													}
+														{
+															//PrintJSONToErrors (STM_LEVEL_FINE, __FILE__, __LINE__, table_row_json_p, "Failed to get Form");
+														}
+
+
+													if (!internal_name_s)
+														{
+															if ((trait_p -> st_abbreviation_s) && (method_p -> st_abbreviation_s) && (unit_p -> st_abbreviation_s))
+																{
+																	created_internal_name_s = ConcatenateVarargsStrings (trait_p  -> st_abbreviation_s, ":", method_p  -> st_abbreviation_s, ":", unit_p  -> st_abbreviation_s, NULL);
+
+																	if (created_internal_name_s)
+																		{
+																			internal_name_s = created_internal_name_s;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to create internal name for row " SIZET_FMT, i);
+																		}
+																}
+														}
 
 													phenotype_p = AllocatePhenotype (NULL, trait_p, method_p, unit_p, form_p, internal_name_s);
+
+													if (phenotype_p)
+														{
+															if (SavePhenotype (phenotype_p, data_p))
+																{
+																	++ num_imported;
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Phenotype for row " SIZET_FMT, i);
+																	success_flag = false;
+																}
+
+														}		/* if (material_p) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocatePhenotype failed with internal name \"%s\"  for row " SIZET_FMT, internal_name_s ? internal_name_s : "", i);
+														}
 
 													if (!phenotype_p)
 														{
@@ -432,10 +465,15 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 															FreeSchemaTerm (unit_p);
 														}
 
+													if (created_internal_name_s)
+														{
+															FreeCopiedString (created_internal_name_s);
+														}
+
 												}		/* if (unit_p) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Unit");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Unit for row " SIZET_FMT, i);
 												}
 
 											if (!phenotype_p)
@@ -446,7 +484,7 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 										}		/* if (method_p) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Method");
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Method for row " SIZET_FMT, i);
 										}
 
 									if (!phenotype_p)
@@ -457,28 +495,13 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 								}		/* if (trait_p) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Trait");
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Trait for row " SIZET_FMT, i);
 								}
 
 							if (phenotype_p)
 								{
-									if (SavePhenotype (phenotype_p, data_p))
-										{
-											++ num_imported;
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Phenotype");
-											success_flag = false;
-										}
-
 									FreePhenotype (phenotype_p);
-								}		/* if (material_p) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Phenotype");
 								}
-
 
 						}		/* if (row_size > 0) */
 					else
@@ -516,11 +539,16 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 			const char *description_s =  GetJSONString (json_p, description_key_s);
 			const char *abbreviation_s =  GetJSONString (json_p, abbreviation_key_s);
 
-			if (!name_s || !description_s || !abbreviation_s)
+			if (IsStringEmpty (name_s) || IsStringEmpty (description_s) || IsStringEmpty (abbreviation_s))
 				{
 					if (strncmp (id_s, "CO_", strlen (CONTEXT_PREFIX_CROP_ONTOLOGY_S)) == 0)
 						{
 							term_p = GetCropOnotologySchemaTerm (id_s);
+
+							if (!term_p)
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetCropOnotologySchemaTerm failed for \"%s\"", id_s);
+								}
 						}
 				}
 
