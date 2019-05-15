@@ -23,11 +23,11 @@
 
 
 
+#include <treatment_jobs.h>
 #include "submit_treatments.h"
 
 #include "audit.h"
 
-#include "phenotype_jobs.h"
 
 
 /*
@@ -140,13 +140,13 @@ static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionPhenotypeParams (data_p, params_p))
+			if (AddSubmissionTreatmentParams (data_p, params_p))
 				{
 					return params_p;
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionFieldTrialParams failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionTreatmentParams failed");
 				}
 
 			FreeParameterSet (params_p);

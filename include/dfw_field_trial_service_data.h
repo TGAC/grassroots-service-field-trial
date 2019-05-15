@@ -44,7 +44,7 @@ typedef enum
 	DFTD_ROW,
 	DFTD_MATERIAL,
 	DFTD_DRILLING,
-	DFTD_PHENOTYPE,
+	DFTD_TREATMENT,
 	DFTD_OBSERVATION,
 	DFTD_INSTRUMENT,
 	DFTD_GENE_BANK,
@@ -122,6 +122,13 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 	 * The collection name of use for each of the different types of data.
 	 */
 	const char *dftsd_collection_ss [DFTD_NUM_TYPES];
+
+	/**
+	 * @private
+	 *
+	 * The key used for facets in Lucene
+	 */
+	const char *dftsd_facet_key_s;
 
 } DFWFieldTrialServiceData;
 

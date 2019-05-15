@@ -25,15 +25,15 @@
 
 
 #include "experimental_area.h"
-#include "phenotype.h"
 #include "typedefs.h"
+#include "treatment.h"
 
 
 typedef struct ExperimentalAreaPhenotype
 {
 	uint32 eap_id;
 
-	Phenotype *eap_phenotype_p;
+	Treatment *eap_phenotype_p;
 
 	bool eap_corrected_flag;
 

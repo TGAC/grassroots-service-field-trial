@@ -58,8 +58,6 @@ SRCS 	= \
 	material.c \
 	material_jobs.c \
 	observation.c \
-	phenotype.c \
-	phenotype_jobs.c \
 	plot.c \
 	plot_jobs.c \
 	row.c \
@@ -75,7 +73,9 @@ SRCS 	= \
 	submit_material.c \
 	submit_study.c \
 	submit_treatments.c \
-
+	treatment.c \
+	treatment_jobs.c \
+	
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 
 LDFLAGS += -L$(DIR_JANSSON_LIB) -ljansson \

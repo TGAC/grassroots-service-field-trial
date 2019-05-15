@@ -24,6 +24,7 @@
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
+#include "treatment_jobs.h"
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
@@ -43,6 +44,11 @@
 
 static NamedParameterType S_KEYWORD = { "FT Keyword Search", PT_KEYWORD };
 static NamedParameterType S_FACET = { "FT Facet", PT_STRING };
+
+static const char * const S_ANY_FACET_S = "<ANY>";
+static const char * const S_FIELD_TRIAL_FACET_S = "Field Trial";
+static const char * const S_STUDY_FACET_S = "Study";
+static const char * const S_TREATMENT_FACET_S = "Treatment";
 
 
 static const char *GetDFWFieldTrialSearchServiceName (Service *service_p);
@@ -71,8 +77,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
 
-static bool AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, ServiceData *data_p);
-
+static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, DFWFieldTrialServiceData *data_p);
 
 
 typedef struct
@@ -152,21 +157,61 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (Service * UNUSED
 }
 
 
-static bool AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, ServiceData *data_p)
+static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	SharedType def;
-	Parameter *param_p = NULL;
+	LinkedList *options_p = CreateParameterOptionsList ();
 
-	InitSharedType (&def);
-	def.st_string_value_s = NULL;
-
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", def, PL_SIMPLE)) != NULL)
+	if (options_p)
 		{
-			success_flag = true;
-		}
+			SharedType def;
 
-	return success_flag;
+
+			InitSharedType (&def);
+
+			def.st_string_value_s = (char *) S_ANY_FACET_S;
+
+			if (CreateAndAddParameterOption (options_p, def, "Any", PT_STRING))
+				{
+					def.st_string_value_s = (char *) S_FIELD_TRIAL_FACET_S;
+
+					if (CreateAndAddParameterOption (options_p, def, S_FIELD_TRIAL_FACET_S, PT_STRING))
+						{
+							def.st_string_value_s = (char *) S_STUDY_FACET_S;
+
+							if (CreateAndAddParameterOption (options_p, def, S_STUDY_FACET_S, PT_STRING))
+								{
+									def.st_string_value_s = (char *) S_TREATMENT_FACET_S;
+
+									if (CreateAndAddParameterOption (options_p, def, S_TREATMENT_FACET_S, PT_STRING))
+										{
+											Parameter *param_p = NULL;
+
+											/* default to any type */
+											def.st_string_value_s = EasyCopyToNewString (S_ANY_FACET_S);
+
+											param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, false, S_FACET.npt_name_s, "Type", "The type of data to search for", options_p, def, NULL, NULL, PL_ALL, NULL);
+
+											if (def.st_string_value_s)
+												{
+													FreeCopiedString (def.st_string_value_s);
+												}
+
+
+											if (param_p)
+												{
+													return param_p;
+												}
+
+										}
+								}
+						}
+				}
+
+
+			FreeLinkedList (options_p);
+		}		/* if (options_p) */
+
+	return NULL;
 }
 
 
@@ -176,7 +221,7 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 
 	if (params_p)
 		{
-			ServiceData *data_p = service_p -> se_data_p;
+			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) service_p -> se_data_p;
 			ParameterGroup *group_p = NULL;
 
 			Parameter *param_p = NULL;
@@ -184,15 +229,15 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 
 			def.st_string_value_s = NULL;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL)
 				{
 					if (AddFacetParameter (params_p, group_p, data_p))
 						{
-							if (AddSearchFieldTrialParams (data_p, params_p))
+							if (AddSearchFieldTrialParams (& (data_p -> dftsd_base_data), params_p))
 								{
-									if (AddSearchStudyParams (data_p, params_p))
+									if (AddSearchStudyParams (& (data_p -> dftsd_base_data), params_p))
 										{
-											if (AddSearchLocationParams (data_p, params_p))
+											if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
 												{
 													return params_p;
 												}
@@ -313,12 +358,20 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 							if (!IsStringEmpty (keyword_value.st_string_value_s))
 								{
 									SharedType facet_value;
-
+									const char *facet_s = NULL;
 									InitSharedType (&facet_value);
 
 									GetParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &facet_value, true);
 
-									SearchFieldTrialsForKeyword (keyword_value.st_string_value_s, facet_value.st_string_value_s, job_p, VF_CLIENT_MINIMAL, data_p);
+									if (facet_value.st_string_value_s)
+										{
+											if (strcmp (facet_value.st_string_value_s, S_ANY_FACET_S) != 0)
+												{
+													facet_s = facet_value.st_string_value_s;
+												}
+										}
+
+									SearchFieldTrialsForKeyword (keyword_value.st_string_value_s, facet_s, job_p, VF_CLIENT_MINIMAL, data_p);
 									ran_flag = true;
 								}		/* if (!IsStringEmpty (value.st_string_value_s)) */
 
@@ -557,7 +610,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 					if (facets_p)
 						{
-							KeyValuePairNode *facet_p = AllocateKeyValuePairNode ("type", facet_s);
+							KeyValuePairNode *facet_p = AllocateKeyValuePairNode (lucene_p -> lt_facet_key_s, facet_s);
 
 							if (facet_p)
 								{
@@ -666,6 +719,28 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 										}
 								}
 								break;
+
+						case DFTD_TREATMENT:
+							{
+								Treatment *treatment_p = GetTreatmentByIdString (id_s, search_data_p -> sd_service_data_p);
+
+								if (treatment_p)
+									{
+										if (AddTreatmentToServiceJob (search_data_p -> sd_job_p, treatment_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+											{
+												success_flag = true;
+											}
+										else
+											{
+												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Treatment %s to ServiceJob", treatment_p -> tr_internal_name_s);
+											}
+
+										FreeTreatment (treatment_p);
+									}
+
+
+							}
+							break;
 
 						default:
 							break;

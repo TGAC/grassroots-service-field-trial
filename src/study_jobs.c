@@ -1098,8 +1098,6 @@ static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, Pa
 			FreeLinkedList (options_p);
 		}		/* if (options_p) */
 
-
-
 	return NULL;
 }
 

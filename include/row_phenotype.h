@@ -24,16 +24,16 @@
 #define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_ROW_PHENOTYPE_H_
 
 
-#include "phenotype.h"
 #include "row.h"
 #include "typedefs.h"
+#include "treatment.h"
 
 
 typedef struct RowPhenotype
 {
 	uint32 rp_id;
 
-	Phenotype *rp_phenotype_p;
+	Treatment *rp_phenotype_p;
 
 	bool rp_corrected_flag;
 

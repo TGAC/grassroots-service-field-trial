@@ -21,6 +21,7 @@
  */
 
 
+#include <treatment_jobs.h>
 #include "submission_service.h"
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
@@ -28,7 +29,6 @@
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
-#include "phenotype_jobs.h"
 #include "row_jobs.h"
 
 #include "audit.h"
@@ -194,7 +194,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 												{
 													if (AddSubmissionMaterialParams (data_p, params_p))
 														{
-															if (AddSubmissionPhenotypeParams (data_p, params_p))
+															if (AddSubmissionTreatmentParams (data_p, params_p))
 																{
 																	if (AddSubmissionRowPhenotypeParams (data_p, params_p))
 																		{

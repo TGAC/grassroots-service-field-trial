@@ -21,9 +21,9 @@
  */
 
 
+#include <treatment_jobs.h>
 #include "row_jobs.h"
 #include "plot_jobs.h"
-#include "phenotype_jobs.h"
 #include "string_utils.h"
 #include "study_jobs.h"
 #include "math_utils.h"
@@ -335,7 +335,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																					if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
 																						{
-																							Phenotype *phenotype_p = GetPhenotypeByInternalName (key_s, data_p);
+																							Treatment *phenotype_p = GetPhenotypeByInternalName (key_s, data_p);
 
 																							if (phenotype_p)
 																								{
