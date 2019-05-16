@@ -54,6 +54,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllTreatmentsAsJSON (const DFWFieldTria
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetTreatmentAsString (const Treatment *treatment_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToServiceJob (ServiceJob *job_p, Treatment *treatment_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+
+
+
 #ifdef __cplusplus
 }
 #endif
