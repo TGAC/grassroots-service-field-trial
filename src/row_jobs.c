@@ -335,9 +335,9 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																					if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
 																						{
-																							Treatment *phenotype_p = GetPhenotypeByInternalName (key_s, data_p);
+																							Treatment *treatment_p = GetPhenotypeByInternalName (key_s, data_p);
 
-																							if (phenotype_p)
+																							if (treatment_p)
 																								{
 																									Observation *observation_p = NULL;
 																									bool added_phenotype_flag = false;
@@ -384,7 +384,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																											if (observation_id_p)
 																												{
-																													observation_p = AllocateObservation (observation_id_p, observation_date_p, phenotype_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
+																													observation_p = AllocateObservation (observation_id_p, observation_date_p, treatment_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
 
 																													if (observation_p)
 																														{
@@ -433,7 +433,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																									if (!added_phenotype_flag)
 																										{
-																											FreePhenotype (phenotype_p);
+																											FreeTreatment (treatment_p);
 																										}
 
 																								}		/* if (phenotype_p) */

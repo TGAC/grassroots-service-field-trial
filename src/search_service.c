@@ -660,7 +660,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 			if (success_flag)
 				{
-					if (RunLuceneTool (lucene_p, keyword_s, facets_p, "drill-down"))
+					if (RunLuceneTool (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size))
 						{
 							SearchData sd;
 
@@ -673,6 +673,17 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 							if (ParseLuceneResults (lucene_p, from, to, AddResultsFromLuceneResults, &sd))
 								{
+									json_error_t error;
+									json_t *metadata_p = json_pack_ex (&error, 0, "{s:i,s:i,s:i}",
+																						 LT_NUM_TOTAL_HITS_S, lucene_p -> lt_num_total_hits,
+																						 LT_HITS_START_INDEX_S, lucene_p -> lt_hits_from_index,
+																						 LT_HITS_END_INDEX_S, lucene_p -> lt_hits_to_index);
+
+									if (metadata_p)
+										{
+											job_p -> sj_metadata_p = metadata_p;
+										}
+
 									status = OS_SUCCEEDED;
 								}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, &sd)) */
 
