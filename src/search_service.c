@@ -45,6 +45,7 @@
 static NamedParameterType S_KEYWORD = { "FT Keyword Search", PT_KEYWORD };
 static NamedParameterType S_FACET = { "FT Facet", PT_STRING };
 static NamedParameterType S_PAGE_NUMBER = { "FT Results Page Number", PT_UNSIGNED_INT };
+static NamedParameterType S_PAGE_SIZE = { "FT Results Page Size", PT_UNSIGNED_INT };
 
 static const char * const S_ANY_FACET_S = "<ANY>";
 static const char * const S_FIELD_TRIAL_FACET_S = "Field Trial";
@@ -237,43 +238,52 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 						{
 							def.st_long_value = 0;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_type, S_PAGE_NUMBER.npt_name_s, "Page", "The page of results to get", def, PL_SIMPLE)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_type, S_PAGE_NUMBER.npt_name_s, "Page", "The number of the results page to get", def, PL_SIMPLE)) != NULL)
 								{
-									if (AddSearchFieldTrialParams (& (data_p -> dftsd_base_data), params_p))
+									def.st_long_value = 10;
+
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_type, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", def, PL_SIMPLE)) != NULL)
 										{
-											if (AddSearchStudyParams (& (data_p -> dftsd_base_data), params_p))
+											if (AddSearchFieldTrialParams (& (data_p -> dftsd_base_data), params_p))
 												{
-													if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
+													if (AddSearchStudyParams (& (data_p -> dftsd_base_data), params_p))
 														{
-															return params_p;
+															if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
+																{
+																	return params_p;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
+																}
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchStudyParams failed");
 														}
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchStudyParams failed");
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchFieldTrialParams failed");
 												}
-										}
+
+										}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_type, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", def, PL_SIMPLE)) != NULL) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchFieldTrialParams failed");
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PAGE_SIZE.npt_name_s);
 										}
 
-								}		/* if (AddFacetParameter (params_p, group_p, data_p)) */
+								}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_type, S_PAGE_NUMBER.npt_name_s, "Page", "The page of results to get", def, PL_SIMPLE)) != NULL) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Facet parameter");
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PAGE_NUMBER.npt_name_s);
 								}
 
-						}		/* if if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_type, S_PAGE_NUMBER.npt_name_s, "Page", "The page of results to get", def, PL_SIMPLE)) != NULL) */
+						}		/* if (AddFacetParameter (params_p, group_p, data_p)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PAGE_NUMBER.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Facet parameter");
 						}
-
 
 				}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, NULL, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL) */
 			else
@@ -308,6 +318,10 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struc
 	else if (strcmp (param_name_s, S_PAGE_NUMBER.npt_name_s) == 0)
 		{
 			*pt_p = S_PAGE_NUMBER.npt_type;
+		}
+	else if (strcmp (param_name_s, S_PAGE_SIZE.npt_name_s) == 0)
+		{
+			*pt_p = S_PAGE_SIZE.npt_type;
 		}
 	else
 		{
@@ -395,6 +409,12 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 										{
 											page_number = value.st_ulong_value;
 										}
+
+									if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &value, true))
+										{
+											page_size = value.st_ulong_value;
+										}
+
 
 
 									SearchFieldTrialsForKeyword (keyword_value.st_string_value_s, facet_s, page_number, page_size, job_p, VF_CLIENT_MINIMAL, data_p);
