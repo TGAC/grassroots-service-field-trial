@@ -127,7 +127,7 @@ static const char *GetTreatmentSubmissionServiceInformationUri (Service * UNUSED
 
 static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
@@ -197,10 +197,10 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p))
 				{
 
-				}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
+				}		/* if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);

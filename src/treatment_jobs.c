@@ -24,6 +24,7 @@
 #include "treatment_jobs.h"
 #include "string_utils.h"
 #include "crop_ontology_tool.h"
+#include "dfw_util.h"
 
 /*
  * static declarations
@@ -31,7 +32,10 @@
 
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
-static const char * const S_INTERNAL_NAME_TITLE_S = "Accession";
+static const char * const S_VARIABLE_ID_S = "Variable Identifier";
+static const char * const S_VARIABLE_NAME_S = "Variable Name";
+static const char * const S_VARIABLE_DESCRIPTION_S = "Variable Description";
+static const char * const S_VARIABLE_ABBREVIATION_S = "Variable Abbreviation";
 static const char * const S_TRAIT_ID_S = "Trait Identifier";
 static const char * const S_TRAIT_ABBREVIATION_S = "Trait Abbreviation";
 static const char * const S_TRAIT_NAME_S = "Trait Name";
@@ -315,41 +319,47 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_INTERNAL_NAME_TITLE_S, PT_STRING, hints_p))
+			if (AddColumnParameterHint (S_TRAIT_ID_S, PT_STRING, hints_p))
 				{
-					if (AddColumnParameterHint (S_TRAIT_ID_S, PT_STRING, hints_p))
+					if (AddColumnParameterHint (S_TRAIT_ABBREVIATION_S, PT_STRING, hints_p))
 						{
-							if (AddColumnParameterHint (S_TRAIT_ABBREVIATION_S, PT_STRING, hints_p))
+							if (AddColumnParameterHint (S_TRAIT_NAME_S, PT_STRING, hints_p))
 								{
-									if (AddColumnParameterHint (S_TRAIT_NAME_S, PT_STRING, hints_p))
+									if (AddColumnParameterHint (S_TRAIT_DESCRIPTION_S, PT_STRING, hints_p))
 										{
-											if (AddColumnParameterHint (S_TRAIT_DESCRIPTION_S, PT_STRING, hints_p))
+											if (AddColumnParameterHint (S_METHOD_ID_S, PT_STRING, hints_p))
 												{
-													if (AddColumnParameterHint (S_METHOD_ID_S, PT_STRING, hints_p))
+													if (AddColumnParameterHint (S_METHOD_ABBREVIATION_S, PT_STRING, hints_p))
 														{
-															if (AddColumnParameterHint (S_METHOD_ABBREVIATION_S, PT_STRING, hints_p))
+															if (AddColumnParameterHint (S_METHOD_NAME_S, PT_STRING, hints_p))
 																{
-																	if (AddColumnParameterHint (S_METHOD_NAME_S, PT_STRING, hints_p))
+																	if (AddColumnParameterHint (S_METHOD_DESCRIPTION_S, PT_STRING, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_METHOD_DESCRIPTION_S, PT_STRING, hints_p))
+																			if (AddColumnParameterHint (S_UNIT_ID_S, PT_STRING, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_UNIT_ID_S, PT_STRING, hints_p))
+																					if (AddColumnParameterHint (S_UNIT_ABBREVIATION_S, PT_STRING, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_UNIT_ABBREVIATION_S, PT_STRING, hints_p))
+																							if (AddColumnParameterHint (S_UNIT_NAME_S, PT_STRING, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_UNIT_NAME_S, PT_STRING, hints_p))
+																									if (AddColumnParameterHint (S_UNIT_DESCRIPTION_S, PT_STRING, hints_p))
 																										{
-																											if (AddColumnParameterHint (S_UNIT_DESCRIPTION_S, PT_STRING, hints_p))
+																											if (AddColumnParameterHint (S_VARIABLE_ID_S, PT_STRING, hints_p))
 																												{
-																													if (AddColumnParameterHint (S_FORM_ID_S, PT_STRING, hints_p))
+																													if (AddColumnParameterHint (S_VARIABLE_NAME_S, PT_STRING, hints_p))
 																														{
-																															if (AddColumnParameterHint (S_FORM_ABBREVIATION_S, PT_STRING, hints_p))
+																															if (AddColumnParameterHint (S_VARIABLE_DESCRIPTION_S, PT_STRING, hints_p))
 																																{
-																																	if (AddColumnParameterHint (S_FORM_NAME_S, PT_STRING, hints_p))
+																																	if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, PT_STRING, hints_p))
 																																		{
-																																			if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, PT_STRING, hints_p))
+																																			if (AddColumnParameterHint (S_FORM_ABBREVIATION_S, PT_STRING, hints_p))
 																																				{
-																																					return hints_p;
+																																					if (AddColumnParameterHint (S_FORM_NAME_S, PT_STRING, hints_p))
+																																						{
+																																							if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, PT_STRING, hints_p))
+																																								{
+																																									return hints_p;
+																																								}
+																																						}
 																																				}
 																																		}
 																																}
@@ -362,10 +372,11 @@ static json_t *GetTableParameterHints (void)
 																		}
 																}
 														}
-
 												}
+
 										}
 								}
+
 
 						}
 				}
@@ -453,8 +464,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 					if (row_size > 0)
 						{
-							const char *internal_name_s = GetJSONString (table_row_json_p, S_INTERNAL_NAME_TITLE_S);
-							Treatment *phenotype_p = NULL;
+							Treatment *treatment_p = NULL;
 							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S);
 
 							if (trait_p)
@@ -467,8 +477,11 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 											if (unit_p)
 												{
+													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S);
+
 													SchemaTerm *form_p = NULL; //GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
 													char *created_internal_name_s = NULL;
+													const char *internal_name_s = NULL;
 
 													if (!form_p)
 														{
@@ -476,7 +489,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 														}
 
 
-													if (!internal_name_s)
+													if (!variable_p)
 														{
 															if ((trait_p -> st_abbreviation_s) && (method_p -> st_abbreviation_s) && (unit_p -> st_abbreviation_s))
 																{
@@ -493,19 +506,26 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 																}
 														}
 
-													phenotype_p = AllocateTreatment (NULL, trait_p, method_p, unit_p, form_p, internal_name_s);
+													treatment_p = AllocateTreatment (NULL, trait_p, method_p, unit_p, variable_p, form_p, internal_name_s);
 
-													if (phenotype_p)
+													if (treatment_p)
 														{
-															if (SaveTreatment (phenotype_p, data_p))
+															if (!DoesTreatmentExist (treatment_p, data_p))
 																{
-																	++ num_imported;
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Treatment for row " SIZET_FMT, i);
-																	success_flag = false;
-																}
+																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding Treatment for row " SIZET_FMT, i);
+
+																	if (SaveTreatment (treatment_p, data_p))
+																		{
+																			++ num_imported;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Treatment for row " SIZET_FMT, i);
+																			success_flag = false;
+																		}
+
+																}		/* if (!DoesTreatmentExist (treatment_p)) */
+
 
 														}		/* if (material_p) */
 													else
@@ -513,7 +533,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateTreatment failed with internal name \"%s\"  for row " SIZET_FMT, internal_name_s ? internal_name_s : "", i);
 														}
 
-													if (!phenotype_p)
+													if (!treatment_p)
 														{
 															if (form_p)
 																{
@@ -534,7 +554,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Unit for row " SIZET_FMT, i);
 												}
 
-											if (!phenotype_p)
+											if (!treatment_p)
 												{
 													FreeSchemaTerm (method_p);
 												}
@@ -545,7 +565,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Method for row " SIZET_FMT, i);
 										}
 
-									if (!phenotype_p)
+									if (!treatment_p)
 										{
 											FreeSchemaTerm (trait_p);
 										}
@@ -556,9 +576,9 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Trait for row " SIZET_FMT, i);
 								}
 
-							if (phenotype_p)
+							if (treatment_p)
 								{
-									FreeTreatment (phenotype_p);
+									FreeTreatment (treatment_p);
 								}
 
 						}		/* if (row_size > 0) */
@@ -627,4 +647,23 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 	return term_p;
 }
 
+
+bool DoesTreatmentExist (Treatment *treatment_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool exists_flag = false;
+
+	if ((treatment_p -> tr_trait_term_p) && (treatment_p -> tr_measurement_term_p) && (treatment_p -> tr_unit_term_p))
+		{
+			Treatment *saved_treatment_p = GetTreatmentBySchemaURLs (treatment_p -> tr_trait_term_p -> st_url_s, treatment_p -> tr_measurement_term_p -> st_url_s, treatment_p -> tr_unit_term_p -> st_url_s, data_p);
+
+			if (saved_treatment_p)
+				{
+					exists_flag = true;
+					FreeTreatment (saved_treatment_p);
+				}
+
+		}
+
+		return exists_flag;
+}
 

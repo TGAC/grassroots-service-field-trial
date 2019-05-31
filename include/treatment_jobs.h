@@ -57,6 +57,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetTreatmentAsString (const Treatment *treat
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToServiceJob (ServiceJob *job_p, Treatment *treatment_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool DoesTreatmentExist (Treatment *treatment_p, const DFWFieldTrialServiceData *data_p);
+
+
+
 
 #ifdef __cplusplus
 }

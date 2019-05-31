@@ -34,15 +34,17 @@
 
 static bool CreateInstrumentFromTreatmentJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p);
 
-static bool AddSchemTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p);
+static bool AddSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p);
 
 static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * const key_s);
+
+static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, const char *child_key_s, const char *child_value_s);
 
 
 /*
  * API definitions
  */
-Treatment *AllocateTreatment (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *form_p, const char *internal_name_s)
+Treatment *AllocateTreatment (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s)
 {
 	char *copied_internal_name_s = NULL;
 
@@ -56,6 +58,7 @@ Treatment *AllocateTreatment (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm 
 					treatment_p -> tr_trait_term_p = trait_p;
 					treatment_p -> tr_measurement_term_p = measurement_p;
 					treatment_p -> tr_unit_term_p = unit_p;
+					treatment_p -> tr_variable_term_p = variable_p;
 					treatment_p -> tr_form_term_p = form_p;
 					treatment_p -> tr_internal_name_s = copied_internal_name_s;
 
@@ -96,6 +99,12 @@ void FreeTreatment (Treatment *treatment_p)
 			FreeSchemaTerm (treatment_p -> tr_unit_term_p);
 		}
 
+	if (treatment_p -> tr_variable_term_p)
+		{
+			FreeSchemaTerm (treatment_p -> tr_variable_term_p);
+		}
+
+
 	if (treatment_p -> tr_internal_name_s)
 		{
 			FreeCopiedString (treatment_p -> tr_internal_name_s);
@@ -119,49 +128,57 @@ json_t *GetTreatmentAsJSON (const Treatment *treatment_p, const ViewFormat forma
 
 	if (phenotype_json_p)
 		{
-			if (AddSchemTermToJSON (phenotype_json_p, TR_TRAIT_S, treatment_p -> tr_trait_term_p))
+			if (AddSchemaTermToJSON (phenotype_json_p, TR_TRAIT_S, treatment_p -> tr_trait_term_p))
 				{
-					if (AddSchemTermToJSON (phenotype_json_p, TR_MEASUREMENT_S, treatment_p -> tr_measurement_term_p))
+					if (AddSchemaTermToJSON (phenotype_json_p, TR_MEASUREMENT_S, treatment_p -> tr_measurement_term_p))
 						{
-							if (AddSchemTermToJSON (phenotype_json_p, TR_UNIT_S, treatment_p -> tr_unit_term_p))
+							if (AddSchemaTermToJSON (phenotype_json_p, TR_UNIT_S, treatment_p -> tr_unit_term_p))
 								{
-									/*
-									 * The form term is optional
-									 */
-									if ((! (treatment_p -> tr_form_term_p)) || (AddSchemTermToJSON (phenotype_json_p, TR_FORM_S, treatment_p -> tr_form_term_p)))
+									if ((! (treatment_p -> tr_variable_term_p)) || (AddSchemaTermToJSON (phenotype_json_p, TR_VARIABLE_S, treatment_p -> tr_variable_term_p)))
 										{
-											bool success_flag = false;
-
-											if (format == VF_STORAGE)
+											/*
+											 * The form term is optional
+											 */
+											if ((! (treatment_p -> tr_form_term_p)) || (AddSchemaTermToJSON (phenotype_json_p, TR_FORM_S, treatment_p -> tr_form_term_p)))
 												{
-													if ((IsStringEmpty (treatment_p -> tr_internal_name_s)) || (SetJSONString (phenotype_json_p, TR_INTERNAL_NAME_S, treatment_p -> tr_internal_name_s)))
+													bool success_flag = false;
+
+													if (format == VF_STORAGE)
+														{
+															if ((IsStringEmpty (treatment_p -> tr_internal_name_s)) || (SetJSONString (phenotype_json_p, TR_INTERNAL_NAME_S, treatment_p -> tr_internal_name_s)))
+																{
+																	success_flag = true;
+																}		/* if ((IsStringEmpty (treatment_p -> tr_internal_name_s)) || SetJSONString (phenotype_json_p, TR_INTERNAL_NAME_S, treatment_p -> tr_internal_name_s)) */
+														}
+													else
 														{
 															success_flag = true;
-														}		/* if ((IsStringEmpty (treatment_p -> tr_internal_name_s)) || SetJSONString (phenotype_json_p, TR_INTERNAL_NAME_S, treatment_p -> tr_internal_name_s)) */
-												}
+														}
+
+													if (success_flag)
+														{
+															if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> tr_id_p))
+																{
+																	if (AddDatatype (phenotype_json_p, DFTD_TREATMENT))
+																		{
+																			return phenotype_json_p;
+																		}
+
+																	return phenotype_json_p;
+																}		/* if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> tr_id_p)) */
+
+														}		/* if (success_flag) */
+
+												}		/* if ((! (treatment_p -> tr_form_term_p)) || (AddSchemTermToJSON (phenotype_json_p, TR_FORM_S, treatment_p -> tr_form_term_p))) */
 											else
 												{
-													success_flag = true;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", treatment_p -> tr_form_term_p -> st_url_s);
 												}
 
-											if (success_flag)
-												{
-													if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> tr_id_p))
-														{
-															if (AddDatatype (phenotype_json_p, DFTD_TREATMENT))
-																{
-																	return phenotype_json_p;
-																}
-
-															return phenotype_json_p;
-														}		/* if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> tr_id_p)) */
-
-												}		/* if (success_flag) */
-
-										}		/* if ((! (treatment_p -> tr_form_term_p)) || (AddSchemTermToJSON (phenotype_json_p, TR_FORM_S, treatment_p -> tr_form_term_p))) */
+										}
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", treatment_p -> tr_form_term_p -> st_url_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", treatment_p -> tr_variable_term_p -> st_url_s);
 										}
 
 								}		/* if (AddSchemTermToJSON (phenotype_json_p, TR_UNIT_S, treatment_p -> tr_unit_term_p)) */
@@ -203,6 +220,14 @@ Treatment *GetTreatmentFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 
 					if (measurement_p)
 						{
+							SchemaTerm *variable_p = GetChildSchemTermFromJSON (phenotype_json_p, TR_VALUE_S);
+
+							if (variable_p)
+								{
+
+
+								}
+
 							/*
 							 * The form is optional
 							 */
@@ -231,7 +256,7 @@ Treatment *GetTreatmentFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 											if (GetMongoIdFromJSON (phenotype_json_p, id_p))
 												{
 													const char *internal_name_s = GetJSONString (phenotype_json_p, TR_INTERNAL_NAME_S);
-													Treatment *treatment_p = AllocateTreatment (id_p, trait_p, measurement_p, unit_p, form_p, internal_name_s);
+													Treatment *treatment_p = AllocateTreatment (id_p, trait_p, measurement_p, unit_p, variable_p, form_p, internal_name_s);
 
 													if (treatment_p)
 														{
@@ -263,6 +288,12 @@ Treatment *GetTreatmentFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 								{
 									FreeSchemaTerm (form_p);
 								}
+
+							if (variable_p)
+								{
+									FreeSchemaTerm (variable_p);
+								}
+
 
 							FreeSchemaTerm (measurement_p);
 						}		/* if (measurement_p) */
@@ -311,6 +342,81 @@ bool SaveTreatment (Treatment *treatment_p, const DFWFieldTrialServiceData *data
 }
 
 
+static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, const char *child_key_s, const char *child_value_s)
+{
+	bool success_flag = false;
+	char *compound_key_s = ConcatenateVarargsStrings (parent_key_s, ".", child_key_s, NULL);
+
+	if (compound_key_s)
+		{
+			if (BSON_APPEND_UTF8 (query_p, compound_key_s, child_value_s))
+				{
+					success_flag = true;
+				}
+
+			FreeCopiedString (compound_key_s);
+		}		/* if (compound_key_s) */
+
+	return success_flag;
+}
+
+
+Treatment *GetTreatmentBySchemaURLs (const char *trait_url_s, const char *method_url_s, const char *unit_url_s, const DFWFieldTrialServiceData *data_p)
+{
+	Treatment *treatment_p = NULL;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+		{
+			bson_t *query_p = AllocateBSON ();
+
+			if (query_p)
+				{
+					if (AppendSchemaTermQuery (query_p, TR_TRAIT_S, SCHEMA_TERM_URL_S, trait_url_s))
+						{
+							if (AppendSchemaTermQuery (query_p, TR_MEASUREMENT_S, SCHEMA_TERM_URL_S, method_url_s))
+								{
+									if (AppendSchemaTermQuery (query_p, TR_UNIT_S, SCHEMA_TERM_URL_S, unit_url_s))
+										{
+											json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+											if (results_p)
+												{
+													if (json_is_array (results_p))
+														{
+															const size_t num_results = json_array_size (results_p);
+
+															if (num_results == 1)
+																{
+																	json_t *entry_p = json_array_get (results_p, 0);
+
+																	treatment_p = GetTreatmentFromJSON (entry_p, data_p);
+
+																	if (!treatment_p)
+																		{
+
+																		}		/* if (!instrument_p) */
+
+																}		/* if (num_results == 1) */
+
+														}		/* if (json_is_array (results_p)) */
+
+													json_decref (results_p);
+												}		/* if (results_p) */
+										}
+								}
+						}
+
+					FreeBSON (query_p);
+				}		/* if (query_p) */
+
+		}
+
+	return treatment_p;
+}
+
+
+
 Treatment *GetTreatmentByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p)
 {
 	Treatment *treatment_p = NULL;
@@ -354,10 +460,10 @@ Treatment *GetTreatmentById (const bson_oid_t *phenotype_id_p, const DFWFieldTri
 
 											treatment_p = GetTreatmentFromJSON (entry_p, data_p);
 
-											if (!DFTD_TREATMENT)
+											if (!treatment_p)
 												{
 
-												}		/* if (!instrument_p) */
+												}		/* if (!treatment_p) */
 
 										}		/* if (num_results == 1) */
 
@@ -381,7 +487,7 @@ Treatment *GetTreatmentById (const bson_oid_t *phenotype_id_p, const DFWFieldTri
  */
 
 
-static bool AddSchemTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p)
+static bool AddSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p)
 {
 	bool success_flag = false;
 	json_t *term_json_p = GetSchemaTermAsJSON (term_p);

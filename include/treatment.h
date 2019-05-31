@@ -39,6 +39,8 @@ typedef struct Treatment
 {
 	bson_oid_t *tr_id_p;
 
+	SchemaTerm *tr_variable_term_p;
+
 	SchemaTerm *tr_trait_term_p;
 
 	SchemaTerm *tr_measurement_term_p;
@@ -73,6 +75,8 @@ TREATMENT_PREFIX const char *TR_MEASUREMENT_S TREATMENT_VAL ("measurement");
 
 TREATMENT_PREFIX const char *TR_UNIT_S TREATMENT_VAL ("unit");
 
+TREATMENT_PREFIX const char *TR_VARIABLE_S TREATMENT_VAL ("variable");
+
 TREATMENT_PREFIX const char *TR_FORM_S TREATMENT_VAL ("form");
 
 TREATMENT_PREFIX const char *TR_VALUE_S TREATMENT_VAL ("value");
@@ -88,7 +92,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *AllocateTreatment (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *form_p, const char *internal_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *AllocateTreatment (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatment (Treatment *treatment_p);
 
@@ -102,7 +106,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentById (const bson_oid_t *id_
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p);
 
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentBySchemaURLs (const char *trait_url_s, const char *method_url_s, const char *unit_url_s, const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }
