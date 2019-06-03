@@ -220,7 +220,7 @@ Treatment *GetTreatmentFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 
 					if (measurement_p)
 						{
-							SchemaTerm *variable_p = GetChildSchemTermFromJSON (phenotype_json_p, TR_VALUE_S);
+							SchemaTerm *variable_p = GetChildSchemTermFromJSON (phenotype_json_p, TR_VARIABLE_S);
 
 							if (variable_p)
 								{

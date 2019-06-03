@@ -525,7 +525,11 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 																		}
 
 																}		/* if (!DoesTreatmentExist (treatment_p)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing Treatment for row " SIZET_FMT, i);
 
+																}
 
 														}		/* if (material_p) */
 													else
