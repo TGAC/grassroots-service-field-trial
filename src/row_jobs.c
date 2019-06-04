@@ -335,7 +335,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																					if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
 																						{
-																							Treatment *treatment_p = GetPhenotypeByInternalName (key_s, data_p);
+																							Treatment *treatment_p = GetTreatmentByInternalName (key_s, data_p);
 
 																							if (treatment_p)
 																								{

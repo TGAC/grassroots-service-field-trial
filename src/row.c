@@ -286,7 +286,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 									if (material_s)
 										{
-											material_p = GetMaterialByInternalName (material_s, plot_p -> pl_parent_p, data_p);
+											material_p = GetOrCreateMaterialByInternalName (material_s, plot_p -> pl_parent_p, data_p);
 										}
 								}
 

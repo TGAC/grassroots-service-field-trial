@@ -336,7 +336,7 @@ static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s)
 
 	InitSharedType (&def);
 
-	def.st_string_value_s = crop_s;
+	def.st_string_value_s = (char *) crop_s;
 
 	if (SetParameterValueFromSharedType (param_p, &def, false))
 		{

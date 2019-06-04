@@ -27,7 +27,7 @@
 
 #include "schema_term.h"
 #include "dfw_field_trial_service_library.h"
-
+#include "mongodb_tool.h"
 
 
 #ifdef __cplusplus
@@ -36,7 +36,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, MongoTool *tool_p);
 
 
 #ifdef __cplusplus

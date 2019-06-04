@@ -30,6 +30,7 @@
  * static declarations
  */
 
+
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 static const char * const S_VARIABLE_ID_S = "Variable Identifier";
@@ -63,7 +64,8 @@ static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, Pa
 
 static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
 
-static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s);
+
+static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, MongoTool *mongo_p);
 
 static json_t *GetTableParameterHints (void);
 
@@ -464,20 +466,21 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 					if (row_size > 0)
 						{
+							MongoTool *mongo_p = data_p -> dftsd_mongo_p;
 							Treatment *treatment_p = NULL;
-							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S);
+							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, mongo_p);
 
 							if (trait_p)
 								{
-									SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S);
+									SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S, mongo_p);
 
 									if (method_p)
 										{
-											SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S);
+											SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S, mongo_p);
 
 											if (unit_p)
 												{
-													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S);
+													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S, mongo_p);
 
 													SchemaTerm *form_p = NULL; //GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
 													char *created_internal_name_s = NULL;
@@ -610,7 +613,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 }
 
 
-static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s)
+static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, MongoTool *mongo_p)
 {
 	SchemaTerm *term_p = NULL;
 	const char *id_s = GetJSONString (json_p, id_key_s);
@@ -625,7 +628,7 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 				{
 					if (strncmp (id_s, "CO_", strlen (CONTEXT_PREFIX_CROP_ONTOLOGY_S)) == 0)
 						{
-							term_p = GetCropOnotologySchemaTerm (id_s);
+							term_p = GetCropOnotologySchemaTerm (id_s, mongo_p);
 
 							if (!term_p)
 								{
