@@ -99,16 +99,6 @@
 
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
-typedef enum
-{
-	TT_TRAIT,
-	TT_METHOD,
-	TT_UNIT,
-	TT_VARIABLE,
-	TT_NUM_TYPES
-} TermType;
-
-
 
 
 static char *GetTermEnglishValue (const json_t *entry_p);
@@ -127,7 +117,7 @@ static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const 
 
 
 
-SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, MongoTool *mongo_p)
+SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermType expected_type, MongoTool *mongo_p)
 {
 	SchemaTerm *term_p = NULL;
 	const size_t TERMS_URL_LENGTH = strlen (CONTEXT_URL_CROP_ONTOLOGY_S);
@@ -202,46 +192,60 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, MongoT
 
 																				}		/* if (key_s) */
 
+																			++ i;
 																		}		/* while ((i < num_results) && (var_type == TT_NUM_TYPES)) */
 
 
 																	if (tt != TT_NUM_TYPES)
 																		{
-																			const char *name_key_s = NULL;
-																			const char *abbr_key_s = NULL;
-																			const char *desc_key_s = NULL;
-
-																			switch (tt)
+																			/*
+																			 * Does the term type match what we expected to get?
+																			 */
+																			if (tt == expected_type)
 																				{
-																					case TT_TRAIT:
-																						name_key_s = "Trait name";
-																						abbr_key_s = "Main trait abbreviation";
-																						desc_key_s = "Trait description";
-																						break;
+																					const char *name_key_s = NULL;
+																					const char *abbr_key_s = NULL;
+																					const char *desc_key_s = NULL;
 
-																					case TT_METHOD:
-																						name_key_s = "Method name";
-																						desc_key_s = "Method description";
-																						break;
+																					switch (tt)
+																						{
+																							case TT_TRAIT:
+																								name_key_s = "Trait name";
+																								abbr_key_s = "Main trait abbreviation";
+																								desc_key_s = "Trait description";
+																								break;
 
-																					case TT_UNIT:
-																						name_key_s = "Scale name";
-																						break;
+																							case TT_METHOD:
+																								name_key_s = "Method name";
+																								desc_key_s = "Method description";
+																								break;
 
-																					case TT_VARIABLE:
-																						name_key_s = "Variable name";
-																						break;
+																							case TT_UNIT:
+																								name_key_s = "Scale name";
+																								break;
 
-																					default:
-																						break;
+																							case TT_VARIABLE:
+																								name_key_s = "Variable name";
+																								break;
+
+																							default:
+																								break;
+																						}
+
+																					term_p = GetSchemaTerm (res_p, term_s, name_key_s, abbr_key_s, desc_key_s);
+
+																					if (!term_p)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "GetSchemaTerm failed for term \"%s\", name_key \"%s\", abbr_key \"%s\", desc_key \"%s\"", term_s, name_key_s ? name_key_s : "", abbr_key_s ? abbr_key_s : "", desc_key_s ? desc_key_s : "");
+																						}
+
+																				}		/* if (tt == expected_type) */
+																			else
+																				{
+																					PrintJSONToLog (STM_LEVEL_WARNING, __FILE__, __LINE__, res_p, "term is of type %d, expected is %d", tt, expected_type);
 																				}
 
-																			term_p = GetSchemaTerm (res_p, term_s, name_key_s, abbr_key_s, desc_key_s);
 
-																			if (!term_p)
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "GetSchemaTerm failed for term \"%s\", name_key \"%s\", abbr_key \"%s\", desc_key \"%s\"", term_s, name_key_s ? name_key_s : "", abbr_key_s ? abbr_key_s : "", desc_key_s ? desc_key_s : "");
-																				}
 
 																		}		/* if (tt != TT_NUM_TYPES) */
 																	else
@@ -366,17 +370,17 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 
 			if (key_s)
 				{
-					if (strcmp (key_s, name_key_s) == 0)
+					if ((name_key_s != NULL) && (strcmp (key_s, name_key_s) == 0))
 						{
 							name_s = GetTermEnglishValue (entry_p);
 							++ matched_count;
 						}
-					else if (strcmp (key_s, description_key_s) == 0)
+					else if ((description_key_s != NULL) && (strcmp (key_s, description_key_s) == 0))
 						{
 							description_s = GetTermEnglishValue (entry_p);
 							++ matched_count;
 						}
-					else if (strcmp (key_s, abbreviation_key_s) == 0)
+					else if ((abbreviation_key_s != NULL) && (strcmp (key_s, abbreviation_key_s) == 0))
 						{
 							abbreviation_s = GetTermEnglishValue (entry_p);
 							++ matched_count;
@@ -468,13 +472,14 @@ static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const 
 										}		/* if (results_p) */
 									else
 										{
+
 											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "GetAllExistingMongoResultsAsJSON failed for query");
 										}
 
 								}		/* if (FindMatchingMongoDocumentsByJSON (tool_p, query_p, NULL, opts_p)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "FindMatchingMongoDocumentsByJSON failed");
+									PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, query_p, "FindMatchingMongoDocumentsByJSON failed");
 								}
 
 						}		/* if (SetJSONString (query_p, key_s, term_s)) */

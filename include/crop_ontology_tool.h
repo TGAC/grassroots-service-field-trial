@@ -30,13 +30,23 @@
 #include "mongodb_tool.h"
 
 
+typedef enum
+{
+	TT_TRAIT,
+	TT_METHOD,
+	TT_UNIT,
+	TT_VARIABLE,
+	TT_NUM_TYPES
+} TermType;
+
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, MongoTool *tool_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermType expected_type, MongoTool *tool_p);
 
 
 #ifdef __cplusplus

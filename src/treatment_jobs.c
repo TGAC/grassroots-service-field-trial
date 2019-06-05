@@ -65,9 +65,11 @@ static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, Pa
 static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
 
 
-static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, MongoTool *mongo_p);
+static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, TermType expected_type, MongoTool *mongo_p);
 
 static json_t *GetTableParameterHints (void);
+
+static char *GetRowAsString (const int32 row);
 
 
 
@@ -468,19 +470,19 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 						{
 							MongoTool *mongo_p = data_p -> dftsd_mongo_p;
 							Treatment *treatment_p = NULL;
-							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, mongo_p);
+							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, TT_TRAIT, mongo_p);
 
 							if (trait_p)
 								{
-									SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S, mongo_p);
+									SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S, TT_METHOD, mongo_p);
 
 									if (method_p)
 										{
-											SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S, mongo_p);
+											SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S, TT_UNIT, mongo_p);
 
 											if (unit_p)
 												{
-													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S, mongo_p);
+													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S, TT_VARIABLE, mongo_p);
 
 													SchemaTerm *form_p = NULL; //GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
 													char *created_internal_name_s = NULL;
@@ -494,6 +496,16 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 													if (!variable_p)
 														{
+															char *row_s = GetRowAsString (i);
+															PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, table_row_json_p, "Failed to get Variable for row " SIZET_FMT, i);
+
+															if (row_s)
+																{
+																	AddErrorToServiceJob (job_p, row_s, "Failed to get Method");
+																	FreeCopiedString (row_s);
+																}
+
+
 															if ((trait_p -> st_abbreviation_s) && (method_p -> st_abbreviation_s) && (unit_p -> st_abbreviation_s))
 																{
 																	created_internal_name_s = ConcatenateVarargsStrings (trait_p  -> st_abbreviation_s, ":", method_p  -> st_abbreviation_s, ":", unit_p  -> st_abbreviation_s, NULL);
@@ -531,7 +543,6 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 															else
 																{
 																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing Treatment for row " SIZET_FMT, i);
-
 																}
 
 														}		/* if (material_p) */
@@ -558,7 +569,14 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 												}		/* if (unit_p) */
 											else
 												{
+													char *row_s = GetRowAsString (i);
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Unit for row " SIZET_FMT, i);
+
+													if (row_s)
+														{
+															AddErrorToServiceJob (job_p, row_s, "Failed to get Unit");
+															FreeCopiedString (row_s);
+														}
 												}
 
 											if (!treatment_p)
@@ -569,7 +587,14 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 										}		/* if (method_p) */
 									else
 										{
+											char *row_s = GetRowAsString (i);
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Method for row " SIZET_FMT, i);
+
+											if (row_s)
+												{
+													AddErrorToServiceJob (job_p, row_s, "Failed to get Method");
+													FreeCopiedString (row_s);
+												}
 										}
 
 									if (!treatment_p)
@@ -580,7 +605,15 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 								}		/* if (trait_p) */
 							else
 								{
+									char *row_s = GetRowAsString (i);
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Trait for row " SIZET_FMT, i);
+
+									if (row_s)
+										{
+											AddErrorToServiceJob (job_p, row_s, "Failed to get Trait");
+											FreeCopiedString (row_s);
+										}
+
 								}
 
 							if (treatment_p)
@@ -613,7 +646,28 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 }
 
 
-static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, MongoTool *mongo_p)
+static char *GetRowAsString (const int32 row)
+{
+	char *row_s = NULL;
+	char *num_s = GetUnsignedIntAsString (row);
+
+	if (num_s)
+		{
+			row_s = ConcatenateStrings ("row ", row_s);
+
+			if (!row_s)
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to concatenate row and " UINT32_FMT, row);
+				}
+
+			FreeCopiedString (num_s);
+		}		/* if (num_s) */
+
+	return row_s;
+}
+
+
+static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, TermType expected_type, MongoTool *mongo_p)
 {
 	SchemaTerm *term_p = NULL;
 	const char *id_s = GetJSONString (json_p, id_key_s);
@@ -628,7 +682,7 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 				{
 					if (strncmp (id_s, "CO_", strlen (CONTEXT_PREFIX_CROP_ONTOLOGY_S)) == 0)
 						{
-							term_p = GetCropOnotologySchemaTerm (id_s, mongo_p);
+							term_p = GetCropOnotologySchemaTerm (id_s, expected_type, mongo_p);
 
 							if (!term_p)
 								{
