@@ -117,7 +117,7 @@ static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const 
 
 
 
-SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermType expected_type, MongoTool *mongo_p)
+SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermType expected_type, TermType *found_type_p, MongoTool *mongo_p)
 {
 	SchemaTerm *term_p = NULL;
 	const size_t TERMS_URL_LENGTH = strlen (CONTEXT_URL_CROP_ONTOLOGY_S);
@@ -132,7 +132,10 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 			term_s = crop_ontology_term_s;
 		}
 
-	term_p = GetCachedCropOnotologySchemaTerm (term_s, mongo_p);
+	if (mongo_p)
+		{
+			term_p = GetCachedCropOnotologySchemaTerm (term_s, mongo_p);
+		}
 
 	if (!term_p)
 		{
@@ -201,7 +204,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 																			/*
 																			 * Does the term type match what we expected to get?
 																			 */
-																			if (tt == expected_type)
+																			if ((expected_type == TT_NUM_TYPES) || (tt == expected_type))
 																				{
 																					const char *name_key_s = NULL;
 																					const char *abbr_key_s = NULL;
@@ -237,6 +240,10 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 																					if (!term_p)
 																						{
 																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "GetSchemaTerm failed for term \"%s\", name_key \"%s\", abbr_key \"%s\", desc_key \"%s\"", term_s, name_key_s ? name_key_s : "", abbr_key_s ? abbr_key_s : "", desc_key_s ? desc_key_s : "");
+																						}
+																					else
+																						{
+																							*found_type_p = tt;
 																						}
 
 																				}		/* if (tt == expected_type) */

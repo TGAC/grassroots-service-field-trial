@@ -682,7 +682,8 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 				{
 					if (strncmp (id_s, "CO_", strlen (CONTEXT_PREFIX_CROP_ONTOLOGY_S)) == 0)
 						{
-							term_p = GetCropOnotologySchemaTerm (id_s, expected_type, mongo_p);
+							TermType found_type = TT_NUM_TYPES;
+							term_p = GetCropOnotologySchemaTerm (id_s, expected_type, &found_type, mongo_p);
 
 							if (!term_p)
 								{
