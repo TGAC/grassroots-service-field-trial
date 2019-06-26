@@ -93,7 +93,7 @@ APP_LDFLAGS = \
 	-L$(DIR_BSON_LIB) -lbson-1.0 \
 	
 	
-LD_FLAGS += $(APP_LDFLAGS)
+LDFLAGS += $(APP_LDFLAGS)
 
 all:: 
 	make -C $(DIR_GRASSROOTS_GEOCODER_BUILD) all
