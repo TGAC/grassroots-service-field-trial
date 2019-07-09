@@ -80,25 +80,49 @@ typedef struct Plot
 
 	Study *pl_parent_p;
 
-	struct tm *pl_sowing_date_p;
+	/*
+	 * Trial Design
+	 */
 
-	struct tm *pl_harvest_date_p;
 
-	double64 pl_width;
-
-	double64 pl_length;
+	/*
+	 * Drilling
+	 */
 
 	uint32 pl_row_index;
 
 	uint32 pl_column_index;
 
-	uint32 pl_replicate_index;
+	char *pl_genotype_replicate_s;
 
-	char *pl_trial_design_s;
+	char *pl_accession_s;
+
+	struct tm *pl_sowing_date_p;
+
+	double pl_sowing_rate;
+
+	/*
+	 * Plots
+	 */
+
+	double64 pl_width;
+
+	double64 pl_length;
 
 	char *pl_growing_conditions_s;
 
-	char *pl_treatments_s;
+	char *pl_soil_type_s;
+
+
+	struct tm *pl_harvest_date_p;
+
+
+	uint32 pl_replicate_index;
+
+//	char *pl_trial_design_s;
+
+
+//	char *pl_treatments_s;
 
 	/**
 	 * A LinkedList of RowNodes
