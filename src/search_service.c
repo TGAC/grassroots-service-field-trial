@@ -643,7 +643,8 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
-	LuceneTool *lucene_p = AllocateLuceneTool (job_p -> sj_id);
+	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
+	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
 
 	if (lucene_p)
 		{

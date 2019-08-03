@@ -459,7 +459,8 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 																		}
 																	else
 																		{
-																			success_flag = DetermineGPSLocationForAddress (address_p, NULL);
+																			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
+																			success_flag = DetermineGPSLocationForAddress (address_p, NULL, grassroots_p);
 																		}
 
 																	if (success_flag)

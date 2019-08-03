@@ -26,7 +26,7 @@
 #include "mongodb_tool.h"
 #include "string_utils.h"
 #include "json_tools.h"
-#include "grassroots_config.h"
+#include "grassroots_server.h"
 #include "string_linked_list.h"
 #include "math_utils.h"
 #include "search_options.h"
