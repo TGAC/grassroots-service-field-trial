@@ -46,24 +46,17 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 
 DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 {
-	MongoTool *tool_p = AllocateMongoTool (NULL);
+	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
 
-	if (tool_p)
+	if (data_p)
 		{
-			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
+			data_p -> dftsd_mongo_p =  NULL;
+			data_p -> dftsd_database_s = NULL;
 
-			if (data_p)
-				{
-					data_p -> dftsd_mongo_p = tool_p;
-					data_p -> dftsd_database_s = NULL;
+			memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
 
-					memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
-
-					return data_p;
-				}
-
-			FreeMongoTool (tool_p);
-		}		/* if (tool_p) */
+			return data_p;
+		}
 
 	return NULL;
 }
@@ -89,27 +82,38 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 	if (data_p -> dftsd_database_s)
 		{
-			if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
-				{
-					success_flag = true;
+			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
 
-					* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_MATERIAL) = DFT_MATERIAL_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_PHENOTYPE_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_OBSERVATION) = DFT_OBSERVATION_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_INSTRUMENT) = DFT_INSTRUMENT_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
-					* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
-				}
+			if ((data_p -> dftsd_mongo_p = AllocateMongoTool (NULL, grassroots_p -> gs_mongo_manager_p)) != NULL)
+				{
+					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
+						{
+							success_flag = true;
+
+							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_MATERIAL) = DFT_MATERIAL_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_PHENOTYPE_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_OBSERVATION) = DFT_OBSERVATION_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_INSTRUMENT) = DFT_INSTRUMENT_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
+						}
+
+				}		/* if ((data_p -> dftsd_mongo_p = AllocateMongoTool (NULL, grassroots_p -> gs_mongo_manager_p)) != NULL) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set db to \"%s\"", data_p -> dftsd_database_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate MongoTool");
 				}
+
 
 		} /* if (data_p -> psd_database_s) */
 
