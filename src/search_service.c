@@ -96,7 +96,7 @@ typedef struct
  */
 
 
-Service *GetDFWFieldTrialSearchService (void)
+Service *GetDFWFieldTrialSearchService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -121,7 +121,8 @@ Service *GetDFWFieldTrialSearchService (void)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetDFWFieldTrialSearchServiceMetadata,
-														 NULL))
+														 NULL,
+														 grassroots_p))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

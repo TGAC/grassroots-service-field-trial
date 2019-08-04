@@ -58,7 +58,7 @@ static ServiceMetadata *GetLocationSubmissionServiceMetadata (Service *service_p
  */
 
 
-Service *GetLocationSubmissionService (void)
+Service *GetLocationSubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -83,7 +83,8 @@ Service *GetLocationSubmissionService (void)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetLocationSubmissionServiceMetadata,
-														 NULL))
+														 NULL,
+														 grassroots_p))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

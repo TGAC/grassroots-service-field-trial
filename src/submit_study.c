@@ -59,7 +59,7 @@ static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p);
  */
 
 
-Service *GetStudySubmissionService (void)
+Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -84,7 +84,8 @@ Service *GetStudySubmissionService (void)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetStudySubmissionServiceMetadata,
-														 NULL))
+														 NULL,
+														 grassroots_p))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

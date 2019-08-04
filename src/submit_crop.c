@@ -60,7 +60,7 @@ static ServiceMetadata *GetCropSubmissionServiceMetadata (Service *service_p);
  */
 
 
-Service *GetCropSubmissionService (void)
+Service *GetCropSubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -85,7 +85,8 @@ Service *GetCropSubmissionService (void)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetCropSubmissionServiceMetadata,
-														 NULL))
+														 NULL,
+														 grassroots_p))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

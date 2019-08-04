@@ -59,7 +59,7 @@ static ServiceMetadata *GetFieldTrialSubmissionServiceMetadata (Service *service
  */
 
 
-Service *GetFieldTrialSubmissionService (void)
+Service *GetFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -84,7 +84,8 @@ Service *GetFieldTrialSubmissionService (void)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetFieldTrialSubmissionServiceMetadata,
-														 NULL))
+														 NULL,
+														 grassroots_p))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

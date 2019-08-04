@@ -35,7 +35,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetCropSubmissionService (void);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetCropSubmissionService (GrassrootsServer *grassroots_p);
 
 
 #ifdef __cplusplus

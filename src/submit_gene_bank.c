@@ -61,7 +61,7 @@ static ServiceMetadata *GetGeneBankSubmissionServiceMetadata (Service *service_p
  */
 
 
-Service *GetGeneBankSubmissionService (void)
+Service *GetGeneBankSubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -86,7 +86,8 @@ Service *GetGeneBankSubmissionService (void)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetGeneBankSubmissionServiceMetadata,
-														 NULL))
+														 NULL,
+														 grassroots_p))
 						{
 
 							if (ConfigureDFWFieldTrialService (data_p))

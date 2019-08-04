@@ -68,18 +68,18 @@ static Service **AddValidService (Service **service_pp, Service *service_p);
  */
 
 
-ServicesArray *GetServices (UserDetails *user_p)
+ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 {
 	uint32 num_services = 0;
-	Service *submission_service_p = GetDFWFieldTrialSubmissionService ();
-	Service *search_service_p = GetDFWFieldTrialSearchService ();
-	Service *field_trial_submission_service_p = GetFieldTrialSubmissionService ();
-	Service *study_submission_service_p = GetStudySubmissionService ();
-	Service *location_submission_service_p = GetLocationSubmissionService ();
-	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService ();
-	Service *material_submission_service_p = GetMaterialSubmissionService ();
-	Service *treatments_submission_service_p = GetTreatmentsSubmissionService ();
-	Service *crop_submission_service_p = GetCropSubmissionService ();
+	Service *submission_service_p = GetDFWFieldTrialSubmissionService (grassroots_p);
+	Service *search_service_p = GetDFWFieldTrialSearchService (grassroots_p);
+	Service *field_trial_submission_service_p = GetFieldTrialSubmissionService (grassroots_p);
+	Service *study_submission_service_p = GetStudySubmissionService (grassroots_p);
+	Service *location_submission_service_p = GetLocationSubmissionService (grassroots_p);
+	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService (grassroots_p);
+	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
+	Service *treatments_submission_service_p = GetTreatmentsSubmissionService (grassroots_p);
+	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
 
 	if (submission_service_p)
 		{

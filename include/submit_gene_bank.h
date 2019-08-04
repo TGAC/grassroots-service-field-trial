@@ -35,7 +35,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetGeneBankSubmissionService (void);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetGeneBankSubmissionService (GrassrootsServer *grassroots_p);
 
 
 #ifdef __cplusplus
