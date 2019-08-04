@@ -89,7 +89,7 @@ Service *GetMaterialSubmissionService (GrassrootsServer *grassroots_p)
 														 grassroots_p))
 						{
 
-							if (ConfigureDFWFieldTrialService (data_p))
+							if (ConfigureDFWFieldTrialService (data_p, grassroots_p))
 								{
 									return service_p;
 								}

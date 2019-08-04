@@ -73,7 +73,7 @@ void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p)
 }
 
 
-bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
+bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p, GrassrootsServer *grassroots_p)
 {
 	bool success_flag = false;
 	const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
@@ -82,8 +82,6 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p)
 
 	if (data_p -> dftsd_database_s)
 		{
-			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
-
 			if ((data_p -> dftsd_mongo_p = AllocateMongoTool (NULL, grassroots_p -> gs_mongo_manager_p)) != NULL)
 				{
 					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
