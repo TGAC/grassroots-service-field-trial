@@ -60,37 +60,47 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 int main (int argc, char **argv)
 {
 	int res = 0;
-	const char *grassroots_url_s = NULL;
-	const char *filename_s = NULL;
-	ImportMode im = IM_NUM_MODES;
 
-	GetAddressFromLocationString  (NULL);
 
-	if (im != IM_NUM_MODES)
+	if (argc != 1)
 		{
-			json_error_t err;
-			json_t *data_p = json_load_file (filename_s, 0, &err);
+			const char *grassroots_url_s = NULL;
+			const char *filename_s = NULL;
+			ImportMode im = IM_NUM_MODES;
 
-			if (data_p)
+			if (im != IM_NUM_MODES)
 				{
-					switch (im)
+					json_error_t err;
+					json_t *data_p = json_load_file (filename_s, 0, &err);
+
+					if (data_p)
 						{
-							case IM_LOCATIONS:
-								ImportLocations (data_p, grassroots_url_s);
-								break;
+							switch (im)
+								{
+									case IM_LOCATIONS:
+										ImportLocations (data_p, grassroots_url_s);
+										break;
 
-							case IM_TRIALS:
-								ImportTrials (data_p, grassroots_url_s);
-								break;
+									case IM_TRIALS:
+										ImportTrials (data_p, grassroots_url_s);
+										break;
 
-							default:
-								break;
-						}
+									default:
+										break;
+								}
 
-					json_decref (data_p);
-				}		/* if (data_p) */
+							json_decref (data_p);
+						}		/* if (data_p) */
 
-		}		/* if (im != IM_NUM_MODES) */
+				}		/* if (im != IM_NUM_MODES) */
+
+		}
+	else
+		{
+			printf ("USAGE: importer --mode (trials|locations) --in <filename>\n");
+		}
+
+
 
 
 	return res;
@@ -173,9 +183,9 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 
 							if (buffer_p)
 								{
-									//AppendStringsToByteBuffer (buffer_p, "?", LOCATION_NAME.npt_name_s, "=", field_s, NULL);
-									//AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, "=", lat_s, NULL);
-									//AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL);
+									AppendStringsToByteBuffer (buffer_p, "?", LOCATION_NAME.npt_name_s, "=", field_s, NULL);
+									AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, "=", lat_s, NULL);
+									AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL);
 
 									/*
 									 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
