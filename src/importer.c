@@ -177,6 +177,10 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 									//AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, "=", lat_s, NULL);
 									//AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL);
 
+									/*
+									 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
+									 */
+
 									FreeByteBuffer (buffer_p);
 								}
 						}
