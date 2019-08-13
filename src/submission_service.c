@@ -149,7 +149,7 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (s
 										{
 											if (!GetSubmissionMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
 												{
-													if (!GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
+													//if (!GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
 														{
 															if (!GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
 																{
@@ -304,7 +304,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 														{
 															if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
 																{
-																	if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
+																	//if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
 																		{
 																			if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
 																				{

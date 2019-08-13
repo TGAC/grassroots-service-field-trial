@@ -21,31 +21,32 @@
  */
 
 
-
+#define ALLOCATE_LOCATION_JOB_CONSTANTS (1)
 #include "location_jobs.h"
 #include "location.h"
 #include "geocoder_util.h"
 #include "string_utils.h"
 
 
-static const char *S_DEFAULT_COORD_PRECISION_S = "6";
+static const char *DEFAULT_COORD_PRECISION_S = "6";
 
 static const char * const S_UNSET_LOCATION_S = "Any Location";
 
 /*
  * Experimental Area parameters
  */
-static NamedParameterType S_LOCATION_NAME = { "LO Name", PT_STRING };
-static NamedParameterType S_LOCATION_STREET = { "LO Street", PT_STRING };
-static NamedParameterType S_LOCATION_TOWN = { "LO Town", PT_STRING };
-static NamedParameterType S_LOCATION_COUNTY = { "LO County", PT_STRING };
-static NamedParameterType S_LOCATION_COUNTRY = { "LO Country", PT_STRING };
-static NamedParameterType S_LOCATION_POSTCODE = { "LO Postcode", PT_STRING };
-static NamedParameterType S_LOCATION_USE_GPS = { "LO Use GPS", PT_BOOLEAN };
-static NamedParameterType S_LOCATION_LATITUDE = { "LO Latitude", PT_SIGNED_REAL };
-static NamedParameterType S_LOCATION_LONGITUDE = { "LO Longitude", PT_SIGNED_REAL };
-static NamedParameterType S_LOCATION_ALTITUDE = { "LO Altitude", PT_SIGNED_REAL };
-
+/*
+static NamedParameterType LOCATION_NAME = { "LO Name", PT_STRING };
+static NamedParameterType LOCATION_STREET = { "LO Street", PT_STRING };
+static NamedParameterType LOCATION_TOWN = { "LO Town", PT_STRING };
+static NamedParameterType LOCATION_COUNTY = { "LO County", PT_STRING };
+static NamedParameterType LOCATION_COUNTRY = { "LO Country", PT_STRING };
+static NamedParameterType LOCATION_POSTCODE = { "LO Postcode", PT_STRING };
+static NamedParameterType LOCATION_USE_GPS = { "LO Use GPS", PT_BOOLEAN };
+static NamedParameterType LOCATION_LATITUDE = { "LO Latitude", PT_SIGNED_REAL };
+static NamedParameterType LOCATION_LONGITUDE = { "LO Longitude", PT_SIGNED_REAL };
+static NamedParameterType LOCATION_ALTITUDE = { "LO Altitude", PT_SIGNED_REAL };
+*/
 
 static NamedParameterType S_ADD_LOCATION = { "Add Location", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_LOCATIONS = { "Get all Locations", PT_BOOLEAN };
@@ -70,45 +71,45 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_NAME.npt_type, S_LOCATION_NAME.npt_name_s, "Name", "The building name or number", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", def, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_STREET.npt_type, S_LOCATION_STREET.npt_name_s, "Street", "The street", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", def, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_TOWN.npt_type, S_LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", def, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTY.npt_type, S_LOCATION_COUNTY.npt_name_s, "County", "The county or state", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", def, PL_ALL)) != NULL)
 								{
 									def.st_string_value_s = (char *) "GB";
 
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_COUNTRY.npt_type, S_LOCATION_COUNTRY.npt_name_s, "Country", "The country", def, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", def, PL_ALL)) != NULL)
 										{
 											def.st_string_value_s = NULL;
 
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_POSTCODE.npt_type, S_LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", def, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", def, PL_ALL)) != NULL)
 												{
 													def.st_boolean_value = true;
 
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_USE_GPS.npt_type, S_LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", def, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_type, LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", def, PL_ALL)) != NULL)
 														{
 															def.st_data_value = 0.0;
 
-															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LATITUDE.npt_type, S_LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", def, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", def, PL_ALL)) != NULL)
 																{
-																	const char *precision_s = S_DEFAULT_COORD_PRECISION_S;
+																	const char *precision_s = DEFAULT_COORD_PRECISION_S;
 
 																	if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																		{
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_LONGITUDE.npt_type, S_LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", def, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", def, PL_ALL)) != NULL)
 																				{
 																					if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ALTITUDE.npt_type, S_LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", def, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", def, PL_ALL)) != NULL)
 																								{
 																									success_flag = true;
 																								}
 																							else
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_ALTITUDE.npt_name_s);
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_ALTITUDE.npt_name_s);
 																								}
 																						}
 																					else
@@ -118,7 +119,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																				}
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_LATITUDE.npt_name_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
 																				}
 																		}
 																	else
@@ -128,41 +129,41 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_LATITUDE.npt_name_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
 																}														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_USE_GPS.npt_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_USE_GPS.npt_name_s);
 														}
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_POSTCODE.npt_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_POSTCODE.npt_name_s);
 												}
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_COUNTRY.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_COUNTRY.npt_name_s);
 										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_COUNTY.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_COUNTY.npt_name_s);
 								}
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_TOWN.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_TOWN.npt_name_s);
 						}
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_STREET.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_STREET.npt_name_s);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_LOCATION_NAME.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_NAME.npt_name_s);
 		}
 	return success_flag;
 }
@@ -180,45 +181,45 @@ bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_LOCATION_NAME.npt_name_s) == 0)
+	if (strcmp (param_name_s, LOCATION_NAME.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_NAME.npt_type;
+			*pt_p = LOCATION_NAME.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_STREET.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_STREET.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_STREET.npt_type;
+			*pt_p = LOCATION_STREET.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_TOWN.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_TOWN.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_TOWN.npt_type;
+			*pt_p = LOCATION_TOWN.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_COUNTY.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_COUNTY.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_COUNTY.npt_type;
+			*pt_p = LOCATION_COUNTY.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_COUNTRY.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_COUNTRY.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_COUNTRY.npt_type;
+			*pt_p = LOCATION_COUNTRY.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_POSTCODE.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_POSTCODE.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_POSTCODE.npt_type;
+			*pt_p = LOCATION_POSTCODE.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_USE_GPS.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_USE_GPS.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_USE_GPS.npt_type;
+			*pt_p = LOCATION_USE_GPS.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_LATITUDE.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_LATITUDE.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_LATITUDE.npt_type;
+			*pt_p = LOCATION_LATITUDE.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_LONGITUDE.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_LONGITUDE.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_LONGITUDE.npt_type;
+			*pt_p = LOCATION_LONGITUDE.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_ALTITUDE.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_ALTITUDE.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_ALTITUDE.npt_type;
+			*pt_p = LOCATION_ALTITUDE.npt_type;
 		}
 	else if (strcmp (param_name_s, S_ADD_LOCATION.npt_name_s) == 0)
 		{
@@ -383,37 +384,37 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 	SharedType name_value;
 	InitSharedType (&name_value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_NAME.npt_name_s, &name_value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value, true))
 		{
 			SharedType street_value;
 			InitSharedType (&street_value);
 
-			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_STREET.npt_name_s, &street_value, true))
+			if (GetParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_value, true))
 				{
 					SharedType town_value;
 					InitSharedType (&town_value);
 
-					if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_TOWN.npt_name_s, &town_value, true))
+					if (GetParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_value, true))
 						{
 							SharedType county_value;
 							InitSharedType (&county_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_COUNTY.npt_name_s, &county_value, true))
+							if (GetParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_value, true))
 								{
 									SharedType country_value;
 									InitSharedType (&country_value);
 
-									if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_COUNTRY.npt_name_s, &country_value, true))
+									if (GetParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_value, true))
 										{
 											SharedType postcode_value;
 											InitSharedType (&postcode_value);
 
-											if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_POSTCODE.npt_name_s, &postcode_value, true))
+											if (GetParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_value, true))
 												{
 													SharedType use_gps_value;
 													InitSharedType (&use_gps_value);
 
-													if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_USE_GPS.npt_name_s, &use_gps_value, true))
+													if (GetParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_value, true))
 														{
 															const char *country_code_s = NULL;
 															const char *gps_s = NULL;
@@ -432,22 +433,21 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 																			SharedType latitude_value;
 																			InitSharedType (&latitude_value);
 
-																			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_LATITUDE.npt_name_s, &latitude_value, true))
+																			if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true))
 																				{
 																					SharedType longitude_value;
 																					InitSharedType (&longitude_value);
 
-																					if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_LONGITUDE.npt_name_s, &longitude_value, true))
+																					if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_value, true))
 																						{
 																							double64 *elevation_p = NULL;
 																							SharedType elevation_value;
 																							InitSharedType (&elevation_value);
 
-																							if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_ALTITUDE.npt_name_s, &elevation_value, true))
+																							if (GetParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_value, true))
 																								{
 																									elevation_p = &elevation_value.st_data_value;
 																								}
-
 
 																							if (SetAddressCentreCoordinate (address_p, latitude_value.st_data_value, longitude_value.st_data_value, elevation_p))
 																								{
@@ -456,7 +456,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 																						}
 
 																				}
-																		}
+																		}		/* if (use_gps_value.st_boolean_value) */
 																	else
 																		{
 																			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
