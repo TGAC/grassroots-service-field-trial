@@ -135,7 +135,7 @@ sanitiser: all
 
 
 importer: all
-	$(CC) $(DIR_SRC)/importer.c -o importer -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -pg -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME)  $(APP_LDFLAGS)
+	$(CC) $(DIR_SRC)/importer.c -o $(DIR_BUILD)/$(BUILD)/importer -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -pg -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME)  $(APP_LDFLAGS)
 	
 
 include $(DIR_BUILD_CONFIG)/generic_makefiles/shared_library.makefile
