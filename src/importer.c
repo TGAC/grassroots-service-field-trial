@@ -67,8 +67,65 @@ int main (int argc, char **argv)
 			const char *grassroots_url_s = NULL;
 			const char *filename_s = NULL;
 			ImportMode im = IM_NUM_MODES;
+			int i = 1;
 
-			if (im != IM_NUM_MODES)
+			while (i < argc)
+				{
+					const char *arg_s = * (argv + i);
+
+					if (strcmp (arg_s, "--mode") == 0)
+						{
+							if ((i + 1) < argc)
+								{
+									arg_s = argv [++ i];
+
+									if (strcmp (arg_s, "trials") == 0)
+										{
+											im = IM_TRIALS;
+										}
+									else if (strcmp (arg_s, "locations") == 0)
+										{
+											im = IM_LOCATIONS;
+										}
+									else
+										{
+											printf ("unknown mode \"%s\"", arg_s);
+										}
+								}
+							else
+								{
+									printf ("mode argument missing");
+								}
+
+						}		/* if (strcmp (arg_s "--mode") == 0) */
+					else if (strcmp (arg_s, "--in") == 0)
+						{
+							if ((i + 1) < argc)
+								{
+									filename_s = argv [++ i];
+								}
+							else
+								{
+									printf ("input filename argument missing");
+								}
+						}		/* else if (strcmp (arg_s, "--in ") == 0) */
+					else if (strcmp (arg_s, "--url ") == 0)
+						{
+							if ((i + 1) < argc)
+								{
+									grassroots_url_s = argv [++ i];
+								}
+							else
+								{
+									printf ("grassroots url argument missing");
+								}
+						}		/* else if (strcmp (arg_s, "--url") == 0) */
+
+				}		/* while (i < argc) */
+
+
+
+			if ((im != IM_NUM_MODES) && (grassroots_url_s != NULL) && (filename_s != NULL))
 				{
 					json_error_t err;
 					json_t *data_p = json_load_file (filename_s, 0, &err);
@@ -92,12 +149,15 @@ int main (int argc, char **argv)
 							json_decref (data_p);
 						}		/* if (data_p) */
 
-				}		/* if (im != IM_NUM_MODES) */
-
+				}		/* if ((im != IM_NUM_MODES) && (grassroots_url_s != NULL) && (filename_s != NULL)) */
+			else
+				{
+					printf ("incomplete args: mode %d, input file \"%s\", grassroots url \"%s\"", im, filename_s, grassroots_url_s);
+				}
 		}
 	else
 		{
-			printf ("USAGE: importer --mode (trials|locations) --in <filename>\n");
+			printf ("USAGE: importer --mode (trials|locations) --in <filename> --url <grassroots url>\n");
 		}
 
 
@@ -183,13 +243,54 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 
 							if (buffer_p)
 								{
-									AppendStringsToByteBuffer (buffer_p, "?", LOCATION_NAME.npt_name_s, "=", field_s, NULL);
-									AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, "=", lat_s, NULL);
-									AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL);
-
 									/*
 									 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
 									 */
+
+									if (AppendStringToByteBuffer (buffer_p, "service/Submit%20Field%20Trial%20Location"))
+										{
+											if (AppendStringsToByteBuffer (buffer_p, "?", LOCATION_NAME.npt_name_s, "=", field_s, NULL))
+												{
+													if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, "=", lat_s, NULL))
+														{
+															if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL))
+																{
+																	CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
+
+																	if (curl_p)
+																		{
+																			const char *url_s = GetByteBufferData (buffer_p);
+
+																			if (SetUriForCurlTool (curl_p, url_s))
+																				{
+																					CURLcode c = RunCurlTool (curl_p);
+
+																					if (c == CURLE_OK)
+																						{
+																							const char *response_s = GetCurlToolData (curl_p);
+
+																							if (response_s)
+																								{
+																									json_error_t err;
+																									json_t *res_p = json_loads (response_s, JSON_DECODE_ANY, &err);
+
+																									if (res_p)
+																										{
+
+
+																											json_decref (res_p);
+																										}
+																								}
+																						}
+																				}
+
+																			FreeCurlTool (curl_p);
+																		}
+
+																}
+														}
+												}
+										}
 
 									FreeByteBuffer (buffer_p);
 								}

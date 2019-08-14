@@ -382,39 +382,34 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 {
 	bool success_flag = false;
 	SharedType name_value;
-	InitSharedType (&name_value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value))
 		{
-			SharedType street_value;
-			InitSharedType (&street_value);
+			Address *address_p = NULL;
 
-			if (GetParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_value, true))
+			SharedType street_value;
+
+			if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_value))
 				{
 					SharedType town_value;
-					InitSharedType (&town_value);
 
-					if (GetParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_value, true))
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_value))
 						{
 							SharedType county_value;
-							InitSharedType (&county_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_value))
 								{
 									SharedType country_value;
-									InitSharedType (&country_value);
 
-									if (GetParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_value, true))
+									if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_value))
 										{
 											SharedType postcode_value;
-											InitSharedType (&postcode_value);
 
-											if (GetParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_value, true))
+											if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_value))
 												{
 													SharedType use_gps_value;
-													InitSharedType (&use_gps_value);
 
-													if (GetParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_value, true))
+													if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_value))
 														{
 															const char *country_code_s = NULL;
 															const char *gps_s = NULL;
@@ -424,27 +419,20 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 															if (address_p)
 																{
-																	const uint32 order = 0;
-																	Study *study_p = NULL;
-																	bson_oid_t *id_p = NULL;
-
 																	if (use_gps_value.st_boolean_value)
 																		{
 																			SharedType latitude_value;
-																			InitSharedType (&latitude_value);
 
-																			if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true))
+																			if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value))
 																				{
 																					SharedType longitude_value;
-																					InitSharedType (&longitude_value);
 
-																					if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_value, true))
+																					if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_value))
 																						{
 																							double64 *elevation_p = NULL;
 																							SharedType elevation_value;
-																							InitSharedType (&elevation_value);
 
-																							if (GetParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_value, true))
+																							if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_value))
 																								{
 																									elevation_p = &elevation_value.st_data_value;
 																								}
@@ -455,16 +443,21 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 																								}
 																						}
 
-																				}
+																				}		/* if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true)) */
+
 																		}		/* if (use_gps_value.st_boolean_value) */
 																	else
 																		{
+
 																			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 																			success_flag = DetermineGPSLocationForAddress (address_p, NULL, grassroots_p);
 																		}
 
+
 																	if (success_flag)
 																		{
+																			const uint32 order = 0;
+																			bson_oid_t *id_p = NULL;
 																			Location *location_p = AllocateLocation (address_p, order, id_p);
 
 																			if (location_p)
@@ -473,11 +466,14 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 																				}
 																			else
 																				{
-																					FreeAddress (address_p);
 																					success_flag = false;
 																				}
+
+																			FreeAddress (address_p);
 																		}
-																}
+
+
+																}		/* if (address_p) */
 														}
 												}
 										}
@@ -485,6 +481,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 						}
 				}
 		}
+
 
 	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
 
