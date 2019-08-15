@@ -386,101 +386,84 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value))
 		{
 			Address *address_p = NULL;
-
 			SharedType street_value;
+			SharedType town_value;
+			SharedType county_value;
+			SharedType country_value;
+			SharedType postcode_value;
+			SharedType use_gps_value;
+			const char *country_code_s = NULL;
+			const char *gps_s = NULL;
 
-			if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_value))
+			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_value);
+			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_value);
+			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_value);
+			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_value);
+			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_value);
+			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_value);
+
+			address_p = AllocateAddress (name_value.st_string_value_s, street_value.st_string_value_s, town_value.st_string_value_s, county_value.st_string_value_s,
+																	 country_value.st_string_value_s, postcode_value.st_string_value_s, country_code_s, gps_s);
+
+			if (address_p)
 				{
-					SharedType town_value;
+					GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_value))
+					if (use_gps_value.st_boolean_value)
 						{
-							SharedType county_value;
+							SharedType latitude_value;
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_value))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value))
 								{
-									SharedType country_value;
+									SharedType longitude_value;
 
-									if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_value))
+									if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_value))
 										{
-											SharedType postcode_value;
+											double64 *elevation_p = NULL;
+											SharedType elevation_value;
 
-											if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_value))
+											if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_value))
 												{
-													SharedType use_gps_value;
+													elevation_p = &elevation_value.st_data_value;
+												}
 
-													if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_value))
-														{
-															const char *country_code_s = NULL;
-															const char *gps_s = NULL;
-
-															Address *address_p = AllocateAddress (name_value.st_string_value_s, street_value.st_string_value_s, town_value.st_string_value_s, county_value.st_string_value_s,
-																																		country_value.st_string_value_s, postcode_value.st_string_value_s, country_code_s, gps_s);
-
-															if (address_p)
-																{
-																	if (use_gps_value.st_boolean_value)
-																		{
-																			SharedType latitude_value;
-
-																			if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value))
-																				{
-																					SharedType longitude_value;
-
-																					if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_value))
-																						{
-																							double64 *elevation_p = NULL;
-																							SharedType elevation_value;
-
-																							if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_value))
-																								{
-																									elevation_p = &elevation_value.st_data_value;
-																								}
-
-																							if (SetAddressCentreCoordinate (address_p, latitude_value.st_data_value, longitude_value.st_data_value, elevation_p))
-																								{
-																									success_flag = true;
-																								}
-																						}
-
-																				}		/* if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true)) */
-
-																		}		/* if (use_gps_value.st_boolean_value) */
-																	else
-																		{
-
-																			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
-																			success_flag = DetermineGPSLocationForAddress (address_p, NULL, grassroots_p);
-																		}
-
-
-																	if (success_flag)
-																		{
-																			const uint32 order = 0;
-																			bson_oid_t *id_p = NULL;
-																			Location *location_p = AllocateLocation (address_p, order, id_p);
-
-																			if (location_p)
-																				{
-																					success_flag = SaveLocation (location_p, data_p);
-																				}
-																			else
-																				{
-																					success_flag = false;
-																				}
-
-																			FreeAddress (address_p);
-																		}
-
-
-																}		/* if (address_p) */
-														}
+											if (SetAddressCentreCoordinate (address_p, latitude_value.st_data_value, longitude_value.st_data_value, elevation_p))
+												{
+													success_flag = DetermineAddressForGPSLocation (address_p, NULL, grassroots_p);
 												}
 										}
-								}
+
+								}		/* if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true)) */
+
+						}		/* if (use_gps_value.st_boolean_value) */
+					else
+						{
+							success_flag = DetermineGPSLocationForAddress (address_p, NULL, grassroots_p);
 						}
-				}
-		}
+
+
+					if (success_flag)
+						{
+							const uint32 order = 0;
+							bson_oid_t *id_p = NULL;
+							Location *location_p = AllocateLocation (address_p, order, id_p);
+
+							if (location_p)
+								{
+									success_flag = SaveLocation (location_p, data_p);
+								}
+							else
+								{
+									success_flag = false;
+								}
+
+							FreeAddress (address_p);
+						}
+
+
+				}		/* if (address_p) */
+
+		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value)) */
 
 
 	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);

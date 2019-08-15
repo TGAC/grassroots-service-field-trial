@@ -156,14 +156,19 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 
 	if (success_flag)
 		{
-			json_t *location_p_json_p = GetLocationAsJSON (location_p);
+			json_t *location_json_p = GetLocationAsJSON (location_p);
 
-			if (location_p_json_p)
+			if (location_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, location_p_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], selector_p);
+					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, location_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], selector_p);
 
-					json_decref (location_p_json_p);
+					json_decref (location_json_p);
 				}		/* if (area_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get location \"%s\" as JSON", location_p -> lo_address_p -> ad_name_s);
+					success_flag = false;
+				}
 
 		}		/* if (location_p -> lo_id_p) */
 

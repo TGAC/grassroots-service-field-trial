@@ -256,104 +256,107 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 														{
 															if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL))
 																{
-																	CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
-
-																	if (curl_p)
+																	if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_USE_GPS.npt_name_s, "=true", NULL))
 																		{
-																			const char *url_s = GetByteBufferData (buffer_p);
+																			CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
 
-																			if (SetUriForCurlTool (curl_p, url_s))
+																			if (curl_p)
 																				{
-																					CURLcode c = RunCurlTool (curl_p);
+																					const char *url_s = GetByteBufferData (buffer_p);
 
-																					if (c == CURLE_OK)
+																					if (SetUriForCurlTool (curl_p, url_s))
 																						{
-																							const char *response_s = GetCurlToolData (curl_p);
+																							CURLcode c = RunCurlTool (curl_p);
 
-																							if (response_s)
+																							if (c == CURLE_OK)
 																								{
-																									json_error_t err;
-																									json_t *res_p = json_loads (response_s, JSON_DECODE_ANY, &err);
+																									const char *response_s = GetCurlToolData (curl_p);
 
-																									if (res_p)
+																									if (response_s)
 																										{
-																											/*
-																											{
-																												"header": {
-																													"schema": {
-																														"so:softwareVersion": "0.10"
-																													}
-																												},
-																												"@context": {
-																													"so:": "http://schema.org/",
-																													"eo:": "http://edamontology.org/",
-																													"efo:": "http://www.ebi.ac.uk/efo/",
-																													"swo:": "http://www.ebi.ac.uk/swo/"
-																												},
-																												"results": [
-																													{
-																														"service_name": "Submit Field Trial Location",
-																														"job_type": "default_service_job",
-																														"status": 5,
-																														"status_text": "Succeeded",
-																														"job_uuid": "2beb4af8-c565-4aff-a185-f04e602a5c53",
-																														"so:description": "Submit Location"
-																													}
-																												]
-																											}
-																											*/
+																											json_error_t err;
+																											json_t *res_p = json_loads (response_s, JSON_DECODE_ANY, &err);
 
-																											json_t *results_p = json_object_get (res_p, "results");
-
-																											if (results_p)
+																											if (res_p)
 																												{
-																													if (json_is_array (results_p))
+																													/*
+																													{
+																														"header": {
+																															"schema": {
+																																"so:softwareVersion": "0.10"
+																															}
+																														},
+																														"@context": {
+																															"so:": "http://schema.org/",
+																															"eo:": "http://edamontology.org/",
+																															"efo:": "http://www.ebi.ac.uk/efo/",
+																															"swo:": "http://www.ebi.ac.uk/swo/"
+																														},
+																														"results": [
+																															{
+																																"service_name": "Submit Field Trial Location",
+																																"job_type": "default_service_job",
+																																"status": 5,
+																																"status_text": "Succeeded",
+																																"job_uuid": "2beb4af8-c565-4aff-a185-f04e602a5c53",
+																																"so:description": "Submit Location"
+																															}
+																														]
+																													}
+																													*/
+
+																													json_t *results_p = json_object_get (res_p, "results");
+
+																													if (results_p)
 																														{
-																															size_t num_results = json_array_size (results_p);
-																															json_t *result_p;
-																															size_t j;
-																															size_t num_succeeded = 0;
-
-																															json_array_foreach (results_p, j , result_p)
+																															if (json_is_array (results_p))
 																																{
-																																	OperationStatus status = OS_ERROR;
-																																	const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
+																																	size_t num_results = json_array_size (results_p);
+																																	json_t *result_p;
+																																	size_t j;
+																																	size_t num_succeeded = 0;
 
-																																	if (value_s)
+																																	json_array_foreach (results_p, j , result_p)
 																																		{
-																																			status = GetOperationStatusFromString (value_s);
-																																		}
-																																	else
-																																		{
-																																			int i;
-																																			/* Get the job status */
+																																			OperationStatus status = OS_ERROR;
+																																			const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
 
-																																			if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
+																																			if (value_s)
 																																				{
-																																					if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
+																																					status = GetOperationStatusFromString (value_s);
+																																				}
+																																			else
+																																				{
+																																					int i;
+																																					/* Get the job status */
+
+																																					if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
 																																						{
-																																							status = (OperationStatus) i;
+																																							if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
+																																								{
+																																									status = (OperationStatus) i;
+																																								}
 																																						}
 																																				}
+
+																																			if (status == OS_SUCCEEDED)
+																																				{
+																																					++ num_succeeded;
+																																				}
+																																			else
+																																				{
+																																					printf ("an import failed");
+																																					success_flag = false;
+																																				}
+
 																																		}
 
-																																	if (status == OS_SUCCEEDED)
-																																		{
-																																			++ num_succeeded;
-																																		}
-																																	else
-																																		{
-																																			printf ("an import failed");
-																																			success_flag = false;
-																																		}
-
+																																	printf ("imported %lu out of %lu records successfully\n", num_succeeded, num_results);
 																																}
+																														}		/* if (results_p) */
 
-																															printf ("imported %lu out of %lu records successfully\n", num_succeeded, num_results);
-																														}
-																												}		/* if (results_p) */
-
-																											json_decref (res_p);
+																													json_decref (res_p);
+																												}
 																										}
 																								}
 																						}
