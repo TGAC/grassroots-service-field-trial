@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2016 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2016 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 
 
 /**
@@ -27,7 +27,7 @@
 #include "streams.h"
 #include "json_util.h"
 #include "byte_buffer.h"
-
+#include "curl_tools.h"
 
 #include "location_jobs.h"
 #include "field_trial.h"
@@ -51,6 +51,7 @@ static bool ImportLocations (const json_t *locations_p, const char *grassroots_u
 
 static bool ImportLocation (const json_t *location_p, const char *grassroots_url_s);
 
+static bool AddVariableToBuffer (ByteBuffer *buffer_p, const char *prefix_s, const char *key_s, const char *value_s, CurlTool *curl_p);
 
 
 /*
@@ -134,18 +135,18 @@ int main (int argc, char **argv)
 					if (data_p)
 						{
 							switch (im)
-								{
-									case IM_LOCATIONS:
-										ImportLocations (data_p, grassroots_url_s);
-										break;
+							{
+								case IM_LOCATIONS:
+									ImportLocations (data_p, grassroots_url_s);
+									break;
 
-									case IM_TRIALS:
-										ImportTrials (data_p, grassroots_url_s);
-										break;
+								case IM_TRIALS:
+									ImportTrials (data_p, grassroots_url_s);
+									break;
 
-									default:
-										break;
-								}
+								default:
+									break;
+							}
 
 							json_decref (data_p);
 						}		/* if (data_p) */
@@ -207,15 +208,41 @@ static bool ImportLocations (const json_t *locations_p, const char *grassroots_u
 			size_t i;
 
 			json_array_foreach (locations_p, i, location_p)
-				{
-					if (!ImportLocation (location_p, grassroots_url_s))
-						{
-						}
-				}
+			{
+				if (!ImportLocation (location_p, grassroots_url_s))
+					{
+					}
+			}
 		}
 	else
 		{
 
+		}
+
+	return success_flag;
+}
+
+
+static bool AddVariableToBuffer (ByteBuffer *buffer_p, const char *prefix_s, const char *key_s, const char *value_s, CurlTool *curl_p)
+{
+	bool success_flag = false;
+	char *escaped_key_s = GetURLEscapedString (curl_p, key_s);
+
+	if (escaped_key_s)
+		{
+			char *escaped_value_s = GetURLEscapedString (curl_p, value_s);
+
+			if (escaped_value_s)
+				{
+					if (AppendStringsToByteBuffer (buffer_p, prefix_s, escaped_key_s, "=", escaped_value_s, NULL))
+						{
+							success_flag = true;
+						}
+
+					FreeURLEscapedString (escaped_value_s);
+				}
+
+			FreeURLEscapedString (escaped_key_s);
 		}
 
 	return success_flag;
@@ -247,20 +274,19 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 									/*
 									 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
 									 */
+									CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
 
-									if (AppendStringsToByteBuffer (buffer_p, grassroots_url_s, "service/Submit%20Field%20Trial%20Location", NULL))
+									if (curl_p)
 										{
-											if (AppendStringsToByteBuffer (buffer_p, "?", LOCATION_NAME.npt_name_s, "=", field_s, NULL))
+											if (AppendStringsToByteBuffer (buffer_p, grassroots_url_s, "service/Submit%20Field%20Trial%20Location", NULL))
 												{
-													if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, "=", lat_s, NULL))
+													if (AddVariableToBuffer (buffer_p, "?", LOCATION_NAME.npt_name_s, field_s, curl_p))
 														{
-															if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, "=", long_s, NULL))
+															if (AddVariableToBuffer (buffer_p, "&", LOCATION_LATITUDE.npt_name_s, lat_s, curl_p))
 																{
-																	if (AppendStringsToByteBuffer (buffer_p, "&", LOCATION_USE_GPS.npt_name_s, "=true", NULL))
+																	if (AddVariableToBuffer (buffer_p, "&", LOCATION_LONGITUDE.npt_name_s, long_s, curl_p))
 																		{
-																			CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
-
-																			if (curl_p)
+																			if (AddVariableToBuffer (buffer_p, "&", LOCATION_USE_GPS.npt_name_s, "true", curl_p))
 																				{
 																					const char *url_s = GetByteBufferData (buffer_p);
 
@@ -303,7 +329,7 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 																															}
 																														]
 																													}
-																													*/
+																													 */
 
 																													json_t *results_p = json_object_get (res_p, "results");
 
@@ -317,39 +343,39 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 																																	size_t num_succeeded = 0;
 
 																																	json_array_foreach (results_p, j , result_p)
-																																		{
-																																			OperationStatus status = OS_ERROR;
-																																			const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
+																																	{
+																																		OperationStatus status = OS_ERROR;
+																																		const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
 
-																																			if (value_s)
-																																				{
-																																					status = GetOperationStatusFromString (value_s);
-																																				}
-																																			else
-																																				{
-																																					int i;
-																																					/* Get the job status */
+																																		if (value_s)
+																																			{
+																																				status = GetOperationStatusFromString (value_s);
+																																			}
+																																		else
+																																			{
+																																				int i;
+																																				/* Get the job status */
 
-																																					if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
-																																						{
-																																							if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
-																																								{
-																																									status = (OperationStatus) i;
-																																								}
-																																						}
-																																				}
+																																				if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
+																																					{
+																																						if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
+																																							{
+																																								status = (OperationStatus) i;
+																																							}
+																																					}
+																																			}
 
-																																			if (status == OS_SUCCEEDED)
-																																				{
-																																					++ num_succeeded;
-																																				}
-																																			else
-																																				{
-																																					printf ("an import failed");
-																																					success_flag = false;
-																																				}
+																																		if (status == OS_SUCCEEDED)
+																																			{
+																																				++ num_succeeded;
+																																			}
+																																		else
+																																			{
+																																				printf ("an import failed");
+																																				success_flag = false;
+																																			}
 
-																																		}
+																																	}
 
 																																	printf ("imported %lu out of %lu records successfully\n", num_succeeded, num_results);
 																																}
@@ -361,14 +387,14 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 																								}
 																						}
 																				}
-
-																			FreeCurlTool (curl_p);
 																		}
-
 																}
 														}
 												}
+
+											FreeCurlTool (curl_p);
 										}
+
 
 									FreeByteBuffer (buffer_p);
 								}
