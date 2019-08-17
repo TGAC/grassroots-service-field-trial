@@ -49,7 +49,8 @@ static bool ImportTrials (const json_t *trial_p, const char *grassroots_url_s);
 
 static bool ImportLocations (const json_t *locations_p, const char *grassroots_url_s);
 
-static bool ImportLocation (const json_t *location_p, const char *grassroots_url_s);
+
+static bool ImportLocation (const json_t *location_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p);
 
 static bool AddVariableToBuffer (ByteBuffer *buffer_p, const char *prefix_s, const char *key_s, const char *value_s, CurlTool *curl_p);
 
@@ -180,13 +181,17 @@ static bool ImportTrials (const json_t *trials_p, const char *grassroots_url_s)
 
 	if (json_is_array (trials_p))
 		{
-			json_t *locations_cache_p = json_object ();
+			json_t *trial_p;
+			size_t i;
+			size_t num_successes = 0;
+			size_t num_failures = 0;
 
-			if (locations_cache_p)
+			json_array_foreach (trials_p, i, trial_p)
 				{
+					ImportTrial (trial_p, grassroots_url_s, &num_successes, &num_failures);
+				}
 
-				}		/* if (locations_cache_p) */
-
+			printf ("Imported %lu out of %lu trials successfully\n", num_successes, num_failures + num_successes);
 		}
 	else
 		{
@@ -198,6 +203,53 @@ static bool ImportTrials (const json_t *trials_p, const char *grassroots_url_s)
 
 
 
+/*
+{
+	"id": "2793",
+	"propNo": "2018/R/WW/1812",
+	"propTitle": "DFW Mapping Populations 7th year",
+	"projectName": "Awaiting project code allocation",
+	"experimentType": "Annual Experiments",
+	"fieldname": "Summerdells 2",
+	"confidentialTreatments": "0",
+	"studyDirectorSupplySeed": "1",
+	"treatmentFactors": "(9 Population/Individuals thereof) * N (2 levels of N).",
+	"NoOfTreatments": "(9 populations/Individuals thereof) * 2 N levels",
+	"designLayout": "Split plot randomised design in 3 blocks, split by N treatment and populations, individuals of the populations randomised within the split plots.",
+	"plotLength": "1",
+	"plotWidth": "1",
+	"NoOfReplicates": "3",
+	"TotalNoOfPlots": "4800",
+	"measurementsToBeTakenAndDivisionOfLabour": "In season measurements by sponsor",
+	"pAndKFertiliser": "1",
+	"specificSowingDate": "0",
+	"seedTreatment": "1",
+	"autumnSpringFungicides": "1",
+	"autumnSpringHerbicides": "1",
+	"autumnSpringInsecticides": "1",
+	"plantGrowthRegulators": "1",
+	"sFertiliser": "1",
+	"nFertiliser": "0",
+	"nFertiliserNotes": "2 rates, 50 and 200 kg/ha",
+	"irrigation": "0",
+	"yieldsTakenByFarm": "1",
+	"yieldsTakenBySponsor": "0",
+	"postHarvest": "0",
+	"postHarvestSampling": "0",
+	"licences": "0",
+	"gmoInvolved": "0",
+	"cropDestruct": "0",
+	"reportDeadlines": "Dec 2018"
+}
+ */
+static bool ImportTrial (const json_t *location_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
+
 static bool ImportLocations (const json_t *locations_p, const char *grassroots_url_s)
 {
 	bool success_flag = false;
@@ -206,13 +258,16 @@ static bool ImportLocations (const json_t *locations_p, const char *grassroots_u
 		{
 			json_t *location_p;
 			size_t i;
+			size_t num_successes = 0;
+			size_t num_failures = 0;
 
 			json_array_foreach (locations_p, i, location_p)
-			{
-				if (!ImportLocation (location_p, grassroots_url_s))
-					{
-					}
-			}
+				{
+					ImportLocation (location_p, grassroots_url_s, &num_successes, &num_failures);
+				}
+
+			printf ("imported %lu out of %lu locations successfully\n", num_successes, num_failures + num_successes);
+
 		}
 	else
 		{
@@ -249,7 +304,7 @@ static bool AddVariableToBuffer (ByteBuffer *buffer_p, const char *prefix_s, con
 }
 
 
-static bool ImportLocation (const json_t *location_p, const char *grassroots_url_s)
+static bool ImportLocation (const json_t *location_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p)
 {
 	bool success_flag = false;
 	const char *field_s = GetJSONString (location_p, "Field");
@@ -343,41 +398,39 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 																																	size_t num_succeeded = 0;
 
 																																	json_array_foreach (results_p, j , result_p)
-																																	{
-																																		OperationStatus status = OS_ERROR;
-																																		const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
+																																		{
+																																			OperationStatus status = OS_ERROR;
+																																			const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
 
-																																		if (value_s)
-																																			{
-																																				status = GetOperationStatusFromString (value_s);
-																																			}
-																																		else
-																																			{
-																																				int i;
-																																				/* Get the job status */
+																																			if (value_s)
+																																				{
+																																					status = GetOperationStatusFromString (value_s);
+																																				}
+																																			else
+																																				{
+																																					int i;
+																																					/* Get the job status */
 
-																																				if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
-																																					{
-																																						if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
-																																							{
-																																								status = (OperationStatus) i;
-																																							}
-																																					}
-																																			}
+																																					if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
+																																						{
+																																							if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
+																																								{
+																																									status = (OperationStatus) i;
+																																								}
+																																						}
+																																				}
 
-																																		if (status == OS_SUCCEEDED)
-																																			{
-																																				++ num_succeeded;
-																																			}
-																																		else
-																																			{
-																																				printf ("an import failed");
-																																				success_flag = false;
-																																			}
+																																			if (status == OS_SUCCEEDED)
+																																				{
+																																					++ *num_successes_p;
+																																				}
+																																			else
+																																				{
+																																					printf ("an import failed");
+																																					++ *num_failures_p;
+																																				}
 
-																																	}
-
-																																	printf ("imported %lu out of %lu records successfully\n", num_succeeded, num_results);
+																																		}
 																																}
 																														}		/* if (results_p) */
 
