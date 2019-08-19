@@ -63,6 +63,33 @@ void FreeLocation (Location *location_p)
 
 
 
+LocationNode *AllocateLocationNode (Location *location_p)
+{
+	LocationNode *node_p = (LocationNode *) AllocMemory (sizeof (LocationNode));
+
+	if (node_p)
+		{
+			InitListItem (& (node_p -> ln_node));
+			node_p -> ln_location_p = location_p;
+		}
+
+	return node_p;
+}
+
+
+void FreeLocationNode (ListItem *node_p)
+{
+	LocationNode *location_node_p = (LocationNode *) node_p;
+
+	if (location_node_p -> ln_location_p)
+		{
+			FreeLocation (location_node_p -> ln_location_p);
+		}
+
+	FreeMemory (location_node_p);
+}
+
+
 json_t *GetLocationAsJSON (Location *location_p)
 {
 	json_t *location_json_p = json_object ();
@@ -191,6 +218,45 @@ Location *GetLocationByIdString (const char *location_id_s, const ViewFormat for
 
 	return location_p;
 }
+
+
+
+/*
+ * The search string could be the bson_oid or a name so check
+ */
+
+Location *GetUniqueLocationBySearchString (const char *location_s, const DFWFieldTrialServiceData *data_p)
+{
+	Location *location_p = NULL;
+
+	if (bson_oid_is_valid (location_s, strlen (location_s)))
+		{
+			location_p = GetLocationByIdString (location_s, data_p);
+		}
+
+	if (!location_p)
+		{
+			LinkedList *locations_p = GetLocationsByName (data_p, location_s);
+
+			if (locations_p)
+				{
+					if (locations_p -> ll_size == 1)
+						{
+							LocationNode *node_p = (LocationNode *) (locations_p -> ll_head_p);
+
+							/* Remove the trial from the node */
+							location_p = node_p -> ln_location_p;
+							node_p -> ln_location_p = NULL;
+						}
+
+					FreeLinkedList (locations_p);
+				}
+		}
+
+
+	return location_p;
+}
+
 
 
 char *GetLocationAsString (const Location *location_p)

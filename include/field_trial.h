@@ -123,6 +123,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialStudies (FieldTrial *tria
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialIdAsString (const FieldTrial *trial_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const DFWFieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct Study *area_p);
 
 

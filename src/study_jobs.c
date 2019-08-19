@@ -625,7 +625,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 															if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value, true))
 																{
-																	FieldTrial *trial_p = GetFieldTrialByIdString (parent_field_trial_value.st_string_value_s, data_p);
+																	FieldTrial *trial_p = GetUniqueFieldTrialBySearchString (parent_field_trial_value.st_string_value_s, data_p);
 
 																	if (trial_p)
 																		{
@@ -634,7 +634,40 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 																			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATIONS_LIST.npt_name_s, &location_value, true))
 																				{
-																					Location *location_p = GetLocationByIdString (location_value.st_string_value_s, VF_STORAGE, data_p);
+																					Location *location_p =
+
+																					value_s = parent_field_trial_value.st_string_value_s;
+
+
+																					/*
+																					 * The trial could be the bson_oid or a name so check
+																					 */
+
+																					if (bson_oid_is_valid (value_s, strlen (value_s)))
+																						{
+																							trial_p = GetLocationByIdString (value_s, VF_STORAGE, data_p);
+																						}
+
+																					if (!trial_p)
+																						{
+																							LinkedList *locations_p = GetLocationsByName (data_p, value_s);
+
+																							if (trials_p)
+																								{
+																									if (trials_p -> ll_size == 1)
+																										{
+																											FieldTrialNode *node_p = (FieldTrialNode *) (trials_p -> ll_head_p);
+
+																											/* Remove the trial from the node */
+																											trial_p = node_p -> ftn_field_trial_p;
+																											node_p -> ftn_field_trial_p = NULL;
+																										}
+
+																									FreeLinkedList (trials_p);
+																								}
+																						}
+
+
 
 																					if (location_p)
 																						{

@@ -347,6 +347,43 @@ void FreeFieldTrialNode (ListItem *node_p)
 }
 
 
+/*
+ * The trial could be the bson_oid or a name so check
+ */
+
+FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const DFWFieldTrialServiceData *data_p)
+{
+	FieldTrial *trial_p = NULL;
+
+	if (bson_oid_is_valid (trial_s, strlen (trial_s)))
+		{
+			trial_p = GetFieldTrialByIdString (trial_s, data_p);
+		}
+
+	if (!trial_p)
+		{
+			LinkedList *trials_p = GetFieldTrialsByName (data_p, trial_s);
+
+			if (trials_p)
+				{
+					if (trials_p -> ll_size == 1)
+						{
+							FieldTrialNode *node_p = (FieldTrialNode *) (trials_p -> ll_head_p);
+
+							/* Remove the trial from the node */
+							trial_p = node_p -> ftn_field_trial_p;
+							node_p -> ftn_field_trial_p = NULL;
+						}
+
+					FreeLinkedList (trials_p);
+				}
+		}
+
+
+	return trial_p;
+}
+
+
 FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
