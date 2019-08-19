@@ -20,6 +20,7 @@
  *      Author: billy
  */
 
+#define ALLOCATE_FIELD_TRIAL_CONSTANTS (1)
 #include "field_trial_jobs.h"
 
 #include "field_trial.h"
@@ -30,9 +31,6 @@
 /*
  * Field Trial parameters
  */
-static NamedParameterType S_FIELD_TRIAL_NAME = { "FT Name", PT_STRING };
-static NamedParameterType S_FIELD_TRIAL_TEAM = { "FT Team", PT_STRING };
-static NamedParameterType S_ADD_FIELD_TRIAL = { "Add Field Trial", PT_BOOLEAN };
 static NamedParameterType S_SEARCH_FIELD_TRIALS = { "Search Field Trials", PT_BOOLEAN };
 static NamedParameterType S_FUZZY_SEARCH_FIELD_TRIALS = { "Fuzzy Search", PT_BOOLEAN };
 static NamedParameterType S_FULL_DATA = { "Get full data from search", PT_BOOLEAN };
@@ -58,29 +56,29 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, S_FIELD_TRIAL_NAME.npt_type, S_FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_SIMPLE)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_SIMPLE)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, S_FIELD_TRIAL_TEAM.npt_type, S_FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_SIMPLE)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_SIMPLE)) != NULL)
 				{
 					def.st_boolean_value = false;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, S_ADD_FIELD_TRIAL.npt_type, S_ADD_FIELD_TRIAL.npt_name_s, "Add", "Add a new Field Trial", def, PL_SIMPLE)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ADD.npt_type, FIELD_TRIAL_ADD.npt_name_s, "Add", "Add a new Field Trial", def, PL_SIMPLE)) != NULL)
 						{
 							success_flag = true;
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ADD_FIELD_TRIAL.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_ADD.npt_name_s);
 						}
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIAL_TEAM.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIAL_NAME.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
 		}
 
 	return success_flag;
@@ -97,14 +95,14 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 	const char *team_s = NULL;
 
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &name_value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_value, true))
 		{
 			SharedType team_value;
 			InitSharedType (&team_value);
 
 			name_s = name_value.st_string_value_s;
 
-			if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_TEAM.npt_name_s, &team_value, true))
+			if (GetParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_value, true))
 				{
 					team_s = team_value.st_string_value_s;
 				}
@@ -113,7 +111,7 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 
 
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_FIELD_TRIAL.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ADD.npt_name_s, &value, true))
 		{
 			if (value.st_boolean_value)
 				{
@@ -133,17 +131,17 @@ bool GetSubmissionFieldTrialParameterTypeForNamedParameter (const char *param_na
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_FIELD_TRIAL_NAME.npt_name_s) == 0)
+	if (strcmp (param_name_s, FIELD_TRIAL_NAME.npt_name_s) == 0)
 		{
-			*pt_p = S_FIELD_TRIAL_NAME.npt_type;
+			*pt_p = FIELD_TRIAL_NAME.npt_type;
 		}
-	else if (strcmp (param_name_s, S_FIELD_TRIAL_TEAM.npt_name_s) == 0)
+	else if (strcmp (param_name_s, FIELD_TRIAL_TEAM.npt_name_s) == 0)
 		{
-			*pt_p = S_FIELD_TRIAL_TEAM.npt_type;
+			*pt_p = FIELD_TRIAL_TEAM.npt_type;
 		}
-	else if (strcmp (param_name_s, S_ADD_FIELD_TRIAL.npt_name_s) == 0)
+	else if (strcmp (param_name_s, FIELD_TRIAL_ADD.npt_name_s) == 0)
 		{
-			*pt_p = S_ADD_FIELD_TRIAL.npt_type;
+			*pt_p = FIELD_TRIAL_ADD.npt_type;
 		}
 	else
 		{
@@ -163,9 +161,9 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	def.st_string_value_s = NULL;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_FIELD_TRIAL_NAME.npt_type, S_FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_ADVANCED)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_ADVANCED)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_FIELD_TRIAL_TEAM.npt_type, S_FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_ADVANCED)) != NULL)
 				{
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_FIELD_TRIALS.npt_type, S_SEARCH_FIELD_TRIALS.npt_name_s, "Search", "Search for matching Field Trials", def, PL_ADVANCED)) != NULL)
 						{
@@ -194,12 +192,12 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIAL_TEAM.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_FIELD_TRIAL_NAME.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
 		}
 
 	return success_flag;
@@ -211,13 +209,13 @@ bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_FIELD_TRIAL_NAME.npt_name_s) == 0)
+	if (strcmp (param_name_s, FIELD_TRIAL_NAME.npt_name_s) == 0)
 		{
-			*pt_p = S_FIELD_TRIAL_NAME.npt_type;
+			*pt_p = FIELD_TRIAL_NAME.npt_type;
 		}
-	else if (strcmp (param_name_s, S_FIELD_TRIAL_TEAM.npt_name_s) == 0)
+	else if (strcmp (param_name_s, FIELD_TRIAL_TEAM.npt_name_s) == 0)
 		{
-			*pt_p = S_FIELD_TRIAL_TEAM.npt_type;
+			*pt_p = FIELD_TRIAL_TEAM.npt_type;
 		}
 	else if (strcmp (param_name_s, S_SEARCH_FIELD_TRIALS.npt_name_s) == 0)
 		{
@@ -252,14 +250,14 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 	InitSharedType (&name_value);
 
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &name_value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_value, true))
 		{
 			SharedType team_value;
 			InitSharedType (&team_value);
 
 			name_s = name_value.st_string_value_s;
 
-			if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_TEAM.npt_name_s, &team_value, true))
+			if (GetParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &team_value, true))
 				{
 					team_s = team_value.st_string_value_s;
 				}
