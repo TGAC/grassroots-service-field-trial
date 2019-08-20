@@ -79,7 +79,7 @@ int main (int argc, char **argv)
 			const char *filename_s = NULL;
 
 			bool (*import_callback_fn) (const json_t *data_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p) = NULL;
-			json_t *(*preprocess_data_fn) (const json_t *src_p);
+			json_t *(*preprocess_data_fn) (const json_t *src_p) = NULL;
 			int i = 1;
 
 			while (i < argc)
@@ -562,7 +562,11 @@ static json_t *PreprocessTrials (const json_t *src_p)
 
 static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p)
 {
-	return false;
+	bool success_flag = false;
+
+	const char *name_s = ST
+
+	return success_flag;
 }
 
 

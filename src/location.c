@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * location.c
  *
@@ -28,6 +28,8 @@
 
 
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
+
+static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, DFWFieldTrialServiceData *service_data_p);
 
 
 
@@ -100,24 +102,29 @@ json_t *GetLocationAsJSON (Location *location_p)
 				{
 					if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order))
 						{
-							json_t *address_json_p = GetAddressAsJSON (location_p -> lo_address_p);
-
-							if (address_json_p)
+							/* if the name exists, add it to the top level for easier searching */
+							if ( (! (location_p -> lo_address_p -> ad_name_s)) || (SetJSONString (location_json_p, LO_NAME_S, location_p -> lo_address_p -> ad_name_s)))
 								{
-									if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0)
+									json_t *address_json_p = GetAddressAsJSON (location_p -> lo_address_p);
+
+									if (address_json_p)
 										{
-											if (AddDatatype (location_json_p, DFTD_LOCATION))
+											if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0)
 												{
-													return location_json_p;
+													if (AddDatatype (location_json_p, DFTD_LOCATION))
+														{
+															return location_json_p;
+														}
+
+												}		/* if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0) */
+											else
+												{
+													json_decref (address_json_p);
 												}
 
-										}		/* if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0) */
-									else
-										{
-											json_decref (address_json_p);
-										}
+										}		/* if (address_json_p) */
 
-								}		/* if (geo_json_p) */
+								}		/*if ( (! (location_p -> lo_address_p -> ad_name_s)) || (SetJSONString (location_json_p, LO_NAME_S, location_p -> lo_address_p -> ad_name_s))) */
 
 						}		/* if (SetJSONInteger (location_json_p, LO_ORDER_S, location_p -> lo_order)) */
 
@@ -221,22 +228,34 @@ Location *GetLocationByIdString (const char *location_id_s, const ViewFormat for
 
 
 
+
+
 /*
  * The search string could be the bson_oid or a name so check
  */
 
-Location *GetUniqueLocationBySearchString (const char *location_s, const DFWFieldTrialServiceData *data_p)
+Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	Location *location_p = NULL;
 
 	if (bson_oid_is_valid (location_s, strlen (location_s)))
 		{
-			location_p = GetLocationByIdString (location_s, data_p);
+			location_p = GetLocationByIdString (location_s, format, data_p);
 		}
 
 	if (!location_p)
 		{
-			LinkedList *locations_p = GetLocationsByName (data_p, location_s);
+			const char *keys_ss [2];
+			const char *values_ss [2];
+
+			* (keys_ss + 0) = LO_NAME_S;
+			* (keys_ss + 1) = NULL;
+
+			* (values_ss + 0) = location_s;
+			* (values_ss + 1) = NULL;
+
+
+			LinkedList *locations_p = SearchObjects (data_p, keys_ss, values_ss, FreeLocationNode,AddLocationResultToList);
 
 			if (locations_p)
 				{
@@ -244,7 +263,7 @@ Location *GetUniqueLocationBySearchString (const char *location_s, const DFWFiel
 						{
 							LocationNode *node_p = (LocationNode *) (locations_p -> ll_head_p);
 
-							/* Remove the trial from the node */
+							/* Remove the location from the node */
 							location_p = node_p -> ln_location_p;
 							node_p -> ln_location_p = NULL;
 						}
@@ -259,6 +278,14 @@ Location *GetUniqueLocationBySearchString (const char *location_s, const DFWFiel
 
 
 
+static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, DFWFieldTrialServiceData *service_data_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
+
 char *GetLocationAsString (const Location *location_p)
 {
 	char *location_s = NULL;
@@ -270,7 +297,6 @@ char *GetLocationAsString (const Location *location_p)
 
 	return location_s;
 }
-
 
 
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p)

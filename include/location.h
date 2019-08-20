@@ -77,6 +77,8 @@ LOCATION_PREFIX const char *LO_ORDER_S LOCATION_VAL ("order");
 
 LOCATION_PREFIX const char *LO_PARENT_EXPERIMENTAL_AREA_S LOCATION_VAL ("parent_experimental_area_id");
 
+LOCATION_PREFIX const char *LO_NAME_S LOCATION_VAL ("name");
+
 
 #ifdef __cplusplus
 extern "C"
@@ -110,6 +112,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationById (bson_oid_t *id_p, const
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationByIdString (const char *location_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetLocationsByName (DFWFieldTrialServiceData *data_p, const char *location_s);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p);
 

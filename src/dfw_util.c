@@ -346,3 +346,71 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 	return success_flag;
 }
+
+
+
+LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p))
+{
+	LinkedList *results_list_p = AllocateLinkedList (free_list_item_fn);
+
+	if (results_list_p)
+		{
+			bson_t *query_p = bson_new ();
+
+			if (query_p)
+				{
+					const char **key_ss = keys_ss;
+					const char **value_ss = values_ss;
+					bool success_flag = true;
+
+					while (success_flag && (*key_ss != NULL) && (*value_ss != NULL))
+						{
+							if (BSON_APPEND_UTF8 (query_p, *key_ss, *value_ss))
+								{
+									++ key_ss;
+									++ value_ss;
+								}
+							else
+								{
+									success_flag = false;
+								}
+						}
+
+					if (success_flag)
+						{
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+							if (results_p)
+								{
+									const size_t size = json_array_size (results_p);
+									size_t i = 0;
+
+									for (i = 0; i < size; ++ i)
+										{
+											json_t *result_p = json_array_get (results_p, i);
+
+											if (!add_result_to_list_fn (result_p, results_list_p, data_p))
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to add result to list");
+												}
+
+										}		/* for (i = 0; i < size; ++ i) */
+
+									json_decref (results_p);
+								}		/* if (results_p) */
+
+						}		/* if (success_flag) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add query");
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+
+		}		/* if (results_list_p) */
+
+	return results_list_p;
+
+}

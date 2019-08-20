@@ -58,6 +58,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddContext (json_t *data_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p));
+
+
 #ifdef __cplusplus
 }
 #endif
