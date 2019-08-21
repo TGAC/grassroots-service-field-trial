@@ -93,6 +93,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropFromJSON (const json_t *crop_json_p, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropById (bson_oid_t *id_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropByIdString (const char *id_s);
+
 #ifdef __cplusplus
 }
 #endif

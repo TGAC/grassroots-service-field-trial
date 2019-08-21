@@ -51,6 +51,7 @@ static const char * const S_ANY_FACET_S = "<ANY>";
 static const char * const S_FIELD_TRIAL_FACET_S = "Field Trial";
 static const char * const S_STUDY_FACET_S = "Study";
 static const char * const S_TREATMENT_FACET_S = "Treatment";
+static const char * const S_LOCATION_FACET_S = "Location";
 
 
 static const char *GetDFWFieldTrialSearchServiceName (Service *service_p);
@@ -188,24 +189,29 @@ static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *gro
 
 									if (CreateAndAddParameterOption (options_p, def, S_TREATMENT_FACET_S, PT_STRING))
 										{
-											Parameter *param_p = NULL;
+											def.st_string_value_s = (char *) S_LOCATION_FACET_S;
 
-											/* default to any type */
-											def.st_string_value_s = EasyCopyToNewString (S_ANY_FACET_S);
-
-											param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, false, S_FACET.npt_name_s, "Type", "The type of data to search for", options_p, def, NULL, NULL, PL_ALL, NULL);
-
-											if (def.st_string_value_s)
+											if (CreateAndAddParameterOption (options_p, def, S_LOCATION_FACET_S, PT_STRING))
 												{
-													FreeCopiedString (def.st_string_value_s);
+													Parameter *param_p = NULL;
+
+													/* default to any type */
+													def.st_string_value_s = EasyCopyToNewString (S_ANY_FACET_S);
+
+													param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, false, S_FACET.npt_name_s, "Type", "The type of data to search for", options_p, def, NULL, NULL, PL_ALL, NULL);
+
+													if (def.st_string_value_s)
+														{
+															FreeCopiedString (def.st_string_value_s);
+														}
+
+
+													if (param_p)
+														{
+															return param_p;
+														}
+
 												}
-
-
-											if (param_p)
-												{
-													return param_p;
-												}
-
 										}
 								}
 						}

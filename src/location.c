@@ -29,7 +29,7 @@
 
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
 
-static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, DFWFieldTrialServiceData *service_data_p);
+static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const DFWFieldTrialServiceData *service_data_p);
 
 
 
@@ -255,7 +255,7 @@ Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFor
 			* (values_ss + 1) = NULL;
 
 
-			LinkedList *locations_p = SearchObjects (data_p, keys_ss, values_ss, FreeLocationNode,AddLocationResultToList);
+			LinkedList *locations_p = SearchObjects (data_p, keys_ss, values_ss, FreeLocationNode, AddLocationResultToList);
 
 			if (locations_p)
 				{
@@ -277,10 +277,26 @@ Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFor
 }
 
 
-
-static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, DFWFieldTrialServiceData *service_data_p)
+static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const DFWFieldTrialServiceData *service_data_p)
 {
 	bool success_flag = false;
+	Location *location_p = GetLocationFromJSON (location_json_p, service_data_p);
+
+	if (location_p)
+		{
+			LocationNode *node_p = AllocateLocationNode (location_p);
+
+			if (node_p)
+				{
+					LinkedListAddTail (locations_p, & (node_p -> ln_node));
+					success_flag = true;
+				}
+
+		}		/* if (location_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to create Location");
+		}
 
 	return success_flag;
 }

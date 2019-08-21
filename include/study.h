@@ -32,6 +32,7 @@
 #include "location.h"
 #include "jansson.h"
 #include "key_value_pair.h"
+#include "crop.h"
 
 #include "typedefs.h"
 #include "address.h"
@@ -80,10 +81,24 @@ STUDY_PREFIX const char *ST_PLOTS_S STUDY_VAL ("plots");
 
 STUDY_PREFIX const char *ST_DATA_LINK_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
 
+STUDY_PREFIX const char *ST_MIN_PH_S STUDY_VAL ("min_ph");
+
+STUDY_PREFIX const char *ST_MAX_PH_S STUDY_VAL ("max_ph");
+
+STUDY_PREFIX const char *ST_CURRENT_CROP_S STUDY_VAL ("current_crop");
+
+STUDY_PREFIX const char *ST_PREVIOUS_CROP_S STUDY_VAL ("previous_crop");
+
+
+STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
+
+
 /**
  * The value to specify that the aspect parameter is not set.
  */
 #define ST_UNKNOWN_DIRECTION_S "Unknown"
+
+
 
 
 typedef struct Study
@@ -118,6 +133,14 @@ typedef struct Study
 	 */
 	LinkedList *st_plots_p;
 
+	Crop *st_current_crop_p;
+
+	Crop *st_previous_crop_p;
+
+	int32 st_min_ph;
+
+	int32 st_max_ph;
+
 } Study;
 
 
@@ -138,7 +161,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 

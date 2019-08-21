@@ -426,3 +426,37 @@ bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p)
 
 	return success_flag;
 }
+
+
+Crop *GetCropByIdString (const char *id_s)
+{
+	Crop *crop_p = NULL;
+
+	if (bson_oid_is_valid (id_s, strlen (id_s)))
+		{
+			bson_oid_t oid;
+
+			bson_oid_init_from_string (&oid, id_s);
+
+			crop_p = GetCropById (&oid);
+
+			if (!crop_p)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to find crop for \"%s\"", id_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "crop id is invalid: \"%s\"", id_s);
+		}
+
+	return crop_p;
+}
+
+
+Crop *GetCropById (bson_oid_t *id_p)
+{
+	Crop *crop_p = NULL;
+
+	return crop_p;
+}

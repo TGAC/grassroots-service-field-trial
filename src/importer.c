@@ -31,6 +31,7 @@
 
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
+#include "study_jobs.h"
 #include "field_trial.h"
 
 typedef enum
@@ -226,7 +227,6 @@ static bool AddVariableToBuffer (ByteBuffer *buffer_p, const char *prefix_s, con
 
 static void ImportData (const json_t *data_p, const char *grassroots_url_s, bool (*import_callback_fn) (const json_t *data_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p))
 {
-	bool success_flag = false;
 	size_t num_successes = 0;
 	size_t num_failures = 0;
 
@@ -237,7 +237,7 @@ static void ImportData (const json_t *data_p, const char *grassroots_url_s, bool
 
 			json_array_foreach (data_p, i, item_p)
 				{
-					printf ("importing record %u\n", i);
+					printf ("importing record " SIZET_FMT "\n", i);
 					import_callback_fn (item_p, grassroots_url_s, &num_successes, &num_failures);
 				}
 
@@ -247,7 +247,7 @@ static void ImportData (const json_t *data_p, const char *grassroots_url_s, bool
 			import_callback_fn (data_p, grassroots_url_s, &num_successes, &num_failures);
 		}
 
-	printf ("imported %lu out of %lu items successfully\n", num_successes, num_failures + num_successes);
+	printf ("imported " SIZET_FMT " out of " SIZET_FMT " items successfully\n", num_successes, num_failures + num_successes);
 }
 
 
@@ -521,7 +521,7 @@ static json_t *PreprocessTrials (const json_t *src_p)
 									const json_t *src_trial_p = json_array_get (src_p, i);
 									const char *name_s = GetJSONString (src_trial_p, NAME_KEY_S);
 
-									printf ("Preprocessing trial %u\n", i);
+									printf ("Preprocessing trial " SIZET_FMT "\n", i);
 
 									if (name_s)
 										{
@@ -564,7 +564,73 @@ static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, si
 {
 	bool success_flag = false;
 
-	const char *name_s = ST
+	const char *study_s = GetJSONString (study_p, "propTitle");
+
+	if (study_s)
+		{
+			const char *trial_s = GetJSONString (study_p, "projectName");
+
+			if (trial_s)
+				{
+					const char *location_s = GetJSONString (study_p, "fieldname");
+
+					if (location_s)
+						{
+							CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
+
+							if (curl_p)
+								{
+									/*
+									 * Build the request
+									 */
+									ByteBuffer *buffer_p = AllocateByteBuffer (1024);
+
+									if (buffer_p)
+										{
+											/*
+											 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
+											 */
+											if (AppendStringsToByteBuffer (buffer_p, grassroots_url_s, "service/Submit%20Field%20Trial%20Study", NULL))
+												{
+													if (AddVariableToBuffer (buffer_p, "?", STUDY_NAME.npt_name_s, study_s, curl_p))
+														{
+															if (AddVariableToBuffer (buffer_p, "&", STUDY_FIELD_TRIALS_LIST.npt_name_s, trial_s, curl_p))
+																{
+																	if (AddVariableToBuffer (buffer_p, "&", STUDY_LOCATIONS_LIST.npt_name_s, location_s, curl_p))
+																		{
+																			const char *url_s = GetByteBufferData (buffer_p);
+
+																			PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, study_p, "Importing");
+
+																			CallFieldTrialWebservice (url_s, curl_p, num_successes_p, num_failures_p);
+																		}
+																}
+														}
+												}
+											FreeByteBuffer (buffer_p);
+										}
+
+									FreeCurlTool (curl_p);
+								}		/* if (curl_p) */
+
+						}		/* if (location_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_LOCATIONS_LIST.npt_name_s);
+						}
+
+				}		/* if (trial_s) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_FIELD_TRIALS_LIST.npt_name_s);
+				}
+
+		}		/* if (study_s) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_NAME.npt_name_s);
+		}
+
 
 	return success_flag;
 }
@@ -627,10 +693,8 @@ static bool CallFieldTrialWebservice (const char *url_s, CurlTool *curl_p, size_
 										{
 											if (json_is_array (results_p))
 												{
-													size_t num_results = json_array_size (results_p);
 													json_t *result_p;
 													size_t j;
-													size_t num_succeeded = 0;
 
 													success_flag = true;
 
