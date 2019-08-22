@@ -27,7 +27,7 @@
 #include "dfw_util.h"
 
 
-static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
+static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const DFWFieldTrialServiceData *service_data_p);
 
@@ -255,7 +255,7 @@ Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFor
 			* (values_ss + 1) = NULL;
 
 
-			LinkedList *locations_p = SearchObjects (data_p, keys_ss, values_ss, FreeLocationNode, AddLocationResultToList);
+			LinkedList *locations_p = SearchObjects (data_p, DFTD_LOCATION, keys_ss, values_ss, FreeLocationNode, AddLocationResultToList);
 
 			if (locations_p)
 				{
@@ -315,7 +315,7 @@ char *GetLocationAsString (const Location *location_p)
 }
 
 
-static void *GetLocationFromJSONCallback (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p)
+static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	return GetLocationFromJSON (location_json_p, data_p);
 }

@@ -172,9 +172,9 @@ void FreeFieldTrial (FieldTrial *trial_p)
 }
 
 
-LinkedList *GetFieldTrialsByName (DFWFieldTrialServiceData *data_p, const char *name_s)
+LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTrialServiceData *data_p)
 {
-	LinkedList *trials_p = GetFieldTrialsByNameFromMongoDB (data_p, name_s);
+	LinkedList *trials_p = GetFieldTrialsByNameFromMongoDB (data_p, trial_s);
 
 	return trials_p;
 }
@@ -362,7 +362,7 @@ FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const DFWFie
 
 	if (!trial_p)
 		{
-			LinkedList *trials_p = GetFieldTrialsByName (data_p, trial_s);
+			LinkedList *trials_p = GetFieldTrialsByName (trial_s, data_p);
 
 			if (trials_p)
 				{

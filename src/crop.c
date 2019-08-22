@@ -28,6 +28,9 @@
 #include "string_utils.h"
 
 
+static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+
+
 Crop *AllocateCrop (bson_oid_t *id_p, const char *name_s, const char *argovoc_preferred_term_s, const char *agrovoc_uri_s, char **synonyms_ss)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
@@ -428,35 +431,15 @@ bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-Crop *GetCropByIdString (const char *id_s)
+Crop *GetCropByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p)
 {
-	Crop *crop_p = NULL;
-
-	if (bson_oid_is_valid (id_s, strlen (id_s)))
-		{
-			bson_oid_t oid;
-
-			bson_oid_init_from_string (&oid, id_s);
-
-			crop_p = GetCropById (&oid);
-
-			if (!crop_p)
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "failed to find crop for \"%s\"", id_s);
-				}
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "crop id is invalid: \"%s\"", id_s);
-		}
+	Crop *crop_p = (Crop *) GetDFWObjectByIdString (id_s, DFTD_GENE_BANK, GetCropCallback, VF_STORAGE, data_p);
 
 	return crop_p;
 }
 
 
-Crop *GetCropById (bson_oid_t *id_p)
+static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
-	Crop *crop_p = NULL;
-
-	return crop_p;
+	return GetCropFromJSON (json_p, data_p);
 }

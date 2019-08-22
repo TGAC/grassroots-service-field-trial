@@ -234,10 +234,10 @@ static void ImportData (const json_t *data_p, const char *grassroots_url_s, bool
 		{
 			json_t *item_p;
 			size_t i;
-
+			const size_t size = json_array_size (data_p);
 			json_array_foreach (data_p, i, item_p)
 				{
-					printf ("importing record " SIZET_FMT "\n", i);
+					printf ("importing record " SIZET_FMT " of " SIZET_FMT "\n", i, size);
 					import_callback_fn (item_p, grassroots_url_s, &num_successes, &num_failures);
 				}
 
@@ -603,6 +603,7 @@ static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, si
 																			PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, study_p, "Importing");
 
 																			CallFieldTrialWebservice (url_s, curl_p, num_successes_p, num_failures_p);
+																			success_flag = true;
 																		}
 																}
 														}
@@ -631,6 +632,13 @@ static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, si
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_NAME.npt_name_s);
 		}
 
+
+	if (!success_flag)
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to import study \"%s\"", STUDY_NAME.npt_name_s);
+
+			++ (*num_failures_p);
+		}
 
 	return success_flag;
 }

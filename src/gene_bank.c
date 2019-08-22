@@ -32,8 +32,7 @@
  * static declarations
  */
 
-static void *GetGeneBankCallback (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
-
+static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
 /*
@@ -283,7 +282,7 @@ GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat fo
 }
 
 
-static void *GetGeneBankCallback (const json_t *json_p, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
+static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
 {
 	return GetGeneBankFromJSON (json_p);
 }

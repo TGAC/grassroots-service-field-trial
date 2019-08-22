@@ -89,6 +89,9 @@ static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, Pa
 static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s);
 
 
+static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTrialServiceData *data_p);
+
+
 /*
  * API DEFINITIONS
  */
@@ -557,6 +560,9 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
  * STATIC DEFINITIONS
  */
 
+
+
+
 static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -577,83 +583,104 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 							if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &location_value))
 								{
+									bool study_freed_flag = false;
 									Location *location_p = GetUniqueLocationBySearchString (location_value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (location_p)
 										{
-											SharedType soil_value;
-											SharedType aspect_value;
-											SharedType slope_value;
-											SharedType data_link_value;
-											SharedType sowing_year_value;
-											SharedType harvest_year_value;
-											SharedType current_crop_value;
-											SharedType previous_crop_value;
-											SharedType min_ph_value;
-											SharedType max_ph_value;
-											Study *study_p = NULL;
-											struct tm *sowing_date_p = NULL;
-											struct tm *harvest_date_p = NULL;
 											Crop *current_crop_p = NULL;
-											Crop *previous_crop_p = NULL;
+											SharedType current_crop_value;
 
-											min_ph_value.st_long_value = ST_UNSET_PH;
-											max_ph_value.st_long_value = ST_UNSET_PH;
-
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &soil_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &aspect_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &slope_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &data_link_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &sowing_year_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &harvest_year_value);
 											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_THIS_CROP.npt_name_s, &current_crop_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &previous_crop_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value);
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value);
 
-
-											if (current_crop_value.st_string_value_s)
+											if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p, data_p))
 												{
-													current_crop_p = GetCropByIdString (current_crop_value.st_string_value_s);
-												}
+													Crop *previous_crop_p = NULL;
+													SharedType previous_crop_value;
 
-											if (previous_crop_value.st_string_value_s)
-												{
-													previous_crop_p = GetCropByIdString (previous_crop_value.st_string_value_s);
-												}
+													GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &previous_crop_value);
 
-
-											if (IsValidDate (sowing_year_value.st_time_p))
-												{
-													sowing_date_p = sowing_year_value.st_time_p;
-												}
-
-											if (IsValidDate (harvest_year_value.st_time_p))
-												{
-													harvest_date_p = harvest_year_value.st_time_p;
-												}
-
-											study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph_value.st_long_value, max_ph_value.st_long_value, data_p);
-
-											if (study_p)
-												{
-													if (SaveStudy (study_p, data_p))
+													if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p, data_p))
 														{
-															success_flag = true;
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_value.st_string_value_s);
-														}
+															SharedType soil_value;
+															SharedType aspect_value;
+															SharedType slope_value;
+															SharedType data_link_value;
+															SharedType sowing_year_value;
+															SharedType harvest_year_value;
+															SharedType min_ph_value;
+															SharedType max_ph_value;
+															Study *study_p = NULL;
+															struct tm *sowing_date_p = NULL;
+															struct tm *harvest_date_p = NULL;
 
-													FreeStudy (study_p);
-												}
-											else
+															min_ph_value.st_long_value = ST_UNSET_PH;
+															max_ph_value.st_long_value = ST_UNSET_PH;
+
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &soil_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &aspect_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &slope_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &data_link_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &sowing_year_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &harvest_year_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value);
+
+
+															if (IsValidDate (sowing_year_value.st_time_p))
+																{
+																	sowing_date_p = sowing_year_value.st_time_p;
+																}
+
+															if (IsValidDate (harvest_year_value.st_time_p))
+																{
+																	harvest_date_p = harvest_year_value.st_time_p;
+																}
+
+															study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph_value.st_long_value, max_ph_value.st_long_value, data_p);
+
+															if (study_p)
+																{
+																	if (SaveStudy (study_p, data_p))
+																		{
+																			success_flag = true;
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_value.st_string_value_s);
+																		}
+
+																	FreeStudy (study_p);
+																	study_freed_flag = true;
+																}
+
+
+															if (!study_freed_flag)
+																{
+																	if (previous_crop_p)
+																		{
+																			FreeCrop (previous_crop_p);
+																		}
+																}
+														}		/* if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p)) */
+
+
+													if (!study_freed_flag)
+														{
+															if (current_crop_p)
+																{
+																	FreeCrop (current_crop_p);
+																}
+														}
+												}		/* if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p)) */
+
+
+
+
+											if (!study_freed_flag)
 												{
 													FreeLocation (location_p);
 												}
-
-
 										}		/* if (location_p) */
 									else
 										{
@@ -1230,6 +1257,25 @@ char *GetStudyAsString (const Study *study_p)
 		}
 
 	return study_s;
+}
+
+
+static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = true;
+
+	if (crop_s)
+		{
+			*crop_pp = GetCropByIdString (crop_s, data_p);
+
+			if (! (*crop_pp))
+				{
+					success_flag = false;
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create crop from \"%s\"", crop_s);
+				}
+		}
+
+	return success_flag;
 }
 
 

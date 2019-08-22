@@ -33,7 +33,13 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByNameFromMongoDB (DFWFieldTrialServiceData *data_p, const char *name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByNameFromMongoDB (const DFWFieldTrialServiceData *data_p, const char *name_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByTeamFromMongoDB (const DFWFieldTrialServiceData *data_p, const char *team_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromMongoDB (const DFWFieldTrialServiceData *data_p, const char *name_s, const char *team_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialByNameToMongoDB (DFWFieldTrialServiceData *data_p, FieldTrial *trial_p);

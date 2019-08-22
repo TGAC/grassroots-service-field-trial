@@ -349,7 +349,7 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 
 
-LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p))
+LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p))
 {
 	LinkedList *results_list_p = AllocateLinkedList (free_list_item_fn);
 
@@ -378,26 +378,35 @@ LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const char **
 
 					if (success_flag)
 						{
-							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-							if (results_p)
+							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [collection_type]))
 								{
-									const size_t size = json_array_size (results_p);
-									size_t i = 0;
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
-									for (i = 0; i < size; ++ i)
+									if (results_p)
 										{
-											json_t *result_p = json_array_get (results_p, i);
+											const size_t size = json_array_size (results_p);
+											size_t i = 0;
 
-											if (!add_result_to_list_fn (result_p, results_list_p, data_p))
+											for (i = 0; i < size; ++ i)
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to add result to list");
-												}
+													json_t *result_p = json_array_get (results_p, i);
 
-										}		/* for (i = 0; i < size; ++ i) */
+													if (!add_result_to_list_fn (result_p, results_list_p, data_p))
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to add result to list");
+														}
 
-									json_decref (results_p);
-								}		/* if (results_p) */
+												}		/* for (i = 0; i < size; ++ i) */
+
+											json_decref (results_p);
+										}		/* if (results_p) */
+
+
+								}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [collection_type])) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set MongoTool collection to \"%s\"", data_p -> dftsd_collection_ss [collection_type]);
+								}
 
 						}		/* if (success_flag) */
 					else
