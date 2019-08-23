@@ -59,8 +59,6 @@ static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_
  */
 static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
 
-static json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
-
 
 bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
@@ -614,7 +612,7 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 }
 
 
-static json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;
 

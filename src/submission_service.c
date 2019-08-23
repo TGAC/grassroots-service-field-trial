@@ -30,6 +30,7 @@
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
 #include "row_jobs.h"
+#include "indexing.h"
 
 #include "audit.h"
 #include "streams.h"
@@ -40,6 +41,8 @@
  * Static declarations
  */
 
+
+static NamedParameterType S_REINDEX_DATA = { "SS Reindex all data", PT_BOOLEAN };
 
 
 static const char *GetDFWFieldTrialSubmissionServiceName (Service *service_p);
@@ -149,14 +152,21 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (s
 										{
 											if (!GetSubmissionMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
 												{
-													//if (!GetSubmissionPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
+													if (!GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p))
 														{
 															if (!GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
 																{
-																	success_flag = false;
+																	if (strcmp (param_name_s, S_REINDEX_DATA.npt_name_s) == 0)
+																		{
+																			*pt_p = S_REINDEX_DATA.npt_type;
+																		}
+																	else
+																		{
+																			success_flag = false;
+																		}
 																}		/* if (!GetSearchRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
-														}		/* if (!GetSearchPhenotypParameterTypeForNamedParameter (param_name_s, pt_p)) */
+														}		/* if (!GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
 												}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
@@ -199,7 +209,16 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 																{
 																	if (AddSubmissionRowPhenotypeParams (data_p, params_p))
 																		{
-																			return params_p;
+																			Parameter *param_p = NULL;
+																			SharedType def;
+																			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
+
+																			def.st_boolean_value = false;
+
+																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_DATA.npt_type, S_REINDEX_DATA.npt_name_s, "Index all", "Reindex all data into Lucene", def, PL_ADVANCED)) != NULL)
+																				{
+																					return params_p;
+																				}
 																		}
 																	else
 																		{
@@ -292,38 +311,55 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 			if (param_set_p)
 				{
-					if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
+					bool done_flag = false;
+					SharedType reindex_value;
+
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_DATA.npt_name_s, &reindex_value))
 						{
-							if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
+							if (reindex_value.st_boolean_value)
 								{
-									if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p))
+									ReindexAllData (job_p, data_p);
+									done_flag = true;
+								}
+						}
+
+					if (done_flag)
+						{
+							if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
+								{
+									if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
 										{
-											if (!RunForSubmissionPlotParams (data_p, param_set_p, job_p))
+											if (!RunForSubmissionLocationParams (data_p, param_set_p, job_p))
 												{
-													if (!RunForSubmissionGeneBankParams (data_p, param_set_p, job_p))
+													if (!RunForSubmissionPlotParams (data_p, param_set_p, job_p))
 														{
-															if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
+															if (!RunForSubmissionGeneBankParams (data_p, param_set_p, job_p))
 																{
-																	//if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
+																	if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
 																		{
-																			if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
+																			if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
 																				{
+																					if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
+																						{
+																						}		/* if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p)) */
 
-																				}		/* if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p)) */
+																				}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
 
-																		}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
+																		}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
 
-																}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
+																}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
 
-														}		/* if (!RunForGeneBankParams (data_p, param_set_p, job_p)) */
+														}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
 
-												}		/* if (!RunForPlotParams (data_p, param_set_p, job_p)) */
+												}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
 
-										}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+										}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
 
-								}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
+								}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
-						}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
+						}		/* if (done_flag) */
+
+
 
 				}		/* if (param_set_p) */
 
@@ -517,4 +553,6 @@ static ParameterSet *IsResourceForDFWFieldTrialSubmissionService (Service * UNUS
 {
 	return NULL;
 }
+
+
 

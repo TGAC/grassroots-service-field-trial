@@ -688,34 +688,40 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 			if (success_flag)
 				{
-					if (RunLuceneTool (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size))
+					if (SetLuceneToolName (lucene_p, "search_keywords"))
 						{
-							SearchData sd;
-
-							sd.sd_service_data_p = data_p;
-							sd.sd_job_p = job_p;
-							sd.sd_format = fmt;
-
-							const uint32 from = page_number * page_size;
-							const uint32 to = from + page_size - 1;
-
-							if (ParseLuceneResults (lucene_p, from, to, AddResultsFromLuceneResults, &sd))
+							if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size))
 								{
-									json_error_t error;
-									json_t *metadata_p = json_pack_ex (&error, 0, "{s:i,s:i,s:i}",
-																						 LT_NUM_TOTAL_HITS_S, lucene_p -> lt_num_total_hits,
-																						 LT_HITS_START_INDEX_S, lucene_p -> lt_hits_from_index,
-																						 LT_HITS_END_INDEX_S, lucene_p -> lt_hits_to_index);
+									SearchData sd;
 
-									if (metadata_p)
+									sd.sd_service_data_p = data_p;
+									sd.sd_job_p = job_p;
+									sd.sd_format = fmt;
+
+									const uint32 from = page_number * page_size;
+									const uint32 to = from + page_size - 1;
+
+									if (ParseLuceneResults (lucene_p, from, to, AddResultsFromLuceneResults, &sd))
 										{
-											job_p -> sj_metadata_p = metadata_p;
-										}
+											json_error_t error;
+											json_t *metadata_p = json_pack_ex (&error, 0, "{s:i,s:i,s:i}",
+																								 LT_NUM_TOTAL_HITS_S, lucene_p -> lt_num_total_hits,
+																								 LT_HITS_START_INDEX_S, lucene_p -> lt_hits_from_index,
+																								 LT_HITS_END_INDEX_S, lucene_p -> lt_hits_to_index);
 
-									status = OS_SUCCEEDED;
-								}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, &sd)) */
+											if (metadata_p)
+												{
+													job_p -> sj_metadata_p = metadata_p;
+												}
 
-						}		/* if (RunLuceneTool (lucene_p, keyword_s, facets_p)) */
+											status = OS_SUCCEEDED;
+										}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, &sd)) */
+
+								}		/* if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size)) */
+
+						}		/* if (SetLuceneToolName ("search_keywords")) */
+
+
 
 					if (facets_p)
 						{

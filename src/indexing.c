@@ -1,0 +1,116 @@
+/*
+** Copyright 2014-2018 The Earlham Institute
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+/*
+ * indexing.c
+ *
+ *  Created on: 23 Aug 2019
+ *      Author: billy
+ */
+
+#include "indexing.h"
+#include "study_jobs.h"
+#include "location_jobs.h"
+#include "field_trial_jobs.h"
+
+
+void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_data_p)
+{
+	OperationStatus status = OS_FAILED_TO_START;
+	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
+	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
+
+	if (lucene_p)
+		{
+			status = OS_SUCCEEDED;
+			/* clear the index initially ...*/
+			if (!ReindexStudies (job_p, lucene_p, false, service_data_p))
+				{
+					status = OS_FAILED;
+				}
+
+			/* ... then update it from here */
+			if (!ReindexTrials (job_p, lucene_p, false, service_data_p))
+				{
+					status = OS_FAILED;
+				}
+
+			if (!ReindexLocations (job_p, lucene_p, false, service_data_p))
+				{
+					status = OS_FAILED;
+				}
+
+			FreeLuceneTool (lucene_p);
+		}		/* if (lucene_p) */
+
+	SetServiceJobStatus (job_p, status);
+}
+
+
+bool ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
+{
+	bool success_flag = false;
+	json_t *studies_p = GetAllStudiesAsJSON (service_data_p);
+
+	if (studies_p)
+		{
+			if (SetLuceneToolName (lucene_p, "index_studies"))
+				{
+					success_flag = IndexLucene (lucene_p, studies_p, update_flag);
+				}
+
+			json_decref (studies_p);
+		}
+
+	return success_flag;
+}
+
+
+bool ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
+{
+	bool success_flag = false;
+	json_t *locations_p = GetAllLocationsAsJSON (service_data_p, NULL);
+
+	if (locations_p)
+		{
+			if (SetLuceneToolName (lucene_p, "index_locations"))
+				{
+					success_flag = IndexLucene (lucene_p, locations_p, update_flag);
+				}
+
+			json_decref (locations_p);
+		}
+
+	return success_flag;
+}
+
+
+bool ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
+{
+	bool success_flag = false;
+	json_t *trials_p = GetAllFieldTrialsAsJSON (service_data_p, NULL);
+
+	if (trials_p)
+		{
+			if (SetLuceneToolName (lucene_p, "index_trials"))
+				{
+					success_flag = IndexLucene (lucene_p, trials_p, update_flag);
+				}
+
+			json_decref (trials_p);
+		}
+
+	return success_flag;
+}

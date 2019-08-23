@@ -92,6 +92,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchLocationParameterTypeForNamedParamet
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetUnsetLocationValue (void);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
 
 
 #ifdef __cplusplus

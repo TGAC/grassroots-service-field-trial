@@ -52,6 +52,7 @@ SRCS 	= \
 	field_trial_mongodb.c \
 	gene_bank.c \
 	gene_bank_jobs.c \
+	indexing.c \
 	instrument.c \
 	location.c \
 	location_jobs.c \

@@ -100,6 +100,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchStudyParams (DFWFieldTrialService
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
 
 

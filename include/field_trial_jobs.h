@@ -72,6 +72,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchFieldTrialParameterTypeForNamedParam
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllFieldTrialsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
