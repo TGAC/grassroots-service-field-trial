@@ -378,6 +378,7 @@ Address *GetAddressFromLocationString (const char *location_s)
 
 static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	bool success_flag = false;
 	SharedType name_value;
 
@@ -448,7 +449,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 							if (location_p)
 								{
-									success_flag = SaveLocation (location_p, data_p);
+									success_flag = SaveLocation (location_p, job_p, data_p);
 								}
 							else
 								{
@@ -464,9 +465,9 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value)) */
 
 
-	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
+	SetServiceJobStatus (job_p, status);
 
-	return success_flag;
+	return ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED));
 }
 
 

@@ -35,6 +35,9 @@ extern "C"
 #endif
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL	bool IndexData (ServiceJob *job_p, const json_t *data_to_index_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_data_p);
 
 
@@ -45,6 +48,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexTrials (ServiceJob *job_p, LuceneTool 
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexTreatments (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p);
 
 
 #ifdef __cplusplus

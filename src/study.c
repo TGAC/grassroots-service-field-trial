@@ -30,6 +30,8 @@
 #include "time_util.h"
 
 #include "study_jobs.h"
+#include "indexing.h"
+
 /*
  * DB COLUMN NAMES
  */
@@ -337,8 +339,9 @@ bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-bool SaveStudy (Study *study_p, DFWFieldTrialServiceData *data_p)
+OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (study_p -> st_id_p), &selector_p);
 
@@ -348,14 +351,25 @@ bool SaveStudy (Study *study_p, DFWFieldTrialServiceData *data_p)
 
 			if (study_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p);
+					if (SaveMongoData (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p))
+						{
+							if (IndexData (job_p, study_json_p))
+								{
+									status = OS_SUCCEEDED;
+								}
+							else
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to index Study \"%s\" as JSON to Lucene", study_p -> st_name_s);
+								}
+						}
 
 					json_decref (study_json_p);
 				}		/* if (study_json_p) */
 
 		}		/* if (success_flag) */
 
-	return success_flag;
+	return status;
 }
 
 

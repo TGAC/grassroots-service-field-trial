@@ -565,7 +565,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 
 static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	SharedType name_value;
 
 
@@ -641,11 +641,9 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 															if (study_p)
 																{
-																	if (SaveStudy (study_p, data_p))
-																		{
-																			success_flag = true;
-																		}
-																	else
+																	status = SaveStudy (study_p, job_p, data_p);
+
+																	if (status == OS_FAILED)
 																		{
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_value.st_string_value_s);
 																		}
@@ -673,8 +671,6 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																}
 														}
 												}		/* if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p)) */
-
-
 
 
 											if (!study_freed_flag)
@@ -713,9 +709,9 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 		}
 
 
-	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
+	SetServiceJobStatus (job_p, status);
 
-	return success_flag;
+	return ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED));
 }
 
 

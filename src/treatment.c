@@ -27,6 +27,7 @@
 #include "string_utils.h"
 #include "dfw_util.h"
 #include "time_util.h"
+#include "indexing.h"
 
 /*
  * static declarations
@@ -320,25 +321,38 @@ Treatment *GetTreatmentFromJSON (const json_t *phenotype_json_p, const DFWFieldT
 }
 
 
-bool SaveTreatment (Treatment *treatment_p, const DFWFieldTrialServiceData *data_p)
+OperationStatus SaveTreatment (Treatment *treatment_p, ServiceJob *job_p, const DFWFieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
-	bool success_flag = PrepareSaveData (& (treatment_p -> tr_id_p), &selector_p);
 
-	if (success_flag)
+	if (PrepareSaveData (& (treatment_p -> tr_id_p), &selector_p))
 		{
 			json_t *phenotype_json_p = GetTreatmentAsJSON (treatment_p, VF_STORAGE);
 
 			if (phenotype_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT], selector_p);
+					if (SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT], selector_p))
+						{
+							if (IndexData (job_p, phenotype_json_p))
+								{
+									status = OS_SUCCEEDED;
+								}
+							else
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index Treatment \"%s\" as JSON to Lucene", treatment_p -> tr_internal_name_s);
+								}
+
+						}
 
 					json_decref (phenotype_json_p);
 				}		/* if (phenotype_json_p) */
 
 		}		/* if (treatment_p -> tr_id_p) */
 
-	return success_flag;
+
+	return status;
 }
 
 

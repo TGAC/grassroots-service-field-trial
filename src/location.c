@@ -25,7 +25,7 @@
 #include "memory_allocations.h"
 #include "study.h"
 #include "dfw_util.h"
-
+#include "indexing.h"
 
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
@@ -183,8 +183,9 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 
 
-bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
+OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (location_p -> lo_id_p), &selector_p);
 
@@ -194,7 +195,18 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 
 			if (location_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, location_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], selector_p);
+					if (SaveMongoData (data_p -> dftsd_mongo_p, location_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], selector_p))
+						{
+							if (IndexData (job_p, location_json_p))
+								{
+									status = OS_SUCCEEDED;
+								}
+							else
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to index location \"%s\" as JSON to Lucene", location_p -> lo_address_p -> ad_name_s);
+								}
+						}
 
 					json_decref (location_json_p);
 				}		/* if (area_json_p) */
@@ -206,7 +218,7 @@ bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p)
 
 		}		/* if (location_p -> lo_id_p) */
 
-	return success_flag;
+	return status;
 }
 
 

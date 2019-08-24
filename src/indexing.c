@@ -24,6 +24,27 @@
 #include "study_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
+#include "treatment_jobs.h"
+
+
+bool IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
+{
+	bool success_flag = false;
+	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
+	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
+
+	if (lucene_p)
+		{
+			if (IndexLucene (lucene_p, data_to_index_p, true))
+				{
+					success_flag = true;
+				}
+
+			FreeLuceneTool (lucene_p);
+		}		/* if (lucene_p) */
+
+	return success_flag;
+}
 
 
 void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_data_p)
@@ -48,6 +69,11 @@ void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_
 				}
 
 			if (!ReindexLocations (job_p, lucene_p, false, service_data_p))
+				{
+					status = OS_FAILED;
+				}
+
+			if (!ReindexTreatments (job_p, lucene_p, false, service_data_p))
 				{
 					status = OS_FAILED;
 				}
@@ -105,6 +131,26 @@ bool ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, c
 	if (trials_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_trials"))
+				{
+					success_flag = IndexLucene (lucene_p, trials_p, update_flag);
+				}
+
+			json_decref (trials_p);
+		}
+
+	return success_flag;
+}
+
+
+
+bool ReindexTreatments (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
+{
+	bool success_flag = false;
+	json_t *trials_p = GetAllTreatmentsAsJSON (service_data_p, NULL);
+
+	if (trials_p)
+		{
+			if (SetLuceneToolName (lucene_p, "index_treatments"))
 				{
 					success_flag = IndexLucene (lucene_p, trials_p, update_flag);
 				}

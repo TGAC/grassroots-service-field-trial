@@ -425,7 +425,7 @@ static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *te
 
 	if (trial_p)
 		{
-			success_flag = SaveFieldTrial (trial_p, data_p);
+			success_flag = SaveFieldTrial (trial_p, job_p, data_p);
 			FreeFieldTrial (trial_p);
 		}
 

@@ -30,6 +30,8 @@
 #include "memory_allocations.h"
 #include "streams.h"
 #include "dfw_util.h"
+#include "indexing.h"
+
 
 
 FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p)
@@ -130,7 +132,7 @@ char *GetFieldTrialIdAsString (const FieldTrial *trial_p)
 }
 
 
-bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
+bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (trial_p -> ft_id_p), &selector_p);
@@ -141,7 +143,18 @@ bool SaveFieldTrial (FieldTrial *trial_p, DFWFieldTrialServiceData *data_p)
 
 			if (field_trial_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p);
+					if (SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p))
+						{
+							if (IndexData (job_p, field_trial_json_p))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_trial_json_p, "Failed to index FieldTrial \"%s\" as JSON to Lucene", trial_p -> ft_name_s);
+								}
+
+						}		/* if (SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p)) */
 
 					json_decref (field_trial_json_p);
 				}		/* if (field_trial_json_p) */

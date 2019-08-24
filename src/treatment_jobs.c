@@ -529,9 +529,13 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 														{
 															if (!DoesTreatmentExist (treatment_p, data_p))
 																{
+																	OperationStatus import_status;
 																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding Treatment for row " SIZET_FMT, i);
 
-																	if (SaveTreatment (treatment_p, data_p))
+																	import_status = SaveTreatment (treatment_p, job_p, data_p);
+
+
+																	if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
 																		{
 																			++ num_imported;
 																		}

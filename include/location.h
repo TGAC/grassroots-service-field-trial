@@ -120,7 +120,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetUniqueLocationBySearchString (const c
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetLocationsByName (DFWFieldTrialServiceData *data_p, const char *location_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveLocation (Location *location_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
