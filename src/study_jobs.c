@@ -617,14 +617,14 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 															min_ph_value.st_long_value = ST_UNSET_PH;
 															max_ph_value.st_long_value = ST_UNSET_PH;
 
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &soil_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &aspect_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &slope_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &data_link_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &sowing_year_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &harvest_year_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value);
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value);
+															GetParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value, true);
+															GetParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value, true);
 
 
 															if (IsValidDate (sowing_year_value.st_time_p))

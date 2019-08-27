@@ -563,16 +563,18 @@ static json_t *PreprocessTrials (const json_t *src_p)
 static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p)
 {
 	bool success_flag = false;
-
-	const char *study_s = GetJSONString (study_p, "propTitle");
+	const char *NAME_KEY_S = "propTitle";
+	const char *study_s = GetJSONString (study_p, NAME_KEY_S);
 
 	if (study_s)
 		{
-			const char *trial_s = GetJSONString (study_p, "projectName");
+			const char *TRIAL_KEY_S = "projectName";
+			const char *trial_s = GetJSONString (study_p, TRIAL_KEY_S);
 
 			if (trial_s)
 				{
-					const char *location_s = GetJSONString (study_p, "fieldname");
+					const char *LOCATION_KEY_S = "fieldname";
+					const char *location_s = GetJSONString (study_p, LOCATION_KEY_S);
 
 					if (location_s)
 						{
@@ -617,25 +619,25 @@ static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, si
 						}		/* if (location_s) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_LOCATIONS_LIST.npt_name_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s ", LOCATION_KEY_S);
 						}
 
 				}		/* if (trial_s) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_FIELD_TRIALS_LIST.npt_name_s);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s ", TRIAL_KEY_S);
 				}
 
 		}		/* if (study_s) */
 	else
 		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s", STUDY_NAME.npt_name_s);
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s ", NAME_KEY_S);
 		}
 
 
 	if (!success_flag)
 		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to import study \"%s\"", STUDY_NAME.npt_name_s);
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to import study \"%s\" ", study_s ? study_s : " unknown");
 
 			++ (*num_failures_p);
 		}

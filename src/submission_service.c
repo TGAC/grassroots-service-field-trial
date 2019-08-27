@@ -337,13 +337,13 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 																{
 																	if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
 																		{
-																			if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p))
+																			if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p))
 																				{
 																					if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
 																						{
 																						}		/* if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p)) */
 
-																				}		/* if (!RunForSubmissionPhenotypeParams (data_p, param_set_p, job_p)) */
+																				}		/* if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p)) */
 
 																		}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
 
