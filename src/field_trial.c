@@ -438,7 +438,7 @@ FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFiel
 														}		/* if (num_results == 1) */
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "" SIZET_FMT " results when searching for field trial with id \"%s\"", field_trial_id_s);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "" SIZET_FMT " results when searching for field trial with id \"%s\"", num_results, field_trial_id_s);
 														}
 
 												}		/* if (json_is_array (results_p) */

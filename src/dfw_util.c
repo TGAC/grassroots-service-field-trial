@@ -349,6 +349,28 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 
 
+bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	const char *type_s = GetDatatypeAsString (data_type);
+
+	if (type_s)
+		{
+			const char *image_s = GetImageForDatatype (data_p, type_s);
+
+			if (image_s)
+				{
+					if (SetJSONString (doc_p, CONTEXT_PREFIX_SCHEMA_ORG_S "image", image_s))
+						{
+							success_flag = true;
+						}
+				}
+		}
+
+	return success_flag;
+}
+
+
 LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p))
 {
 	LinkedList *results_list_p = AllocateLinkedList (free_list_item_fn);

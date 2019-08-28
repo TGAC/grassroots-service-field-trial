@@ -23,9 +23,9 @@
 
 #define ALLOCATE_LOCATION_JOB_CONSTANTS (1)
 #include "location_jobs.h"
-#include "location.h"
 #include "geocoder_util.h"
 #include "string_utils.h"
+#include "dfw_util.h"
 
 
 static const char *DEFAULT_COORD_PRECISION_S = "6";
@@ -625,6 +625,62 @@ json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *o
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
 
 	return results_p;
+}
+
+
+
+
+
+bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *location_json_p = GetLocationAsJSON (location_p);
+
+	if (location_json_p)
+		{
+			char *title_s = NULL;
+
+			if (location_p -> lo_address_p)
+				{
+					if (location_p -> lo_address_p -> ad_name_s)
+						{
+							title_s = EasyCopyToNewString (location_p -> lo_address_p -> ad_name_s);
+						}
+					else
+						{
+							title_s = GetAddressAsString (location_p -> lo_address_p);
+						}
+				}
+
+			if (title_s)
+				{
+					if (AddContext (location_json_p))
+						{
+							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, location_json_p);
+
+							if (dest_record_p)
+								{
+									AddImage (dest_record_p, DFTD_LOCATION, data_p);
+
+									if (AddResultToServiceJob (job_p, dest_record_p))
+										{
+											success_flag = true;
+										}
+									else
+										{
+											json_decref (dest_record_p);
+										}
+
+								}		/* if (dest_record_p) */
+
+						}		/* if (AddContext (treatment_json_p)) */
+
+					FreeCopiedString (title_s);
+				}		/* if (title_s) */
+
+		}		/* if (location_json_p) */
+
+	return success_flag;
 }
 
 

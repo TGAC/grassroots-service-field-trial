@@ -454,6 +454,8 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 
 									if (dest_record_p)
 										{
+											AddImage (dest_record_p, DFTD_FIELD_TRIAL, data_p);
+
 											if (AddResultToServiceJob (job_p, dest_record_p))
 												{
 													success_flag = true;

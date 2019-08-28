@@ -761,6 +761,8 @@ bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat f
 
 							if (dest_record_p)
 								{
+									AddImage (dest_record_p, DFTD_STUDY, data_p);
+
 									if (AddResultToServiceJob (job_p, dest_record_p))
 										{
 											success_flag = true;

@@ -26,6 +26,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 #include "address.h"
+#include "location.h"
 
 
 
@@ -93,6 +94,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchLocationParameterTypeForNamedParamet
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetUnsetLocationValue (void);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

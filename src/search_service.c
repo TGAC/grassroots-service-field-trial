@@ -811,8 +811,33 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 
 										FreeTreatment (treatment_p);
 									}
+							}
+							break;
 
+						case DFTD_LOCATION:
+							{
+								Location *location_p = GetLocationByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
 
+								if (location_p)
+									{
+										if (AddLocationToServiceJob (search_data_p -> sd_job_p, location_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+											{
+												success_flag = true;
+											}
+										else
+											{
+												const char *name_s = "";
+
+												if (location_p -> lo_address_p)
+													{
+														name_s = location_p -> lo_address_p -> ad_name_s;
+													}
+
+												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Location %s to ServiceJob", name_s);
+											}
+
+										FreeLocation (location_p);
+									}
 							}
 							break;
 

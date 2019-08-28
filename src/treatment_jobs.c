@@ -252,12 +252,51 @@ char *GetTreatmentAsString (const Treatment *treatment_p)
 		{
 			title_s = EasyCopyToNewString (treatment_p -> tr_internal_name_s);
 		}
+	else if (treatment_p -> tr_variable_term_p)
+		{
+			title_s = EasyCopyToNewString (treatment_p -> tr_variable_term_p -> st_name_s);
+		}
 	else
 		{
-			if (treatment_p -> tr_trait_term_p)
+			ByteBuffer *buffer_p = AllocateByteBuffer (1024);
+
+			if (buffer_p)
 				{
-					title_s = EasyCopyToNewString (treatment_p -> tr_trait_term_p -> st_name_s);
-				}
+					bool success_flag = true;
+
+					if (treatment_p -> tr_trait_term_p)
+						{
+							success_flag = AppendStringToByteBuffer (buffer_p, treatment_p -> tr_trait_term_p -> st_name_s);
+						}
+
+					if (success_flag)
+						{
+							if (treatment_p -> tr_measurement_term_p)
+								{
+									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> tr_measurement_term_p -> st_name_s, NULL);
+								}
+						}
+
+					if (success_flag)
+						{
+							if (treatment_p -> tr_unit_term_p)
+								{
+									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> tr_unit_term_p -> st_name_s, NULL);
+								}
+						}
+
+
+					if (success_flag)
+						{
+							title_s = DetachByteBufferData (buffer_p);
+						}
+					else
+						{
+							FreeByteBuffer (buffer_p);
+						}
+
+				}		/* if (buffer_p) */
+
 		}
 
 	return title_s;
@@ -281,6 +320,8 @@ bool AddTreatmentToServiceJob (ServiceJob *job_p, Treatment *treatment_p, const 
 
 							if (dest_record_p)
 								{
+									AddImage (dest_record_p, DFTD_TREATMENT, data_p);
+
 									if (AddResultToServiceJob (job_p, dest_record_p))
 										{
 											success_flag = true;

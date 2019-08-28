@@ -153,3 +153,18 @@ DFWFieldTrialData GetDatatypeFromString (const char *type_s)
 }
 
 
+
+const char *GetImageForDatatype (const DFWFieldTrialServiceData *data_p, const char *data_type_s)
+{
+	const char *image_s = NULL;
+	const json_t *images_config_p = json_object_get (data_p -> dftsd_base_data.sd_config_p, "images");
+
+	if (images_config_p)
+		{
+			image_s = GetJSONString (images_config_p, data_type_s);
+		}
+
+
+	return image_s;
+}
+

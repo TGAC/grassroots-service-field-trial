@@ -266,6 +266,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const DFWFieldTri
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const char *type_s);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetImageForDatatype (const DFWFieldTrialServiceData *data_p, const char *data_type_s);
+
+
 #ifdef __cplusplus
 }
 #endif
