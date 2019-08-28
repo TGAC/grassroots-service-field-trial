@@ -55,25 +55,31 @@ void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_
 
 	if (lucene_p)
 		{
-			status = OS_SUCCEEDED;
 			/* clear the index initially ...*/
-			if (!ReindexStudies (job_p, lucene_p, false, service_data_p))
+			bool update_flag = false;
+
+			status = OS_SUCCEEDED;
+
+
+			if (!ReindexStudies (job_p, lucene_p, update_flag, service_data_p))
 				{
 					status = OS_FAILED;
 				}
 
 			/* ... then update it from here */
-			if (!ReindexTrials (job_p, lucene_p, false, service_data_p))
+			update_flag = true;
+
+			if (!ReindexTrials (job_p, lucene_p, update_flag, service_data_p))
 				{
 					status = OS_FAILED;
 				}
 
-			if (!ReindexLocations (job_p, lucene_p, false, service_data_p))
+			if (!ReindexLocations (job_p, lucene_p, update_flag, service_data_p))
 				{
 					status = OS_FAILED;
 				}
 
-			if (!ReindexTreatments (job_p, lucene_p, false, service_data_p))
+			if (!ReindexTreatments (job_p, lucene_p, update_flag, service_data_p))
 				{
 					status = OS_FAILED;
 				}

@@ -323,7 +323,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 								}
 						}
 
-					if (done_flag)
+					if (!done_flag)
 						{
 							if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
 								{
@@ -357,9 +357,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 								}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
-						}		/* if (done_flag) */
-
-
+						}		/* if (!done_flag) */
 
 				}		/* if (param_set_p) */
 
