@@ -449,7 +449,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 							if (location_p)
 								{
-									success_flag = SaveLocation (location_p, job_p, data_p);
+									status = SaveLocation (location_p, job_p, data_p);
 								}
 							else
 								{
