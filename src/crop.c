@@ -362,6 +362,19 @@ Crop *GetCropFromJSON (const json_t *crop_json_p, const DFWFieldTrialServiceData
 												{
 													Crop *crop_p = AllocateCrop (id_p, name_s, term_s, url_s, synonyms_ss);
 
+													if (synonyms_ss)
+														{
+															char **synonym_ss = synonyms_ss;
+
+															while (*synonym_ss)
+																{
+																	FreeCopiedString (*synonym_ss);
+																	++ synonym_ss;
+																}
+
+															FreeMemory (synonyms_ss);
+														}
+
 													if (crop_p)
 														{
 															return crop_p;

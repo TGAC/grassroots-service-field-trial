@@ -461,6 +461,8 @@ static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, Pa
 									success_flag = true;
 								}
 						}
+
+					json_decref (hints_p);
 				}
 
 			if (!success_flag)
