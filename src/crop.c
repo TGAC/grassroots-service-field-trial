@@ -97,6 +97,7 @@ Crop *AllocateCrop (bson_oid_t *id_p, const char *name_s, const char *argovoc_pr
 															while (copied_synonym_ss >= copied_synonyms_ss)
 																{
 																	FreeCopiedString (*copied_synonym_ss);
+																	-- copied_synonym_ss;
 																}
 
 															FreeMemory (copied_synonyms_ss);
@@ -328,6 +329,7 @@ Crop *GetCropFromJSON (const json_t *crop_json_p, const DFWFieldTrialServiceData
 															if (*synonym_ss)
 																{
 																	++ i;
+																	++ synonym_ss;
 																}
 															else
 																{
