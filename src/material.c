@@ -513,126 +513,118 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 		{
 			const char *germplasm_id_s = GetJSONString (json_p, MA_GERMPLASM_ID_S);
 
-			if (germplasm_id_s)
+			bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+			if (id_p)
 				{
-					bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
-
-					if (id_p)
+					if (GetMongoIdFromJSON (json_p, id_p))
 						{
-							if (GetMongoIdFromJSON (json_p, id_p))
+							bson_oid_t *gene_bank_id_p = GetNewUnitialisedBSONOid ();
+
+							if (gene_bank_id_p)
 								{
-									bson_oid_t *gene_bank_id_p = GetNewUnitialisedBSONOid ();
-
-									if (gene_bank_id_p)
+									if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, gene_bank_id_p))
 										{
-											if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, gene_bank_id_p))
+											Study *study_p = NULL;
+											bool success_flag = false;
+
+											if (format == VF_CLIENT_FULL)
 												{
-													Study *study_p = NULL;
-													bool success_flag = false;
+													bson_oid_t *study_id_p = GetNewUnitialisedBSONOid ();
 
-													if (format == VF_CLIENT_FULL)
+													if (study_id_p)
 														{
-															bson_oid_t *study_id_p = GetNewUnitialisedBSONOid ();
-
-															if (study_id_p)
+															if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, study_id_p))
 																{
-																	if (GetNamedIdFromJSON (json_p, MA_EXPERIMENTAL_AREA_ID_S, study_id_p))
+																	study_p = GetStudyById (study_id_p, format, data_p);
+
+																	if (!study_p)
 																		{
-																			study_p = GetStudyById (study_id_p, format, data_p);
+																			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-																			if (!study_p)
-																				{
-																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																					bson_oid_to_string (study_id_p, id_s);
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find Study with id \"%s\"", id_s);
-																				}
+																			bson_oid_to_string (study_id_p, id_s);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to find Study with id \"%s\"", id_s);
 																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
-																		}
-
-																	FreeBSONOid (study_id_p);
-																}		/* if (exp_area_id_p) */
+																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
 																}
+
+															FreeBSONOid (study_id_p);
+														}		/* if (exp_area_id_p) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_EXPERIMENTAL_AREA_ID_S);
+														}
+												}
+											else
+												{
+													success_flag = true;
+												}
+
+											if (success_flag)
+												{
+													Material *material_p = NULL;
+													const char *type_s = GetJSONString (json_p, MA_TYPE_S);
+													const char *species_s = GetJSONString (json_p, MA_SPECIES_S);
+													const char *selection_reason_s = GetJSONString (json_p, MA_SELECTION_REASON_S);
+													const char *generation_s = GetJSONString (json_p, MA_GENERATION_S);
+													const char *seed_supplier_s = GetJSONString (json_p, MA_SEED_SUPPLIER_S);
+													const char *seed_source_s = GetJSONString (json_p, MA_SEED_SOURCE_S);
+													const char *germplasm_origin_s = GetJSONString (json_p, MA_GERMPLASM_ORIGIN_S);
+													const char *seed_treatment_s = GetJSONString (json_p, MA_SEED_TREATMENT_S);
+													bool in_gru_flag;
+													bool cleaned_flag;
+													uint32 tgw = 0;
+
+
+													GetJSONBoolean (json_p, MA_IN_GRU_S, &in_gru_flag);
+													GetJSONBoolean (json_p, MA_CLEANED_NAME_S, &cleaned_flag);
+													GetJSONInteger (json_p, MA_TGW_S, (int *) &tgw);
+
+													material_p = AllocateMaterial (id_p, accession_s, species_s, type_s, selection_reason_s, generation_s, seed_supplier_s, seed_source_s, germplasm_origin_s, seed_treatment_s, in_gru_flag, cleaned_flag, tgw, study_p, gene_bank_id_p, data_p);
+
+
+													if (material_p)
+														{
+															return material_p;
 														}
 													else
 														{
-															success_flag = true;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to allocate Material");
 														}
-
-													if (success_flag)
-														{
-															Material *material_p = NULL;
-															const char *type_s = GetJSONString (json_p, MA_TYPE_S);
-															const char *species_s = GetJSONString (json_p, MA_SPECIES_S);
-															const char *selection_reason_s = GetJSONString (json_p, MA_SELECTION_REASON_S);
-															const char *generation_s = GetJSONString (json_p, MA_GENERATION_S);
-															const char *seed_supplier_s = GetJSONString (json_p, MA_SEED_SUPPLIER_S);
-															const char *seed_source_s = GetJSONString (json_p, MA_SEED_SOURCE_S);
-															const char *germplasm_origin_s = GetJSONString (json_p, MA_GERMPLASM_ORIGIN_S);
-															const char *seed_treatment_s = GetJSONString (json_p, MA_SEED_TREATMENT_S);
-															bool in_gru_flag;
-															bool cleaned_flag;
-															uint32 tgw = 0;
-
-
-															GetJSONBoolean (json_p, MA_IN_GRU_S, &in_gru_flag);
-															GetJSONBoolean (json_p, MA_CLEANED_NAME_S, &cleaned_flag);
-															GetJSONInteger (json_p, MA_TGW_S, (int *) &tgw);
-
-															material_p = AllocateMaterial (id_p, accession_s, species_s, type_s, selection_reason_s, generation_s, seed_supplier_s, seed_source_s, germplasm_origin_s, seed_treatment_s, in_gru_flag, cleaned_flag, tgw, study_p, gene_bank_id_p, data_p);
-
-
-															if (material_p)
-																{
-																	return material_p;
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to allocate Material");
-																}
-														}
-
-													if (study_p)
-														{
-															FreeStudy (study_p);
-														}
-
-												}		/* if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p)) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_GENE_BANK_ID_S);
 												}
 
-											FreeBSONOid (gene_bank_id_p);
-										}		/* if (germplasm_id_p) */
+											if (study_p)
+												{
+													FreeStudy (study_p);
+												}
+
+										}		/* if (GetNamedIdFromJSON (json_p, MA_GENE_BANK_ID_S, germplasm_id_p)) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_GENE_BANK_ID_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_GENE_BANK_ID_S);
 										}
 
-								}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
+									FreeBSONOid (gene_bank_id_p);
+								}		/* if (germplasm_id_p) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MONGO_ID_S);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MA_GENE_BANK_ID_S);
 								}
 
-							FreeBSONOid (id_p);
-						}		/* if (id_p) */
+						}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed tp allocate id for \"%s\"", MONGO_ID_S);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MONGO_ID_S);
 						}
 
-				}		/* if (internal_name_s) */
+					FreeBSONOid (id_p);
+				}		/* if (id_p) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MA_GERMPLASM_ID_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed tp allocate id for \"%s\"", MONGO_ID_S);
 				}
 
 		}		/* if (accession_s) */
