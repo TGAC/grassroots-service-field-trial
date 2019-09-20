@@ -393,101 +393,103 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 														{
 															if (AddValidAspectToJSON (study_p, study_json_p))
 																{
-																	bool add_item_flag = false;
-
-																	/*
-																	 * Add the location
-																	 */
-																	if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+																	if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S))
 																		{
-																			json_t *location_json_p = GetLocationAsJSON (study_p -> st_location_p);
-
-																			if (location_json_p)
-																				{
-																					if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
-																						{
-																							add_item_flag = true;
-																						}		/* if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0) */
-																					else
-																						{
-																							json_decref (location_json_p);
-																						}
-																				}
-																		}
-																	else
-																		{
-																			if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S))
-																				{
-																					add_item_flag = true;
-																				}
-																		}
-
-																	if (add_item_flag)
-																		{
-																			add_item_flag = false;
+																			bool add_item_flag = false;
 
 																			/*
-																			 * Add the dates
+																			 * Add the location
 																			 */
-																			if (format == VF_STORAGE)
+																			if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 																				{
-																					if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
+																					json_t *location_json_p = GetLocationAsJSON (study_p -> st_location_p);
+
+																					if (location_json_p)
 																						{
-																							if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
+																							if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
 																								{
 																									add_item_flag = true;
+																								}		/* if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0) */
+																							else
+																								{
+																									json_decref (location_json_p);
 																								}
 																						}
-																				}		/* if (format == VF_STORAGE) */
+																				}
 																			else
 																				{
-																					if (AddValidDateToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
+																					if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S))
 																						{
-																							if (AddValidDateToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
-																								{
-																									add_item_flag = true;
-																								}
+																							add_item_flag = true;
 																						}
 																				}
 
 																			if (add_item_flag)
 																				{
+																					add_item_flag = false;
 
-																					if (AddCompoundIdToJSON (study_json_p, study_p -> st_id_p))
+																					/*
+																					 * Add the dates
+																					 */
+																					if (format == VF_STORAGE)
 																						{
-																							bool success_flag = false;
-
-																							if (format == VF_STORAGE)
+																							if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
 																								{
-																									success_flag = AddNamedCompoundIdToJSON (study_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S);
-																								}
-																							else if (format == VF_CLIENT_FULL)
-																								{
-																									if (GetStudyPlots (study_p, data_p))
+																									if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
 																										{
-																											if (AddPlotsToJSON (study_p, study_json_p, format, data_p))
-																												{
-																													success_flag = true;
-																												}
+																											add_item_flag = true;
 																										}
 																								}
-																							else
+																						}		/* if (format == VF_STORAGE) */
+																					else
+																						{
+																							if (AddValidDateToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
 																								{
-																									success_flag = true;
-																								}
-
-																							if (success_flag)
-																								{
-																									if (AddDatatype (study_json_p, DFTD_STUDY))
+																									if (AddValidDateToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
 																										{
-																											return study_json_p;
+																											add_item_flag = true;
 																										}
 																								}
 																						}
 
+																					if (add_item_flag)
+																						{
+
+																							if (AddCompoundIdToJSON (study_json_p, study_p -> st_id_p))
+																								{
+																									bool success_flag = false;
+
+																									if (format == VF_CLIENT_FULL)
+																										{
+																											if (GetStudyPlots (study_p, data_p))
+																												{
+																													if (AddPlotsToJSON (study_p, study_json_p, format, data_p))
+																														{
+																															success_flag = true;
+																														}
+																												}
+																										}
+																									else
+																										{
+																											success_flag = true;
+																										}
+
+																									if (success_flag)
+																										{
+																											if (AddDatatype (study_json_p, DFTD_STUDY))
+																												{
+																													return study_json_p;
+																												}
+																										}
+																								}
+
+																						}		/* if (add_item_flag) */
+
 																				}		/* if (add_item_flag) */
 
-																		}		/* if (add_item_flag) */
+																		}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S)) */
+
+
 
 																}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
 
