@@ -76,7 +76,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 
 			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 				{
-					if (SetUpStudiesListParameter (dfw_service_data_p, param_p))
+					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
 						{
 							def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 

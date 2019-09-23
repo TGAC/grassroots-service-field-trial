@@ -134,7 +134,7 @@ static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Se
 
 
 
-static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -142,7 +142,7 @@ static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Re
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionStudyParams (data_p, params_p))
+			if (AddSubmissionStudyParams (data_p, params_p, resource_p))
 				{
 					return params_p;
 				}
