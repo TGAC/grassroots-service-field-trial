@@ -72,6 +72,7 @@ PLOT_PREFIX const char *PL_REPLICATE_INDEX_S PLOT_VAL ("replicate_index");
 
 PLOT_PREFIX const char *PL_ROWS_S PLOT_VAL ("rows");
 
+PLOT_PREFIX const char *PL_INDEX_S PLOT_VAL ("index");
 
 
 typedef struct Plot
@@ -124,6 +125,8 @@ typedef struct Plot
 
 //	char *pl_treatments_s;
 
+	uint32 pl_index;
+
 	/**
 	 * A LinkedList of RowNodes
 	 * for all of the Rows in this
@@ -149,8 +152,9 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 row_index,
-																									const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, Study *parent_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length,
+																									const uint32 plot_index, const uint32 row_index, const uint32 column_index, const uint32 replicate, const char *trial_design_s,
+																									const char *growing_conditions_s, const char *treatments_s, Study *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 

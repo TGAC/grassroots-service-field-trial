@@ -107,10 +107,10 @@ typedef struct Study
 
 	FieldTrial *st_parent_p;
 
-	//char *st_location_s;
-	struct Location *st_location_p;
+	bson_oid_t *st_parent_id_p;
 
-	//Address *st_address_p;
+
+	struct Location *st_location_p;
 
 	char *st_soil_type_s;
 

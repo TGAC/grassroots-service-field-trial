@@ -53,6 +53,7 @@ static const char * const S_SOWING_TITLE_S = "Sowing date";
 static const char * const S_HARVEST_TITLE_S = "Harvest date";
 static const char * const S_WIDTH_TITLE_S = "Width";
 static const char * const S_LENGTH_TITLE_S = "Length";
+static const char * const S_INDEX_TITLE_S = "Plot ID";
 static const char * const S_ROW_TITLE_S = "Row";
 static const char * const S_COLUMN_TITLE_S = "Column";
 static const char * const S_RACK_TITLE_S = "Rack";
@@ -344,30 +345,32 @@ static json_t *GetTableParameterHints (void)
 								{
 									if (AddColumnParameterHint (S_LENGTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
 										{
-											if (AddColumnParameterHint (S_ROW_TITLE_S, PT_UNSIGNED_INT, hints_p))
+											if (AddColumnParameterHint (S_INDEX_TITLE_S, PT_UNSIGNED_INT, hints_p))
 												{
-													if (AddColumnParameterHint (S_COLUMN_TITLE_S, PT_UNSIGNED_INT, hints_p))
+													if (AddColumnParameterHint (S_ROW_TITLE_S, PT_UNSIGNED_INT, hints_p))
 														{
-															if (AddColumnParameterHint (S_REPLICATE_TITLE_S, PT_UNSIGNED_INT, hints_p))
+															if (AddColumnParameterHint (S_COLUMN_TITLE_S, PT_UNSIGNED_INT, hints_p))
 																{
-																	if (AddColumnParameterHint (S_RACK_TITLE_S, PT_UNSIGNED_INT, hints_p))
+																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, PT_UNSIGNED_INT, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_MATERIAL_TITLE_S, PT_STRING, hints_p))
+																			if (AddColumnParameterHint (S_RACK_TITLE_S, PT_UNSIGNED_INT, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_TRIAL_DESIGN_TITLE_S, PT_STRING, hints_p))
+																					if (AddColumnParameterHint (S_MATERIAL_TITLE_S, PT_STRING, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_GROWING_CONDITION_TITLE_S, PT_STRING, hints_p))
+																							if (AddColumnParameterHint (S_TRIAL_DESIGN_TITLE_S, PT_STRING, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_MATERIAL_TITLE_S, PT_STRING, hints_p))
+																									if (AddColumnParameterHint (S_GROWING_CONDITION_TITLE_S, PT_STRING, hints_p))
 																										{
-																											return hints_p;
+																											if (AddColumnParameterHint (S_MATERIAL_TITLE_S, PT_STRING, hints_p))
+																												{
+																													return hints_p;
+																												}
 																										}
 																								}
 																						}
 																				}
 																		}
 																}
-
 														}
 												}
 										}
@@ -450,140 +453,153 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 							if (material_p)
 								{
 									Plot *plot_p = NULL;
-									int32 row = -1;
 
-									if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
+									int32 index = -1;
+
+									if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &index))
 										{
-											int32 column = -1;
 
-											if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
+											int32 row = -1;
+
+											if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
 												{
-													/*
-													 * does the plot already exist?
-													 */
-													plot_p = GetPlotByRowAndColumn (row, column, area_p, data_p);
+													int32 column = -1;
 
-													if (!plot_p)
-														{
-															double width = 0.0;
-
-															if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width))
-																{
-																	double length = 0.0;
-
-																	if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length))
-																		{
-																			const char *growing_condition_s = GetJSONString (table_row_json_p, S_GROWING_CONDITION_TITLE_S);
-																			const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
-																			const char *trial_design_s = GetJSONString (table_row_json_p, S_TRIAL_DESIGN_TITLE_S);
-																			struct tm *sowing_date_p = NULL;
-																			struct tm *harvest_date_p = NULL;
-																			const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
-																			int32 replicate = 1;
-
-																			GetJSONStringAsInteger (table_row_json_p, S_REPLICATE_TITLE_S, &replicate);
-
-																			if (date_s)
-																				{
-																					sowing_date_p = GetTimeFromString (date_s);
-
-																					if (!sowing_date_p)
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
-																						}
-																				}
-
-																			date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
-																			if (date_s)
-																				{
-																					harvest_date_p = GetTimeFromString (date_s);
-
-																					if (!harvest_date_p)
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
-																						}
-																				}
-
-																			plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, area_p);
-
-																			if (plot_p)
-																				{
-																					if (!SavePlot (plot_p, data_p))
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
-																							plot_p = NULL;
-																						}		/* if (!SavePlot (plot_p, data_p)) */
-
-																				}		/* if (plot_p) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
-																				}
-
-																		}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
-																		}
-
-																}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
-																}
-
-														}		/* if (!plot_p) */
-
-
-													if (plot_p)
+													if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
 														{
 															/*
-															 * plot_p now has an id, so we can add the row/rack.
+															 * does the plot already exist?
 															 */
-															int32 rack = -1;
+															plot_p = GetPlotByRowAndColumn (row, column, area_p, data_p);
 
-															if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack))
+															if (!plot_p)
 																{
-																	Row *row_p = AllocateRow (NULL, rack, material_p, plot_p);
+																	double width = 0.0;
 
-																	if (row_p)
+																	if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width))
 																		{
-																			if (SaveRow (row_p, data_p, true))
+																			double length = 0.0;
+
+																			if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length))
 																				{
-																					++ num_imported;
+																					const char *growing_condition_s = GetJSONString (table_row_json_p, S_GROWING_CONDITION_TITLE_S);
+																					const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
+																					const char *trial_design_s = GetJSONString (table_row_json_p, S_TRIAL_DESIGN_TITLE_S);
+																					struct tm *sowing_date_p = NULL;
+																					struct tm *harvest_date_p = NULL;
+																					const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
+																					int32 replicate = 1;
+
+																					GetJSONStringAsInteger (table_row_json_p, S_REPLICATE_TITLE_S, &replicate);
+
+																					if (date_s)
+																						{
+																							sowing_date_p = GetTimeFromString (date_s);
+
+																							if (!sowing_date_p)
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
+																								}
+																						}
+
+																					date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
+																					if (date_s)
+																						{
+																							harvest_date_p = GetTimeFromString (date_s);
+
+																							if (!harvest_date_p)
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
+																								}
+																						}
+
+																					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, area_p);
+
+																					if (plot_p)
+																						{
+																							if (!SavePlot (plot_p, data_p))
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
+																									plot_p = NULL;
+																								}		/* if (!SavePlot (plot_p, data_p)) */
+
+																						}		/* if (plot_p) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
+																						}
+
+																				}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
+																				}
+
+																		}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
+																		}
+
+																}		/* if (!plot_p) */
+
+
+															if (plot_p)
+																{
+																	/*
+																	 * plot_p now has an id, so we can add the row/rack.
+																	 */
+																	int32 rack = -1;
+
+																	if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack))
+																		{
+																			Row *row_p = AllocateRow (NULL, rack, material_p, plot_p);
+
+																			if (row_p)
+																				{
+																					if (SaveRow (row_p, data_p, true))
+																						{
+																							++ num_imported;
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																						}
+
+																					FreeRow (row_p);
 																				}
 																			else
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
 																				}
 
-																			FreeRow (row_p);
-																		}
+																		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
 																		}
 
-																}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
-																}
+																	FreePlot (plot_p);
+																}		/* if (plot_p) */
 
-															FreePlot (plot_p);
-														}		/* if (plot_p) */
+														}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
+														}
 
-												}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
+												}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
 												}
 
-										}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
+										}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &index)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
 										}
+
 
 								}		/* if (material_p) */
 							else

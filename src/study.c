@@ -459,6 +459,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 
 																							if (format == VF_STORAGE)
 																								{
+
 																									success_flag = AddNamedCompoundIdToJSON (study_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S);
 																								}
 																							else if (format == VF_CLIENT_FULL)
@@ -510,7 +511,6 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 }
 
 
-
 Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, ST_NAME_S);
@@ -518,106 +518,117 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 
 	if (name_s)
 		{
-			bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
+			bson_oid_t *parent_field_trial_id_p = GetNewUnitialisedBSONOid ();
 
-			if (location_id_p)
+			if (parent_field_trial_id_p)
 				{
-					if (GetNamedIdFromJSON (json_p, ST_LOCATION_ID_S, location_id_p))
+					if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p))
 						{
-							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+							bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
 
-							if (id_p)
+							if (location_id_p)
 								{
-									if (GetMongoIdFromJSON (json_p, id_p))
+									if (GetNamedIdFromJSON (json_p, ST_LOCATION_ID_S, location_id_p))
 										{
-											FieldTrial *trial_p = NULL;
-											const char *parent_field_trial_id_s = NULL;
-											Location *location_p = NULL;
-											bool success_flag = true;
+											bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+											if (id_p)
 												{
-													if (! (location_p = GetLocationById (location_id_p, format, data_p)))
+													if (GetMongoIdFromJSON (json_p, id_p))
 														{
-															success_flag = false;
-														}
-												}
+															FieldTrial *trial_p = NULL;
+															Location *location_p = NULL;
+															bool success_flag = true;
 
-											if (success_flag)
-												{
-													struct tm *sowing_date_p = NULL;
-
-													if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p))
-														{
-															struct tm *harvest_date_p = NULL;
-
-															if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p))
+															if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 																{
-																	const char *soil_s = GetJSONString (json_p, ST_SOIL_S);
-																	const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
-																	const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
-																	const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
-																	Crop *current_crop_p = NULL;
-																	Crop *previous_crop_p = NULL;
-																	const KeyValuePair *aspect_p = NULL;
-																	int32 min_ph = ST_UNSET_PH;
-																	int32 max_ph = ST_UNSET_PH;
-
-																	if (aspect_s)
+																	if (! (location_p = GetLocationById (location_id_p, format, data_p)))
 																		{
-																			aspect_p = GetAspect (aspect_s);
-
-																			if (aspect_p)
-																				{
-																					aspect_s = aspect_p -> kvp_value_s;
-																				}
-																			else
-																				{
-																					aspect_s = NULL;
-																				}
+																			success_flag = false;
 																		}
-
-
-																	GetJSONInteger (json_p, ST_MIN_PH_S, &min_ph);
-																	GetJSONInteger (json_p, ST_MAX_PH_S, &max_ph);
-
-																	study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph, max_ph, data_p);
-
-																	/*
-																	 * The dates are copied by AllocateStudy so we can free our values.
-																	 */
-																	if (harvest_date_p)
-																		{
-																			FreeTime (harvest_date_p);
-																		}
-
-																}		/* if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p)) */
-
-															/*
-															 * The dates are copied by AllocateStudy so we can free our values.
-															 */
-															if (sowing_date_p)
-																{
-																	FreeTime (sowing_date_p);
 																}
 
-														}		/* if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p)) */
+															if (success_flag)
+																{
+																	struct tm *sowing_date_p = NULL;
 
-												}		/* if (success_flag) */
+																	if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p))
+																		{
+																			struct tm *harvest_date_p = NULL;
 
-										}
+																			if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p))
+																				{
+																					const char *soil_s = GetJSONString (json_p, ST_SOIL_S);
+																					const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
+																					const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
+																					const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
+																					Crop *current_crop_p = NULL;
+																					Crop *previous_crop_p = NULL;
+																					const KeyValuePair *aspect_p = NULL;
+																					int32 min_ph = ST_UNSET_PH;
+																					int32 max_ph = ST_UNSET_PH;
 
-									if (!study_p)
-										{
-											FreeBSONOid (id_p);
-										}
+																					if (aspect_s)
+																						{
+																							aspect_p = GetAspect (aspect_s);
 
-								}
+																							if (aspect_p)
+																								{
+																									aspect_s = aspect_p -> kvp_value_s;
+																								}
+																							else
+																								{
+																									aspect_s = NULL;
+																								}
+																						}
 
-						}		/* if (GetNamedIdFromJSON (json_p, ST_LOCATION_S, address_id_p)) */
 
-					FreeBSONOid (location_id_p);
-				}		/* if (location_id_p) */
+																					GetJSONInteger (json_p, ST_MIN_PH_S, &min_ph);
+																					GetJSONInteger (json_p, ST_MAX_PH_S, &max_ph);
+
+																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph, max_ph, data_p);
+
+																					/*
+																					 * The dates are copied by AllocateStudy so we can free our values.
+																					 */
+																					if (harvest_date_p)
+																						{
+																							FreeTime (harvest_date_p);
+																						}
+
+																				}		/* if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p)) */
+
+																			/*
+																			 * The dates are copied by AllocateStudy so we can free our values.
+																			 */
+																			if (sowing_date_p)
+																				{
+																					FreeTime (sowing_date_p);
+																				}
+
+																		}		/* if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p)) */
+
+																}		/* if (success_flag) */
+
+														}
+
+													if (!study_p)
+														{
+															FreeBSONOid (id_p);
+														}
+
+												}
+
+										}		/* if (GetNamedIdFromJSON (json_p, ST_LOCATION_S, address_id_p)) */
+
+									FreeBSONOid (location_id_p);
+								}		/* if (location_id_p) */
+
+						}		/* if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p)) */
+
+					FreeBSONOid (parent_field_trial_id_p);
+				}		/* if (parent_field_trial_id_p) */
+
 
 		}		/* if (name_s) */
 
