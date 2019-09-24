@@ -47,6 +47,7 @@ SRCS 	= \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
 	dfw_util.c \
+	drilling_jobs.c \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \

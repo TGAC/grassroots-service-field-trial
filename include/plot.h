@@ -81,10 +81,8 @@ typedef struct Plot
 
 	Study *pl_parent_p;
 
-	/*
-	 * Trial Design
-	 */
 
+	uint32 pl_index;
 
 	/*
 	 * Drilling
@@ -120,12 +118,7 @@ typedef struct Plot
 
 	uint32 pl_replicate_index;
 
-//	char *pl_trial_design_s;
 
-
-//	char *pl_treatments_s;
-
-	uint32 pl_index;
 
 	/**
 	 * A LinkedList of RowNodes
