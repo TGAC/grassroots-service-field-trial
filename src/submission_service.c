@@ -185,7 +185,7 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (s
 
 
 
-static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial submission service parameters", "The parameters used for the DFWFieldTrial submission service");
 
@@ -195,7 +195,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 
 			if (AddSubmissionFieldTrialParams (data_p, params_p))
 				{
-					if (AddSubmissionStudyParams (data_p, params_p))
+					if (AddSubmissionStudyParams (data_p, params_p, resource_p))
 						{
 							if (AddSubmissionLocationParams (data_p, params_p))
 								{

@@ -45,6 +45,8 @@
 /*
  * Study parameters
  */
+STUDY_JOB_PREFIX NamedParameterType STUDY_ID STUDY_JOB_STRUCT_VAL("ST Id", PT_STRING);
+
 STUDY_JOB_PREFIX NamedParameterType STUDY_NAME STUDY_JOB_STRUCT_VAL("ST Name", PT_STRING);
 STUDY_JOB_PREFIX NamedParameterType STUDY_SOIL STUDY_JOB_STRUCT_VAL("ST Soil", PT_STRING);
 
@@ -55,7 +57,6 @@ STUDY_JOB_PREFIX NamedParameterType STUDY_HARVEST_YEAR STUDY_JOB_STRUCT_VAL("ST 
 STUDY_JOB_PREFIX NamedParameterType STUDY_ASPECT STUDY_JOB_STRUCT_VAL("ST Field Aspect", PT_STRING);
 STUDY_JOB_PREFIX NamedParameterType STUDY_SLOPE STUDY_JOB_STRUCT_VAL("ST Slope", PT_STRING);
 
-STUDY_JOB_PREFIX NamedParameterType STUDY_ID STUDY_JOB_STRUCT_VAL("Study to search for", PT_STRING);
 STUDY_JOB_PREFIX NamedParameterType STUDY_GET_ALL_PLOTS STUDY_JOB_STRUCT_VAL("Get all Plots for Study", PT_BOOLEAN);
 
 
@@ -73,6 +74,7 @@ STUDY_JOB_PREFIX NamedParameterType STUDY_LOCATIONS_LIST STUDY_JOB_STRUCT_VAL("L
 
 
 
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -80,7 +82,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
@@ -101,7 +103,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchStudyParameterTypeForNamedParameter 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const char *empty_option_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
