@@ -150,69 +150,78 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																				{
 																					if (SetUpLocationsListParameter (dfw_data_p, param_p, false))
 																						{
-																							if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
+																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NOTES.npt_type, STUDY_NOTES.npt_name_s, "Notes", "Any additional information about the study", def, PL_ALL)) != NULL)
 																								{
-																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL)
+																									if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
 																										{
-																											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", def, PL_ALL)) != NULL)
+																											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL)
 																												{
-																													if (SetUpCropsListParameter (dfw_data_p, param_p))
+																													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", def, PL_ALL)) != NULL)
 																														{
-																															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", def, PL_ALL)) != NULL)
+																															if (SetUpCropsListParameter (dfw_data_p, param_p))
 																																{
-																																	if (SetUpCropsListParameter (dfw_data_p, param_p))
+																																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", def, PL_ALL)) != NULL)
 																																		{
-																																			if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
+																																			if (SetUpCropsListParameter (dfw_data_p, param_p))
 																																				{
-																																					if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																					if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
 																																						{
-																																							success_flag = true;
-																																						}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
+																																							if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																								{
+																																									success_flag = true;
+																																								}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
+																																							else
+																																								{
+																																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MAX_PH.npt_name_s);
+																																								}
+																																						}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
 																																					else
 																																						{
-																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MAX_PH.npt_name_s);
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MIN_PH.npt_name_s);
 																																						}
-																																				}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
+
+																																				}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 																																			else
 																																				{
-																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MIN_PH.npt_name_s);
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_PREVIOUS_CROP.npt_name_s);;
 																																				}
 
-																																		}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
+																																		}		/* if (param_p) */
 																																	else
 																																		{
-																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_PREVIOUS_CROP.npt_name_s);;
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PREVIOUS_CROP.npt_name_s);
 																																		}
-
-																																}		/* if (param_p) */
+																																}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 																															else
 																																{
-																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PREVIOUS_CROP.npt_name_s);
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_THIS_CROP.npt_name_s);
 																																}
-																														}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
+
+																														}		/* if (param_p) */
 																													else
 																														{
-																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_THIS_CROP.npt_name_s);
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_THIS_CROP.npt_name_s);
 																														}
 
-																												}		/* if (param_p) */
+
+																												}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, SLOPE.npt_type, SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL) */
 																											else
 																												{
-																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_THIS_CROP.npt_name_s);
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SLOPE.npt_name_s);
 																												}
 
-
-																										}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, SLOPE.npt_type, SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL) */
+																										}		/* if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL) */
 																									else
 																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SLOPE.npt_name_s);
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed");
 																										}
 
-																								}		/* if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL) */
+																								}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NOTES.npt_type, STUDY_NOTES.npt_name_s, "Notes", "Any additional information about the study", def, PL_ALL)) != NULL) */
 																							else
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed");
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_NOTES.npt_name_s);
 																								}
+
 																						}
 																					else
 																						{
@@ -344,6 +353,10 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	else if (strcmp (param_name_s, STUDY_MAX_PH.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_MAX_PH.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_NOTES.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_NOTES.npt_type;
 		}
 	else
 		{
@@ -652,7 +665,6 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 	OperationStatus status = OS_FAILED;
 	SharedType name_value;
 
-
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &name_value))
 		{
 			SharedType parent_field_trial_value;
@@ -672,89 +684,100 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 									if (location_p)
 										{
-											Crop *current_crop_p = NULL;
-											SharedType current_crop_value;
+											SharedType notes_value;
 
-											GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_THIS_CROP.npt_name_s, &current_crop_value);
-
-											if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p, data_p))
+											if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NOTES.npt_name_s, &notes_value))
 												{
-													Crop *previous_crop_p = NULL;
-													SharedType previous_crop_value;
+													Crop *current_crop_p = NULL;
+													SharedType current_crop_value;
 
-													GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &previous_crop_value);
+													GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_THIS_CROP.npt_name_s, &current_crop_value);
 
-													if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p, data_p))
+													if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p, data_p))
 														{
-															SharedType soil_value;
-															SharedType aspect_value;
-															SharedType slope_value;
-															SharedType data_link_value;
-															SharedType sowing_year_value;
-															SharedType harvest_year_value;
-															SharedType min_ph_value;
-															SharedType max_ph_value;
-															Study *study_p = NULL;
-															struct tm *sowing_date_p = NULL;
-															struct tm *harvest_date_p = NULL;
+															Crop *previous_crop_p = NULL;
+															SharedType previous_crop_value;
 
-															min_ph_value.st_long_value = ST_UNSET_PH;
-															max_ph_value.st_long_value = ST_UNSET_PH;
+															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &previous_crop_value);
 
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value);
-															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value);
-															GetParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value, true);
-															GetParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value, true);
-
-
-															if (IsValidDate (sowing_year_value.st_time_p))
+															if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p, data_p))
 																{
-																	sowing_date_p = sowing_year_value.st_time_p;
-																}
+																	SharedType soil_value;
+																	SharedType aspect_value;
+																	SharedType slope_value;
+																	SharedType data_link_value;
+																	SharedType sowing_year_value;
+																	SharedType harvest_year_value;
+																	SharedType min_ph_value;
+																	SharedType max_ph_value;
+																	Study *study_p = NULL;
+																	struct tm *sowing_date_p = NULL;
+																	struct tm *harvest_date_p = NULL;
 
-															if (IsValidDate (harvest_year_value.st_time_p))
-																{
-																	harvest_date_p = harvest_year_value.st_time_p;
-																}
+																	min_ph_value.st_long_value = ST_UNSET_PH;
+																	max_ph_value.st_long_value = ST_UNSET_PH;
 
-															study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph_value.st_long_value, max_ph_value.st_long_value, data_p);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value);
+																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value);
 
-															if (study_p)
-																{
-																	status = SaveStudy (study_p, job_p, data_p);
 
-																	if (status == OS_FAILED)
+																	if (IsValidDate (sowing_year_value.st_time_p))
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_value.st_string_value_s);
+																			sowing_date_p = sowing_year_value.st_time_p;
 																		}
 
-																	FreeStudy (study_p);
-																	study_freed_flag = true;
-																}
+																	if (IsValidDate (harvest_year_value.st_time_p))
+																		{
+																			harvest_date_p = harvest_year_value.st_time_p;
+																		}
+
+																	study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph_value.st_long_value, max_ph_value.st_long_value, notes_value.st_string_value_s, data_p);
+
+																	if (study_p)
+																		{
+																			status = SaveStudy (study_p, job_p, data_p);
+
+																			if (status == OS_FAILED)
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_value.st_string_value_s);
+																				}
+
+																			FreeStudy (study_p);
+																			study_freed_flag = true;
+																		}
+
+
+																	if (!study_freed_flag)
+																		{
+																			if (previous_crop_p)
+																				{
+																					FreeCrop (previous_crop_p);
+																				}
+																		}
+																}		/* if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p)) */
 
 
 															if (!study_freed_flag)
 																{
-																	if (previous_crop_p)
+																	if (current_crop_p)
 																		{
-																			FreeCrop (previous_crop_p);
+																			FreeCrop (current_crop_p);
 																		}
 																}
-														}		/* if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p)) */
+														}		/* if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p)) */
 
+												}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NOTES.npt_name_s, &notes_value)) */
+											else
+												{
 
-													if (!study_freed_flag)
-														{
-															if (current_crop_p)
-																{
-																	FreeCrop (current_crop_p);
-																}
-														}
-												}		/* if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p)) */
+												}
+
 
 
 											if (!study_freed_flag)

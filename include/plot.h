@@ -149,6 +149,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct
 																									const uint32 plot_index, const uint32 row_index, const uint32 column_index, const uint32 replicate, const char *trial_design_s,
 																									const char *growing_conditions_s, const char *treatments_s, Study *parent_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlotFromDrillingData (bson_oid_t *id_p, const struct tm *sowing_date_p, const uint32 plot_index, const uint32 row_index,
+																																	const uint32 column_index, const uint32 replicate, const char *sowing_rate_s, Study *parent_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL PlotNode *AllocatePlotNode (Plot *plot_p);

@@ -35,6 +35,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFie
 
 
 
+
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 plot_index, const uint32 row_index,
 										const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, Study *parent_p)
 {

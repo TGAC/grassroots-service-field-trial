@@ -114,7 +114,7 @@ static const char *GetCropSubmissionServiceName (Service * UNUSED_PARAM (service
 
 static const char *GetCropSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial locations";
+	return "A service to submit field trial crop data";
 }
 
 

@@ -43,6 +43,7 @@
 #include "submit_study.h"
 #include "submit_treatments.h"
 #include "submit_crop.h"
+#include "submit_drilling.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -80,6 +81,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
 	Service *treatments_submission_service_p = GetTreatmentsSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
+	Service *drilling_submission_service_p = GetDrillingSubmissionService  (grassroots_p);
 
 	if (submission_service_p)
 		{
@@ -126,6 +128,12 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
+	if (drilling_submission_service_p)
+		{
+			++ num_services;
+		}
+
+
 	if (num_services)
 		{
 			ServicesArray *services_p = AllocateServicesArray (num_services);
@@ -142,6 +150,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, location_submission_service_p);
 					service_pp = AddValidService (service_pp, gene_bank_submission_service_p);
 					service_pp = AddValidService (service_pp, material_submission_service_p);
+					service_pp = AddValidService (service_pp, drilling_submission_service_p);
 					service_pp = AddValidService (service_pp, treatments_submission_service_p);
 					service_pp = AddValidService (service_pp, crop_submission_service_p);
 

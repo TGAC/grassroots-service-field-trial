@@ -90,6 +90,9 @@ STUDY_PREFIX const char *ST_CURRENT_CROP_S STUDY_VAL ("current_crop");
 STUDY_PREFIX const char *ST_PREVIOUS_CROP_S STUDY_VAL ("previous_crop");
 
 
+STUDY_PREFIX const char *ST_NOTES_S STUDY_VAL ("notes");
+
+
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
 
@@ -108,7 +111,6 @@ typedef struct Study
 	FieldTrial *st_parent_p;
 
 	bson_oid_t *st_parent_id_p;
-
 
 	struct Location *st_location_p;
 
@@ -141,6 +143,8 @@ typedef struct Study
 
 	int32 st_max_ph;
 
+	const char *st_notes_s;
+
 } Study;
 
 
@@ -161,7 +165,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *notes_s, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 
