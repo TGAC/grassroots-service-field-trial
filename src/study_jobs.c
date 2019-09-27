@@ -109,13 +109,14 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	Parameter *param_p = NULL;
 	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
+	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
 
 	def.st_string_value_s = NULL;
 
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", def, PL_ADVANCED)) != NULL)
 		{
-			if (SetUpStudiesListParameter (data_p, param_p, S_EMPTY_LIST_OPTION_S))
+			if (SetUpStudiesListParameter (dfw_data_p, param_p, S_EMPTY_LIST_OPTION_S))
 				{
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", def, PL_ALL)) != NULL)
 						{
@@ -142,8 +143,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 															if (param_p)
 																{
-																	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
-
 																	if (SetUpFieldTrialsListParameter (dfw_data_p, param_p))
 																		{
 																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL)) != NULL)
@@ -164,9 +163,9 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																																		{
 																																			if (SetUpCropsListParameter (dfw_data_p, param_p))
 																																				{
-																																					if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
+																																					if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range or -1 if the value is unknown"))
 																																						{
-																																							if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																							if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range or -1 if the value is unknown"))
 																																								{
 																																									success_flag = true;
 																																								}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */

@@ -84,28 +84,41 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 
 															if (plots_p)
 																{
-																	Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																	char *copied_notes_s = NULL;
 
-																	if (study_p)
+																	if (CloneValidString (notes_s, &copied_notes_s))
 																		{
-																			study_p -> st_id_p = id_p;
-																			study_p -> st_name_s = copied_name_s;
-																			study_p -> st_data_url_s = copied_url_s;
-																			study_p -> st_soil_type_s = copied_soil_s;
-																			study_p -> st_aspect_s = copied_aspect_s;
-																			study_p -> st_slope_s = copied_slope_s;
-																			study_p -> st_sowing_date_p = copied_sowing_date_p;
-																			study_p -> st_harvest_date_p = copied_harvest_date_p;
-																			study_p -> st_parent_p = parent_field_trial_p;
-																			study_p -> st_location_p = location_p;
-																			study_p -> st_plots_p = plots_p;
-																			study_p -> st_min_ph = min_ph;
-																			study_p -> st_max_ph = max_ph;
-																			study_p -> st_current_crop_p = current_crop_p;
-																			study_p -> st_previous_crop_p = previous_crop_p;
+																			Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-																			return study_p;
-																		}
+																			if (study_p)
+																				{
+																					study_p -> st_id_p = id_p;
+																					study_p -> st_name_s = copied_name_s;
+																					study_p -> st_data_url_s = copied_url_s;
+																					study_p -> st_soil_type_s = copied_soil_s;
+																					study_p -> st_aspect_s = copied_aspect_s;
+																					study_p -> st_slope_s = copied_slope_s;
+																					study_p -> st_sowing_date_p = copied_sowing_date_p;
+																					study_p -> st_harvest_date_p = copied_harvest_date_p;
+																					study_p -> st_parent_p = parent_field_trial_p;
+																					study_p -> st_location_p = location_p;
+																					study_p -> st_plots_p = plots_p;
+																					study_p -> st_min_ph = min_ph;
+																					study_p -> st_max_ph = max_ph;
+																					study_p -> st_current_crop_p = current_crop_p;
+																					study_p -> st_previous_crop_p = previous_crop_p;
+																					study_p -> st_notes_s = copied_notes_s;
+
+																					return study_p;
+																				}
+
+																			if (copied_notes_s)
+																				{
+																					FreeCopiedString (copied_notes_s);
+																				}
+
+																		}		/* if (CloneValidString (notes_s, &copied_notes_s)) */
+
 
 																	FreeLinkedList (plots_p);
 																}		/* if (plots_p) */

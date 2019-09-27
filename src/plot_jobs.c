@@ -101,11 +101,6 @@ static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_d
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
-
-static bool GetJSONStringAsInteger (const json_t *json_p, const char * const key_s, int *answer_p);
-
-static bool GetJSONStringAsDouble (const json_t *json_p, const char * const key_s, double *answer_p);
-
 static json_t *GetTableParameterHints (void);
 
 
@@ -633,34 +628,6 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 	return success_flag;
 }
 
-
-static bool GetJSONStringAsInteger (const json_t *json_p, const char * const key_s, int *answer_p)
-{
-	bool success_flag = false;
-	const char *value_s = GetJSONString (json_p, key_s);
-
-	if (value_s)
-		{
-			success_flag = GetValidInteger (&value_s, answer_p);
-		}		/* if (value_s) */
-
-	return success_flag;
-}
-
-
-
-static bool GetJSONStringAsDouble (const json_t *json_p, const char * const key_s, double *answer_p)
-{
-	bool success_flag = false;
-	const char *value_s = GetJSONString (json_p, key_s);
-
-	if (value_s)
-		{
-			success_flag = GetValidRealNumber (&value_s, answer_p, NULL);
-		}		/* if (value_s) */
-
-	return success_flag;
-}
 
 
 static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char column_delimiter, const DFWFieldTrialServiceData *data_p)

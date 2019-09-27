@@ -448,7 +448,7 @@ bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p)
 
 Crop *GetCropByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p)
 {
-	Crop *crop_p = (Crop *) GetDFWObjectByIdString (id_s, DFTD_GENE_BANK, GetCropCallback, VF_STORAGE, data_p);
+	Crop *crop_p = (Crop *) GetDFWObjectByIdString (id_s, DFTD_CROP, GetCropCallback, VF_STORAGE, data_p);
 
 	return crop_p;
 }

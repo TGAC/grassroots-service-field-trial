@@ -81,7 +81,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
 	Service *treatments_submission_service_p = GetTreatmentsSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
-	Service *drilling_submission_service_p = GetDrillingSubmissionService  (grassroots_p);
+	Service *drilling_submission_service_p = NULL; // GetDrillingSubmissionService  (grassroots_p);
 
 	if (submission_service_p)
 		{

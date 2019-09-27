@@ -139,9 +139,9 @@ typedef struct Study
 
 	Crop *st_previous_crop_p;
 
-	int32 st_min_ph;
+	double st_min_ph;
 
-	int32 st_max_ph;
+	double st_max_ph;
 
 	const char *st_notes_s;
 

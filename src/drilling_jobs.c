@@ -24,6 +24,7 @@
 #include "plot.h"
 #include "drilling_jobs.h"
 #include "study_jobs.h"
+#include "material.h"
 
 typedef enum
 {
@@ -66,6 +67,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 static json_t *GetTableParameterHints (void);
 
+static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -169,7 +171,7 @@ bool RunForSubmissionDrillingParams (DFWFieldTrialServiceData *data_p, Parameter
 							delimiter.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 							GetParameterValueFromParameterSet (param_set_p, S_DRILLING_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter, true);
 
-							success_flag = AddDrillingsTableFromTabularString (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
+							//success_flag = AddDrillingsTableFromTabularString (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
 						}
 
 					job_done_flag = true;
@@ -309,11 +311,11 @@ static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_jso
 					json_t *table_row_json_p = json_array_get (drillings_json_p, i);
 					Material *material_p = NULL;
 
-					const char *material_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
+					const char *accessionn_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
 
-					if (material_s)
+					if (accessionn_s)
 						{
-							material_p = GetOrCreateMaterialByInternalName (material_s, study_p, data_p);
+							material_p = GetOrCreateMaterialByInternalName (accessionn_s, study_p, data_p);
 
 							if (material_p)
 								{
@@ -341,7 +343,7 @@ static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_jso
 															/*
 															 * does the plot already exist?
 															 */
-															plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
+															//plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
 
 															if (!plot_p)
 																{
@@ -360,71 +362,12 @@ static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_jso
 																				}
 																		}
 
-																					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, study_p);
-
-																					if (plot_p)
-																						{
-																							if (!SavePlot (plot_p, data_p))
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
-																									plot_p = NULL;
-																								}		/* if (!SavePlot (plot_p, data_p)) */
-
-																						}		/* if (plot_p) */
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
-																						}
-
-																				}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
-																				}
-
-																		}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
-																		}
-
 																}		/* if (!plot_p) */
 
 
 															if (plot_p)
 																{
-																	/*
-																	 * plot_p now has an id, so we can add the row/rack.
-																	 */
-																	int32 rack = -1;
 
-																	if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack))
-																		{
-																			Row *row_p = AllocateRow (NULL, rack, material_p, plot_p);
-
-																			if (row_p)
-																				{
-																					if (SaveRow (row_p, data_p, true))
-																						{
-																							++ num_imported;
-																						}
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
-																						}
-
-																					FreeRow (row_p);
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
-																				}
-
-																		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
-																		}
 
 																	FreePlot (plot_p);
 																}		/* if (plot_p) */
@@ -451,13 +394,13 @@ static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_jso
 								}		/* if (material_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", material_s, study_P -> st_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accessionn_s, study_p -> st_name_s);
 								}
 
 						}		/* if (material_s) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_MATERIAL_TITLE_S);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
 						}
 
 				}		/* for (i = 0; i < num_rows; ++ i) */
