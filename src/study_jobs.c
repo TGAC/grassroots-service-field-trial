@@ -840,10 +840,21 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 
 			if (param_p)
 				{
-					return param_p;
-				}
+					if (SetParameterOptional (param_p, true, "Unknown"))
+						{
+							return param_p;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetParameterOptional failed for parameter \"%s\"", param_type_p -> npt_name_s);
+						}
 
-			FreeParameterBounds (bounds_p, param_type_p -> npt_type);
+					FreeParameter (param_p);
+				}
+			else
+				{
+					FreeParameterBounds (bounds_p, param_type_p -> npt_type);
+				}
 		}		/* if (bounds_p) */
 
 	return NULL;
