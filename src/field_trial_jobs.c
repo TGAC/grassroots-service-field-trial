@@ -47,11 +47,22 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
-bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
+
+
+bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	SharedType def;
+	Study *active_study_p = NULL;
+
+	if (resource_p)
+		{
+			if (resource_p -> re_data_p)
+				{
+					active_study_p = GetStudyFromJSONResource (resource_p -> re_data_p, data_p);
+				}
+		}
 
 
 	def.st_string_value_s = NULL;
@@ -655,3 +666,5 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 	return success_flag;
 }
+
+

@@ -89,8 +89,7 @@ STUDY_PREFIX const char *ST_CURRENT_CROP_S STUDY_VAL ("current_crop");
 
 STUDY_PREFIX const char *ST_PREVIOUS_CROP_S STUDY_VAL ("previous_crop");
 
-
-STUDY_PREFIX const char *ST_NOTES_S STUDY_VAL ("notes");
+STUDY_PREFIX const char *ST_DESCRIPTION_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "description");
 
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
@@ -143,7 +142,7 @@ typedef struct Study
 
 	double st_max_ph;
 
-	const char *st_notes_s;
+	const char *st_description_s;
 
 } Study;
 

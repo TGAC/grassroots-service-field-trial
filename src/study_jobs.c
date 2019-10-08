@@ -98,6 +98,8 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 
 static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTrialServiceData *data_p);
 
+static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
+
 
 /*
  * API DEFINITIONS
@@ -840,16 +842,7 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 
 			if (param_p)
 				{
-					if (SetParameterOptional (param_p, true, "Unknown"))
-						{
-							return param_p;
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetParameterOptional failed for parameter \"%s\"", param_type_p -> npt_name_s);
-						}
-
-					FreeParameter (param_p);
+					return param_p;
 				}
 			else
 				{
@@ -1404,5 +1397,67 @@ static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTria
 
 	return success_flag;
 }
+
+
+
+static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p)
+{
+	const json_t *param_set_json_p = json_object_get (resource_data_p, PARAM_SET_KEY_S);
+
+	if (param_set_json_p)
+		{
+			const json_t *params_json_p = json_object_get (resource_data_p, PARAM_SET_PARAMS_S);
+
+			if (params_json_p)
+				{
+					if (json_is_array (params_json_p))
+						{
+							const size_t num_params = json_array_size (params_json_p);
+							size_t i = 0;
+
+							for (i = 0; i < num_params; ++ i)
+								{
+									const json_t *param_json_p = json_array_get (params_json_p, i);
+									const char *param_name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+									if (param_name_s)
+										{
+											/*
+											 * Is this the Study ID parameter?
+											 */
+											if (strcmp (param_name_s, STUDY_ID.npt_name_s) == 0)
+												{
+													const char *id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
+
+													if (id_s)
+														{
+															Study *study_p = GetStudyByIdString (id_s, VF_STORAGE, data_p);
+
+															if (study_p)
+																{
+																	return study_p;
+																}		/* if (study_p) */
+															else
+																{
+
+																}
+
+														}		/* if (id_s) */
+
+												}
+
+										}		/* if (param_name_s) */
+
+								}		/* for (i = 0; i < num_params; ++ i) */
+
+						}		/* if (json_is_array (params_json_p)) */
+
+				}		/* if (params_json_p) */
+
+		}		/* if (param_set_json_p) */
+
+	return NULL;
+}
+
 
 

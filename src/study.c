@@ -107,7 +107,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 																					study_p -> st_max_ph = max_ph;
 																					study_p -> st_current_crop_p = current_crop_p;
 																					study_p -> st_previous_crop_p = previous_crop_p;
-																					study_p -> st_notes_s = copied_notes_s;
+																					study_p -> st_description_s = copied_notes_s;
 
 																					return study_p;
 																				}
@@ -398,7 +398,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 						{
 							if ((study_p -> st_max_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MAX_PH_S, study_p -> st_min_ph)))
 								{
-									if ((IsStringEmpty (study_p -> st_notes_s)) || (SetJSONString (study_json_p, ST_NOTES_S, study_p -> st_notes_s)))
+									if ((IsStringEmpty (study_p -> st_description_s)) || (SetJSONString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s)))
 										{
 											if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s)))
 												{
@@ -580,7 +580,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
 																					const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
 																					const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
-																					const char *notes_s = GetJSONString (json_p, ST_NOTES_S);
+																					const char *notes_s = GetJSONString (json_p, ST_DESCRIPTION_S);
 																					Crop *current_crop_p = NULL;
 																					Crop *previous_crop_p = NULL;
 																					const KeyValuePair *aspect_p = NULL;

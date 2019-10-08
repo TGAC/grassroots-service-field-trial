@@ -131,7 +131,7 @@ static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (stru
 
 
 
-static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -139,7 +139,7 @@ static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionFieldTrialParams (data_p, params_p))
+			if (AddSubmissionFieldTrialParams (data_p, params_p, resource_p))
 				{
 					return params_p;
 				}
