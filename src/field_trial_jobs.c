@@ -49,21 +49,11 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 
 
 
-bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	SharedType def;
-	Study *active_study_p = NULL;
-
-	if (resource_p)
-		{
-			if (resource_p -> re_data_p)
-				{
-					active_study_p = GetStudyFromJSONResource (resource_p -> re_data_p, data_p);
-				}
-		}
-
 
 	def.st_string_value_s = NULL;
 
