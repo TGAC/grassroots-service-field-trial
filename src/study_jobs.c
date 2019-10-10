@@ -101,6 +101,9 @@ static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTria
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
 
 
+static bool GetStudyDefaultValue (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p);
+
+
 /*
  * API DEFINITIONS
  */
@@ -112,9 +115,36 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
 	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	const json_t *params_json_p = NULL;
 
 	def.st_string_value_s = NULL;
 
+
+	/*
+	 * Have we been set some parameter values to refresh from?
+	 */
+	if (resource_p && (resource_p -> re_data_p))
+		{
+			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
+
+			if (param_set_json_p)
+				{
+					params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
+
+					if (!params_json_p)
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
+				}
+
+		}		/* if (resource_p && (resource_p -> re_data_p)) */
+
+
+	bool GetStudyDefaultValue (SharedType *def_p, )
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", def, PL_ADVANCED)) != NULL)
 		{
@@ -659,6 +689,48 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
  */
 
 
+static bool GetStudyDefaultValue (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p)
+{
+	bool success_flag = false;
+
+	if (params_json_p)
+		{
+			const size_t num_entries = json_array_size (params_json_p);
+			size_t i;
+
+			for (i = 0; i < num_entries; ++ i)
+				{
+					const json_t *param_json_p = json_array_get (params_json_p, i);
+					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+					if (name_s)
+						{
+							if (strcmp (name_s, param_type.npt_name_s) == 0)
+								{
+									if (GetValueFromJSON (param_json_p, PARAM_CURRENT_VALUE_S, param_type.npt_type, value_p))
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to set \"%s\" from \"%s\"", param_type.npt_name_s, PARAM_CURRENT_VALUE_S);
+										}
+
+									/* force exit from loop */
+									i = num_entries;
+								}
+						}		/* if (name_s) */
+
+				}		/* for (i = 0; i < num_entries; ++ i) */
+
+		}		/* if (params_json_p) */
+	else
+		{
+
+		}
+
+	return success_flag;
+}
 
 
 static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
@@ -963,12 +1035,7 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Paramete
 														{
 															option.st_string_value_s = id_s;
 
-															if (!def.st_string_value_s)
-																{
-																	def.st_string_value_s = study_p -> st_name_s;
-																}
-
-															if (!CreateAndAddParameterOptionToParameter (param_p, def, study_p -> st_name_s))
+															if (!CreateAndAddParameterOptionToParameter (param_p, option, study_p -> st_name_s))
 																{
 																	success_flag = false;
 																	i = num_results;
@@ -1431,7 +1498,7 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 
 													if (id_s)
 														{
-															Study *study_p = GetStudyByIdString (id_s, VF_STORAGE, data_p);
+															Study *study_p = GetStudyByIdString (id_s, VF_STORAGE, (DFWFieldTrialServiceData *) data_p);
 
 															if (study_p)
 																{
