@@ -101,7 +101,20 @@ static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTria
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
 
 
-static bool GetStudyDefaultValue (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p);
+static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p);
+
+
+static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
+																						const char **this_crop_ss, const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp,
+																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp);
+
+
+static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, const char **this_crop_ss,
+													 const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
+													 double64 **ph_min_pp, double64 **ph_max_pp);
+
+static Study *GetStudyFromResource (Resource *resource_p, DFWFieldTrialServiceData *data_p);
+
 
 
 /*
@@ -115,65 +128,38 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
 	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
-	const json_t *params_json_p = NULL;
-	Study *active_study_p = NULL;
 
-	def.st_string_value_s = NULL;
+	char *id_s = NULL;
+	const char *name_s = NULL;
+	const char *soil_s = NULL;
+	const char *link_s = NULL;
+	const char *slope_s = NULL;
+	const char *aspect_s = NULL;
+	const char *this_crop_s= NULL;
+	const char *previous_crop_s = NULL;
+	const char *trial_s = NULL;
+	const char *location_s = NULL;
+	const char *notes_s = NULL;
+	struct tm *sowing_time_p = NULL;
+	struct tm *harvest_time_p = NULL;
+	double64 *ph_min_p = NULL;
+	double64 *ph_max_p = NULL;
 
-
-	/*
-	 * Have we been set some parameter values to refresh from?
-	 */
-	if (resource_p && (resource_p -> re_data_p))
-		{
-			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
-
-			if (param_set_json_p)
-				{
-					params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
-
-					if (!params_json_p)
-						{
-							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
-						}
-				}
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
-				}
-
-		}		/* if (resource_p && (resource_p -> re_data_p)) */
-
-
-	/*
-	 * Do we have an existing study id?
-	 */
-	if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL))
-		{
-			active_study_p = GetStudyByIdString (def.st_string_value_s, VF_STORAGE, dfw_data_p);
-
-			if (!active_study_p)
-				{
-
-				}		/* if (study_p) */
-
-		}		/* if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL)) */
-
+	Study *active_study_p = GetStudyFromResource (resource_p, dfw_data_p);
 
 	if (active_study_p)
 		{
-			char *id_s = GetBSONOidAsString (active_study_p -> st_id_p);
 
-			if (id_s)
-				{
-					def.st_string_value_s = id_s;
-				}
 		}
+
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", def, PL_ADVANCED)) != NULL)
 		{
 			if (SetUpStudiesListParameter (dfw_data_p, param_p, S_EMPTY_LIST_OPTION_S))
 				{
+					ClearSharedType (&def, STUDY_ID.npt_type);
+
+
 					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", def, PL_ALL)) != NULL)
 						{
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SOIL.npt_type, STUDY_SOIL.npt_name_s, "Soil", "The soil of the Study", def, PL_ALL)) != NULL)
@@ -713,7 +699,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
  */
 
 
-static bool GetStudyDefaultValue (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p)
+static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p)
 {
 	bool success_flag = false;
 
@@ -762,6 +748,79 @@ static bool GetStudyDefaultValue (SharedType *value_p, const json_t *params_json
 
 	return success_flag;
 }
+
+
+static bool GetStudyDefaultValues (SharedType *value_p, const Study *study_p, const NamedParameterType param_type, void *default_p)
+{
+	bool success_flag = false;
+
+	if (params_json_p)
+		{
+			const size_t num_entries = json_array_size (params_json_p);
+			size_t i;
+
+			for (i = 0; i < num_entries; ++ i)
+				{
+					const json_t *param_json_p = json_array_get (params_json_p, i);
+					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+					if (name_s)
+						{
+							if (strcmp (name_s, param_type.npt_name_s) == 0)
+								{
+									if (GetValueFromJSON (param_json_p, PARAM_CURRENT_VALUE_S, param_type.npt_type, value_p))
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to set \"%s\" from \"%s\"", param_type.npt_name_s, PARAM_CURRENT_VALUE_S);
+										}
+
+									/* force exit from loop */
+									i = num_entries;
+								}
+						}		/* if (name_s) */
+
+				}		/* for (i = 0; i < num_entries; ++ i) */
+
+		}		/* if (params_json_p) */
+	else
+		{
+			if (SetSharedTypeValue (value_p, param_type.npt_type, default_p, NULL))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to set default value for \"%s\"", param_type.npt_name_s);
+				}
+		}
+
+	return success_flag;
+}
+
+
+static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
+																						const char **this_crop_ss, const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp,
+																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
+
+
+static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, const char **this_crop_ss,
+													 const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
+													 double64**ph_min_pp, double64**ph_max_pp)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
+
 
 
 static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
@@ -1557,5 +1616,61 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 	return NULL;
 }
 
+
+static Study *GetStudyFromResource (Resource *resource_p, DFWFieldTrialServiceData *dfw_data_p)
+{
+	Study *study_p = NULL;
+
+	/*
+	 * Have we been set some parameter values to refresh from?
+	 */
+	if (resource_p && (resource_p -> re_data_p))
+		{
+			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
+
+			if (param_set_json_p)
+				{
+					json_t *params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
+
+					if (params_json_p)
+						{
+							SharedType def;
+
+							InitSharedType (&def);
+
+							/*
+							 * Do we have an existing study id?
+							 */
+							if (GetStudyDefaultValueFromJSON (&def, params_json_p, STUDY_ID, NULL))
+								{
+									Study *study_p = GetStudyByIdString (def.st_string_value_s, VF_STORAGE, dfw_data_p);
+
+									if (study_p)
+										{
+											return study_p;
+										}		/* if (study_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to load Study with id \"%s\"", def.st_string_value_s);
+										}
+
+								}		/* if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL)) */
+
+
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
+				}
+
+		}		/* if (resource_p && (resource_p -> re_data_p)) */
+
+	return NULL;
+}
 
 
