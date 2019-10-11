@@ -116,6 +116,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
 	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
 	const json_t *params_json_p = NULL;
+	Study *active_study_p = NULL;
 
 	def.st_string_value_s = NULL;
 
@@ -144,7 +145,30 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
 
-	bool GetStudyDefaultValue (SharedType *def_p, )
+	/*
+	 * Do we have an existing study id?
+	 */
+	if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL))
+		{
+			active_study_p = GetStudyByIdString (def.st_string_value_s, VF_STORAGE, dfw_data_p);
+
+			if (!active_study_p)
+				{
+
+				}		/* if (study_p) */
+
+		}		/* if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL)) */
+
+
+	if (active_study_p)
+		{
+			char *id_s = GetBSONOidAsString (active_study_p -> st_id_p);
+
+			if (id_s)
+				{
+					def.st_string_value_s = id_s;
+				}
+		}
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", def, PL_ADVANCED)) != NULL)
 		{
@@ -726,7 +750,14 @@ static bool GetStudyDefaultValue (SharedType *value_p, const json_t *params_json
 		}		/* if (params_json_p) */
 	else
 		{
-
+			if (SetSharedTypeValue (value_p, param_type.npt_type, default_p, NULL))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to set default value for \"%s\"", param_type.npt_name_s);
+				}
 		}
 
 	return success_flag;
