@@ -147,6 +147,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudiesToFieldTrialJSON (FieldTrial *trial
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GeFieldTrialById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

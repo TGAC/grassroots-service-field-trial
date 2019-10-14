@@ -397,6 +397,23 @@ FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const DFWFie
 }
 
 
+FieldTrial *GeFieldTrialById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p)
+{
+	FieldTrial *trial_p = NULL;
+	char *id_s = GetBSONOidAsString (id_p);
+
+	if (id_s)
+		{
+			trial_p = GetFieldTrialByIdString (id_s, data_p);
+
+			FreeCopiedString (id_s);
+		}
+
+	return trial_p;
+}
+
+
+
 FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;

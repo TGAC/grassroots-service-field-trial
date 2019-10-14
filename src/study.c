@@ -564,6 +564,10 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																		{
 																			success_flag = false;
 																		}
+																	else if (! (trial_p = GetFieldTrialById (parent_field_trial_id_p, format, data_p)))
+																		{
+																			success_flag = false;
+																		}
 																}
 
 															if (success_flag)
