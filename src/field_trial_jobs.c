@@ -270,12 +270,11 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 
 					if (bson_oid_is_valid (id_s, l))
 						{
-							FieldTrial *trial_p = GetFieldTrialByIdString (id_s, data_p);
+							const ViewFormat format = full_data_flag ? VF_CLIENT_FULL : VF_CLIENT_MINIMAL;
+							FieldTrial *trial_p = GetFieldTrialByIdString (id_s, format, data_p);
 
 							if (trial_p)
 								{
-									const ViewFormat format = full_data_flag ? VF_CLIENT_FULL : VF_CLIENT_MINIMAL;
-
 									if (AddFieldTrialToServiceJob (job_p, trial_p, format, data_p))
 										{
 											job_done_flag = true;

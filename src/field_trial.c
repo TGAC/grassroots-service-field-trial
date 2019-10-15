@@ -364,13 +364,13 @@ void FreeFieldTrialNode (ListItem *node_p)
  * The trial could be the bson_oid or a name so check
  */
 
-FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const DFWFieldTrialServiceData *data_p)
+FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 
 	if (bson_oid_is_valid (trial_s, strlen (trial_s)))
 		{
-			trial_p = GetFieldTrialByIdString (trial_s, data_p);
+			trial_p = GetFieldTrialByIdString (trial_s, format, data_p);
 		}
 
 	if (!trial_p)
@@ -397,14 +397,14 @@ FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const DFWFie
 }
 
 
-FieldTrial *GeFieldTrialById (const bson_oid_t *id_p, const DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	char *id_s = GetBSONOidAsString (id_p);
 
 	if (id_s)
 		{
-			trial_p = GetFieldTrialByIdString (id_s, data_p);
+			trial_p = GetFieldTrialByIdString (id_s, format, data_p);
 
 			FreeCopiedString (id_s);
 		}
@@ -414,7 +414,7 @@ FieldTrial *GeFieldTrialById (const bson_oid_t *id_p, const DFWFieldTrialService
 
 
 
-FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;

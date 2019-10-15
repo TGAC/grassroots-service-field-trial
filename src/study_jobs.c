@@ -105,12 +105,11 @@ static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *par
 
 
 static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
-																						const char **this_crop_ss, const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp,
+																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, struct tm **sowing_time_pp,
 																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp);
 
-
-static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, const char **this_crop_ss,
-													 const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
+static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
+													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
 													 double64 **ph_min_pp, double64 **ph_max_pp);
 
 static Study *GetStudyFromResource (Resource *resource_p, DFWFieldTrialServiceData *data_p);
@@ -125,7 +124,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
 	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
 
@@ -135,17 +133,20 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	const char *link_s = NULL;
 	const char *slope_s = NULL;
 	const char *aspect_s = NULL;
-	const char *this_crop_s= NULL;
-	const char *previous_crop_s = NULL;
-	const char *trial_s = NULL;
-	const char *location_s = NULL;
+	char *this_crop_s= NULL;
+	char *previous_crop_s = NULL;
+	char *trial_s = NULL;
+	char *location_s = NULL;
 	const char *notes_s = NULL;
 	struct tm *sowing_time_p = NULL;
 	struct tm *harvest_time_p = NULL;
-	double64 *ph_min_p = NULL;
-	double64 *ph_max_p = NULL;
 	Study *active_study_p = GetStudyFromResource (resource_p, dfw_data_p);
 	bool defaults_flag = false;
+	double ph_min = -1.0;
+	double ph_max = -1.0;
+	double64 *ph_min_p = &ph_min;
+	double64 *ph_max_p = &ph_max;
+
 
 	if (active_study_p)
 		{
@@ -153,8 +154,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 				{
 					defaults_flag = true;
 				}
-
-			FreeStudy (active_study_p);
 		}
 	else
 		{
@@ -166,32 +165,61 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 	if (defaults_flag)
 		{
+			SharedType def;
+
+			InitSharedType (&def);
+
 			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", def, PL_ADVANCED)) != NULL)
 				{
 					if (SetUpStudiesListParameter (dfw_data_p, param_p, S_EMPTY_LIST_OPTION_S))
 						{
 							ClearSharedType (&def, STUDY_ID.npt_type);
 
+							def.st_string_value_s = (char *) name_s;
+
 							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", def, PL_ALL)) != NULL)
 								{
+									def.st_string_value_s = (char *) soil_s;
+
 									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SOIL.npt_type, STUDY_SOIL.npt_name_s, "Soil", "The soil of the Study", def, PL_ALL)) != NULL)
 										{
+											def.st_string_value_s = (char *) link_s;
+
 											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", def, PL_ALL)) != NULL)
 												{
 													struct tm t;
 
-													ClearTime (&t);
-													SetDateValuesForTime (&t, 2017, 1, 1);
+													if (sowing_time_p)
+														{
+															def.st_time_p = sowing_time_p;
+														}
+													else
+														{
+															ClearTime (&t);
+															SetDateValuesForTime (&t, 2017, 1, 1);
 
-													def.st_time_p = &t;
+															def.st_time_p = &t;
+														}
 
 													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SOWING_YEAR.npt_type, STUDY_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Study", def, PL_ALL)) != NULL)
 														{
 															ClearTime (&t);
 
+															if (harvest_time_p)
+																{
+																	def.st_time_p = harvest_time_p;
+																}
+															else
+																{
+																	ClearTime (&t);
+																	SetDateValuesForTime (&t, 2018, 1, 1);
+
+																	def.st_time_p = &t;
+																}
+
 															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_HARVEST_YEAR.npt_type, STUDY_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Study", def, PL_ALL)) != NULL)
 																{
-																	def.st_string_value_s = NULL;
+																	def.st_string_value_s = trial_s;
 
 																	param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_FIELD_TRIALS_LIST.npt_type, STUDY_FIELD_TRIALS_LIST.npt_name_s, "Field trials", "The available field trials", def, PL_ALL);
 
@@ -199,26 +227,40 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																		{
 																			if (SetUpFieldTrialsListParameter (dfw_data_p, param_p))
 																				{
+																					def.st_string_value_s = location_s;
+
 																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", def, PL_ALL)) != NULL)
 																						{
 																							if (SetUpLocationsListParameter (dfw_data_p, param_p, false))
 																								{
+																									def.st_string_value_s = (char *) notes_s;
+
 																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NOTES.npt_type, STUDY_NOTES.npt_name_s, "Notes", "Any additional information about the study", def, PL_ALL)) != NULL)
 																										{
 																											if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
 																												{
+																													def.st_string_value_s = (char *) slope_s;
+
 																													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL)
 																														{
+																															def.st_string_value_s = this_crop_s;
+
 																															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", def, PL_ALL)) != NULL)
 																																{
 																																	if (SetUpCropsListParameter (dfw_data_p, param_p))
 																																		{
+																																			def.st_string_value_s = previous_crop_s;
+
 																																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", def, PL_ALL)) != NULL)
 																																				{
 																																					if (SetUpCropsListParameter (dfw_data_p, param_p))
 																																						{
+																																							def.st_data_value = ph_min_p ? *ph_min_p : 0.0;
+
 																																							if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range or -1 if the value is unknown"))
 																																								{
+																																									def.st_data_value = ph_max_p ? *ph_max_p : 0.0;
+
 																																									if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range or -1 if the value is unknown"))
 																																										{
 																																											success_flag = true;
@@ -337,6 +379,31 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 		}		/* if (defaults_flag) */
 
+
+	if (active_study_p)
+		{
+			FreeStudy (active_study_p);
+		}
+
+	if (this_crop_s)
+		{
+			FreeCopiedString (this_crop_s);
+		}
+
+	if (previous_crop_s)
+		{
+			FreeCopiedString (previous_crop_s);
+		}
+
+	if (trial_s)
+		{
+			FreeCopiedString (trial_s);
+		}
+
+	if (location_s)
+		{
+			FreeCopiedString (location_s);
+		}
 
 	return success_flag;
 }
@@ -767,7 +834,7 @@ static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *par
 
 
 static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
-																						const char **this_crop_ss, const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp,
+																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, struct tm **sowing_time_pp,
 																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp)
 {
 	bool success_flag = false;
@@ -787,20 +854,59 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 
 									if (field_trial_id_s)
 										{
-											*id_ss = study_id_s;
-											*name_ss = study_p -> st_name_s;
-											*soil_ss = study_p -> st_soil_type_s;
-											*link_ss = study_p -> st_data_url_s;
-											*slope_ss = study_p -> st_slope_s;
-											*aspect_ss = study_p -> st_aspect_s;
+											bool got_crops_flag = true;
+											char *current_crop_id_s = NULL;
+											char *previous_crop_id_s = NULL;
 
-											*notes_ss = study_p -> st_description_s;
-											*sowing_time_pp = study_p -> st_sowing_date_p;
-											*harvest_time_pp = study_p -> st_harvest_date_p;
-											**ph_min_pp = study_p -> st_min_ph;
-											**ph_max_pp = study_p -> st_max_ph;
+											if (study_p -> st_current_crop_p)
+												{
+													current_crop_id_s = GetBSONOidAsString (study_p -> st_current_crop_p -> cr_id_p);
 
-											return true;
+													if (!current_crop_id_s)
+														{
+															got_crops_flag = false;
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get current crop id as string for study \"%s\"", study_p -> st_name_s);
+														}
+												}
+
+											if (got_crops_flag)
+												{
+													if (study_p -> st_previous_crop_p)
+														{
+															previous_crop_id_s = GetBSONOidAsString (study_p -> st_previous_crop_p -> cr_id_p);
+
+															if (!previous_crop_id_s)
+																{
+																	got_crops_flag = false;
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get previous crop id as string for study \"%s\"", study_p -> st_name_s);
+																}
+														}
+												}
+
+
+											if (got_crops_flag)
+												{
+													*id_ss = study_id_s;
+													*name_ss = study_p -> st_name_s;
+													*soil_ss = study_p -> st_soil_type_s;
+													*link_ss = study_p -> st_data_url_s;
+													*slope_ss = study_p -> st_slope_s;
+													*aspect_ss = study_p -> st_aspect_s;
+													*this_crop_ss = current_crop_id_s;
+													*previous_crop_ss = previous_crop_id_s;
+													*trial_ss = field_trial_id_s;
+													*location_ss = location_id_s;
+													*notes_ss = study_p -> st_description_s;
+													*sowing_time_pp = study_p -> st_sowing_date_p;
+													*harvest_time_pp = study_p -> st_harvest_date_p;
+													**ph_min_pp = study_p -> st_min_ph;
+													**ph_max_pp = study_p -> st_max_ph;
+
+													return true;
+
+												}		/* if (got_crops_flag) */
+
+											FreeCopiedString (field_trial_id_s);
 										}		/* if (field_trial_id_s) */
 									else
 										{
@@ -836,12 +942,27 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 
 
 
-static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, const char **this_crop_ss,
-													 const char **previous_crop_ss, const char **trial_ss, const char **location_ss, const char **notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64**ph_min_pp, double64**ph_max_pp)
+static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
+													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
+													 double64 **ph_min_pp, double64 **ph_max_pp)
 {
-	bool success_flag = false;
+	bool success_flag = true;
 
+	*id_ss = NULL;
+	*name_ss = NULL;
+	*soil_ss = NULL;
+	*link_ss = NULL;
+	*slope_ss = NULL;
+	*aspect_ss = NULL;
+	*this_crop_ss = NULL;
+	*previous_crop_ss = NULL;
+	*trial_ss = NULL;
+	*location_ss = NULL;
+	*notes_ss = NULL;
+	*sowing_time_pp = NULL;
+	*harvest_time_pp = NULL;
+	*ph_min_pp = NULL;
+	*ph_max_pp = NULL;
 
 	return success_flag;
 }
@@ -859,7 +980,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 			if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_value))
 				{
-					FieldTrial *trial_p = GetUniqueFieldTrialBySearchString (parent_field_trial_value.st_string_value_s, data_p);
+					FieldTrial *trial_p = GetUniqueFieldTrialBySearchString (parent_field_trial_value.st_string_value_s, VF_STORAGE, data_p);
 
 					if (trial_p)
 						{

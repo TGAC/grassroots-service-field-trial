@@ -756,7 +756,7 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 						{
 							case DFTD_FIELD_TRIAL:
 								{
-									FieldTrial *trial_p = GetFieldTrialByIdString (id_s, search_data_p -> sd_service_data_p);
+									FieldTrial *trial_p = GetFieldTrialByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
 
 									if (trial_p)
 										{
