@@ -369,82 +369,78 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Para
 					if (num_results > 0)
 						{
 							size_t i = 0;
-							json_t *entry_p = json_array_get (results_p, i);
-							FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, data_p);
+							const char *param_value_s = param_p -> pa_current_value.st_string_value_s;
 
-							if (trial_p)
+							while ((i < num_results) && success_flag)
 								{
-									char *name_s = GetFieldTrialAsString (trial_p);
+									json_t *entry_p = json_array_get (results_p, i);
+									FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, data_p);
 
-									if (name_s)
+									if (trial_p)
 										{
-											SharedType def;
-											char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+											char *name_s = GetFieldTrialAsString (trial_p);
 
-											if (id_s)
+											if (name_s)
 												{
-													def.st_string_value_s = id_s;
+													char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
-													if (SetParameterValueFromSharedType (param_p, &def, false))
-														{
-															if (SetParameterValueFromSharedType (param_p, &def, true))
-																{
-																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
-																}
-														}
-
-													FreeCopiedString (id_s);
-												}
-
-											FreeCopiedString (name_s);
-										}
-
-									FreeFieldTrial (trial_p);
-								}		/* if (trial_p) */
-
-							if (success_flag)
-								{
-									for (++ i; i < num_results; ++ i)
-										{
-											entry_p = json_array_get (results_p, i);
-											trial_p = GetFieldTrialFromJSON (entry_p, data_p);
-
-											if (trial_p)
-												{
-													char *name_s = GetFieldTrialAsString (trial_p);
-
-													if (name_s)
+													if (id_s)
 														{
 															SharedType def;
-															char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
-															if (id_s)
+															InitSharedType (&def);
+															def.st_string_value_s = id_s;
+
+															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																{
-																	def.st_string_value_s = id_s;
 
-																	if (param_p)
-																		{
-																			success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
-																		}
-
-																	FreeCopiedString (id_s);
 																}
 
-															FreeCopiedString (name_s);
-														}		/* if (name_s) */
+															if (!CreateAndAddParameterOptionToParameter (param_p, def, name_s))
+																{
+																	success_flag = false;
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", def.st_string_value_s, name_s);
+																}
 
-													FreeFieldTrial (trial_p);
-												}		/* if (trial_p) */
+															FreeCopiedString (id_s);
+														}
+													else
+														{
+															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial BSON oid");
+														}
 
-										}		/* for (++ i; i < num_results; ++ i) */
+													FreeCopiedString (name_s);
+												}		/* if (name_s) */
+											else
+												{
+													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial as string");
+												}
 
-									if (!success_flag)
+											FreeFieldTrial (trial_p);
+										}		/* if (trial_p) */
+									else
 										{
-											FreeParameter (param_p);
-											param_p = NULL;
+											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial");
 										}
 
-								}		/* if (param_p) */
+									if (success_flag)
+										{
+											++ i;
+										}
+
+								}		/* while ((i < num_results) && success_flag) */
+
+
+							if (!success_flag)
+								{
+									FreeParameter (param_p);
+									param_p = NULL;
+								}
+
+
 
 						}		/* if (num_results > 0) */
 					else

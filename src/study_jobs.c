@@ -173,6 +173,8 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 				{
 					if (SetUpStudiesListParameter (dfw_data_p, param_p, S_EMPTY_LIST_OPTION_S))
 						{
+							param_p -> pa_refresh_service_flag = true;
+
 							ClearSharedType (&def, STUDY_ID.npt_type);
 
 							def.st_string_value_s = (char *) name_s;
