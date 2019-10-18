@@ -40,6 +40,9 @@ static NamedParameterType S_SYNONYMS = { "CR Synonyms", PT_LARGE_STRING };
 
 static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s);
 
+
+static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
+
 /*
  * API definitions
  */
@@ -238,7 +241,7 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
+bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const char *empty_option_s)
 {
 	bool success_flag = false;
 
@@ -259,6 +262,20 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 									size_t i;
 									const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
 									const char *default_crop_s = GetJSONString (service_config_p, "default_crop");
+
+									SharedType def;
+
+									InitSharedType (&def);
+
+									/*
+									 * If there's an empty option, add it
+									 */
+									if (empty_option_s)
+										{
+											def.st_string_value_s = (char *) S_EMPTY_LIST_OPTION_S;
+
+											success_flag = CreateAndAddParameterOptionToParameter (param_p, def, S_EMPTY_LIST_OPTION_S);
+										}
 
 									for (i = 0; i < num_results; ++ i)
 										{
