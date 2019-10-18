@@ -471,11 +471,13 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 }
 
 
+
 bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const bool add_any_flag)
 {
 	bool success_flag = false;
 	bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
 	json_t *results_p = GetAllLocationsAsJSON (data_p, opts_p);
+	bool value_set_flag = false;
 
 	if (results_p)
 		{
@@ -483,121 +485,92 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 				{
 					const size_t num_results = json_array_size (results_p);
 
-					if (num_results > 0)
+					success_flag = true;
+
+
+					if (success_flag)
 						{
-							size_t i = 0;
-							SharedType def;
-							char *id_s = NULL;
-							char *name_s = NULL;
-
-							InitSharedType (&def);
-
-							if (add_any_flag)
+							if (num_results > 0)
 								{
-									name_s = EasyCopyToNewString (S_UNSET_LOCATION_S);
+									size_t i = 0;
+									const char *param_value_s = param_p -> pa_current_value.st_string_value_s;
 
-									if (name_s)
-										{
-											def.st_string_value_s = name_s;
-										}
-								}
-							else
-								{
-									json_t *entry_p = json_array_get (results_p, i);
-									Location *location_p = GetLocationFromJSON (entry_p, data_p);
-
-									if (location_p)
-										{
-											name_s = GetLocationAsString (location_p);
-
-											if (name_s)
-												{
-													id_s = GetBSONOidAsString (location_p -> lo_id_p);
-
-													if (id_s)
-														{
-															def.st_string_value_s = id_s;
-															++ i;
-														}
-												}
-
-											FreeLocation (location_p);
-										}		/* if (location_p) */
-
-								}
-
-							if (name_s)
-								{
-									if (SetParameterValueFromSharedType (param_p, &def, false))
-										{
-											if (SetParameterValueFromSharedType (param_p, &def, true))
-												{
-													if (CreateAndAddParameterOptionToParameter (param_p, def, name_s))
-														{
-															success_flag = true;
-														}
-												}
-										}
-
-									FreeCopiedString (name_s);
-
-									if (id_s)
-										{
-											FreeCopiedString (id_s);
-										}
-
-									if (success_flag)
-										{
-
-										}		/* if (success_flag) */
-
-									for ( ; i < num_results; ++ i)
+									while ((i < num_results) && success_flag)
 										{
 											json_t *entry_p = json_array_get (results_p, i);
 											Location *location_p = GetLocationFromJSON (entry_p, data_p);
 
 											if (location_p)
 												{
-													name_s = GetLocationAsString (location_p);
+													char *name_s = GetLocationAsString (location_p);
 
 													if (name_s)
 														{
-															id_s = GetBSONOidAsString (location_p -> lo_id_p);
+															char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
 
 															if (id_s)
 																{
+																	SharedType def;
+
+																	InitSharedType (&def);
 																	def.st_string_value_s = id_s;
 
-																	if (param_p)
+																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																		{
-																			success_flag = CreateAndAddParameterOptionToParameter (param_p, def, name_s);
+																			value_set_flag = true;
 																		}
+
+																	if (!CreateAndAddParameterOptionToParameter (param_p, def, name_s))
+																		{
+																			success_flag = false;
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", def.st_string_value_s, name_s);
+																		}
+
+
 
 																	FreeCopiedString (id_s);
 																}
+															else
+																{
+																	success_flag = false;
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Location BSON oid");
+																}
 
 															FreeCopiedString (name_s);
-														}		/* if (name_s) */
+														}
+													else
+														{
+															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Location name");
+														}
 
 													FreeLocation (location_p);
 												}		/* if (location_p) */
 
-										}		/* for (++ i; i < num_results; ++ i) */
+											if (success_flag)
+												{
+													++ i;
+												}
 
-									if (!success_flag)
+										}		/* while ((i < num_results) && success_flag) */
+
+									/*
+									 * If the parameter's value isn't on the list, reset it
+									 */
+									if (!value_set_flag)
 										{
-											FreeParameter (param_p);
-											param_p = NULL;
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing studies", param_value_s);
 										}
 
-								}		/* if (name_s) */
+								}		/* if (num_results > 0) */
+							else
+								{
+									/* nothing to add */
+									success_flag = true;
+								}
 
-						}		/* if (num_results > 0) */
-					else
-						{
-							/* nothing to add */
-							success_flag = true;
-						}
+						}		/* if (success_flag) */
+
 
 				}		/* if (json_is_array (results_p)) */
 
@@ -626,9 +599,6 @@ json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *o
 
 	return results_p;
 }
-
-
-
 
 
 bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)

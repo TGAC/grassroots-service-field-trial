@@ -359,12 +359,15 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Para
 {
 	bool success_flag = false;
 	json_t *results_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+	bool value_set_flag = false;
 
 	if (results_p)
 		{
 			if (json_is_array (results_p))
 				{
 					const size_t num_results = json_array_size (results_p);
+
+					success_flag = true;
 
 					if (num_results > 0)
 						{
@@ -375,6 +378,7 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Para
 								{
 									json_t *entry_p = json_array_get (results_p, i);
 									FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, data_p);
+
 
 									if (trial_p)
 										{
@@ -393,7 +397,7 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Para
 
 															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																{
-
+																	value_set_flag = true;
 																}
 
 															if (!CreateAndAddParameterOptionToParameter (param_p, def, name_s))
@@ -433,14 +437,13 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Para
 
 								}		/* while ((i < num_results) && success_flag) */
 
-
-							if (!success_flag)
+							/*
+							 * If the parameter's value isn't on the list, reset it
+							 */
+							if (!value_set_flag)
 								{
-									FreeParameter (param_p);
-									param_p = NULL;
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
 								}
-
-
 
 						}		/* if (num_results > 0) */
 					else

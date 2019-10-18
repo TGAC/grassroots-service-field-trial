@@ -322,7 +322,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																								}
 																							else
 																								{
-																									FreeParameter (param_p);
 																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpLocationsListParameter failed");
 																								}
 																						}
@@ -333,7 +332,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																				}
 																			else
 																				{
-																					FreeParameter (param_p);
 																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpFieldTrialsListParameter failed");
 																				}
 																		}
@@ -1228,42 +1226,43 @@ json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p)
 
 bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const char *empty_option_s)
 {
-	bool success_flag = true;
+	bool success_flag = false;
 	json_t *results_p = GetAllStudiesAsJSON (data_p);
+	bool value_set_flag = false;
 
 	if (results_p)
 		{
-			SharedType def;
-
-			InitSharedType (&def);
-
-			/*
-			 * If there's an empty option, add it
-			 */
-			if (empty_option_s)
+			if (json_is_array (results_p))
 				{
-					def.st_string_value_s = S_EMPTY_LIST_OPTION_S;
+					const size_t num_results = json_array_size (results_p);
 
-					success_flag = CreateAndAddParameterOptionToParameter (param_p, def, S_EMPTY_LIST_OPTION_S);
-				}
+					success_flag = true;
 
-			if (success_flag)
-				{
-					if (json_is_array (results_p))
+					SharedType def;
+
+					InitSharedType (&def);
+
+					/*
+					 * If there's an empty option, add it
+					 */
+					if (empty_option_s)
 						{
-							const size_t num_results = json_array_size (results_p);
+							def.st_string_value_s = (char *) S_EMPTY_LIST_OPTION_S;
 
+							success_flag = CreateAndAddParameterOptionToParameter (param_p, def, S_EMPTY_LIST_OPTION_S);
+						}
+
+					if (success_flag)
+						{
 							if (num_results > 0)
 								{
-									size_t i;
+									size_t i = 0;
+									const char *param_value_s = param_p -> pa_current_value.st_string_value_s;
 
-									for (i = 0; i < num_results; ++ i)
+									while ((i < num_results) && success_flag)
 										{
-											SharedType option;
 											json_t *entry_p = json_array_get (results_p, i);
 											Study *study_p = GetStudyFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-											InitSharedType (&option);
 
 											if (study_p)
 												{
@@ -1271,46 +1270,58 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Paramete
 
 													if (id_s)
 														{
-															option.st_string_value_s = id_s;
+															InitSharedType (&def);
+															def.st_string_value_s = id_s;
 
-															if (!CreateAndAddParameterOptionToParameter (param_p, option, study_p -> st_name_s))
+															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																{
+																	value_set_flag = true;
+																}
+
+															if (!CreateAndAddParameterOptionToParameter (param_p, def, study_p -> st_name_s))
 																{
 																	success_flag = false;
-																	i = num_results;
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", def.st_string_value_s,  study_p -> st_name_s);
 																}
 
 															FreeCopiedString (id_s);
 														}
+													else
+														{
+															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Study BSON oid");
+														}
 
 													FreeStudy (study_p);
 												}		/* if (study_p) */
-										}
-								}
-						}
 
-					if (success_flag)
-						{
-							if (def.st_string_value_s)
-								{
-									success_flag = false;
 
-									if (SetParameterValueFromSharedType (param_p, &def, false))
-										{
-											if (SetParameterValueFromSharedType (param_p, &def, true))
+											if (success_flag)
 												{
-													success_flag = true;
+													++ i;
 												}
+
+										}		/* while ((i < num_results) && success_flag) */
+
+									/*
+									 * If the parameter's value isn't on the list, reset it
+									 */
+									if (!value_set_flag)
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing studies", param_value_s);
 										}
+
+								}		/* if (num_results > 0) */
+							else
+								{
+									/* nothing to add */
+									success_flag = true;
 								}
-						}
 
-				}		/* if (success_flag) */
+						}		/* if (success_flag) */
 
-			if (!success_flag)
-				{
-					FreeParameter (param_p);
-					param_p = NULL;
-				}
+
+				}		/* if (json_is_array (results_p)) */
 
 			json_decref (results_p);
 		}		/* if (results_p) */
