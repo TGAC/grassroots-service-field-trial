@@ -37,7 +37,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFie
 
 
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length, const uint32 plot_index, const uint32 row_index,
-										const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, Study *parent_p)
+										const uint32 column_index, const uint32 replicate, const char *trial_design_s, const char *growing_conditions_s, const char *treatments_s, const char *comment_s, Study *parent_p)
 {
 	char *copied_trial_design_s = NULL;
 
@@ -51,56 +51,66 @@ Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const stru
 
 					if ((IsStringEmpty (treatments_s)) || ((copied_trial_design_s = EasyCopyToNewString (treatments_s)) != NULL))
 						{
-							struct tm *copied_sowing_date_p = NULL;
+							char *copied_comment_s = NULL;
 
-							if (CopyValidDate (sowing_date_p, &copied_sowing_date_p))
+							if ((IsStringEmpty (comment_s)) || ((copied_comment_s = EasyCopyToNewString (comment_s)) != NULL))
 								{
-									struct tm *copied_harvest_date_p = NULL;
+									struct tm *copied_sowing_date_p = NULL;
 
-									if (CopyValidDate (harvest_date_p, &copied_harvest_date_p))
+									if (CopyValidDate (sowing_date_p, &copied_sowing_date_p))
 										{
-											LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
+											struct tm *copied_harvest_date_p = NULL;
 
-											if (rows_p)
+											if (CopyValidDate (harvest_date_p, &copied_harvest_date_p))
 												{
-													Plot *plot_p = (Plot *) AllocMemory (sizeof (Plot));
+													LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
 
-													if (plot_p)
+													if (rows_p)
 														{
-															plot_p -> pl_id_p = id_p;
-															plot_p -> pl_sowing_date_p = copied_sowing_date_p;
-															plot_p -> pl_harvest_date_p = copied_harvest_date_p;
-															plot_p -> pl_width = width;
-															plot_p -> pl_length = length;
-															plot_p -> pl_index = plot_index;
-															plot_p -> pl_row_index = row_index;
-															plot_p -> pl_column_index = column_index;
-															plot_p -> pl_replicate_index = replicate;
-															plot_p -> pl_parent_p = parent_p;
-															plot_p -> pl_rows_p = rows_p;
-															plot_p -> pl_growing_conditions_s = copied_growing_conditions_s;
-															//plot_p -> pl_treatments_s = copied_treatments_s;
-															//plot_p -> pl_trial_design_s = copied_trial_design_s;
+															Plot *plot_p = (Plot *) AllocMemory (sizeof (Plot));
 
-															return plot_p;
-														}		/* if (plot_p) */
+															if (plot_p)
+																{
+																	plot_p -> pl_id_p = id_p;
+																	plot_p -> pl_sowing_date_p = copied_sowing_date_p;
+																	plot_p -> pl_harvest_date_p = copied_harvest_date_p;
+																	plot_p -> pl_width = width;
+																	plot_p -> pl_length = length;
+																	plot_p -> pl_index = plot_index;
+																	plot_p -> pl_row_index = row_index;
+																	plot_p -> pl_column_index = column_index;
+																	plot_p -> pl_replicate_index = replicate;
+																	plot_p -> pl_parent_p = parent_p;
+																	plot_p -> pl_rows_p = rows_p;
+																	plot_p -> pl_growing_conditions_s = copied_growing_conditions_s;
 
-													FreeLinkedList (rows_p);
-												}		/* if (rows_p) */
+																	plot_p -> pl_comment_s = copied_comment_s;
 
-											if (copied_harvest_date_p)
+																	//plot_p -> pl_treatments_s = copied_treatments_s;
+																	//plot_p -> pl_trial_design_s = copied_trial_design_s;
+
+																	return plot_p;
+																}		/* if (plot_p) */
+
+															FreeLinkedList (rows_p);
+														}		/* if (rows_p) */
+
+													if (copied_harvest_date_p)
+														{
+															FreeTime (copied_harvest_date_p);
+														}
+
+												}		/* if (CopyValidDate (harvest_date_p, &copied_harvest_date_p)) */
+
+											if (copied_sowing_date_p)
 												{
-													FreeTime (copied_harvest_date_p);
+													FreeTime (copied_sowing_date_p);
 												}
 
-										}		/* if (CopyValidDate (harvest_date_p, &copied_harvest_date_p)) */
+										}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
 
-									if (copied_sowing_date_p)
-										{
-											FreeTime (copied_sowing_date_p);
-										}
+								}		/* if ((IsStringEmpty (comment_s)) || ((copied_comment_s = EasyCopyToNewString (comment_s)) != NULL)) */
 
-								}		/* if (CopyValidDate (sowing_date_p, &copied_sowing_date_p)) */
 
 							if (copied_treatments_s)
 								{
@@ -146,6 +156,12 @@ void FreePlot (Plot *plot_p)
 	if (plot_p -> pl_growing_conditions_s)
 		{
 			FreeCopiedString (plot_p -> pl_growing_conditions_s);
+		}
+
+
+	if (plot_p -> pl_comment_s)
+		{
+			FreeCopiedString (plot_p -> pl_comment_s);
 		}
 
 /*

@@ -63,6 +63,7 @@ static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
 static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
+static const char * const S_COMMENT_TITLE_S = "Comment";
 
 /*
 static NamedParameterType S_PLOT_SOWING_DATE = { "PL Sowing Year", PT_TIME };
@@ -481,6 +482,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																					const char *growing_condition_s = GetJSONString (table_row_json_p, S_GROWING_CONDITION_TITLE_S);
 																					const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
 																					const char *trial_design_s = GetJSONString (table_row_json_p, S_TRIAL_DESIGN_TITLE_S);
+																					const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
 																					struct tm *sowing_date_p = NULL;
 																					struct tm *harvest_date_p = NULL;
 																					const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
