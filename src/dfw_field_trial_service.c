@@ -43,7 +43,7 @@
 #include "submit_study.h"
 #include "submit_treatments.h"
 #include "submit_crop.h"
-#include "submit_drilling.h"
+#include "submit_plots.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -72,7 +72,7 @@ static Service **AddValidService (Service **service_pp, Service *service_p);
 ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 {
 	uint32 num_services = 0;
-	Service *submission_service_p = GetDFWFieldTrialSubmissionService (grassroots_p);
+	Service *all_in_one_submission_service_p = GetDFWFieldTrialSubmissionService (grassroots_p);
 	Service *search_service_p = GetDFWFieldTrialSearchService (grassroots_p);
 	Service *field_trial_submission_service_p = GetFieldTrialSubmissionService (grassroots_p);
 	Service *study_submission_service_p = GetStudySubmissionService (grassroots_p);
@@ -81,9 +81,9 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
 	Service *treatments_submission_service_p = GetTreatmentsSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
-	Service *drilling_submission_service_p = NULL; // GetDrillingSubmissionService  (grassroots_p);
+	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
 
-	if (submission_service_p)
+	if (all_in_one_submission_service_p)
 		{
 			++ num_services;
 		}
@@ -128,11 +128,10 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
-	if (drilling_submission_service_p)
+	if (plots_submission_service_p)
 		{
 			++ num_services;
 		}
-
 
 	if (num_services)
 		{
@@ -143,14 +142,14 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					num_services = 0;
 					Service **service_pp = services_p -> sa_services_pp;
 
-					service_pp = AddValidService (service_pp, submission_service_p);
+					service_pp = AddValidService (service_pp, all_in_one_submission_service_p);
 					service_pp = AddValidService (service_pp, search_service_p);
 					service_pp = AddValidService (service_pp, field_trial_submission_service_p);
 					service_pp = AddValidService (service_pp, study_submission_service_p);
 					service_pp = AddValidService (service_pp, location_submission_service_p);
 					service_pp = AddValidService (service_pp, gene_bank_submission_service_p);
 					service_pp = AddValidService (service_pp, material_submission_service_p);
-					service_pp = AddValidService (service_pp, drilling_submission_service_p);
+					service_pp = AddValidService (service_pp, plots_submission_service_p);
 					service_pp = AddValidService (service_pp, treatments_submission_service_p);
 					service_pp = AddValidService (service_pp, crop_submission_service_p);
 
@@ -158,17 +157,55 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 				}
 		}
 
-
-	if (submission_service_p)
+	if (all_in_one_submission_service_p)
 		{
-			FreeService (submission_service_p);
+			FreeService (all_in_one_submission_service_p);
 		}
 
 	if (search_service_p)
 		{
-			FreeService (submission_service_p);
+			FreeService (search_service_p);
 		}
 
+	if (field_trial_submission_service_p)
+		{
+			FreeService (field_trial_submission_service_p);
+		}
+
+	if (study_submission_service_p)
+		{
+			FreeService (study_submission_service_p);
+		}
+
+	if (location_submission_service_p)
+		{
+			FreeService (location_submission_service_p);
+		}
+
+	if (gene_bank_submission_service_p)
+		{
+			FreeService (gene_bank_submission_service_p);
+		}
+
+	if (material_submission_service_p)
+		{
+			FreeService (material_submission_service_p);
+		}
+
+	if (plots_submission_service_p)
+		{
+			FreeService (plots_submission_service_p);
+		}
+
+	if (treatments_submission_service_p)
+		{
+			FreeService (treatments_submission_service_p);
+		}
+
+	if (crop_submission_service_p)
+		{
+			FreeService (crop_submission_service_p);
+		}
 
 	return NULL;
 }

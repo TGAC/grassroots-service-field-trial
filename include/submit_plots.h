@@ -14,14 +14,14 @@
 ** limitations under the License.
 */
 /*
- * crop_jobs.h
+ * submit_plots.h
  *
- *  Created on: 17 Apr 2019
+ *  Created on: 25 Oct 2019
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_JOBS_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_JOBS_H_
+#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SUBMIT_PLOTS_H_
+#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SUBMIT_PLOTS_H_
 
 
 #include "dfw_field_trial_service_data.h"
@@ -35,21 +35,11 @@ extern "C"
 #endif
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetPlotsSubmissionService (GrassrootsServer *grassroots_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionCropParams (ServiceData *data_p, ParameterSet *param_set_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const char *empty_option_s);
 
 #ifdef __cplusplus
 }
 #endif
 
-
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_JOBS_H_ */
+#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_SUBMIT_PLOTS_H_ */

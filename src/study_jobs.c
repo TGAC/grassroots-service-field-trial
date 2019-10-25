@@ -249,13 +249,13 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 																															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", def, PL_ALL)) != NULL)
 																																{
-																																	if (SetUpCropsListParameter (dfw_data_p, param_p))
+																																	if (SetUpCropsListParameter (dfw_data_p, param_p, NULL))
 																																		{
 																																			def.st_string_value_s = previous_crop_s;
 
 																																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", def, PL_ALL)) != NULL)
 																																				{
-																																					if (SetUpCropsListParameter (dfw_data_p, param_p))
+																																					if (SetUpCropsListParameter (dfw_data_p, param_p, NULL))
 																																						{
 																																							def.st_data_value = ph_min_p ? *ph_min_p : 0.0;
 

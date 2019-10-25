@@ -58,7 +58,7 @@ static const char * const S_INDEX_TITLE_S = "Plot ID";
 static const char * const S_ROW_TITLE_S = "Row";
 static const char * const S_COLUMN_TITLE_S = "Column";
 static const char * const S_RACK_TITLE_S = "Rack";
-static const char * const S_MATERIAL_TITLE_S = "Material";
+static const char * const S_MATERIAL_TITLE_S = "Accession";
 static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
 static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
@@ -110,7 +110,7 @@ static json_t *GetTableParameterHints (void);
  * API definitions
  */
 
-bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -119,7 +119,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	InitSharedType (&def);
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", def, PL_ALL)) != NULL)
 		{
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
@@ -358,7 +358,7 @@ static json_t *GetTableParameterHints (void)
 																								{
 																									if (AddColumnParameterHint (S_GROWING_CONDITION_TITLE_S, PT_STRING, hints_p))
 																										{
-																											if (AddColumnParameterHint (S_MATERIAL_TITLE_S, PT_STRING, hints_p))
+																											if (AddColumnParameterHint (S_COMMENT_TITLE_S, PT_STRING, hints_p))
 																												{
 																													return hints_p;
 																												}
@@ -511,7 +511,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																								}
 																						}
 
-																					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, area_p);
+																					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, comment_s, area_p);
 
 																					if (plot_p)
 																						{

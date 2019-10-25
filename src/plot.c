@@ -446,6 +446,7 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DF
 													const char *growing_conditions_s = GetJSONString (plot_json_p, PL_GROWING_CONDITION_S);
 													const char *treatments_s = GetJSONString (plot_json_p, PL_TREATMENT_S);
 													const char *trial_design_s = GetJSONString (plot_json_p, PL_TRIAL_DESIGN_S);
+													const char *comment_s = GetJSONString (plot_json_p, PL_COMMENT_S);
 													struct tm *sowing_date_p = NULL;
 
 													if (CreateValidDateFromJSON (plot_json_p, PL_SOWING_DATE_S, &sowing_date_p))
@@ -484,7 +485,7 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DF
 
 																						}		/* if (!parent_area_p) */
 
-																					plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_conditions_s, treatments_s, parent_area_p);
+																					plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_conditions_s, treatments_s, comment_s, parent_area_p);
 
 																					if (!plot_p)
 																						{

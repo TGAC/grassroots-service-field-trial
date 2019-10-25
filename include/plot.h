@@ -74,7 +74,8 @@ PLOT_PREFIX const char *PL_ROWS_S PLOT_VAL ("rows");
 
 PLOT_PREFIX const char *PL_INDEX_S PLOT_VAL ("index");
 
-PLOT_PREFIX const char *PL_INDEX_S PLOT_VAL ("comment");
+PLOT_PREFIX const char *PL_COMMENT_S PLOT_VAL ("comment");
+
 
 typedef struct Plot
 {

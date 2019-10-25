@@ -47,7 +47,6 @@ SRCS 	= \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
 	dfw_util.c \
-	drilling_jobs.c \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \
@@ -73,6 +72,7 @@ SRCS 	= \
 	submit_gene_bank.c \
 	submit_location.c \
 	submit_material.c \
+	submit_plots.c \
 	submit_study.c \
 	submit_treatments.c \
 	treatment.c \

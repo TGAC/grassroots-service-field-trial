@@ -288,8 +288,6 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 
 													if (id_s)
 														{
-															SharedType def;
-
 															InitSharedType (&def);
 
 															def.st_string_value_s = id_s;
