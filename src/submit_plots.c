@@ -129,7 +129,7 @@ static const char *GetPlotsSubmissionServiceInformationUri (Service * UNUSED_PAR
 
 static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionPlotsParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionPlotParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
@@ -197,7 +197,7 @@ static ServiceJobSet *RunPlotsSubmissionService (Service *service_p, ParameterSe
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionPlotsParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionPlotParams (data_p, param_set_p, job_p))
 				{
 
 				}		/* if (!RunForSubmissionPlotsParams (data_p, param_set_p, job_p)) */

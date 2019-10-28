@@ -70,6 +70,7 @@ static const KeyValuePair S_DIRECTIONS_P [] =
 
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
+static const char * const S_UNKNOWN_CROP_OPTION_S = "Unknown";
 
 /*
  * STATIC DECLARATIONS
@@ -249,13 +250,13 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 																															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", def, PL_ALL)) != NULL)
 																																{
-																																	if (SetUpCropsListParameter (dfw_data_p, param_p, NULL))
+																																	if (SetUpCropsListParameter (dfw_data_p, param_p, S_UNKNOWN_CROP_OPTION_S))
 																																		{
 																																			def.st_string_value_s = previous_crop_s;
 
 																																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", def, PL_ALL)) != NULL)
 																																				{
-																																					if (SetUpCropsListParameter (dfw_data_p, param_p, NULL))
+																																					if (SetUpCropsListParameter (dfw_data_p, param_p, S_UNKNOWN_CROP_OPTION_S))
 																																						{
 																																							def.st_data_value = ph_min_p ? *ph_min_p : 0.0;
 
@@ -999,17 +1000,22 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 												{
 													Crop *current_crop_p = NULL;
 													SharedType current_crop_value;
+													const char *crop_s = NULL;
 
 													GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_THIS_CROP.npt_name_s, &current_crop_value);
 
-													if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p, data_p))
+													crop_s = current_crop_value.st_string_value_s;
+
+													if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &current_crop_p, data_p)))
 														{
 															Crop *previous_crop_p = NULL;
 															SharedType previous_crop_value;
 
 															GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &previous_crop_value);
 
-															if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p, data_p))
+															crop_s = previous_crop_value.st_string_value_s;
+
+															if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &previous_crop_p, data_p)))
 																{
 																	SharedType soil_value;
 																	SharedType aspect_value;
@@ -1046,7 +1052,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																			harvest_date_p = harvest_year_value.st_time_p;
 																		}
 
-																	study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph_value.st_long_value, max_ph_value.st_long_value, notes_value.st_string_value_s, data_p);
+																	study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s, slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph_value.st_data_value, max_ph_value.st_data_value, notes_value.st_string_value_s, data_p);
 
 																	if (study_p)
 																		{

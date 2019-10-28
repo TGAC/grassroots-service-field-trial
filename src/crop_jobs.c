@@ -272,9 +272,9 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 									 */
 									if (empty_option_s)
 										{
-											def.st_string_value_s = (char *) S_EMPTY_LIST_OPTION_S;
+											def.st_string_value_s = (char *) empty_option_s;
 
-											success_flag = CreateAndAddParameterOptionToParameter (param_p, def, S_EMPTY_LIST_OPTION_S);
+											success_flag = CreateAndAddParameterOptionToParameter (param_p, def, empty_option_s);
 										}
 
 									for (i = 0; i < num_results; ++ i)

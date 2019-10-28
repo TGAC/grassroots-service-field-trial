@@ -45,6 +45,10 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 
 static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
+static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+
+static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const DFWFieldTrialServiceData *data_p);
+
 
 /*
  * API FUNCTIONS
@@ -396,7 +400,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 				{
 					if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph)))
 						{
-							if ((study_p -> st_max_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MAX_PH_S, study_p -> st_min_ph)))
+							if ((study_p -> st_max_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MAX_PH_S, study_p -> st_max_ph)))
 								{
 									if ((IsStringEmpty (study_p -> st_description_s)) || (SetJSONString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s)))
 										{
@@ -421,19 +425,57 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 																						{
 																							if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
 																								{
-																									add_item_flag = true;
+																									if (AddValidCropToJSON (study_p -> st_current_crop_p, study_json_p, format, data_p))
+																										{
+																											if (AddValidCropToJSON (study_p -> st_previous_crop_p, study_json_p, format, data_p))
+																												{
+																													add_item_flag = true;
+																												}
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add previous crop to study \"%s\"", study_p -> st_previous_crop_p -> cr_name_s);
+																												}
+																										}
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add current crop to study \"%s\"", study_p -> st_current_crop_p -> cr_name_s);
+																										}
+
 																								}		/* if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0) */
 																							else
 																								{
 																									json_decref (location_json_p);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add location to study \"%s\"", study_p -> st_location_p -> lo_address_p -> ad_name_s);
 																								}
+																						}		/* if (location_json_p) */
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get location \"%s\" as JSON", study_p -> st_location_p -> lo_address_p -> ad_name_s);
 																						}
 																				}
 																			else
 																				{
-																					if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S))
+																					if ((! (study_p -> st_location_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)))
 																						{
-																							add_item_flag = true;
+																							if ((! (study_p -> st_current_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)))
+																								{
+																									if ((! (study_p -> st_previous_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)))
+																										{
+																											add_item_flag = true;
+																										}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)) */
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add previous crop \"%s\"", study_p -> st_previous_crop_p -> cr_name_s);
+																										}
+																								}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)) */
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add current crop \"%s\"", study_p -> st_current_crop_p -> cr_name_s);
+																								}
+																						}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add location \"%s\"", study_p -> st_location_p -> lo_address_p -> ad_name_s);
 																						}
 																				}
 
@@ -513,8 +555,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 
 												}		/* if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s) == 0)) */
 
-										}
-
+										}		/* if ((IsStringEmpty (study_p -> st_description_s)) || (SetJSONString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))) */
 
 								}		/* if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph))) */
 
@@ -585,11 +626,13 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
 																					const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
 																					const char *notes_s = GetJSONString (json_p, ST_DESCRIPTION_S);
-																					Crop *current_crop_p = NULL;
-																					Crop *previous_crop_p = NULL;
+																					Crop *current_crop_p = GetStoredCropValue (json_p, ST_CURRENT_CROP_S, data_p);
+																					Crop *previous_crop_p = GetStoredCropValue (json_p, ST_PREVIOUS_CROP_S, data_p);
 																					const KeyValuePair *aspect_p = NULL;
 																					int32 min_ph = ST_UNSET_PH;
 																					int32 max_ph = ST_UNSET_PH;
+
+
 
 																					if (aspect_s)
 																						{
@@ -618,6 +661,25 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																						{
 																							FreeTime (harvest_date_p);
 																						}
+
+																					/*
+																					 * If the Study wasn't allocated, free any allocated
+																					 * resources.
+																					 */
+																					if (!study_p)
+																						{
+																							if (current_crop_p)
+																								{
+																									FreeCrop (current_crop_p);
+																								}
+
+																							if (previous_crop_p)
+																								{
+																									FreeCrop (previous_crop_p);
+																								}
+
+																						}
+
 
 																				}		/* if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p)) */
 
@@ -692,6 +754,81 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p)
 		}
 
 	return success_flag;
+}
+
+
+
+static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (crop_p)
+		{
+			json_t *crop_json_p = GetCropAsJSON (crop_p, format, data_p);
+
+			if (crop_json_p)
+				{
+					if (json_object_set_new (study_json_p, ST_CURRENT_CROP_S, crop_json_p) == 0)
+						{
+							success_flag = true;
+						}
+					else
+						{
+							json_decref (crop_json_p);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, crop_json_p, "Failed to add crop to study");
+						}
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const DFWFieldTrialServiceData *data_p)
+{
+	Crop *crop_p = NULL;
+	bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+
+	if (crop_id_p)
+		{
+			if (GetNamedIdFromJSON (json_p, key_s, crop_id_p))
+				{
+					char *id_s = GetBSONOidAsString (crop_id_p);
+
+					if (id_s)
+						{
+							crop_p = GetCropByIdString (id_s, data_p);
+
+							if (!crop_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
+								}
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON for \"%s\"", key_s);
+						}
+
+				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
+				}
+
+			FreeBSONOid (crop_id_p);
+		}		/* if (crop_id_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
+		}
+
+	return crop_p;
 }
 
 
