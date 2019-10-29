@@ -41,8 +41,6 @@ static NamedParameterType S_SYNONYMS = { "CR Synonyms", PT_LARGE_STRING };
 static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s);
 
 
-static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
-
 /*
  * API definitions
  */

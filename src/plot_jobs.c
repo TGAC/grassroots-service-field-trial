@@ -487,8 +487,21 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																					struct tm *harvest_date_p = NULL;
 																					const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
 																					int32 replicate = 1;
+																					const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
+																					bool control_rep_flag = false;
 
-																					GetJSONStringAsInteger (table_row_json_p, S_REPLICATE_TITLE_S, &replicate);
+																					if (rep_s)
+																						{
+																							if (Stricmp (rep_s, PL_REPLICATE_CONTROL_S) == 0)
+																								{
+																									control_rep_flag = true;
+																								}
+																							else
+																								{
+																									success_flag = GetValidInteger (&rep_s, &replicate);
+																								}		/* if (value_s) */
+																						}
+
 
 																					if (date_s)
 																						{
@@ -515,6 +528,11 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 																					if (plot_p)
 																						{
+																							if (control_rep_flag)
+																								{
+																									SetPlotGenotypeControl (plot_p, true);
+																								}
+
 																							if (!SavePlot (plot_p, data_p))
 																								{
 																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
