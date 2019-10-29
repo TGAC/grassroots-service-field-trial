@@ -89,8 +89,11 @@ Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const stru
 																	plot_p -> pl_comment_s = copied_comment_s;
 
 																	//plot_p -> pl_treatments_s = copied_treatments_s;
-																	//plot_p -> pl_trial_design_s = copied_trial_design_s;
+																	plot_p -> pl_trial_design_s = copied_trial_design_s;
 
+																	plot_p -> pl_accession_s = NULL;
+																	plot_p -> pl_soil_type_s = NULL;
+																	plot_p -> pl_sowing_rate = 0.0f;
 																	return plot_p;
 																}		/* if (plot_p) */
 
@@ -272,10 +275,10 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 														{
 															if ((IsStringEmpty (plot_p -> pl_growing_conditions_s)) || (SetJSONString (plot_json_p, PL_GROWING_CONDITION_S, plot_p -> pl_growing_conditions_s)))
 																{
-																//	if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s)))
-																//		{
-																//			if ((IsStringEmpty (plot_p -> pl_trial_design_s)) || (SetJSONString (plot_json_p, PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s)))
-																//				{
+																	if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s)))
+																		{
+																			if ((IsStringEmpty (plot_p -> pl_trial_design_s)) || (SetJSONString (plot_json_p, PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s)))
+																				{
 																					if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S))
 																						{
 																							if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S))
@@ -366,17 +369,17 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 																								}
 																						}
 
-		//																		}		/* if ((IsStringEmpty (plot_p -> pl_trial_design_s)) || (SetJSONString (plot_json_p, PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s))) */
-		//																	else
-		//																		{
-		//																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s);
-		//																		}
-		//
-		//																}		/* if ((IsStringEmpty (plot_p -> pl_growing_conditions_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s))) */
-		//															else
-		//																{
-		//																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TREATMENT_S, plot_p -> pl_treatments_s);
-		//																}
+																				}		/* if ((IsStringEmpty (plot_p -> pl_trial_design_s)) || (SetJSONString (plot_json_p, PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s))) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TRIAL_DESIGN_S, plot_p -> pl_trial_design_s);
+																				}
+
+																		}		/* if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s))) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_COMMENT_S, plot_p -> pl_comment_s);
+																		}
 
 																}		/* if ((IsStringEmpty (plot_p -> pl_growing_conditions_s)) || (SetJSONString (plot_json_p, PL_GROWING_CONDITION_S, plot_p -> pl_growing_conditions_s))) */
 															else
@@ -399,7 +402,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 										}		/* if ((! (plot_p -> pl_replicate_index_p)) || (SetJSONInteger (plot_json_p, PL_REPLICATE_INDEX_S, * (plot_p -> pl_replicate_index_p)))) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT, PL_REPLICATE_S, plot_p -> pl_replicate_index);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT " control: \%s", PL_REPLICATE_S, plot_p -> pl_replicate_index, plot_p -> pl_replicate_control_flag ? "true": "false");
 										}
 
 								}		/* if (SetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, plot_p -> pl_column_index)) */

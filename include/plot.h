@@ -97,8 +97,6 @@ typedef struct Plot
 
 	uint32 pl_column_index;
 
-	char *pl_genotype_replicate_s;
-
 	char *pl_accession_s;
 
 	struct tm *pl_sowing_date_p;
@@ -118,6 +116,8 @@ typedef struct Plot
 	char *pl_soil_type_s;
 
 	char *pl_comment_s;
+
+	char *pl_trial_design_s;
 
 	struct tm *pl_harvest_date_p;
 
