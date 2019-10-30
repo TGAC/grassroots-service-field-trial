@@ -386,52 +386,41 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 					/*
 					 * check for simple search first
 					 */
-					bool ran_flag = false;
-					SharedType keyword_value;
-
-					InitSharedType (&keyword_value);
-
-					if (GetParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_value, true))
+					if (param_set_p -> ps_current_level == PL_SIMPLE)
 						{
-							if (!IsStringEmpty (keyword_value.st_string_value_s))
+							SharedType keyword_value;
+							SharedType value;
+							const char *facet_s = NULL;
+							uint32 page_number = 0;
+							uint32 page_size = 10;
+
+							InitSharedType (&keyword_value);
+							GetParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_value, true);
+
+							InitSharedType (&value);
+							GetParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &value, true);
+
+							if (value.st_string_value_s)
 								{
-									SharedType value;
-									const char *facet_s = NULL;
-									uint32 page_number = 0;
-									uint32 page_size = 10;
-
-									InitSharedType (&value);
-
-									GetParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &value, true);
-
-									if (value.st_string_value_s)
+									if (strcmp (value.st_string_value_s, S_ANY_FACET_S) != 0)
 										{
-											if (strcmp (value.st_string_value_s, S_ANY_FACET_S) != 0)
-												{
-													facet_s = value.st_string_value_s;
-												}
+											facet_s = value.st_string_value_s;
 										}
+								}
 
-									if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &value, true))
-										{
-											page_number = value.st_ulong_value;
-										}
+							if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &value, true))
+								{
+									page_number = value.st_ulong_value;
+								}
 
-									if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &value, true))
-										{
-											page_size = value.st_ulong_value;
-										}
+							if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &value, true))
+								{
+									page_size = value.st_ulong_value;
+								}
 
-
-
-									SearchFieldTrialsForKeyword (keyword_value.st_string_value_s, facet_s, page_number, page_size, job_p, VF_CLIENT_MINIMAL, data_p);
-									ran_flag = true;
-								}		/* if (!IsStringEmpty (value.st_string_value_s)) */
-
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &value, true)) */
-
-
-					if (!ran_flag)
+							SearchFieldTrialsForKeyword (keyword_value.st_string_value_s, facet_s, page_number, page_size, job_p, VF_CLIENT_MINIMAL, data_p);
+						}
+					else if (param_set_p -> ps_current_level == PL_ADVANCED)
 						{
 							/*
 							 * check for the advanced search
