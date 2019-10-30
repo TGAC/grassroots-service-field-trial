@@ -80,6 +80,9 @@ PLOT_PREFIX const char *PL_COMMENT_S PLOT_VAL ("comment");
 PLOT_PREFIX const char *PL_REPLICATE_CONTROL_S PLOT_VAL ("control");
 
 
+PLOT_PREFIX int32 PL_UNSET_ID PLOT_VAL (INT32_MAX);
+
+
 typedef struct Plot
 {
 	bson_oid_t *pl_id_p;
