@@ -109,8 +109,6 @@ typedef struct Study
 
 	FieldTrial *st_parent_p;
 
-	bson_oid_t *st_parent_id_p;
-
 	struct Location *st_location_p;
 
 	char *st_soil_type_s;

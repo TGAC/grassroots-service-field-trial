@@ -434,7 +434,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
-	uint32 index = PL_UNSET_ID;
+	int32 index = PL_UNSET_ID;
 	int32 row;
 
 	GetJSONInteger (plot_json_p, PL_INDEX_S, &index);
