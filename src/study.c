@@ -325,16 +325,6 @@ bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p)
 
 																if (node_p)
 																	{
-																		/*
-																		 * The initial imported data doesn't have a plot id
-																		 * so if needed update it here.
-																		 */
-																		if (plot_p -> pl_index == PL_UNSET_ID)
-																			{
-																				plot_p -> pl_index = i + 1;
-																			}
-
-
 																		LinkedListAddTail (study_p -> st_plots_p, & (node_p -> pn_node));
 																	}
 																else

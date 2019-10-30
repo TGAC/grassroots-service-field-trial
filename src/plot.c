@@ -250,7 +250,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 
 	if (plot_json_p)
 		{
-			if (SetJSONInteger (plot_json_p, PL_INDEX_S, plot_p -> pl_index))
+			if ((plot_p -> pl_index == PL_UNSET_ID) || (SetJSONInteger (plot_json_p, PL_INDEX_S, plot_p -> pl_index)))
 				{
 					if (SetJSONInteger (plot_json_p, PL_ROW_INDEX_S, plot_p -> pl_row_index))
 						{
