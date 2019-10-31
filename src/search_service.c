@@ -700,10 +700,18 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 											if (metadata_p)
 												{
+													if (AddLuceneFacetResultsToJSON (lucene_p, metadata_p))
+														{
+															status = OS_SUCCEEDED;
+														}
+													else
+														{
+															status = OS_PARTIALLY_SUCCEEDED;
+														}
+
 													job_p -> sj_metadata_p = metadata_p;
 												}
 
-											status = OS_SUCCEEDED;
 										}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, &sd)) */
 
 								}		/* if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size)) */
