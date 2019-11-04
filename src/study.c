@@ -824,7 +824,7 @@ static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const 
 				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed for \"%s\"", key_s);
 				}
 
 			FreeBSONOid (crop_id_p);
