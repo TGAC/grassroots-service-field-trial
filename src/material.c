@@ -395,9 +395,19 @@ Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gen
 
 	if (!material_p)
 		{
-			material_p  = AllocateMaterialByAccession (NULL, accession_s, gene_bank_p -> gb_id_p, data_p);
+			material_p = AllocateMaterialByAccession (NULL, accession_s, gene_bank_p -> gb_id_p, data_p);
 
-			if (!material_p)
+			if (material_p)
+				{
+					if (!SaveMaterial (material_p, data_p))
+						{
+							FreeMaterial (material_p);
+							material_p = NULL;
+
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Material with internal name of \"%s\" for gene bank \"%s\"", accession_s, gene_bank_p -> gb_name_s);
+						}
+				}
+			else
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Material with internal name of \"%s\" for gene bank \"%s\"", accession_s, gene_bank_p -> gb_name_s);
 				}
@@ -412,47 +422,40 @@ Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gen
 
 Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
 {
+	Material *material_p = NULL;
 	bson_t *query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
 
 	if (query_p)
 		{
-			Material *material_p = SearchForMaterial (query_p, data_p);
+			material_p = SearchForMaterial (query_p, data_p);
 
-			bson_destroy (query_p);
-
-			if (material_p)
-				{
-					return material_p;
-				}
-			else
+			if (!material_p)
 				{
 					PrintBSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, query_p, "SearchForMaterial did not find accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_p -> gb_name_s);
 				}
+
+			bson_destroy (query_p);
+
 		}		/* if (query_p) */
 	else
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialByAccession could not create query for accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_p -> gb_name_s);
 		}
 
-	return NULL;
+	return material_p;
 }
 
 
 Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialServiceData *data_p)
 {
+	Material *material_p = NULL;
 	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p));
 
 	if (query_p)
 		{
-			Material *material_p = SearchForMaterial (query_p, data_p);
+			material_p = SearchForMaterial (query_p, data_p);
 
-			bson_destroy (query_p);
-
-			if (material_p)
-				{
-					return material_p;
-				}
-			else
+			if (!material_p)
 				{
 					char *id_s = GetBSONOidAsString (material_id_p);
 
@@ -463,6 +466,9 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialS
 							FreeCopiedString (id_s);
 						}
 				}
+
+			bson_destroy (query_p);
+
 		}		/* if (query_p) */
 	else
 		{
@@ -476,8 +482,7 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialS
 				}
 		}
 
-	return NULL;
-
+	return material_p;
 }
 
 

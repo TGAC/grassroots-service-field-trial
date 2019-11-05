@@ -201,7 +201,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveMaterial (Material *material_p, const DFW
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material*GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
