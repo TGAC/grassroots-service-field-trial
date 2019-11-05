@@ -312,11 +312,11 @@ static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_jso
 					json_t *table_row_json_p = json_array_get (drillings_json_p, i);
 					Material *material_p = NULL;
 
-					const char *accessionn_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
+					const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
 
-					if (accessionn_s)
+					if (accession_s)
 						{
-							material_p = GetOrCreateMaterialByInternalName (accessionn_s, study_p, data_p);
+							material_p = GetOrCreateMaterialByInternalName (accession_s, study_p, data_p);
 
 							if (material_p)
 								{

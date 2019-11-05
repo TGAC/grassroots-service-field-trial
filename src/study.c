@@ -818,7 +818,7 @@ static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const 
 						}		/* if (id_s) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON for \"%s\"", key_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetBSONOidAsString for \"%s\"", key_s);
 						}
 
 				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */

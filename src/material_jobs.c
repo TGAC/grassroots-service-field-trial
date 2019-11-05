@@ -417,7 +417,7 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
 
 																													if (GetJSONBoolean (table_row_json_p, S_CLEANED_TITLE_S, &cleaned_flag))
 																														{
-																															Material *material_p = AllocateMaterial (NULL, accession_s, species_name_s, type_s, reason_s, generation_s, supplier_s, source_s, germplasm_origin_s, treatment_s, in_gru_flag, cleaned_flag, tgw, area_p, gene_bank_p -> gb_id_p, data_p);
+																															Material *material_p = NULL; // AllocateMaterial (NULL, accession_s, species_name_s, type_s, reason_s, generation_s, supplier_s, source_s, germplasm_origin_s, treatment_s, in_gru_flag, cleaned_flag, tgw, area_p, gene_bank_p -> gb_id_p, data_p);
 
 																															if (material_p)
 																																{

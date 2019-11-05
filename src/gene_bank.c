@@ -34,6 +34,8 @@
 
 static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
+static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
+
 
 /*
  * API definitions
@@ -245,24 +247,119 @@ GeneBank *GetGeneBankFromJSON (const json_t *gene_bank_json_p)
 bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
-	bool success_flag = PrepareSaveData (& (gene_bank_p -> gb_id_p), &selector_p);
+	bool success_flag = false;
 
-	if (gene_bank_p -> gb_id_p)
+	if (PrepareSaveData (& (gene_bank_p -> gb_id_p), &selector_p))
 		{
 			json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, NULL);
 
 			if (gene_bank_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, gene_bank_json_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK], selector_p);
+					if (SaveMongoData (data_p -> dftsd_mongo_p, gene_bank_json_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK], selector_p))
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, gene_bank_json_p, "Failed to save GeneBank");
+						}
 
 					json_decref (gene_bank_json_p);
 				}		/* if (area_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetGeneBankAsJSON failed for GeneBank \"%s\"", gene_bank_p -> gb_name_s);
+				}
 
-		}		/* if (gene_bank_p -> gb_id_p) */
+		}		/* if (PrepareSaveData (& (gene_bank_p -> gb_id_p), &selector_p)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for GeneBank \"%s\"", gene_bank_p -> gb_name_s);
+		}
 
 	return success_flag;
 }
 
+
+GeneBank *GetGeneBankByName (const char *name_s, const DFWFieldTrialServiceData *data_p)
+{
+	bson_t *query_p = BCON_NEW (GB_NAME_S, BCON_UTF8 (name_s));
+
+	if (query_p)
+		{
+			GeneBank *gene_bank_p = SearchForGeneBank (query_p, data_p);
+
+			if (gene_bank_p)
+				{
+					return gene_bank_p;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find GeneBank \"%s\"", name_s);
+				}
+
+			bson_destroy (query_p);
+		}		/* if (query_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create GeneBank query to search for \"%s\"", name_s);
+		}
+
+	return NULL;
+}
+
+
+static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+{
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK]))
+		{
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							if (json_array_size (results_p) == 1)
+								{
+									json_t *result_p = json_array_get (results_p, 0);
+
+									GeneBank *gene_bank_p = GetGeneBankFromJSON (result_p);
+
+									if (gene_bank_p)
+										{
+											return gene_bank_p;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get GeneBank from JSON");
+										}
+
+								}		/* if (json_array_size (results_p) == 1) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GeneBanks array does not contain just a single item");
+								}
+
+						}		/* if (json_is_array (results_p)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
+						}
+
+					json_decref (results_p);
+				}		/* if (results_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
+				}
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_GENE_BANK]);
+		}
+
+	return NULL;
+}
 
 
 GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
@@ -270,7 +367,6 @@ GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, cons
 	GeneBank *gene_bank_p = GetDFWObjectById (id_p, DFTD_GENE_BANK, GetGeneBankCallback, format, data_p);
 
 	return gene_bank_p;
-
 }
 
 

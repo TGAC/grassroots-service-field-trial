@@ -32,11 +32,23 @@
 #include "jansson.h"
 #include "typedefs.h"
 #include "study.h"
-
+#include "gene_bank.h"
 
 /*
  *
- * Species name	Germplasm ID	Type of Material	Reason for selection	Generation	Seed Supplier	Source of Seed	Germplasm Origin	In GRU?	GRU Accession	TGW	Seed Treatment	Cleaned
+ * Species name
+ * Germplasm ID
+ * Type of Material
+ * Reason for selection
+ * Generation
+ * Seed Supplier
+ * Source of Seed
+ * Germplasm Origin
+ * In GRU?
+ * GRU Accession
+ * TGW
+ * Seed Treatment
+ * Cleaned
 			keyword list	F2, F3 etc	Organisation	Trial or Organisation	Organisation	Y/N	ID	Number	Treatment 	Y/N
 Triticum aestivum	BT1604	Synthetic Derived	yield, drought tolerance		Rothamsted	17/18 Trial	NIAB
 Triticum aestivum	Skyfall	Elite	control		RAGT	Commercial	RAGT			150	Azole fungicide X
@@ -44,20 +56,9 @@ Triticum aestivum	Skyfall	Elite	control		RAGT	Commercial	RAGT			150	Azole fungic
  *
  */
 
-typedef struct Material
+
+typedef struct MaterialStudyDetails
 {
-	bson_oid_t *ma_id_p;
-
-	bson_oid_t *ma_gene_bank_id_p;
-
-	char *ma_accession_s;
-
-	/*
-	char *ma_pedigree_s;
-
-	char *ma_barcode_s;
-
-	*/
 	char *ma_germplasm_id_s;
 
 	const Study *ma_parent_area_p;
@@ -84,6 +85,24 @@ typedef struct Material
 
 	bool ma_cleaned_flag;
 
+}  MaterialStudyDetails;
+
+
+typedef struct MaterialStudyDetailsNode
+{
+	ListItem msdn_node;
+
+	MaterialStudyDetails *msdn_details_p;
+} MaterialStudyDetailsNode;
+
+
+typedef struct Material
+{
+	bson_oid_t *ma_id_p;
+
+	bson_oid_t *ma_gene_bank_id_p;
+
+	char *ma_accession_s;
 
 } Material;
 
@@ -155,6 +174,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL	Material *AllocateMaterial (bson_oid_t *id_p, cons
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm_id_s, const Study *area_p, const DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s, bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p);
+
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialAccession (Material *material_p, const char * const accession_s);
 
 /*
@@ -181,7 +205,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByInternalName (const
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, Study *area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsMaterialComplete (const Material * const material_p);

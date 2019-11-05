@@ -147,6 +147,10 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 													json_decref (material_json_p);
 												}
 										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialAsJSON failed for \"%s\"", row_p -> ro_material_p -> ma_accession_s);
+										}
 								}
 								break;
 
@@ -155,6 +159,10 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 									if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_material_p -> ma_id_p, RO_MATERIAL_ID_S))
 										{
 											success_flag = true;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add material \"%s\" to row json", row_p -> ro_material_p -> ma_accession_s);
 										}
 								}
 								break;
@@ -180,6 +188,8 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 									if (!AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
 										{
 											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add id for for plot [" UINT32_FMT, ", " UINT32_FMT "] in study \"%s\"",
+																				 row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
 										}
 								}		/* if (format == VF_STORAGE) */
 
@@ -193,9 +203,49 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 														{
 															return row_json_p;
 														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddDatatype failed");
+														}
+												}		/* if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format)) */
+											else
+												{
+													char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+													if (id_s)
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row \"%s\"", id_s);
+															FreeCopiedString (id_s);
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row");
+														}
+
+												}
+
+										}		/* if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p)) */
+									else
+										{
+											char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+											if (id_s)
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
+													FreeCopiedString (id_s);
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to row add compound id");
 												}
 										}
-								}
+
+								}		/* if (success_flag) */
+
+						}		/* if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_INDEX_S, row_p -> ro_index);
 						}
 				}
 
@@ -279,17 +329,6 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
 								}
 
-
-							if (!material_p)
-								{
-									material_s = GetJSONString (json_p, RO_TRIAL_MATERIAL_S);
-
-									if (material_s)
-										{
-											material_p = GetOrCreateMaterialByInternalName (material_s, plot_p -> pl_parent_p, data_p);
-										}
-								}
-
 						}		/* if (!material_p) */
 
 					success_flag = (material_p != NULL);
@@ -341,20 +380,35 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag)
 {
 	bson_t *selector_p = NULL;
-	bool success_flag = PrepareSaveData (& (row_p -> ro_id_p), &selector_p);
+	bool success_flag = false;
 
-	if (success_flag)
+	if (PrepareSaveData (& (row_p -> ro_id_p), &selector_p))
 		{
 			json_t *row_json_p = GetRowAsJSON (row_p, false, data_p);
 
 			if (row_json_p)
 				{
-					success_flag = SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], selector_p);
+					if (SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], selector_p))
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SaveMongoData failed");
+						}
 
 					json_decref (row_json_p);
 				}		/* if (row_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowAsJSON failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+				}
 
 		}		/* if (row_p -> ro_id_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+		}
 
 	return success_flag;
 }
