@@ -101,6 +101,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankById (const bson_oid_t *id_p,
 DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL GeneBank *GetGeneBankByName (const char *name_s, const DFWFieldTrialServiceData *data_p);
 
 
 

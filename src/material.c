@@ -389,25 +389,6 @@ bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 
 
 
-Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p)
-{
-	Material *material_p = GetMaterialByGermplasmID (material_s, area_p, data_p);
-
-	if (!material_p)
-		{
-			material_p  = AllocateMaterialByGermplasmID (NULL, material_s, area_p, data_p);
-
-			if (!material_p)
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Material with internal name of \"%s\" for area \"%s\"", material_s, area_p -> st_name_s);
-				}
-
-		}		/* if (!material_p) */
-
-	return material_p;
-}
-
-
 Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = GetMaterialByAccession (accession_s, gene_bank_p, data_p);
@@ -457,9 +438,9 @@ Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p
 }
 
 
-Material *GetMaterialById (const bson_oid_t *material_id_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialServiceData *data_p)
 {
-	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
+	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p));
 
 	if (query_p)
 		{
@@ -475,7 +456,7 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, GeneBank *gene_bank_
 				{
 					char *id_s = GetBSONOidAsString (material_id_p);
 
-					PrintBSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, query_p, "SearchForMaterial did not find accession \"%s\" in gene bank \"%s\"", id_s ? id_s : "", gene_bank_p -> gb_name_s);
+					PrintBSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, query_p, "SearchForMaterial did not find accession \"%s\"", id_s ? id_s : "");
 
 					if (id_s)
 						{
@@ -487,7 +468,7 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, GeneBank *gene_bank_
 		{
 			char *id_s = GetBSONOidAsString (material_id_p);
 
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialById could not create query for id \"%s\" in gene bank \"%s\"", id_s, gene_bank_p -> gb_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialById could not create query for id \"%s\"", id_s);
 
 			if (id_s)
 				{

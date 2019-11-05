@@ -205,7 +205,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByInternalName (const
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);

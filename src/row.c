@@ -283,7 +283,6 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 					if (!material_p)
 						{
 							bson_oid_t *material_id_p = GetNewUnitialisedBSONOid ();
-							const char *material_s = NULL;
 
 							if (material_id_p)
 								{
@@ -291,7 +290,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 										{
 											if (plot_p -> pl_parent_p)
 												{
-													material_p = GetMaterialById (material_id_p, plot_p -> pl_parent_p, data_p);
+													material_p = GetMaterialById (material_id_p, data_p);
 
 													if (!material_p)
 														{

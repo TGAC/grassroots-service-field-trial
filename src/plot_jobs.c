@@ -30,6 +30,7 @@
 #include "math_utils.h"
 #include "material.h"
 #include "row.h"
+#include "gene_bank.h"
 
 
 typedef enum
@@ -458,7 +459,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 							if (accession_s)
 								{
-									Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p -> gb_id_p, data_p);
+									Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
 
 									if (material_p)
 										{
