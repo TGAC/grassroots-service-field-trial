@@ -59,6 +59,7 @@ SRCS 	= \
 	material.c \
 	material_jobs.c \
 	observation.c \
+	phenotype_jobs.c \
 	plot.c \
 	plot_jobs.c \
 	row.c \
@@ -72,6 +73,7 @@ SRCS 	= \
 	submit_gene_bank.c \
 	submit_location.c \
 	submit_material.c \
+	submit_phenotypes.c \
 	submit_plots.c \
 	submit_study.c \
 	submit_treatments.c \

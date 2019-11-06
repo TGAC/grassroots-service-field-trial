@@ -68,20 +68,6 @@ static const char * const S_TREATMENT_TITLE_S = "Treatment";
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
 static const char * const S_COMMENT_TITLE_S = "Comment";
 
-/*
-static NamedParameterType S_PLOT_SOWING_DATE = { "PL Sowing Year", PT_TIME };
-static NamedParameterType S_PLOT_HARVEST_DATE = { "PL Harvest Year", PT_TIME };
-static NamedParameterType S_PLOT_WIDTH = { "PL Width", PT_UNSIGNED_REAL };
-static NamedParameterType S_PLOT_LENGTH = { "PL Length", PT_UNSIGNED_REAL };
-
-
-static NamedParameterType S_PLOT_ROW = { "PL Row", PT_UNSIGNED_INT };
-static NamedParameterType S_PLOT_COLUMN = { "PL Column", PT_UNSIGNED_INT };
-
-static NamedParameterType S_PLOT_TRIAL_DESIGN = { "PL Trial Design", PT_STRING };
-static NamedParameterType S_PLOT_GROWING_CONDITION = { "PL Growing Condition", PT_STRING };
-static NamedParameterType S_PLOT_TREATMENT = { "PL Treatment", PT_STRING };
- */
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
 static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_TABLE};
@@ -137,75 +123,6 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 							if ((param_p = GetTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 								{
 									success_flag = true;
-									//									SharedType date_def;
-									//
-									//									InitSharedType (&date_def);
-									//
-									//									if ((date_def.st_time_p = AllocateTime ()) != NULL)
-									//										{
-									//											SetDateValuesForTime (date_def.st_time_p, 2017, 1, 1);
-									//
-									//											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_SOWING_DATE.npt_type, S_PLOT_SOWING_DATE.npt_name_s, S_SOWING_TITLE_S, "The date when the seeds were sown", date_def, PL_ADVANCED)) != NULL)
-									//												{
-									//													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_HARVEST_DATE.npt_type, S_PLOT_HARVEST_DATE.npt_name_s, S_HARVEST_TITLE_S, "The date when the seeds were harvested", date_def, PL_ADVANCED)) != NULL)
-									//														{
-									//															InitSharedType (&def);
-									//
-									//															def.st_ulong_value = 0;
-									//
-									//															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_WIDTH.npt_type, S_PLOT_WIDTH.npt_name_s, S_WIDTH_TITLE_S, "The width of the plot", def, PL_ADVANCED)) != NULL)
-									//																{
-									//																	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_LENGTH.npt_type, S_PLOT_LENGTH.npt_name_s, S_LENGTH_TITLE_S, "The length of the plot", def, PL_ADVANCED)) != NULL)
-									//																		{
-									//																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TRIAL_DESIGN.npt_type, S_PLOT_TRIAL_DESIGN.npt_name_s, S_TRIAL_DESIGN_TITLE_S, "The trial desgin of the plot", def, PL_ADVANCED)) != NULL)
-									//																				{
-									//																					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TREATMENT.npt_type, S_PLOT_TREATMENT.npt_name_s, S_TREATMENT_TITLE_S, "The treatments of the plot", def, PL_ADVANCED)) != NULL)
-									//																						{
-									//																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_GROWING_CONDITION.npt_type, S_PLOT_GROWING_CONDITION.npt_name_s, S_GROWING_CONDITION_TITLE_S, "The growing condtions of the plot", def, PL_ADVANCED)) != NULL)
-									//																								{
-									//																									success_flag = true;
-									//																								}
-									//																							else
-									//																								{
-									//																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_GROWING_CONDITION.npt_name_s);
-									//																								}
-									//																						}
-									//																					else
-									//																						{
-									//																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TREATMENT.npt_name_s);
-									//																						}
-									//																				}
-									//																			else
-									//																				{
-									//																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TRIAL_DESIGN.npt_name_s);
-									//																				}
-									//																		}
-									//																	else
-									//																		{
-									//																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_LENGTH.npt_name_s);
-									//																		}
-									//																}
-									//															else
-									//																{
-									//																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_WIDTH.npt_name_s);
-									//																}
-									//														}
-									//													else
-									//														{
-									//															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_HARVEST_DATE.npt_name_s);
-									//														}
-									//												}
-									//											else
-									//												{
-									//													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_SOWING_DATE.npt_name_s);
-									//												}
-									//
-									//											ClearSharedType (&date_def, PT_TIME);
-									//										}		/* if ((date_def.st_time_p = AllocateTime ()) != NULL) */
-									//									else
-									//										{
-									//											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateTime failed");
-									//										}
 								}
 							else
 								{
@@ -219,7 +136,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpStudysListParameter failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpStudiesListParameter failed");
 				}
 		}
 	else
@@ -438,12 +355,15 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 			const size_t num_rows = json_array_size (plots_json_p);
 			size_t i;
 			size_t num_imported = 0;
+			bool imported_row_flag;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
 					const json_t *table_row_json_p = json_array_get (plots_json_p, i);
 					const char *gene_bank_s = GetJSONString (table_row_json_p, S_GENE_BANK_S);
 					GeneBank *gene_bank_p = NULL;
+
+					imported_row_flag = false;
 
 					if (!gene_bank_s)
 						{
@@ -588,6 +508,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																							if (SaveRow (row_p, data_p, true))
 																								{
 																									++ num_imported;
+																									imported_row_flag = true;
 																								}
 																							else
 																								{
@@ -646,6 +567,10 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
 						}
 
+					if (!imported_row_flag)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plot data");
+						}
 
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
