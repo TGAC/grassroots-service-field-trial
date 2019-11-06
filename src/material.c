@@ -44,30 +44,6 @@ static bool SetValidJSONString (json_t *material_json_p, const char *key_s, cons
 Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s, bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_accession_s = NULL;
-	bson_oid_t *id_to_use_p = NULL;
-
-	if (!id_p)
-		{
-			id_to_use_p = GetNewBSONOid ();
-
-			if (!id_to_use_p)
-				{
-					char *gene_bank_id_s = GetBSONOidAsString (gene_bank_id_p);
-
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewBSONOid failed when allocating Material with accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_id_s ? gene_bank_id_s : "");
-
-					if (gene_bank_id_s)
-						{
-							FreeCopiedString (gene_bank_id_s);
-						}
-
-					return NULL;
-				}
-		}
-	else
-		{
-			id_to_use_p = id_p;
-		}
 
 	if ((copied_accession_s = EasyCopyToNewString (accession_s)) != NULL)
 		{
@@ -75,7 +51,7 @@ Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s
 
 			if (material_p)
 				{
-					material_p -> ma_id_p = id_to_use_p;
+					material_p -> ma_id_p = id_p;
 					material_p -> ma_gene_bank_id_p = gene_bank_id_p;
 					material_p -> ma_accession_s = copied_accession_s;
 
@@ -106,11 +82,6 @@ Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s
 					FreeCopiedString (gene_bank_id_s);
 				}
 
-		}
-
-	if (id_to_use_p != id_p)
-		{
-			FreeBSONOid (id_to_use_p);
 		}
 
 	return NULL;
