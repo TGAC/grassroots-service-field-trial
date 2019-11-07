@@ -28,10 +28,12 @@
 #include "row.h"
 #include "dfw_util.h"
 #include "time_util.h"
+#include "study.h"
 
 
 static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFieldTrialServiceData *data_p);
 
+static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
 
 
 
@@ -686,6 +688,83 @@ void SetPlotGenotypeControl (Plot *plot_p, bool control_flag)
 bool IsPlotGenotypeControl (const Plot *plot_p)
 {
 	return plot_p -> pl_replicate_control_flag;
+}
+
+
+Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p)
+{
+	Plot *plot_p = NULL;
+	bson_t *query_p = BCON_NEW (PL_INDEX_S, BCON_INT32 (plot_index), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
+
+	if (query_p)
+		{
+			plot_p = SearchForPlot (query_p, data_p);
+
+			if (!plot_p)
+				{
+					PrintBSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, query_p, "SearchForPlot did not find plot " UINT32_FMT " in study \"%s\"", plot_index, study_p -> st_name_s);
+				}
+
+			bson_destroy (query_p);
+
+		}		/* if (query_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetPlotByIndex could not create query for plot " UINT32_FMT " in study \"%s\"", plot_index, study_p -> st_name_s);
+		}
+
+	return plot_p;
+}
+
+
+static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+{
+	Plot *plot_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+		{
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							if (json_array_size (results_p) == 1)
+								{
+									json_t *result_p = json_array_get (results_p, 0);
+
+									plot_p = GetPlotFromJSON (result_p, false, data_p);
+
+									if (!plot_p)
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get Plot from JSON");
+										}
+
+								}		/* if (json_array_size (results_p) == 1) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Plots array does not contain just a single item");
+								}
+
+						}		/* if (json_is_array (results_p)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
+						}
+
+					json_decref (results_p);
+				}		/* if (results_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
+				}
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_PLOT]);
+		}
+
+	return plot_p;
 }
 
 

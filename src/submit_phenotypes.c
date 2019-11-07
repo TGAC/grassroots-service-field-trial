@@ -23,7 +23,7 @@
 
 
 #include "submit_phenotypes.h"
-
+#include "phenotype_jobs.h"
 #include "audit.h"
 
 //#include "phenotypes_jobs.h"
@@ -132,7 +132,7 @@ static bool GetPhenotypesSubmissionServiceParameterTypesForNamedParameters (stru
 
 
 
-static ParameterSet *GetPhenotypesSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetPhenotypesSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial Phenotypes submission service parameters", "The parameters used for the Field Trial Phenotypes submission service");
 
@@ -140,7 +140,7 @@ static ParameterSet *GetPhenotypesSubmissionServiceParameters (Service *service_
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionPhenotypesParams (data_p, params_p))
+			if (AddSubmissionPhenotypesParams (data_p, params_p, resource_p))
 				{
 					return params_p;
 				}

@@ -187,6 +187,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void SetPlotGenotypeControl (Plot *plot_p, bool co
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsPlotGenotypeControl (const Plot *plot_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

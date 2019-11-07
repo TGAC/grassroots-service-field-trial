@@ -1336,6 +1336,7 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, Paramete
 }
 
 
+
 const KeyValuePair *GetAspect (const char *aspect_value_s)
 {
 	const KeyValuePair *aspect_p = S_DIRECTIONS_P;

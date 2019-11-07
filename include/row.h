@@ -36,7 +36,17 @@ typedef struct Row
 
 	Plot *ro_plot_p;
 
-	uint32 ro_index;
+	/**
+	 * The unique index for this row within
+	 * its parent study.
+	 */
+	uint32 ro_by_study_index;
+
+	/**
+	 * The row factor/category for this rack within
+	 * its parent plot.
+	 */
+	uint32 ro_rack_index;
 
 	Material *ro_material_p;
 
@@ -74,6 +84,8 @@ ROW_PREFIX const char *RO_ID_S ROW_VAL ("id");
 
 ROW_PREFIX const char *RO_INDEX_S ROW_VAL ("index");
 
+ROW_PREFIX const char *RO_INDEX_WITHIN_STUDY_S ROW_VAL ("study_index");
+
 ROW_PREFIX const char *RO_PLOT_ID_S ROW_VAL ("plot_id");
 
 ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
@@ -98,7 +110,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p,  const uint32 rack_index, Material *material_p, Plot *parent_plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
 

@@ -12,6 +12,7 @@
 #include "study.h"
 #include "streams.h"
 #include "study_jobs.h"
+#include "string_utils.h"
 
 
 /*
@@ -27,7 +28,7 @@ static NamedParameterType S_STUDIES_LIST = { "PH Study", PT_STRING };
 
 static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
-static const char * const S_PLOT_INDEX_TITLE_S = "Plot ID";
+static const char * const S_ROW_INDEX_TITLE_S = "Plot ID";
 
 
 /*
@@ -225,7 +226,7 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_PLOT_INDEX_TITLE_S, PT_TIME, hints_p))
+			if (AddColumnParameterHint (S_ROW_INDEX_TITLE_S, PT_TIME, hints_p))
 				{
 					return hints_p;
 				}
@@ -237,7 +238,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, Study *area_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
@@ -251,15 +252,61 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 			for (i = 0; i < num_rows; ++ i)
 				{
-					const json_t *table_row_json_p = json_array_get (phenotypes_json_p, i);
+					const json_t *phenotype_json_p = json_array_get (phenotypes_json_p, i);
+					int32 row_index = 0;
 
 					imported_row_flag = false;
 
 
+					if (GetJSONInteger (phenotype_json_p, S_ROW_INDEX_TITLE_S, &row_index))
+						{
+							const char *key_s;
+							json_t *value_p;
+							const char *date_suffix_s = " date";
+
+							json_object_foreach (phenotype_json_p, key_s, value_p)
+								{
+									/*
+									 * Is it a measurement date or the treatment?
+									 */
+									if (!DoesStringEndWith (key_s, date_suffix_s))
+										{
+											char *date_key_s = ConcatenateStrings (key_s, date_suffix_s);
+
+											if (date_key_s)
+												{
+													const char *date_s = GetJSONString (phenotype_json_p, date_key_s);
+
+													if (date_s)
+														{
+															if (json_is_string (value_p))
+																{
+																	const char *treatment_s = json_string_value (value_p);
+
+																	if (treatment_s)
+																		{
+																			Observation *obs_p;
+
+																			//AddObservationToRow ();
+																		}
+																}
+														}
+
+													FreeCopiedString (date_key_s);
+												}
+										}
+								}
+
+						}		/* if (GetJSONInteger (phenotype_json_p, S_PLOT_INDEX_TITLE_S, &plot_index)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "No \"%s\" key", S_ROW_INDEX_TITLE_S);
+						}
+
 
 					if (!imported_row_flag)
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plot data");
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to import plot data");
 						}
 
 				}		/* for (i = 0; i < num_rows; ++ i) */

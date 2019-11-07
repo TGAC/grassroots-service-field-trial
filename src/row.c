@@ -36,7 +36,7 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 
 
 
-Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Plot *parent_plot_p)
+Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, Material *material_p, Plot *parent_plot_p)
 {
 	if (material_p)
 		{
@@ -49,7 +49,7 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 index, Material *material_p, Pl
 					if (row_p)
 						{
 							row_p -> ro_id_p = id_p;
-							row_p -> ro_index = index;
+							row_p -> ro_rack_index = rack_index;
 							row_p -> ro_material_p = material_p;
 							row_p -> ro_plot_p = parent_plot_p;
 							row_p -> ro_material_s = NULL;
@@ -178,7 +178,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 
 			if (success_flag)
 				{
-					if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index))
+					if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_rack_index))
 						{
 							/*
 							 * We only need to store the parent plot id if the JSON is for the backend
@@ -245,7 +245,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 						}		/* if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_INDEX_S, row_p -> ro_index);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_INDEX_S, row_p -> ro_rack_index);
 						}
 				}
 
@@ -400,13 +400,13 @@ bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_fl
 				}		/* if (row_json_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowAsJSON failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowAsJSON failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_rack_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
 				}
 
 		}		/* if (row_p -> ro_id_p) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_rack_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
 		}
 
 	return success_flag;

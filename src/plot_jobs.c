@@ -401,7 +401,11 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																	 */
 																	plot_p = GetPlotByRowAndColumn (row, column, area_p, data_p);
 
-																	if (!plot_p)
+																	if (plot_p)
+																		{
+
+																		}		/* if (plot_p) */
+																	else
 																		{
 																			double width = 0.0;
 
