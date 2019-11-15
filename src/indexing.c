@@ -94,7 +94,7 @@ void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_
 bool ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
 {
 	bool success_flag = false;
-	json_t *studies_p = GetAllStudiesAsJSON (service_data_p);
+	json_t *studies_p = GetAllStudiesAsJSONInViewFormat (service_data_p, VF_CLIENT_FULL);
 
 	if (studies_p)
 		{

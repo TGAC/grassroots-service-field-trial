@@ -92,6 +92,14 @@ STUDY_PREFIX const char *ST_PREVIOUS_CROP_S STUDY_VAL ("previous_crop");
 STUDY_PREFIX const char *ST_DESCRIPTION_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "description");
 
 
+STUDY_PREFIX const char *ST_DESIGN_S STUDY_VAL ("study_design");
+
+STUDY_PREFIX const char *ST_GROWING_CONDITIONS_S STUDY_VAL ("growing_conditions");
+
+STUDY_PREFIX const char *ST_PHENOTYPE_GATHERING_NOTES_S STUDY_VAL ("phenotype_gathering_notes");
+
+
+
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
 
@@ -142,6 +150,12 @@ typedef struct Study
 
 	const char *st_description_s;
 
+	const char *st_design_s;
+
+	const char *st_growing_conditions_s;
+
+	const char *st_phenotype_gathering_notes_s;
+
 } Study;
 
 
@@ -162,7 +176,10 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *notes_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
+																										const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
+																										Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *description_s,
+																										const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s, const DFWFieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 

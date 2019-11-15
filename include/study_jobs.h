@@ -72,7 +72,13 @@ STUDY_JOB_PREFIX NamedParameterType STUDY_MAX_PH STUDY_JOB_STRUCT_VAL("pH Maximu
 STUDY_JOB_PREFIX NamedParameterType STUDY_FIELD_TRIALS_LIST STUDY_JOB_STRUCT_VAL("Field Trials", PT_STRING);
 STUDY_JOB_PREFIX NamedParameterType STUDY_LOCATIONS_LIST STUDY_JOB_STRUCT_VAL("Locations", PT_STRING);
 
-STUDY_JOB_PREFIX NamedParameterType STUDY_NOTES STUDY_JOB_STRUCT_VAL("ST Notes", PT_LARGE_STRING);
+STUDY_JOB_PREFIX NamedParameterType STUDY_DESCRIPTION STUDY_JOB_STRUCT_VAL("ST Description", PT_LARGE_STRING);
+
+
+STUDY_JOB_PREFIX NamedParameterType STUDY_DESIGN STUDY_JOB_STRUCT_VAL("ST Design", PT_LARGE_STRING);
+STUDY_JOB_PREFIX NamedParameterType STUDY_GROWING_CONDITIONS STUDY_JOB_STRUCT_VAL("ST Growing Conditions", PT_LARGE_STRING);
+STUDY_JOB_PREFIX NamedParameterType STUDY_PHENOTYPE_GATHERING_NOTES STUDY_JOB_STRUCT_VAL("ST Phenotype Gathering Notes", PT_LARGE_STRING);
+
 
 
 
@@ -114,6 +120,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetStudyAsString (const Study *study_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const KeyValuePair *GetAspect (const char *aspect_value_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSONInViewFormat (const DFWFieldTrialServiceData *data_p, const ViewFormat format);
+
 
 
 #ifdef __cplusplus

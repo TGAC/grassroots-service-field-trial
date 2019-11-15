@@ -52,6 +52,8 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 
 static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
 
+static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
+
 static json_t *GetTableParameterHints (void);
 
 /*
@@ -653,4 +655,105 @@ Row *GetRowByRackIndex (const int32 row, Plot *plot_p, const bool expand_fields_
 //
 //	return row_p;
 //}
+
+
+static LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
+{
+	LinkedList *rows_p = NULL;
+	bson_t *query_p = BCON_NEW (RO_MATERIAL_ID_S, BCON_OID (material_p -> ma_id_p));
+
+	if (query_p)
+		{
+			rows_p = SearchForRows (query_p, data_p);
+
+			bson_destroy (query_p);
+		}
+
+	return rows_p;
+}
+
+
+
+static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+{
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
+		{
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+			if (results_p)
+				{
+					if (json_is_array (results_p))
+						{
+							LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
+
+							if (rows_p)
+								{
+									const size_t num_results = json_array_size (results_p);
+									size_t i = num_results;
+									bool success_flag = true;
+
+									while ((i > 0) && success_flag)
+										{
+											json_t *result_p = json_array_get (results_p, 0);
+											Plot *plot_p = NULL;
+											Material *material_p = NULL;
+											ViewFormat format = VF_CLIENT_FULL;
+
+											Row *row_p = GetRowFromJSON (result_p, plot_p, material_p, format, data_p);
+
+											if (row_p)
+												{
+													RowNode *node_p = AllocateRowNode (row_p);
+
+													if (node_p)
+														{
+															LinkedListAddTail (rows_p, (ListItem *) node_p);
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to allocate node for Row");
+															FreeRow (row_p);
+															success_flag = false;
+														}
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "GetRowFromJSON failed");
+													success_flag = false;
+												}
+
+										}		/* while ((i > 0) && success_flag) */
+
+									if (success_flag)
+										{
+											return rows_p;
+										}
+
+									FreeLinkedList (rows_p);
+								}		/* if (rows_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Rows list");
+								}
+
+						}		/* if (json_is_array (results_p)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
+						}
+
+					json_decref (results_p);
+				}		/* if (results_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
+				}
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MATERIAL]);
+		}
+
+	return NULL;
+}
 

@@ -26,7 +26,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-
+#include "material.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -42,6 +42,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMaterialParams (DFWFieldTrial
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllStudiesContainingMaterial (Material *material_p, DFWFieldTrialServiceData *data_p);
+
 
 
 #ifdef __cplusplus

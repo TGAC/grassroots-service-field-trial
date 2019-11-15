@@ -248,6 +248,37 @@ bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name
 	return success_flag;
 }
 
+
+LinkedList *GetAllStudiesContainingMaterial (Material *material_p, DFWFieldTrialServiceData *data_p)
+{
+	LinkedList *studies_p = AllocateLinkedList (FreeStudy);
+
+	if (studies_p)
+		{
+			/*
+			 * find all rows containing the material ...
+			 */
+
+			/*
+			 * ... get the plots for each of these rows ...
+			 */
+
+			/*
+			 * ... get the studies for each of these plots ...
+			 */
+
+
+			/*
+			 * .. order the studies by how many times the material appears in them.
+			 */
+
+		}		/* if (studies_p) */
+
+	return NULL;
+}
+
+
+
 /*
  * static definitions
  */

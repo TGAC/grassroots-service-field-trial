@@ -42,7 +42,11 @@
  */
 
 
-static NamedParameterType S_REINDEX_DATA = { "SS Reindex all data", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_ALL_DATA = { "SS Reindex all data", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_TRIALS = { "SS Reindex trials", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_BOOLEAN };
 
 
 static const char *GetDFWFieldTrialSubmissionServiceName (Service *service_p);
@@ -65,6 +69,11 @@ static bool CloseDFWFieldTrialSubmissionService (Service *service_p);
 
 static ServiceMetadata *GetDFWFieldTrialSubmissionServiceMetadata (Service *service_p);
 
+static bool AddIndexingParameters (ServiceData *data_p, ParameterSet *params_p);
+
+static bool GetSubmissionIndexingParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -156,11 +165,7 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (s
 														{
 															if (!GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
 																{
-																	if (strcmp (param_name_s, S_REINDEX_DATA.npt_name_s) == 0)
-																		{
-																			*pt_p = S_REINDEX_DATA.npt_type;
-																		}
-																	else
+																	if (!GetSubmissionIndexingParameterTypeForNamedParameter (param_name_s, pt_p))
 																		{
 																			success_flag = false;
 																		}
@@ -183,6 +188,69 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (s
 	return success_flag;
 }
 
+
+
+static bool AddIndexingParameters (ServiceData *data_p, ParameterSet *params_p)
+{
+	Parameter *param_p = NULL;
+	SharedType def;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
+
+	def.st_boolean_value = false;
+
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_ALL_DATA.npt_type, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", def, PL_ADVANCED)) != NULL)
+		{
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_TRIALS.npt_type, S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", def, PL_ADVANCED)) != NULL)
+				{
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_STUDIES.npt_type, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", def, PL_ADVANCED)) != NULL)
+						{
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_LOCATIONS.npt_type, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", def, PL_ADVANCED)) != NULL)
+								{
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_TREATMENTS.npt_type, S_REINDEX_TREATMENTS.npt_name_s, "Reindex all Treatments", "Reindex all Treatments into Lucene", def, PL_ADVANCED)) != NULL)
+										{
+											return true;
+										}
+								}
+						}
+				}
+		}
+
+
+	return false;
+}
+
+
+static bool GetSubmissionIndexingParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_REINDEX_ALL_DATA.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_ALL_DATA.npt_type;
+		}
+	else if (strcmp (param_name_s, S_REINDEX_TRIALS.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_TRIALS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_REINDEX_STUDIES.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_STUDIES.npt_type;
+		}
+	else if (strcmp (param_name_s, S_REINDEX_LOCATIONS.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_LOCATIONS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_REINDEX_TREATMENTS.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_TREATMENTS.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
 
 
 static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
@@ -209,15 +277,13 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 																{
 																	if (AddSubmissionRowPhenotypeParams (data_p, params_p))
 																		{
-																			Parameter *param_p = NULL;
-																			SharedType def;
-																			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
-
-																			def.st_boolean_value = false;
-
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_DATA.npt_type, S_REINDEX_DATA.npt_name_s, "Index all", "Reindex all data into Lucene", def, PL_ADVANCED)) != NULL)
+																			if (AddIndexingParameters (data_p, params_p))
 																				{
 																					return params_p;
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddIndexingParameters failed");
 																				}
 																		}
 																	else
@@ -294,6 +360,78 @@ static bool CloseDFWFieldTrialSubmissionService (Service *service_p)
 }
 
 
+static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
+{
+	bool done_flag = false;
+	SharedType reindex_value;
+
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_ALL_DATA.npt_name_s, &reindex_value))
+		{
+			if (reindex_value.st_boolean_value)
+				{
+					ReindexAllData (job_p, data_p);
+					done_flag = true;
+				}
+		}
+
+	if (!done_flag)
+		{
+			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
+			LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
+
+			if (lucene_p)
+				{
+					bool update_flag = false;
+
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &reindex_value))
+						{
+							if (reindex_value.st_boolean_value)
+								{
+									ReindexTrials (job_p, lucene_p, update_flag, data_p);
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_STUDIES.npt_name_s, &reindex_value))
+						{
+							if (reindex_value.st_boolean_value)
+								{
+									ReindexStudies (job_p, lucene_p, update_flag, data_p);
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_LOCATIONS.npt_name_s, &reindex_value))
+						{
+							if (reindex_value.st_boolean_value)
+								{
+									ReindexLocations (job_p, lucene_p, update_flag, data_p);
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_TREATMENTS.npt_name_s, &reindex_value))
+						{
+							if (reindex_value.st_boolean_value)
+								{
+									ReindexTreatments (job_p, lucene_p, update_flag, data_p);
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
+					FreeLuceneTool (lucene_p);
+				}		/* if (lucene_p) */
+
+		}		/* if (!done_flag) */
+
+	return done_flag;
+}
+
+
 
 static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
@@ -311,19 +449,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 			if (param_set_p)
 				{
-					bool done_flag = false;
-					SharedType reindex_value;
-
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_DATA.npt_name_s, &reindex_value))
-						{
-							if (reindex_value.st_boolean_value)
-								{
-									ReindexAllData (job_p, data_p);
-									done_flag = true;
-								}
-						}
-
-					if (!done_flag)
+					if (!RunReindexing (param_set_p, job_p, data_p))
 						{
 							if (!RunForSubmissionFieldTrialParams (data_p, param_set_p, job_p))
 								{
@@ -357,7 +483,7 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 
 								}		/* if (!RunForFieldTrialParams (data_p, param_set_p, job_p)) */
 
-						}		/* if (!done_flag) */
+						}		/* if (!RunReindexing (param_set_p, job_p, data_p)) */
 
 				}		/* if (param_set_p) */
 

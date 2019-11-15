@@ -49,12 +49,16 @@ static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFo
 
 static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const DFWFieldTrialServiceData *data_p);
 
+static bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s);
 
 /*
  * API FUNCTIONS
  */
 
-Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s, const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *notes_s, const DFWFieldTrialServiceData *data_p)
+Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
+											const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
+											Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *description_s,
+											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -88,37 +92,74 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 
 															if (plots_p)
 																{
-																	char *copied_notes_s = NULL;
+																	char *copied_description_s = NULL;
 
-																	if (CloneValidString (notes_s, &copied_notes_s))
+																	if (CloneValidString (description_s, &copied_description_s))
 																		{
-																			Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																			char *copied_design_s = NULL;
 
-																			if (study_p)
+																			if (CloneValidString (design_s, &copied_design_s))
 																				{
-																					study_p -> st_id_p = id_p;
-																					study_p -> st_name_s = copied_name_s;
-																					study_p -> st_data_url_s = copied_url_s;
-																					study_p -> st_soil_type_s = copied_soil_s;
-																					study_p -> st_aspect_s = copied_aspect_s;
-																					study_p -> st_slope_s = copied_slope_s;
-																					study_p -> st_sowing_date_p = copied_sowing_date_p;
-																					study_p -> st_harvest_date_p = copied_harvest_date_p;
-																					study_p -> st_parent_p = parent_field_trial_p;
-																					study_p -> st_location_p = location_p;
-																					study_p -> st_plots_p = plots_p;
-																					study_p -> st_min_ph = min_ph;
-																					study_p -> st_max_ph = max_ph;
-																					study_p -> st_current_crop_p = current_crop_p;
-																					study_p -> st_previous_crop_p = previous_crop_p;
-																					study_p -> st_description_s = copied_notes_s;
+																					char *copied_growing_conditions_s = NULL;
 
-																					return study_p;
-																				}
+																					if (CloneValidString (growing_conditions_s, &copied_growing_conditions_s))
+																						{
+																							char *copied_phenotype_notes_s = NULL;
 
-																			if (copied_notes_s)
+																							if (CloneValidString (phenotype_gathering_notes_s, &copied_phenotype_notes_s))
+																								{
+																									Study *study_p = (Study *) AllocMemory (sizeof (Study));
+
+																									if (study_p)
+																										{
+																											study_p -> st_id_p = id_p;
+																											study_p -> st_name_s = copied_name_s;
+																											study_p -> st_data_url_s = copied_url_s;
+																											study_p -> st_soil_type_s = copied_soil_s;
+																											study_p -> st_aspect_s = copied_aspect_s;
+																											study_p -> st_slope_s = copied_slope_s;
+																											study_p -> st_sowing_date_p = copied_sowing_date_p;
+																											study_p -> st_harvest_date_p = copied_harvest_date_p;
+																											study_p -> st_parent_p = parent_field_trial_p;
+																											study_p -> st_location_p = location_p;
+																											study_p -> st_plots_p = plots_p;
+																											study_p -> st_min_ph = min_ph;
+																											study_p -> st_max_ph = max_ph;
+																											study_p -> st_current_crop_p = current_crop_p;
+																											study_p -> st_previous_crop_p = previous_crop_p;
+																											study_p -> st_description_s = copied_description_s;
+																											study_p -> st_growing_conditions_s = NULL;
+																											study_p -> st_phenotype_gathering_notes_s = NULL;
+																											study_p -> st_design_s = NULL;
+
+																											return study_p;
+																										}
+
+																									if (copied_phenotype_notes_s)
+																										{
+																											FreeCopiedString (copied_phenotype_notes_s);
+																										}
+
+																								}		/* if (CloneValidString (phenotype_gathering_notes_s, &copied_phenotype_notes_s)) */
+
+																							if (copied_growing_conditions_s)
+																								{
+																									FreeCopiedString (copied_growing_conditions_s);
+																								}
+
+																						}		/* if (CloneValidString (growing_conditions_s, &copied_growing_conditions_s)) */
+
+																					if (copied_design_s)
+																						{
+																							FreeCopiedString (copied_design_s);
+																						}
+
+																				}		/* if (CloneValidString (design_s, &copied_design_s)) */
+
+
+																			if (copied_description_s)
 																				{
-																					FreeCopiedString (copied_notes_s);
+																					FreeCopiedString (copied_description_s);
 																				}
 
 																		}		/* if (CloneValidString (notes_s, &copied_notes_s)) */
@@ -247,6 +288,22 @@ void FreeStudy (Study *study_p)
 	if (study_p -> st_previous_crop_p)
 		{
 			FreeCrop (study_p -> st_previous_crop_p);
+		}
+
+
+	if (study_p -> st_phenotype_gathering_notes_s)
+		{
+			FreeCopiedString (study_p -> st_phenotype_gathering_notes_s);
+		}
+
+	if (study_p -> st_design_s)
+		{
+			FreeCopiedString (study_p -> st_design_s);
+		}
+
+	if (study_p -> st_growing_conditions_s)
+		{
+			FreeCopiedString (study_p -> st_growing_conditions_s);
 		}
 
 
@@ -404,158 +461,173 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 								{
 									if ((study_p -> st_max_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MAX_PH_S, study_p -> st_max_ph)))
 										{
-											if ((IsStringEmpty (study_p -> st_description_s)) || (SetJSONString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s)))
+											if (SetNonTrivialString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))
 												{
-													if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s)))
+													if (SetNonTrivialString (study_json_p, ST_GROWING_CONDITIONS_S, study_p -> st_growing_conditions_s))
 														{
-															if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s)))
+															if (SetNonTrivialString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))
 																{
-																	if ((IsStringEmpty (study_p -> st_slope_s)) || (SetJSONString (study_json_p, ST_SLOPE_S, study_p -> st_slope_s)))
+																	if (SetNonTrivialString (study_json_p, ST_DESIGN_S, study_p -> st_design_s))
 																		{
-																			if (AddValidAspectToJSON (study_p, study_json_p))
+																			if (SetNonTrivialString (study_json_p, ST_GROWING_CONDITIONS_S, study_p -> st_growing_conditions_s))
 																				{
-																					bool add_item_flag = false;
-
-																					/*
-																					 * Add the location
-																					 */
-																					if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+																					if (SetNonTrivialString (study_json_p, ST_PHENOTYPE_GATHERING_NOTES_S, study_p -> st_phenotype_gathering_notes_s))
 																						{
-																							json_t *location_json_p = GetLocationAsJSON (study_p -> st_location_p);
-
-																							if (location_json_p)
+																							if (SetNonTrivialString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s))
 																								{
-																									if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
+																									if (SetNonTrivialString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s))
 																										{
-																											if (AddValidCropToJSON (study_p -> st_current_crop_p, study_json_p, format, data_p))
+																											if (SetNonTrivialString (study_json_p, ST_SLOPE_S, study_p -> st_slope_s))
 																												{
-																													if (AddValidCropToJSON (study_p -> st_previous_crop_p, study_json_p, format, data_p))
+																													if (AddValidAspectToJSON (study_p, study_json_p))
 																														{
-																															add_item_flag = true;
-																														}
-																													else
-																														{
-																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add previous crop to study \"%s\"", study_p -> st_previous_crop_p -> cr_name_s);
-																														}
-																												}
-																											else
-																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add current crop to study \"%s\"", study_p -> st_current_crop_p -> cr_name_s);
-																												}
+																															bool add_item_flag = false;
 
-																										}		/* if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0) */
-																									else
-																										{
-																											json_decref (location_json_p);
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add location to study \"%s\"", study_p -> st_location_p -> lo_address_p -> ad_name_s);
-																										}
-																								}		/* if (location_json_p) */
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get location \"%s\" as JSON", study_p -> st_location_p -> lo_address_p -> ad_name_s);
-																								}
-																						}
-																					else
-																						{
-																							if ((! (study_p -> st_location_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)))
-																								{
-																									if ((! (study_p -> st_current_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)))
-																										{
-																											if ((! (study_p -> st_previous_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)))
-																												{
-																													add_item_flag = true;
-																												}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)) */
-																											else
-																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add previous crop \"%s\"", study_p -> st_previous_crop_p -> cr_name_s);
-																												}
-																										}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)) */
-																									else
-																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add current crop \"%s\"", study_p -> st_current_crop_p -> cr_name_s);
-																										}
-																								}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)) */
-																							else
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add location \"%s\"", study_p -> st_location_p -> lo_address_p -> ad_name_s);
-																								}
-																						}
-
-																					if (add_item_flag)
-																						{
-																							add_item_flag = false;
-
-																							/*
-																							 * Add the dates
-																							 */
-																							if (format == VF_STORAGE)
-																								{
-																									if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
-																										{
-																											if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
-																												{
-																													add_item_flag = true;
-																												}
-																										}
-																								}		/* if (format == VF_STORAGE) */
-																							else
-																								{
-																									if (AddValidDateToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
-																										{
-																											if (AddValidDateToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
-																												{
-																													add_item_flag = true;
-																												}
-																										}
-																								}
-
-																							if (add_item_flag)
-																								{
-
-																									if (AddCompoundIdToJSON (study_json_p, study_p -> st_id_p))
-																										{
-																											bool success_flag = false;
-
-																											if (format == VF_CLIENT_FULL)
-																												{
-																													if (GetStudyPlots (study_p, data_p))
-																														{
-																															if (AddPlotsToJSON (study_p, study_json_p, format, data_p))
+																															/*
+																															 * Add the location
+																															 */
+																															if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 																																{
-																																	success_flag = true;
+																																	json_t *location_json_p = GetLocationAsJSON (study_p -> st_location_p);
+
+																																	if (location_json_p)
+																																		{
+																																			if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
+																																				{
+																																					if (AddValidCropToJSON (study_p -> st_current_crop_p, study_json_p, format, data_p))
+																																						{
+																																							if (AddValidCropToJSON (study_p -> st_previous_crop_p, study_json_p, format, data_p))
+																																								{
+																																									add_item_flag = true;
+																																								}
+																																							else
+																																								{
+																																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add previous crop to study \"%s\"", study_p -> st_previous_crop_p -> cr_name_s);
+																																								}
+																																						}
+																																					else
+																																						{
+																																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add current crop to study \"%s\"", study_p -> st_current_crop_p -> cr_name_s);
+																																						}
+
+																																				}		/* if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0) */
+																																			else
+																																				{
+																																					json_decref (location_json_p);
+																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add location to study \"%s\"", study_p -> st_location_p -> lo_address_p -> ad_name_s);
+																																				}
+																																		}		/* if (location_json_p) */
+																																	else
+																																		{
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get location \"%s\" as JSON", study_p -> st_location_p -> lo_address_p -> ad_name_s);
+																																		}
 																																}
-																														}
-																												}
-																											else
-																												{
-																													success_flag = true;
-																												}
+																															else
+																																{
+																																	if ((! (study_p -> st_location_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)))
+																																		{
+																																			if ((! (study_p -> st_current_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)))
+																																				{
+																																					if ((! (study_p -> st_previous_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)))
+																																						{
+																																							add_item_flag = true;
+																																						}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)) */
+																																					else
+																																						{
+																																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add previous crop \"%s\"", study_p -> st_previous_crop_p -> cr_name_s);
+																																						}
+																																				}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)) */
+																																			else
+																																				{
+																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add current crop \"%s\"", study_p -> st_current_crop_p -> cr_name_s);
+																																				}
+																																		}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)) */
+																																	else
+																																		{
+																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add location \"%s\"", study_p -> st_location_p -> lo_address_p -> ad_name_s);
+																																		}
+																																}
 
-																											if (success_flag)
-																												{
-																													if (AddDatatype (study_json_p, DFTD_STUDY))
-																														{
-																															return study_json_p;
-																														}
-																												}
-																										}
+																															if (add_item_flag)
+																																{
+																																	add_item_flag = false;
 
-																								}		/* if (add_item_flag) */
+																																	/*
+																																	 * Add the dates
+																																	 */
+																																	if (format == VF_STORAGE)
+																																		{
+																																			if (AddValidDateAsEpochToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
+																																				{
+																																					if (AddValidDateAsEpochToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
+																																						{
+																																							add_item_flag = true;
+																																						}
+																																				}
+																																		}		/* if (format == VF_STORAGE) */
+																																	else
+																																		{
+																																			if (AddValidDateToJSON (study_p -> st_sowing_date_p, study_json_p, ST_SOWING_DATE_S))
+																																				{
+																																					if (AddValidDateToJSON (study_p -> st_harvest_date_p, study_json_p, ST_HARVEST_DATE_S))
+																																						{
+																																							add_item_flag = true;
+																																						}
+																																				}
+																																		}
 
-																						}		/* if (add_item_flag) */
+																																	if (add_item_flag)
+																																		{
 
-																				}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
+																																			if (AddCompoundIdToJSON (study_json_p, study_p -> st_id_p))
+																																				{
+																																					bool success_flag = false;
 
-																		}		/* if ((IsStringEmpty (study_p -> st_slope_s)) || (SetJSONString (study_json_p, ST_SLOPE_S, study_p -> st_slope_s))) */
+																																					if (format == VF_CLIENT_FULL)
+																																						{
+																																							if (GetStudyPlots (study_p, data_p))
+																																								{
+																																									if (AddPlotsToJSON (study_p, study_json_p, format, data_p))
+																																										{
+																																											success_flag = true;
+																																										}
+																																								}
+																																						}
+																																					else
+																																						{
+																																							success_flag = true;
+																																						}
 
-																}		/* if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s) == 0)) */
+																																					if (success_flag)
+																																						{
+																																							if (AddDatatype (study_json_p, DFTD_STUDY))
+																																								{
+																																									return study_json_p;
+																																								}
+																																						}
+																																				}
 
-														}		/* if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s) == 0)) */
+																																		}		/* if (add_item_flag) */
 
-												}		/* if ((IsStringEmpty (study_p -> st_description_s)) || (SetJSONString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))) */
+																																}		/* if (add_item_flag) */
 
-										}		/* if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph))) */
+																														}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
 
+																												}		/* if ((IsStringEmpty (study_p -> st_slope_s)) || (SetJSONString (study_json_p, ST_SLOPE_S, study_p -> st_slope_s))) */
+
+																										}		/* if ((IsStringEmpty (study_p -> st_soil_type_s)) || (SetJSONString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s) == 0)) */
+
+																								}		/* if ((IsStringEmpty (study_p -> st_data_url_s)) || (SetJSONString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s) == 0)) */
+
+																						}
+																				}
+																		}
+
+																}		/* if ((IsStringEmpty (study_p -> st_description_s)) || (SetJSONString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))) */
+
+														}		/* if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph))) */
+												}
+										}
 								}
 						}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_parent_p -> ft_id_p, ST_PARENT_FIELD_TRIAL_S)) */
 					else
@@ -563,9 +635,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add \"%s\" \"%s\"", ST_PARENT_FIELD_TRIAL_S, study_p -> st_parent_p -> ft_name_s);
 						}
 
-
-
-		/* if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph))) */
+					/* if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph))) */
 
 				}		/* if (SetJSONString (study_json_p, ST_NAME_S, study_p -> st_name_s) == 0) */
 
@@ -631,7 +701,10 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
 																					const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
 																					const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
-																					const char *notes_s = GetJSONString (json_p, ST_DESCRIPTION_S);
+																					const char *description_s = GetJSONString (json_p, ST_DESCRIPTION_S);
+																					const char *design_s = GetJSONString (json_p, ST_DESIGN_S);
+																					const char *growing_conditions_s = GetJSONString (json_p, ST_GROWING_CONDITIONS_S);
+																					const char *phenotype_gathering_notes_s = GetJSONString (json_p, ST_PHENOTYPE_GATHERING_NOTES_S);
 																					Crop *current_crop_p = GetStoredCropValue (json_p, ST_CURRENT_CROP_S, data_p);
 																					Crop *previous_crop_p = GetStoredCropValue (json_p, ST_PREVIOUS_CROP_S, data_p);
 																					const KeyValuePair *aspect_p = NULL;
@@ -658,33 +731,34 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					GetJSONInteger (json_p, ST_MIN_PH_S, &min_ph);
 																					GetJSONInteger (json_p, ST_MAX_PH_S, &max_ph);
 
-																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p, min_ph, max_ph, notes_s, data_p);
+																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p,
+																																	 min_ph, max_ph, description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s, data_p);
 
 																					/*
 																					 * The dates are copied by AllocateStudy so we can free our values.
 																					 */
-																					if (harvest_date_p)
-																						{
-																							FreeTime (harvest_date_p);
-																						}
+																					 if (harvest_date_p)
+																						 {
+																							 FreeTime (harvest_date_p);
+																						 }
 
-																					/*
-																					 * If the Study wasn't allocated, free any allocated
-																					 * resources.
-																					 */
-																					if (!study_p)
-																						{
-																							if (current_crop_p)
-																								{
-																									FreeCrop (current_crop_p);
-																								}
+																					 /*
+																					  * If the Study wasn't allocated, free any allocated
+																					  * resources.
+																					  */
+																					 if (!study_p)
+																						 {
+																							 if (current_crop_p)
+																								 {
+																									 FreeCrop (current_crop_p);
+																								 }
 
-																							if (previous_crop_p)
-																								{
-																									FreeCrop (previous_crop_p);
-																								}
+																							 if (previous_crop_p)
+																								 {
+																									 FreeCrop (previous_crop_p);
+																								 }
 
-																						}
+																						 }
 
 
 																				}		/* if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p)) */
@@ -898,5 +972,11 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 		}
 
 	return success_flag;
+}
+
+
+static bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s)
+{
+	return ((IsStringEmpty (value_s)) || (SetJSONString (value_p, key_s, value_s)));
 }
 
