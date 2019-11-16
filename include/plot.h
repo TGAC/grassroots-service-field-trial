@@ -58,10 +58,6 @@ PLOT_PREFIX const char *PL_WIDTH_S PLOT_VAL ("width");
 
 PLOT_PREFIX const char *PL_LENGTH_S PLOT_VAL ("length");
 
-PLOT_PREFIX const char *PL_TRIAL_DESIGN_S PLOT_VAL ("trial_design");
-
-PLOT_PREFIX const char *PL_GROWING_CONDITION_S PLOT_VAL ("growing_condition");
-
 PLOT_PREFIX const char *PL_TREATMENT_S PLOT_VAL ("treatment");
 
 PLOT_PREFIX const char *PL_ROW_INDEX_S PLOT_VAL ("row_index");
@@ -114,13 +110,12 @@ typedef struct Plot
 
 	double64 pl_length;
 
-	char *pl_growing_conditions_s;
+	char *pl_treatments_s;
 
 	char *pl_soil_type_s;
 
 	char *pl_comment_s;
 
-	char *pl_trial_design_s;
 
 	struct tm *pl_harvest_date_p;
 
@@ -155,8 +150,8 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length,
-																									const uint32 plot_index, const uint32 row_index, const uint32 column_index, const uint32 replicate, const char *trial_design_s,
-																									const char *growing_conditions_s, const char *treatments_s, const char *comment_s, Study *parent_p);
+																									const uint32 plot_index, const uint32 row_index, const uint32 column_index, const uint32 replicate,
+																								 const char *treatments_s, const char *comment_s, Study *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlotFromDrillingData (bson_oid_t *id_p, const struct tm *sowing_date_p, const uint32 plot_index, const uint32 row_index,
 																																	const uint32 column_index, const uint32 replicate, const char *sowing_rate_s, Study *parent_p);

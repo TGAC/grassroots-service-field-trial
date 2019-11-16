@@ -244,7 +244,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																								{
 																									def.st_string_value_s = (char *) description_s;
 
-																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Notes", "Any additional information about the study", def, PL_ALL)) != NULL)
+																									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the study", def, PL_ALL)) != NULL)
 																										{
 																											def.st_string_value_s = (char *) design_s;
 

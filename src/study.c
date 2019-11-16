@@ -128,9 +128,9 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 																											study_p -> st_current_crop_p = current_crop_p;
 																											study_p -> st_previous_crop_p = previous_crop_p;
 																											study_p -> st_description_s = copied_description_s;
-																											study_p -> st_growing_conditions_s = NULL;
-																											study_p -> st_phenotype_gathering_notes_s = NULL;
-																											study_p -> st_design_s = NULL;
+																											study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																											study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																											study_p -> st_design_s = copied_design_s;
 
 																											return study_p;
 																										}

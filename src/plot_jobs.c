@@ -62,8 +62,6 @@ static const char * const S_RACK_TITLE_S = "Rack";
 static const char * const S_ACCESSION_TITLE_S = "Accession";
 static const char * const S_PEDIGREE_TITLE_S = "Pedigree";
 static const char * const S_GENE_BANK_S = "Gene Bank";
-static const char * const S_TRIAL_DESIGN_TITLE_S = "Trial design";
-static const char * const S_GROWING_CONDITION_TITLE_S = "Growing condition";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
 static const char * const S_COMMENT_TITLE_S = "Comment";
@@ -274,15 +272,9 @@ static json_t *GetTableParameterHints (void)
 																				{
 																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_TRIAL_DESIGN_TITLE_S, PT_STRING, hints_p))
+																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, PT_STRING, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_GROWING_CONDITION_TITLE_S, PT_STRING, hints_p))
-																										{
-																											if (AddColumnParameterHint (S_COMMENT_TITLE_S, PT_STRING, hints_p))
-																												{
-																													return hints_p;
-																												}
-																										}
+																									return hints_p;
 																								}
 																						}
 																				}
@@ -415,9 +407,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 																					if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length))
 																						{
-																							const char *growing_condition_s = GetJSONString (table_row_json_p, S_GROWING_CONDITION_TITLE_S);
 																							const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
-																							const char *trial_design_s = GetJSONString (table_row_json_p, S_TRIAL_DESIGN_TITLE_S);
 																							const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
 																							struct tm *sowing_date_p = NULL;
 																							struct tm *harvest_date_p = NULL;
@@ -460,7 +450,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																										}
 																								}
 
-																							plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, trial_design_s, growing_condition_s, treatment_s, comment_s, area_p);
+																							plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, treatment_s, comment_s, area_p);
 
 																							if (plot_p)
 																								{

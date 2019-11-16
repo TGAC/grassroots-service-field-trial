@@ -251,7 +251,7 @@ bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name
 
 LinkedList *GetAllStudiesContainingMaterial (Material *material_p, DFWFieldTrialServiceData *data_p)
 {
-	LinkedList *studies_p = AllocateLinkedList (FreeStudy);
+	LinkedList *studies_p = AllocateLinkedList (FreeStudyNode);
 
 	if (studies_p)
 		{
