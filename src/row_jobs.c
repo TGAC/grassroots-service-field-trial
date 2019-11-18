@@ -40,7 +40,7 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 static const char * const S_ROW_S = "Row";
 static const char * const S_COLUMN_S = "Column";
 static const char * const S_RACK_S = "Rack";
-static const char * const S_PLOT_INDEX_S = "index";
+static const char * const S_PLOT_INDEX_S = "Plot index";
 
 
 static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER = { "RO phenotype data delimiter", PT_CHAR };
@@ -56,12 +56,14 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 
 static json_t *GetTableParameterHints (void);
 
+static bool GetPlotIndex (const json_t *observation_json_p, int32 *plot_index_p);
+
 /*
  * API Definitions
  */
 
 
-bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
 
@@ -272,6 +274,44 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 }
 
 
+static bool GetPlotIndex (const json_t *observation_json_p, int32 *plot_index_p)
+{
+	bool success_flag = false;
+	const json_t *index_p = json_object_get (observation_json_p, S_PLOT_INDEX_S);
+
+	if (index_p)
+		{
+			if (json_is_integer (index_p))
+				{
+					*plot_index_p = json_integer_value (index_p);
+					success_flag = true;
+				}
+			else if (json_is_string (index_p))
+				{
+					const char *index_s = json_string_value (index_p);
+
+					if (GetValidInteger (&index_s, plot_index_p))
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get plot index \"%s\" as integer", index_s);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "\"%s\" is not a string or a number", S_PLOT_INDEX_S);
+				}
+		}		/* if (index_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get \"%s\"", S_PLOT_INDEX_S);
+		}
+
+
+	return success_flag;
+}
 
 
 static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
@@ -285,7 +325,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 			size_t i;
 			size_t num_imported = 0;
 			size_t num_empty_rows = 0;
-			bool imported_obeservation_flag;
+			bool imported_obeservation_flag = false;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
@@ -294,11 +334,11 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 					if (row_size > 0)
 						{
-							imported_obeservation_flag = false;
-
 							int32 plot_index = -1;
 
-							if (GetJSONInteger (observation_json_p, S_PLOT_INDEX_S, &plot_index))
+							imported_obeservation_flag = false;
+
+							if (GetPlotIndex (observation_json_p, &plot_index))
 								{
 									int32 rack_index = 1;
 									Plot *plot_p = NULL;
@@ -336,7 +376,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																	if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
 																		{
-																			Treatment *treatment_p = GetTreatmentByInternalName (key_s, data_p);
+																			Treatment *treatment_p = GetTreatmentByVariableName (key_s, data_p);
 
 																			if (treatment_p)
 																				{

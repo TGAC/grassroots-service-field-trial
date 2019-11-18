@@ -25,6 +25,7 @@
 #include "submit_phenotypes.h"
 #include "phenotype_jobs.h"
 #include "audit.h"
+#include "row_jobs.h"
 
 //#include "phenotypes_jobs.h"
 
@@ -127,7 +128,7 @@ static const char *GetPhenotypesSubmissionServiceInformationUri (Service * UNUSE
 
 static bool GetPhenotypesSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionPhenotypesParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
@@ -140,7 +141,7 @@ static ParameterSet *GetPhenotypesSubmissionServiceParameters (Service *service_
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionPhenotypesParams (data_p, params_p, resource_p))
+			if (AddSubmissionRowPhenotypeParams (data_p, params_p, resource_p))
 				{
 					return params_p;
 				}
@@ -197,7 +198,7 @@ static ServiceJobSet *RunPhenotypesSubmissionService (Service *service_p, Parame
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionPhenotypesParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
 				{
 
 				}		/* if (!RunForSubmissionPhenotypesParams (data_p, param_set_p, job_p)) */

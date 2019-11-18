@@ -275,7 +275,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 														{
 															if (AddSubmissionTreatmentParams (data_p, params_p))
 																{
-																	if (AddSubmissionRowPhenotypeParams (data_p, params_p))
+																	if (AddSubmissionRowPhenotypeParams (data_p, params_p, resource_p))
 																		{
 																			if (AddIndexingParameters (data_p, params_p))
 																				{

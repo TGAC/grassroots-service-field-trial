@@ -109,13 +109,13 @@ Service *GetTreatmentsSubmissionService (GrassrootsServer *grassroots_p)
 
 static const char *GetTreatmentSubmissionServiceName (Service * UNUSED_PARAM (service_p))
 {
-	return "Submit Field Trial Treatments";
+	return "Submit Field Trial Measured Variables";
 }
 
 
 static const char *GetTreatmentSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial Treatments";
+	return "A service to submit field trial measured variables";
 }
 
 

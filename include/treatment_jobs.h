@@ -45,7 +45,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionTreatmentParams (DFWFieldTria
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllTreatmentsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);

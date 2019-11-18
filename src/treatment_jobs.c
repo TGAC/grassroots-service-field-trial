@@ -183,47 +183,78 @@ bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_nam
 }
 
 
-Treatment *GetTreatmentByInternalName (const char *name_s, const DFWFieldTrialServiceData *data_p)
+Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p)
 {
 	Treatment *phenotype_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
 		{
-			bson_t *query_p = BCON_NEW (TR_INTERNAL_NAME_S, BCON_UTF8 (name_s));
+			char *key_s = ConcatenateVarargsStrings (TR_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
 
-			if (query_p)
+			if (key_s)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+					bson_t *query_p = BCON_NEW (key_s, BCON_UTF8 (name_s));
 
-					if (results_p)
+					if (query_p)
 						{
-							if (json_is_array (results_p))
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+							if (results_p)
 								{
-									const size_t num_results = json_array_size (results_p);
-
-									if (num_results == 1)
+									if (json_is_array (results_p))
 										{
-											size_t i = 0;
-											json_t *entry_p = json_array_get (results_p, i);
+											const size_t num_results = json_array_size (results_p);
 
-											phenotype_p = GetTreatmentFromJSON (entry_p, data_p);
-
-											if (!phenotype_p)
+											if (num_results == 1)
 												{
+													size_t i = 0;
+													json_t *entry_p = json_array_get (results_p, i);
 
+													phenotype_p = GetTreatmentFromJSON (entry_p, data_p);
+
+													if (!phenotype_p)
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GetTreatmentFromJSON failed for \"%s\": \"%s\"", key_s, name_s);
+														}
+
+												}		/* if (num_results == 1) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Got " SIZET_FMT " hits for \"%s\": \"%s\"", num_results, key_s, name_s);
 												}
 
-										}		/* if (num_results == 1) */
+										}		/* if (json_is_array (results_p)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array for \"%s\": \"%s\"", key_s, name_s);
+										}
 
-								}		/* if (json_is_array (results_p)) */
+									json_decref (results_p);
+								}		/* if (results_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "NULL results for \"%s\": \"%s\"", key_s, name_s);
+								}
 
-							json_decref (results_p);
-						}		/* if (results_p) */
+							bson_destroy (query_p);
+						}		/* if (query_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for \"%s\": \"%s\"", key_s, name_s);
+						}
 
-					bson_destroy (query_p);
-				}		/* if (query_p) */
+					FreeCopiedString (key_s);
+				}		/* if (key_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate strings for variable name key");
+				}
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_TREATMENT]);
+		}
 
 	return phenotype_p;
 }

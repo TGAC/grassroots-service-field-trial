@@ -50,7 +50,7 @@ static NamedParameterType S_PAGE_SIZE = { "FT Results Page Size", PT_UNSIGNED_IN
 static const char * const S_ANY_FACET_S = "<ANY>";
 static const char * const S_FIELD_TRIAL_FACET_S = "Field Trial";
 static const char * const S_STUDY_FACET_S = "Study";
-static const char * const S_TREATMENT_FACET_S = "Treatment";
+static const char * const S_TREATMENT_FACET_S = "Measured Variable";
 static const char * const S_LOCATION_FACET_S = "Location";
 
 

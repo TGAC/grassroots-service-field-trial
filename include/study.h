@@ -148,13 +148,13 @@ typedef struct Study
 
 	double st_max_ph;
 
-	const char *st_description_s;
+	char *st_description_s;
 
-	const char *st_design_s;
+	char *st_design_s;
 
-	const char *st_growing_conditions_s;
+	char *st_growing_conditions_s;
 
-	const char *st_phenotype_gathering_notes_s;
+	char *st_phenotype_gathering_notes_s;
 
 } Study;
 

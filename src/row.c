@@ -288,33 +288,24 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 								{
 									if (GetNamedIdFromJSON (json_p, RO_MATERIAL_ID_S, material_id_p))
 										{
-											if (plot_p -> pl_parent_p)
-												{
-													material_p = GetMaterialById (material_id_p, data_p);
+											material_p = GetMaterialById (material_id_p, data_p);
 
-													if (!material_p)
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (material_id_p, id_s);
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get material with id %s", id_s);
-														}
-												}		/* if (plot_p -> pl_parent_p) */
-											else
+											if (!material_p)
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-													bson_oid_to_string (plot_p -> pl_id_p, id_s);
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row's material, Plot %s has no parent id", id_s);
+													bson_oid_to_string (material_id_p, id_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get material with id %s", id_s);
 												}
 
 										}		/* if (GetNamedIdFromJSON (json_p, RO_MATERIAL_ID_S, material_id_p)) */
 									else
 										{
-											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+											char plot_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-											bson_oid_to_string (plot_p -> pl_id_p, id_s);
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
+											bson_oid_to_string (plot_p -> pl_id_p, plot_id_s);
+
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", plot_id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
 										}
 
 
