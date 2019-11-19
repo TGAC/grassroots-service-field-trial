@@ -1029,7 +1029,27 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
+	SharedType id_value;
 	SharedType name_value;
+	bson_oid_t *study_id_p = NULL;
+
+	/*
+	 * Get the existing study id if specified
+	 */
+	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &id_value);
+
+	if (id_value.st_string_value_s)
+		{
+			study_id_p = GetBSONOidFromString (id_value.st_string_value_s);
+
+			if (!study_id_p)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load study \"%s\" for editing", id_value.st_string_value_s);
+					return false;
+				}
+
+		}		/* if (id_value.st_string_value_s) */
+
 
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &name_value))
 		{
@@ -1104,6 +1124,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, &phenotype_notes_value);
 
 
+
 																	if (IsValidDate (sowing_year_value.st_time_p))
 																		{
 																			sowing_date_p = sowing_year_value.st_time_p;
@@ -1114,7 +1135,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																			harvest_date_p = harvest_year_value.st_time_p;
 																		}
 
-																	study_p = AllocateStudy (NULL, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s,
+																	study_p = AllocateStudy (study_id_p, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s,
 																													 slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p,
 																													 min_ph_value.st_data_value, max_ph_value.st_data_value, notes_value.st_string_value_s, design_value.st_string_value_s,
 																													 growing_conditions_value.st_string_value_s, phenotype_notes_value.st_string_value_s, data_p);

@@ -440,7 +440,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																													bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" to \"%s\"", id_s);
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
 																													FreeObservation (observation_p);
 																												}
 
@@ -451,7 +451,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																											bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\"", id_s);
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
 
 																											FreeBSONOid (observation_id_p);
 																										}
@@ -469,7 +469,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 																						}		/* if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s))) */
 																					else
 																						{
-																							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value, skipping");
+																							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value for \"%s\", skipping", key_s);
 																						}
 
 																					if (!added_phenotype_flag)
@@ -480,7 +480,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 																				}		/* if (phenotype_p) */
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get phenotype with internal name \"%s\"", key_s);
+																					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get phenotype with variable name \"%s\"", key_s);
 																				}
 
 																		}		/* if (! (DoesStringEndWith (mapped_key_s, "date"))) */
