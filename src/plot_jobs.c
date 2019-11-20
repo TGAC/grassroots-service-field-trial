@@ -60,7 +60,6 @@ static const char * const S_ROW_TITLE_S = "Row";
 static const char * const S_COLUMN_TITLE_S = "Column";
 static const char * const S_RACK_TITLE_S = "Rack";
 static const char * const S_ACCESSION_TITLE_S = "Accession";
-static const char * const S_PEDIGREE_TITLE_S = "Pedigree";
 static const char * const S_GENE_BANK_S = "Gene Bank";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
@@ -81,23 +80,22 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
  * static declarations
  */
 
-static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char delimiter, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *area_p,  const DFWFieldTrialServiceData *data_p);
 
-static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_delimiter);
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p,  const DFWFieldTrialServiceData *data_p);
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
 
 
 /*
  * API definitions
  */
 
-bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *UNUSED_PARAM (resource_p))
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -160,7 +158,7 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 			 */
 			if (! (IsStringEmpty (value.st_string_value_s)))
 				{
-					bool success_flag = false;
+					OperationStatus status = OS_FAILED;
 					json_error_t e;
 					json_t *plots_json_p = NULL;
 
@@ -177,30 +175,25 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true))
 								{
-									Study *area_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
+									Study *study_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
 
-									if (area_p)
+									if (study_p)
 										{
-											success_flag = AddPlotsFromJSON (job_p, plots_json_p, area_p, data_p);
+											if (!AddPlotsFromJSON (job_p, plots_json_p, study_p, data_p))
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_json_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+												}
 
-											FreeStudy (area_p);
+											FreeStudy (study_p);
 										}
 								}
 
 							json_decref (plots_json_p);
 						}		/* if (plots_json_p) */
-					else
-						{
-							SharedType delimiter;
-							InitSharedType (&delimiter);
-
-							delimiter.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
-							GetParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter, true);
-
-							success_flag = AddPlotsTableFromTabularString (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
-						}
 
 					job_done_flag = true;
+
+
 				}		/* if (value.st_boolean_value) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
@@ -337,7 +330,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *area_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
@@ -376,178 +369,188 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 									if (material_p)
 										{
 											Plot *plot_p = NULL;
-											int32 index = -1;
+											int32 row = -1;
 
-											if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &index))
+											if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
 												{
-													int32 row = -1;
+													int32 column = -1;
 
-													if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
+													if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
 														{
-															int32 column = -1;
+															/*
+															 * does the plot already exist?
+															 */
+															plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
 
-															if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
+															if (plot_p)
 																{
-																	/*
-																	 * does the plot already exist?
-																	 */
-																	plot_p = GetPlotByRowAndColumn (row, column, area_p, data_p);
+																	/* We're good to go */
+																}		/* if (plot_p) */
+															else
+																{
+																	double width = 0.0;
 
-																	if (plot_p)
+																	if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width))
 																		{
+																			double length = 0.0;
 
-																		}		/* if (plot_p) */
+																			if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length))
+																				{
+																					const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
+																					const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
+																					struct tm *sowing_date_p = NULL;
+																					struct tm *harvest_date_p = NULL;
+																					const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
+
+
+																					if (date_s)
+																						{
+																							sowing_date_p = GetTimeFromString (date_s);
+
+																							if (!sowing_date_p)
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
+																								}
+																						}
+
+																					date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
+																					if (date_s)
+																						{
+																							harvest_date_p = GetTimeFromString (date_s);
+
+																							if (!harvest_date_p)
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
+																								}
+																						}
+
+																					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, treatment_s, comment_s, study_p);
+
+																					if (plot_p)
+																						{
+																							if (SavePlot (plot_p, data_p))
+																								{
+																									success_flag = false;
+																								}
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
+																									plot_p = NULL;
+																								}		/* if (!SavePlot (plot_p, data_p)) */
+
+																						}		/* if (plot_p) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
+																						}
+
+																				}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
+																				}
+
+																		}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
 																	else
 																		{
-																			double width = 0.0;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
+																		}
 
-																			if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width))
+																}		/* if (!plot_p) */
+
+
+															if (plot_p)
+																{
+																	/*
+																	 * plot_p now has an id, so we can add the row/rack.
+																	 */
+																	int32 rack_plotwise_index = -1;
+
+																	if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index))
+																		{
+																			int32 rack_studywise_index = -1;
+
+																			if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &rack_studywise_index))
 																				{
-																					double length = 0.0;
+																					int32 replicate = 1;
+																					const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
+																					bool control_rep_flag = false;
+																					Row *row_p = NULL;
 
-																					if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length))
+																					if (rep_s)
 																						{
-																							const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
-																							const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
-																							struct tm *sowing_date_p = NULL;
-																							struct tm *harvest_date_p = NULL;
-																							const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
-																							int32 replicate = 1;
-																							const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
-																							bool control_rep_flag = false;
-
-																							if (rep_s)
+																							if (Stricmp (rep_s, RO_REPLICATE_CONTROL_S) == 0)
 																								{
-																									if (Stricmp (rep_s, PL_REPLICATE_CONTROL_S) == 0)
-																										{
-																											control_rep_flag = true;
-																										}
-																									else
-																										{
-																											success_flag = GetValidInteger (&rep_s, &replicate);
-																										}		/* if (value_s) */
+																									control_rep_flag = true;
 																								}
-
-
-																							if (date_s)
+																							else
 																								{
-																									sowing_date_p = GetTimeFromString (date_s);
+																									success_flag = GetValidInteger (&rep_s, &replicate);
+																								}		/* if (value_s) */
+																						}
 
-																									if (!sowing_date_p)
-																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
-																										}
-																								}
+																					if (success_flag)
+																						{
+																							row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, plot_p);
 
-																							date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
-																							if (date_s)
-																								{
-																									harvest_date_p = GetTimeFromString (date_s);
-
-																									if (!harvest_date_p)
-																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
-																										}
-																								}
-
-																							plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, index, row, column, replicate, treatment_s, comment_s, area_p);
-
-																							if (plot_p)
+																							if (row_p)
 																								{
 																									if (control_rep_flag)
 																										{
-																											SetPlotGenotypeControl (plot_p, true);
+																											SetRowGenotypeControl (row_p, true);
 																										}
 
-																									if (!SavePlot (plot_p, data_p))
+																									if (SaveRow (row_p, data_p, true))
 																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
-																											plot_p = NULL;
-																										}		/* if (!SavePlot (plot_p, data_p)) */
+																											++ num_imported;
+																											imported_row_flag = true;
+																										}
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																										}
 
-																								}		/* if (plot_p) */
+																									FreeRow (row_p);
+																								}
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
 																								}
 
-																						}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
-																						}
+																						}		/* if (success_flag) */
 
-																				}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
+																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
 																			else
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
 																				}
 
-																		}		/* if (!plot_p) */
-
-
-																	if (plot_p)
+																		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
+																	else
 																		{
-																			/*
-																			 * plot_p now has an id, so we can add the row/rack.
-																			 */
-																			int32 rack = -1;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
+																		}
 
-																			if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack))
-																				{
-																					Row *row_p = AllocateRow (NULL, rack, material_p, plot_p);
+																	FreePlot (plot_p);
+																}		/* if (plot_p) */
 
-																					if (row_p)
-																						{
-																							if (SaveRow (row_p, data_p, true))
-																								{
-																									++ num_imported;
-																									imported_row_flag = true;
-																								}
-																							else
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
-																								}
-
-																							FreeRow (row_p);
-																						}
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
-																						}
-
-																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
-																				}
-
-																			FreePlot (plot_p);
-																		}		/* if (plot_p) */
-
-																}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
-																}
-
-														}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
+														}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
 														}
 
-												}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &index)) */
+												}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
 												}
 
 
 										}		/* if (material_p) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, area_p -> st_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, study_p -> st_name_s);
 										}
 
 								}		/* if (accession_s) */
@@ -587,120 +590,72 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 
 
-static bool AddPlotsTableFromTabularString (ServiceJob *job_p, const char *table_data_s, const char column_delimiter, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag	= true;
-	const char *current_row_s = table_data_s;
-	const char *next_row_s = strchr (current_row_s, '\n');
+	Plot *plot_p = NULL;
 
+	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (id_p));
 
-	/*
-	 * column headings are S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
-	 * S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s
-	 *
-	 */
-	while (success_flag && (*current_row_s != '\0'))
+	if (query_p)
 		{
-			Plot *plot_p = GetPlotFromTableRow (current_row_s, column_delimiter);
+			plot_p = GetUniquePlot (query_p, study_p, data_p);
 
-			/*
-			 * move onto the next row
-			 */
-			current_row_s = next_row_s + 1;
+			bson_destroy (query_p);
+		}		/* if (query_p) */
 
-			if (*current_row_s != '\0')
-				{
-					next_row_s = strchr (current_row_s, '\n');
-				}
-		}		/* while (success_flag && (*current_row_s != '\0')) */
-
-
-	return success_flag;
+	return plot_p;
 }
 
 
-static Plot *GetPlotFromTableRow (const char *current_row_s, const char column_delimiter)
+Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag	= true;
-	const char *current_column_s = current_row_s;
-	const char *next_column_s = strchr (current_column_s, column_delimiter);
-	PlotParam i;
+	Plot *plot_p = NULL;
+	bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
 
-	char *column_values_s [PP_NUM_PARAMS];
-	///	char *
-
-	/*
-	 * column headings are S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
-	 * S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s
-	 *
-	 */
-	while (success_flag && (*current_column_s != '\0'))
+	if (query_p)
 		{
+			plot_p = GetUniquePlot (query_p, study_p, data_p);
 
-			if (next_column_s)
-				{
-					/*
-					 * move onto the next column
-					 */
-					current_column_s = next_column_s + 1;
+			bson_destroy (query_p);
+		}		/* if (query_p) */
 
-					if (*current_column_s != '\0')
-						{
-							next_column_s = strchr (current_column_s, column_delimiter);
-						}
-
-				}		/* if (next_column_s) */
-			else
-				{
-					//*current_column_s = '\0';
-				}
-
-		}		/* while (success_flag && (*current_column_s != '\0')) */
-
-	return NULL;
+	return plot_p;
 }
 
 
 
-Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *area_p, const DFWFieldTrialServiceData *data_p)
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
-			bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (area_p -> st_id_p));
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
-			if (query_p)
+			if (results_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-					if (results_p)
+					if (json_is_array (results_p))
 						{
-							if (json_is_array (results_p))
+							const size_t num_results = json_array_size (results_p);
+
+							if (num_results == 1)
 								{
-									const size_t num_results = json_array_size (results_p);
+									size_t i = 0;
+									json_t *entry_p = json_array_get (results_p, i);
 
-									if (num_results == 1)
+									plot_p = GetPlotFromJSON (entry_p, study_p, data_p);
+
+									if (!plot_p)
 										{
-											size_t i = 0;
-											json_t *entry_p = json_array_get (results_p, i);
 
-											plot_p = GetPlotFromJSON (entry_p, area_p, data_p);
+										}
 
-											if (!plot_p)
-												{
+								}		/* if (num_results == 1) */
 
-												}
+						}		/* if (json_is_array (results_p)) */
 
-										}		/* if (num_results == 1) */
-
-								}		/* if (json_is_array (results_p)) */
-
-							json_decref (results_p);
-						}		/* if (results_p) */
-
-					bson_destroy (query_p);
-				}		/* if (query_p) */
+					json_decref (results_p);
+				}		/* if (results_p) */
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
 

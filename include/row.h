@@ -34,6 +34,8 @@ typedef struct Row
 {
 	bson_oid_t *ro_id_p;
 
+	const Study *ro_study_p;
+
 	Plot *ro_plot_p;
 
 	/**
@@ -53,6 +55,12 @@ typedef struct Row
 	char *ro_material_s;
 
 	LinkedList *ro_observations_p;
+
+	uint32 ro_replicate_index;
+
+	bool ro_replicate_control_flag;
+
+
 
 } Row;
 
@@ -82,11 +90,15 @@ typedef struct RowNode
 
 ROW_PREFIX const char *RO_ID_S ROW_VAL ("id");
 
-ROW_PREFIX const char *RO_INDEX_S ROW_VAL ("index");
+ROW_PREFIX const char *RO_RACK_INDEX_S ROW_VAL ("rack_index");
 
-ROW_PREFIX const char *RO_INDEX_WITHIN_STUDY_S ROW_VAL ("study_index");
+ROW_PREFIX const char *RO_STUDY_INDEX_S ROW_VAL ("study_index");
 
 ROW_PREFIX const char *RO_PLOT_ID_S ROW_VAL ("plot_id");
+
+ROW_PREFIX const char *RO_STUDY_ID_S ROW_VAL ("study_id");
+
+ROW_PREFIX const char *RO_REPLICATE_S ROW_VAL ("replicate");
 
 ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
 
@@ -103,6 +115,8 @@ ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material");
 
 ROW_PREFIX const char *RO_OBSERVATIONS_S  ROW_VAL ("observations");
 
+PLOT_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
+
 
 #ifdef __cplusplus
 extern "C"
@@ -110,7 +124,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p,  const uint32 rack_index, Material *material_p, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, Plot *parent_plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
 
@@ -126,6 +140,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *p
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationToRow (Row *row_p, Observation *observation_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowGenotypeControl (Row *row_p, bool control_flag);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowGenotypeControl (const Row *row_p);
+
+
 
 #ifdef __cplusplus
 }

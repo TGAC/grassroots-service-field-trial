@@ -205,7 +205,12 @@ Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialSe
 										{
 											const size_t num_results = json_array_size (results_p);
 
-											if (num_results == 1)
+											if (num_results > 1)
+												{
+													PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, results_p, "Multiple matching treatments " SIZET_FMT ", using the first", num_results);
+												}
+
+											if (num_results != 0)
 												{
 													size_t i = 0;
 													json_t *entry_p = json_array_get (results_p, i);
@@ -217,10 +222,10 @@ Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialSe
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GetTreatmentFromJSON failed for \"%s\": \"%s\"", key_s, name_s);
 														}
 
-												}		/* if (num_results == 1) */
+												}		/* if (num_results != 0) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Got " SIZET_FMT " hits for \"%s\": \"%s\"", num_results, key_s, name_s);
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "No treatments found for \"%s\": \"%s\"", key_s, name_s);
 												}
 
 										}		/* if (json_is_array (results_p)) */

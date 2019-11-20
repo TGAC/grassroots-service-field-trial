@@ -47,6 +47,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionRowPhenotypeParameterTypeForName
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByRackIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

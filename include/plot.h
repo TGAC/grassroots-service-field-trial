@@ -64,16 +64,11 @@ PLOT_PREFIX const char *PL_ROW_INDEX_S PLOT_VAL ("row_index");
 
 PLOT_PREFIX const char *PL_COLUMN_INDEX_S PLOT_VAL ("column_index");
 
-PLOT_PREFIX const char *PL_REPLICATE_S PLOT_VAL ("replicate");
-
 PLOT_PREFIX const char *PL_ROWS_S PLOT_VAL ("rows");
 
-PLOT_PREFIX const char *PL_INDEX_S PLOT_VAL ("index");
+PLOT_PREFIX const char *PL_RACK_INDICES_S PLOT_VAL ("rack_indices");
 
 PLOT_PREFIX const char *PL_COMMENT_S PLOT_VAL ("comment");
-
-
-PLOT_PREFIX const char *PL_REPLICATE_CONTROL_S PLOT_VAL ("control");
 
 
 PLOT_PREFIX int32 PL_UNSET_ID PLOT_VAL (INT32_MAX);
@@ -84,9 +79,6 @@ typedef struct Plot
 	bson_oid_t *pl_id_p;
 
 	Study *pl_parent_p;
-
-
-	uint32 pl_index;
 
 	/*
 	 * Drilling
@@ -120,10 +112,6 @@ typedef struct Plot
 	struct tm *pl_harvest_date_p;
 
 
-	uint32 pl_replicate_index;
-
-	bool pl_replicate_control_flag;
-
 	/**
 	 * A LinkedList of RowNodes
 	 * for all of the Rows in this
@@ -150,7 +138,7 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length,
-																									const uint32 plot_index, const uint32 row_index, const uint32 column_index, const uint32 replicate,
+																									const uint32 row_index, const uint32 column_index,
 																								 const char *treatments_s, const char *comment_s, Study *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlotFromDrillingData (bson_oid_t *id_p, const struct tm *sowing_date_p, const uint32 plot_index, const uint32 row_index,
@@ -176,13 +164,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPlotRows (Plot *plot_p, const DFWFieldTria
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void SetPlotGenotypeControl (Plot *plot_p, bool control_flag);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsPlotGenotypeControl (const Plot *plot_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p);
+//DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

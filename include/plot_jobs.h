@@ -49,6 +49,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionPlotParameterTypeForNamedParamet
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *area_p, const DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif
