@@ -364,12 +364,14 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 {
 	bool done_flag = false;
 	SharedType reindex_value;
+	OperationStatus status = GetServiceJobStatus (job_p);
 
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_ALL_DATA.npt_name_s, &reindex_value))
 		{
 			if (reindex_value.st_boolean_value)
 				{
 					ReindexAllData (job_p, data_p);
+
 					done_flag = true;
 				}
 		}
@@ -378,6 +380,8 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 		{
 			GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 			LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
+			uint32 num_attempted = 0;
+			uint32 num_succeeded = 0;
 
 			if (lucene_p)
 				{
@@ -387,7 +391,13 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 						{
 							if (reindex_value.st_boolean_value)
 								{
-									ReindexTrials (job_p, lucene_p, update_flag, data_p);
+									if (ReindexTrials (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
 									update_flag = true;
 									done_flag = true;
 								}
@@ -397,7 +407,14 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 						{
 							if (reindex_value.st_boolean_value)
 								{
-									ReindexStudies (job_p, lucene_p, update_flag, data_p);
+									if (ReindexStudies (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
+
 									update_flag = true;
 									done_flag = true;
 								}
@@ -407,7 +424,13 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 						{
 							if (reindex_value.st_boolean_value)
 								{
-									ReindexLocations (job_p, lucene_p, update_flag, data_p);
+									if (ReindexLocations (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
 									update_flag = true;
 									done_flag = true;
 								}
@@ -417,7 +440,13 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 						{
 							if (reindex_value.st_boolean_value)
 								{
-									ReindexTreatments (job_p, lucene_p, update_flag, data_p);
+									if (ReindexTreatments (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
 									update_flag = true;
 									done_flag = true;
 								}
@@ -426,7 +455,23 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 					FreeLuceneTool (lucene_p);
 				}		/* if (lucene_p) */
 
+			if (num_succeeded == num_attempted)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_succeeded > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+			else
+				{
+					status = OS_FAILED;
+				}
+
+			SetServiceJobStatus (job_p, status);
+
 		}		/* if (!done_flag) */
+
 
 	return done_flag;
 }

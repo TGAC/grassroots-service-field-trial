@@ -47,7 +47,7 @@ bool IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
 }
 
 
-void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_data_p)
+OperationStatus ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
@@ -57,29 +57,45 @@ void ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceData *service_
 		{
 			/* clear the index initially ...*/
 			bool update_flag = false;
+			uint32 num_succeeded = 0;
+			const uint32 num_reindexes = 4;
 
 			status = OS_SUCCEEDED;
 
 
-			if (!ReindexStudies (job_p, lucene_p, update_flag, service_data_p))
+			if (ReindexStudies (job_p, lucene_p, update_flag, service_data_p))
 				{
-					status = OS_FAILED;
+					++ num_succeeded;
 				}
 
 			/* ... then update it from here */
 			update_flag = true;
 
-			if (!ReindexTrials (job_p, lucene_p, update_flag, service_data_p))
+			if (ReindexTrials (job_p, lucene_p, update_flag, service_data_p))
 				{
-					status = OS_FAILED;
+					++ num_succeeded;
 				}
 
-			if (!ReindexLocations (job_p, lucene_p, update_flag, service_data_p))
+			if (ReindexLocations (job_p, lucene_p, update_flag, service_data_p))
 				{
-					status = OS_FAILED;
+					++ num_succeeded;
 				}
 
-			if (!ReindexTreatments (job_p, lucene_p, update_flag, service_data_p))
+			if (ReindexTreatments (job_p, lucene_p, update_flag, service_data_p))
+				{
+					++ num_succeeded;
+				}
+
+
+			if (num_succeeded == num_reindexes)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_succeeded > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+			else
 				{
 					status = OS_FAILED;
 				}

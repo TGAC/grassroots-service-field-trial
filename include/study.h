@@ -79,6 +79,9 @@ STUDY_PREFIX const char *ST_PARENT_FIELD_TRIAL_S STUDY_VAL ("parent_field_trial_
 
 STUDY_PREFIX const char *ST_PLOTS_S STUDY_VAL ("plots");
 
+STUDY_PREFIX const char *ST_NUMBER_OF_PLOTS_S STUDY_VAL ("number_of_plots");
+
+
 STUDY_PREFIX const char *ST_DATA_LINK_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
 
 STUDY_PREFIX const char *ST_MIN_PH_S STUDY_VAL ("min_ph");

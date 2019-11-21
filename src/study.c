@@ -51,6 +51,9 @@ static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const 
 
 static bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s);
 
+static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialServiceData *data_p);
+
+
 /*
  * API FUNCTIONS
  */
@@ -593,6 +596,23 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 																																										}
 																																								}
 																																						}
+																																					else if (format == VF_CLIENT_MINIMAL)
+																																						{
+																																							int32 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+																																							if (num_plots >= 0)
+																																								{
+																																									if (SetJSONInteger (study_json_p, ST_NUMBER_OF_PLOTS_S, num_plots))
+																																										{
+																																											success_flag = true;
+																																										}
+																																								}
+																																							else
+																																								{
+
+																																								}
+
+																																						}
 																																					else
 																																						{
 																																							success_flag = true;
@@ -980,3 +1000,37 @@ static bool SetNonTrivialString (json_t *value_p, const char *key_s, const char 
 	return ((IsStringEmpty (value_s)) || (SetJSONString (value_p, key_s, value_s)));
 }
 
+
+
+static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialServiceData *data_p)
+{
+	int32 res = -1;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+		{
+			bson_t *query_p = BCON_NEW (PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
+
+			/*
+			 * Make the query to get the matching plots
+			 */
+			if (query_p)
+				{
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+					if (results_p)
+						{
+							if (json_is_array (results_p))
+								{
+									res = json_array_size (results_p);
+								}		/* if (json_is_array (results_p)) */
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+		}
+
+	return res;
+}
