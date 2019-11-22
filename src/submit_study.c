@@ -34,7 +34,6 @@
 
 
 
-static const char *GetStudySubmissionServiceName (Service *service_p);
 
 static const char *GetStudySubmissionServiceDesciption (Service *service_p);
 
@@ -108,7 +107,7 @@ Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 
 
 
-static const char *GetStudySubmissionServiceName (Service * UNUSED_PARAM (service_p))
+const char *GetStudySubmissionServiceName (Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Study";
 }

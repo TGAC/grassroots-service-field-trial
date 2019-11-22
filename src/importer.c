@@ -33,6 +33,9 @@
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "field_trial.h"
+#include "schema_keys.h"
+#include "submit_study.h"
+
 
 typedef enum
 {
@@ -58,12 +61,18 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 
 static bool AddVariableToBuffer (ByteBuffer *buffer_p, const char *prefix_s, const char *key_s, const char *value_s, CurlTool *curl_p);
 
-static bool CallFieldTrialWebservice (const char *url_s, CurlTool *curl_p, size_t *num_successes_p, size_t *num_failures_p);
+static bool CallFieldTrialWebservice (const json_t *req_p, CurlTool *curl_p, size_t *num_successes_p, size_t *num_failures_p);
 
 static json_t *PreprocessTrials (const json_t *src_p);
 
 static bool AddUniqueTrial (json_t *trials_p, json_t *cache_p, const char *name_s, const char *team_s);
 
+static json_t *GetInitialRequest (const char *service_name_s, json_t **params_array_pp);
+
+
+static bool AddParamFromImportData (json_t *params_p, const json_t *study_p, const char *study_key_s, const char *db_key_s);
+
+static bool AddParam (json_t *params_p, const char *key_s, const char *value_s);
 
 /*
  * DEFINITIONS
@@ -236,10 +245,10 @@ static void ImportData (const json_t *data_p, const char *grassroots_url_s, bool
 			size_t i;
 			const size_t size = json_array_size (data_p);
 			json_array_foreach (data_p, i, item_p)
-				{
-					printf ("importing record " SIZET_FMT " of " SIZET_FMT "\n", i, size);
-					import_callback_fn (item_p, grassroots_url_s, &num_successes, &num_failures);
-				}
+			{
+				printf ("importing record " SIZET_FMT " of " SIZET_FMT "\n", i, size);
+				import_callback_fn (item_p, grassroots_url_s, &num_successes, &num_failures);
+			}
 
 		}
 	else
@@ -293,7 +302,7 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 																				{
 																					const char *url_s = GetByteBufferData (buffer_p);
 
-																					CallFieldTrialWebservice (url_s, curl_p, num_successes_p, num_failures_p);
+																					CallFieldTrialWebservice (NULL, curl_p, num_successes_p, num_failures_p);
 																				}
 																		}
 																}
@@ -407,7 +416,7 @@ static bool ImportTrial (const json_t *trial_p, const char *grassroots_url_s, si
 
 																	PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, trial_p, "Importing");
 
-																	CallFieldTrialWebservice (url_s, curl_p, num_successes_p, num_failures_p);
+																	CallFieldTrialWebservice (NULL, curl_p, num_successes_p, num_failures_p);
 																}
 														}
 												}
@@ -560,84 +569,223 @@ static json_t *PreprocessTrials (const json_t *src_p)
 }
 
 
+/*
+{
+  "services": [
+    {
+      "so:name": "Submit Field Trial Study",
+      "start_service": true,
+      "parameter_set": {
+        "level": "simple",
+        "parameters": [
+				]
+      }
+    }
+  ]
+}
+
+
+ */
+static json_t *GetInitialRequest (const char *service_name_s, json_t **params_array_pp)
+{
+	json_t *root_p = json_object ();
+
+	if (root_p)
+		{
+			json_t *services_p = json_array ();
+
+			if (services_p)
+				{
+					if (json_object_set_new (root_p, SERVICES_NAME_S, services_p) == 0)
+						{
+							json_t *service_p = json_object ();
+
+							if (service_p)
+								{
+									if (json_array_append_new (services_p, service_p) == 0)
+										{
+											if (SetJSONString (service_p, SERVICE_NAME_S, service_name_s))
+												{
+													if (SetJSONBoolean (service_p, SERVICE_RUN_S, true))
+														{
+															json_t *param_set_p = json_object ();
+
+															if (param_set_p)
+																{
+																	if (json_object_set_new (service_p, PARAM_SET_KEY_S, param_set_p) == 0)
+																		{
+																			if (SetJSONString (service_p, PARAM_LEVEL_S, PARAM_LEVEL_TEXT_SIMPLE_S))
+																				{
+																					json_t *params_array_p = json_array ();
+
+																					if (params_array_p)
+																						{
+																							if (json_object_set_new (param_set_p, PARAM_SET_PARAMS_S, params_array_p) == 0)
+																								{
+																									*params_array_pp = params_array_p;
+																									return root_p;
+																								}
+																							else
+																								{
+																									json_decref (params_array_p);
+																								}
+																						}
+																				}
+
+																		}
+																	else
+																		{
+																			json_decref (param_set_p);
+																		}
+																}
+
+														}
+
+												}
+
+										}
+									else
+										{
+											json_decref (service_p);
+										}
+								}
+
+						}
+					else
+						{
+							json_decref (services_p);
+						}
+				}
+
+			json_decref (root_p);
+		}
+
+	return NULL;
+}
+
+
+static bool AddParamFromImportData (json_t *params_p, const json_t *study_p, const char *study_key_s, const char *db_key_s)
+{
+	bool success_flag = false;
+	const char *value_s = GetJSONString (study_p, study_key_s);
+
+	if (value_s)
+		{
+			success_flag = AddParam (params_p, db_key_s, value_s);
+		}
+
+	return success_flag;
+}
+
+
+static bool AddParam (json_t *params_p, const char *key_s, const char *value_s)
+{
+	json_t *param_p = json_object ();
+
+	if (param_p)
+		{
+			if (SetJSONString (param_p, PARAM_NAME_S, key_s))
+				{
+					if (SetJSONString (param_p, PARAM_CURRENT_VALUE_S, value_s))
+						{
+							if (json_array_append_new (params_p, param_p) == 0)
+								{
+									return true;
+								}
+							else
+								{
+									json_decref (param_p);
+								}
+						}
+				}
+		}
+
+	return false;
+}
+
+
 static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p)
 {
 	bool success_flag = false;
-	const char *NAME_KEY_S = "propTitle";
-	const char *study_s = GetJSONString (study_p, NAME_KEY_S);
+	CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
 
-	if (study_s)
+	if (curl_p)
 		{
-			const char *TRIAL_KEY_S = "projectName";
-			const char *trial_s = GetJSONString (study_p, TRIAL_KEY_S);
+			json_t *params_p = NULL;
+			json_t *submission_p = GetInitialRequest (GetStudySubmissionServiceName (NULL), &params_p);
 
-			if (trial_s)
+
+			if (submission_p)
 				{
-					const char *LOCATION_KEY_S = "fieldname";
-					const char *location_s = GetJSONString (study_p, LOCATION_KEY_S);
-
-					if (location_s)
+					if (AddParam (params_p, STUDY_DESCRIPTION.npt_name_s, ""))
 						{
-							CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
-
-							if (curl_p)
+							if (AddParam (params_p, STUDY_THIS_CROP.npt_name_s, "Unknown"))
 								{
-									/*
-									 * Build the request
-									 */
-									ByteBuffer *buffer_p = AllocateByteBuffer (1024);
-
-									if (buffer_p)
+									if (AddParam (params_p, STUDY_PREVIOUS_CROP.npt_name_s, "Unknown"))
 										{
-											/*
-											 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
-											 */
-											if (AppendStringsToByteBuffer (buffer_p, grassroots_url_s, "service/Submit%20Field%20Trial%20Study", NULL))
+											if (AddParamFromImportData (params_p, study_p, "propTitle", STUDY_NAME.npt_name_s))
 												{
-													if (AddVariableToBuffer (buffer_p, "?", STUDY_NAME.npt_name_s, study_s, curl_p))
+													if (AddParamFromImportData (params_p, study_p, "projectName", STUDY_FIELD_TRIALS_LIST.npt_name_s))
 														{
-															if (AddVariableToBuffer (buffer_p, "&", STUDY_FIELD_TRIALS_LIST.npt_name_s, trial_s, curl_p))
+															if (AddParamFromImportData (params_p, study_p, "fieldname", STUDY_LOCATIONS_LIST.npt_name_s))
 																{
-																	if (AddVariableToBuffer (buffer_p, "&", STUDY_LOCATIONS_LIST.npt_name_s, location_s, curl_p))
+																	if (AddParamFromImportData (params_p, study_p, "designLayout", STUDY_DESIGN.npt_name_s))
 																		{
-																			const char *url_s = GetByteBufferData (buffer_p);
+																			if (AddParamFromImportData (params_p, study_p, "measurementsToBeTakenAndDivisionOfLabour", STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s))
+																				{
+																					if (SetUriForCurlTool (curl_p, grassroots_url_s))
+																						{
+																							CallFieldTrialWebservice (submission_p, curl_p, num_successes_p, num_failures_p);
+																							success_flag = true;
+																						}
 
-																			PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, study_p, "Importing");
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, submission_p, "Failed to add \"measurementsToBeTakenAndDivisionOfLabour\" -> \"%s\" to params", STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s);
+																				}
 
-																			CallFieldTrialWebservice (url_s, curl_p, num_successes_p, num_failures_p);
-																			success_flag = true;
+
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, submission_p, "Failed to add \"designLayout\" -> \"%s\" to params", STUDY_DESIGN.npt_name_s);
 																		}
 																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, submission_p, "Failed to add \"fieldname\" -> \"%s\" to params", STUDY_LOCATIONS_LIST.npt_name_s);
+																}
+
+														}		/* if (AddParamFromImportData (params_p, STUDY_FIELD_TRIALS_LIST.npt_name_s, trial_s)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, submission_p, "Failed to add \"projectName\" -> \"%s\" to params", STUDY_FIELD_TRIALS_LIST.npt_name_s);
 														}
+
+												}		/* if (AddParam (params_p, STUDY_NAME.npt_name_s, study_s)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, submission_p, "Failed to add \"propTitle\" -> \"%s\" to params", STUDY_NAME.npt_name_s);
 												}
-											FreeByteBuffer (buffer_p);
+
 										}
 
-									FreeCurlTool (curl_p);
-								}		/* if (curl_p) */
+								}
 
-						}		/* if (location_s) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s ", LOCATION_KEY_S);
 						}
 
-				}		/* if (trial_s) */
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s ", TRIAL_KEY_S);
-				}
 
-		}		/* if (study_s) */
-	else
-		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to get %s ", NAME_KEY_S);
-		}
+					json_decref (submission_p);
+				}		/* if (submission_p) */
+
+			FreeCurlTool (curl_p);
+		}		/* if (curl_p) */
 
 
 	if (!success_flag)
 		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to import study \"%s\" ", study_s ? study_s : " unknown");
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p, "Failed to import study");
 
 			++ (*num_failures_p);
 		}
@@ -647,110 +795,106 @@ static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, si
 
 
 
-static bool CallFieldTrialWebservice (const char *url_s, CurlTool *curl_p, size_t *num_successes_p, size_t *num_failures_p)
+static bool CallFieldTrialWebservice (const json_t *req_p, CurlTool *curl_p, size_t *num_successes_p, size_t *num_failures_p)
 {
 	bool success_flag = false;
 
-	if (SetUriForCurlTool (curl_p, url_s))
+
+	PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, req_p, "REQUEST: ");
+
+	if (MakeRemoteJSONCallFromCurlTool (curl_p, req_p))
 		{
-			CURLcode c = RunCurlTool (curl_p);
+			const char *response_s = GetCurlToolData (curl_p);
 
-			printf ("called: %s\n", url_s);
-
-			if (c == CURLE_OK)
+			if (response_s)
 				{
-					const char *response_s = GetCurlToolData (curl_p);
+					json_error_t err;
+					json_t *res_p = json_loads (response_s, JSON_DECODE_ANY, &err);
 
-					if (response_s)
+
+					printf ("response:\n%s\n", response_s);
+
+					if (res_p)
 						{
-							json_error_t err;
-							json_t *res_p = json_loads (response_s, JSON_DECODE_ANY, &err);
-
-
-							printf ("response:\n%s\n", response_s);
-
-							if (res_p)
-								{
-									/*
-									{
-										"header": {
-											"schema": {
-												"so:softwareVersion": "0.10"
-											}
-										},
-										"@context": {
-											"so:": "http://schema.org/",
-											"eo:": "http://edamontology.org/",
-											"efo:": "http://www.ebi.ac.uk/efo/",
-											"swo:": "http://www.ebi.ac.uk/swo/"
-										},
-										"results": [
-											{
-												"service_name": "Submit Field Trial Location",
-												"job_type": "default_service_job",
-												"status": 5,
-												"status_text": "Succeeded",
-												"job_uuid": "2beb4af8-c565-4aff-a185-f04e602a5c53",
-												"so:description": "Submit Location"
-											}
-										]
+							/*
+							{
+								"header": {
+									"schema": {
+										"so:softwareVersion": "0.10"
 									}
-									 */
+								},
+								"@context": {
+									"so:": "http://schema.org/",
+									"eo:": "http://edamontology.org/",
+									"efo:": "http://www.ebi.ac.uk/efo/",
+									"swo:": "http://www.ebi.ac.uk/swo/"
+								},
+								"results": [
+									{
+										"service_name": "Submit Field Trial Location",
+										"job_type": "default_service_job",
+										"status": 5,
+										"status_text": "Succeeded",
+										"job_uuid": "2beb4af8-c565-4aff-a185-f04e602a5c53",
+										"so:description": "Submit Location"
+									}
+								]
+							}
+							 */
 
-									json_t *results_p = json_object_get (res_p, "results");
+							json_t *results_p = json_object_get (res_p, "results");
 
-									if (results_p)
+							if (results_p)
+								{
+									if (json_is_array (results_p))
 										{
-											if (json_is_array (results_p))
-												{
-													json_t *result_p;
-													size_t j;
+											json_t *result_p;
+											size_t j;
 
-													success_flag = true;
+											success_flag = true;
 
-													json_array_foreach (results_p, j , result_p)
-														{
-															OperationStatus status = OS_ERROR;
-															const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
+											json_array_foreach (results_p, j , result_p)
+											{
+												OperationStatus status = OS_ERROR;
+												const char *value_s = GetJSONString (result_p, SERVICE_STATUS_S);
 
-															if (value_s)
-																{
-																	status = GetOperationStatusFromString (value_s);
-																}
-															else
-																{
-																	int i;
-																	/* Get the job status */
+												if (value_s)
+													{
+														status = GetOperationStatusFromString (value_s);
+													}
+												else
+													{
+														int i;
+														/* Get the job status */
 
-																	if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
-																		{
-																			if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
-																				{
-																					status = (OperationStatus) i;
-																				}
-																		}
-																}
+														if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
+															{
+																if ((i > OS_LOWER_LIMIT) && (i < OS_UPPER_LIMIT))
+																	{
+																		status = (OperationStatus) i;
+																	}
+															}
+													}
 
-															if (status == OS_SUCCEEDED)
-																{
-																	++ *num_successes_p;
-																}
-															else
-																{
-																	puts ("an import failed");
-																	++ *num_failures_p;
-																}
+												if (status == OS_SUCCEEDED)
+													{
+														++ *num_successes_p;
+													}
+												else
+													{
+														puts ("an import failed");
+														++ *num_failures_p;
+													}
 
-														}
-												}
-										}		/* if (results_p) */
+											}
+										}
+								}		/* if (results_p) */
 
-									json_decref (res_p);
-								}
+							json_decref (res_p);
 						}
 				}
-		}
 
+		}
 
 	return success_flag;
 }

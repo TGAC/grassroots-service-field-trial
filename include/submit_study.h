@@ -38,6 +38,12 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetStudySubmissionService (GrassrootsServer *grassroots_p);
 
 
+/*
+ * For the importer
+ */
+DFW_FIELD_TRIAL_SERVICE_API const char *GetStudySubmissionServiceName (Service *service_p);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -1108,21 +1108,27 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																	struct tm *sowing_date_p = NULL;
 																	struct tm *harvest_date_p = NULL;
 
-																	min_ph_value.st_long_value = ST_UNSET_PH;
-																	max_ph_value.st_long_value = ST_UNSET_PH;
-
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_year_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_value);
-																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value);
-																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_DESIGN.npt_name_s, &design_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_GROWING_CONDITIONS.npt_name_s, &growing_conditions_value);
 																	GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, &phenotype_notes_value);
 
+
+																	if (!GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_value))
+																		{
+																			min_ph_value.st_long_value = ST_UNSET_PH;
+																		}
+
+
+																	if (!GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_value))
+																		{
+																			max_ph_value.st_long_value = ST_UNSET_PH;
+																		}
 
 
 																	if (IsValidDate (sowing_year_value.st_time_p))
