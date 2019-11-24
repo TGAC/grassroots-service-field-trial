@@ -103,7 +103,8 @@ static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.o
 
 static char *GetTermEnglishValue (const json_t *entry_p);
 
-static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const char *name_key_s, const char *abbreviation_key_s, const char *description_key_s);
+
+static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const char *name_key_s, const char *abbreviation_key_s, const char *description_key_s, const bool is_unit_term_flag);
 
 static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTool *tool_p);
 
@@ -209,6 +210,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 																					const char *name_key_s = NULL;
 																					const char *abbr_key_s = NULL;
 																					const char *desc_key_s = NULL;
+																					bool is_unit_flag = false;
 
 																					switch (tt)
 																						{
@@ -225,6 +227,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 
 																							case TT_UNIT:
 																								name_key_s = "Scale name";
+																								is_unit_flag = true;
 																								break;
 
 																							case TT_VARIABLE:
@@ -235,7 +238,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 																								break;
 																						}
 
-																					term_p = GetSchemaTerm (res_p, term_s, name_key_s, abbr_key_s, desc_key_s);
+																					term_p = GetSchemaTerm (res_p, term_s, name_key_s, abbr_key_s, desc_key_s, is_unit_flag);
 
 																					if (!term_p)
 																						{
@@ -343,7 +346,7 @@ static char *GetTermEnglishValue (const json_t *entry_p)
 }
 
 
-static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const char *name_key_s, const char *abbreviation_key_s, const char *description_key_s)
+static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const char *name_key_s, const char *abbreviation_key_s, const char *description_key_s, const bool is_unit_term_flag)
 {
 	SchemaTerm *term_p = NULL;
 	const size_t num_results = json_array_size (values_p);
@@ -353,6 +356,10 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 	char *description_s = NULL;
 	char *abbreviation_s = NULL;
 	size_t num_to_match = 0;
+	char *scale_name_s = NULL;
+	char *lower_limit_s = NULL;
+	char *upper_limit_s = NULL;
+	char *decimal_place_s = NULL;
 
 	if (name_key_s)
 		{
@@ -369,6 +376,11 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 			++ num_to_match;
 		}
 
+
+	if (is_unit_term_flag)
+		{
+			num_to_match += 4;
+		}
 
 	while ((i < num_results) && (matched_count < num_to_match))
 		{
@@ -391,6 +403,25 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 						{
 							abbreviation_s = GetTermEnglishValue (entry_p);
 							++ matched_count;
+						}
+					else if (is_unit_term_flag)
+						{
+							if (strcmp (key_s, "Scale name") == 0)
+								{
+									scale_name_s = GetTermEnglishValue (entry_p);
+								}
+							else if (strcmp (key_s, "Upper limit"))
+								{
+									upper_limit_s = GetTermEnglishValue (entry_p);
+								}
+							else if (strcmp (key_s, "lower limit"))
+								{
+									lower_limit_s = GetTermEnglishValue (entry_p);
+								}
+							else if (strcmp (key_s, "Decimal places"))
+								{
+									decimal_place_s = GetTermEnglishValue (entry_p);
+								}
 						}
 				}
 
