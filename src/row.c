@@ -53,7 +53,6 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 							row_p -> ro_material_p = material_p;
 							row_p -> ro_plot_p = parent_plot_p;
 							row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
-							row_p -> ro_material_s = NULL;
 							row_p -> ro_observations_p = observations_p;
 							row_p -> ro_replicate_index = replicate;
 							row_p -> ro_replicate_control_flag = false;
@@ -81,11 +80,6 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 
 void FreeRow (Row *row_p)
 {
-	if (row_p -> ro_material_s)
-		{
-			FreeCopiedString (row_p -> ro_material_s);
-		}
-
 	FreeLinkedList (row_p -> ro_observations_p);
 
 	FreeMemory (row_p);

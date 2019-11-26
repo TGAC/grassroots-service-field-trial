@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * material_jobs.c
  *
@@ -40,7 +40,7 @@ static const char * const S_INTERNAL_NAME_TITLE_S = "Accession";
 static const char * const S_PEDIGREE_TITLE_S = "Pedigree";
 static const char * const S_BARCODE_TITLE_S = "Barcode";
 static const char * const S_ACCESSION_TITLE_S = "Store code";
-*/
+ */
 
 static const char * const S_SPECIES_NAME_TITLE_S = "Species Name";
 static const char * const S_GERMPLASM_ID_TITLE_S = "Germplasm ID";
@@ -62,6 +62,8 @@ static NamedParameterType S_MATERIAL_TABLE = { "MA Upload", PT_TABLE};
 static NamedParameterType S_STUDIES_LIST = { "MA Study", PT_STRING };
 static NamedParameterType S_GENE_BANKS_LIST = { "MA Gene Bank", PT_STRING };
 
+static NamedParameterType S_MATERIAL_ACCESSION_S = { "MA Accesion", PT_STRING };
+
 
 static json_t *GetTableParameterHints (void);
 
@@ -79,7 +81,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 {
 	bool success_flag = false;
 
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Materials", false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Materials Submission", false, data_p, param_set_p);
 
 	if (group_p)
 		{
@@ -249,24 +251,217 @@ bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name
 }
 
 
-LinkedList *GetAllStudiesContainingMaterial (Material *material_p, DFWFieldTrialServiceData *data_p)
+bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Materials Search", false, data_p, param_set_p);
+
+	if (group_p)
+		{
+			Parameter *param_p = NULL;
+			SharedType def;
+
+			InitSharedType (&def);
+
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_S.npt_type, S_MATERIAL_ACCESSION_S.npt_name_s, "Accession", "Accesion to search for", def, PL_ALL)) != NULL)
+				{
+					success_flag = true;
+				}
+		}		/* if (group_p) */
+
+
+	return success_flag;
+
+}
+
+
+bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+
+	SharedType value;
+	InitSharedType (&value);
+
+	if (GetParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_S.npt_name_s, &value, true))
+		{
+			GeneBank *gene_bank_p = NULL;
+			Material *material_p = GetMaterialByAccession (value.st_string_value_s, gene_bank_p, data_p);
+
+			if (material_p)
+				{
+					ViewFormat format = VF_CLIENT_MINIMAL;
+					LinkedList *studies_p = GetAllStudiesContainingMaterial (material_p, format, data_p);
+
+					if (studies_p)
+						{
+
+							FreeLinkedList (studies_p);
+						}		/* if (studies_p) */
+
+					FreeMaterial (material_p);
+				}		/* if (material_p) */
+
+			job_done_flag = true;
+
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_S.npt_name_s, &value, true)) */
+
+
+	return job_done_flag;
+
+}
+
+
+bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, S_MATERIAL_ACCESSION_S.npt_name_s) == 0)
+		{
+			*pt_p = S_MATERIAL_ACCESSION_S.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+
+}
+
+
+
+LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	LinkedList *studies_p = AllocateLinkedList (FreeStudyNode);
 
 	if (studies_p)
 		{
-			/*
-			 * find all rows containing the material ...
-			 */
+			LinkedList *rows_p = GetAllRowsContainingMaterial (material_p, data_p);
 
-			/*
-			 * ... get the plots for each of these rows ...
-			 */
+			if (rows_p)
+				{
+					HashTable *studies_cache_p = GetHashTableOfStringInts (16, 80);
 
-			/*
-			 * ... get the studies for each of these plots ...
-			 */
+					if (studies_cache_p)
+						{
+							uint32 num_studies = 0;
 
+							/*
+							 * ... get the studies for each of these rows ...
+							 */
+							RowNode *row_node_p = (RowNode *) (rows_p -> ll_head_p);
+
+							while (row_node_p)
+								{
+									Row *row_p = row_node_p -> rn_row_p;
+									bson_oid_t *study_id_p = NULL;
+
+									if (row_p -> ro_study_p)
+										{
+											study_id_p = row_p -> ro_study_p -> st_id_p;
+										}
+									else if (row_p -> ro_study_id_p)
+										{
+											study_id_p = row_p -> ro_study_id_p;
+										}
+
+
+									if (study_id_p)
+										{
+											char *id_s = GetBSONOidAsString (study_id_p);
+
+											if (id_s)
+												{
+													int *count_p = GetFromHashTable (studies_cache_p, id_s);
+
+													if (count_p)
+														{
+															++ (*count_p);
+														}
+													else
+														{
+															int count = 1;
+															PutInHashTable (studies_cache_p, id_s, &count);
+														}
+
+													FreeCopiedString (id_s);
+												}		/* if (id_s) */
+
+										}		/* if (study_id_p) */
+
+									row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+								}		/* while (row_node_p) */
+
+							num_studies = GetHashTableSize (studies_cache_p);
+							if (num_studies > 0)
+								{
+									char **keys_ss =  (char **) GetKeysIndexFromHashTable (studies_cache_p);
+
+									if (keys_ss)
+										{
+											StringIntPairArray *ids_with_counts_p = AllocateStringIntPairArray (num_studies);
+
+											if (ids_with_counts_p)
+												{
+													char **key_ss = keys_ss;
+													uint32 i = num_studies;
+													StringIntPair *pair_p = ids_with_counts_p -> sipa_values_p;
+
+													for ( ; i > 0; -- i, ++ key_ss, ++ pair_p)
+														{
+															int *count_p = GetFromHashTable (studies_cache_p, *key_ss);
+
+															if (count_p)
+																{
+																	if (!SetStringIntPair (pair_p, *key_ss, MF_SHADOW_USE, *count_p))
+																		{
+
+																		}
+
+																}
+
+														}		/* for ( ; num_studies > 0; -- num_studies, ++ key_ss) */
+
+													/*
+													 * Sort by the counts of how many times each material appears
+													 * in each study
+													 */
+													SortStringIntPairsByCount (ids_with_counts_p);
+
+													for (i = num_studies, pair_p = ids_with_counts_p -> sipa_values_p; i > 0; -- i, ++ pair_p)
+														{
+															Study *study_p = GetStudyByIdString (pair_p -> sip_string_s, format, data_p);
+
+															if (study_p)
+																{
+																	StudyNode *node_p = AllocateStudyNode (study_p);
+
+																	if (node_p)
+																		{
+																			LinkedListAddTail (studies_p, & (node_p -> stn_node));
+																		}
+
+																}		/* if (study_p) */
+															else
+																{
+																	FreeStudy (study_p);
+																}
+
+														}		/* for ( ; num_studies > 0; -- num_studies, ++ key_ss) */
+
+												}		/* if (ids_with_counts_p) */
+
+
+											FreeKeysIndex (keys_ss);
+										}		/* if (keys_ss) */
+
+								}		/* if (studies_cache_p -> ht_size > 0) */
+
+							FreeHashTable (studies_cache_p);
+						}		/* if (studies_cache_p) */
+
+					FreeLinkedList (rows_p);
+				}		/* if (rows_p) */
 
 			/*
 			 * .. order the studies by how many times the material appears in them.

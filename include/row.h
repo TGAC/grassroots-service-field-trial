@@ -36,6 +36,9 @@ typedef struct Row
 
 	const Study *ro_study_p;
 
+	bson_oid_t *ro_study_id_p;
+
+
 	Plot *ro_plot_p;
 
 	/**
@@ -51,8 +54,6 @@ typedef struct Row
 	uint32 ro_rack_index;
 
 	Material *ro_material_p;
-
-	char *ro_material_s;
 
 	LinkedList *ro_observations_p;
 

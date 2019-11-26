@@ -737,7 +737,7 @@ Row *GetRowByRackIndex (const int32 rack_index, Plot *plot_p, const bool expand_
 //}
 
 
-static LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
+LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 {
 	LinkedList *rows_p = NULL;
 	bson_t *query_p = BCON_NEW (RO_MATERIAL_ID_S, BCON_OID (material_p -> ma_id_p));

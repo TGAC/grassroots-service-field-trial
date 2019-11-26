@@ -44,8 +44,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMaterialParams (DFWFieldTrial
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllStudiesContainingMaterial (Material *material_p, DFWFieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
