@@ -392,6 +392,11 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 									row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
 								}		/* while (row_node_p) */
 
+
+
+							/*
+							 * Now we sort the studies by how many times the material appears
+							 */
 							num_studies = GetHashTableSize (studies_cache_p);
 							if (num_studies > 0)
 								{
@@ -415,7 +420,7 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 																{
 																	if (!SetStringIntPair (pair_p, *key_ss, MF_SHADOW_USE, *count_p))
 																		{
-
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "");
 																		}
 
 																}
