@@ -271,7 +271,6 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 
 	return success_flag;
-
 }
 
 
@@ -286,6 +285,7 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 		{
 			GeneBank *gene_bank_p = NULL;
 			Material *material_p = GetMaterialByAccession (value.st_string_value_s, gene_bank_p, data_p);
+			OperationStatus status = OS_FAILED_TO_START;
 
 			if (material_p)
 				{
@@ -294,20 +294,56 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 					if (studies_p)
 						{
+							StudyNode *node_p = (StudyNode *) (studies_p -> ll_head_p);
+							uint32 added_count = 0;
+
+							while (node_p)
+								{
+									Study *study_p = node_p -> stn_study_p;
+
+									if (AddStudyToServiceJob (job_p, study_p, format, data_p))
+										{
+											++ added_count;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study \"%s\" to results for job \"%s\"", study_p -> st_name_s, job_p -> sj_name_s);
+										}
+
+								}		/* while (node_p) */
+
+							if (added_count == studies_p -> ll_size)
+								{
+									status = OS_SUCCEEDED;
+								}
+							else if (added_count > 0)
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+								}
+							else
+								{
+									status = OS_FAILED;
+								}
 
 							FreeLinkedList (studies_p);
 						}		/* if (studies_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Error getting studies for material \"%s\" for job \"%s\"", value.st_string_value_s, job_p -> sj_name_s);
+						}
 
 					FreeMaterial (material_p);
 				}		/* if (material_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", value.st_string_value_s, job_p -> sj_name_s);
+				}
 
+			SetServiceJobStatus (job_p, status);
 			job_done_flag = true;
-
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_S.npt_name_s, &value, true)) */
 
-
 	return job_done_flag;
-
 }
 
 
