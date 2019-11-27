@@ -28,6 +28,8 @@
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
+#include "material_jobs.h"
+
 
 #include "audit.h"
 #include "streams.h"
@@ -257,7 +259,14 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 														{
 															if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
 																{
-																	return params_p;
+																	if (AddSearchMaterialParams (& (data_p -> dftsd_base_data), params_p))
+																		{
+																			return params_p;
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchMaterialParams failed");
+																		}
 																}
 															else
 																{
@@ -338,7 +347,11 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struc
 						{
 							if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
 								{
-									success_flag = false;
+									if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
+										{
+											success_flag = false;
+										}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
 								}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
 						}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
@@ -431,6 +444,10 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 										{
 											if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
 												{
+													if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
+														{
+
+														}		/* if (!RunForSearchMaterialParams (data_p, param_set_p, job_p)) */
 
 												}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
 

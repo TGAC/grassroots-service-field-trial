@@ -104,6 +104,8 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceDat
 		}		/* if (lucene_p) */
 
 	SetServiceJobStatus (job_p, status);
+
+	return status;
 }
 
 

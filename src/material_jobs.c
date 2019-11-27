@@ -21,12 +21,13 @@
  */
 
 
-#include "material.h"
 #include "material_jobs.h"
 #include "string_utils.h"
 #include "study_jobs.h"
 #include "gene_bank.h"
 #include "gene_bank_jobs.h"
+#include "row_jobs.h"
+#include "string_int_pair.h"
 
 
 /*
@@ -263,7 +264,7 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 			InitSharedType (&def);
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_S.npt_type, S_MATERIAL_ACCESSION_S.npt_name_s, "Accession", "Accesion to search for", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_S.npt_type, S_MATERIAL_ACCESSION_S.npt_name_s, "Accession", "Accession to search for", def, PL_ADVANCED)) != NULL)
 				{
 					success_flag = true;
 				}
@@ -376,18 +377,19 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 
 			if (rows_p)
 				{
-					HashTable *studies_cache_p = GetHashTableOfStringInts (16, 80);
+					json_t *studies_cache_p = json_object ();
 
 					if (studies_cache_p)
 						{
 							uint32 num_studies = 0;
+							bool success_flag = true;
 
 							/*
 							 * ... get the studies for each of these rows ...
 							 */
 							RowNode *row_node_p = (RowNode *) (rows_p -> ll_head_p);
 
-							while (row_node_p)
+							while (row_node_p && success_flag)
 								{
 									Row *row_p = row_node_p -> rn_row_p;
 									bson_oid_t *study_id_p = NULL;
@@ -408,16 +410,15 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 
 											if (id_s)
 												{
-													int *count_p = GetFromHashTable (studies_cache_p, id_s);
+													int count = 0;
 
-													if (count_p)
+													GetJSONInteger (studies_cache_p, id_s, &count);
+
+													++ count;
+
+													if (!SetJSONInteger (studies_cache_p, id_s, count))
 														{
-															++ (*count_p);
-														}
-													else
-														{
-															int count = 1;
-															PutInHashTable (studies_cache_p, id_s, &count);
+
 														}
 
 													FreeCopiedString (id_s);
@@ -433,80 +434,67 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 							/*
 							 * Now we sort the studies by how many times the material appears
 							 */
-							num_studies = GetHashTableSize (studies_cache_p);
+							num_studies = json_object_size (studies_cache_p);
 							if (num_studies > 0)
 								{
-									char **keys_ss =  (char **) GetKeysIndexFromHashTable (studies_cache_p);
+									StringIntPairArray *ids_with_counts_p = AllocateStringIntPairArray (num_studies);
 
-									if (keys_ss)
+									if (ids_with_counts_p)
 										{
-											StringIntPairArray *ids_with_counts_p = AllocateStringIntPairArray (num_studies);
+											int i;
+											const char *key_s;
+											json_t *value_p;
+											StringIntPair *pair_p = ids_with_counts_p -> sipa_values_p;
 
-											if (ids_with_counts_p)
+											json_object_foreach (studies_cache_p, key_s, value_p)
 												{
-													char **key_ss = keys_ss;
-													uint32 i = num_studies;
-													StringIntPair *pair_p = ids_with_counts_p -> sipa_values_p;
+													int count = json_integer_value (value_p);
 
-													for ( ; i > 0; -- i, ++ key_ss, ++ pair_p)
+													if (!SetStringIntPair (pair_p, (char *) key_s, MF_SHADOW_USE, count))
 														{
-															int *count_p = GetFromHashTable (studies_cache_p, *key_ss);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "");
+														}
 
-															if (count_p)
+													++ pair_p;
+												}		/* json_object_foreach (studies_cache_p, key_s, value_p) */
+
+											/*
+											 * Sort by the counts of how many times each material appears
+											 * in each study
+											 */
+											SortStringIntPairsByCount (ids_with_counts_p);
+
+											for (i = num_studies, pair_p = ids_with_counts_p -> sipa_values_p; i > 0; -- i, ++ pair_p)
+												{
+													Study *study_p = GetStudyByIdString (pair_p -> sip_string_s, format, data_p);
+
+													if (study_p)
+														{
+															StudyNode *node_p = AllocateStudyNode (study_p);
+
+															if (node_p)
 																{
-																	if (!SetStringIntPair (pair_p, *key_ss, MF_SHADOW_USE, *count_p))
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "");
-																		}
-
+																	LinkedListAddTail (studies_p, & (node_p -> stn_node));
 																}
 
-														}		/* for ( ; num_studies > 0; -- num_studies, ++ key_ss) */
-
-													/*
-													 * Sort by the counts of how many times each material appears
-													 * in each study
-													 */
-													SortStringIntPairsByCount (ids_with_counts_p);
-
-													for (i = num_studies, pair_p = ids_with_counts_p -> sipa_values_p; i > 0; -- i, ++ pair_p)
+														}		/* if (study_p) */
+													else
 														{
-															Study *study_p = GetStudyByIdString (pair_p -> sip_string_s, format, data_p);
+															FreeStudy (study_p);
+														}
 
-															if (study_p)
-																{
-																	StudyNode *node_p = AllocateStudyNode (study_p);
+												}		/* for ( ; num_studies > 0; -- num_studies, ++ key_ss) */
 
-																	if (node_p)
-																		{
-																			LinkedListAddTail (studies_p, & (node_p -> stn_node));
-																		}
-
-																}		/* if (study_p) */
-															else
-																{
-																	FreeStudy (study_p);
-																}
-
-														}		/* for ( ; num_studies > 0; -- num_studies, ++ key_ss) */
-
-												}		/* if (ids_with_counts_p) */
-
-
-											FreeKeysIndex (keys_ss);
-										}		/* if (keys_ss) */
+											FreeStringIntPairArray (ids_with_counts_p);
+										}		/* if (ids_with_counts_p) */
 
 								}		/* if (studies_cache_p -> ht_size > 0) */
 
-							FreeHashTable (studies_cache_p);
+							json_decref (studies_cache_p);
 						}		/* if (studies_cache_p) */
 
 					FreeLinkedList (rows_p);
 				}		/* if (rows_p) */
-
-			/*
-			 * .. order the studies by how many times the material appears in them.
-			 */
 
 		}		/* if (studies_p) */
 

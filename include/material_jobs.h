@@ -45,7 +45,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMaterialParameterTypeForNamedPar
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
