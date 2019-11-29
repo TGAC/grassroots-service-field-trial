@@ -34,6 +34,8 @@ static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceD
 
 static bool SetValidJSONString (json_t *material_json_p, const char *key_s, const char *value_s);
 
+static char *GetRegex (const char *accession_s);
+
 /*
  * API FUNCTIONS
  */
@@ -362,7 +364,7 @@ bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 
 Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
 {
-	Material *material_p = GetMaterialByAccession (accession_s, gene_bank_p, data_p);
+	Material *material_p = GetMaterialByAccession (accession_s, gene_bank_p, true, data_p);
 
 	if (!material_p)
 		{
@@ -391,18 +393,46 @@ Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gen
 
 
 
-Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const bool case_sensitive_flag, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
 	bson_t *query_p = NULL;
 
 	if (gene_bank_p)
 		{
-			query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
+			if (case_sensitive_flag)
+				{
+					query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
+				}
+			else
+				{
+					char *regex_s = GetRegex (accession_s);
+
+					if (regex_s)
+						{
+							query_p = BCON_NEW (MA_ACCESSION_S, BCON_REGEX (accession_s, "i"), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
+
+							FreeCopiedString (regex_s);
+						}
+				}
 		}
 	else
 		{
-			query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s));
+			if (case_sensitive_flag)
+				{
+					query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s));
+				}
+			else
+				{
+					char *regex_s = GetRegex (accession_s);
+
+					if (regex_s)
+						{
+							query_p = BCON_NEW (MA_ACCESSION_S, BCON_REGEX (accession_s, "i"));
+
+							FreeCopiedString (regex_s);
+						}
+				}
 		}
 
 	if (query_p)
@@ -582,5 +612,19 @@ static bool ReplaceMaterialField (const char *new_value_s, char **value_ss)
 static bool SetValidJSONString (json_t *material_json_p, const char *key_s, const char *value_s)
 {
 	return ((IsStringEmpty (value_s)) || (SetJSONString (material_json_p, key_s, value_s)));
+}
+
+
+static char *GetRegex (const char *accession_s)
+{
+	char *regex_s = NULL;
+	char *lower_case_accession_s = GetStringAsLowerCase (accession_s);
+
+	if (lower_case_accession_s)
+		{
+			regex_s = ConcatenateVarargsStrings ("^", lower_case_accession_s, "$", NULL);
+		}
+
+	return regex_s;
 }
 

@@ -28,6 +28,7 @@
 #include "streams.h"
 #include "observation.h"
 #include "dfw_util.h"
+#include "plot_jobs.h"
 
 
 static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
@@ -298,7 +299,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 				{
 					if (GetNamedIdFromJSON (json_p, RO_PLOT_ID_S, plot_id_p))
 						{
-
+							plot_p = GetPlotById (plot_id_p, NULL, data_p);
 						}
 				}
 		}

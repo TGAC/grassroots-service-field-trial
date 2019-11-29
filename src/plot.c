@@ -360,7 +360,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const DFWFieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row;
@@ -396,15 +396,15 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DF
 														{
 															if (GetMongoIdFromJSON (plot_json_p, id_p))
 																{
-																	if (!parent_area_p)
+																	if (!parent_study_p)
 																		{
-																			bson_oid_t *parent_area_id_p = GetNewUnitialisedBSONOid ();
+																			bson_oid_t *parent_study_id_p = GetNewUnitialisedBSONOid ();
 
-																			if (parent_area_id_p)
+																			if (parent_study_id_p)
 																				{
-																					if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_STUDY_S, parent_area_id_p))
+																					if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_STUDY_S, parent_study_id_p))
 																						{
-
+																							parent_study_p = GetStudyById (parent_study_id_p, VF_CLIENT_MINIMAL, data_p);
 
 																						}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
 																					else
@@ -420,7 +420,7 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DF
 
 																		}		/* if (!parent_area_p) */
 
-																	plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, row, column, treatments_s, comment_s, parent_area_p);
+																	plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, row, column, treatments_s, comment_s, parent_study_p);
 
 																	if (!plot_p)
 																		{

@@ -63,7 +63,10 @@ static NamedParameterType S_MATERIAL_TABLE = { "MA Upload", PT_TABLE};
 static NamedParameterType S_STUDIES_LIST = { "MA Study", PT_STRING };
 static NamedParameterType S_GENE_BANKS_LIST = { "MA Gene Bank", PT_STRING };
 
-static NamedParameterType S_MATERIAL_ACCESSION_S = { "MA Accesion", PT_STRING };
+static NamedParameterType S_MATERIAL_ACCESSION = { "MA Accession", PT_STRING };
+static NamedParameterType S_MATERIAL_ACCESSION_CASE_SENSITIVE = { "MA Accession case-sensitive", PT_BOOLEAN };
+
+static const bool S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG = true;
 
 
 static json_t *GetTableParameterHints (void);
@@ -264,9 +267,14 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 			InitSharedType (&def);
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_S.npt_type, S_MATERIAL_ACCESSION_S.npt_name_s, "Accession", "Accession to search for", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION.npt_type, S_MATERIAL_ACCESSION.npt_name_s, "Accession", "Accession to search for", def, PL_ADVANCED)) != NULL)
 				{
-					success_flag = true;
+					def.st_boolean_value = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
+
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_type, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, "Case sensitive", "Do a case-sensitive search for the accession", def, PL_ADVANCED)) != NULL)
+						{
+							success_flag = true;
+						}
 				}
 		}		/* if (group_p) */
 
@@ -278,15 +286,22 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	SharedType accession_value;
 
-	SharedType value;
-	InitSharedType (&value);
-
-	if (GetParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_S.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION.npt_name_s, &accession_value))
 		{
-			GeneBank *gene_bank_p = NULL;
-			Material *material_p = GetMaterialByAccession (value.st_string_value_s, gene_bank_p, data_p);
 			OperationStatus status = OS_FAILED_TO_START;
+			SharedType case_sensitive_value;
+			bool case_senstive_search_flag = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
+			GeneBank *gene_bank_p = NULL;
+			Material *material_p = NULL;
+
+			if (GetCurrentParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &case_sensitive_value))
+				{
+					case_senstive_search_flag = case_sensitive_value.st_boolean_value;
+				}
+
+			material_p = GetMaterialByAccession (accession_value.st_string_value_s, gene_bank_p, case_senstive_search_flag, data_p);
 
 			if (material_p)
 				{
@@ -311,6 +326,7 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study \"%s\" to results for job \"%s\"", study_p -> st_name_s, job_p -> sj_name_s);
 										}
 
+									node_p = (StudyNode *) (node_p -> stn_node.ln_next_p);
 								}		/* while (node_p) */
 
 							if (added_count == studies_p -> ll_size)
@@ -330,14 +346,14 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 						}		/* if (studies_p) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Error getting studies for material \"%s\" for job \"%s\"", value.st_string_value_s, job_p -> sj_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Error getting studies for material \"%s\" for job \"%s\"", accession_value.st_string_value_s, job_p -> sj_name_s);
 						}
 
 					FreeMaterial (material_p);
 				}		/* if (material_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", value.st_string_value_s, job_p -> sj_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_value.st_string_value_s, job_p -> sj_name_s);
 				}
 
 			SetServiceJobStatus (job_p, status);
@@ -352,9 +368,13 @@ bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, 
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_MATERIAL_ACCESSION_S.npt_name_s) == 0)
+	if (strcmp (param_name_s, S_MATERIAL_ACCESSION.npt_name_s) == 0)
 		{
-			*pt_p = S_MATERIAL_ACCESSION_S.npt_type;
+			*pt_p = S_MATERIAL_ACCESSION.npt_type;
+		}
+	else if (strcmp (param_name_s, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s) == 0)
+		{
+			*pt_p = S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_type;
 		}
 	else
 		{
@@ -462,7 +482,7 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 											 * Sort by the counts of how many times each material appears
 											 * in each study
 											 */
-											SortStringIntPairsByCount (ids_with_counts_p);
+											SortStringIntPairsByCountDescending (ids_with_counts_p);
 
 											for (i = num_studies, pair_p = ids_with_counts_p -> sipa_values_p; i > 0; -- i, ++ pair_p)
 												{
@@ -495,6 +515,8 @@ LinkedList *GetAllStudiesContainingMaterial (Material *material_p, const ViewFor
 
 					FreeLinkedList (rows_p);
 				}		/* if (rows_p) */
+
+			return studies_p;
 
 		}		/* if (studies_p) */
 

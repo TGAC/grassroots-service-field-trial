@@ -769,12 +769,12 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 							if (rows_p)
 								{
 									const size_t num_results = json_array_size (results_p);
-									size_t i = num_results;
+									size_t i = 0;
 									bool success_flag = true;
 
-									while ((i > 0) && success_flag)
+									while ((i < num_results) && success_flag)
 										{
-											json_t *result_p = json_array_get (results_p, 0);
+											json_t *result_p = json_array_get (results_p, i);
 											Plot *plot_p = NULL;
 											Material *material_p = NULL;
 											ViewFormat format = VF_CLIENT_FULL;
@@ -788,6 +788,7 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 													if (node_p)
 														{
 															LinkedListAddTail (rows_p, (ListItem *) node_p);
+															++ i;
 														}
 													else
 														{
