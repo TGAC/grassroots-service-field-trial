@@ -385,6 +385,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p)
 {
+	Observation *observation_p = NULL;
 	struct tm *date_p = NULL;
 
 	if (CreateValidDateFromJSON (observation_json_p, OB_DATE_S, &date_p))
@@ -404,7 +405,6 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFW
 									if (phenotype_p)
 										{
 											ObservationNature nature = ON_ROW;
-											Observation *observation_p = NULL;
 											const char *growth_stage_s = GetJSONString (observation_json_p, OB_GROWTH_STAGE_S);
 											const char *method_s = GetJSONString (observation_json_p, OB_METHOD_S);
 											const char *raw_value_s = GetJSONString (observation_json_p, OB_RAW_VALUE_S);
@@ -419,11 +419,7 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFW
 
 													observation_p = AllocateObservation (id_p, date_p, phenotype_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
 
-													if (observation_p)
-														{
-															return observation_p;
-														}
-													else
+													if (!observation_p)
 														{
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
 														}
@@ -447,20 +443,24 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFW
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get id \"%s\"", MONGO_ID_S);
 						}
 
-					FreeBSONOid (id_p);
+					if (!observation_p)
+						{
+							FreeBSONOid (id_p);
+						}
 				}		/* if (id_p) */
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate id");
 				}
 
+				FreeTime (date_p);
 		}		/* if (CreateValidDateFromJSON (observation_json_p, OB_DATE_S, &date_p)) */
 	else
 		{
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to create date from \"%s\"", OB_DATE_S);
 		}
 
-	return NULL;
+	return observation_p;
 }
 
 

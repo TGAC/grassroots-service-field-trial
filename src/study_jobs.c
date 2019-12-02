@@ -79,7 +79,7 @@ static const char * const S_UNKNOWN_CROP_OPTION_S = "Unknown";
 static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
 
 
-static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format);
+static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p);
 
 
 static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p);
@@ -781,7 +781,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 
 					if (!job_done_flag)
 						{
-							if (GetStudyForGivenId (data_p, param_set_p, job_p, format))
+							if (GetStudyForGivenId (data_p, param_set_p, job_p, format, NULL))
 								{
 									job_done_flag = true;
 								}		/* if (GetStudyForGivenId (data_p, param_set_p, job_p)) */
@@ -1263,7 +1263,7 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *study_json_p = GetStudyAsJSON (study_p, format, data_p);
+	json_t *study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
 	if (study_json_p)
 		{
@@ -1455,7 +1455,7 @@ json_t *GetAllStudiesAsJSONInViewFormat (const DFWFieldTrialServiceData *data_p,
 
 											if (study_p)
 												{
-													json_t *formatted_study_json_p = GetStudyAsJSON (study_p, format, data_p);
+													json_t *formatted_study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
 													if (formatted_study_json_p)
 														{
@@ -1537,7 +1537,7 @@ const KeyValuePair *GetAspect (const char *aspect_value_s)
 }
 
 
-static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format)
+static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p)
 {
 	bool job_done_flag = false;
 	SharedType value;
@@ -1558,15 +1558,15 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 								{
 									if (GetStudyPlots (study_p, data_p))
 										{
-											json_t *arst_json_p = GetStudyAsJSON (study_p, format, data_p);
+											json_t *study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
 
-											if (arst_json_p)
+											if (study_json_p)
 												{
 													bool added_flag = false;
 
-													if (AddContext (arst_json_p))
+													if (AddContext (study_json_p))
 														{
-															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, arst_json_p);
+															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
 
 															if (dest_record_p)
 																{
@@ -1587,7 +1587,7 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 
 													if (!added_flag)
 														{
-															json_decref (arst_json_p);
+															json_decref (study_json_p);
 														}
 
 												}		/* if (arst_json_p) */
@@ -1638,7 +1638,7 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 
 									if (study_p)
 										{
-											json_t *study_json_p = GetStudyAsJSON (study_p, format, data_p);
+											json_t *study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
 											if (study_json_p)
 												{

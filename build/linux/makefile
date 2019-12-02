@@ -54,6 +54,7 @@ SRCS 	= \
 	gene_bank_jobs.c \
 	indexing.c \
 	instrument.c \
+	json_processor.c \
 	location.c \
 	location_jobs.c \
 	material.c \

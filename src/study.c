@@ -41,7 +41,9 @@
  */
 static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
-static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+
+static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+
 
 static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
@@ -424,7 +426,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 
 	if (success_flag)
 		{
-			json_t *study_json_p = GetStudyAsJSON (study_p, VF_STORAGE, data_p);
+			json_t *study_json_p = GetStudyAsJSON (study_p, VF_STORAGE, NULL, data_p);
 
 			if (study_json_p)
 				{
@@ -450,7 +452,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 }
 
 
-json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *study_json_p = json_object ();
 
@@ -590,7 +592,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, const DFWFieldT
 																																						{
 																																							if (GetStudyPlots (study_p, data_p))
 																																								{
-																																									if (AddPlotsToJSON (study_p, study_json_p, format, data_p))
+																																									if (AddPlotsToJSON (study_p, study_json_p, format, processor_p, data_p))
 																																										{
 																																											success_flag = true;
 																																										}
@@ -938,7 +940,7 @@ static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, co
 }
 
 
-static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *plots_json_p = json_array ();
@@ -953,7 +955,7 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 
 					while (node_p && success_flag)
 						{
-							json_t *plot_json_p = GetPlotAsJSON (node_p -> pn_plot_p, format, data_p);
+							json_t *plot_json_p = ProcessPlotJSON (processor_p, node_p -> pn_plot_p, format, data_p);
 
 							if (plot_json_p)
 								{

@@ -31,7 +31,7 @@
 #include "streams.h"
 #include "dfw_util.h"
 #include "indexing.h"
-
+#include "json_processor.h"
 
 
 FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p)
@@ -238,10 +238,11 @@ bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, cons
 				{
 					StudyNode *node_p = (StudyNode *) (trial_p -> ft_studies_p -> ll_head_p);
 					bool ok_flag = true;
+					JSONProcessor *processor_p = NULL;
 
 					while (node_p && ok_flag)
 						{
-							json_t *study_p = GetStudyAsJSON (node_p -> stn_study_p, format, data_p);
+							json_t *study_p = GetStudyAsJSON (node_p -> stn_study_p, format, processor_p, data_p);
 
 							if (study_p)
 								{

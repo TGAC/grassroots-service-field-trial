@@ -353,7 +353,8 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 				}		/* if (material_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_value.st_string_value_s, job_p -> sj_name_s);
+					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_value.st_string_value_s, job_p -> sj_name_s);
+					status = OS_SUCCEEDED;
 				}
 
 			SetServiceJobStatus (job_p, status);

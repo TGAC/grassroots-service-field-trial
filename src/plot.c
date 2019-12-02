@@ -439,10 +439,20 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const D
 															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", MONGO_ID_S);
 														}
 
+													if (harvest_date_p)
+														{
+															FreeTime (harvest_date_p);
+														}
+
 												}		/* if (CreateValidDateFromJSON (plot_json_p, PL_HARVEST_DATE_S, &harvest_date_p)) */
 											else
 												{
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get time from \"%s\"", PL_HARVEST_DATE_S);
+												}
+
+											if (sowing_date_p)
+												{
+													FreeTime (sowing_date_p);
 												}
 
 										}		/* if (CreateValidDateFromJSON (plot_json_p, PL_SOWING_DATE_S, &sowing_date_p)) */

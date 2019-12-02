@@ -396,61 +396,60 @@ Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gen
 Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const bool case_sensitive_flag, const DFWFieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
-	bson_t *query_p = NULL;
-
-	if (gene_bank_p)
-		{
-			if (case_sensitive_flag)
-				{
-					query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
-				}
-			else
-				{
-					char *regex_s = GetRegex (accession_s);
-
-					if (regex_s)
-						{
-							query_p = BCON_NEW (MA_ACCESSION_S, BCON_REGEX (accession_s, "i"), MA_GENE_BANK_ID_S, BCON_OID (gene_bank_p -> gb_id_p));
-
-							FreeCopiedString (regex_s);
-						}
-				}
-		}
-	else
-		{
-			if (case_sensitive_flag)
-				{
-					query_p = BCON_NEW (MA_ACCESSION_S, BCON_UTF8 (accession_s));
-				}
-			else
-				{
-					char *regex_s = GetRegex (accession_s);
-
-					if (regex_s)
-						{
-							query_p = BCON_NEW (MA_ACCESSION_S, BCON_REGEX (accession_s, "i"));
-
-							FreeCopiedString (regex_s);
-						}
-				}
-		}
+	bson_t *query_p = bson_new ();
 
 	if (query_p)
 		{
-			material_p = SearchForMaterial (query_p, data_p);
+			bool success_flag = false;
 
-			if (!material_p)
+			if (case_sensitive_flag)
 				{
-					PrintBSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, query_p, "SearchForMaterial did not find accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_p ? gene_bank_p -> gb_name_s : "");
+					success_flag = BSON_APPEND_UTF8 (query_p, MA_ACCESSION_S, accession_s);
+				}
+			else
+				{
+					char *regex_s = GetRegex (accession_s);
+
+					if (regex_s)
+						{
+							success_flag = BSON_APPEND_REGEX (query_p, MA_ACCESSION_S, regex_s, "i");
+
+							FreeCopiedString (regex_s);
+						}
 				}
 
-			bson_destroy (query_p);
+			if (success_flag)
+				{
+					if (gene_bank_p)
+						{
+							success_flag = BSON_APPEND_OID (query_p, MA_GENE_BANK_ID_S, gene_bank_p -> gb_id_p);
+						}
+				}
+
+
+			if (success_flag)
+				{
+					material_p = SearchForMaterial (query_p, data_p);
+
+					if (!material_p)
+						{
+							PrintBSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, query_p, "SearchForMaterial did not find accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_p ? gene_bank_p -> gb_name_s : "");
+						}
+
+					bson_destroy (query_p);
+
+				}		/* if (success_flag) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialByAccession could not generate query for accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_p ? gene_bank_p -> gb_name_s : "");
+				}
 
 		}		/* if (query_p) */
 	else
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialByAccession could not create query for accession \"%s\" in gene bank \"%s\"", accession_s, gene_bank_p ? gene_bank_p -> gb_name_s : "");
 		}
+
 
 	return material_p;
 }

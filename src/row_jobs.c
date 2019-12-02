@@ -756,6 +756,8 @@ LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTr
 
 static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
 {
+	LinkedList *rows_p = NULL;
+
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
 		{
 			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
@@ -764,7 +766,7 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 				{
 					if (json_is_array (results_p))
 						{
-							LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
+							rows_p = AllocateLinkedList (FreeRowNode);
 
 							if (rows_p)
 								{
@@ -805,12 +807,12 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 
 										}		/* while ((i > 0) && success_flag) */
 
-									if (success_flag)
+									if (!success_flag)
 										{
-											return rows_p;
+											FreeLinkedList (rows_p);
+											rows_p = NULL;
 										}
 
-									FreeLinkedList (rows_p);
 								}		/* if (rows_p) */
 							else
 								{
@@ -835,6 +837,6 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MATERIAL]);
 		}
 
-	return NULL;
+	return rows_p;
 }
 

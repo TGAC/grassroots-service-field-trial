@@ -116,7 +116,7 @@ ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material");
 
 ROW_PREFIX const char *RO_OBSERVATIONS_S  ROW_VAL ("observations");
 
-PLOT_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
+ROW_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
 
 
 #ifdef __cplusplus
