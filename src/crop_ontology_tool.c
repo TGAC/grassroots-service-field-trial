@@ -112,6 +112,20 @@ static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const 
 
 
 
+static const COScaleClass s_scale_classes_p [] =
+{
+	{ "Code", PT_STRING },
+	{ "Duration", PT_TIME },
+	{ "Nominal", PT_STRING },
+	{ "Numerical", PT_SIGNED_REAL },
+	{ "Ordinal", PT_STRING },
+	{ "Text", PT_STRING },
+	{ "Date", PT_TIME },
+};
+
+
+
+
 /*
  * API definitions
  */

@@ -20,6 +20,7 @@ struct JSONProcessor;
 
 typedef struct JSONProcessor
 {
+	void *jp_data_p;
 
 	json_t *(*jp_process_plot_json_fn) (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p);
 
@@ -31,6 +32,7 @@ extern "C"
 {
 #endif
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL JSONProcessor *AllocatePlotHighlighter (struct JSONProcessor *processor_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeJSONProcessor (struct JSONProcessor *processor_p);

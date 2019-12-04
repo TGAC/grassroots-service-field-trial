@@ -52,7 +52,7 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 
 static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
 
-static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
+static LinkedList *SearchForRows (bson_t *query_p, Material *material_p, const DFWFieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
@@ -744,7 +744,7 @@ LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTr
 
 	if (query_p)
 		{
-			rows_p = SearchForRows (query_p, data_p);
+			rows_p = SearchForRows (query_p, material_p, data_p);
 
 			bson_destroy (query_p);
 		}
@@ -754,7 +754,7 @@ LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTr
 
 
 
-static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+static LinkedList *SearchForRows (bson_t *query_p, Material *material_p, const DFWFieldTrialServiceData *data_p)
 {
 	LinkedList *rows_p = NULL;
 
@@ -778,9 +778,7 @@ static LinkedList *SearchForRows (bson_t *query_p, const DFWFieldTrialServiceDat
 										{
 											json_t *result_p = json_array_get (results_p, i);
 											Plot *plot_p = NULL;
-											Material *material_p = NULL;
 											ViewFormat format = VF_CLIENT_FULL;
-
 											Row *row_p = GetRowFromJSON (result_p, plot_p, material_p, format, data_p);
 
 											if (row_p)

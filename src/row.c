@@ -36,7 +36,7 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p);
 
 
-Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, Plot *parent_plot_p)
+Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
 {
 	if (material_p)
 		{
@@ -52,6 +52,7 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 							row_p -> ro_rack_index = rack_index;
 							row_p -> ro_by_study_index = study_index;
 							row_p -> ro_material_p = material_p;
+							row_p -> ro_material_mem = material_mem;
 							row_p -> ro_plot_p = parent_plot_p;
 							row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
 							row_p -> ro_observations_p = observations_p;
@@ -82,6 +83,16 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 void FreeRow (Row *row_p)
 {
 	FreeLinkedList (row_p -> ro_observations_p);
+
+	if ((row_p -> ro_material_mem == MF_DEEP_COPY) || (row_p -> ro_material_mem == MF_SHALLOW_COPY))
+		{
+			if (row_p -> ro_material_p)
+				{
+					FreeMaterial (row_p -> ro_material_p);
+				}
+		}
+
+	FreeBSONOid (row_p -> ro_id_p);
 
 	FreeMemory (row_p);
 }
@@ -291,6 +302,9 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldT
 
 Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
+	Row *row_p = NULL;
+	Material *material_to_use_p = material_p;
+
 	if (!plot_p)
 		{
 			bson_oid_t *plot_id_p = GetNewUnitialisedBSONOid ();
@@ -313,17 +327,23 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 					/*
 					 * If we haven't already got the material, get it!
 					 */
-					if (!material_p)
+					if (!material_to_use_p)
 						{
 							bson_oid_t *material_id_p = GetNewUnitialisedBSONOid ();
+
+							success_flag = true;
 
 							if (material_id_p)
 								{
 									if (GetNamedIdFromJSON (json_p, RO_MATERIAL_ID_S, material_id_p))
 										{
-											material_p = GetMaterialById (material_id_p, data_p);
+											material_to_use_p = GetMaterialById (material_id_p, data_p);
 
-											if (!material_p)
+											if (material_to_use_p)
+												{
+													success_flag = true;
+												}
+											else
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
@@ -341,7 +361,6 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", plot_id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
 										}
 
-
 									FreeBSONOid (material_id_p);
 								}		/* if (material_id_p) */
 							else
@@ -354,8 +373,8 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 						}		/* if (!material_p) */
 
-					success_flag = (material_p != NULL);
-				}		/* if (expand_fields_flag) */
+					success_flag = (material_to_use_p != NULL);
+				}		/* if (format == VF_CLIENT_FULL) */
 
 			if (success_flag)
 				{
@@ -407,7 +426,8 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 													if ((replicate != 0) || (rep_control_flag))
 														{
-															Row *row_p = AllocateRow (id_p, rack_index, study_index, replicate, material_p, plot_p);
+															MEM_FLAG mf = material_to_use_p == material_p ? MF_SHADOW_USE : MF_SHALLOW_COPY;
+															row_p = AllocateRow (id_p, rack_index, study_index, replicate, material_to_use_p, mf, plot_p);
 
 															if (row_p)
 																{
@@ -416,12 +436,13 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 																			SetRowGenotypeControl (row_p, true);
 																		}
 
-																	if (GetObservationsFromJSON (json_p, row_p, data_p))
+																	if (!GetObservationsFromJSON (json_p, row_p, data_p))
 																		{
-																			return row_p;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetObservationsFromJSON failed");
+																			FreeRow (row_p);
+																			row_p = NULL;
 																		}
 
-																	FreeRow (row_p);
 																}
 
 														}		/* if ((replicate != 0) || (rep_control_flag)) */
@@ -430,7 +451,10 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 								}
 
-							FreeBSONOid (id_p);
+							if (!row_p)
+								{
+									FreeBSONOid (id_p);
+								}
 						}		/* if (id_p) */
 
 				}		/* if (success_flag) */
@@ -443,7 +467,15 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 				}
 		}
 
-	return NULL;
+	if (!row_p)
+		{
+			if (material_to_use_p && (material_to_use_p != material_p))
+				{
+					FreeMaterial (material_to_use_p);
+				}
+		}
+
+	return row_p;
 }
 
 

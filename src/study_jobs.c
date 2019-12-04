@@ -1260,10 +1260,10 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 }
 
 
-bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, JSONProcessor *processor_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
+	json_t *study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
 
 	if (study_json_p)
 		{
@@ -1295,7 +1295,8 @@ bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat f
 					FreeCopiedString (title_s);
 				}		/* if (title_s) */
 
-		}		/* if (trial_p) */
+			json_decref (study_json_p);
+		}		/* if (study_json_p) */
 
 	return success_flag;
 }
@@ -1585,12 +1586,9 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 
 														}		/* if (AddContext (trial_json_p)) */
 
-													if (!added_flag)
-														{
-															json_decref (study_json_p);
-														}
+													json_decref (study_json_p);
 
-												}		/* if (arst_json_p) */
+												}		/* if (study_json_p) */
 
 										}		/* if (GetStudyPlots (study_p, data_p)) */
 

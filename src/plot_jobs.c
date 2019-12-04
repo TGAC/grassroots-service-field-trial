@@ -491,8 +491,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 																					if (success_flag)
 																						{
-																							row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, plot_p);
-
+																							row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, MF_SHALLOW_COPY, plot_p);
 																							if (row_p)
 																								{
 																									if (control_rep_flag)

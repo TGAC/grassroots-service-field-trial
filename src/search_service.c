@@ -794,7 +794,7 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 
 									if (study_p)
 										{
-											if (AddStudyToServiceJob (search_data_p -> sd_job_p, study_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+											if (AddStudyToServiceJob (search_data_p -> sd_job_p, study_p, search_data_p -> sd_format, NULL, search_data_p -> sd_service_data_p))
 												{
 													success_flag = true;
 												}
