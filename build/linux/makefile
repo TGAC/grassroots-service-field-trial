@@ -65,6 +65,7 @@ SRCS 	= \
 	plot_jobs.c \
 	row.c \
 	row_jobs.c \
+	row_processor.c \
 	search_service.c \
 	study.c \
 	study_jobs.c \

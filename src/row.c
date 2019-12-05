@@ -128,7 +128,7 @@ void FreeRowNode (ListItem *node_p)
 
 
 
-json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *row_json_p = json_object ();
 
@@ -486,7 +486,7 @@ bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_fl
 
 	if (PrepareSaveData (& (row_p -> ro_id_p), &selector_p))
 		{
-			json_t *row_json_p = GetRowAsJSON (row_p, false, data_p);
+			json_t *row_json_p = GetRowAsJSON (row_p, VF_STORAGE, NULL, data_p);
 
 			if (row_json_p)
 				{

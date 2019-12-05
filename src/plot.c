@@ -32,7 +32,7 @@
 #include "int_linked_list.h"
 
 
-static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
 
 static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
 
@@ -192,7 +192,7 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 
 	if (success_flag)
 		{
-			json_t *plot_json_p = GetPlotAsJSON (plot_p, VF_STORAGE, data_p);
+			json_t *plot_json_p = GetPlotAsJSON (plot_p, VF_STORAGE, NULL, data_p);
 
 			if (plot_json_p)
 				{
@@ -207,7 +207,7 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *plot_json_p = json_object ();
 
@@ -240,7 +240,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, const DFWFieldTria
 																							{
 																								if (GetPlotRows (plot_p, data_p))
 																									{
-																										if (AddRowsToJSON (plot_p, plot_json_p, data_p))
+																										if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
 																											{
 																												success_flag = true;
 																											}
@@ -651,7 +651,7 @@ static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *dat
 }
 
 
-static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *rows_json_p = json_array ();
@@ -666,7 +666,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const DFWFie
 
 					while (node_p && success_flag)
 						{
-							json_t *row_json_p = GetRowAsJSON (node_p -> rn_row_p, true, data_p);
+							json_t *row_json_p = ProcessRowJSON (processor_p, node_p -> rn_row_p, format, data_p);
 
 							if (row_json_p)
 								{

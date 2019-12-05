@@ -28,6 +28,7 @@
 #include "gene_bank_jobs.h"
 #include "row_jobs.h"
 #include "string_int_pair.h"
+#include "row_processor.h"
 
 
 /*
@@ -305,8 +306,8 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 			if (material_p)
 				{
-					ViewFormat format = VF_CLIENT_MINIMAL;
-					GetAllStudiesContainingMaterial (material_p, job_p, format, data_p);
+					ViewFormat format = VF_CLIENT_FULL;
+					status = GetAllStudiesContainingMaterial (material_p, job_p, format, data_p);
 
 					FreeMaterial (material_p);
 				}		/* if (material_p) */
@@ -347,7 +348,7 @@ bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, 
 
 
 
-void GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag = true;
@@ -423,6 +424,7 @@ void GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, c
 																	uint32 added_count = 0;
 																	const char *key_s;
 																	json_t *value_p;
+																	JSONProcessor *processor_p = AllocateRowProcessor (material_p);
 																	StringIntPair *pair_p = ids_with_counts_p -> sipa_values_p;
 
 																	json_object_foreach (studies_cache_p, key_s, value_p)
@@ -442,8 +444,6 @@ void GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, c
 																	 * in each study
 																	 */
 																	SortStringIntPairsByCountDescending (ids_with_counts_p);
-
-																	JSONProcessor *processor_p = NULL;
 
 																	for (i = num_studies, pair_p = ids_with_counts_p -> sipa_values_p; i > 0; -- i, ++ pair_p)
 																		{
@@ -467,6 +467,11 @@ void GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, c
 																				}
 
 																		}		/* for ( ; num_studies > 0; -- num_studies, ++ key_ss) */
+
+																	if (processor_p)
+																		{
+																			FreeJSONProcessor (processor_p);
+																		}
 
 																	if (added_count == num_studies)
 																		{
@@ -501,10 +506,43 @@ void GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, c
 			bson_free (query_p);
 		}		/* if (query_p) */
 
-	SetServiceJobStatus (job_p, status);
+	return status;
 }
 
 
+static StringIntPairArray *SortStudies (json_t *studies_cache_p)
+{
+	const size_t num_studies = json_object_size (studies_cache_p);
+	StringIntPairArray *ids_with_counts_p = AllocateStringIntPairArray (num_studies);
+
+	if (ids_with_counts_p)
+		{
+			uint32 added_count = 0;
+			const char *key_s;
+			json_t *value_p;
+			StringIntPair *pair_p = ids_with_counts_p -> sipa_values_p;
+
+			json_object_foreach (studies_cache_p, key_s, value_p)
+				{
+					int count = json_integer_value (value_p);
+
+					if (!SetStringIntPair (pair_p, (char *) key_s, MF_SHADOW_USE, count))
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "");
+						}
+
+					++ pair_p;
+				}		/* json_object_foreach (studies_cache_p, key_s, value_p) */
+
+			/*
+			 * Sort by the counts of how many times each material appears
+			 * in each study
+			 */
+			SortStringIntPairsByCountDescending (ids_with_counts_p);
+		}
+
+	return ids_with_counts_p;
+}
 
 /*
  * static definitions

@@ -247,6 +247,17 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
 
 
 
+
+/**
+ * The key for specifying whether a particular object in a JSON tree is
+ * selected, e.g. matched a search.
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected");
+
+
+
 #ifdef __cplusplus
 extern "C"
 {

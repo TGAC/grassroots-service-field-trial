@@ -14,30 +14,41 @@
 
 
 struct Plot;
-
+struct Row;
 struct JSONProcessor;
 
 
 typedef struct JSONProcessor
 {
-	void *jp_data_p;
-
 	json_t *(*jp_process_plot_json_fn) (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p);
+
+
+	json_t *(*jp_process_row_json_fn) (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p);
 
 	void (*jp_free_fn) (struct JSONProcessor *processor_p);
 } JSONProcessor;
+
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL JSONProcessor *AllocatePlotHighlighter (struct JSONProcessor *processor_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void InitialiseJSONProcessor (
+		struct JSONProcessor *processor_p,
+		json_t *(*process_plot_json_fn) (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p),
+		json_t *(*process_row_json_fn) (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p),
+		void (*free_fn) (struct JSONProcessor *processor_p)
+);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeJSONProcessor (struct JSONProcessor *processor_p);
 
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *ProcessPlotJSON (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *ProcessRowJSON (struct JSONProcessor *processor_p, struct Row *row_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p);
 
 
 #ifdef __cplusplus

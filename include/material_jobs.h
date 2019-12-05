@@ -54,7 +54,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchMaterialParams (DFWFieldTrialServ
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
