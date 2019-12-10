@@ -180,6 +180,13 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 				{
 					if (SetUpStudiesListParameter (dfw_data_p, param_p, S_EMPTY_LIST_OPTION_S))
 						{
+							/*
+							 * We want to update all of the values in the form
+							 * when a user selects a study from the list so
+							 * we need to make the parameter automatically
+							 * refresh the values. So we set the
+							 * pa_refresh_service_flag to true.
+							 */
 							param_p -> pa_refresh_service_flag = true;
 
 							ClearSharedType (&def, STUDY_ID.npt_type);

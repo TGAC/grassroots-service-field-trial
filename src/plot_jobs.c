@@ -84,7 +84,7 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p,  const DFWFieldTrialServiceData *data_p);
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const Study *active_study_p, const DFWFieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
@@ -95,28 +95,39 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrial
  * API definitions
  */
 
-bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *UNUSED_PARAM (resource_p))
+bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
+	const DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", false, data_p, param_set_p);
 	SharedType def;
+	Study *active_study_p = GetStudyFromResource (resource_p, dfw_data_p);
 
 	InitSharedType (&def);
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", def, PL_ALL)) != NULL)
 		{
-			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-			if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
+			if (SetUpStudiesListParameter (dfw_data_p, param_p, NULL))
 				{
+					/*
+					 * We want to update all of the values in the form
+					 * when a user selects a study from the list so
+					 * we need to make the parameter automatically
+					 * refresh the values. So we set the
+					 * pa_refresh_service_flag to true.
+					 */
+					param_p -> pa_refresh_service_flag = true;
+
+
 					def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
 					if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_type, false, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
 						{
 							def.st_string_value_s = NULL;
 
-							if ((param_p = GetTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+							if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
 								{
 									success_flag = true;
 								}
@@ -147,6 +158,17 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	Study *study_p = NULL;
+
+
+	SharedType parent_study_value;
+
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
+		{
+			Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
+
+		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
+
 
 	SharedType value;
 	InitSharedType (&value);
@@ -170,12 +192,11 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 					if (plots_json_p)
 						{
-							SharedType parent_experimental_area_value;
-							InitSharedType (&parent_experimental_area_value);
+							SharedType parent_study_value;
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 								{
-									Study *study_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
+									Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (study_p)
 										{
@@ -289,42 +310,55 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const Study *active_study_p, const DFWFieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
 	SharedType def;
+	bool success_flag = false;
+	json_t *hints_p = GetTableParameterHints ();
 
-	InitSharedType (&def);
-
-	param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
-
-	if (param_p)
+	if (hints_p)
 		{
-			bool success_flag = false;
-			json_t *hints_p = GetTableParameterHints ();
-
-			if (hints_p)
+			if (active_study_p)
 				{
-					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
-						{
-							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
-								{
-									success_flag = true;
-								}
-						}
-
-					json_decref (hints_p);
-				}		/* if (hints_p) */
-
-
-			if (!success_flag)
+					json_t *plots_json_p = GetStudyPlotsForSubmissionTable (active_study_p, hints_p, data_p);
+				}
+			else
 				{
-					FreeParameter (param_p);
-					param_p = NULL;
+					InitSharedType (&def);
+					success_flag = true;
 				}
 
-		}		/* if (param_p) */
+			if (success_flag)
+				{
+					param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+
+					if (param_p)
+						{
+							success_flag = false;
+
+							if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
+								{
+									if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
+										{
+											success_flag = true;
+										}
+								}
+
+							if (!success_flag)
+								{
+									FreeParameter (param_p);
+									param_p = NULL;
+								}
+
+						}		/* if (param_p) */
+
+				}		/* if (success_flag) */
+
+			json_decref (hints_p);
+		}		/* if (hints_p) */
+
 
 	return param_p;
 }
@@ -661,3 +695,106 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrial
 
 	return plot_p;
 }
+
+
+static json_t *GetStudyPlotsForSubmissionTable (const Study *study_p, const DFWFieldTrialServiceData *service_data_p)
+{
+	json_t *plots_table_p = NULL;
+
+	/*
+	 * Has the study got any plots?
+	 */
+	if (study_p -> st_plots_p -> ll_size == 0)
+		{
+			if (!GetStudyPlots (study_p, service_data_p))
+				{
+
+				}
+
+		}		/* if ((study_p -> st_plots_p == NULL) || (study_p -> st_plots_p -> ll_size == 0)) */
+
+
+	if (study_p -> st_plots_p -> ll_size >= 0)
+		{
+			bool success_flag = true;
+
+			plots_table_p = json_array ();
+
+			if (plots_table_p)
+				{
+					PlotNode *node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
+
+					while (success_flag && node_p)
+						{
+							json_t *plot_row_p = GetPlotTableRow (node_p -> pn_plot_p, service_data_p);
+
+							if (plot_row_p)
+								{
+									if (json_array_append_new (plots_table_p, plot_row_p) == 0)
+										{
+											node_p = (PlotNode *) (node_p -> pn_node.ln_next_p);
+										}		/* if (json_array_append_new (plots_json_p, plot_row_p) == 0) */
+									else
+										{
+											json_decref (plot_row_p);
+											success_flag = false;
+										}
+
+								}		/* if (plot_row_p) */
+							else
+								{
+									success_flag = false;
+								}
+
+						}		/* while (success_flag && node_p) */
+
+					if (!success_flag)
+						{
+							json_decref (plots_table_p);
+						}
+
+				}		/* if (plots_table_p) */
+
+		}		/* if (study_p -> st_plots_p -> ll_size >= 0) */
+
+	return plots_table_p;
+}
+
+
+
+
+static json_t *GetPlotTableRow (const Plot *plot_p, const DFWFieldTrialServiceData service_data_p)
+{
+	json_t *row_p = json_object ();
+
+	if (row_p)
+		{
+			/*
+				if (AddColumnParameterHint (S_SOWING_TITLE_S, PT_TIME, hints_p))
+				if (AddColumnParameterHint (S_HARVEST_TITLE_S, PT_TIME, hints_p))
+				if (AddColumnParameterHint (S_WIDTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
+				if (AddColumnParameterHint (S_LENGTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
+				if (AddColumnParameterHint (S_INDEX_TITLE_S, PT_UNSIGNED_INT, hints_p))
+				if (AddColumnParameterHint (S_REPLICATE_TITLE_S, PT_UNSIGNED_INT, hints_p))
+				if (AddColumnParameterHint (S_RACK_TITLE_S, PT_UNSIGNED_INT, hints_p))
+				if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
+				if (AddColumnParameterHint (S_COMMENT_TITLE_S, PT_STRING, hints_p))
+			*/
+
+
+			if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (row_p, S_ROW_TITLE_S, plot_p -> pl_row_index)))
+				{
+					if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index)))
+						{
+						}		/* if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))) */
+
+				}		/* if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (row_p, S_ROW_TITLE_S, plot_p -> pl_row_index))) */
+
+			json_decref (row_p);
+		}		/* if (row_p) */
+
+
+
+	return row_p;
+}
+
