@@ -31,6 +31,7 @@
 #include "material.h"
 #include "row.h"
 #include "gene_bank.h"
+#include "dfw_util.h"
 
 
 typedef enum
@@ -84,11 +85,17 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p,  const DFWFieldTrialServiceData *data_p);
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const Study *active_study_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const DFWFieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
 static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
+
+static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData *service_data_p);
+
+static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTrialServiceData *service_data_p);
+
+static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const DFWFieldTrialServiceData *service_data_p);
 
 
 /*
@@ -97,12 +104,12 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrial
 
 bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
-	const DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", false, data_p, param_set_p);
 	SharedType def;
-	Study *active_study_p = GetStudyFromResource (resource_p, dfw_data_p);
+	Study *active_study_p = GetStudyFromResource (resource_p, S_STUDIES_LIST, dfw_data_p);
 
 	InitSharedType (&def);
 
@@ -159,14 +166,11 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 {
 	bool job_done_flag = false;
 	Study *study_p = NULL;
-
-
 	SharedType parent_study_value;
 
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 		{
-			Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
-
+			study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 
 
@@ -192,11 +196,9 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 					if (plots_json_p)
 						{
-							SharedType parent_study_value;
-
 							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 								{
-									Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
+									study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
 
 									if (study_p)
 										{
@@ -310,7 +312,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const Study *active_study_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const DFWFieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
@@ -322,7 +324,13 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 		{
 			if (active_study_p)
 				{
-					json_t *plots_json_p = GetStudyPlotsForSubmissionTable (active_study_p, hints_p, data_p);
+					json_t *plots_json_p = GetStudyPlotsForSubmissionTable (active_study_p, data_p);
+
+					if (plots_json_p)
+						{
+							def.st_json_p = plots_json_p;
+							success_flag = true;
+						}
 				}
 			else
 				{
@@ -359,6 +367,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 			json_decref (hints_p);
 		}		/* if (hints_p) */
 
+	ClearSharedType (&def, PT_JSON);
 
 	return param_p;
 }
@@ -697,7 +706,7 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrial
 }
 
 
-static json_t *GetStudyPlotsForSubmissionTable (const Study *study_p, const DFWFieldTrialServiceData *service_data_p)
+static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTrialServiceData *service_data_p)
 {
 	json_t *plots_table_p = NULL;
 
@@ -714,7 +723,7 @@ static json_t *GetStudyPlotsForSubmissionTable (const Study *study_p, const DFWF
 		}		/* if ((study_p -> st_plots_p == NULL) || (study_p -> st_plots_p -> ll_size == 0)) */
 
 
-	if (study_p -> st_plots_p -> ll_size >= 0)
+	if (study_p -> st_plots_p -> ll_size > 0)
 		{
 			bool success_flag = true;
 
@@ -722,31 +731,20 @@ static json_t *GetStudyPlotsForSubmissionTable (const Study *study_p, const DFWF
 
 			if (plots_table_p)
 				{
-					PlotNode *node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
+					PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
 
-					while (success_flag && node_p)
+					while (success_flag && plot_node_p)
 						{
-							json_t *plot_row_p = GetPlotTableRow (node_p -> pn_plot_p, service_data_p);
-
-							if (plot_row_p)
+							if (AddPlotRowsToTable (plot_node_p -> pn_plot_p, plots_table_p, service_data_p))
 								{
-									if (json_array_append_new (plots_table_p, plot_row_p) == 0)
-										{
-											node_p = (PlotNode *) (node_p -> pn_node.ln_next_p);
-										}		/* if (json_array_append_new (plots_json_p, plot_row_p) == 0) */
-									else
-										{
-											json_decref (plot_row_p);
-											success_flag = false;
-										}
-
-								}		/* if (plot_row_p) */
+									plot_node_p = (PlotNode *) (plot_node_p -> pn_node.ln_next_p);
+								}
 							else
 								{
 									success_flag = false;
 								}
 
-						}		/* while (success_flag && node_p) */
+						}		/* while (success_flag && plot_node_p) */
 
 					if (!success_flag)
 						{
@@ -761,40 +759,136 @@ static json_t *GetStudyPlotsForSubmissionTable (const Study *study_p, const DFWF
 }
 
 
-
-
-static json_t *GetPlotTableRow (const Plot *plot_p, const DFWFieldTrialServiceData service_data_p)
+static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const DFWFieldTrialServiceData *service_data_p)
 {
-	json_t *row_p = json_object ();
+	bool success_flag = true;
+	LinkedList *rows_p = plot_p -> pl_rows_p;
 
-	if (row_p)
+	if (rows_p)
+		{
+			RowNode *row_node_p = (RowNode *) (rows_p -> ll_head_p);
+
+			while (success_flag && row_node_p)
+				{
+					json_t *row_json_p = GetPlotTableRow (row_node_p -> rn_row_p, service_data_p);
+
+					if (row_json_p)
+						{
+							if (json_array_append_new (plots_table_p, row_json_p) == 0)
+								{
+									row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+								}		/* if (json_array_append_new (plots_json_p, plot_row_p) == 0) */
+							else
+								{
+									json_decref (row_json_p);
+									success_flag = false;
+								}
+
+						}		/* if (plot_row_p) */
+					else
+						{
+							success_flag = false;
+						}
+
+				}		/* while (success_flag && row_node_p) */
+
+
+		}		/* if (rows_p) */
+
+	return success_flag;
+}
+
+
+static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData *service_data_p)
+{
+	json_t *table_row_p = json_object ();
+
+	if (table_row_p)
 		{
 			/*
-				if (AddColumnParameterHint (S_SOWING_TITLE_S, PT_TIME, hints_p))
-				if (AddColumnParameterHint (S_HARVEST_TITLE_S, PT_TIME, hints_p))
-				if (AddColumnParameterHint (S_WIDTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
-				if (AddColumnParameterHint (S_LENGTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
-				if (AddColumnParameterHint (S_INDEX_TITLE_S, PT_UNSIGNED_INT, hints_p))
-				if (AddColumnParameterHint (S_REPLICATE_TITLE_S, PT_UNSIGNED_INT, hints_p))
-				if (AddColumnParameterHint (S_RACK_TITLE_S, PT_UNSIGNED_INT, hints_p))
 				if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
-				if (AddColumnParameterHint (S_COMMENT_TITLE_S, PT_STRING, hints_p))
 			*/
+			Plot *plot_p = row_p -> ro_plot_p;
 
-
-			if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (row_p, S_ROW_TITLE_S, plot_p -> pl_row_index)))
+			if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (table_row_p, S_ROW_TITLE_S, plot_p -> pl_row_index)))
 				{
-					if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index)))
+					if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (table_row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index)))
 						{
-						}		/* if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))) */
+							if ((CompareDoubles (plot_p -> pl_length, 0.0) <= 0) || (SetJSONReal (table_row_p, S_LENGTH_TITLE_S, plot_p -> pl_length)))
+								{
+									if ((CompareDoubles (plot_p -> pl_width, 0.0) <= 0) || (SetJSONReal (table_row_p, S_WIDTH_TITLE_S, plot_p -> pl_width)))
+										{
+											if ((plot_p -> pl_comment_s == NULL) || (SetJSONString (table_row_p, S_COMMENT_TITLE_S, plot_p -> pl_comment_s)))
+												{
+													if ((plot_p -> pl_treatments_s == NULL) || (SetJSONString (table_row_p, S_TREATMENT_TITLE_S, plot_p -> pl_treatments_s)))
+														{
+															if ((plot_p -> pl_sowing_date_p == NULL) || (AddValidDateToJSON (plot_p -> pl_sowing_date_p, table_row_p, S_SOWING_TITLE_S)))
+																{
+																	if ((plot_p -> pl_harvest_date_p == NULL) || (AddValidDateToJSON (plot_p -> pl_harvest_date_p, table_row_p, S_HARVEST_TITLE_S)))
+																		{
+																			if ((row_p -> ro_rack_index == 0) || (SetJSONInteger (table_row_p, S_RACK_TITLE_S, row_p -> ro_rack_index)))
+																				{
+																					if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, S_REPLICATE_TITLE_S, row_p -> ro_replicate_index)))
+																						{
+																							if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, S_INDEX_TITLE_S, row_p -> ro_by_study_index)))
+																								{
+																									bool success_flag = false;
 
-				}		/* if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (row_p, S_ROW_TITLE_S, plot_p -> pl_row_index))) */
+																									if (row_p -> ro_material_p)
+																										{
+																											if ((row_p -> ro_material_p -> ma_accession_s == NULL) || (SetJSONString (table_row_p, S_ACCESSION_TITLE_S, row_p -> ro_material_p -> ma_accession_s)))
+																												{
 
-			json_decref (row_p);
-		}		/* if (row_p) */
+																												}
+
+																											GeneBank *gene_bank_p = GetGeneBankById (row_p -> ro_material_p -> ma_gene_bank_id_p, VF_CLIENT_MINIMAL, service_data_p);
+
+																											if (gene_bank_p)
+																												{
+																													if (SetJSONString (table_row_p, S_GENE_BANK_S, gene_bank_p -> gb_name_s))
+																														{
+
+																														}
+																												}
+																										}
+																									else
+																										{
+																											success_flag = true;
+																										}
+
+																									if (success_flag)
+																										{
+																											return table_row_p;
+																										}
 
 
+																								}		/* if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, S_INDEX_TITLE_S, row_p -> ro_by_study_index))) */
 
-	return row_p;
+																						}		/* if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, S_REPLICATE_TITLE_S, row_p -> ro_rephttps://www.theguardian.com/ukhttps://www.theguardian.com/uklicate_index))) */
+
+																				}		/* if ((row_p -> ro_rack_index == 0) || (SetJSONInteger (table_row_p, S_RACK_TITLE_S, row_p -> ro_rack_index))) */
+
+
+																		}		/* if ((plot_p -> pl_harvest_date_p == NULL) || (AddValidDateToJSON (plot_p -> pl_harvest_date_p, table_row_p, S_HARVEST_TITLE_S))) */
+
+																}		/* if ((plot_p -> pl_sowing_date_p == NULL) || (AddValidDateToJSON (plot_p -> pl_sowing_date_p, table_row_p, S_SOWING_TITLE_S))) */
+
+														}		/* if ((plot_p -> pl_treatments_s == NULL) || (SetJSONString (table_row_p, S_TREATMENT_TITLE_S, plot_p -> pl_treatments_s))) */
+
+												}		/* if ((plot_p -> pl_comment_s == NULL) || (SetJSONString (table_row_p, S_COMMENT_TITLE_S, plot_p -> pl_comment_s))) */
+
+										}		/* if ((CompareDoubles (plot_p -> pl_width, 0.0) <= 0) || (SetJSONReal (table_row_p, S_WIDTH_TITLE_S, plot_p -> pl_width))) */
+
+								}		/* if ((CompareDoubles (plot_p -> pl_length, 0.0) <= 0) || (SetJSONReal (table_row_p, S_LENGTH_TITLE_S, plot_p -> pl_length))) */
+
+
+						}		/* if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (table_row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))) */
+
+				}		/* if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (table_row_p, S_ROW_TITLE_S, plot_p -> pl_row_index))) */
+
+			json_decref (table_row_p);
+		}		/* if (table_row_p) */
+
+	return table_row_p;
 }
 

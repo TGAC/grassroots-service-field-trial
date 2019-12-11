@@ -115,7 +115,6 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 														const char **phenotype_gathering_notes_ss,struct tm **sowing_time_pp, struct tm **harvest_time_pp,
 													 double64 **ph_min_pp, double64 **ph_max_pp);
 
-static Study *GetStudyFromResource (Resource *resource_p, DFWFieldTrialServiceData *data_p);
 
 
 
@@ -143,7 +142,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	const char *description_s = NULL;
 	struct tm *sowing_time_p = NULL;
 	struct tm *harvest_time_p = NULL;
-	Study *active_study_p = GetStudyFromResource (resource_p, dfw_data_p);
+	Study *active_study_p = GetStudyFromResource (resource_p, STUDY_ID, dfw_data_p);
 	bool defaults_flag = false;
 	double ph_min = -1.0;
 	double ph_max = -1.0;
@@ -1971,7 +1970,7 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 }
 
 
-static Study *GetStudyFromResource (Resource *resource_p, DFWFieldTrialServiceData *dfw_data_p)
+Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, DFWFieldTrialServiceData *dfw_data_p)
 {
 	/*
 	 * Have we been set some parameter values to refresh from?
@@ -1993,7 +1992,7 @@ static Study *GetStudyFromResource (Resource *resource_p, DFWFieldTrialServiceDa
 							/*
 							 * Do we have an existing study id?
 							 */
-							if (GetStudyDefaultValueFromJSON (&def, params_json_p, STUDY_ID, NULL))
+							if (GetStudyDefaultValueFromJSON (&def, params_json_p, study_param_type, NULL))
 								{
 									Study *study_p = GetStudyByIdString (def.st_string_value_s, VF_CLIENT_FULL , dfw_data_p);
 

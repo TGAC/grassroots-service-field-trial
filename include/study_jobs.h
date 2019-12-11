@@ -125,6 +125,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const KeyValuePair *GetAspect (const char *aspect_
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSONInViewFormat (const DFWFieldTrialServiceData *data_p, const ViewFormat format);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, DFWFieldTrialServiceData *dfw_data_p);
+
 
 #ifdef __cplusplus
 }
