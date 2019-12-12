@@ -68,7 +68,7 @@ static const char * const S_COMMENT_TITLE_S = "Comment";
 
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
-static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_TABLE};
+static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_JSON_TABLE};
 
 
 static NamedParameterType S_STUDIES_LIST = { "PL Study", PT_STRING };
@@ -766,6 +766,12 @@ static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const
 
 	if (rows_p)
 		{
+			if (rows_p -> ll_size == 0)
+				{
+					success_flag = GetPlotRows (plot_p, service_data_p);
+				}
+
+
 			RowNode *row_node_p = (RowNode *) (rows_p -> ll_head_p);
 
 			while (success_flag && row_node_p)
