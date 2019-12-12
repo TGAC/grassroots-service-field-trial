@@ -853,7 +853,7 @@ static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData
 																												{
 																													if (SetJSONString (table_row_p, S_GENE_BANK_S, gene_bank_p -> gb_name_s))
 																														{
-
+																															success_flag = true;
 																														}
 																												}
 																										}
@@ -895,6 +895,6 @@ static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData
 			json_decref (table_row_p);
 		}		/* if (table_row_p) */
 
-	return table_row_p;
+	return NULL;
 }
 
