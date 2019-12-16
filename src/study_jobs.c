@@ -1972,6 +1972,8 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 
 Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, DFWFieldTrialServiceData *dfw_data_p)
 {
+	Study *study_p = NULL;
+
 	/*
 	 * Have we been set some parameter values to refresh from?
 	 */
@@ -1994,19 +1996,15 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 							 */
 							if (GetStudyDefaultValueFromJSON (&def, params_json_p, study_param_type, NULL))
 								{
-									Study *study_p = GetStudyByIdString (def.st_string_value_s, VF_CLIENT_FULL , dfw_data_p);
+									study_p = GetStudyByIdString (def.st_string_value_s, VF_CLIENT_FULL , dfw_data_p);
 
-									if (study_p)
-										{
-											return study_p;
-										}		/* if (study_p) */
-									else
+									if (!study_p)
 										{
 											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to load Study with id \"%s\"", def.st_string_value_s);
 										}
 
+									ClearSharedType (&def, study_param_type.npt_type);
 								}		/* if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL)) */
-
 
 						}
 					else
@@ -2021,7 +2019,7 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
-	return NULL;
+	return study_p;
 }
 
 

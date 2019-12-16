@@ -158,6 +158,11 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDIES_LIST.npt_name_s);
 		}
 
+	if (active_study_p)
+		{
+			FreeStudy (active_study_p);
+		}
+
 	return success_flag;
 }
 
@@ -855,6 +860,8 @@ static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData
 																														{
 																															success_flag = true;
 																														}
+
+																													FreeGeneBank (gene_bank_p);
 																												}
 																										}
 																									else
