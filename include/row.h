@@ -79,7 +79,7 @@ typedef struct RowNode
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef ALLOCATE_ROW_TAGS
-	#define ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_API
 	#define ROW_VAL(x)	= x
 	#define ROW_CONCAT_VAL(x,y)	= x y
 #else

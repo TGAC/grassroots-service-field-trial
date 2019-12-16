@@ -108,8 +108,7 @@ LDFLAGS += $(LIB_LDFLAGS)
 APP_LDFLAGS = $(LIB_LDFLAGS) \
 	-L$(DIR_PCRE_LIB) -lpcre \
 	-L$(DIR_HTMLCXX_LIB) -lhtmlcxx \
-	-L$(DIR_HCXSELECT_LIB) -lhcxselect \
-		
+	-L$(DIR_HCXSELECT_LIB) -lhcxselect
 	
 	
 ifeq ($(IRODS_ENABLED), 1)
@@ -131,7 +130,8 @@ APP_LDFLAGS += \
 	-L$(DIR_HTCONDOR_DRMAA_LIB) -ldrmaa 
 endif	
 	
-	
+PLOT_ROW_APP_LDFLAGS += $(APP_LDFLAGS) \
+	-lcurl
 
 all:: 
 	make -C $(DIR_GRASSROOTS_GEOCODER_BUILD) all
@@ -143,6 +143,10 @@ sanitiser: all
 importer: all
 	$(CC) $(DIR_SRC)/importer.c -o $(DIR_BUILD)/$(BUILD)/importer -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -pg -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME)  $(APP_LDFLAGS)
 	
+plot_row_merger: all
+	$(CC) $(DIR_SRC)/merge_plot_row_collections.c -o $(DIR_BUILD)/$(BUILD)/merge_plot_row_collections -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -pg -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME) $(PLOT_ROW_APP_LDFLAGS)
+	
+
 
 include $(DIR_BUILD_CONFIG)/generic_makefiles/shared_library.makefile
 
