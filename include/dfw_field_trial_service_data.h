@@ -41,7 +41,7 @@ typedef enum
 	DFTD_STUDY,
 	DFTD_LOCATION,
 	DFTD_PLOT,
-	DFTD_ROW,
+/*	DFTD_ROW, */
 	DFTD_MATERIAL,
 	DFTD_DRILLING,
 	DFTD_TREATMENT,
@@ -235,7 +235,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBan
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_ROW_S DFW_FIELD_TRIAL_VAL ("Rows");
+//DFW_FIELD_TRIAL_PREFIX const char *DFT_ROW_S DFW_FIELD_TRIAL_VAL ("Rows");
 
 
 /**

@@ -235,36 +235,36 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 																					bool success_flag = false;
 
 																					switch (format)
-																					{
-																						case VF_CLIENT_FULL:
-																							{
-																								if (GetPlotRows (plot_p, data_p))
-																									{
-																										if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
-																											{
-																												success_flag = true;
-																											}
-																									}
-																							}		/* case VF_CLIENT_FULL: */
-																							break;
+																						{
+																							case VF_CLIENT_FULL:
+																								{
+																									if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
+																										{
+																											success_flag = true;
+																										}
+																								}		/* case VF_CLIENT_FULL: */
+																								break;
 
-																						case VF_STORAGE:
-																							{
-																								if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
-																									{
-																										success_flag = true;
-																									}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_FIELD_TRIAL_S)) */
-																								else
-																									{
-																										PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_STUDY_S);
-																									}
-																							}		/* case VF_STORAGE */
-																							break;
+																							case VF_STORAGE:
+																								{
+																									if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
+																										{
+																											if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
+																												{
+																													success_flag = true;
+																												}
+																										}		/* if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_FIELD_TRIAL_S)) */
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_STUDY_S);
+																										}
+																								}		/* case VF_STORAGE */
+																								break;
 
-																						default:
-																							break;
+																							default:
+																								break;
 
-																					}		/* switch (format) */
+																						}		/* switch (format) */
 
 																					if (success_flag)
 																						{
@@ -422,7 +422,19 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const D
 
 																	plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width, length, row, column, treatments_s, comment_s, parent_study_p);
 
-																	if (!plot_p)
+																	if (plot_p)
+																		{
+																			json_t *rows_array_p = json_object_get (plot_json_p, PL_ROWS_S);
+
+																			if (rows_array_p)
+																				{
+																					if (GetPlotRows (plot_p, rows_array_p, data_p))
+																						{
+
+																						}
+																				}
+																		}
+																	else
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get create Plot");
 																		}
@@ -491,82 +503,50 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const D
 }
 
 
-bool GetPlotRows (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
+bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
 	ClearLinkedList (plot_p -> pl_rows_p);
+	size_t i;
+	const size_t num_results = json_array_size (rows_array_p);
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
+	success_flag = true;
+
+	if (num_results > 0)
 		{
-			bson_t *query_p = BCON_NEW (RO_PLOT_ID_S, BCON_OID (plot_p -> pl_id_p));
+			json_t *row_json_p;
 
-			/*
-			 * Make the query to get the matching plots
-			 */
-			if (query_p)
+			json_array_foreach (rows_array_p, i, row_json_p)
 				{
-					bson_t *opts_p = BCON_NEW ( "sort", "{", RO_RACK_INDEX_S, BCON_INT32 (1), "}");
+					Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, true, data_p);
 
-					if (opts_p)
+					if (row_p)
 						{
-							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+							RowNode *node_p = AllocateRowNode (row_p);
 
-							if (results_p)
+							if (node_p)
 								{
-									if (json_is_array (results_p))
-										{
-											size_t i;
-											const size_t num_results = json_array_size (results_p);
+									LinkedListAddTail (plot_p -> pl_rows_p, & (node_p -> rn_node));
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row to plot's list");
+									FreePlot (plot_p);
+								}
+						}
 
-											success_flag = true;
+				}		/* json_array_foreach (results_p, i, entry_p) */
 
-											if (num_results > 0)
-												{
-													json_t *row_json_p;
+		}		/* if (num_results > 0) */
+	else
+		{
+			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-													json_array_foreach (results_p, i, row_json_p)
-														{
-															Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, true, data_p);
-
-															if (row_p)
-																{
-																	RowNode *node_p = AllocateRowNode (row_p);
-
-																	if (node_p)
-																		{
-																			LinkedListAddTail (plot_p -> pl_rows_p, & (node_p -> rn_node));
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row to plot's list");
-																			FreePlot (plot_p);
-																		}
-																}
-
-														}		/* json_array_foreach (results_p, i, entry_p) */
-
-												}		/* if (num_results > 0) */
-											else
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (plot_p -> pl_id_p, id_s);
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No rows found for plot with id \"%s\"");
-												}
-
-										}		/* if (json_is_array (results_p)) */
-
-									json_decref (results_p);
-								}		/* if (results_p) */
-
-							bson_destroy (opts_p);
-						}		/* if (opts_p) */
-
-					bson_destroy (query_p);
-				}		/* if (query_p) */
-
+			bson_oid_to_string (plot_p -> pl_id_p, id_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No rows found for plot with id \"%s\"");
 		}
+
 
 	return success_flag;
 }

@@ -771,12 +771,6 @@ static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const
 
 	if (rows_p)
 		{
-			if (rows_p -> ll_size == 0)
-				{
-					success_flag = GetPlotRows (plot_p, service_data_p);
-				}
-
-
 			RowNode *row_node_p = (RowNode *) (rows_p -> ll_head_p);
 
 			while (success_flag && row_node_p)

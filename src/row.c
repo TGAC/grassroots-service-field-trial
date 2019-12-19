@@ -235,14 +235,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 														{
 															if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
 																{
-																	if (AddDatatype (row_json_p, DFTD_ROW))
-																		{
-																			return row_json_p;
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddDatatype failed");
-																		}
+																	return row_json_p;
 																}		/* if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format)) */
 															else
 																{
