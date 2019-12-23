@@ -33,8 +33,8 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 	"Grassroots:Study",
 	"Grassroots:Location",
 	"Grassroots:Plot",
-	"Grassroots:Row",
-	"Grassroots:Material",
+/*	"Grassroots:Row", */
+ 	"Grassroots:Material",
 	"Grassroots:Drilling",
 	"Grassroots:Phenotype",
 	"Grassroots:Observation",

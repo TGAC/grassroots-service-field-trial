@@ -52,7 +52,6 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 
 static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
 
-static LinkedList *SearchForRows (bson_t *query_p, Material *material_p, const DFWFieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
@@ -341,7 +340,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 							if (GetRackStudyIndex (observation_json_p, &rack_index))
 								{
 									const bool expand_fields_flag = true;
-									Row *row_p = GetRowByStudyIndex (rack_index, study_p, expand_fields_flag, data_p);
+									Row *row_p = GetRowByStudyIndex (rack_index, study_p, data_p);
 
 									if (row_p)
 										{
@@ -482,7 +481,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 											if (loop_success_flag)
 												{
-													if (SaveRow (row_p, data_p, false))
+													if (SavePlot (row_p -> ro_plot_p, data_p))
 														{
 															imported_obeservation_flag = true;
 															++ num_imported;
@@ -545,296 +544,59 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 }
 
 
-Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
+Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
-	bson_t *query_p = BCON_NEW (RO_STUDY_INDEX_S, BCON_INT32 (by_study_index), RO_STUDY_ID_S, BCON_OID (study_p -> st_id_p));
+	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_INDEX_S, NULL);
 
-	if (query_p)
+	if (index_key_s)
 		{
-			if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
-				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-					if (results_p)
-						{
-							if (json_is_array (results_p))
-								{
-									const size_t num_results = json_array_size (results_p);
-
-									if (num_results == 1)
-										{
-											size_t i = 0;
-											json_t *entry_p = json_array_get (results_p, i);
-											bson_oid_t *plot_id_p = GetNewUnitialisedBSONOid ();
-
-											if (plot_id_p)
-												{
-													if (GetNamedIdFromJSON (entry_p, RO_PLOT_ID_S, plot_id_p))
-														{
-															Plot *plot_p = GetPlotById (plot_id_p, study_p, data_p);
-
-															if (plot_p)
-																{
-																	row_p = GetRowFromJSON (entry_p, plot_p, NULL, expand_fields_flag, data_p);
-
-																	if (!row_p)
-																		{
-
-																		}
-
-																}		/* if (plot_p) */
-
-														}		/* if (GetNamedIdFromJSON (entry_p, RO_PLOT_ID_S, plot_id_p)) */
-
-													FreeBSONOid (plot_id_p);
-												}		/* if (plot_id_p) */
-
-										}		/* if (num_results == 1) */
-
-								}		/* if (json_is_array (results_p)) */
-
-							json_decref (results_p);
-						}		/* if (results_p) */
-
-				}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]) */
-
-			bson_destroy (query_p);
-		}		/* if (query_p) */
-
-	return row_p;
-}
-
-
-Row *GetRowByRackIndex (const int32 rack_index, Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
-{
-	Row *row_p = NULL;
-
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
-		{
-			bson_t *query_p = BCON_NEW (RO_RACK_INDEX_S, BCON_INT32 (rack_index), RO_PLOT_ID_S, BCON_OID (plot_p -> pl_id_p));
+			bson_t *query_p = BCON_NEW (index_key_s, BCON_INT32 (by_study_index), RO_STUDY_ID_S, BCON_OID (study_p -> st_id_p));
 
 			if (query_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-					if (results_p)
+					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 						{
-							if (json_is_array (results_p))
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+							if (results_p)
 								{
-									const size_t num_results = json_array_size (results_p);
-
-									if (num_results == 1)
+									if (json_is_array (results_p))
 										{
-											size_t i = 0;
-											json_t *entry_p = json_array_get (results_p, i);
+											const size_t num_results = json_array_size (results_p);
 
-											row_p = GetRowFromJSON (entry_p, plot_p, NULL, expand_fields_flag, data_p);
-
-											if (!row_p)
+											if (num_results == 1)
 												{
+													size_t i = 0;
+													json_t *plot_json_p = json_array_get (results_p, i);
+													Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
 
-												}
+													if (plot_p)
+														{
+															row_p = GetRowFromPlotByStudyIndex (plot_p, by_study_index);
 
-										}		/* if (num_results == 1) */
+															if (!row_p)
+																{
+																	FreePlot (plot_p);
+																}
+														}
 
-								}		/* if (json_is_array (results_p)) */
+												}		/* if (num_results == 1) */
 
-							json_decref (results_p);
-						}		/* if (results_p) */
+										}		/* if (json_is_array (results_p)) */
+
+									json_decref (results_p);
+								}		/* if (results_p) */
+
+						}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]) */
 
 					bson_destroy (query_p);
 				}		/* if (query_p) */
 
-		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
+			FreeCopiedString (index_key_s);
+		}		/* if (index_key_s) */
 
 	return row_p;
 }
 
-
-//static Row *SearchForRow (const bson_t *query_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
-//{
-//	Row *row_p = NULL;
-//
-//	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
-//		{
-//			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-//
-//			if (results_p)
-//				{
-//					if (json_is_array (results_p))
-//						{
-//							const size_t num_results = json_array_size (results_p);
-//
-//							if (num_results == 1)
-//								{
-//									size_t i = 0;
-//									json_t *entry_p = json_array_get (results_p, i);
-//
-//									row_p = GetRowFromJSON (entry_p, plot_p, NULL, expand_fields_flag, data_p);
-//
-//									if (!row_p)
-//										{
-//
-//										}
-//
-//								}		/* if (num_results == 1) */
-//
-//						}		/* if (json_is_array (results_p)) */
-//
-//					json_decref (results_p);
-//				}		/* if (results_p) */
-//		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
-//
-//	return row_p;
-//
-
-
-//Row *GetRowByStudyIndex (const uint32 index, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p)
-//{
-//	bson_t *query_p = BCON_NEW (RO_INDEX_WITHIN_STUDY_S, BCON_INT32 (index));
-//
-//	Row *row_p = NULL;
-//
-//	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
-//		{
-//
-//			if (query_p)
-//				{
-//					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-//
-//					if (results_p)
-//						{
-//							if (json_is_array (results_p))
-//								{
-//									const size_t num_results = json_array_size (results_p);
-//
-//									if (num_results == 1)
-//										{
-//											size_t i = 0;
-//											json_t *entry_p = json_array_get (results_p, i);
-//
-//											row_p = GetRowFromJSON (entry_p, plot_p, NULL, expand_fields_flag, data_p);
-//
-//											if (!row_p)
-//												{
-//
-//												}
-//
-//										}		/* if (num_results == 1) */
-//
-//								}		/* if (json_is_array (results_p)) */
-//
-//							json_decref (results_p);
-//						}		/* if (results_p) */
-//
-//					bson_destroy (query_p);
-//				}		/* if (query_p) */
-//
-//		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
-//
-//	return row_p;
-//}
-
-
-LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
-{
-	LinkedList *rows_p = NULL;
-	bson_t *query_p = BCON_NEW (RO_MATERIAL_ID_S, BCON_OID (material_p -> ma_id_p));
-
-	if (query_p)
-		{
-			rows_p = SearchForRows (query_p, material_p, data_p);
-
-			bson_destroy (query_p);
-		}
-
-	return rows_p;
-}
-
-
-
-static LinkedList *SearchForRows (bson_t *query_p, Material *material_p, const DFWFieldTrialServiceData *data_p)
-{
-	LinkedList *rows_p = NULL;
-
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]))
-		{
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-			if (results_p)
-				{
-					if (json_is_array (results_p))
-						{
-							rows_p = AllocateLinkedList (FreeRowNode);
-
-							if (rows_p)
-								{
-									const size_t num_results = json_array_size (results_p);
-									size_t i = 0;
-									bool success_flag = true;
-
-									while ((i < num_results) && success_flag)
-										{
-											json_t *result_p = json_array_get (results_p, i);
-											Plot *plot_p = NULL;
-											ViewFormat format = VF_CLIENT_FULL;
-											Row *row_p = GetRowFromJSON (result_p, plot_p, material_p, format, data_p);
-
-											if (row_p)
-												{
-													RowNode *node_p = AllocateRowNode (row_p);
-
-													if (node_p)
-														{
-															LinkedListAddTail (rows_p, (ListItem *) node_p);
-															++ i;
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to allocate node for Row");
-															FreeRow (row_p);
-															success_flag = false;
-														}
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "GetRowFromJSON failed");
-													success_flag = false;
-												}
-
-										}		/* while ((i > 0) && success_flag) */
-
-									if (!success_flag)
-										{
-											FreeLinkedList (rows_p);
-											rows_p = NULL;
-										}
-
-								}		/* if (rows_p) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Rows list");
-								}
-
-						}		/* if (json_is_array (results_p)) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
-						}
-
-					json_decref (results_p);
-				}		/* if (results_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
-				}
-		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MATERIAL]);
-		}
-
-	return rows_p;
-}
 

@@ -471,43 +471,43 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 	return row_p;
 }
 
-
-bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag)
-{
-	bson_t *selector_p = NULL;
-	bool success_flag = false;
-
-	if (PrepareSaveData (& (row_p -> ro_id_p), &selector_p))
-		{
-			json_t *row_json_p = GetRowAsJSON (row_p, VF_STORAGE, NULL, data_p);
-
-			if (row_json_p)
-				{
-					if (SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], selector_p))
-						{
-							success_flag = true;
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SaveMongoData failed");
-						}
-
-					json_decref (row_json_p);
-				}		/* if (row_json_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowAsJSON failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_rack_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
-				}
-
-		}		/* if (row_p -> ro_id_p) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_rack_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
-		}
-
-	return success_flag;
-}
-
+//
+//bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag)
+//{
+//	bson_t *selector_p = NULL;
+//	bool success_flag = false;
+//
+//	if (PrepareSaveData (& (row_p -> ro_id_p), &selector_p))
+//		{
+//			json_t *row_json_p = GetRowAsJSON (row_p, VF_STORAGE, NULL, data_p);
+//
+//			if (row_json_p)
+//				{
+//					if (SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], selector_p))
+//						{
+//							success_flag = true;
+//						}
+//					else
+//						{
+//							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SaveMongoData failed");
+//						}
+//
+//					json_decref (row_json_p);
+//				}		/* if (row_json_p) */
+//			else
+//				{
+//					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowAsJSON failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_rack_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+//				}
+//
+//		}		/* if (row_p -> ro_id_p) */
+//	else
+//		{
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> ro_rack_index, row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+//		}
+//
+//	return success_flag;
+//}
+//
 
 bool AddObservationToRow (Row *row_p, Observation *observation_p)
 {

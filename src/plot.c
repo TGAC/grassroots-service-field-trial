@@ -503,6 +503,65 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const D
 }
 
 
+Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index)
+{
+	RowNode *node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
+
+	while (node_p)
+		{
+			Row *row_p = node_p -> rn_row_p;
+
+			if (row_p -> ro_by_study_index == by_study_index)
+				{
+					return row_p;
+				}
+
+			node_p = (RowNode *) (node_p -> rn_node.ln_next_p);
+		}
+
+	return NULL;
+}
+
+
+Row *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index)
+{
+	RowNode *node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
+
+	while (node_p)
+		{
+			Row *row_p = node_p -> rn_row_p;
+
+			if (row_p -> ro_rack_index == rack_index)
+				{
+					return row_p;
+				}
+
+			node_p = (RowNode *) (node_p -> rn_node.ln_next_p);
+		}
+
+	return NULL;
+}
+
+
+bool AddRowToPlot (Plot *plot_p, Row *row_p)
+{
+	bool success_flag = false;
+	RowNode *node_p = AllocateRowNode (row_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (plot_p -> pl_rows_p, & (node_p -> rn_node));
+			success_flag = true;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__,  "Failed to add row to plot's list");
+		}
+
+	return success_flag;
+}
+
+
 bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -523,18 +582,16 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialService
 
 					if (row_p)
 						{
-							RowNode *node_p = AllocateRowNode (row_p);
-
-							if (node_p)
+							if (AddRowToPlot (plot_p, row_p))
 								{
-									LinkedListAddTail (plot_p -> pl_rows_p, & (node_p -> rn_node));
+									success_flag = true;
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row to plot's list");
-									FreePlot (plot_p);
+									FreeRow (row_p);
 								}
-						}
+
+						}		/* if (row_p) */
 
 				}		/* json_array_foreach (results_p, i, entry_p) */
 

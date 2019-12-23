@@ -130,6 +130,10 @@ typedef struct PlotNode
 } PlotNode;
 
 
+/*
+ * forward declaration
+ */
+struct Row;
 
 #ifdef __cplusplus
 extern "C"
@@ -163,7 +167,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPlotRows (Plot *plot_p, json_t *rows_array
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowToPlot (Plot *plot_p, struct Row *row_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index);
+
 //DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index);
 
 
 #ifdef __cplusplus

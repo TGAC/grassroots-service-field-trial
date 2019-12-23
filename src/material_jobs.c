@@ -353,12 +353,11 @@ OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJo
 	OperationStatus status = OS_FAILED;
 	bool success_flag = true;
 
-	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_MATERIAL_ID_S, NULL);
+	char *query_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_MATERIAL_ID_S, NULL);
 
-
-	if (key_s)
+	if (query_key_s)
 		{
-			bson_t *query_p = BCON_NEW (key_s, BCON_OID (material_p -> ma_id_p));
+			bson_t *query_p = BCON_NEW (query_key_s, BCON_OID (material_p -> ma_id_p));
 
 			if (query_p)
 				{
@@ -512,8 +511,8 @@ OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJo
 					bson_free (query_p);
 				}		/* if (query_p) */
 
-			FreeCopiedString (key_s);
-		}		/* if (key_s) */
+			FreeCopiedString (query_key_s);
+		}		/* if (query_key_s) */
 
 	return status;
 }
