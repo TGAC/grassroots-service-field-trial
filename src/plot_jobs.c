@@ -368,12 +368,13 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 						}		/* if (param_p) */
 
+					ClearSharedType (&def, PT_JSON);
+
 				}		/* if (success_flag) */
 
 			json_decref (hints_p);
 		}		/* if (hints_p) */
 
-	ClearSharedType (&def, PT_JSON);
 
 	return param_p;
 }
