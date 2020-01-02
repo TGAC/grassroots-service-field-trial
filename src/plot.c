@@ -703,7 +703,8 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFo
 
 					while (node_p && success_flag)
 						{
-							json_t *row_json_p = ProcessRowJSON (processor_p, node_p -> rn_row_p, format, data_p);
+							Row *row_p = node_p -> rn_row_p;
+							json_t *row_json_p = ProcessRowJSON (processor_p, row_p, format, data_p);
 
 							if (row_json_p)
 								{

@@ -178,53 +178,57 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 		{
 			study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
-		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 
-
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value))
-		{
-			/*
-			 * Has a spreadsheet been uploaded?
-			 */
-			if (! (IsStringEmpty (table_value.st_string_value_s)))
+			if (study_p)
 				{
-					OperationStatus status = OS_FAILED;
-					json_error_t e;
-					json_t *plots_json_p = NULL;
-
-					/*
-					 * The data could be either an array of json objects
-					 * or a tabular string. so try it as json array first
-					 */
-					plots_json_p = json_loads (table_value.st_string_value_s, 0, &e);
-
-					if (plots_json_p)
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value))
 						{
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
-								{
-									study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
+							job_done_flag = true;
 
-									if (study_p)
+							/*
+							 * Has a spreadsheet been uploaded?
+							 */
+							if (table_value.st_json_p)
+								{
+									const size_t num_rows = json_array_size (table_value.st_json_p);
+
+									if (num_rows > 0)
 										{
-											if (!AddPlotsFromJSON (job_p, plots_json_p, study_p, data_p))
+											if (!AddPlotsFromJSON (job_p, table_value.st_json_p, study_p, data_p))
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_json_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_value.st_json_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
 												}
 
-											FreeStudy (study_p);
+										}		/* if (num_rows > 0) */
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
 										}
+
+								}		/* if (table_value.st_json_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
 								}
 
-							json_decref (plots_json_p);
-						}		/* if (plots_json_p) */
+						}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", S_PLOT_TABLE.npt_name_s);
+						}
 
-					job_done_flag = true;
+					FreeStudy (study_p);
+				}		/* if (study_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", parent_study_value.st_string_value_s);
+				}
 
-
-				}		/* if (value.st_boolean_value) */
-
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
-
+		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", S_STUDIES_LIST.npt_name_s);
+		}
 
 	return job_done_flag;
 }

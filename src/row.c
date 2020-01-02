@@ -48,18 +48,37 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 
 					if (row_p)
 						{
-							row_p -> ro_id_p = id_p;
-							row_p -> ro_rack_index = rack_index;
-							row_p -> ro_by_study_index = study_index;
-							row_p -> ro_material_p = material_p;
-							row_p -> ro_material_mem = material_mem;
-							row_p -> ro_plot_p = parent_plot_p;
-							row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
-							row_p -> ro_observations_p = observations_p;
-							row_p -> ro_replicate_index = replicate;
-							row_p -> ro_replicate_control_flag = false;
+							bool success_flag = true;
 
-							return row_p;
+							if (!id_p)
+								{
+									id_p = GetNewBSONOid ();
+
+									if (!id_p)
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate BSON oid for row at [" UINT32_FMT ", " UINT32_FMT "] for study \"%s\"", parent_plot_p -> pl_parent_p -> st_name_s);
+											success_flag = false;
+										}
+								}
+
+							if (success_flag)
+								{
+									row_p -> ro_id_p = id_p;
+
+									row_p -> ro_rack_index = rack_index;
+									row_p -> ro_by_study_index = study_index;
+									row_p -> ro_material_p = material_p;
+									row_p -> ro_material_mem = material_mem;
+									row_p -> ro_plot_p = parent_plot_p;
+									row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
+									row_p -> ro_observations_p = observations_p;
+									row_p -> ro_replicate_index = replicate;
+									row_p -> ro_replicate_control_flag = false;
+
+									return row_p;
+								}
+
+							FreeMemory (row_p);
 						}
 					else
 						{
