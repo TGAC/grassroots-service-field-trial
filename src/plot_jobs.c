@@ -173,6 +173,7 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 	bool job_done_flag = false;
 	Study *study_p = NULL;
 	SharedType parent_study_value;
+	SharedType table_value;
 
 	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 		{
@@ -180,15 +181,12 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 
 
-	SharedType value;
-	InitSharedType (&value);
-
-	if (GetParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
 			 */
-			if (! (IsStringEmpty (value.st_string_value_s)))
+			if (! (IsStringEmpty (table_value.st_string_value_s)))
 				{
 					OperationStatus status = OS_FAILED;
 					json_error_t e;
@@ -198,7 +196,7 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 					 * The data could be either an array of json objects
 					 * or a tabular string. so try it as json array first
 					 */
-					plots_json_p = json_loads (value.st_string_value_s, 0, &e);
+					plots_json_p = json_loads (table_value.st_string_value_s, 0, &e);
 
 					if (plots_json_p)
 						{

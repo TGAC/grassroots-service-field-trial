@@ -26,7 +26,7 @@
 #include "crop_jobs.h"
 #include "string_utils.h"
 
-#include "bson/bson.h"
+#include "bson.h"
 
 /*
  * static declarations
