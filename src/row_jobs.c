@@ -44,7 +44,7 @@ static const char * const S_PLOT_INDEX_S = "Plot index";
 
 
 static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER = { "RO phenotype data delimiter", PT_CHAR };
-static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE = { "RO phenotype data upload", PT_TABLE};
+static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE = { "RO phenotype data upload", PT_JSON_TABLE};
 static NamedParameterType S_STUDIES_LIST = { "RO Study", PT_STRING };
 
 
@@ -107,67 +107,59 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 {
 	bool job_done_flag = false;
 
-	SharedType value;
-	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, &value, true))
+	SharedType parent_study_value;
+
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 		{
-			/*
-			 * Has a spreadsheet been uploaded?
-			 */
-			if (! (IsStringEmpty (value.st_string_value_s)))
+			Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
+
+			if (study_p)
 				{
-					bool success_flag = false;
-					json_error_t e;
-					json_t *observations_json_p = NULL;
+					SharedType table_value;
 
-					job_done_flag = true;
-
-					/*
-					 * The data could be either an array of json objects
-					 * or a tabular string. so try it as json array first
-					 */
-					observations_json_p = json_loads (value.st_string_value_s, 0, &e);
-
-					if (observations_json_p)
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, &table_value))
 						{
-							SharedType parent_experimental_area_value;
-							InitSharedType (&parent_experimental_area_value);
+							/*
+							 * Has a spreadsheet been uploaded?
+							 */
+							job_done_flag = true;
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true))
+							/*
+							 * Has a spreadsheet been uploaded?
+							 */
+							if (table_value.st_json_p)
 								{
-									Study *area_p = GetStudyByIdString (parent_experimental_area_value.st_string_value_s, VF_STORAGE, data_p);
+									const size_t num_rows = json_array_size (table_value.st_json_p);
 
-									if (area_p)
+									if (num_rows > 0)
 										{
-											if (AddObservationValuesFromJSON (job_p, observations_json_p, area_p, data_p))
-												{
-													success_flag = true;
-												}
-											else
+											if (!AddObservationValuesFromJSON (job_p, table_value.st_json_p, study_p, data_p))
 												{
 													char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "AddObservationValuesFromJSON for failed");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_value.st_json_p, "AddObservationValuesFromJSON for failed");
 												}
 
-											FreeStudy (area_p);
-										}		/* if (area_p) */
+										}		/* if (num_rows > 0) */
 
-								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
+										}
 
-							json_decref (observations_json_p);
-						}		/* if (observations_json_p) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load \"%s\" as JSON", value.st_string_value_s);
-						}
+								}		/* if (table_value.st_json_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
+								}
 
-					job_done_flag = true;
-				}		/* if (! (IsStringEmpty (value.st_string_value_s))) */
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true)) */
 
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true)) */
+					FreeStudy (study_p);
+				}		/* if (study_p) */
 
+		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true)) */
 
 	return job_done_flag;
 }
