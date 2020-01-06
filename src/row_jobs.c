@@ -543,50 +543,102 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const DFWFi
 
 	if (index_key_s)
 		{
-			bson_t *query_p = BCON_NEW (index_key_s, BCON_INT32 (by_study_index), RO_STUDY_ID_S, BCON_OID (study_p -> st_id_p));
+			char *study_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_ID_S, NULL);
 
-			if (query_p)
+			if (study_key_s)
 				{
-					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+					bson_t *query_p = BCON_NEW (index_key_s, BCON_INT32 (by_study_index), study_key_s, BCON_OID (study_p -> st_id_p));
+
+					if (query_p)
 						{
-							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-							if (results_p)
+							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 								{
-									if (json_is_array (results_p))
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+									if (results_p)
 										{
-											const size_t num_results = json_array_size (results_p);
-
-											if (num_results == 1)
+											if (json_is_array (results_p))
 												{
-													size_t i = 0;
-													json_t *plot_json_p = json_array_get (results_p, i);
-													Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
+													const size_t num_results = json_array_size (results_p);
 
-													if (plot_p)
+													if (num_results == 1)
 														{
-															row_p = GetRowFromPlotByStudyIndex (plot_p, by_study_index);
+															size_t i = 0;
+															json_t *plot_json_p = json_array_get (results_p, i);
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
 
-															if (!row_p)
+															if (plot_p)
 																{
-																	FreePlot (plot_p);
+																	row_p = GetRowFromPlotByStudyIndex (plot_p, by_study_index);
+
+																	if (!row_p)
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get row with study index " UINT32_FMT,  by_study_index);
+																			FreePlot (plot_p);
+																		}
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to create plot");
+																}
+
+														}		/* if (num_results == 1) */
+													else
+														{
+															char *query_json_s = bson_as_json (query_p, NULL);
+
+															if (query_json_s)
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, UINT32_FMT " results for \"%s\"", query_json_s);
+																	free (query_json_s);
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, UINT32_FMT " for row " UINT32_FMT " in study \"%s\"", by_study_index, study_p -> st_name_s);
 																}
 														}
 
-												}		/* if (num_results == 1) */
+												}		/* if (json_is_array (results_p)) */
 
-										}		/* if (json_is_array (results_p)) */
+											json_decref (results_p);
+										}		/* if (results_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "No results for row " UINT32_FMT " in study \"%s\"", by_study_index, study_p -> st_name_s);
+										}
 
-									json_decref (results_p);
-								}		/* if (results_p) */
+								}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]) */
 
-						}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_ROW]) */
+							bson_destroy (query_p);
+						}		/* if (query_p) */
+					else
+						{
+							char *study_id_s = GetBSONOidAsString (study_p -> st_id_p);
 
-					bson_destroy (query_p);
-				}		/* if (query_p) */
+							if (study_id_s)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for row " UINT32_FMT " in study \"%s\"", by_study_index, study_id_s);
+									FreeCopiedString (study_id_s);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for row " UINT32_FMT " in study \"%s\"", study_p -> st_name_s);
+								}
+						}
+
+					FreeCopiedString (study_key_s);
+				}		/* if (study_key_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, RO_STUDY_ID_S);
+				}
 
 			FreeCopiedString (index_key_s);
 		}		/* if (index_key_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, RO_STUDY_INDEX_S);
+		}
 
 	return row_p;
 }
