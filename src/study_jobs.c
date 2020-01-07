@@ -1563,41 +1563,36 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 
 							if (study_p)
 								{
-									if (GetStudyPlots (study_p, data_p))
+									json_t *study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
+
+									if (study_json_p)
 										{
-											json_t *study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
+											bool added_flag = false;
 
-											if (study_json_p)
+											if (AddContext (study_json_p))
 												{
-													bool added_flag = false;
+													json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
 
-													if (AddContext (study_json_p))
+													if (dest_record_p)
 														{
-															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
-
-															if (dest_record_p)
+															if (AddResultToServiceJob (job_p, dest_record_p))
 																{
-																	if (AddResultToServiceJob (job_p, dest_record_p))
-																		{
-																			added_flag = true;
-																			job_done_flag = true;
-																			status = OS_SUCCEEDED;
-																		}
-																	else
-																		{
-																			json_decref (dest_record_p);
-																		}
+																	added_flag = true;
+																	job_done_flag = true;
+																	status = OS_SUCCEEDED;
+																}
+															else
+																{
+																	json_decref (dest_record_p);
+																}
 
-																}		/* if (dest_record_p) */
+														}		/* if (dest_record_p) */
 
-														}		/* if (AddContext (trial_json_p)) */
+												}		/* if (AddContext (trial_json_p)) */
 
-													json_decref (study_json_p);
+											json_decref (study_json_p);
 
-												}		/* if (study_json_p) */
-
-										}		/* if (GetStudyPlots (study_p, data_p)) */
-
+										}		/* if (study_json_p) */
 
 									FreeStudy (study_p);
 								}		/* if (study_p) */
