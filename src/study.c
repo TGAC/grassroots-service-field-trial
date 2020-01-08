@@ -314,7 +314,7 @@ void FreeStudy (Study *study_p)
 
 	if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
 		{
-			FreeFieldTrial (study_p -> st_parent_p);
+			//FreeFieldTrial (study_p -> st_parent_p);
 		}
 
 	FreeMemory (study_p);
