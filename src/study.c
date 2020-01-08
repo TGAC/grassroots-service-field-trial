@@ -62,7 +62,7 @@ static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialS
 
 Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
 											const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
-											Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *description_s,
+											MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *description_s,
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s, const DFWFieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
@@ -126,6 +126,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 																											study_p -> st_sowing_date_p = copied_sowing_date_p;
 																											study_p -> st_harvest_date_p = copied_harvest_date_p;
 																											study_p -> st_parent_p = parent_field_trial_p;
+																											study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
 																											study_p -> st_location_p = location_p;
 																											study_p -> st_plots_p = plots_p;
 																											study_p -> st_min_ph = min_ph;
@@ -311,6 +312,10 @@ void FreeStudy (Study *study_p)
 			FreeCopiedString (study_p -> st_growing_conditions_s);
 		}
 
+	if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
+		{
+			FreeFieldTrial (study_p -> st_parent_p);
+		}
 
 	FreeMemory (study_p);
 }
@@ -753,7 +758,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					GetJSONInteger (json_p, ST_MIN_PH_S, &min_ph);
 																					GetJSONInteger (json_p, ST_MAX_PH_S, &max_ph);
 
-																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p,
+																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																																	 min_ph, max_ph, description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s, data_p);
 
 																					/*

@@ -1148,7 +1148,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																		}
 
 																	study_p = AllocateStudy (study_id_p, name_value.st_string_value_s, soil_value.st_string_value_s, data_link_value.st_string_value_s, aspect_value.st_string_value_s,
-																													 slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, current_crop_p, previous_crop_p,
+																													 slope_value.st_string_value_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																													 min_ph_value.st_data_value, max_ph_value.st_data_value, notes_value.st_string_value_s, design_value.st_string_value_s,
 																													 growing_conditions_value.st_string_value_s, phenotype_notes_value.st_string_value_s, data_p);
 

@@ -121,6 +121,8 @@ typedef struct Study
 
 	FieldTrial *st_parent_p;
 
+	MEM_FLAG st_parent_field_trial_mem;
+
 	struct Location *st_location_p;
 
 	char *st_soil_type_s;
@@ -181,7 +183,7 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
-																										const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
+																										const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p, MEM_FLAG parent_field_trial_mem,
 																										Crop *current_crop_p, Crop *previous_crop_p, const int32 min_ph, const int32 max_ph, const char *description_s,
 																										const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s, const DFWFieldTrialServiceData *data_p);
 
