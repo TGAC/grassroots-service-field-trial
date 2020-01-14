@@ -126,7 +126,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialIdAsString (const FieldTrial *t
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialExperimentalArea (FieldTrial *trial_p, struct Study *area_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialStudy (FieldTrial *trial_p, struct Study *study_p, MEM_FLAG mf);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);

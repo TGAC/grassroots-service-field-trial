@@ -312,9 +312,12 @@ void FreeStudy (Study *study_p)
 			FreeCopiedString (study_p -> st_growing_conditions_s);
 		}
 
-	if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
+	if (study_p -> st_parent_p)
 		{
-			//FreeFieldTrial (study_p -> st_parent_p);
+			if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
+				{
+					//FreeFieldTrial (study_p -> st_parent_p);
+				}
 		}
 
 	FreeMemory (study_p);
@@ -345,6 +348,14 @@ void FreeStudyNode (ListItem *node_p)
 		}
 
 	FreeMemory (st_node_p);
+}
+
+
+bool AddStudyPlotsJSONDirectly (Study *study_p, json_t *study_json_p,  const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
 }
 
 

@@ -503,7 +503,7 @@ FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFor
 
 
 
-bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p)
+bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p, MEM_FLAG mf)
 {
 	bool success_flag = false;
 	StudyNode *node_p = AllocateStudyNode (study_p);
@@ -511,6 +511,8 @@ bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p)
 	if (node_p)
 		{
 			study_p -> st_parent_p = trial_p;
+			study_p -> st_parent_field_trial_mem = mf;
+
 			LinkedListAddTail (trial_p -> ft_studies_p, & (node_p -> stn_node));
 			success_flag  = true;
 		}
@@ -557,7 +559,7 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 
 																	if (study_p)
 																		{
-																			if (!AddFieldTrialStudy (trial_p, study_p))
+																			if (!AddFieldTrialStudy (trial_p, study_p, MF_SHADOW_USE))
 																				{
 																					FreeStudy (study_p);
 																					success_flag = false;

@@ -746,40 +746,44 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 						{
 							const char *id_s = value.st_string_value_s;
 
-							if (!IsStringEmpty (id_s))
+							/*
+							 * We're building up a query for the given parameters
+							 */
+							bson_t *query_p = bson_new ();
+
+							if (query_p)
 								{
+									bool built_query_success_flag = true;
 
-									/*
-									 * We're building up a query for the given parameters
-									 */
-									bson_t *query_p = bson_new ();
-
-									if (query_p)
+									if (!IsStringEmpty (id_s))
 										{
 											bson_oid_t *id_p = GetBSONOidFromString (id_s);
 
 											if (id_p)
 												{
-													if (BSON_APPEND_OID (query_p, ST_PARENT_FIELD_TRIAL_S, id_p))
+													if (!BSON_APPEND_OID (query_p, ST_PARENT_FIELD_TRIAL_S, id_p))
 														{
-															/*
-															 * Search with our given criteria
-															 */
-															if (GetMatchingStudies (query_p, data_p, job_p, format))
-																{
-																}
-
+															FreeBSONOid (id_p);
+															built_query_success_flag = false;
 														}
-
-													FreeBSONOid (id_p);
 												}
 											else
 												{
-													AddErrorToServiceJob (job_p, "Parent field trial id error", id_s);
 												}
 
-											bson_destroy (query_p);
+											if (!built_query_success_flag)
+												{
+													AddErrorToServiceJob (job_p, "Parent field trial id error", id_s);
+												}
 										}		/* if (query_p) */
+
+									/*
+									 * Search with our given criteria
+									 */
+									if (GetMatchingStudies (query_p, data_p, job_p, format))
+										{
+
+										}
 
 									job_done_flag = true;
 								}
