@@ -37,12 +37,6 @@
 /*
  * Study parameters
  */
-static NamedParameterType S_GET_ALL_STUDIES = { "Get all Studies", PT_BOOLEAN };
-
-static NamedParameterType S_ACTIVE_DATE = { "Active on date", PT_TIME };
-
-static NamedParameterType S_SEARCH_STUDIES = { "Search Studies", PT_BOOLEAN };
-
 
 static NamedParameterType S_SEARCH_TRIAL_ID_S = { "Get all studies for this Field Trial", PT_STRING };
 
@@ -600,9 +594,9 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_SEARCH_STUDIES.npt_name_s) == 0)
+	if (strcmp (param_name_s, STUDY_SEARCH_STUDIES.npt_name_s) == 0)
 		{
-			*pt_p = S_SEARCH_STUDIES.npt_type;
+			*pt_p = STUDY_SEARCH_STUDIES.npt_type;
 		}
 	else if (strcmp (param_name_s, STUDY_ID.npt_name_s) == 0)
 		{
@@ -616,9 +610,9 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 		{
 			*pt_p = STUDY_LOCATIONS_LIST.npt_type;
 		}
-	else if (strcmp (param_name_s, S_ACTIVE_DATE.npt_name_s) == 0)
+	else if (strcmp (param_name_s, STUDY_SEARCH_ACTIVE_DATE.npt_name_s) == 0)
 		{
-			*pt_p = S_ACTIVE_DATE.npt_type;
+			*pt_p = STUDY_SEARCH_ACTIVE_DATE.npt_type;
 		}
 	else if (strcmp (param_name_s, S_SEARCH_TRIAL_ID_S.npt_name_s) == 0)
 		{
@@ -646,7 +640,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 		{
 			def.st_boolean_value = false;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_STUDIES.npt_type, S_SEARCH_STUDIES.npt_name_s, "Search Studies", "Get the matching Studies", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SEARCH_STUDIES.npt_type, STUDY_SEARCH_STUDIES.npt_name_s, "Search Studies", "Get the matching Studies", def, PL_ADVANCED)) != NULL)
 				{
 					def.st_string_value_s = NULL;
 
@@ -667,13 +661,13 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 															def.st_time_p = &t;
 
-															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ACTIVE_DATE.npt_type, S_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ADVANCED)) != NULL)
+															if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SEARCH_ACTIVE_DATE.npt_type, STUDY_SEARCH_ACTIVE_DATE.npt_name_s, "Active date", "Date during which the study was active", def, PL_ADVANCED)) != NULL)
 																{
 																	success_flag = true;
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ACTIVE_DATE.npt_name_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SEARCH_ACTIVE_DATE.npt_name_s);
 																}
 
 														}
@@ -708,7 +702,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_STUDIES.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SEARCH_STUDIES.npt_name_s);
 				}
 		}
 	else
@@ -726,7 +720,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 	SharedType value;
 	ViewFormat format = VF_CLIENT_MINIMAL;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_SEARCH_STUDIES.npt_name_s, &value))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SEARCH_STUDIES.npt_name_s, &value))
 		{
 			if (value.st_boolean_value)
 				{
@@ -1815,7 +1809,7 @@ static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p)
 	/*
 	 * Are we looking for a specific location?
 	 */
-	if (GetParameterValueFromParameterSet (param_set_p, S_ACTIVE_DATE.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, STUDY_SEARCH_ACTIVE_DATE.npt_name_s, &value, true))
 		{
 			if (value.st_time_p)
 				{

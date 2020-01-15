@@ -50,6 +50,7 @@ static NamedParameterType LOCATION_ALTITUDE = { "LO Altitude", PT_SIGNED_REAL };
 
 static NamedParameterType S_ADD_LOCATION = { "Add Location", PT_BOOLEAN };
 static NamedParameterType S_GET_ALL_LOCATIONS = { "Get all Locations", PT_BOOLEAN };
+static NamedParameterType S_LOCATION_ID = { "Location ID", PT_STRING };
 static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_SIZE = { "Page size", PT_UNSIGNED_INT };
 static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_UNSIGNED_INT };
 
@@ -249,7 +250,16 @@ bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_LOCATIONS.npt_type, S_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ADVANCED)) != NULL)
 		{
-			success_flag = true;
+			def.st_string_value_s = NULL;
+
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ID.npt_type, S_LOCATION_ID.npt_name_s, "Id", "The id of the Location", def, PL_ADVANCED)) != NULL)
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_LOCATIONS.npt_name_s);
+				}
 		}
 	else
 		{
@@ -267,6 +277,10 @@ bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, 
 	if (strcmp (param_name_s, S_GET_ALL_LOCATIONS.npt_name_s) == 0)
 		{
 			*pt_p = S_GET_ALL_LOCATIONS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_LOCATION_ID.npt_name_s) == 0)
+		{
+			*pt_p = S_LOCATION_ID.npt_type;
 		}
 	else
 		{
@@ -356,6 +370,65 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 				}		/* if (value.st_boolean_value) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_LOCATION.npt_name_s, &value, true)) */
+
+	if (!job_done_flag)
+		{
+			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_ID.npt_name_s, &value, true))
+				{
+					OperationStatus status = OS_FAILED;
+
+					if (!IsStringEmpty (value.st_string_value_s))
+						{
+							Location *location_p = GetLocationByIdString (value.st_string_value_s, VF_CLIENT_FULL, data_p);
+
+							if (location_p)
+								{
+									json_t *location_json_p = GetLocationAsJSON (location_p);
+
+									if (location_json_p)
+										{
+											json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, location_p -> lo_address_p -> ad_name_s, location_json_p);
+
+											if (job_result_p)
+												{
+													if (AddResultToServiceJob (job_p, job_result_p))
+														{
+															status = OS_SUCCEEDED;
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, job_result_p, "Failed to add result to ServiceJob");
+
+															json_decref (job_result_p);
+														}
+												}		/* if (job_result_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to create result for Location \"%s\"", location_p -> lo_address_p -> ad_name_s);
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Location \"%s\" as JSON", location_p -> lo_address_p -> ad_name_s);
+										}
+
+									FreeLocation (location_p);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find location \"%s\"", value.st_string_value_s);
+								}
+
+							job_done_flag = true;
+						}
+					else
+						{
+							status = OS_FAILED_TO_START;
+						}
+
+					SetServiceJobStatus (job_p, status);
+				}
+		}
 
 	return job_done_flag;
 }
