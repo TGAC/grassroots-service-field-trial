@@ -76,7 +76,7 @@ STUDY_PREFIX const char *ST_SOWING_DATE_S STUDY_VAL ("sowing_date");
 STUDY_PREFIX const char *ST_HARVEST_DATE_S STUDY_VAL ("harvest_date");
 
 
-STUDY_PREFIX const char *ST_PARENT_FIELD_TRIAL_S STUDY_VAL ("parent_field_trial_id");
+STUDY_PREFIX const char *ST_PARENT_FIELD_TRIAL_S STUDY_VAL ("parent_field_trial");
 
 STUDY_PREFIX const char *ST_PLOTS_S STUDY_VAL ("plots");
 
