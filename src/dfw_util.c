@@ -35,6 +35,95 @@
 #endif
 
 
+static char *GetCacheFilename (const char *id_s, const DFWFieldTrialServiceData *data_p);
+
+
+
+bool CacheStudy (const char *id_s, const json_t *study_json_p, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	/*
+	 * Is the Study cached?
+	 */
+	if (data_p -> dftsd_study_cache_path_s)
+		{
+			char *filename_s = GetCacheFilename (id_s, data_p);
+
+			if (filename_s)
+				{
+					int res = json_dump_file (study_json_p, filename_s, 0);
+
+					if (res != 0)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to save cached study to \"%s\", error \"%s\" at [%d, %d]", filename_s);
+						}
+
+					FreeCopiedString (filename_s);
+				}		/* if (filename_s) */
+
+		}		/* if (data_p -> dftsd_study_cache_path_s) */
+	else
+		{
+			/* No cache path configured*/
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p)
+{
+	json_t *study_json_p = NULL;
+
+	/*
+	 * Is the Study cached?
+	 */
+	if (data_p -> dftsd_study_cache_path_s)
+		{
+			char *filename_s = GetCacheFilename (id_s, data_p);
+
+			if (filename_s)
+				{
+					if (IsPathValid (filename_s))
+						{
+							json_error_t err;
+							study_json_p = json_load_file (filename_s, 0, &err);
+
+							if (!study_json_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load cached study from \"%s\", error \"%s\" at [%d, %d]", filename_s, err.text, err.line, err.column);
+								}
+						}
+
+					FreeCopiedString (filename_s);
+				}		/* if (filename_s) */
+
+		}		/* if (data_p -> dftsd_study_cache_path_s) */
+
+	return study_json_p;
+}
+
+
+bool ClearCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p)
+{
+	bool success_flag = true;
+	char *filename_s = GetCacheFilename (id_s, data_p);
+
+	if (filename_s)
+		{
+			if (IsPathValid (filename_s))
+				{
+					if (!RemoveFile (filename_s))
+						{
+							success_flag = false;
+						}
+				}
+		}		/* if (filename_s) */
+
+	return success_flag;
+}
 
 
 void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p)
@@ -443,5 +532,29 @@ LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFiel
 		}		/* if (results_list_p) */
 
 	return results_list_p;
+}
 
+
+static char *GetCacheFilename (const char *id_s, const DFWFieldTrialServiceData *data_p)
+{
+	char *filename_s = NULL;
+	char *local_filename_s = ConcatenateStrings (id_s, ".json");
+
+	if (local_filename_s)
+		{
+			filename_s = MakeFilename (data_p -> dftsd_study_cache_path_s, local_filename_s);
+
+			if (!filename_s)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get main cache filename for \"%s\" and \"%s\"", data_p -> dftsd_study_cache_path_s, local_filename_s);
+				}		/* if (filename_s) */
+
+			FreeCopiedString (local_filename_s);
+		}		/* if (local_filename_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get local cache filename for \"%s\"", id_s);
+		}
+
+	return filename_s;
 }

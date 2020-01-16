@@ -559,6 +559,12 @@ bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p,
 }
 
 
+void FindAndAddFieldTrialToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+{
+
+}
+
+
 
 static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {

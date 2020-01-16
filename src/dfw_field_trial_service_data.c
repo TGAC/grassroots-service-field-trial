@@ -88,6 +88,18 @@ bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p, Grassroots
 						{
 							success_flag = true;
 
+							data_p -> dftsd_study_cache_path_s = GetJSONString (service_config_p, "cache_path");
+
+							if (data_p -> dftsd_study_cache_path_s)
+								{
+									if (!EnsureDirectoryExists (data_p -> dftsd_study_cache_path_s))
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to create studies cache directory \"%s\"", data_p -> dftsd_study_cache_path_s);
+											data_p -> dftsd_study_cache_path_s = NULL;
+										}
+								}
+
+
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;

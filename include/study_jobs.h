@@ -131,6 +131,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSONInViewFormat (const DFW
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, DFWFieldTrialServiceData *dfw_data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **study_name_ss, const DFWFieldTrialServiceData *data_p);
+
 #ifdef __cplusplus
 }
 #endif

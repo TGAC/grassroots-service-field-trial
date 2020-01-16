@@ -130,6 +130,14 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 	 */
 	const char *dftsd_facet_key_s;
 
+
+	/**
+	 * @private
+	 *
+	 * The path to where cached studies are saved.
+	 */
+	const char *dftsd_study_cache_path_s;
+
 } DFWFieldTrialServiceData;
 
 

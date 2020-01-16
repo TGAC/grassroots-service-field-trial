@@ -769,90 +769,58 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 					switch (datatype)
 						{
 							case DFTD_FIELD_TRIAL:
-								{
-									FieldTrial *trial_p = GetFieldTrialByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+								FindAndAddFieldTrialToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+								break;
 
-									if (trial_p)
+							case DFTD_STUDY:
+								FindAndAddStudyToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+								break;
+
+							case DFTD_TREATMENT:
+								{
+									Treatment *treatment_p = GetTreatmentByIdString (id_s, search_data_p -> sd_service_data_p);
+
+									if (treatment_p)
 										{
-											if (AddFieldTrialToServiceJob (search_data_p -> sd_job_p, trial_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+											if (AddTreatmentToServiceJob (search_data_p -> sd_job_p, treatment_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
 												{
 													success_flag = true;
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add field trial %s to ServiceJob", trial_p -> ft_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Treatment %s to ServiceJob", treatment_p -> tr_internal_name_s);
 												}
 
-											FreeFieldTrial (trial_p);
+											FreeTreatment (treatment_p);
 										}
 								}
-								break;
-
-						case DFTD_STUDY:
-								{
-									Study *study_p = GetStudyByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
-
-									if (study_p)
-										{
-											if (AddStudyToServiceJob (search_data_p -> sd_job_p, study_p, search_data_p -> sd_format, NULL, search_data_p -> sd_service_data_p))
-												{
-													success_flag = true;
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study %s to ServiceJob", study_p -> st_name_s);
-												}
-
-											FreeStudy (study_p);
-										}
-								}
-								break;
-
-						case DFTD_TREATMENT:
-							{
-								Treatment *treatment_p = GetTreatmentByIdString (id_s, search_data_p -> sd_service_data_p);
-
-								if (treatment_p)
-									{
-										if (AddTreatmentToServiceJob (search_data_p -> sd_job_p, treatment_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
-											{
-												success_flag = true;
-											}
-										else
-											{
-												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Treatment %s to ServiceJob", treatment_p -> tr_internal_name_s);
-											}
-
-										FreeTreatment (treatment_p);
-									}
-							}
 							break;
 
-						case DFTD_LOCATION:
-							{
-								Location *location_p = GetLocationByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+							case DFTD_LOCATION:
+								{
+									Location *location_p = GetLocationByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
 
-								if (location_p)
-									{
-										if (AddLocationToServiceJob (search_data_p -> sd_job_p, location_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
-											{
-												success_flag = true;
-											}
-										else
-											{
-												const char *name_s = "";
+									if (location_p)
+										{
+											if (AddLocationToServiceJob (search_data_p -> sd_job_p, location_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+												{
+													success_flag = true;
+												}
+											else
+												{
+													const char *name_s = "";
 
-												if (location_p -> lo_address_p)
-													{
-														name_s = location_p -> lo_address_p -> ad_name_s;
-													}
+													if (location_p -> lo_address_p)
+														{
+															name_s = location_p -> lo_address_p -> ad_name_s;
+														}
 
-												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Location %s to ServiceJob", name_s);
-											}
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Location %s to ServiceJob", name_s);
+												}
 
-										FreeLocation (location_p);
-									}
-							}
+											FreeLocation (location_p);
+										}
+								}
 							break;
 
 						default:

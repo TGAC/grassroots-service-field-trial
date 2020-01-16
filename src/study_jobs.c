@@ -740,17 +740,18 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 						{
 							const char *id_s = value.st_string_value_s;
 
-							/*
-							 * We're building up a query for the given parameters
-							 */
-							bson_t *query_p = bson_new ();
-
-							if (query_p)
+							if (!IsStringEmpty (id_s))
 								{
-									bool built_query_success_flag = true;
 
-									if (!IsStringEmpty (id_s))
+									/*
+									 * We're building up a query for the given parameters
+									 */
+									bson_t *query_p = bson_new ();
+
+									if (query_p)
 										{
+											bool built_query_success_flag = true;
+
 											bson_oid_t *id_p = GetBSONOidFromString (id_s);
 
 											if (id_p)
@@ -1552,59 +1553,96 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 		{
 			if (value.st_string_value_s)
 				{
-					bson_oid_t *id_p = GetBSONOidFromString (value.st_string_value_s);
-
-					if (id_p)
-						{
-							OperationStatus status = OS_FAILED;
-							Study *study_p = GetStudyById (id_p, format, data_p);
-
-							if (study_p)
-								{
-									json_t *study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
-
-									if (study_json_p)
-										{
-											bool added_flag = false;
-
-											if (AddContext (study_json_p))
-												{
-													json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
-
-													if (dest_record_p)
-														{
-															if (AddResultToServiceJob (job_p, dest_record_p))
-																{
-																	added_flag = true;
-																	job_done_flag = true;
-																	status = OS_SUCCEEDED;
-																}
-															else
-																{
-																	json_decref (dest_record_p);
-																}
-
-														}		/* if (dest_record_p) */
-
-												}		/* if (AddContext (trial_json_p)) */
-
-											json_decref (study_json_p);
-
-										}		/* if (study_json_p) */
-
-									FreeStudy (study_p);
-								}		/* if (study_p) */
-
-							SetServiceJobStatus (job_p, status);
-
-							FreeBSONOid (id_p);
-						}		/* if (id_p) */
-
+					FindAndAddStudyToServiceJob (value.st_string_value_s, format, job_p, processor_p, data_p);
+					job_done_flag = true;
 				}		/* if (value.st_string_value_s)*/
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ARST_ID.npt_name_s, &value, true)) */
 
 	return job_done_flag;
+}
+
+
+json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **study_name_ss, const DFWFieldTrialServiceData *data_p)
+{
+	json_t *study_json_p = GetCachedStudy (id_s, data_p);
+
+	if (study_json_p)
+		{
+			const char *name_s = GetJSONString (study_json_p, ST_NAME_S);
+
+			if (name_s)
+				{
+					*study_name_ss = EasyCopyToNewString (name_s);
+				}
+		}
+	else
+		{
+			bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
+			if (id_p)
+				{
+					Study *study_p = GetStudyById (id_p, format, data_p);
+
+					if (study_p)
+						{
+							study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
+
+							if (study_json_p)
+								{
+									if (AddContext (study_json_p))
+										{
+											CacheStudy (id_s, study_json_p, data_p);
+											*study_name_ss = EasyCopyToNewString (study_p -> st_name_s);
+										}		/* if (AddContext (trial_json_p)) */
+
+								}		/* if (study_json_p) */
+
+							FreeStudy (study_p);
+						}		/* if (study_p) */
+
+
+					FreeBSONOid (id_p);
+				}		/* if (id_p) */
+
+		}		/* if (!study_json_p) */
+
+	return study_json_p;
+}
+
+
+void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	char *study_name_s = NULL;
+	json_t *study_json_p = GetStudyJSONForId (id_s, format, processor_p, &study_name_s, data_p);
+
+	if (study_json_p)
+		{
+			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_name_s, study_json_p);
+
+			if (dest_record_p)
+				{
+					if (AddResultToServiceJob (job_p, dest_record_p))
+						{
+							status = OS_SUCCEEDED;
+						}
+					else
+						{
+							json_decref (dest_record_p);
+						}
+
+				}		/* if (dest_record_p) */
+
+			json_decref (study_json_p);
+		}		/* if (study_json_p) */
+
+	if (study_name_s)
+		{
+			FreeCopiedString (study_name_s);
+		}
+
+	SetServiceJobStatus (job_p, status);
 }
 
 
@@ -1631,6 +1669,25 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 							for (i = 0; i < num_results; ++ i)
 								{
 									json_t *entry_p = json_array_get (results_p, i);
+
+									if (format == VF_CLIENT_FULL)
+										{
+											bson_oid_t id;
+
+											if (GetMongoIdFromJSON (entry_p, &id))
+												{
+													char *id_s = GetBSONOidAsString (&id);
+
+													if (id_s)
+														{
+
+															FreeCopiedString (id_s);
+														}		/* if (id_s) */
+
+												}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
+
+										}		/* if (format == VF_CLIENT_FULL) */
+
 									Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
 
 									if (study_p)
