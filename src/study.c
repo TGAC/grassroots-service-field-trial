@@ -449,6 +449,18 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 				{
 					if (SaveMongoData (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p))
 						{
+							char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+
+							if (id_s)
+								{
+									ClearCachedStudy (id_s, data_p);
+									FreeCopiedString (id_s);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to clear potential cached Study \"%s\"", study_p -> st_name_s);
+								}
+
 							if (IndexData (job_p, study_json_p))
 								{
 									status = OS_SUCCEEDED;

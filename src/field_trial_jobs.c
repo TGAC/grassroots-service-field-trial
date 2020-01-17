@@ -521,6 +521,33 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 	return success_flag;
 }
 
+
+json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p)
+{
+	json_t *trial_json_p = NULL;
+	FieldTrial *trial_p = GetFieldTrialByIdString (id_s, format, data_p);
+
+	if (trial_p)
+		{
+			if (format == VF_CLIENT_FULL)
+				{
+
+				}
+			else
+				{
+					trial_json_p = GetFieldTrialAsJSON (trial_p, format, data_p);
+
+				}
+
+			*name_ss = EasyCopyToNewString (trial_p -> ft_name_s);
+
+			FreeFieldTrial (trial_p);
+		}		/* if (trial_p) */
+
+	return trial_json_p;
+}
+
+
 bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -559,10 +586,6 @@ bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p,
 }
 
 
-void FindAndAddFieldTrialToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
-{
-
-}
 
 
 

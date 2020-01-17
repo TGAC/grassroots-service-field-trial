@@ -1565,18 +1565,24 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 
 json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **study_name_ss, const DFWFieldTrialServiceData *data_p)
 {
-	json_t *study_json_p = GetCachedStudy (id_s, data_p);
+	json_t *study_json_p = NULL;
 
-	if (study_json_p)
+	if (format == VF_CLIENT_FULL)
 		{
-			const char *name_s = GetJSONString (study_json_p, ST_NAME_S);
+			study_json_p = GetCachedStudy (id_s, data_p);
 
-			if (name_s)
+			if (study_json_p)
 				{
-					*study_name_ss = EasyCopyToNewString (name_s);
+					const char *name_s = GetJSONString (study_json_p, ST_NAME_S);
+
+					if (name_s)
+						{
+							*study_name_ss = EasyCopyToNewString (name_s);
+						}
 				}
 		}
-	else
+
+	if (!study_json_p)
 		{
 			bson_oid_t *id_p = GetBSONOidFromString (id_s);
 
@@ -1592,7 +1598,11 @@ json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProces
 								{
 									if (AddContext (study_json_p))
 										{
-											CacheStudy (id_s, study_json_p, data_p);
+											if (format == VF_CLIENT_FULL)
+												{
+													CacheStudy (id_s, study_json_p, data_p);
+												}
+
 											*study_name_ss = EasyCopyToNewString (study_p -> st_name_s);
 										}		/* if (AddContext (trial_json_p)) */
 

@@ -29,6 +29,7 @@
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
 #include "material_jobs.h"
+#include "dfw_util.h"
 
 
 #include "audit.h"
@@ -769,11 +770,11 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 					switch (datatype)
 						{
 							case DFTD_FIELD_TRIAL:
-								FindAndAddFieldTrialToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+								success_flag = FindAndAddResultToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_job_p, NULL, GetFieldTrialJSONForId, search_data_p -> sd_service_data_p);
 								break;
 
 							case DFTD_STUDY:
-								FindAndAddStudyToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+								success_flag = FindAndAddResultToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_job_p, NULL, GetStudyJSONForId, search_data_p -> sd_service_data_p);
 								break;
 
 							case DFTD_TREATMENT:

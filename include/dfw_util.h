@@ -26,7 +26,7 @@
 
 #include "dfw_field_trial_service_data.h"
 
-
+#include "json_processor.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -69,6 +69,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool CacheStudy (const char *id_s, const json_t *s
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
+																																 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p),
+																																 const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }

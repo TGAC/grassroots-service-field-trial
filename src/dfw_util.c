@@ -39,6 +39,45 @@ static char *GetCacheFilename (const char *id_s, const DFWFieldTrialServiceData 
 
 
 
+bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
+																	 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p),
+																	 const DFWFieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	char *name_s = NULL;
+	json_t *json_p = get_json_fn (id_s, format, processor_p, &name_s, data_p);
+
+	if (json_p)
+		{
+			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, name_s, json_p);
+
+			if (dest_record_p)
+				{
+					if (AddResultToServiceJob (job_p, dest_record_p))
+						{
+							status = OS_SUCCEEDED;
+						}
+					else
+						{
+							json_decref (dest_record_p);
+						}
+
+				}		/* if (dest_record_p) */
+
+			json_decref (json_p);
+		}		/* if (json_p) */
+
+	if (name_s)
+		{
+			FreeCopiedString (name_s);
+		}
+
+	SetServiceJobStatus (job_p, status);
+	return (status == OS_SUCCEEDED);
+}
+
+
+
 bool CacheStudy (const char *id_s, const json_t *study_json_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;

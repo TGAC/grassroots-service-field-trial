@@ -551,11 +551,11 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 													if (num_results > 0)
 														{
 															size_t i;
-															json_t *area_json_p;
+															json_t *study_json_p;
 
-															json_array_foreach (results_p, i, area_json_p)
+															json_array_foreach (results_p, i, study_json_p)
 																{
-																	Study *study_p = GetStudyFromJSON (area_json_p, format, data_p);
+																	Study *study_p = GetStudyFromJSON (study_json_p, format, data_p);
 
 																	if (study_p)
 																		{
@@ -569,7 +569,7 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 																		{
 																			success_flag = false;
 																		}
-																}
+																}		/* json_array_foreach (results_p, i, study_json_p) */
 
 														}
 												}

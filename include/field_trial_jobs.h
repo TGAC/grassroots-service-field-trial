@@ -28,6 +28,7 @@
 #include "dfw_field_trial_service_library.h"
 
 #include "field_trial.h"
+#include "json_processor.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -81,6 +82,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJobFromJSON (ServiceJob
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }
