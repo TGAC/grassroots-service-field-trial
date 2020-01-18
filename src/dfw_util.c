@@ -29,7 +29,7 @@
 
 
 #ifdef _DEBUG
-	#define DFW_UTIL_DEBUG	(STM_LEVEL_INFO)
+	#define DFW_UTIL_DEBUG	(STM_LEVEL_FINE)
 #else
 	#define DFW_UTIL_DEBUG	(STM_LEVEL_NONE)
 #endif
@@ -121,13 +121,24 @@ json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p
 	 */
 	if (data_p -> dftsd_study_cache_path_s)
 		{
-			char *filename_s = GetCacheFilename (id_s, data_p);
+			char *filename_s = NULL;
+
+			#if DFW_UTIL_DEBUG >= STM_LEVEL_FINE
+			PrintLog (STM_LEVEL_FINE, __FILE__, __LINE__, "Checking for cached study \"%s\" in \"%s\"", id_s, data_p -> dftsd_study_cache_path_s);
+			#endif
+
+			filename_s = GetCacheFilename (id_s, data_p);
 
 			if (filename_s)
 				{
 					if (IsPathValid (filename_s))
 						{
 							json_error_t err;
+
+							#if DFW_UTIL_DEBUG >= STM_LEVEL_FINE
+							PrintLog (STM_LEVEL_FINE, __FILE__, __LINE__, "Loading cached study \"%s\" in \"%s\"", id_s, data_p -> dftsd_study_cache_path_s);
+							#endif
+
 							study_json_p = json_load_file (filename_s, 0, &err);
 
 							if (!study_json_p)
@@ -135,11 +146,27 @@ json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load cached study from \"%s\", error \"%s\" at [%d, %d]", filename_s, err.text, err.line, err.column);
 								}
 						}
+					else
+						{
+							#if DFW_UTIL_DEBUG >= STM_LEVEL_FINE
+							PrintLog (STM_LEVEL_FINE, __FILE__, __LINE__, "No cached study \"%s\" in \"%s\"", id_s, data_p -> dftsd_study_cache_path_s);
+							#endif
+						}
 
 					FreeCopiedString (filename_s);
 				}		/* if (filename_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetCacheFilename failed for \"%s\"", id_s);
+				}
 
 		}		/* if (data_p -> dftsd_study_cache_path_s) */
+	else
+		{
+			#if DFW_UTIL_DEBUG >= STM_LEVEL_FINE
+			PrintLog (STM_LEVEL_FINE, __FILE__, __LINE__, "No cache path configured");
+			#endif
+		}
 
 	return study_json_p;
 }
