@@ -49,8 +49,6 @@ static NamedParameterType LOCATION_ALTITUDE = { "LO Altitude", PT_SIGNED_REAL };
 */
 
 static NamedParameterType S_ADD_LOCATION = { "Add Location", PT_BOOLEAN };
-static NamedParameterType S_GET_ALL_LOCATIONS = { "Get all Locations", PT_BOOLEAN };
-static NamedParameterType S_LOCATION_ID = { "Location ID", PT_STRING };
 static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_SIZE = { "Page size", PT_UNSIGNED_INT };
 static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_UNSIGNED_INT };
 
@@ -224,9 +222,9 @@ bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name
 		{
 			*pt_p = S_ADD_LOCATION.npt_type;
 		}
-	else if (strcmp (param_name_s, S_GET_ALL_LOCATIONS.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_GET_ALL_LOCATIONS.npt_name_s) == 0)
 		{
-			*pt_p = S_GET_ALL_LOCATIONS.npt_type;
+			*pt_p = LOCATION_GET_ALL_LOCATIONS.npt_type;
 		}
 	else
 		{
@@ -248,22 +246,22 @@ bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	def.st_boolean_value = false;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GET_ALL_LOCATIONS.npt_type, S_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ADVANCED)) != NULL)
+	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_GET_ALL_LOCATIONS.npt_type, LOCATION_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ADVANCED)) != NULL)
 		{
 			def.st_string_value_s = NULL;
 
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_LOCATION_ID.npt_type, S_LOCATION_ID.npt_name_s, "Id", "The id of the Location", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Id", "The id of the Location", def, PL_ADVANCED)) != NULL)
 				{
 					success_flag = true;
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_LOCATIONS.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_ID.npt_name_s);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_GET_ALL_LOCATIONS.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_GET_ALL_LOCATIONS.npt_name_s);
 		}
 
 	return success_flag;
@@ -274,13 +272,13 @@ bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, 
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_GET_ALL_LOCATIONS.npt_name_s) == 0)
+	if (strcmp (param_name_s, LOCATION_GET_ALL_LOCATIONS.npt_name_s) == 0)
 		{
-			*pt_p = S_GET_ALL_LOCATIONS.npt_type;
+			*pt_p = LOCATION_GET_ALL_LOCATIONS.npt_type;
 		}
-	else if (strcmp (param_name_s, S_LOCATION_ID.npt_name_s) == 0)
+	else if (strcmp (param_name_s, LOCATION_ID.npt_name_s) == 0)
 		{
-			*pt_p = S_LOCATION_ID.npt_type;
+			*pt_p = LOCATION_ID.npt_type;
 		}
 	else
 		{
@@ -297,7 +295,7 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_LOCATIONS.npt_name_s, &value, true))
+	if (GetParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &value, true))
 		{
 			if (value.st_boolean_value)
 				{
@@ -373,7 +371,7 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 	if (!job_done_flag)
 		{
-			if (GetParameterValueFromParameterSet (param_set_p, S_LOCATION_ID.npt_name_s, &value, true))
+			if (GetParameterValueFromParameterSet (param_set_p, LOCATION_ID.npt_name_s, &value, true))
 				{
 					OperationStatus status = OS_FAILED;
 
