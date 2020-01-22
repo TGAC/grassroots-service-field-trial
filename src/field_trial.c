@@ -434,7 +434,7 @@ FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFor
 
 							if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid))
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL);
+									json_t *results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL, NULL, 1);
 
 									if (results_p)
 										{
@@ -538,7 +538,7 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 
 							if (opts_p)
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
 
 									if (results_p)
 										{

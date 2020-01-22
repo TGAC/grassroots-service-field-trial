@@ -109,7 +109,7 @@ static LinkedList *GetMatchingFieldTrialsFromMongoDB (const DFWFieldTrialService
 						{
 							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 0);
 
 									if (results_p)
 										{

@@ -379,7 +379,7 @@ bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p)
 
 					if (opts_p)
 						{
-							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
 
 							if (results_p)
 								{
@@ -1056,7 +1056,7 @@ static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialS
 			 */
 			if (query_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 0);
 
 					if (results_p)
 						{

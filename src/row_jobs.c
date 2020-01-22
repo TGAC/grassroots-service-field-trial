@@ -553,7 +553,7 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const DFWFi
 						{
 							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 1);
 
 									if (results_p)
 										{

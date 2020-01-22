@@ -392,7 +392,7 @@ Treatment *GetTreatmentBySchemaURLs (const char *trait_url_s, const char *method
 								{
 									if (AppendSchemaTermQuery (query_p, TR_UNIT_S, SCHEMA_TERM_URL_S, unit_url_s))
 										{
-											json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+											json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 1);
 
 											if (results_p)
 												{
@@ -460,7 +460,7 @@ Treatment *GetTreatmentById (const bson_oid_t *phenotype_id_p, const DFWFieldTri
 
 			if (query_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 1);
 
 					if (results_p)
 						{

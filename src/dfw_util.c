@@ -216,7 +216,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 								}
 							#endif
 
-							results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL);
+							results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL, 0, 1);
 
 							if (results_p)
 								{
@@ -557,7 +557,7 @@ LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFiel
 						{
 							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [collection_type]))
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 0);
 
 									if (results_p)
 										{
