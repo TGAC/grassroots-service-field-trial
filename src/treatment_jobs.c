@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-
+#define ALLOCATE_TREATMENT_CONSTANTS (1)
 #include "treatment_jobs.h"
 #include "string_utils.h"
 #include "crop_ontology_tool.h"
@@ -181,6 +181,45 @@ bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_nam
 
 	return success_flag;
 }
+
+
+
+
+bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Traits", false, data_p, param_set_p);
+
+	if (group_p)
+		{
+			Parameter *param_p = NULL;
+			SharedType def;
+
+			InitSharedType (&def);
+			def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+
+			if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+				{
+					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+
+					def.st_string_value_s = NULL;
+
+					if ((param_p = GetTreatmentsDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+						{
+							success_flag = true;
+						}
+				}
+
+		}		/* if (group_p) */
+
+
+	return success_flag;
+}
+
+
+
+
 
 
 Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p)

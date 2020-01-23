@@ -30,6 +30,29 @@
 #include "treatment.h"
 
 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_TREATMENT_CONSTANTS
+	#define TREATMENT_JOB_PREFIX DFW_FIELD_TRIAL_SERVICE_API
+	#define TREATMENT_JOB_STRUCT_VAL(x,y)	= { x, y}
+#else
+	#define TREATMENT_JOB_PREFIX extern
+	#define TREATMENT_JOB_STRUCT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+
+/*
+ * Study parameters
+ */
+TREATMENT_JOB_PREFIX NamedParameterType TR_TRAIT_ID TREATMENT_JOB_STRUCT_VAL("TR Trait Id", PT_STRING);
+
+
+
+
 #ifdef __cplusplus
 extern "C"
 {
