@@ -220,6 +220,65 @@ bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 
 
+json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
+{
+	json_t *traits_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+		{
+			bson_t *query_p = NULL;
+			bson_t *opts_p =  BCON_NEW ( "sort", "{", MONGO_ID_S, BCON_INT32 (1), "}");
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+
+			if (results_p)
+				{
+					json_t *traits_p = json_array ();
+
+					if (traits_p)
+						{
+							const size_t num_results = json_array_size (results_p);
+							size_t i;
+
+							for (i = 0; i < num_results; ++ i)
+								{
+									json_t *result_p = json_array_get (results_p, i);
+									json_t *trait_p = json_object_get (result_p, TR_TRAIT_S);
+
+									if (trait_p)
+										{
+											if (json_array_append (traits_p, trait_p) != 0)
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trait_p, "Failed to append trait to array");
+												}		/* if (json_array_append (traits_p, trait_p) != 0) */
+
+										}		/* if (trait_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, result_p, "No \"%s\" key found");
+										}
+
+								}		/* for (i = 0; i < num_results; ++ i) */
+
+						}		/* if (traits_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create traits array");
+						}
+
+					json_decref (results_p);
+				}
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+		}
+
+	return traits_p;
+}
+
+
+
 
 
 Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p)

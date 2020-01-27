@@ -208,20 +208,20 @@ static ServiceJobSet *RunLocationSubmissionService (Service *service_p, Paramete
 }
 
 
+
+
 static ServiceMetadata *GetLocationSubmissionServiceMetadata (Service *service_p)
 {
-	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
-	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
-		"The study of genetic constitution of a living entity, such as an individual, and organism, a cell and so on, "
-		"typically with respect to a particular observable phenotypic traits, or resources concerning such traits, which "
-		"might be an aspect of biochemistry, physiology, morphology, anatomy, development and so on.");
+	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_3810";
+	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Agricultural science",
+		"Multidisciplinary study, research and development within the field of agriculture.");
 
 	if (category_p)
 		{
 			SchemaTerm *subcategory_p;
 
-			term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "operation_0304";
-			subcategory_p = AllocateSchemaTerm (term_url_s, "Query and retrieval", "Search or query a data resource and retrieve entries and / or annotation.");
+			term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "operation_3431";
+			subcategory_p = AllocateSchemaTerm (term_url_s, "Deposition", "Deposit some data in a database or some other type of repository or software system.");
 
 			if (subcategory_p)
 				{
@@ -231,124 +231,15 @@ static ServiceMetadata *GetLocationSubmissionServiceMetadata (Service *service_p
 						{
 							SchemaTerm *input_p;
 
-							term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "data_0968";
-							input_p = AllocateSchemaTerm (term_url_s, "Keyword",
-								"Boolean operators (AND, OR and NOT) and wildcard characters may be allowed. Keyword(s) or phrase(s) used (typically) for text-searching purposes.");
+							/* Place */
+							term_url_s = CONTEXT_PREFIX_SCHEMA_ORG_S "Place";
+							input_p = AllocateSchemaTerm (term_url_s, "Place", "Entities that have a somewhat fixed, physical extension.");
 
 							if (input_p)
 								{
 									if (AddSchemaTermToServiceMetadataInput (metadata_p, input_p))
 										{
-											SchemaTerm *output_p;
-
-											/* Place */
-											term_url_s = CONTEXT_PREFIX_SCHEMA_ORG_S "Place";
-											output_p = AllocateSchemaTerm (term_url_s, "Place", "Entities that have a somewhat fixed, physical extension.");
-
-											if (output_p)
-												{
-													if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p))
-														{
-															/* Date */
-															term_url_s = CONTEXT_PREFIX_SCHEMA_ORG_S "Date";
-															output_p = AllocateSchemaTerm (term_url_s, "Date", "A date value in ISO 8601 date format.");
-
-															if (output_p)
-																{
-																	if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p))
-																		{
-																			/* Pathogen */
-																			term_url_s = CONTEXT_PREFIX_EXPERIMENTAL_FACTOR_ONTOLOGY_S "EFO_0000643";
-																			output_p = AllocateSchemaTerm (term_url_s, "pathogen", "A biological agent that causes disease or illness to its host.");
-
-																			if (output_p)
-																				{
-																					if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p))
-																						{
-																							/* Phenotype */
-																							term_url_s = CONTEXT_PREFIX_EXPERIMENTAL_FACTOR_ONTOLOGY_S "EFO_0000651";
-																							output_p = AllocateSchemaTerm (term_url_s, "phenotype", "The observable form taken by some character (or group of characters) "
-																								"in an individual or an organism, excluding pathology and disease. The detectable outward manifestations of a specific genotype.");
-
-																							if (output_p)
-																								{
-																									if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p))
-																										{
-																											/* Genotype */
-																											term_url_s = CONTEXT_PREFIX_EXPERIMENTAL_FACTOR_ONTOLOGY_S "EFO_0000513";
-																											output_p = AllocateSchemaTerm (term_url_s, "genotype", "Information, making the distinction between the actual physical material "
-																												"(e.g. a cell) and the information about the genetic content (genotype).");
-
-																											if (output_p)
-																												{
-																													if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p))
-																														{
-																															return metadata_p;
-																														}		/* if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p)) */
-																													else
-																														{
-																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add output term %s to service metadata", term_url_s);
-																															FreeSchemaTerm (output_p);
-																														}
-
-																												}		/* if (output_p) */
-																											else
-																												{
-																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate output term %s for service metadata", term_url_s);
-																												}
-																										}		/* if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p)) */
-																									else
-																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add output term %s to service metadata", term_url_s);
-																											FreeSchemaTerm (output_p);
-																										}
-
-																								}		/* if (output_p) */
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate output term %s for service metadata", term_url_s);
-																								}
-
-																						}		/* if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p)) */
-																					else
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add output term %s to service metadata", term_url_s);
-																							FreeSchemaTerm (output_p);
-																						}
-
-																				}		/* if (output_p) */
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate output term %s for service metadata", term_url_s);
-																				}
-
-																		}		/* if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p)) */
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add output term %s to service metadata", term_url_s);
-																			FreeSchemaTerm (output_p);
-																		}
-
-																}		/* if (output_p) */
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate output term %s for service metadata", term_url_s);
-																}
-
-
-														}		/* if (AddSchemaTermToServiceMetadataOutput (metadata_p, output_p)) */
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add output term %s to service metadata", term_url_s);
-															FreeSchemaTerm (output_p);
-														}
-
-												}		/* if (output_p) */
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate output term %s for service metadata", term_url_s);
-												}
-
+											return metadata_p;
 										}		/* if (AddSchemaTermToServiceMetadataInput (metadata_p, input_p)) */
 									else
 										{
@@ -382,5 +273,4 @@ static ServiceMetadata *GetLocationSubmissionServiceMetadata (Service *service_p
 
 	return NULL;
 }
-
 
