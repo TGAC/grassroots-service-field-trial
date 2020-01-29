@@ -295,7 +295,7 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &value))
 		{
 			if (value.st_boolean_value)
 				{
@@ -371,7 +371,7 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 	if (!job_done_flag)
 		{
-			if (GetParameterValueFromParameterSet (param_set_p, LOCATION_ID.npt_name_s, &value, true))
+			if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_ID.npt_name_s, &value))
 				{
 					OperationStatus status = OS_FAILED;
 

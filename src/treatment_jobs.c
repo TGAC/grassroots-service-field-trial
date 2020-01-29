@@ -115,7 +115,7 @@ bool RunForSubmissionTreatmentParams (DFWFieldTrialServiceData *data_p, Paramete
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?

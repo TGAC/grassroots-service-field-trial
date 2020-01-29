@@ -135,7 +135,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_MATERIAL_TABLE.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_MATERIAL_TABLE.npt_name_s, &value))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
@@ -158,7 +158,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 						{
 							InitSharedType (&value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value))
 								{
 									Study *area_p = GetStudyByIdString (value.st_string_value_s, VF_STORAGE, data_p);
 
@@ -166,7 +166,7 @@ bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, Parameter
 										{
 											InitSharedType (&value);
 
-											if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &value, true))
+											if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &value))
 												{
 													GeneBank *gene_bank_p = GetGeneBankByIdString (value.st_string_value_s, VF_STORAGE, data_p);
 

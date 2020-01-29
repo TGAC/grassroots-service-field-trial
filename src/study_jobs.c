@@ -1549,7 +1549,7 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &value))
 		{
 			if (value.st_string_value_s)
 				{
@@ -1833,7 +1833,7 @@ static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p
 	/*
 	 * Are we looking for a specific location?
 	 */
-	if (GetParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &value))
 		{
 			if (value.st_string_value_s)
 				{
@@ -1876,7 +1876,7 @@ static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p)
 	/*
 	 * Are we looking for a specific location?
 	 */
-	if (GetParameterValueFromParameterSet (param_set_p, STUDY_SEARCH_ACTIVE_DATE.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_SEARCH_ACTIVE_DATE.npt_name_s, &value))
 		{
 			if (value.st_time_p)
 				{

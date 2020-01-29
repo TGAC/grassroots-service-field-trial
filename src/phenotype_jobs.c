@@ -127,7 +127,7 @@ bool RunForSubmissionPhenotypesParams (DFWFieldTrialServiceData *data_p, Paramet
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPES_TABLE.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PHENOTYPES_TABLE.npt_name_s, &value))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
@@ -149,7 +149,7 @@ bool RunForSubmissionPhenotypesParams (DFWFieldTrialServiceData *data_p, Paramet
 							SharedType parent_study_value;
 							InitSharedType (&parent_study_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
 								{
 									Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
 

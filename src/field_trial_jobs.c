@@ -111,7 +111,7 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 
 
 
-	if (GetParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ADD.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ADD.npt_name_s, &value))
 		{
 			if (value.st_boolean_value)
 				{

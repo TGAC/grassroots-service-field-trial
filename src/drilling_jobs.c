@@ -170,7 +170,7 @@ bool RunForSubmissionDrillingParams (DFWFieldTrialServiceData *data_p, Parameter
 							InitSharedType (&delimiter);
 
 							delimiter.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
-							GetParameterValueFromParameterSet (param_set_p, S_DRILLING_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter, true);
+							GetCurrentParameterValueFromParameterSet (param_set_p, S_DRILLING_TABLE_COLUMN_DELIMITER.npt_name_s, &delimiter);
 
 							//success_flag = AddDrillingsTableFromTabularString (job_p, value.st_string_value_s, delimiter.st_char_value, data_p);
 						}

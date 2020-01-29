@@ -409,10 +409,10 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 							uint32 page_size = 10;
 
 							InitSharedType (&keyword_value);
-							GetParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_value, true);
+							GetCurrentParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_value);
 
 							InitSharedType (&value);
-							GetParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &value, true);
+							GetCurrentParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &value);
 
 							if (value.st_string_value_s)
 								{
@@ -422,12 +422,12 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 										}
 								}
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &value))
 								{
 									page_number = value.st_ulong_value;
 								}
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &value))
 								{
 									page_size = value.st_ulong_value;
 								}

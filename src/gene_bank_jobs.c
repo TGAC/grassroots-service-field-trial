@@ -101,7 +101,7 @@ bool RunForSubmissionGeneBankParams (DFWFieldTrialServiceData *data_p, Parameter
 	SharedType value;
 	InitSharedType (&value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_ADD_GENE_BANK.npt_name_s, &value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_ADD_GENE_BANK.npt_name_s, &value))
 		{
 			if (value.st_boolean_value)
 				{
@@ -249,17 +249,17 @@ static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 	SharedType name_value;
 	InitSharedType (&name_value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANK_NAME.npt_name_s, &name_value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANK_NAME.npt_name_s, &name_value))
 		{
 			SharedType url_value;
 			InitSharedType (&url_value);
 
-			if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANK_URL.npt_name_s, &url_value, true))
+			if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANK_URL.npt_name_s, &url_value))
 				{
 					SharedType api_url_value;
 					InitSharedType (&api_url_value);
 
-					if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANK_API_URL.npt_name_s, &api_url_value, true))
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANK_API_URL.npt_name_s, &api_url_value))
 						{
 							GeneBank *gene_bank_p = AllocateGeneBank (NULL, name_value.st_string_value_s, url_value.st_string_value_s, api_url_value.st_string_value_s);
 

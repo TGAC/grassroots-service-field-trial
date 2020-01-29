@@ -87,7 +87,7 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 	SharedType name_value;
 	InitSharedType (&name_value);
 
-	if (GetParameterValueFromParameterSet (param_set_p, S_NAME.npt_name_s, &name_value, true))
+	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_NAME.npt_name_s, &name_value))
 		{
 			/*
 			 * The name is required
@@ -98,17 +98,17 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 					InitSharedType (&term_value);
 					OperationStatus status = OS_FAILED_TO_START;
 
-					if (GetParameterValueFromParameterSet (param_set_p, S_PREFERRED_TERM.npt_name_s, &term_value, true))
+					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PREFERRED_TERM.npt_name_s, &term_value))
 						{
 							SharedType ontology_value;
 							InitSharedType (&ontology_value);
 
-							if (GetParameterValueFromParameterSet (param_set_p, S_ONTOLOGY_URL.npt_name_s, &ontology_value, true))
+							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_ONTOLOGY_URL.npt_name_s, &ontology_value))
 								{
 									SharedType synonyms_value;
 									InitSharedType (&synonyms_value);
 
-									if (GetParameterValueFromParameterSet (param_set_p, S_SYNONYMS.npt_name_s, &synonyms_value, true))
+									if (GetCurrentParameterValueFromParameterSet (param_set_p, S_SYNONYMS.npt_name_s, &synonyms_value))
 										{
 											bool success_flag = true;
 											char **synonyms_ss = NULL;
