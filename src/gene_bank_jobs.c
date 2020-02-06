@@ -146,7 +146,7 @@ bool GetSubmissionGeneBankParameterTypeForNamedParameter (const char *param_name
 
 
 
-bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p)
+bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p)
 {
 	bool success_flag = false;
 
@@ -170,19 +170,17 @@ bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, Paramet
 
 									if (gene_bank_p)
 										{
-											SharedType def;
 											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 											bson_oid_to_string (gene_bank_p -> gb_id_p, id_s);
 
-											def.st_string_value_s = id_s;
-
-											if (SetParameterValueFromSharedType (param_p, &def, false))
+											if (SetStringParameterCurrentValue (param_p, id_s))
 												{
-													if (SetParameterValueFromSharedType (param_p, &def, true))
+													if (SetStringParameterDefaultValue (param_p, id_s))
 														{
-															success_flag = CreateAndAddParameterOptionToParameter (param_p, def, gene_bank_p -> gb_name_s);
+															success_flag = CreateAndAddStringParameterOption (param_p, id_s, gene_bank_p -> gb_name_s);
 														}
+
 												}
 
 											FreeGeneBank (gene_bank_p);
@@ -197,14 +195,11 @@ bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, Paramet
 
 													if (gene_bank_p)
 														{
-															SharedType def;
 															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 															bson_oid_to_string (gene_bank_p -> gb_id_p, id_s);
 
-															def.st_string_value_s = id_s;
-
-															success_flag = CreateAndAddParameterOptionToParameter (param_p, def, gene_bank_p -> gb_name_s);
+															success_flag = CreateAndAddStringParameterOption (param_p, id_s, gene_bank_p -> gb_name_s);
 
 															FreeGeneBank (gene_bank_p);
 														}		/* if (gene_bank_p) */

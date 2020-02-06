@@ -38,7 +38,7 @@ static NamedParameterType S_ONTOLOGY_URL = { "CR Ontology URL", PT_STRING };
 static NamedParameterType S_SYNONYMS = { "CR Synonyms", PT_LARGE_STRING };
 
 
-static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s);
+static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_s);
 
 
 /*
@@ -342,18 +342,13 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 }
 
 
-static bool SetDefaultCropValue (Parameter *param_p, const char *crop_s)
+static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_s)
 {
 	bool success_flag = false;
-	SharedType def;
 
-	InitSharedType (&def);
-
-	def.st_string_value_s = (char *) crop_s;
-
-	if (SetParameterValueFromSharedType (param_p, &def, false))
+	if (SetStringParameterCurrentValue (param_p, crop_s))
 		{
-			if (SetParameterValueFromSharedType (param_p, &def, true))
+			if (SetStringParameterDefaultValue (param_p, crop_s))
 				{
 					success_flag = true;
 				}
