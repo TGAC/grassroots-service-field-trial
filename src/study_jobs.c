@@ -96,7 +96,7 @@ static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTria
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
 
 
-static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p);
+static const char *GetStudyDefaultValueFromJSON (const char *study_id_param_s, const json_t *params_json_p);
 
 
 static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
@@ -835,9 +835,9 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
  */
 
 
-static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *params_json_p, const NamedParameterType param_type, void *default_p)
+static const char *GetStudyDefaultValueFromJSON (const char *study_id_param_s, const json_t *params_json_p)
 {
-	bool success_flag = false;
+	const char *study_id_s;
 
 	if (params_json_p)
 		{
@@ -851,15 +851,13 @@ static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *par
 
 					if (name_s)
 						{
-							if (strcmp (name_s, param_type.npt_name_s) == 0)
+							if (strcmp (name_s, study_id_param_s) == 0)
 								{
-									if (GetValueFromJSON (param_json_p, PARAM_CURRENT_VALUE_S, param_type.npt_type, value_p))
+									study_id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
+
+									if (!study_id_s)
 										{
-											success_flag = true;
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to set \"%s\" from \"%s\"", param_type.npt_name_s, PARAM_CURRENT_VALUE_S);
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, study_id_param_s);
 										}
 
 									/* force exit from loop */
@@ -870,19 +868,8 @@ static bool GetStudyDefaultValueFromJSON (SharedType *value_p, const json_t *par
 				}		/* for (i = 0; i < num_entries; ++ i) */
 
 		}		/* if (params_json_p) */
-	else
-		{
-			if (SetSharedTypeValue (value_p, param_type.npt_type, default_p, NULL))
-				{
-					success_flag = true;
-				}
-			else
-				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to set default value for \"%s\"", param_type.npt_name_s);
-				}
-		}
 
-	return success_flag;
+	return study_id_s;
 }
 
 
@@ -2047,24 +2034,21 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 
 					if (params_json_p)
 						{
-							SharedType def;
-
-							InitSharedType (&def);
+							const char *study_id_s = GetStudyDefaultValueFromJSON (study_param_type.npt_name_s, param_set_json_p);
 
 							/*
 							 * Do we have an existing study id?
 							 */
-							if (GetStudyDefaultValueFromJSON (&def, params_json_p, study_param_type, NULL))
+							if (study_id_s)
 								{
-									study_p = GetStudyByIdString (def.st_string_value_s, VF_CLIENT_FULL , dfw_data_p);
+									study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL , dfw_data_p);
 
 									if (!study_p)
 										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to load Study with id \"%s\"", def.st_string_value_s);
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to load Study with id \"%s\"", study_id_s);
 										}
 
-									ClearSharedType (&def, study_param_type.npt_type);
-								}		/* if (GetStudyDefaultValue (&def, params_json_p, STUDY_ID.npt_type, NULL)) */
+								}		/* if (study_id_s) */
 
 						}
 					else
