@@ -27,6 +27,8 @@
 #include "string_utils.h"
 #include "dfw_util.h"
 
+#include "boolean_parameter.h"
+#include "string_parameter.h"
 
 /*
  * Field Trial parameters
@@ -53,17 +55,12 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	SharedType def;
 
-	def.st_string_value_s = NULL;
-
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", def, PL_SIMPLE)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", NULL, PL_SIMPLE)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", def, PL_SIMPLE)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", NULL, PL_SIMPLE)) != NULL)
 				{
-					def.st_boolean_value = false;
-
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ADD.npt_type, FIELD_TRIAL_ADD.npt_name_s, "Add", "Add a new Field Trial", def, PL_SIMPLE)) != NULL)
+					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ADD.npt_name_s, "Add", "Add a new Field Trial", false, PL_SIMPLE)) != NULL)
 						{
 							success_flag = true;
 						}

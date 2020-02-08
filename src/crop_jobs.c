@@ -25,8 +25,10 @@
 #include "crop.h"
 #include "crop_jobs.h"
 #include "string_utils.h"
-
 #include "bson.h"
+
+#include "string_parameter.h"
+
 
 /*
  * static declarations
@@ -48,25 +50,19 @@ static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_s);
 bool AddSubmissionCropParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
-
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Crops", false, data_p, param_set_p);
 
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			SharedType def;
 
-			InitSharedType (&def);
-
-			def.st_string_value_s = NULL;
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_NAME.npt_type, S_NAME.npt_name_s, "Name", "The crop name", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_NAME.npt_type, S_NAME.npt_name_s, "Name", "The crop name", NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PREFERRED_TERM.npt_type, S_PREFERRED_TERM.npt_name_s, "Preferred name", "The AgroVOC preferred term for the crop", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PREFERRED_TERM.npt_type, S_PREFERRED_TERM.npt_name_s, "Preferred name", "The AgroVOC preferred term for the crop", NULL, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ONTOLOGY_URL.npt_type, S_ONTOLOGY_URL.npt_name_s, "Definition", "The URL of the ontology definition for this crop", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ONTOLOGY_URL.npt_type, S_ONTOLOGY_URL.npt_name_s, "Definition", "The URL of the ontology definition for this crop", NULL, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SYNONYMS.npt_type, S_SYNONYMS.npt_name_s, "Synonyms", "The comma-separated list of synonyms for this crop", def, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SYNONYMS.npt_type, S_SYNONYMS.npt_name_s, "Synonyms", "The comma-separated list of synonyms for this crop", NULL, PL_ALL)) != NULL)
 										{
 											success_flag = true;
 										}
@@ -83,39 +79,34 @@ bool AddSubmissionCropParams (ServiceData *data_p, ParameterSet *param_set_p)
 bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	const char *name_s = NULL;
 
-	SharedType name_value;
-	InitSharedType (&name_value);
-
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_NAME.npt_name_s, &name_value))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NAME.npt_name_s, &name_s))
 		{
 			/*
 			 * The name is required
 			 */
-			if (! (IsStringEmpty (name_value.st_string_value_s)))
+			if (! (IsStringEmpty (name_s)))
 				{
-					SharedType term_value;
-					InitSharedType (&term_value);
+					const char *term_s = NULL;
 					OperationStatus status = OS_FAILED_TO_START;
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PREFERRED_TERM.npt_name_s, &term_value))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_PREFERRED_TERM.npt_name_s, &term_s))
 						{
-							SharedType ontology_value;
-							InitSharedType (&ontology_value);
+							const char *ontology_s = NULL;
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_ONTOLOGY_URL.npt_name_s, &ontology_value))
+							if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_ONTOLOGY_URL.npt_name_s, &ontology_s))
 								{
-									SharedType synonyms_value;
-									InitSharedType (&synonyms_value);
+									const char *synonyms_s = NULL;
 
-									if (GetCurrentParameterValueFromParameterSet (param_set_p, S_SYNONYMS.npt_name_s, &synonyms_value))
+									if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_SYNONYMS.npt_name_s, &synonyms_s))
 										{
 											bool success_flag = true;
 											char **synonyms_ss = NULL;
 
-											if (!IsStringEmpty (synonyms_value.st_string_value_s))
+											if (!IsStringEmpty (synonyms_s))
 												{
-													LinkedList *synonyms_p = ParseStringToStringLinkedList (synonyms_value.st_string_value_s, ",", false);
+													LinkedList *synonyms_p = ParseStringToStringLinkedList (synonyms_s, ",", false);
 
 													if (synonyms_p)
 														{
@@ -140,7 +131,7 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to parse \"%s\" for synonyms", synonyms_value.st_string_value_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to parse \"%s\" for synonyms", synonyms_s);
 															success_flag = false;
 														}
 
@@ -148,7 +139,7 @@ bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 											if (success_flag)
 												{
-													Crop *crop_p = AllocateCrop (NULL, name_value.st_string_value_s, term_value.st_string_value_s, ontology_value.st_string_value_s, synonyms_ss);
+													Crop *crop_p = AllocateCrop (NULL, name_s, term_s, ontology_s, synonyms_ss);
 
 													if (crop_p)
 														{
@@ -239,7 +230,7 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const char *empty_option_s)
+bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s)
 {
 	bool success_flag = false;
 
@@ -261,18 +252,12 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 									const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
 									const char *default_crop_s = GetJSONString (service_config_p, "default_crop");
 
-									SharedType def;
-
-									InitSharedType (&def);
-
 									/*
 									 * If there's an empty option, add it
 									 */
 									if (empty_option_s)
 										{
-											def.st_string_value_s = (char *) empty_option_s;
-
-											success_flag = CreateAndAddParameterOptionToParameter (param_p, def, empty_option_s);
+											success_flag = CreateAndAddStringParameterOption (param_p, empty_option_s, empty_option_s);
 										}
 
 									for (i = 0; i < num_results; ++ i)
@@ -286,10 +271,6 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 
 													if (id_s)
 														{
-															InitSharedType (&def);
-
-															def.st_string_value_s = id_s;
-
 															if (param_p)
 																{
 																	success_flag  = true;
@@ -299,7 +280,7 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, Parameter 
 																			success_flag = SetDefaultCropValue (param_p, crop_p -> cr_name_s);
 																		}
 
-																	success_flag = CreateAndAddParameterOptionToParameter (param_p, def, crop_p -> cr_name_s);
+																	success_flag = CreateAndAddStringParameterOption (param_p, id_s, crop_p -> cr_name_s);
 																}
 
 															FreeCopiedString (id_s);

@@ -116,8 +116,6 @@ typedef struct COUnitTerm
 
 	COScaleClass *cout_class_p;
 
-	ParameterBounds *cout_bounds_p;
-
 
 } COUnitTerm;
 
