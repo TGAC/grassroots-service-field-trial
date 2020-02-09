@@ -14,13 +14,18 @@
 #include "study_jobs.h"
 #include "string_utils.h"
 
+#include "char_parameter.h"
+#include "string_parameter.h"
+#include "json_parameter.h"
+
+
 
 /*
  * Static variables
  */
 
 static NamedParameterType S_PHENOTYPES_TABLE_COLUMN_DELIMITER = { "PH Data delimiter", PT_CHAR };
-static NamedParameterType S_PHENOTYPES_TABLE = { "PH Upload", PT_TABLE};
+static NamedParameterType S_PHENOTYPES_TABLE = { "PH Upload", PT_JSON_TABLE};
 
 
 static NamedParameterType S_STUDIES_LIST = { "PH Study", PT_STRING };
@@ -51,22 +56,17 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Phenotypes", false, data_p, param_set_p);
-	SharedType def;
 
-	InitSharedType (&def);
-
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these phenotype are from", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these phenotype are from", NULL, PL_ALL)) != NULL)
 		{
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
 			if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
 				{
-					def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+					const char delim = S_DEFAULT_COLUMN_DELIMITER;
 
-					if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPES_TABLE_COLUMN_DELIMITER.npt_type, false, S_PHENOTYPES_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+					if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPES_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &delim, PL_ADVANCED)) != NULL)
 						{
-							def.st_string_value_s = NULL;
-
 							if ((param_p = GetTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 								{
 									success_flag = true;
@@ -123,46 +123,39 @@ bool GetSubmissionPhenotypesParameterTypeForNamedParameter (const char *param_na
 bool RunForSubmissionPhenotypesParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	const json_t *phenotypes_json_p = NULL;
 
-	SharedType value;
-	InitSharedType (&value);
-
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PHENOTYPES_TABLE.npt_name_s, &value))
+	if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PHENOTYPES_TABLE.npt_name_s, &phenotypes_json_p))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
 			 */
-			if (! (IsStringEmpty (value.st_string_value_s)))
+			if ((phenotypes_json_p != NULL) && (json_array_size (phenotypes_json_p) > 0))
 				{
-					bool success_flag = false;
-					json_error_t e;
-					json_t *phenotypes_json_p = NULL;
+					OperationStatus status = OS_FAILED;
 
 					/*
 					 * The data could be either an array of json objects
 					 * or a tabular string. so try it as json array first
 					 */
-					phenotypes_json_p = json_loads (value.st_string_value_s, 0, &e);
+					const char *study_id_s = NULL;
 
-					if (phenotypes_json_p)
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
 						{
-							SharedType parent_study_value;
-							InitSharedType (&parent_study_value);
+							Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
+							if (study_p)
 								{
-									Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
-
-									if (study_p)
+									if (AddPhenotypesFromJSON (job_p, phenotypes_json_p, study_p, data_p))
 										{
-											success_flag = AddPhenotypesFromJSON (job_p, phenotypes_json_p, study_p, data_p);
-
-											FreeStudy (study_p);
+											status = OS_SUCCEEDED;
 										}
-								}
 
-							json_decref (phenotypes_json_p);
-						}		/* if (phenotypes_json_p) */
+									FreeStudy (study_p);
+								}
+						}
+
+					SetServiceJobStatus (job_p, status);
 
 					job_done_flag = true;
 				}		/* if (value.st_boolean_value) */
@@ -181,13 +174,7 @@ bool RunForSubmissionPhenotypesParams (DFWFieldTrialServiceData *data_p, Paramet
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
-	Parameter *param_p = NULL;
-	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	SharedType def;
-
-	InitSharedType (&def);
-
-	param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPES_TABLE.npt_type, false, S_PHENOTYPES_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPES_TABLE.npt_type, S_PHENOTYPES_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL,  PL_ALL);
 
 	if (param_p)
 		{
@@ -198,6 +185,8 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
+							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
 									success_flag = true;

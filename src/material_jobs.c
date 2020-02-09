@@ -32,6 +32,7 @@
 
 #include "char_parameter.h"
 #include "boolean_parameter.h"
+#include "json_parameter.h"
 
 
 /*
@@ -63,7 +64,7 @@ static const char * const S_CLEANED_TITLE_S = "Cleaned?";
 
 
 static NamedParameterType S_MATERIAL_TABLE_COLUMN_DELIMITER = { "MA Data delimiter", PT_CHAR };
-static NamedParameterType S_MATERIAL_TABLE = { "MA Upload", PT_TABLE};
+static NamedParameterType S_MATERIAL_TABLE = { "MA Upload", PT_JSON_TABLE};
 static NamedParameterType S_STUDIES_LIST = { "MA Study", PT_STRING };
 static NamedParameterType S_GENE_BANKS_LIST = { "MA Gene Bank", PT_STRING };
 
@@ -131,93 +132,69 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	const json_t *materials_json_p = NULL;
 
-	SharedType value;
-	InitSharedType (&value);
-
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_MATERIAL_TABLE.npt_name_s, &value))
+	if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_MATERIAL_TABLE.npt_name_s, &materials_json_p))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
 			 */
-			if (! (IsStringEmpty (value.st_string_value_s)))
+			if ((materials_json_p != NULL) && (json_array_size (materials_json_p) > 0))
 				{
-					bool success_flag = false;
-					json_error_t e;
-					json_t *materials_json_p = NULL;
-
+					OperationStatus status = OS_FAILED;
+					const char *study_id_s = NULL;
 					job_done_flag = true;
 
-					/*
-					 * The data could be either an array of json objects
-					 * or a tabular string. so try it as json array first
-					 */
-					materials_json_p = json_loads (value.st_string_value_s, 0, &e);
-
-					if (materials_json_p)
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
 						{
-							InitSharedType (&value);
+							Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value))
+							if (study_p)
 								{
-									Study *area_p = GetStudyByIdString (value.st_string_value_s, VF_STORAGE, data_p);
+									const char *gene_bank_id_s = NULL;
 
-									if (area_p)
+									if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &gene_bank_id_s))
 										{
-											InitSharedType (&value);
+											GeneBank *gene_bank_p = GetGeneBankByIdString (gene_bank_id_s, VF_STORAGE, data_p);
 
-											if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &value))
+											if (gene_bank_p)
 												{
-													GeneBank *gene_bank_p = GetGeneBankByIdString (value.st_string_value_s, VF_STORAGE, data_p);
-
-													if (gene_bank_p)
+													if (AddMaterialsFromJSON (job_p, materials_json_p, study_p, gene_bank_p, data_p))
 														{
-															if (AddMaterialsFromJSON (job_p, materials_json_p, area_p, gene_bank_p, data_p))
-																{
-																	success_flag = true;
-																}
-															else
-																{
-																	char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																	bson_oid_to_string (area_p -> st_id_p, area_id_s);
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, materials_json_p, "AddMaterialsFromJSON for GeneBank with id \"%s\" and Study with id \"%s\"", value.st_string_value_s,materials_json_p);
-																}
-
-															FreeGeneBank (gene_bank_p);
-														}		/* if (gene_bank_p) */
+															status = OS_SUCCEEDED;
+														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get GeneBank with id \"%s\"", value.st_string_value_s);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, materials_json_p, "AddMaterialsFromJSON for GeneBank with id \"%s\" and Study with id \"%s\"", gene_bank_id_s, study_id_s);
 														}
 
-												}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &value, true)) */
+													FreeGeneBank (gene_bank_p);
+												}		/* if (gene_bank_p) */
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_GENE_BANKS_LIST.npt_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get GeneBank with id \"%s\"", gene_bank_id_s);
 												}
 
-											FreeStudy (area_p);
-										}		/* if (area_p) */
+										}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANKS_LIST.npt_name_s, &value, true)) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Study with id \"%s\"", value.st_string_value_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_GENE_BANKS_LIST.npt_name_s);
 										}
 
-								}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value, true)) */
+									FreeStudy (study_p);
+								}		/* if (area_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_STUDIES_LIST.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Study with id \"%s\"", study_id_s);
 								}
 
-							json_decref (materials_json_p);
-						}		/* if (materials_json_p) */
+						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &value, true)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load \"%s\" as JSON", value.st_string_value_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get \"%s\" parameter value", S_STUDIES_LIST.npt_name_s);
 						}
 
-					job_done_flag = true;
+					SetServiceJobStatus (job_p, status);
 				}		/* if (! (IsStringEmpty (value.st_string_value_s))) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_EXPERIMENTAL_AREA.npt_name_s, &value, true)) */
@@ -606,10 +583,7 @@ static json_t *GetTableParameterHints (void)
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
-	Parameter *param_p = NULL;
-	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-
-	param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_MATERIAL_TABLE.npt_type, S_MATERIAL_TABLE.npt_name_s, "Material data to upload", "The data to upload", def, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_MATERIAL_TABLE.npt_type, S_MATERIAL_TABLE.npt_name_s, "Material data to upload", "The data to upload", NULL, PL_ALL);
 
 	if (param_p)
 		{
@@ -620,6 +594,8 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
+							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
 									success_flag = true;
