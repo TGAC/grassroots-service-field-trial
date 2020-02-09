@@ -62,6 +62,7 @@ static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_
 static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
 
 
+
 bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
@@ -78,7 +79,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 								{
 									const char * const def_country_s = "GB";
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", &def_country_s, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", def_country_s, PL_ALL)) != NULL)
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", NULL, PL_ALL)) != NULL)
 												{
@@ -86,19 +87,17 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 
 													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", &use_gps_flag, PL_ALL)) != NULL)
 														{
-															def.st_data_value = 0.0;
-
-															if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", def, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", NULL, PL_ALL)) != NULL)
 																{
 																	const char *precision_s = DEFAULT_COORD_PRECISION_S;
 
 																	if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																		{
-																			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", def, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", NULL, PL_ALL)) != NULL)
 																				{
 																					if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																						{
-																							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", def, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", NULL, PL_ALL)) != NULL)
 																								{
 																									success_flag = true;
 																								}
@@ -451,48 +450,48 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_s))
 		{
 			Address *address_p = NULL;
-			SharedType street_value;
-			SharedType town_value;
-			SharedType county_value;
-			SharedType country_value;
-			SharedType postcode_value;
-			SharedType use_gps_value;
+			const char *street_s;
+			const char *town_s;
+			const char *county_s;
+			const char *country_s;
+			const char *postcode_s;
+			bool use_gps_flag = false;
 			const char *country_code_s = NULL;
 			const char *gps_s = NULL;
 
-			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_value);
-			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_value);
-			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_value);
-			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_value);
-			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_value);
-			GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_value);
+			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_s);
+			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_s);
+			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_s);
+			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_s);
+			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_s);
+			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_flag);
 
-			address_p = AllocateAddress (name_value.st_string_value_s, street_value.st_string_value_s, town_value.st_string_value_s, county_value.st_string_value_s,
-																	 country_value.st_string_value_s, postcode_value.st_string_value_s, country_code_s, gps_s);
+			address_p = AllocateAddress (name_s, street_s, town_s, county_s,
+																	 country_s, postcode_s, country_code_s, gps_s);
 
 			if (address_p)
 				{
 					GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 
-					if (use_gps_value.st_boolean_value)
+					if (use_gps_flag)
 						{
-							SharedType latitude_value;
+							double64 latitude;
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value))
+							if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude))
 								{
-									SharedType longitude_value;
+									double64 longitude;
 
-									if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_value))
+									if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude))
 										{
-											double64 *elevation_p = NULL;
-											SharedType elevation_value;
+											const double64 *elevation_p = NULL;
+											double64 elevation;
 
-											if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_value))
+											if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation))
 												{
-													elevation_p = &elevation_value.st_data_value;
+													elevation_p = &elevation;
 												}
 
-											if (SetAddressCentreCoordinate (address_p, latitude_value.st_data_value, longitude_value.st_data_value, elevation_p))
+											if (SetAddressCentreCoordinate (address_p, latitude, longitude, elevation_p))
 												{
 													success_flag = DetermineAddressForGPSLocation (address_p, NULL, grassroots_p);
 												}
