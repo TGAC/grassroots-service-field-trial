@@ -25,6 +25,8 @@
 #include "gene_bank.h"
 #include "streams.h"
 
+#include "boolean_parameter.h"
+#include "string_parameter.h"
 
 static NamedParameterType S_GENE_BANK_NAME = { "GB Name", PT_STRING };
 static NamedParameterType S_GENE_BANK_URL = { "GB Url", PT_STRING};
@@ -47,19 +49,16 @@ bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			SharedType def;
 
-			def.st_string_value_s = NULL;
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_NAME.npt_type, S_GENE_BANK_NAME.npt_name_s, "Name", "The name of the Gene Bank", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_NAME.npt_type, S_GENE_BANK_NAME.npt_name_s, "Name", "The name of the Gene Bank", NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_URL.npt_type, S_GENE_BANK_URL.npt_name_s, "URL", "The web page with information about the Gene Bank", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_URL.npt_type, S_GENE_BANK_URL.npt_name_s, "URL", "The web page with information about the Gene Bank", NULL, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_API_URL.npt_type, S_GENE_BANK_API_URL.npt_name_s, "API URL", "The API URL for the Gene Bank", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_API_URL.npt_type, S_GENE_BANK_API_URL.npt_name_s, "API URL", "The API URL for the Gene Bank", NULL, PL_ALL)) != NULL)
 								{
-									def.st_boolean_value = false;
+									bool add_flag = false;
 
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_GENE_BANK.npt_type, S_ADD_GENE_BANK.npt_name_s, "Add", "Add Gene Bank", def, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_ADD_GENE_BANK.npt_name_s, "Add", "Add Gene Bank", &add_flag, PL_ALL)) != NULL)
 										{
 											success_flag = true;
 										}
@@ -98,17 +97,16 @@ bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p
 bool RunForSubmissionGeneBankParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
-	SharedType value;
-	InitSharedType (&value);
+	bool add_flag = false;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_ADD_GENE_BANK.npt_name_s, &value))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_ADD_GENE_BANK.npt_name_s, &add_flag))
 		{
-			if (value.st_boolean_value)
+			if (add_flag)
 				{
 					bool success_flag = AddGeneBank (job_p, param_set_p, data_p);
 
 					job_done_flag = true;
-				}		/* if (value.st_boolean_value) */
+				}		/* if (add_flag) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_LOCATION.npt_name_s, &value, true)) */
 
@@ -241,22 +239,19 @@ bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, StringP
 static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	SharedType name_value;
-	InitSharedType (&name_value);
+	const char *name_s = NULL;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANK_NAME.npt_name_s, &name_value))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENE_BANK_NAME.npt_name_s, &name_s))
 		{
-			SharedType url_value;
-			InitSharedType (&url_value);
+			const char *url_s = NULL;
 
-			if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANK_URL.npt_name_s, &url_value))
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENE_BANK_URL.npt_name_s, &url_s))
 				{
-					SharedType api_url_value;
-					InitSharedType (&api_url_value);
+					const char *api_url_s = NULL;
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_GENE_BANK_API_URL.npt_name_s, &api_url_value))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENE_BANK_API_URL.npt_name_s, &api_url_s))
 						{
-							GeneBank *gene_bank_p = AllocateGeneBank (NULL, name_value.st_string_value_s, url_value.st_string_value_s, api_url_value.st_string_value_s);
+							GeneBank *gene_bank_p = AllocateGeneBank (NULL, name_s, url_s, api_url_s);
 
 							if (gene_bank_p)
 								{
@@ -266,14 +261,14 @@ static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveGeneBank failed for \"%s\", \"%s\", \"%s\"", name_value.st_string_value_s, url_value.st_string_value_s, api_url_value.st_string_value_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveGeneBank failed for \"%s\", \"%s\", \"%s\"", name_s, url_s, api_url_s);
 										}
 
 									FreeGeneBank (gene_bank_p);
 								}		/* if (gene_bank_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateGeneBank failed for \"%s\", \"%s\", \"%s\"", name_value.st_string_value_s, url_value.st_string_value_s, api_url_value.st_string_value_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateGeneBank failed for \"%s\", \"%s\", \"%s\"", name_s, url_s, api_url_s);
 								}
 
 						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GENE_BANK_API_URL.npt_name_s, &api_url_value, true)) */

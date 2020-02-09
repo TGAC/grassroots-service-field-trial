@@ -27,6 +27,9 @@
 #include "string_utils.h"
 #include "dfw_util.h"
 
+#include "boolean_parameter.h"
+#include "double_parameter.h"
+
 
 static const char *DEFAULT_COORD_PRECISION_S = "6";
 
@@ -63,30 +66,25 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Location", false, data_p, param_set_p);
 
-	def.st_string_value_s = NULL;
-
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", NULL, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", def, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", NULL, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", def, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", NULL, PL_ALL)) != NULL)
 								{
-									def.st_string_value_s = (char *) "GB";
+									const char * const def_country_s = "GB";
 
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", def, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", &def_country_s, PL_ALL)) != NULL)
 										{
-											def.st_string_value_s = NULL;
-
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", def, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", NULL, PL_ALL)) != NULL)
 												{
-													def.st_boolean_value = true;
+													bool use_gps_flag = true;
 
-													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_type, LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", def, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_name_s, "Use given GPS", "Use the given GPS values, uncheck this to look up the GPS values using the location instead", &use_gps_flag, PL_ALL)) != NULL)
 														{
 															def.st_data_value = 0.0;
 
@@ -241,16 +239,12 @@ bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Location", false, data_p, param_set_p);
+	bool list_flag = false;
 
-	def.st_boolean_value = false;
-
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_GET_ALL_LOCATIONS.npt_type, LOCATION_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", def, PL_ADVANCED)) != NULL)
+	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, "List", "Get all of the existing locations", &list_flag, PL_ADVANCED)) != NULL)
 		{
-			def.st_string_value_s = NULL;
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Id", "The id of the Location", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Id", "The id of the Location", NULL, PL_ADVANCED)) != NULL)
 				{
 					success_flag = true;
 				}
@@ -292,12 +286,11 @@ bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, 
 bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
-	SharedType value;
-	InitSharedType (&value);
+	bool get_all_flag = false;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &value))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &get_all_flag))
 		{
-			if (value.st_boolean_value)
+			if (get_all_flag)
 				{
 					bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
 					json_t *db_results_p = GetAllLocationsAsJSON (data_p, opts_p);
@@ -371,13 +364,15 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 
 	if (!job_done_flag)
 		{
-			if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_ID.npt_name_s, &value))
+			const char *id_s = NULL;
+
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_ID.npt_name_s, &id_s))
 				{
 					OperationStatus status = OS_FAILED;
 
-					if (!IsStringEmpty (value.st_string_value_s))
+					if (!IsStringEmpty (id_s))
 						{
-							Location *location_p = GetLocationByIdString (value.st_string_value_s, VF_CLIENT_FULL, data_p);
+							Location *location_p = GetLocationByIdString (id_s, VF_CLIENT_FULL, data_p);
 
 							if (location_p)
 								{
@@ -414,7 +409,7 @@ bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find location \"%s\"", value.st_string_value_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find location \"%s\"", id_s);
 								}
 
 							job_done_flag = true;
@@ -543,7 +538,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 
 
-bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p, const bool add_any_flag)
+bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const bool add_any_flag)
 {
 	bool success_flag = false;
 	bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
@@ -558,13 +553,12 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 
 					success_flag = true;
 
-
 					if (success_flag)
 						{
 							if (num_results > 0)
 								{
 									size_t i = 0;
-									const char *param_value_s = param_p -> pa_current_value.st_string_value_s;
+									const char *param_value_s = GetStringParameterCurrentValue (param_p);
 
 									while ((i < num_results) && success_flag)
 										{
@@ -581,23 +575,16 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, Parame
 
 															if (id_s)
 																{
-																	SharedType def;
-
-																	InitSharedType (&def);
-																	def.st_string_value_s = id_s;
-
 																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																		{
 																			value_set_flag = true;
 																		}
 
-																	if (!CreateAndAddParameterOptionToParameter (param_p, def, name_s))
+																	if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
 																		{
 																			success_flag = false;
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", def.st_string_value_s, name_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
 																		}
-
-
 
 																	FreeCopiedString (id_s);
 																}

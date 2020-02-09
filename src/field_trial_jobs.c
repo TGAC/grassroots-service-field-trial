@@ -240,9 +240,9 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 	bool job_done_flag = false;
 	const char *id_s = NULL;
 
-	GetCurrentParameterValueFromParameterSet (param_set_p, S_FULL_DATA.npt_name_s, &full_data_flag);
+	GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FULL_DATA.npt_name_s, &full_data_flag);
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ID.npt_name_s, &id_s))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ID.npt_name_s, &id_s))
 		{
 			if (!IsStringEmpty (id_s))
 				{
@@ -279,7 +279,7 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 
 			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
 				{
-					GetCurrentParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &team_s);
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &team_s);
 				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
 
 

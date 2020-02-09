@@ -26,6 +26,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
+#include "string_parameter.h"
 
 
 #ifdef __cplusplus
