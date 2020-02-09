@@ -29,6 +29,7 @@
 
 #include "field_trial.h"
 #include "json_processor.h"
+#include "string_parameter.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -72,7 +73,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchFieldTrialParams (DFWFieldTrialSe
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Parameter *param_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllFieldTrialsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
