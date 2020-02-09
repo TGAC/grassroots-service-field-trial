@@ -30,6 +30,9 @@
 #include "string_int_pair.h"
 #include "row_processor.h"
 
+#include "char_parameter.h"
+#include "boolean_parameter.h"
+
 
 /*
  * static declarations
@@ -91,26 +94,23 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			SharedType def;
 
-			InitSharedType (&def);
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Area", "The available experimental areas", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
 					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", def, PL_ALL)) != NULL)
+							StringParameter *string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
+
+							if (string_param_p)
 								{
-									if (SetUpGenBanksListParameter ((DFWFieldTrialServiceData *) data_p, param_p))
+									if (SetUpGenBanksListParameter ((DFWFieldTrialServiceData *) data_p, string_param_p))
 										{
-											def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+											const char c = S_DEFAULT_COLUMN_DELIMITER;
 
-											if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_type, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", def, PL_ADVANCED)) != NULL)
+											if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 												{
-													def.st_string_value_s = NULL;
-
 													if ((param_p = GetTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 														{
 															success_flag = true;
@@ -264,15 +264,12 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			SharedType def;
 
-			InitSharedType (&def);
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION.npt_type, S_MATERIAL_ACCESSION.npt_name_s, "Accession", "Accession to search for", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION.npt_type, S_MATERIAL_ACCESSION.npt_name_s, "Accession", "Accession to search for", NULL, PL_ADVANCED)) != NULL)
 				{
-					def.st_boolean_value = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
+					const bool case_sensitivity_flag = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
 
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_type, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, "Case sensitive", "Do a case-sensitive search for the accession", def, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, "Case sensitive", "Do a case-sensitive search for the accession", &case_sensitivity_flag, PL_ADVANCED)) != NULL)
 						{
 							success_flag = true;
 						}
@@ -287,22 +284,18 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
-	SharedType accession_value;
+	const char *accession_s = NULL;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION.npt_name_s, &accession_value))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION.npt_name_s, &accession_s))
 		{
 			OperationStatus status = OS_FAILED_TO_START;
-			SharedType case_sensitive_value;
 			bool case_senstive_search_flag = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
 			GeneBank *gene_bank_p = NULL;
 			Material *material_p = NULL;
 
-			if (GetCurrentParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &case_sensitive_value))
-				{
-					case_senstive_search_flag = case_sensitive_value.st_boolean_value;
-				}
+			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &case_senstive_search_flag);
 
-			material_p = GetMaterialByAccession (accession_value.st_string_value_s, gene_bank_p, case_senstive_search_flag, data_p);
+			material_p = GetMaterialByAccession (accession_s, gene_bank_p, case_senstive_search_flag, data_p);
 
 			if (material_p)
 				{
@@ -313,7 +306,7 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 				}		/* if (material_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_value.st_string_value_s, job_p -> sj_name_s);
+					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_s, job_p -> sj_name_s);
 					status = OS_SUCCEEDED;
 				}
 
@@ -615,9 +608,6 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	SharedType def;
-
-	InitSharedType (&def);
 
 	param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_MATERIAL_TABLE.npt_type, S_MATERIAL_TABLE.npt_name_s, "Material data to upload", "The data to upload", def, PL_ALL);
 
