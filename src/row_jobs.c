@@ -31,6 +31,10 @@
 #include "observation.h"
 
 
+#include "char_parameter.h"
+#include "json_parameter.h"
+#include "string_parameter.h"
+
 /*
  * static declarations
  */
@@ -71,21 +75,16 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			SharedType def;
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-			InitSharedType (&def);
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study to update the phenotypes for", def, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study to update the phenotypes for", NULL, PL_ALL)) != NULL)
 				{
 					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
 						{
-							def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
+							char delim = S_DEFAULT_COLUMN_DELIMITER;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_type, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", def, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", delim, PL_ADVANCED)) != NULL)
 								{
-									def.st_string_value_s = NULL;
-
 									if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 										{
 											success_flag = true;
@@ -106,19 +105,17 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	const char *study_id_s = NULL;
 
-
-	SharedType parent_study_value;
-
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
 		{
-			Study *study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
+			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
 
 			if (study_p)
 				{
-					SharedType table_value;
+					const json_t *rows_json_p = NULL;
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, &table_value))
+					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, &rows_json_p))
 						{
 							/*
 							 * Has a spreadsheet been uploaded?
@@ -128,30 +125,28 @@ bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, Param
 							/*
 							 * Has a spreadsheet been uploaded?
 							 */
-							if (table_value.st_json_p)
+							if (rows_json_p)
 								{
-									const size_t num_rows = json_array_size (table_value.st_json_p);
+									const size_t num_rows = json_array_size (rows_json_p);
 
 									if (num_rows > 0)
 										{
-											if (!AddObservationValuesFromJSON (job_p, table_value.st_json_p, study_p, data_p))
+											if (!AddObservationValuesFromJSON (job_p, rows_json_p, study_p, data_p))
 												{
-													char area_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_value.st_json_p, "AddObservationValuesFromJSON for failed");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_json_p, "AddObservationValuesFromJSON for study \"%s\" failed", study_id_s);
 												}
 
 										}		/* if (num_rows > 0) */
 
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
 										}
 
 								}		/* if (table_value.st_json_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
 								}
 
 						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true)) */
@@ -223,14 +218,7 @@ static json_t *GetTableParameterHints (void)
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
-	Parameter *param_p = NULL;
-	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	SharedType def;
-
-	InitSharedType (&def);
-	def.st_string_value_s = NULL;
-
-	param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, false, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, PL_ALL);
 
 	if (param_p)
 		{
@@ -241,6 +229,8 @@ static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, Pa
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
+							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
 									if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_HEADERS_PLACEMENT_S, PA_TABLE_COLUMN_HEADERS_PLACEMENT_FIRST_ROW_S))

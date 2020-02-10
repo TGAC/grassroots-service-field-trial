@@ -33,6 +33,11 @@
 #include "gene_bank.h"
 #include "dfw_util.h"
 
+#include "char_parameter.h"
+#include "json_parameter.h"
+#include "string_parameter.h"
+
+
 
 typedef enum
 {
@@ -109,16 +114,16 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", false, data_p, param_set_p);
-	SharedType def;
 	Study *active_study_p = GetStudyFromResource (resource_p, S_STUDIES_LIST, dfw_data_p);
 
-	InitSharedType (&def);
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", def, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", NULL, PL_ALL)) != NULL)
 		{
 
 			if (SetUpStudiesListParameter (dfw_data_p, param_p, NULL))
 				{
+					char c = S_DEFAULT_COLUMN_DELIMITER;
+
 					/*
 					 * We want to update all of the values in the form
 					 * when a user selects a study from the list so
@@ -128,12 +133,8 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 					 */
 					param_p -> pa_refresh_service_flag = true;
 
-
-					def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
-
-					if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_type, false, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+					if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 						{
-							def.st_string_value_s = NULL;
 
 							if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
 								{
@@ -146,7 +147,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDIES_LIST.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s);
 						}
 				}
 			else
@@ -171,44 +172,44 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
-	Study *study_p = NULL;
-	SharedType parent_study_value;
-	SharedType table_value;
+	const char *study_id_s = NULL;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
 		{
-			study_p = GetStudyByIdString (parent_study_value.st_string_value_s, VF_STORAGE, data_p);
+			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
 
 			if (study_p)
 				{
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value))
+					const json_t *plots_table_p = NULL;
+
+					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &plots_table_p))
 						{
 							job_done_flag = true;
 
 							/*
 							 * Has a spreadsheet been uploaded?
 							 */
-							if (table_value.st_json_p)
+							if (plots_table_p)
 								{
-									const size_t num_rows = json_array_size (table_value.st_json_p);
+									const size_t num_rows = json_array_size (plots_table_p);
 
 									if (num_rows > 0)
 										{
-											if (!AddPlotsFromJSON (job_p, table_value.st_json_p, study_p, data_p))
+											if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_value.st_json_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
 												}
 
 										}		/* if (num_rows > 0) */
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
 										}
 
 								}		/* if (table_value.st_json_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", parent_study_value.st_string_value_s);
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
 								}
 
 						}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
@@ -221,7 +222,7 @@ bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 				}		/* if (study_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", parent_study_value.st_string_value_s);
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
 				}
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
@@ -324,31 +325,30 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	SharedType def;
 	bool success_flag = false;
 	json_t *hints_p = GetTableParameterHints ();
 
 	if (hints_p)
 		{
+			json_t *plots_json_p = NULL;
+
 			if (active_study_p)
 				{
-					json_t *plots_json_p = GetStudyPlotsForSubmissionTable (active_study_p, data_p);
+					plots_json_p = GetStudyPlotsForSubmissionTable (active_study_p, data_p);
 
 					if (plots_json_p)
 						{
-							def.st_json_p = plots_json_p;
 							success_flag = true;
 						}
 				}
 			else
 				{
-					InitSharedType (&def);
 					success_flag = true;
 				}
 
 			if (success_flag)
 				{
-					param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PLOT_TABLE.npt_type, false, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+					param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PLOT_TABLE.npt_type, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", plots_json_p, PL_ALL);
 
 					if (param_p)
 						{
@@ -369,8 +369,6 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 								}
 
 						}		/* if (param_p) */
-
-					ClearSharedType (&def, PT_JSON);
 
 				}		/* if (success_flag) */
 

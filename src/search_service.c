@@ -167,62 +167,27 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (Service * UNUSED
 
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, DFWFieldTrialServiceData *data_p)
 {
-	LinkedList *options_p = CreateParameterOptionsList ();
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", S_ANY_FACET_S, PL_ALL);
 
-	if (options_p)
+	if (param_p)
 		{
-			SharedType def;
-
-
-			InitSharedType (&def);
-
-			def.st_string_value_s = (char *) S_ANY_FACET_S;
-
-			if (CreateAndAddParameterOption (options_p, def, "Any", PT_STRING))
+			if (CreateAndAddStringParameterOption (param_p, S_ANY_FACET_S, "Any"))
 				{
-					def.st_string_value_s = (char *) S_FIELD_TRIAL_FACET_S;
-
-					if (CreateAndAddParameterOption (options_p, def, S_FIELD_TRIAL_FACET_S, PT_STRING))
+					if (CreateAndAddStringParameterOption (param_p, S_FIELD_TRIAL_FACET_S, S_FIELD_TRIAL_FACET_S))
 						{
-							def.st_string_value_s = (char *) S_STUDY_FACET_S;
-
-							if (CreateAndAddParameterOption (options_p, def, S_STUDY_FACET_S, PT_STRING))
+							if (CreateAndAddStringParameterOption (param_p, S_STUDY_FACET_S, S_STUDY_FACET_S))
 								{
-									def.st_string_value_s = (char *) S_TREATMENT_FACET_S;
-
-									if (CreateAndAddParameterOption (options_p, def, S_TREATMENT_FACET_S, PT_STRING))
+									if (CreateAndAddStringParameterOption (param_p, S_TREATMENT_FACET_S, S_TREATMENT_FACET_S))
 										{
-											def.st_string_value_s = (char *) S_LOCATION_FACET_S;
-
-											if (CreateAndAddParameterOption (options_p, def, S_LOCATION_FACET_S, PT_STRING))
+											if (CreateAndAddStringParameterOption (param_p, S_LOCATION_FACET_S, S_LOCATION_FACET_S))
 												{
-													Parameter *param_p = NULL;
-
-													/* default to any type */
-													def.st_string_value_s = EasyCopyToNewString (S_ANY_FACET_S);
-
-													param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, false, S_FACET.npt_name_s, "Type", "The type of data to search for", options_p, def, NULL, NULL, PL_ALL, NULL);
-
-													if (def.st_string_value_s)
-														{
-															FreeCopiedString (def.st_string_value_s);
-														}
-
-
-													if (param_p)
-														{
-															return param_p;
-														}
-
+													return param_p;
 												}
 										}
 								}
 						}
 				}
-
-
-			FreeLinkedList (options_p);
-		}		/* if (options_p) */
+		}
 
 	return NULL;
 }
