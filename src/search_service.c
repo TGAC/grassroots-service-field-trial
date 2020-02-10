@@ -32,6 +32,9 @@
 #include "dfw_util.h"
 
 
+#include "unsigned_int_parameter.h"
+#include "string_parameter.h"
+
 #include "audit.h"
 #include "streams.h"
 #include "math_utils.h"
@@ -201,23 +204,19 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 		{
 			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) service_p -> se_data_p;
 			ParameterGroup *group_p = NULL;
-
 			Parameter *param_p = NULL;
-			SharedType def;
 
-			def.st_string_value_s = NULL;
-
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", def, PL_SIMPLE)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", NULL, PL_SIMPLE)) != NULL)
 				{
 					if (AddFacetParameter (params_p, group_p, data_p))
 						{
-							def.st_long_value = 0;
+							uint32 def = 0;
 
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_type, S_PAGE_NUMBER.npt_name_s, "Page", "The number of the results page to get", def, PL_SIMPLE)) != NULL)
+							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_name_s, "Page", "The number of the results page to get", &def, PL_SIMPLE)) != NULL)
 								{
-									def.st_long_value = 10;
+									def = 10;
 
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_type, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", def, PL_SIMPLE)) != NULL)
+									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", &def, PL_SIMPLE)) != NULL)
 										{
 											if (AddSearchFieldTrialParams (& (data_p -> dftsd_base_data), params_p))
 												{
@@ -367,37 +366,27 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 					 */
 					if (param_set_p -> ps_current_level == PL_SIMPLE)
 						{
-							SharedType keyword_value;
-							SharedType value;
+							const char *keyword_s = NULL;
 							const char *facet_s = NULL;
 							uint32 page_number = 0;
 							uint32 page_size = 10;
 
-							InitSharedType (&keyword_value);
-							GetCurrentParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_value);
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_s);
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &facet_s);
 
-							InitSharedType (&value);
-							GetCurrentParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &value);
-
-							if (value.st_string_value_s)
+							if (facet_s)
 								{
-									if (strcmp (value.st_string_value_s, S_ANY_FACET_S) != 0)
+									if (strcmp (facet_s, S_ANY_FACET_S) == 0)
 										{
-											facet_s = value.st_string_value_s;
+											facet_s = NULL;
 										}
 								}
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &value))
-								{
-									page_number = value.st_ulong_value;
-								}
+							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &page_number);
+							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &page_size);
 
-							if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &value))
-								{
-									page_size = value.st_ulong_value;
-								}
 
-							SearchFieldTrialsForKeyword (keyword_value.st_string_value_s, facet_s, page_number, page_size, job_p, VF_CLIENT_MINIMAL, data_p);
+							SearchFieldTrialsForKeyword (keyword_s, facet_s, page_number, page_size, job_p, VF_CLIENT_MINIMAL, data_p);
 						}
 					else if (param_set_p -> ps_current_level == PL_ADVANCED)
 						{

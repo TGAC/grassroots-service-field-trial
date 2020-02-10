@@ -450,11 +450,11 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_s))
 		{
 			Address *address_p = NULL;
-			const char *street_s;
-			const char *town_s;
-			const char *county_s;
-			const char *country_s;
-			const char *postcode_s;
+			const char *street_s = NULL;
+			const char *town_s = NULL;
+			const char *county_s = NULL;
+			const char *country_s = NULL;
+			const char *postcode_s = NULL;
 			bool use_gps_flag = false;
 			const char *country_code_s = NULL;
 			const char *gps_s = NULL;
