@@ -90,13 +90,13 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
 		{
-			bool add_flag = false;
+			const bool *add_flag_p = NULL;
 
 			GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ADD.npt_name_s, &add_flag))
+			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ADD.npt_name_s, &add_flag_p))
 				{
-					if (add_flag)
+					if ((add_flag_p != NULL) && (*add_flag_p == true))
 						{
 							/* It's a job for FieldTrials */
 							if (!AddFieldTrial (job_p, name_s, team_s, data_p))
@@ -236,11 +236,11 @@ bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s
 
 bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
-	bool full_data_flag = false;
+	const bool *full_data_flag_p = NULL;
 	bool job_done_flag = false;
 	const char *id_s = NULL;
 
-	GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FULL_DATA.npt_name_s, &full_data_flag);
+	GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FULL_DATA.npt_name_s, &full_data_flag_p);
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ID.npt_name_s, &id_s))
 		{
@@ -249,8 +249,15 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 					const size_t l = strlen (id_s);
 					if (bson_oid_is_valid (id_s, l))
 						{
-							const ViewFormat format = full_data_flag ? VF_CLIENT_FULL : VF_CLIENT_MINIMAL;
-							FieldTrial *trial_p = GetFieldTrialByIdString (id_s, format, data_p);
+							FieldTrial *trial_p = NULL;
+							ViewFormat format = VF_CLIENT_MINIMAL;
+
+							if ((full_data_flag_p != NULL) && (*full_data_flag_p == true))
+								{
+									format = VF_CLIENT_FULL;
+								}
+
+							trial_p = GetFieldTrialByIdString (id_s, format, data_p);
 
 							if (trial_p)
 								{
@@ -275,7 +282,7 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 		{
 			const char *name_s = NULL;
 			const char *team_s = NULL;
-			bool search_flag = false;
+			const bool *search_flag_p = NULL;
 
 			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
 				{
@@ -283,16 +290,28 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
 
 
-			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_SEARCH.npt_name_s, &search_flag))
+			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_SEARCH.npt_name_s, &search_flag_p))
 				{
-					if (search_flag)
+					if ((search_flag_p != NULL) && (*search_flag_p == true))
 						{
 							bool success_flag;
+							const bool *fuzzy_search_flag_p = NULL;
 							bool fuzzy_search_flag = false;
+							ViewFormat vf = VF_CLIENT_MINIMAL;
 
-							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s, &fuzzy_search_flag);
+							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s, &fuzzy_search_flag_p);
 
-							success_flag = SearchFieldTrials (job_p, name_s, team_s, fuzzy_search_flag, full_data_flag ? VF_CLIENT_FULL : VF_CLIENT_MINIMAL, data_p);
+							if ((fuzzy_search_flag_p != NULL) && (*fuzzy_search_flag_p == true))
+								{
+									fuzzy_search_flag = true;
+								}
+
+							if ((full_data_flag_p != NULL) && (*full_data_flag_p == true))
+								{
+									vf = VF_CLIENT_FULL;
+								}
+
+							success_flag = SearchFieldTrials (job_p, name_s, team_s, fuzzy_search_flag, vf, data_p);
 
 							job_done_flag = true;
 						}		/* if (value.st_boolean_value) */

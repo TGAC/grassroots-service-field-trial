@@ -285,11 +285,11 @@ bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, 
 bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
-	bool get_all_flag = false;
+	const bool *get_all_flag_p = NULL;
 
-	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &get_all_flag))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_GET_ALL_LOCATIONS.npt_name_s, &get_all_flag_p))
 		{
-			if (get_all_flag)
+			if ((get_all_flag_p != NULL) && (*get_all_flag_p == true))
 				{
 					bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
 					json_t *db_results_p = GetAllLocationsAsJSON (data_p, opts_p);
@@ -455,7 +455,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 			const char *county_s = NULL;
 			const char *country_s = NULL;
 			const char *postcode_s = NULL;
-			bool use_gps_flag = false;
+			const bool *use_gps_flag_p = NULL;
 			const char *country_code_s = NULL;
 			const char *gps_s = NULL;
 
@@ -464,7 +464,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_s);
 			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_s);
 			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_s);
-			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_flag);
+			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_flag_p);
 
 			address_p = AllocateAddress (name_s, street_s, town_s, county_s,
 																	 country_s, postcode_s, country_code_s, gps_s);
@@ -473,27 +473,30 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 				{
 					GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 
-					if (use_gps_flag)
+					if ((use_gps_flag_p != NULL) && (*use_gps_flag_p == true))
 						{
-							double64 latitude;
+							const double64 *latitude_p = NULL;
 
-							if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude))
+							if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_p))
 								{
-									double64 longitude;
+									const double64 *longitude_p = NULL;
 
-									if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude))
+									if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_p))
 										{
 											const double64 *elevation_p = NULL;
 											double64 elevation;
 
-											if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation))
+											if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_p))
 												{
 													elevation_p = &elevation;
 												}
 
-											if (SetAddressCentreCoordinate (address_p, latitude, longitude, elevation_p))
+											if (latitude_p && longitude_p)
 												{
-													success_flag = DetermineAddressForGPSLocation (address_p, NULL, grassroots_p);
+													if (SetAddressCentreCoordinate (address_p, *latitude_p, *longitude_p, elevation_p))
+														{
+															success_flag = DetermineAddressForGPSLocation (address_p, NULL, grassroots_p);
+														}
 												}
 										}
 

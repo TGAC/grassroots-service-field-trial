@@ -28,6 +28,7 @@
 #include "dfw_field_trial_service_library.h"
 
 #include "study.h"
+#include "string_parameter.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
