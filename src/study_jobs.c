@@ -1459,7 +1459,7 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 	bool job_done_flag = false;
 	const char *id_s = NULL;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &id_s))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &id_s))
 		{
 			if (id_s)
 				{
@@ -1722,7 +1722,7 @@ static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p
 	/*
 	 * Are we looking for a specific location?
 	 */
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &location_id_s))
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &location_id_s))
 		{
 			if (location_id_s)
 				{

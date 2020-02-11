@@ -310,17 +310,45 @@ bool CopyValidDate (const struct tm *src_p, struct tm **dest_pp)
 			if (dest_p)
 				{
 					*dest_pp = dest_p;
-					success_flag = true;
 				}
 			else
 				{
 					success_flag = false;
 				}
 		}
+	else
+		{
+			*dest_pp = NULL;
+		}
 
 	return success_flag;
 }
 
+
+bool CopyValidReal (const double64 *src_p, double64 **dest_pp)
+{
+	bool success_flag = true;
+
+	if (src_p)
+		{
+			double64 *dest_p = (double64 *) AllocMemory (sizeof (double64));
+
+			if (dest_p)
+				{
+					*dest_pp = dest_p;
+				}
+			else
+				{
+					success_flag = false;
+				}
+		}
+	else
+		{
+			*dest_pp = NULL;
+		}
+
+	return success_flag;
+}
 
 
 bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s)

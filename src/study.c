@@ -53,9 +53,14 @@ static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const 
 
 static bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s);
 
+static bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p);
+
 static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialServiceData *data_p);
 
 static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const DFWFieldTrialServiceData *data_p);
+
+static bool GetValidPHFromJSON (const json_t *study_json_p, const char *key_s, double64 **ph_pp);
+
 
 /*
  * API FUNCTIONS
@@ -114,33 +119,58 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 
 																							if (CloneValidString (phenotype_gathering_notes_s, &copied_phenotype_notes_s))
 																								{
-																									Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																									double64 *copied_min_ph_p = NULL;
 
-																									if (study_p)
+																									if (CopyValidReal (min_ph_p, &copied_min_ph_p))
 																										{
-																											study_p -> st_id_p = id_p;
-																											study_p -> st_name_s = copied_name_s;
-																											study_p -> st_data_url_s = copied_url_s;
-																											study_p -> st_soil_type_s = copied_soil_s;
-																											study_p -> st_aspect_s = copied_aspect_s;
-																											study_p -> st_slope_s = copied_slope_s;
-																											study_p -> st_sowing_date_p = copied_sowing_date_p;
-																											study_p -> st_harvest_date_p = copied_harvest_date_p;
-																											study_p -> st_parent_p = parent_field_trial_p;
-																											study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
-																											study_p -> st_location_p = location_p;
-																											study_p -> st_plots_p = plots_p;
-																											study_p -> st_min_ph = min_ph;
-																											study_p -> st_max_ph = max_ph;
-																											study_p -> st_current_crop_p = current_crop_p;
-																											study_p -> st_previous_crop_p = previous_crop_p;
-																											study_p -> st_description_s = copied_description_s;
-																											study_p -> st_growing_conditions_s = copied_growing_conditions_s;
-																											study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
-																											study_p -> st_design_s = copied_design_s;
+																											double64 *copied_max_ph_p = NULL;
 
-																											return study_p;
-																										}
+																											if (CopyValidReal (max_ph_p, &copied_max_ph_p))
+																												{
+																													Study *study_p = (Study *) AllocMemory (sizeof (Study));
+
+																													if (study_p)
+																														{
+																															study_p -> st_id_p = id_p;
+																															study_p -> st_name_s = copied_name_s;
+																															study_p -> st_data_url_s = copied_url_s;
+																															study_p -> st_soil_type_s = copied_soil_s;
+																															study_p -> st_aspect_s = copied_aspect_s;
+																															study_p -> st_slope_s = copied_slope_s;
+																															study_p -> st_sowing_date_p = copied_sowing_date_p;
+																															study_p -> st_harvest_date_p = copied_harvest_date_p;
+																															study_p -> st_parent_p = parent_field_trial_p;
+																															study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
+																															study_p -> st_location_p = location_p;
+																															study_p -> st_plots_p = plots_p;
+																															study_p -> st_min_ph_p = copied_min_ph_p;
+																															study_p -> st_max_ph_p = copied_max_ph_p;
+																															study_p -> st_current_crop_p = current_crop_p;
+																															study_p -> st_previous_crop_p = previous_crop_p;
+																															study_p -> st_description_s = copied_description_s;
+																															study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																															study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																															study_p -> st_design_s = copied_design_s;
+
+																															return study_p;
+																														}
+
+
+																													if (copied_max_ph_p)
+																														{
+																															FreeMemory (copied_max_ph_p);
+																														}
+
+																												}		/* if (CopyValidReal (max_ph_p, &copied_max_ph_p)) */
+
+
+																											if (copied_min_ph_p)
+																												{
+																													FreeMemory (copied_min_ph_p);
+																												}
+
+																										}		/* if (CopyValidReal (min_ph_p, &copied_min_ph_p)) */
+
 
 																									if (copied_phenotype_notes_s)
 																										{
@@ -489,9 +519,9 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 		{
 			if (SetJSONString (study_json_p, ST_NAME_S, study_p -> st_name_s))
 				{
-					if ((study_p -> st_min_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph)))
+					if (SetNonTrivialDouble (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph_p))
 						{
-							if ((study_p -> st_max_ph == ST_UNSET_PH) || (SetJSONInteger (study_json_p, ST_MAX_PH_S, study_p -> st_max_ph)))
+							if (SetNonTrivialDouble (study_json_p, ST_MAX_PH_S, study_p -> st_max_ph_p))
 								{
 									if (SetNonTrivialString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))
 										{
@@ -769,10 +799,8 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					Crop *current_crop_p = GetStoredCropValue (json_p, ST_CURRENT_CROP_S, data_p);
 																					Crop *previous_crop_p = GetStoredCropValue (json_p, ST_PREVIOUS_CROP_S, data_p);
 																					const KeyValuePair *aspect_p = NULL;
-																					int32 min_ph = ST_UNSET_PH;
-																					int32 max_ph = ST_UNSET_PH;
-
-
+																					double64 *min_ph_p = NULL;
+																					double64 *max_ph_p = NULL;
 
 																					if (aspect_s)
 																						{
@@ -788,12 +816,12 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																								}
 																						}
 
+																					GetValidPHFromJSON (json_p, ST_MIN_PH_S, &min_ph_p);
+																					GetValidPHFromJSON (json_p, ST_MAX_PH_S, &max_ph_p);
 
-																					GetJSONInteger (json_p, ST_MIN_PH_S, &min_ph);
-																					GetJSONInteger (json_p, ST_MAX_PH_S, &max_ph);
 
 																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
-																																	 min_ph, max_ph, description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s, data_p);
+																																	 min_ph_p, max_ph_p, description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s, data_p);
 
 																					/*
 																					 * The dates are copied by AllocateStudy so we can free our values.
@@ -802,6 +830,19 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																						{
 																							FreeTime (harvest_date_p);
 																						}
+
+
+																					if (min_ph_p)
+																						{
+																							FreeMemory (min_ph_p);
+																						}
+
+
+																					if (max_ph_p)
+																						{
+																							FreeMemory (max_ph_p);
+																						}
+
 
 																					/*
 																					 * If the Study wasn't allocated, free any allocated
@@ -897,6 +938,30 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p)
 	return success_flag;
 }
 
+
+static bool GetValidPHFromJSON (const json_t *study_json_p, const char *key_s, double64 **ph_pp)
+{
+	bool success_flag = false;
+	double64 d;
+
+	if (GetJSONReal (study_json_p, key_s, &d))
+		{
+			if (CopyValidReal (&d, ph_pp))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_json_p, "Failed to copy double value for \"%s\"", key_s);
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
 
 
 static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
@@ -1041,6 +1106,11 @@ static bool SetNonTrivialString (json_t *value_p, const char *key_s, const char 
 	return ((IsStringEmpty (value_s)) || (SetJSONString (value_p, key_s, value_s)));
 }
 
+
+static bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p)
+{
+	return ((value_p == NULL) || (SetJSONReal (json_p, key_s, *value_p)));
+}
 
 
 static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialServiceData *data_p)

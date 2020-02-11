@@ -37,6 +37,8 @@
 #include "math_utils.h"
 #include "string_utils.h"
 
+#include "boolean_parameter.h"
+
 /*
  * Static declarations
  */
@@ -193,20 +195,18 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (s
 static bool AddIndexingParameters (ServiceData *data_p, ParameterSet *params_p)
 {
 	Parameter *param_p = NULL;
-	SharedType def;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
 
-	def.st_boolean_value = false;
+	bool b = false;
 
-	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_ALL_DATA.npt_type, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", def, PL_ADVANCED)) != NULL)
+	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ADVANCED)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_TRIALS.npt_type, S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", def, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ADVANCED)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_STUDIES.npt_type, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", def, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ADVANCED)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_LOCATIONS.npt_type, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", def, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ADVANCED)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, params_p, group_p, S_REINDEX_TREATMENTS.npt_type, S_REINDEX_TREATMENTS.npt_name_s, "Reindex all Treatments", "Reindex all Treatments into Lucene", def, PL_ADVANCED)) != NULL)
 										{
 											return true;
 										}
@@ -363,12 +363,12 @@ static bool CloseDFWFieldTrialSubmissionService (Service *service_p)
 static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
 {
 	bool done_flag = false;
-	SharedType reindex_value;
 	OperationStatus status = GetServiceJobStatus (job_p);
+	const bool *index_flag_p = NULL;
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_ALL_DATA.npt_name_s, &reindex_value))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_ALL_DATA.npt_name_s, &index_flag_p))
 		{
-			if (reindex_value.st_boolean_value)
+			if ((index_flag_p != NULL) && (*index_flag_p == true))
 				{
 					ReindexAllData (job_p, data_p);
 
@@ -387,9 +387,9 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 				{
 					bool update_flag = false;
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &reindex_value))
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &index_flag_p))
 						{
-							if (reindex_value.st_boolean_value)
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
 									if (ReindexTrials (job_p, lucene_p, update_flag, data_p))
 										{
@@ -403,9 +403,9 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 								}
 						}
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_STUDIES.npt_name_s, &reindex_value))
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_STUDIES.npt_name_s, &index_flag_p))
 						{
-							if (reindex_value.st_boolean_value)
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
 									if (ReindexStudies (job_p, lucene_p, update_flag, data_p))
 										{
@@ -420,9 +420,9 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 								}
 						}
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_LOCATIONS.npt_name_s, &reindex_value))
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_LOCATIONS.npt_name_s, &index_flag_p))
 						{
-							if (reindex_value.st_boolean_value)
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
 									if (ReindexLocations (job_p, lucene_p, update_flag, data_p))
 										{
@@ -436,9 +436,9 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 								}
 						}
 
-					if (GetCurrentParameterValueFromParameterSet (param_set_p, S_REINDEX_TREATMENTS.npt_name_s, &reindex_value))
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TREATMENTS.npt_name_s, &index_flag_p))
 						{
-							if (reindex_value.st_boolean_value)
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
 									if (ReindexTreatments (job_p, lucene_p, update_flag, data_p))
 										{

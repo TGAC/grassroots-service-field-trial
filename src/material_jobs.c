@@ -89,26 +89,26 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
 bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
-
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Materials Submission", false, data_p, param_set_p);
 
 	if (group_p)
 		{
-			Parameter *param_p = NULL;
+			StringParameter *string_param_p = NULL;
 
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
+			if ((string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
+					if (SetUpStudiesListParameter (dfw_service_data_p, string_param_p, NULL))
 						{
-							StringParameter *string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
+							string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
 
 							if (string_param_p)
 								{
 									if (SetUpGenBanksListParameter ((DFWFieldTrialServiceData *) data_p, string_param_p))
 										{
 											const char c = S_DEFAULT_COLUMN_DELIMITER;
+											Parameter *param_p;
 
 											if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 												{
@@ -269,8 +269,14 @@ bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet 
 			bool case_senstive_search_flag = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
 			GeneBank *gene_bank_p = NULL;
 			Material *material_p = NULL;
+			const bool *sens_flag_p = NULL;
 
-			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &case_senstive_search_flag);
+			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &sens_flag_p);
+
+			if (sens_flag_p != NULL)
+				{
+					case_senstive_search_flag = *sens_flag_p;
+				}
 
 			material_p = GetMaterialByAccession (accession_s, gene_bank_p, case_senstive_search_flag, data_p);
 

@@ -79,11 +79,11 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study to update the phenotypes for", NULL, PL_ALL)) != NULL)
 				{
-					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
+					if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL))
 						{
 							char delim = S_DEFAULT_COLUMN_DELIMITER;
 
-							if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", delim, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &delim, PL_ADVANCED)) != NULL)
 								{
 									if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 										{

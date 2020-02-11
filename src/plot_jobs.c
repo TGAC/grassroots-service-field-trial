@@ -120,7 +120,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", NULL, PL_ALL)) != NULL)
 		{
 
-			if (SetUpStudiesListParameter (dfw_data_p, param_p, NULL))
+			if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL))
 				{
 					char c = S_DEFAULT_COLUMN_DELIMITER;
 

@@ -97,11 +97,11 @@ bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p
 bool RunForSubmissionGeneBankParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
-	bool add_flag = false;
+	const bool *add_flag_p = NULL;
 
-	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_ADD_GENE_BANK.npt_name_s, &add_flag))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_ADD_GENE_BANK.npt_name_s, &add_flag_p))
 		{
-			if (add_flag)
+			if ((add_flag_p != NULL) && (*add_flag_p == true))
 				{
 					bool success_flag = AddGeneBank (job_p, param_set_p, data_p);
 
@@ -203,12 +203,6 @@ bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, StringP
 														}		/* if (gene_bank_p) */
 
 												}		/* for (++ i; i < num_results; ++ i) */
-
-											if (!success_flag)
-												{
-													FreeParameter (param_p);
-													param_p = NULL;
-												}
 
 										}		/* if (param_p) */
 

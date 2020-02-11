@@ -28,6 +28,9 @@
 #include "io_utils.h"
 
 
+#include "char_parameter.h"
+#include "json_parameter.h"
+
 /*
  * static declarations
  */
@@ -58,7 +61,7 @@ static const char * const S_FORM_DESCRIPTION_S = "Form Description";
 
 
 static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimiter", PT_CHAR };
-static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_TABLE};
+static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_JSON_TABLE};
 
 
 static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
@@ -84,16 +87,11 @@ bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			SharedType def;
+			const char c = S_DEFAULT_COLUMN_DELIMITER;
 
-			InitSharedType (&def);
-			def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
-
-			if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+			if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
-
-					def.st_string_value_s = NULL;
 
 					if ((param_p = GetTreatmentsDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
@@ -111,49 +109,23 @@ bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_
 bool RunForSubmissionTreatmentParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
+	const json_t *phenotypes_json_p = NULL;
 
-	SharedType value;
-	InitSharedType (&value);
 
-	if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value))
+	if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &phenotypes_json_p))
 		{
 			/*
 			 * Has a spreadsheet been uploaded?
 			 */
-			if (! (IsStringEmpty (value.st_string_value_s)))
+			if (phenotypes_json_p && (json_array_size (phenotypes_json_p) > 0))
 				{
-					bool success_flag = false;
-					json_error_t e;
-					json_t *phenotypes_json_p = NULL;
-
-					job_done_flag = true;
-
-					/*
-					 * The data could be either an array of json objects
-					 * or a tabular string. so try it as json array first
-					 */
-					phenotypes_json_p = json_loads (value.st_string_value_s, 0, &e);
-
-					if (phenotypes_json_p)
+					if (!AddTreatmentsFromJSON (job_p, phenotypes_json_p, data_p))
 						{
-							if (AddTreatmentsFromJSON (job_p, phenotypes_json_p, data_p))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddTreatmentsFromJSON for failed");
-								}
-
-							json_decref (phenotypes_json_p);
-						}		/* if (phenotpnes_json_p) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load \"%s\" as JSON", value.st_string_value_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddTreatmentsFromJSON for failed");
 						}
+				}		/* if (phenotpnes_json_p) */
 
-					job_done_flag = true;
-				}		/* if (! (IsStringEmpty (value.st_string_value_s))) */
+			job_done_flag = true;
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true)) */
 
@@ -188,22 +160,16 @@ bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_nam
 bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
-
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Traits", false, data_p, param_set_p);
 
 	if (group_p)
 		{
+			const char c = S_DEFAULT_COLUMN_DELIMITER;
 			Parameter *param_p = NULL;
-			SharedType def;
 
-			InitSharedType (&def);
-			def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
-
-			if ((param_p = CreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type, false, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", NULL, def, NULL, NULL, PL_ADVANCED, NULL)) != NULL)
+			if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
-
-					def.st_string_value_s = NULL;
 
 					if ((param_p = GetTreatmentsDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
@@ -232,7 +198,7 @@ json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
 
 			if (results_p)
 				{
-					json_t *traits_p = json_array ();
+					traits_p = json_array ();
 
 					if (traits_p)
 						{
@@ -571,14 +537,7 @@ static json_t *GetTableParameterHints (void)
 
 static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
-	Parameter *param_p = NULL;
-	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-	SharedType def;
-
-	InitSharedType (&def);
-	def.st_string_value_s = NULL;
-
-	param_p = CreateAndAddParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, false, S_PHENOTYPE_TABLE.npt_name_s, "Treatment data to upload", "The data to upload", NULL, def, NULL, NULL, PL_ALL, NULL);
+	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, S_PHENOTYPE_TABLE.npt_name_s, "Treatment data to upload", "The data to upload", NULL, PL_ALL);
 
 	if (param_p)
 		{
@@ -590,6 +549,8 @@ static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, Pa
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
+							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{
 									success_flag = true;

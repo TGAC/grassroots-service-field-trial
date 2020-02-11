@@ -59,6 +59,9 @@ static const char * const S_STUDY_FACET_S = "Study";
 static const char * const S_TREATMENT_FACET_S = "Measured Variable";
 static const char * const S_LOCATION_FACET_S = "Location";
 
+static const uint32 S_DEFAULT_PAGE_NUMBER = 0;
+static const uint32 S_DEFAULT_PAGE_SIZE = 10;
+
 
 static const char *GetDFWFieldTrialSearchServiceName (Service *service_p);
 
@@ -170,7 +173,7 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (Service * UNUSED
 
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, DFWFieldTrialServiceData *data_p)
 {
-	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", S_ANY_FACET_S, PL_ALL);
+	StringParameter *param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", S_ANY_FACET_S, PL_ALL);
 
 	if (param_p)
 		{
@@ -184,7 +187,7 @@ static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *gro
 										{
 											if (CreateAndAddStringParameterOption (param_p, S_LOCATION_FACET_S, S_LOCATION_FACET_S))
 												{
-													return param_p;
+													return & (param_p -> sp_base_param);
 												}
 										}
 								}
@@ -210,11 +213,11 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 				{
 					if (AddFacetParameter (params_p, group_p, data_p))
 						{
-							uint32 def = 0;
+							uint32 def = S_DEFAULT_PAGE_NUMBER;
 
 							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_name_s, "Page", "The number of the results page to get", &def, PL_SIMPLE)) != NULL)
 								{
-									def = 10;
+									def = S_DEFAULT_PAGE_SIZE;
 
 									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", &def, PL_SIMPLE)) != NULL)
 										{
@@ -368,8 +371,8 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 						{
 							const char *keyword_s = NULL;
 							const char *facet_s = NULL;
-							uint32 page_number = 0;
-							uint32 page_size = 10;
+							const uint32 *page_number_p = NULL;
+							const uint32 *page_size_p = NULL;
 
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_s);
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &facet_s);
@@ -382,11 +385,11 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 										}
 								}
 
-							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &page_number);
-							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &page_size);
+							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &page_number_p);
+							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &page_size_p);
 
 
-							SearchFieldTrialsForKeyword (keyword_s, facet_s, page_number, page_size, job_p, VF_CLIENT_MINIMAL, data_p);
+							SearchFieldTrialsForKeyword (keyword_s, facet_s, page_number_p ? *page_number_p : S_DEFAULT_PAGE_NUMBER, page_size_p ? *page_size_p : S_DEFAULT_PAGE_SIZE, job_p, VF_CLIENT_MINIMAL, data_p);
 						}
 					else if (param_set_p -> ps_current_level == PL_ADVANCED)
 						{
