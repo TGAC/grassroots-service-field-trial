@@ -168,7 +168,7 @@ Instrument *GetInstrumentById (const bson_oid_t *instrument_id_p, const DFWField
 
 			if (query_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 1);
+					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
 					if (results_p)
 						{

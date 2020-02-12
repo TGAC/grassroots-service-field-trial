@@ -698,7 +698,7 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrial
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 1);
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
 			if (results_p)
 				{

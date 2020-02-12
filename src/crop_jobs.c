@@ -238,7 +238,7 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringPara
 		{
 			bson_t *query_p = NULL;
 			bson_t *opts_p =  BCON_NEW ( "sort", "{", CR_NAME_S, BCON_INT32 (1), "}", "collation", "{", "locale", BCON_UTF8 ("en"), "}");
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, 0, 0);
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (results_p)
 				{

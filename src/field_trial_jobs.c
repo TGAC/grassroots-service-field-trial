@@ -331,7 +331,7 @@ json_t *GetAllFieldTrialsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t 
 		{
 			bson_t *query_p = NULL;
 
-			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
 
 	return results_p;
@@ -595,7 +595,7 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 							if (opts_p)
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 									if (results_p)
 										{

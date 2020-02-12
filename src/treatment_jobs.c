@@ -194,7 +194,7 @@ json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
 		{
 			bson_t *query_p = NULL;
 			bson_t *opts_p =  BCON_NEW ( "sort", "{", MONGO_ID_S, BCON_INT32 (1), "}");
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (results_p)
 				{
@@ -261,7 +261,7 @@ Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialSe
 
 					if (query_p)
 						{
-							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL, NULL, 0);
+							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
 
 							if (results_p)
 								{
@@ -337,7 +337,7 @@ json_t *GetAllTreatmentsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *
 		{
 			bson_t *query_p = NULL;
 
-			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE])) */
 
 	return results_p;

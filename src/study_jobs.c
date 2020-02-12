@@ -1236,7 +1236,7 @@ json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p)
 			bson_t *query_p = NULL;
 			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
 
-			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (opts_p)
 				{
@@ -1573,7 +1573,7 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
 			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (results_p)
 				{

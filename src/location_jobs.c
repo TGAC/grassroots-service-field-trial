@@ -654,7 +654,7 @@ json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *o
 		{
 			bson_t *query_p = NULL;
 
-			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
 
 	return results_p;

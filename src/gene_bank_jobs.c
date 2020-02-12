@@ -152,7 +152,7 @@ bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, StringP
 		{
 			bson_t *query_p = NULL;
 			bson_t *opts_p = BCON_NEW ( "sort", "{", CONTEXT_PREFIX_SCHEMA_ORG_S "name", BCON_INT32 (1), "}");
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p, NULL, 0);
+			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
 			if (results_p)
 				{

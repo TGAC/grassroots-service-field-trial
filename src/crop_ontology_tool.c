@@ -486,7 +486,7 @@ static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const 
 				{
 					if (SetJSONString (query_p, key_s, term_s))
 						{
-							if (FindMatchingMongoDocumentsByJSON (tool_p, query_p, NULL, opts_p, NULL, 1))
+							if (FindMatchingMongoDocumentsByJSON (tool_p, query_p, NULL, opts_p))
 								{
 									json_t *results_p = GetAllExistingMongoResultsAsJSON (tool_p);
 
