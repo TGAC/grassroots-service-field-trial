@@ -34,15 +34,15 @@
 
 
 
-static const char *GetPlotsSubmissionServiceName (Service *service_p);
+static const char *GetPlotsSubmissionServiceName (const Service *service_p);
 
-static const char *GetPlotsSubmissionServiceDesciption (Service *service_p);
+static const char *GetPlotsSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetPlotsSubmissionServiceInformationUri (Service *service_p);
+static const char *GetPlotsSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleasePlotsSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -108,26 +108,26 @@ Service *GetPlotsSubmissionService (GrassrootsServer *grassroots_p)
 
 
 
-static const char *GetPlotsSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetPlotsSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Plots";
 }
 
 
-static const char *GetPlotsSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetPlotsSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial plots";
 }
 
 
-static const char *GetPlotsSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetPlotsSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionPlotParameterTypeForNamedParameter (param_name_s, pt_p);
 }

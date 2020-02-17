@@ -33,15 +33,15 @@
 
 
 
-static const char *GetFieldTrialSubmissionServiceName (Service *service_p);
+static const char *GetFieldTrialSubmissionServiceName (const Service *service_p);
 
-static const char *GetFieldTrialSubmissionServiceDesciption (Service *service_p);
+static const char *GetFieldTrialSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetFieldTrialSubmissionServiceInformationUri (Service *service_p);
+static const char *GetFieldTrialSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseFieldTrialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -105,26 +105,26 @@ Service *GetFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetFieldTrialSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetFieldTrialSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trials";
 }
 
 
-static const char *GetFieldTrialSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetFieldTrialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial data";
 }
 
 
-static const char *GetFieldTrialSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p);
 }

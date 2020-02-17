@@ -35,15 +35,15 @@
 
 
 
-static const char *GetCropSubmissionServiceName (Service *service_p);
+static const char *GetCropSubmissionServiceName (const Service *service_p);
 
-static const char *GetCropSubmissionServiceDesciption (Service *service_p);
+static const char *GetCropSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetCropSubmissionServiceInformationUri (Service *service_p);
+static const char *GetCropSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetCropSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetCropSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseCropSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -106,26 +106,26 @@ Service *GetCropSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetCropSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Crop";
 }
 
 
-static const char *GetCropSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial crop data";
 }
 
 
-static const char *GetCropSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetCropSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetCropSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionCropParameterTypeForNamedParameter (param_name_s, pt_p);
 }

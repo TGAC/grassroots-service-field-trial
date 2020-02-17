@@ -63,15 +63,15 @@ static const uint32 S_DEFAULT_PAGE_NUMBER = 0;
 static const uint32 S_DEFAULT_PAGE_SIZE = 10;
 
 
-static const char *GetDFWFieldTrialSearchServiceName (Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceName (const Service *service_p);
 
-static const char *GetDFWFieldTrialSearchServiceDesciption (Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceDesciption (const Service *service_p);
 
-static const char *GetDFWFieldTrialSearchServiceInformationUri (Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 
 static void ReleaseDFWFieldTrialSearchServiceParameters (Service *service_p, ParameterSet *params_p);
@@ -153,19 +153,19 @@ Service *GetDFWFieldTrialSearchService (GrassrootsServer *grassroots_p)
 
 
 
-static const char *GetDFWFieldTrialSearchServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Search Field Trials";
 }
 
 
-static const char *GetDFWFieldTrialSearchServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to search field trial data";
 }
 
 
-static const char *GetDFWFieldTrialSearchServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
@@ -287,7 +287,7 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 }
 
 
-static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	bool success_flag = true;
 

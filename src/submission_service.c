@@ -51,15 +51,15 @@ static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOO
 static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_BOOLEAN };
 
 
-static const char *GetDFWFieldTrialSubmissionServiceName (Service *service_p);
+static const char *GetDFWFieldTrialSubmissionServiceName (const Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (Service *service_p);
+static const char *GetDFWFieldTrialSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service *service_p);
+static const char *GetDFWFieldTrialSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseDFWFieldTrialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -129,25 +129,25 @@ Service *GetDFWFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 
 
 
-static const char *GetDFWFieldTrialSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit any Field Trial data";
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial data";
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
-static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	bool success_flag = true;
 

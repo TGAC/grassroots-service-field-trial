@@ -1172,7 +1172,10 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 
 	if (param_p)
 		{
-			if (SetDoubleParameterBounds ((DoubleParameter *) param_p, 0.0, 14.0))
+			const double min_ph = 0.0f;
+			const double max_ph = 14.0f;
+
+			if (SetDoubleParameterBounds ((DoubleParameter *) param_p, &min_ph, &max_ph))
 				{
 					return param_p;
 				}
