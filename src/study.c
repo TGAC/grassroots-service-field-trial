@@ -343,6 +343,17 @@ void FreeStudy (Study *study_p)
 			FreeCopiedString (study_p -> st_growing_conditions_s);
 		}
 
+	if (study_p -> st_min_ph_p)
+		{
+			FreeMemory (study_p -> st_min_ph_p);
+		}
+
+	if (study_p -> st_max_ph_p)
+		{
+			FreeMemory (study_p -> st_max_ph_p);
+		}
+
+
 	if (study_p -> st_parent_p)
 		{
 			if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
