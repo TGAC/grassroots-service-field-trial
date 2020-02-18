@@ -170,7 +170,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 	if (defaults_flag)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", NULL, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", S_EMPTY_LIST_OPTION_S, PL_ADVANCED)) != NULL)
 				{
 					if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, S_EMPTY_LIST_OPTION_S))
 						{
@@ -241,9 +241,9 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																																										{
 																																											if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
 																																												{
-																																													if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range or -1 if the value is unknown"))
+																																													if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
 																																														{
-																																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range or -1 if the value is unknown"))
+																																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
 																																																{
 																																																	success_flag = true;
 																																																}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
