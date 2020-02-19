@@ -40,7 +40,7 @@ static NamedParameterType S_ONTOLOGY_URL = { "CR Ontology URL", PT_STRING };
 static NamedParameterType S_SYNONYMS = { "CR Synonyms", PT_LARGE_STRING };
 
 
-static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_s);
+static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_id_s);
 
 
 /*
@@ -271,17 +271,19 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringPara
 
 													if (id_s)
 														{
-															if (param_p)
+															if (default_crop_s)
 																{
-																	success_flag  = true;
-
-																	if ((!default_crop_s) && (i == 0))
+																	if (strcmp (crop_p -> cr_name_s, default_crop_s) == 0)
 																		{
-																			success_flag = SetDefaultCropValue (param_p, crop_p -> cr_name_s);
+																			success_flag = SetDefaultCropValue (param_p, id_s);
 																		}
-
-																	success_flag = CreateAndAddStringParameterOption (param_p, id_s, crop_p -> cr_name_s);
 																}
+															else if (i == 0)
+																{
+																	success_flag = SetDefaultCropValue (param_p, id_s);
+																}
+
+															success_flag = CreateAndAddStringParameterOption (param_p, id_s, crop_p -> cr_name_s);
 
 															FreeCopiedString (id_s);
 														}
@@ -290,15 +292,6 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringPara
 												}		/* if (crop_p) */
 
 										}		/* for (i = 0; i < num_results; ++ i)) */
-
-
-									if (success_flag)
-										{
-											if (default_crop_s)
-												{
-													success_flag = SetDefaultCropValue (param_p, default_crop_s);
-												}
-										}
 
 								}		/* if (num_results > 0) */
 							else
@@ -323,13 +316,13 @@ bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringPara
 }
 
 
-static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_s)
+static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_id_s)
 {
 	bool success_flag = false;
 
-	if (SetStringParameterCurrentValue (param_p, crop_s))
+	if (SetStringParameterCurrentValue (param_p, crop_id_s))
 		{
-			if (SetStringParameterDefaultValue (param_p, crop_s))
+			if (SetStringParameterDefaultValue (param_p, crop_id_s))
 				{
 					success_flag = true;
 				}
