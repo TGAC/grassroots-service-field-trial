@@ -35,15 +35,15 @@
 
 
 
-static const char *GetMaterialSubmissionServiceName (Service *service_p);
+static const char *GetMaterialSubmissionServiceName (const Service *service_p);
 
-static const char *GetMaterialSubmissionServiceDesciption (Service *service_p);
+static const char *GetMaterialSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetMaterialSubmissionServiceInformationUri (Service *service_p);
+static const char *GetMaterialSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetMaterialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetMaterialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetMaterialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseMaterialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -106,26 +106,26 @@ Service *GetMaterialSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetMaterialSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetMaterialSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Materials";
 }
 
 
-static const char *GetMaterialSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetMaterialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial Materials";
 }
 
 
-static const char *GetMaterialSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetMaterialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetMaterialSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetMaterialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionMaterialParameterTypeForNamedParameter (param_name_s, pt_p);
 }

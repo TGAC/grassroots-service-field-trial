@@ -52,8 +52,12 @@ bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_NAME.npt_type, S_GENE_BANK_NAME.npt_name_s, "Name", "The name of the Gene Bank", NULL, PL_ALL)) != NULL)
 				{
+					param_p -> pa_required_flag = true;
+
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_URL.npt_type, S_GENE_BANK_URL.npt_name_s, "URL", "The web page with information about the Gene Bank", NULL, PL_ALL)) != NULL)
 						{
+							param_p -> pa_required_flag = true;
+
 							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANK_API_URL.npt_type, S_GENE_BANK_API_URL.npt_name_s, "API URL", "The API URL for the Gene Bank", NULL, PL_ALL)) != NULL)
 								{
 									bool add_flag = false;

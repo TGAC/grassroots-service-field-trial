@@ -71,6 +71,8 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", NULL, PL_ALL)) != NULL)
 		{
+			param_p -> pa_required_flag = true;
+
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", NULL, PL_ALL)) != NULL)
 				{
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", NULL, PL_ALL)) != NULL)

@@ -494,7 +494,11 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 
 							if (id_s)
 								{
-									ClearCachedStudy (id_s, data_p);
+									if (data_p -> dftsd_study_cache_path_s)
+										{
+											ClearCachedStudy (id_s, data_p);
+										}
+
 									FreeCopiedString (id_s);
 								}
 							else

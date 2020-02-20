@@ -36,15 +36,15 @@
 
 
 
-static const char *GetGeneBankSubmissionServiceName (Service *service_p);
+static const char *GetGeneBankSubmissionServiceName (const Service *service_p);
 
-static const char *GetGeneBankSubmissionServiceDesciption (Service *service_p);
+static const char *GetGeneBankSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetGeneBankSubmissionServiceInformationUri (Service *service_p);
+static const char *GetGeneBankSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetGeneBankSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetGeneBankSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetGeneBankSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseGeneBankSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -107,26 +107,26 @@ Service *GetGeneBankSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetGeneBankSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetGeneBankSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Gene Banks";
 }
 
 
-static const char *GetGeneBankSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetGeneBankSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial GeneBanks";
 }
 
 
-static const char *GetGeneBankSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetGeneBankSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetGeneBankSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetGeneBankSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionGeneBankParameterTypeForNamedParameter (param_name_s, pt_p);
 }

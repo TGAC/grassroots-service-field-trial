@@ -57,6 +57,8 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", NULL, PL_SIMPLE)) != NULL)
 		{
+			param_p -> pa_required_flag = true;
+
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", NULL, PL_SIMPLE)) != NULL)
 				{
 					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ADD.npt_name_s, "Add", "Add a new Field Trial", false, PL_SIMPLE)) != NULL)

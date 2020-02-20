@@ -52,6 +52,8 @@ DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 		{
 			data_p -> dftsd_mongo_p =  NULL;
 			data_p -> dftsd_database_s = NULL;
+			data_p -> dftsd_facet_key_s = NULL;
+			data_p -> dftsd_study_cache_path_s = NULL;
 
 			memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
 

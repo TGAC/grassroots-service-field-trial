@@ -33,15 +33,15 @@
 
 
 
-static const char *GetLocationSubmissionServiceName (Service *service_p);
+static const char *GetLocationSubmissionServiceName (const Service *service_p);
 
-static const char *GetLocationSubmissionServiceDesciption (Service *service_p);
+static const char *GetLocationSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetLocationSubmissionServiceInformationUri (Service *service_p);
+static const char *GetLocationSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (const  Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseLocationSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -104,26 +104,26 @@ Service *GetLocationSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetLocationSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Location";
 }
 
 
-static const char *GetLocationSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial locations";
 }
 
 
-static const char *GetLocationSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (const  Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionLocationParameterTypeForNamedParameter (param_name_s, pt_p);
 }

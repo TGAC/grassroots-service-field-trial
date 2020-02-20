@@ -29,9 +29,9 @@
 #include "crop_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
-#include "time_util.h"
 #include "dfw_util.h"
 #include "key_value_pair.h"
+#include "time_util.h"
 
 #include "string_parameter.h"
 #include "double_parameter.h"
@@ -990,14 +990,16 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 	if (id_s)
 		{
-			study_id_p = GetBSONOidFromString (id_s);
-
-			if (!study_id_p)
+			if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load study \"%s\" for editing", id_s);
-					return false;
-				}
+					study_id_p = GetBSONOidFromString (id_s);
 
+					if (!study_id_p)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load study \"%s\" for editing", id_s);
+							return false;
+						}
+				}
 		}		/* if (id_value.st_string_value_s) */
 
 
