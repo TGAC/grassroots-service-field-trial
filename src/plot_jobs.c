@@ -104,6 +104,9 @@ static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const
 
 static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const DFWFieldTrialServiceData *data_p);
 
+static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const double64 *width_p, const double64 *height_p);
+
+
 /*
  * API definitions
  */
@@ -339,6 +342,12 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 					if (plots_json_p)
 						{
 							success_flag = true;
+						}
+					else
+						{
+							/*
+							 * Are there default values for the study
+							 */
 						}
 				}
 			else
@@ -780,6 +789,19 @@ static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTr
 				}		/* if (plots_table_p) */
 
 		}		/* if (study_p -> st_plots_p -> ll_size >= 0) */
+	else
+		{
+			/*
+			 * Does the study have default values to load?
+			 */
+			if (HasStudyGotPlotLayoutDetails (study_p))
+				{
+					const uint32 num_rows = study_p -> st_num_rows_p;
+					const uint32 num_cols = study_p -> st_num_columns_p;
+
+
+				}
+		}
 
 	return plots_table_p;
 }
@@ -822,6 +844,33 @@ static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const
 		}		/* if (rows_p) */
 
 	return success_flag;
+}
+
+
+static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const double64 *width_p, const double64 *height_p)
+{
+	json_t *table_row_p = json_object ();
+
+	if (table_row_p)
+		{
+			if (SetJSONInteger (table_row_p, S_ROW_TITLE_S, row))
+				{
+					if (SetJSONInteger (table_row_p, S_COLUMN_TITLE_S, column))
+						{
+							if ((width_p == NULL) || (SetJSONReal (table_row_p, S_WIDTH_TITLE_S, *width_p)))
+								{
+									if ((height_p == NULL) || (SetJSONReal (table_row_p, S_LENGTH_TITLE_S, *height_p)))
+										{
+											return table_row_p;
+										}
+								}
+						}
+				}
+
+			json_decref (table_row_p);
+		}
+
+	return NULL;
 }
 
 

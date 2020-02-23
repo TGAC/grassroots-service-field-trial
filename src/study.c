@@ -152,6 +152,12 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 																															study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
 																															study_p -> st_design_s = copied_design_s;
 
+																															study_p -> st_default_plot_width_p = NULL;
+																															study_p -> st_default_plot_height_p = NULL;
+																															study_p -> st_num_rows_p = NULL;
+																															study_p -> st_num_columns_p = NULL;
+
+
 																															return study_p;
 																														}
 
@@ -305,7 +311,6 @@ void FreeStudy (Study *study_p)
 			FreeLinkedList (study_p -> st_plots_p);
 		}
 
-
 	if (study_p -> st_sowing_date_p)
 		{
 			FreeTime (study_p -> st_sowing_date_p);
@@ -315,7 +320,6 @@ void FreeStudy (Study *study_p)
 		{
 			FreeTime (study_p -> st_harvest_date_p);
 		}
-
 
 	if (study_p -> st_current_crop_p)
 		{
@@ -353,6 +357,25 @@ void FreeStudy (Study *study_p)
 			FreeMemory (study_p -> st_max_ph_p);
 		}
 
+	if (study_p -> st_default_plot_width_p)
+		{
+			FreeMemory (study_p -> st_default_plot_width_p);
+		}
+
+	if (study_p -> st_default_plot_height_p)
+		{
+			FreeMemory (study_p -> st_default_plot_height_p);
+		}
+
+	if (study_p -> st_num_rows_p)
+		{
+			FreeMemory (study_p -> st_num_rows_p);
+		}
+
+	if (study_p -> st_num_columns_p)
+		{
+			FreeMemory (study_p -> st_num_columns_p);
+		}
 
 	if (study_p -> st_parent_p)
 		{
@@ -361,6 +384,8 @@ void FreeStudy (Study *study_p)
 					//FreeFieldTrial (study_p -> st_parent_p);
 				}
 		}
+
+
 
 	FreeMemory (study_p);
 }
@@ -931,6 +956,12 @@ Study *GetStudyById (bson_oid_t *study_id_p, const ViewFormat format, const DFWF
 	Study *study_p = GetDFWObjectById (study_id_p, DFTD_STUDY, GetStudyCallback, format, data_p);
 
 	return study_p;
+}
+
+
+bool HasStudyGotPlotLayoutDetails (const Study *study_p)
+{
+	return ((study_p -> st_num_rows_p) && (*study_p -> st_num_rows_p > 0) && (study_p -> st_num_columns_p) && (*study_p -> st_num_columns_p > 0);
 }
 
 

@@ -162,6 +162,14 @@ typedef struct Study
 
 	char *st_phenotype_gathering_notes_s;
 
+	double64 *st_default_plot_width_p;
+
+	double64 *st_default_plot_height_p;
+
+	uint32 *st_num_rows_p;
+
+	uint32 *st_num_columns_p;
+
 } Study;
 
 
@@ -205,6 +213,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyByIdString (const char *arst_id_s, 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *arst_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *study_p);
 
 #ifdef __cplusplus
 }
