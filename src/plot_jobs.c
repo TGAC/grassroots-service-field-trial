@@ -106,6 +106,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 
 static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const double64 *width_p, const double64 *height_p);
 
+static json_t *GeneratePlotsTemplate (const Study *study_p);
 
 /*
  * API definitions
@@ -799,7 +800,7 @@ static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTr
 					const uint32 num_rows = study_p -> st_num_rows_p;
 					const uint32 num_cols = study_p -> st_num_columns_p;
 
-
+					plots_table_p = GeneratePlotsTemplate (study_p);
 				}
 		}
 
@@ -845,6 +846,60 @@ static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const
 
 	return success_flag;
 }
+
+
+static json_t *GeneratePlotsTemplate (const Study *study_p)
+{
+	json_t *plots_p = json_array ();
+
+	if (plots_p)
+		{
+			bool success_flag = true;
+			const uint32 num_rows = * (study_p -> st_num_rows_p);
+			const uint32 num_cols = * (study_p -> st_num_columns_p);
+			uint32 i = 1;
+
+			while ((i <= num_rows) && (success_flag == true))
+				{
+					uint32 j = 1;
+
+					while ((j <= num_cols) && (success_flag == true))
+						{
+							json_t *row_json_p = GetPlotRowTemplate (i, j, study_p -> st_default_plot_width_p, study_p -> st_default_plot_length_p);
+
+							if (row_json_p)
+								{
+									if (!json_array_append_new (plots_p, row_json_p) == 0)
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add plot template for [ " UINT32_FMT ", " UINT32_FMT " ]", i, j);
+											json_decref (row_json_p);
+											success_flag = false;
+										}
+
+								}		/* if (plot_row_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to generate plot template for [ " UINT32_FMT ", " UINT32_FMT " ]", i, j);
+									success_flag = false;
+								}
+
+							++ j;
+						}		/* while ((j <= num_cols) && (success_flag == true)) */
+
+					++ i;
+				}		/* while ((i <= num_rows) && (success_flag == true)) */
+
+			if (success_flag)
+				{
+					return plots_p;
+				}
+
+			json_decref (plots_p);
+		}		/* if (plots_p) */
+
+	return NULL;
+}
+
 
 
 static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const double64 *width_p, const double64 *height_p)

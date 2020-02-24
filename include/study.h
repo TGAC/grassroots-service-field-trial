@@ -103,6 +103,16 @@ STUDY_PREFIX const char *ST_GROWING_CONDITIONS_S STUDY_VAL ("growing_conditions"
 STUDY_PREFIX const char *ST_PHENOTYPE_GATHERING_NOTES_S STUDY_VAL ("phenotype_gathering_notes");
 
 
+STUDY_PREFIX const char *ST_NUMBER_OF_PLOT_ROWS_S STUDY_VAL ("num_rows");
+
+STUDY_PREFIX const char *ST_NUMBER_OF_PLOT_COLUMN_S STUDY_VAL ("num_columns");
+
+
+
+STUDY_PREFIX const char *ST_PLOT_LENGTH_S STUDY_VAL ("plot_length");
+
+STUDY_PREFIX const char *ST_PLOT_WIDTH_S STUDY_VAL ("plot_width");
+
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
@@ -164,7 +174,7 @@ typedef struct Study
 
 	double64 *st_default_plot_width_p;
 
-	double64 *st_default_plot_height_p;
+	double64 *st_default_plot_length_p;
 
 	uint32 *st_num_rows_p;
 
@@ -193,7 +203,10 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
 											const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
 											MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const double64 *min_ph_p, const double64 *max_ph_p, const char *description_s,
-											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s, const DFWFieldTrialServiceData *data_p);
+											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
+											const uint32 *num_rows_p, const uint32 *num_cols_p, const double64 *plot_width_p, const double64 *plot_length_p,
+											const DFWFieldTrialServiceData *data_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 

@@ -37,6 +37,8 @@
 #include "double_parameter.h"
 #include "time_parameter.h"
 #include "boolean_parameter.h"
+#include "signed_int_parameter.h"
+#include "unsigned_int_parameter.h"
 
 
 /*
@@ -114,6 +116,8 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 														const char **phenotype_gathering_notes_ss,struct tm **sowing_time_pp, struct tm **harvest_time_pp,
 													 double64 **ph_min_pp, double64 **ph_max_pp);
 
+
+static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p);
 
 
 
@@ -247,7 +251,14 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																																														{
 																																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
 																																																{
-																																																	success_flag = true;
+																																																	if (AddDefaultPlotsParameters (data_p, param_set_p))
+																																																		{
+																																																			success_flag = true;
+																																																		}
+																																																	else
+																																																		{
+																																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddDefaultPlotsParameters failed");
+																																																		}
 																																																}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
 																																															else
 																																																{
@@ -492,6 +503,22 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	else if (strcmp (param_name_s, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_PHENOTYPE_GATHERING_NOTES.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_NUM_PLOT_ROWS.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_NUM_PLOT_ROWS.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_NUM_PLOT_COLS.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_NUM_PLOT_COLS.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_WIDTH.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_WIDTH.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_LENGTH.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_LENGTH.npt_type;
 		}
 	else
 		{
@@ -1055,7 +1082,10 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																					const struct tm *harvest_date_p = NULL;
 																					const double64 *min_ph_p = NULL;
 																					const double64 *max_ph_p = NULL;
-
+																					const uint32 *num_rows_p = NULL;
+																					const uint32 *num_cols_p = NULL;
+																					const double64 *plot_width_p = NULL;
+																					const double64 *plot_length_p = NULL;
 
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
@@ -1073,11 +1103,18 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_p);
 																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_p);
 
+																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_ROWS.npt_name_s, &num_rows_p);
+																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_COLS.npt_name_s, &num_cols_p);
+																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_WIDTH.npt_name_s, &plot_width_p);
+																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_LENGTH.npt_name_s, &plot_length_p);
+
 
 																					study_p = AllocateStudy (study_id_p, name_s, soil_s, data_link_s, aspect_s,
 																																	 slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																																	 min_ph_p, max_ph_p, notes_s, design_s,
-																																	 growing_conditions_s, phenotype_notes_s, data_p);
+																																	 growing_conditions_s, phenotype_notes_s,
+																																	 num_rows_p, num_cols_p, plot_width_p, plot_length_p,
+																																	 data_p);
 
 																					if (study_p)
 																						{
@@ -1976,3 +2013,28 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 }
 
 
+static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p)
+{
+	bool success_flag = false;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data", false, service_data_p, params_p);
+
+	if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Number of plot rows", "The number of plot rows", NULL, PL_ALL))
+		{
+			if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_COLS.npt_name_s, "Number of plot columns", "The number of plot columns", NULL, PL_ALL))
+				{
+					if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL))
+						{
+							if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Plot height", "The default height, in metres, of each plot", NULL, PL_ALL))
+								{
+									return true;
+								}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
+
+						}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
+
+				}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
+
+		}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
+
+
+	return success_flag;
+}

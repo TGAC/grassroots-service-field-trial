@@ -335,6 +335,7 @@ bool CopyValidReal (const double64 *src_p, double64 **dest_pp)
 
 			if (dest_p)
 				{
+					*dest_p = *src_p;
 					*dest_pp = dest_p;
 				}
 			else
@@ -349,6 +350,34 @@ bool CopyValidReal (const double64 *src_p, double64 **dest_pp)
 
 	return success_flag;
 }
+
+
+bool CopyValidUnsignedInteger (const uint32 *src_p, uint32 **dest_pp)
+{
+	bool success_flag = true;
+
+	if (src_p)
+		{
+			uint32 *dest_p = (uint32 *) AllocMemory (sizeof (uint32));
+
+			if (dest_p)
+				{
+					*dest_p = *src_p;
+					*dest_pp = dest_p;
+				}
+			else
+				{
+					success_flag = false;
+				}
+		}
+	else
+		{
+			*dest_pp = NULL;
+		}
+
+	return success_flag;
+}
+
 
 
 bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s)
