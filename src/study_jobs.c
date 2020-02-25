@@ -1385,6 +1385,25 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringPa
 			json_decref (results_p);
 		}		/* if (results_p) */
 
+	if (success_flag)
+		{
+			if (active_study_p)
+				{
+					char *id_s = GetBSONOidAsString (active_study_p -> st_id_p);
+
+					if (id_s)
+						{
+							success_flag = SetStringParameterDefaultValue (param_p, id_s);
+							FreeCopiedString (id_s);
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id string for active study \"%s\"", active_study_p -> st_name_s);
+							success_flag = false;
+						}
+				}
+		}
+
 	return success_flag;
 }
 
