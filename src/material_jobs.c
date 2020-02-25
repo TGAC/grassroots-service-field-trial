@@ -99,7 +99,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-					if (SetUpStudiesListParameter (dfw_service_data_p, string_param_p, NULL))
+					if (SetUpStudiesListParameter (dfw_service_data_p, string_param_p, NULL, false))
 						{
 							string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
 

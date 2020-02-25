@@ -61,7 +61,7 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 		{
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-			if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL))
+			if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL, false))
 				{
 					const char delim = S_DEFAULT_COLUMN_DELIMITER;
 

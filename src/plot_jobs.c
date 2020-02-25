@@ -123,8 +123,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", NULL, PL_ALL)) != NULL)
 		{
-
-			if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL))
+			if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p, false))
 				{
 					char c = S_DEFAULT_COLUMN_DELIMITER;
 
@@ -797,9 +796,6 @@ static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTr
 			 */
 			if (HasStudyGotPlotLayoutDetails (study_p))
 				{
-					const uint32 num_rows = study_p -> st_num_rows_p;
-					const uint32 num_cols = study_p -> st_num_columns_p;
-
 					plots_table_p = GeneratePlotsTemplate (study_p);
 				}
 		}

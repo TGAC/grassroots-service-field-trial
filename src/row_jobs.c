@@ -79,7 +79,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study to update the phenotypes for", NULL, PL_ALL)) != NULL)
 				{
-					if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL))
+					if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL, false))
 						{
 							char delim = S_DEFAULT_COLUMN_DELIMITER;
 

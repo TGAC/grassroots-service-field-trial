@@ -120,7 +120,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchStudyParameterTypeForNamedParameter 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, JSONProcessor *processor_p, DFWFieldTrialServiceData *data_p);

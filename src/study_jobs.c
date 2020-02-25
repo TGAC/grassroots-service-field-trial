@@ -176,7 +176,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 		{
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", S_EMPTY_LIST_OPTION_S, PL_ADVANCED)) != NULL)
 				{
-					if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, S_EMPTY_LIST_OPTION_S))
+					if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
 						{
 							/*
 							 * We want to update all of the values in the form
@@ -1292,7 +1292,7 @@ json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p)
 }
 
 
-bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s)
+bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	json_t *results_p = GetAllStudiesAsJSON (data_p);
@@ -1309,7 +1309,7 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringPa
 					/*
 					 * If there's an empty option, add it
 					 */
-					if (empty_option_s)
+					if (empty_option_flag)
 						{
 							success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
 						}
@@ -1980,7 +1980,7 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 
 					if (params_json_p)
 						{
-							const char *study_id_s = GetStudyDefaultValueFromJSON (study_param_type.npt_name_s, param_set_json_p);
+							const char *study_id_s = GetStudyDefaultValueFromJSON (study_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing study id?
@@ -1991,7 +1991,7 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 
 									if (!study_p)
 										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to load Study with id \"%s\"", study_id_s);
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Study with id \"%s\"", study_id_s);
 										}
 
 								}		/* if (study_id_s) */

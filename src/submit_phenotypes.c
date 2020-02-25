@@ -36,15 +36,15 @@
 
 
 
-static const char *GetPhenotypesSubmissionServiceName (Service *service_p);
+static const char *GetPhenotypesSubmissionServiceName (const Service *service_p);
 
-static const char *GetPhenotypesSubmissionServiceDesciption (Service *service_p);
+static const char *GetPhenotypesSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetPhenotypesSubmissionServiceInformationUri (Service *service_p);
+static const char *GetPhenotypesSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetPhenotypesSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetPhenotypesSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetPhenotypesSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleasePhenotypesSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -107,26 +107,26 @@ Service *GetPhenotypesSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetPhenotypesSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetPhenotypesSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Phenotypes";
 }
 
 
-static const char *GetPhenotypesSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetPhenotypesSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial phenotypes data";
 }
 
 
-static const char *GetPhenotypesSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetPhenotypesSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetPhenotypesSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetPhenotypesSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p);
 }

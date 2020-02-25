@@ -88,7 +88,7 @@ bool AddSubmissionDrillingParams (ServiceData *data_p, ParameterSet *param_set_p
 		{
 			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-			if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL))
+			if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL, false))
 				{
 					def.st_char_value = S_DEFAULT_COLUMN_DELIMITER;
 
