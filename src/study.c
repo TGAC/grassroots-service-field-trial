@@ -956,6 +956,31 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																						}
 
 
+																					if (num_plot_rows_p)
+																						{
+																							FreeMemory (num_plot_rows_p);
+																						}
+
+
+																					if (num_plot_columns_p)
+																						{
+																							FreeMemory (num_plot_columns_p);
+																						}
+
+
+																					if (plot_width_p)
+																						{
+																							FreeMemory (plot_width_p);
+																						}
+
+
+																					if (plot_length_p)
+																						{
+																							FreeMemory (plot_length_p);
+																						}
+
+
+
 																					/*
 																					 * If the Study wasn't allocated, free any allocated
 																					 * resources.
