@@ -115,7 +115,8 @@ const char *GetStudySubmissionServiceName (const Service * UNUSED_PARAM (service
 
 static const char *GetStudySubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial studies";
+	return "Following the same nomenclature as <a href='https://brapi.docs.apiary.io/'>BrAPI</a>, a Study is a phenotyping experiment "
+			"taking place at a single location. One or more Studies can take place within a single Trial.";
 }
 
 

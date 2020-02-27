@@ -113,7 +113,8 @@ static const char *GetFieldTrialSubmissionServiceName (const Service * UNUSED_PA
 
 static const char *GetFieldTrialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial data";
+	return "Add a Field Trial to the system. Following the same nomenclature as <a href='https://brapi.docs.apiary.io/'>BrAPI</a>,"
+			" a Field Trial contains multiple Studies. This is equivalent to an Investigation in <a href='https://www.miappe.org/'>MIAPPE</a>.";
 }
 
 
