@@ -36,15 +36,15 @@
 
 
 
-static const char *GetTreatmentSubmissionServiceName (Service *service_p);
+static const char *GetTreatmentSubmissionServiceName (const Service *service_p);
 
-static const char *GetTreatmentSubmissionServiceDesciption (Service *service_p);
+static const char *GetTreatmentSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetTreatmentSubmissionServiceInformationUri (Service *service_p);
+static const char *GetTreatmentSubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseTreatmentSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -107,26 +107,26 @@ Service *GetTreatmentsSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetTreatmentSubmissionServiceName (Service * UNUSED_PARAM (service_p))
+static const char *GetTreatmentSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Measured Variables";
 }
 
 
-static const char *GetTreatmentSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetTreatmentSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial measured variables";
 }
 
 
-static const char *GetTreatmentSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetTreatmentSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p);
 }

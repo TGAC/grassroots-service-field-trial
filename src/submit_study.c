@@ -35,13 +35,13 @@
 
 
 
-static const char *GetStudySubmissionServiceDesciption (Service *service_p);
+static const char *GetStudySubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetStudySubmissionServiceInformationUri (Service *service_p);
+static const char *GetStudySubmissionServiceInformationUri (const Service *service_p);
 
 static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetStudySubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseStudySubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
@@ -107,26 +107,26 @@ Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 
 
 
-const char *GetStudySubmissionServiceName (Service * UNUSED_PARAM (service_p))
+const char *GetStudySubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Study";
 }
 
 
-static const char *GetStudySubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetStudySubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial studies";
 }
 
 
-static const char *GetStudySubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetStudySubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetStudySubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetStudySubmissionServiceParameterTypesForNamedParameters (const struct Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
 	return GetSubmissionStudyParameterTypeForNamedParameter (param_name_s, pt_p);
 }

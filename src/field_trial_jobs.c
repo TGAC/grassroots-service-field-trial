@@ -61,14 +61,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", NULL, PL_SIMPLE)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ADD.npt_name_s, "Add", "Add a new Field Trial", false, PL_SIMPLE)) != NULL)
-						{
-							success_flag = true;
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_ADD.npt_name_s);
-						}
+					success_flag = true;
 				}
 			else
 				{
@@ -88,28 +81,23 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 {
 	bool job_done_flag = false;
 	const char *name_s = NULL;
-	const char *team_s = NULL;
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
 		{
-			const bool *add_flag_p = NULL;
-
-			GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
-
-			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ADD.npt_name_s, &add_flag_p))
+			if (!IsStringEmpty (name_s))
 				{
-					if ((add_flag_p != NULL) && (*add_flag_p == true))
+					const char *team_s = NULL;
+
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
+
+					/* It's a job for FieldTrials */
+					if (!AddFieldTrial (job_p, name_s, team_s, data_p))
 						{
-							/* It's a job for FieldTrials */
-							if (!AddFieldTrial (job_p, name_s, team_s, data_p))
-								{
 
-								}
+						}
 
-							job_done_flag = true;
-						}		/* if (value.st_boolean_value) */
-
-				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ADD_FIELD_TRIAL.npt_name_s, &value, true)) */
+					job_done_flag = true;
+				}
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
 

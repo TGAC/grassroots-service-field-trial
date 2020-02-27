@@ -41,7 +41,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetStudySubmissionService (GrassrootsServ
 /*
  * For the importer
  */
-DFW_FIELD_TRIAL_SERVICE_API const char *GetStudySubmissionServiceName (Service *service_p);
+DFW_FIELD_TRIAL_SERVICE_API const char *GetStudySubmissionServiceName (const Service *service_p);
 
 
 #ifdef __cplusplus
