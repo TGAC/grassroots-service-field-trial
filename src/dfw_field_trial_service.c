@@ -272,7 +272,7 @@ bool AddErrorMessage (ServiceJob *job_p, const json_t *value_p, const char *erro
 
 	if (id_s)
 		{
-			added_error_flag = AddErrorToServiceJob (job_p, id_s, error_s);
+			added_error_flag = AddErrorMessageToServiceJob (job_p, id_s, error_s);
 		}
 	else
 		{
@@ -284,7 +284,7 @@ bool AddErrorMessage (ServiceJob *job_p, const json_t *value_p, const char *erro
 
 					if (row_s)
 						{
-							added_error_flag = AddErrorToServiceJob (job_p, row_s, error_s);
+							added_error_flag = AddErrorMessageToServiceJob (job_p, row_s, error_s);
 
 							FreeCopiedString (row_s);
 						}

@@ -389,6 +389,46 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
+static bool GetIntegerValue (const json_t *data_p, const char *key_s, int32 *value_p, ServiceJob *job_p, const bool required_flag)
+{
+	bool success_flag = false;
+	const json_t *json_value_p = json_object_get (data_p, key_s);
+
+	if (json_value_p)
+		{
+			if (json_is_integer (json_value_p))
+				{
+					*value_p = json_integer_value (json_value_p);
+					success_flag = true;
+				}
+			else if (json_is_string (json_value_p))
+				{
+					const char *value_s = json_string_value (json_value_p);
+
+					if (GetValidInteger (&value_s, value_p))
+						{
+							success_flag = true;
+						}
+					else
+						{
+
+							AddErrorMessageToServiceJob (job_p, key_s, value_s);
+						}
+
+				}		/* else if (json_is_string (json_value_p)) */
+			else
+				{
+
+				}
+
+		}
+
+
+	return success_flag;
+}
+
+
+
 static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
@@ -421,7 +461,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 						{
 							const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
 
-							if (accession_s)
+							if (!IsStringEmpty (accession_s))
 								{
 									Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
 
@@ -1019,4 +1059,11 @@ static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData
 
 	return NULL;
 }
+
+
+static void AddErrorForTableCell (const uint32 row, const char *column_key_s)
+{
+
+}
+
 

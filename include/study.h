@@ -116,6 +116,9 @@ STUDY_PREFIX const char *ST_PLOT_WIDTH_S STUDY_VAL ("plot_width");
 
 STUDY_PREFIX const char *ST_WEATHER_S STUDY_VAL ("weather");
 
+STUDY_PREFIX const char *ST_SHAPE_S STUDY_VAL ("shape_dat");
+
+
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
 
@@ -184,6 +187,11 @@ typedef struct Study
 
 	char *st_weather_link_s;
 
+	/**
+	 * The GeoJSON data for the shape of the plots
+	 */
+	json_t *st_shape_p;
+
 } Study;
 
 
@@ -209,7 +217,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 											MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const double64 *min_ph_p, const double64 *max_ph_p, const char *description_s,
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
 											const uint32 *num_rows_p, const uint32 *num_cols_p, const double64 *plot_width_p, const double64 *plot_length_p,
-											const char *st_weather_link_s,
+											const char *st_weather_link_s, const json_t *shape_p,
 											const DFWFieldTrialServiceData *data_p);
 
 

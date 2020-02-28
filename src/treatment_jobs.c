@@ -641,7 +641,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 															if (row_s)
 																{
-																	AddErrorToServiceJob (job_p, row_s, "Failed to get Method");
+																	AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Method");
 																	FreeCopiedString (row_s);
 																}
 
@@ -718,7 +718,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 													if (row_s)
 														{
-															AddErrorToServiceJob (job_p, row_s, "Failed to get Unit");
+															AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Unit");
 															FreeCopiedString (row_s);
 														}
 												}
@@ -736,7 +736,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 											if (row_s)
 												{
-													AddErrorToServiceJob (job_p, row_s, "Failed to get Method");
+													AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Method");
 													FreeCopiedString (row_s);
 												}
 										}
@@ -754,7 +754,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 									if (row_s)
 										{
-											AddErrorToServiceJob (job_p, row_s, "Failed to get Trait");
+											AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Trait");
 											FreeCopiedString (row_s);
 										}
 

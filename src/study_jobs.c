@@ -14,7 +14,7 @@
  ** limitations under the License.
  */
 /*
- * experimental_arst_jobs.c
+ * study_jobs.c
  *
  *  Created on: 1 Oct 2018
  *      Author: billy
@@ -39,6 +39,7 @@
 #include "boolean_parameter.h"
 #include "signed_int_parameter.h"
 #include "unsigned_int_parameter.h"
+#include "json_parameter.h"
 
 
 /*
@@ -110,17 +111,18 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
 																						const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp,
 																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp,
-																						const char **weather_ss);
+																						const char **weather_ss, const json_t **shape_pp);
 
 static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
 													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
 														const char **phenotype_gathering_notes_ss,struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss);
+													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp);
 
 
 static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p);
 
 
+static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, DFWFieldTrialServiceData *dfw_data_p);
 
 /*
  * API DEFINITIONS
@@ -148,20 +150,19 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	struct tm *harvest_time_p = NULL;
 	Study *active_study_p = GetStudyFromResource (resource_p, STUDY_ID, dfw_data_p);
 	bool defaults_flag = false;
-	double ph_min = -1.0;
-	double ph_max = -1.0;
-	double64 *ph_min_p = &ph_min;
-	double64 *ph_max_p = &ph_max;
+	double64 *ph_min_p = NULL;
+	double64 *ph_max_p = NULL;
 	const char *growing_conditions_s = NULL;
 	const char *design_s = NULL;
 	const char *phenotype_notes_s = NULL;
 	const char *weather_s = NULL;
+	const json_t *shape_p = NULL;
 
 	if (active_study_p)
 		{
 			if (SetUpDefaultsFromExistingStudy (active_study_p, &id_s, &name_s, &soil_s, &link_s, &slope_s, &aspect_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s, &description_s,
 																					&design_s, &growing_conditions_s, &phenotype_notes_s, &sowing_time_p, &harvest_time_p, &ph_min_p, &ph_max_p,
-																					&weather_s))
+																					&weather_s, &shape_p))
 				{
 					defaults_flag = true;
 				}
@@ -170,7 +171,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 		{
 			if (SetUpDefaults (&id_s, &name_s, &soil_s, &link_s, &slope_s, &aspect_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s, &description_s,
 												 &design_s, &growing_conditions_s, &phenotype_notes_s, &sowing_time_p, &harvest_time_p, &ph_min_p, &ph_max_p,
-												 &weather_s))
+												 &weather_s, &shape_p))
 				{
 					defaults_flag = true;
 				}
@@ -239,78 +240,68 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																														{
 																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype Gathering", "Notes on how the Phenotype information was gathered", phenotype_notes_s, PL_ALL)) != NULL)
 																																{
-
 																																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", weather_s, PL_ALL)) != NULL)
 																																		{
-																																			if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
+																																			if (AddLayoutParams (param_set_p, aspect_s, slope_s, shape_p, dfw_data_p))
 																																				{
-																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", slope_s, PL_ALL)) != NULL)
+																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", this_crop_s, PL_ALL)) != NULL)
 																																						{
-																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", this_crop_s, PL_ALL)) != NULL)
+																																							if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
 																																								{
-																																									if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
+																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
 																																										{
-																																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
+																																											if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
 																																												{
-																																													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
+																																													if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
 																																														{
-																																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
+																																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
 																																																{
-																																																	if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																																	if (AddDefaultPlotsParameters (data_p, param_set_p))
 																																																		{
-																																																			if (AddDefaultPlotsParameters (data_p, param_set_p))
-																																																				{
-																																																					success_flag = true;
-																																																				}
-																																																			else
-																																																				{
-																																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddDefaultPlotsParameters failed");
-																																																				}
-																																																		}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
+																																																			success_flag = true;
+																																																		}
 																																																	else
 																																																		{
-																																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MAX_PH.npt_name_s);
+																																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddDefaultPlotsParameters failed");
 																																																		}
-																																																}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
+																																																}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
 																																															else
 																																																{
-																																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MIN_PH.npt_name_s);
+																																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MAX_PH.npt_name_s);
 																																																}
-
-																																														}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
+																																														}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
 																																													else
 																																														{
-																																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_PREVIOUS_CROP.npt_name_s);;
+																																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MIN_PH.npt_name_s);
 																																														}
 
-																																												}		/* if (param_p) */
+																																												}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 																																											else
 																																												{
-																																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PREVIOUS_CROP.npt_name_s);
+																																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_PREVIOUS_CROP.npt_name_s);;
 																																												}
-																																										}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
+
+																																										}		/* if (param_p) */
 																																									else
 																																										{
-																																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_THIS_CROP.npt_name_s);
+																																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PREVIOUS_CROP.npt_name_s);
 																																										}
-
-																																								}		/* if (param_p) */
+																																								}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 																																							else
 																																								{
-																																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_THIS_CROP.npt_name_s);
+																																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_THIS_CROP.npt_name_s);
 																																								}
 
-
-																																						}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, SLOPE.npt_type, SLOPE.npt_name_s, "Slope", "The slope of the Study", def, PL_ALL)) != NULL) */
+																																						}		/* if (param_p) */
 																																					else
 																																						{
-																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SLOPE.npt_name_s);
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_THIS_CROP.npt_name_s);
 																																						}
 
-																																				}		/* if ((param_p = GetAndAddAspectParameter (data_p, param_set_p)) != NULL) */
+																																				}
 																																			else
 																																				{
-																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed");
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddLayoutParams failed");
 																																				}
 
 																																		}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", weather_s, PL_ALL)) != NULL) */
@@ -431,6 +422,39 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 		}
 
 	return success_flag;
+}
+
+
+static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, DFWFieldTrialServiceData *dfw_data_p)
+{
+	ServiceData *data_p = & (dfw_data_p -> dftsd_base_data);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Layout", false, data_p, param_set_p);
+	Parameter *param_p;
+
+	if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
+		{
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", slope_s, PL_ALL)) != NULL)
+				{
+					if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Shape data", "The shape data for the plots in GeoJSON format", shape_data_p, PL_ALL)) != NULL)
+						{
+							return true;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SHAPE_DATA.npt_name_s);
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SLOPE.npt_name_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed with aspect \"%s\"", aspect_s ? aspect_s : "NULL");
+		}
+
+	return false;
 }
 
 
@@ -771,7 +795,7 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 
 											if (!built_query_success_flag)
 												{
-													AddErrorToServiceJob (job_p, "Parent field trial id error", id_s);
+													AddErrorMessageToServiceJob (job_p, "Parent field trial id error", id_s);
 												}
 										}		/* if (query_p) */
 
@@ -881,7 +905,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
 																						const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp,
 																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp,
-																						const char **weather_ss)
+																						const char **weather_ss, const json_t **shape_pp)
 {
 	bool success_flag = false;
 	char *study_id_s = GetBSONOidAsString (study_p -> st_id_p);
@@ -951,6 +975,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 													*ph_min_pp = study_p -> st_min_ph_p;
 													*ph_max_pp = study_p -> st_max_ph_p;
 													*weather_ss = study_p -> st_weather_link_s;
+													*shape_pp = study_p -> st_shape_p;
 
 													return true;
 
@@ -995,7 +1020,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
 													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, const char **design_ss, const char **growing_conditons_ss,
 														const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss)
+													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp)
 {
 	bool success_flag = true;
 
@@ -1018,6 +1043,7 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 	*ph_min_pp = NULL;
 	*ph_max_pp = NULL;
 	*weather_ss = NULL;
+	*shape_pp = NULL;
 
 	return success_flag;
 }
@@ -1108,6 +1134,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 																					const double64 *plot_width_p = NULL;
 																					const double64 *plot_length_p = NULL;
 																					const char *weather_s = NULL;
+																					const json_t *shape_p = NULL;
 
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
@@ -1133,12 +1160,14 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_WEATHER_LINK.npt_name_s, &weather_s);
 
+																					GetCurrentJSONParameterValueFromParameterSet (param_set_p, STUDY_SHAPE_DATA.npt_name_s, &shape_p);
+
 																					study_p = AllocateStudy (study_id_p, name_s, soil_s, data_link_s, aspect_s,
 																																	 slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																																	 min_ph_p, max_ph_p, notes_s, design_s,
 																																	 growing_conditions_s, phenotype_notes_s,
 																																	 num_rows_p, num_cols_p, plot_width_p, plot_length_p,
-																																	 weather_s,
+																																	 weather_s, shape_p,
 																																	 data_p);
 
 																					if (study_p)
