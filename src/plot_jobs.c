@@ -441,186 +441,199 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 		{
 			const size_t num_rows = json_array_size (plots_json_p);
 			size_t i;
+			size_t num_empty_rows = 0;
 			size_t num_imported = 0;
 			bool imported_row_flag;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
 					const json_t *table_row_json_p = json_array_get (plots_json_p, i);
-					const char *gene_bank_s = GetJSONString (table_row_json_p, S_GENE_BANK_S);
-					GeneBank *gene_bank_p = NULL;
 
-					imported_row_flag = false;
-
-					if (!gene_bank_s)
+					/*
+					 * Is the row non-empty?
+					 */
+					if (json_object_size (table_row_json_p) > 0)
 						{
-							/* default to using the GRU */
-							gene_bank_s = "Germplasm Resources Unit";
-						}
+							const char *gene_bank_s = GetJSONString (table_row_json_p, S_GENE_BANK_S);
+							GeneBank *gene_bank_p = NULL;
 
-					gene_bank_p = GetGeneBankByName (gene_bank_s, data_p);
+							imported_row_flag = false;
 
-					if (gene_bank_p)
-						{
-							const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
-
-							if (!IsStringEmpty (accession_s))
+							if (!gene_bank_s)
 								{
-									Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
+									/* default to using the GRU */
+									gene_bank_s = "Germplasm Resources Unit";
+								}
 
-									if (material_p)
+							gene_bank_p = GetGeneBankByName (gene_bank_s, data_p);
+
+							if (gene_bank_p)
+								{
+									const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
+
+									if (!IsStringEmpty (accession_s))
 										{
-											Plot *plot_p = NULL;
-											int32 row = -1;
+											Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
 
-											if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
+											if (material_p)
 												{
-													int32 column = -1;
+													Plot *plot_p = NULL;
+													int32 row = -1;
 
-													if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
+													if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
 														{
-															/*
-															 * does the plot already exist?
-															 */
-															plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
+															int32 column = -1;
 
-															if (!plot_p)
+															if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
 																{
-																	plot_p = CreatePlotFromTabularJSON (table_row_json_p, row, column, study_p, data_p);
+																	/*
+																	 * does the plot already exist?
+																	 */
+																	plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
 
 																	if (!plot_p)
 																		{
+																			plot_p = CreatePlotFromTabularJSON (table_row_json_p, row, column, study_p, data_p);
+
+																			if (!plot_p)
+																				{
+
+																				}		/* if (!plot_p) */
 
 																		}		/* if (!plot_p) */
 
-																}		/* if (!plot_p) */
 
-
-															if (plot_p)
-																{
-																	/*
-																	 * plot_p now has an id, so we can add the row/rack.
-																	 */
-																	int32 rack_plotwise_index = -1;
-
-																	if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index))
+																	if (plot_p)
 																		{
-																			int32 rack_studywise_index = -1;
+																			/*
+																			 * plot_p now has an id, so we can add the row/rack.
+																			 */
+																			int32 rack_plotwise_index = -1;
 
-																			if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &rack_studywise_index))
+																			if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index))
 																				{
-																					int32 replicate = 1;
-																					const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
-																					bool control_rep_flag = false;
-																					Row *row_p = NULL;
+																					int32 rack_studywise_index = -1;
 
-																					if (rep_s)
+																					if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &rack_studywise_index))
 																						{
-																							if (Stricmp (rep_s, RO_REPLICATE_CONTROL_S) == 0)
-																								{
-																									control_rep_flag = true;
-																								}
-																							else
-																								{
-																									success_flag = GetValidInteger (&rep_s, &replicate);
-																								}		/* if (value_s) */
-																						}
+																							int32 replicate = 1;
+																							const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
+																							bool control_rep_flag = false;
+																							Row *row_p = NULL;
 
-																					if (success_flag)
-																						{
-																							row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, MF_SHALLOW_COPY, plot_p);
-
-																							if (row_p)
+																							if (rep_s)
 																								{
-																									if (control_rep_flag)
+																									if (Stricmp (rep_s, RO_REPLICATE_CONTROL_S) == 0)
 																										{
-																											SetRowGenotypeControl (row_p, true);
+																											control_rep_flag = true;
 																										}
-
-																									if (AddRowToPlot (plot_p, row_p))
+																									else
 																										{
-																											if (SavePlot (plot_p, data_p))
+																											success_flag = GetValidInteger (&rep_s, &replicate);
+																										}		/* if (value_s) */
+																								}
+
+																							if (success_flag)
+																								{
+																									row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, MF_SHALLOW_COPY, plot_p);
+
+																									if (row_p)
+																										{
+																											if (control_rep_flag)
 																												{
-																													++ num_imported;
-																													imported_row_flag = true;
+																													SetRowGenotypeControl (row_p, true);
+																												}
+
+																											if (AddRowToPlot (plot_p, row_p))
+																												{
+																													if (SavePlot (plot_p, data_p))
+																														{
+																															++ num_imported;
+																															imported_row_flag = true;
+																														}
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																														}
+
 																												}
 																											else
 																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																													FreeRow (row_p);
 																												}
 
 																										}
 																									else
 																										{
-																											FreeRow (row_p);
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
 																										}
 
-																								}
-																							else
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
-																								}
+																								}		/* if (success_flag) */
 
-																						}		/* if (success_flag) */
+																						}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
+																					else
+																						{
+																							AddErrorForTableCell (job_p, table_row_json_p, i, S_INDEX_TITLE_S, "Value not set");
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
+																						}
 
-																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
+																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
 																			else
 																				{
-																					AddErrorForTableCell (job_p, table_row_json_p, i, S_INDEX_TITLE_S, "Value not set");
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
+																					AddErrorForTableCell (job_p, table_row_json_p, i, S_RACK_TITLE_S, "Value not set");
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
 																				}
 
-																		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
-																	else
-																		{
-																			AddErrorForTableCell (job_p, table_row_json_p, i, S_RACK_TITLE_S, "Value not set");
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
-																		}
+																			FreePlot (plot_p);
+																		}		/* if (plot_p) */
 
-																	FreePlot (plot_p);
-																}		/* if (plot_p) */
+																}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
+															else
+																{
+																	AddErrorForTableCell (job_p, table_row_json_p, i, S_COLUMN_TITLE_S, "Value not set");
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
+																}
 
-														}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
+														}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
 													else
 														{
-															AddErrorForTableCell (job_p, table_row_json_p, i, S_COLUMN_TITLE_S, "Value not set");
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
+															AddErrorForTableCell (job_p, table_row_json_p, i, S_ROW_TITLE_S, "Value not set");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
 														}
 
-												}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
+
+												}		/* if (material_p) */
 											else
 												{
-													AddErrorForTableCell (job_p, table_row_json_p, i, S_ROW_TITLE_S, "Value not set");
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, study_p -> st_name_s);
 												}
 
-
-										}		/* if (material_p) */
+										}		/* if (accession_s) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, study_p -> st_name_s);
+											AddErrorForTableCell (job_p, table_row_json_p, i, S_ACCESSION_TITLE_S, "Value not set");
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
 										}
-
-								}		/* if (accession_s) */
+								}		/* if (gene_bank_p) */
 							else
 								{
-									AddErrorForTableCell (job_p, table_row_json_p, i, S_ACCESSION_TITLE_S, "Value not set");
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
 								}
-						}		/* if (gene_bank_p) */
+
+							if (!imported_row_flag)
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plot data");
+								}
+
+						}		/* if (json_object_size (table_row_json_p) > 0) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
-						}
-
-					if (!imported_row_flag)
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plot data");
+							++ num_empty_rows;
 						}
 
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
-			if (num_imported == num_rows)
+			if (num_imported + num_empty_rows == num_rows)
 				{
 					status = OS_SUCCEEDED;
 				}
@@ -1079,7 +1092,7 @@ static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, 
 				{
 					if (SetJSONString (error_p, "column", column_key_s))
 						{
-							if (SetJSONString (error_p, JOB_ERRORS_S, message_s))
+							if (SetJSONString (error_p, JOB_ERROR_S, message_s))
 								{
 									if (AddCompoundErrorToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, error_p))
 										{
