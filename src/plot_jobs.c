@@ -108,6 +108,9 @@ static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const 
 
 static json_t *GeneratePlotsTemplate (const Study *study_p);
 
+static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, const uint32 row, const char *column_key_s, const char *message_s);
+
+
 /*
  * API definitions
  */
@@ -550,7 +553,6 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																									else
 																										{
 																											FreeRow (row_p);
-
 																										}
 
 																								}
@@ -564,12 +566,14 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
 																			else
 																				{
+																					AddErrorForTableCell (job_p, table_row_json_p, i, S_INDEX_TITLE_S, "Value not set");
 																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
 																				}
 
 																		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
 																	else
 																		{
+																			AddErrorForTableCell (job_p, table_row_json_p, i, S_RACK_TITLE_S, "Value not set");
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
 																		}
 
@@ -579,12 +583,14 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 														}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
 													else
 														{
+															AddErrorForTableCell (job_p, table_row_json_p, i, S_COLUMN_TITLE_S, "Value not set");
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
 														}
 
 												}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
 											else
 												{
+													AddErrorForTableCell (job_p, table_row_json_p, i, S_ROW_TITLE_S, "Value not set");
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
 												}
 
@@ -598,6 +604,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 								}		/* if (accession_s) */
 							else
 								{
+									AddErrorForTableCell (job_p, table_row_json_p, i, S_ACCESSION_TITLE_S, "Value not set");
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
 								}
 						}		/* if (gene_bank_p) */
@@ -1061,15 +1068,31 @@ static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData
 }
 
 
-static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, const uint32 row, const char *column_key_s, const char *message_s, const uint32 line)
+static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, const uint32 row, const char *column_key_s, const char *message_s)
 {
+	bool success_flag = false;
+	json_t *error_p = json_object ();
 
-	bool AddCompoundErrorToServiceJob (ServiceJob *job_p, const char * const param_s, json_t *compound_error_p)
+	if (error_p)
+		{
+			if (SetJSONInteger (error_p, "row", row))
+				{
+					if (SetJSONString (error_p, "column", column_key_s))
+						{
+							if (SetJSONString (error_p, JOB_ERRORS_S, message_s))
+								{
+									if (AddCompoundErrorToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, error_p))
+										{
+											success_flag = true;
+										}
+								}
+						}
+				}
 
-	AddErrorMessageToServiceJob(job_p, param_s, value_s)
+			json_decref (error_p);
+		}		/* if (error_p) */
 
-	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, line, table_row_p, message_s);
-
+	return success_flag;
 }
 
 
