@@ -1061,8 +1061,14 @@ static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData
 }
 
 
-static void AddErrorForTableCell (const uint32 row, const char *column_key_s)
+static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, const uint32 row, const char *column_key_s, const char *message_s, const uint32 line)
 {
+
+	bool AddCompoundErrorToServiceJob (ServiceJob *job_p, const char * const param_s, json_t *compound_error_p)
+
+	AddErrorMessageToServiceJob(job_p, param_s, value_s)
+
+	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, line, table_row_p, message_s);
 
 }
 
