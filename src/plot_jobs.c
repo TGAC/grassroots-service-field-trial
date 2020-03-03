@@ -614,6 +614,8 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 											AddErrorForTableCell (job_p, table_row_json_p, i, S_ACCESSION_TITLE_S, "Value not set");
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
 										}
+
+									FreeGeneBank (gene_bank_p);
 								}		/* if (gene_bank_p) */
 							else
 								{
@@ -1096,16 +1098,15 @@ static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, 
 								{
 									if (AddCompoundErrorToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, error_p))
 										{
-											success_flag = true;
+											return true;
 										}
 								}
 						}
 				}
 
-			json_decref (error_p);
 		}		/* if (error_p) */
 
-	return success_flag;
+	return false;
 }
 
 

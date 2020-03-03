@@ -283,17 +283,14 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 
 GeneBank *GetGeneBankByName (const char *name_s, const DFWFieldTrialServiceData *data_p)
 {
+	GeneBank *gene_bank_p = NULL;
 	bson_t *query_p = BCON_NEW (GB_NAME_S, BCON_UTF8 (name_s));
 
 	if (query_p)
 		{
-			GeneBank *gene_bank_p = SearchForGeneBank (query_p, data_p);
+			gene_bank_p = SearchForGeneBank (query_p, data_p);
 
-			if (gene_bank_p)
-				{
-					return gene_bank_p;
-				}
-			else
+			if (!gene_bank_p)
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find GeneBank \"%s\"", name_s);
 				}
@@ -305,12 +302,14 @@ GeneBank *GetGeneBankByName (const char *name_s, const DFWFieldTrialServiceData 
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create GeneBank query to search for \"%s\"", name_s);
 		}
 
-	return NULL;
+	return gene_bank_p;
 }
 
 
 static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
 {
+	GeneBank *gene_bank_p = NULL;
+
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK]))
 		{
 			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
@@ -323,13 +322,9 @@ static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceD
 								{
 									json_t *result_p = json_array_get (results_p, 0);
 
-									GeneBank *gene_bank_p = GetGeneBankFromJSON (result_p);
+									gene_bank_p = GetGeneBankFromJSON (result_p);
 
-									if (gene_bank_p)
-										{
-											return gene_bank_p;
-										}
-									else
+									if (!gene_bank_p)
 										{
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get GeneBank from JSON");
 										}
@@ -358,7 +353,7 @@ static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceD
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_GENE_BANK]);
 		}
 
-	return NULL;
+	return gene_bank_p;
 }
 
 
