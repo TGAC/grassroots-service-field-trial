@@ -1090,9 +1090,9 @@ static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, 
 
 	if (error_p)
 		{
-			if (SetJSONInteger (error_p, "row", row))
+			if (SetJSONInteger (error_p, TABLE_PARAM_ROW_S, row))
 				{
-					if (SetJSONString (error_p, "column", column_key_s))
+					if (SetJSONString (error_p, TABLE_PARAM_COLUMN_S, column_key_s))
 						{
 							if (SetJSONString (error_p, JOB_ERROR_S, message_s))
 								{
