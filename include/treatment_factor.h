@@ -87,7 +87,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (const ch
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactor (TreatmentFactor *treatment_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, const char *name_s, const char *value_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueByParts (TreatmentFactor *treatment_p, const char *name_s, const char *value_s);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, KeyValuePair *pair_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p);
 

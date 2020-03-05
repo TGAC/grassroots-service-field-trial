@@ -628,7 +628,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 
 					if (facets_p)
 						{
-							KeyValuePairNode *facet_p = AllocateKeyValuePairNode (lucene_p -> lt_facet_key_s, facet_s);
+							KeyValuePairNode *facet_p = AllocateKeyValuePairNodeByParts (lucene_p -> lt_facet_key_s, facet_s);
 
 							if (facet_p)
 								{

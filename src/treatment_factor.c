@@ -63,7 +63,7 @@ TreatmentFactor *AllocateTreatmentFactor (const char * const name_s)
 		}		/* if (copied_name_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy TreatmnetFactor name \"%s\"", name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy TreatmentFactor name \"%s\"", name_s);
 		}
 
 	return NULL;
@@ -79,19 +79,43 @@ void FreeTreatmentFactor (TreatmentFactor *treatment_p)
 }
 
 
-bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, const char *name_s, const char *value_s)
+bool AddTreatmentFactorValueByParts (TreatmentFactor *treatment_p, const char *name_s, const char *value_s)
 {
 	bool success_flag = false;
-	KeyValuePairNode *node_p = AllocateKeyValuePairNode (name_s, value_s);
+	KeyValuePair *pair_p = AllocateKeyValuePair (name_s, value_s);
 
-	if (node_p)
+	if (pair_p)
 		{
-			LinkedListAddTail (treatment_p -> tf_values_p, node_p);
-			success_flag = true;
+			if (AddTreatmentFactorValue (treatment_p, pair_p))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					FreeKeyValuePair (pair_p);
+				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmnetFactor value for \"%s\": \"s\"", name_s, value_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", name_s, value_s);
+		}
+
+	return success_flag;
+}
+
+
+bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, KeyValuePair *pair_p)
+{
+	bool success_flag = false;
+	KeyValuePairNode *node_p = AllocateKeyValuePairNode (pair_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (treatment_p -> tf_values_p, & (node_p -> kvpn_node));
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", pair_p -> kvp_key_s, pair_p -> kvp_value_s);
 		}
 
 	return success_flag;
@@ -107,11 +131,11 @@ TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p)
 			InitListItem (& (node_p -> tfn_node));
 			node_p -> tfn_treatment_p = treatment_p;
 
-			return treatment_p;
+			return node_p;
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmnetFactorNode for treatment \"%s\"", treatment_p -> tf_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactorNode for treatment \"%s\"", treatment_p -> tf_name_s);
 		}
 
 	return NULL;
@@ -197,20 +221,57 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_p)
 }
 
 
-TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatmnent_json_p)
+TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_json_p)
 {
-	const char *name_s = GetJSONString (treatmnent_json_p, TF_NAME_S);
+	const char *name_s = GetJSONString (treatment_json_p, TF_NAME_S);
 
 	if (name_s)
 		{
 			TreatmentFactor *tf_p = AllocateTreatmentFactor (name_s);
 
-			json_t *values_p = json_object_get (treatmnent_json_p, TF_VALUES_S);
-
-			if (values_p)
+			if (tf_p)
 				{
+					json_t *values_p = json_object_get (treatment_json_p, TF_VALUES_S);
+					bool success_flag = true;
 
-				}		/* if (values_p) */
+					if (values_p)
+						{
+							const size_t size = json_array_size (values_p);
+							size_t i = 0;
+
+							while ((i < size) && success_flag)
+								{
+									const json_t *entry_p = json_array_get (values_p, i);
+									KeyValuePair  *pair_p = GetKeyValuePairFromJSON (entry_p);
+
+									if (pair_p)
+										{
+											if (AddTreatmentFactorValue (tf_p, pair_p))
+												{
+													++ i;
+												}
+											else
+												{
+													FreeKeyValuePair (pair_p);
+													success_flag = false;
+												}
+										}		/* if (pair_p) */
+									else
+										{
+											success_flag = false;
+										}
+
+								}		/* while ((i < size) && success_flag) */
+
+						}		/* if (values_p) */
+
+					if (success_flag)
+						{
+							return tf_p;
+						}
+
+					FreeTreatmentFactor (tf_p);
+				}		/* if (tf_p) */
 
 		}		/* if (name_s) */
 
