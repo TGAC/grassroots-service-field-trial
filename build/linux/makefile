@@ -59,6 +59,8 @@ SRCS 	= \
 	location_jobs.c \
 	material.c \
 	material_jobs.c \
+	measured_variable.c \
+	measured_variable_jobs.c \
 	observation.c \
 	phenotype_jobs.c \
 	plot.c \
@@ -79,9 +81,8 @@ SRCS 	= \
 	submit_plots.c \
 	submit_study.c \
 	submit_measured_variables.c \
-	measured_variable.c \
-	measured_variable_jobs.c \
-	
+	treatment_factor.c
+		
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 
 
