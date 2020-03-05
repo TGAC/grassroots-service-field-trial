@@ -41,7 +41,7 @@
 #include "submit_location.h"
 #include "submit_material.h"
 #include "submit_study.h"
-#include "submit_treatments.h"
+#include "submit_measured_variables.h"
 #include "submit_crop.h"
 #include "submit_plots.h"
 #include "submit_phenotypes.h"
@@ -80,7 +80,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *location_submission_service_p = GetLocationSubmissionService (grassroots_p);
 	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService (grassroots_p);
 	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
-	Service *treatments_submission_service_p = GetTreatmentsSubmissionService (grassroots_p);
+	Service *treatments_submission_service_p = GetMeasuredVariablesSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
 	Service *phenotypes_submission_service_p = GetPhenotypesSubmissionService (grassroots_p);

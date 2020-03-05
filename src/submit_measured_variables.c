@@ -23,8 +23,8 @@
 
 
 
-#include <treatment_jobs.h>
-#include "submit_treatments.h"
+#include "measured_variable_jobs.h"
+#include "submit_measured_variables.h"
 
 #include "audit.h"
 
@@ -36,24 +36,24 @@
 
 
 
-static const char *GetTreatmentSubmissionServiceName (const Service *service_p);
+static const char *GetMeasuredVariableSubmissionServiceName (const Service *service_p);
 
-static const char *GetTreatmentSubmissionServiceDesciption (const Service *service_p);
+static const char *GetMeasuredVariableSubmissionServiceDesciption (const Service *service_p);
 
-static const char *GetTreatmentSubmissionServiceInformationUri (const Service *service_p);
+static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static void ReleaseTreatmentSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
+static void ReleaseMeasuredVariableSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
 
-static bool CloseTreatmentSubmissionService (Service *service_p);
+static bool CloseMeasuredVariableSubmissionService (Service *service_p);
 
-static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_p);
+static ServiceMetadata *GetMeasuredVariableSubmissionServiceMetadata (Service *service_p);
 
 
 /*
@@ -61,7 +61,7 @@ static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_
  */
 
 
-Service *GetTreatmentsSubmissionService (GrassrootsServer *grassroots_p)
+Service *GetMeasuredVariablesSubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -72,20 +72,20 @@ Service *GetTreatmentsSubmissionService (GrassrootsServer *grassroots_p)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetTreatmentSubmissionServiceName,
-														 GetTreatmentSubmissionServiceDesciption,
-														 GetTreatmentSubmissionServiceInformationUri,
-														 RunTreatmentSubmissionService,
+														 GetMeasuredVariableSubmissionServiceName,
+														 GetMeasuredVariableSubmissionServiceDesciption,
+														 GetMeasuredVariableSubmissionServiceInformationUri,
+														 RunMeasuredVariableSubmissionService,
 														 NULL,
-														 GetTreatmentSubmissionServiceParameters,
-														 GetTreatmentSubmissionServiceParameterTypesForNamedParameters,
-														 ReleaseTreatmentSubmissionServiceParameters,
-														 CloseTreatmentSubmissionService,
+														 GetMeasuredVariableSubmissionServiceParameters,
+														 GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters,
+														 ReleaseMeasuredVariableSubmissionServiceParameters,
+														 CloseMeasuredVariableSubmissionService,
 														 NULL,
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetTreatmentSubmissionServiceMetadata,
+														 GetMeasuredVariableSubmissionServiceMetadata,
 														 NULL,
 														 grassroots_p))
 						{
@@ -107,33 +107,33 @@ Service *GetTreatmentsSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetTreatmentSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
+static const char *GetMeasuredVariableSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
 	return "Submit Field Trial Measured Variables";
 }
 
 
-static const char *GetTreatmentSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetMeasuredVariableSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial measured variables";
 }
 
 
-static const char *GetTreatmentSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
+static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
 	return NULL;
 }
 
 
 
-static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionMeasuredVariableParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -141,20 +141,20 @@ static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionTreatmentParams (data_p, params_p))
+			if (AddSubmissionMeasuredVariableParams (data_p, params_p))
 				{
 					return params_p;
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionTreatmentParams failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionMeasuredVariableParams failed");
 				}
 
 			FreeParameterSet (params_p);
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetTreatmentSubmissionServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetMeasuredVariableSubmissionServiceName (service_p));
 		}
 
 	return NULL;
@@ -165,7 +165,7 @@ static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p
 
 
 
-static void ReleaseTreatmentSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
+static void ReleaseMeasuredVariableSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
@@ -173,7 +173,7 @@ static void ReleaseTreatmentSubmissionServiceParameters (Service * UNUSED_PARAM 
 
 
 
-static bool CloseTreatmentSubmissionService (Service *service_p)
+static bool CloseMeasuredVariableSubmissionService (Service *service_p)
 {
 	bool success_flag = true;
 
@@ -184,11 +184,11 @@ static bool CloseTreatmentSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Treatment");
+	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit MeasuredVariable");
 
 	if (service_p -> se_jobs_p)
 		{
@@ -198,10 +198,10 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p))
 				{
 
-				}		/* if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p)) */
+				}		/* if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
@@ -211,7 +211,7 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 }
 
 
-static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_p)
+static ServiceMetadata *GetMeasuredVariableSubmissionServiceMetadata (Service *service_p)
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",

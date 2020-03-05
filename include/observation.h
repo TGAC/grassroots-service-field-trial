@@ -25,7 +25,7 @@
 
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
-#include "treatment.h"
+#include "measured_variable.h"
 
 
 
@@ -48,7 +48,7 @@ typedef struct Observation
 
 	struct tm *ob_date_p;
 
-	Treatment *ob_phenotype_p;
+	MeasuredVariable *ob_phenotype_p;
 
 	Instrument *ob_instrument_p;
 
@@ -113,7 +113,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, Treatment *phenotype_p, const char *value_s, const char *corrected_value_s,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, MeasuredVariable *phenotype_p, const char *value_s, const char *corrected_value_s,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature);
 
 

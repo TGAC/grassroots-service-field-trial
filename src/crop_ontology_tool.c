@@ -84,7 +84,7 @@
 #include <string.h>
 
 #include "crop_ontology_tool.h"
-#include "treatment.h"
+#include "measured_variable.h"
 #include "curl_tools.h"
 #include "jansson.h"
 #include "string_utils.h"
@@ -560,13 +560,13 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 
 	if (opts_p)
 		{
-			if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, TR_TRAIT_S, tool_p, opts_p)) == NULL)
+			if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, MV_TRAIT_S, tool_p, opts_p)) == NULL)
 				{
-					if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, TR_MEASUREMENT_S, tool_p, opts_p)) == NULL)
+					if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, MV_MEASUREMENT_S, tool_p, opts_p)) == NULL)
 						{
-							if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, TR_UNIT_S, tool_p, opts_p)) == NULL)
+							if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, MV_UNIT_S, tool_p, opts_p)) == NULL)
 								{
-									if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, TR_VARIABLE_S, tool_p, opts_p)) == NULL)
+									if ((term_p = FindCachedCropOnotologySchemaTerm (term_s, MV_VARIABLE_S, tool_p, opts_p)) == NULL)
 										{
 
 										}

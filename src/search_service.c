@@ -24,7 +24,7 @@
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
-#include "treatment_jobs.h"
+#include "measured_variable_jobs.h"
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
@@ -753,20 +753,20 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 
 							case DFTD_TREATMENT:
 								{
-									Treatment *treatment_p = GetTreatmentByIdString (id_s, search_data_p -> sd_service_data_p);
+									MeasuredVariable *treatment_p = GetMeasuredVariableByIdString (id_s, search_data_p -> sd_service_data_p);
 
 									if (treatment_p)
 										{
-											if (AddTreatmentToServiceJob (search_data_p -> sd_job_p, treatment_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+											if (AddMeasuredVariableToServiceJob (search_data_p -> sd_job_p, treatment_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
 												{
 													success_flag = true;
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Treatment %s to ServiceJob", treatment_p -> tr_internal_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add MeasuredVariable %s to ServiceJob", treatment_p -> mv_internal_name_s);
 												}
 
-											FreeTreatment (treatment_p);
+											FreeMeasuredVariable (treatment_p);
 										}
 								}
 							break;

@@ -40,7 +40,7 @@ static bool GetObservationNatureFromJSON (ObservationNature *phenotype_nature_p,
 
 static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p);
 
-static Treatment *CreateTreatmentFromObservationJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p);
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p);
 
 
 /*
@@ -48,7 +48,7 @@ static Treatment *CreateTreatmentFromObservationJSON (const json_t *observation_
  */
 
 
-Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, Treatment *phenotype_p, const char *raw_value_s, const char *corrected_value_s,
+Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, MeasuredVariable *phenotype_p, const char *raw_value_s, const char *corrected_value_s,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature)
 {
 	bool success_flag = true;
@@ -170,7 +170,7 @@ void FreeObservation (Observation *observation_p)
 
 	if (observation_p -> ob_phenotype_p)
 		{
-			FreeTreatment (observation_p -> ob_phenotype_p);
+			FreeMeasuredVariable (observation_p -> ob_phenotype_p);
 		}
 
 	if (observation_p -> ob_growth_stage_s)
@@ -284,7 +284,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 																	if (done_instrument_flag)
 																		{
-																			json_t *phenotype_json_p = GetTreatmentAsJSON (observation_p -> ob_phenotype_p, format);
+																			json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
 
 																			if (phenotype_json_p)
 																				{
@@ -304,7 +304,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 																{
 																	if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
 																		{
-																			if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> tr_id_p, OB_PHENOTYPE_ID_S)))
+																			if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
 																				{
 																					if (AddObservationNatureToJSON (observation_p -> ob_type, observation_json_p))
 																						{
@@ -400,7 +400,7 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFW
 
 							if (CreateInstrumentFromObservationJSON (observation_json_p, &instrument_p, data_p))
 								{
-									Treatment *phenotype_p = CreateTreatmentFromObservationJSON (observation_json_p, data_p);
+									MeasuredVariable *phenotype_p = CreateMeasuredVariableFromObservationJSON (observation_json_p, data_p);
 
 									if (phenotype_p)
 										{
@@ -524,7 +524,7 @@ bool AreObservationsMatching (const Observation *observation_0_p, const Observat
 {
 	bool match_flag = false;
 
-	if (bson_oid_equal (observation_0_p -> ob_phenotype_p -> tr_id_p, observation_1_p -> ob_phenotype_p -> tr_id_p))
+	if (bson_oid_equal (observation_0_p -> ob_phenotype_p -> mv_id_p, observation_1_p -> ob_phenotype_p -> mv_id_p))
 		{
 			if (CompareDates (observation_0_p -> ob_date_p, observation_1_p -> ob_date_p, true))
 				{
@@ -631,14 +631,14 @@ static bool GetObservationNatureFromJSON (ObservationNature *nature_p, const jso
 
 
 
-static Treatment *CreateTreatmentFromObservationJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p)
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p)
 {
-	Treatment *phenotype_p = NULL;
+	MeasuredVariable *phenotype_p = NULL;
 	const json_t *val_p = json_object_get (observation_json_p, OB_PHENOTYPE_S);
 
 	if (val_p)
 		{
-			phenotype_p = GetTreatmentFromJSON (val_p, data_p);
+			phenotype_p = GetMeasuredVariableFromJSON (val_p, data_p);
 
 			if (!phenotype_p)
 				{
@@ -653,7 +653,7 @@ static Treatment *CreateTreatmentFromObservationJSON (const json_t *observation_
 				{
 					if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p))
 						{
-							phenotype_p = GetTreatmentById (phenotype_id_p, data_p);
+							phenotype_p = GetMeasuredVariableById (phenotype_id_p, data_p);
 
 							if (!phenotype_p)
 								{
@@ -673,7 +673,7 @@ static Treatment *CreateTreatmentFromObservationJSON (const json_t *observation_
 				}		/* if (phenotype_id_p) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Treatment's BSONOid");
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate MeasuredVariable's BSONOid");
 				}
 		}
 

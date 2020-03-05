@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#define ALLOCATE_TREATMENT_CONSTANTS (1)
-#include "treatment_jobs.h"
+#define ALLOCATE_MEASURED_VARIABLE_CONSTANTS (1)
+#include "measured_variable_jobs.h"
 #include "string_utils.h"
 #include "crop_ontology_tool.h"
 #include "dfw_util.h"
@@ -64,10 +64,10 @@ static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimi
 static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_JSON_TABLE};
 
 
-static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
 
 
-static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
 
 
 static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, TermType expected_type, MongoTool *mongo_p);
@@ -78,11 +78,11 @@ static char *GetRowAsString (const int32 row);
 
 
 
-bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatments", false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("MeasuredVariables", false, data_p, param_set_p);
 
 	if (group_p)
 		{
@@ -93,7 +93,7 @@ bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-					if ((param_p = GetTreatmentsDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+					if ((param_p = GetMeasuredVariablesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
 							success_flag = true;
 						}
@@ -106,7 +106,7 @@ bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_
 }
 
 
-bool RunForSubmissionTreatmentParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionMeasuredVariableParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const json_t *phenotypes_json_p = NULL;
@@ -119,9 +119,9 @@ bool RunForSubmissionTreatmentParams (DFWFieldTrialServiceData *data_p, Paramete
 			 */
 			if (phenotypes_json_p && (json_array_size (phenotypes_json_p) > 0))
 				{
-					if (!AddTreatmentsFromJSON (job_p, phenotypes_json_p, data_p))
+					if (!AddMeasuredVariablesFromJSON (job_p, phenotypes_json_p, data_p))
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddTreatmentsFromJSON for failed");
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddMeasuredVariablesFromJSON for failed");
 						}
 				}		/* if (phenotpnes_json_p) */
 
@@ -134,7 +134,7 @@ bool RunForSubmissionTreatmentParams (DFWFieldTrialServiceData *data_p, Paramete
 }
 
 
-bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+bool GetSubmissionMeasuredVariableParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	bool success_flag = true;
 
@@ -171,7 +171,7 @@ bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 				{
 					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
 
-					if ((param_p = GetTreatmentsDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
+					if ((param_p = GetMeasuredVariablesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
 							success_flag = true;
 						}
@@ -208,7 +208,7 @@ json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
 							for (i = 0; i < num_results; ++ i)
 								{
 									json_t *result_p = json_array_get (results_p, i);
-									json_t *trait_p = json_object_get (result_p, TR_TRAIT_S);
+									json_t *trait_p = json_object_get (result_p, MV_TRAIT_S);
 
 									if (trait_p)
 										{
@@ -247,13 +247,13 @@ json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
 
 
 
-Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p)
 {
-	Treatment *phenotype_p = NULL;
+	MeasuredVariable *phenotype_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
 		{
-			char *key_s = ConcatenateVarargsStrings (TR_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
+			char *key_s = ConcatenateVarargsStrings (MV_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
 
 			if (key_s)
 				{
@@ -279,11 +279,11 @@ Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialSe
 													size_t i = 0;
 													json_t *entry_p = json_array_get (results_p, i);
 
-													phenotype_p = GetTreatmentFromJSON (entry_p, data_p);
+													phenotype_p = GetMeasuredVariableFromJSON (entry_p, data_p);
 
 													if (!phenotype_p)
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GetTreatmentFromJSON failed for \"%s\": \"%s\"", key_s, name_s);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GetMeasuredVariableFromJSON failed for \"%s\": \"%s\"", key_s, name_s);
 														}
 
 												}		/* if (num_results != 0) */
@@ -329,7 +329,7 @@ Treatment *GetTreatmentByVariableName (const char *name_s, const DFWFieldTrialSe
 }
 
 
-json_t *GetAllTreatmentsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllMeasuredVariablesAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;
 
@@ -344,17 +344,17 @@ json_t *GetAllTreatmentsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *
 }
 
 
-char *GetTreatmentAsString (const Treatment *treatment_p)
+char *GetMeasuredVariableAsString (const MeasuredVariable *treatment_p)
 {
 	char *title_s = NULL;
 
-	if (treatment_p -> tr_internal_name_s)
+	if (treatment_p -> mv_internal_name_s)
 		{
-			title_s = EasyCopyToNewString (treatment_p -> tr_internal_name_s);
+			title_s = EasyCopyToNewString (treatment_p -> mv_internal_name_s);
 		}
-	else if (treatment_p -> tr_variable_term_p)
+	else if (treatment_p -> mv_variable_term_p)
 		{
-			title_s = EasyCopyToNewString (treatment_p -> tr_variable_term_p -> st_name_s);
+			title_s = EasyCopyToNewString (treatment_p -> mv_variable_term_p -> st_name_s);
 		}
 	else
 		{
@@ -364,24 +364,24 @@ char *GetTreatmentAsString (const Treatment *treatment_p)
 				{
 					bool success_flag = true;
 
-					if (treatment_p -> tr_trait_term_p)
+					if (treatment_p -> mv_trait_term_p)
 						{
-							success_flag = AppendStringToByteBuffer (buffer_p, treatment_p -> tr_trait_term_p -> st_name_s);
+							success_flag = AppendStringToByteBuffer (buffer_p, treatment_p -> mv_trait_term_p -> st_name_s);
 						}
 
 					if (success_flag)
 						{
-							if (treatment_p -> tr_measurement_term_p)
+							if (treatment_p -> mv_measurement_term_p)
 								{
-									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> tr_measurement_term_p -> st_name_s, NULL);
+									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> mv_measurement_term_p -> st_name_s, NULL);
 								}
 						}
 
 					if (success_flag)
 						{
-							if (treatment_p -> tr_unit_term_p)
+							if (treatment_p -> mv_unit_term_p)
 								{
-									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> tr_unit_term_p -> st_name_s, NULL);
+									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> mv_unit_term_p -> st_name_s, NULL);
 								}
 						}
 
@@ -403,14 +403,14 @@ char *GetTreatmentAsString (const Treatment *treatment_p)
 }
 
 
-bool AddTreatmentToServiceJob (ServiceJob *job_p, Treatment *treatment_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treatment_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *treatment_json_p = GetTreatmentAsJSON (treatment_p, format);
+	json_t *treatment_json_p = GetMeasuredVariableAsJSON (treatment_p, format);
 
 	if (treatment_json_p)
 		{
-			char *title_s = GetTreatmentAsString (treatment_p);
+			char *title_s = GetMeasuredVariableAsString (treatment_p);
 
 			if (title_s)
 				{
@@ -535,9 +535,9 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
 {
-	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, S_PHENOTYPE_TABLE.npt_name_s, "Treatment data to upload", "The data to upload", NULL, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, S_PHENOTYPE_TABLE.npt_name_s, "MeasuredVariable data to upload", "The data to upload", NULL, PL_ALL);
 
 	if (param_p)
 		{
@@ -588,7 +588,7 @@ static Parameter *GetTreatmentsDataTableParameter (ParameterSet *param_set_p, Pa
 	"Unit Name": "Julian date (JD)"
 }
  */
-static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -609,7 +609,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 					if (row_size > 0)
 						{
 							MongoTool *mongo_p = data_p -> dftsd_mongo_p;
-							Treatment *treatment_p = NULL;
+							MeasuredVariable *treatment_p = NULL;
 							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, TT_TRAIT, mongo_p);
 
 							if (trait_p)
@@ -661,16 +661,16 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 																}
 														}
 
-													treatment_p = AllocateTreatment (NULL, trait_p, method_p, unit_p, variable_p, form_p, internal_name_s);
+													treatment_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, form_p, internal_name_s);
 
 													if (treatment_p)
 														{
-															if (!DoesTreatmentExist (treatment_p, data_p))
+															if (!DoesMeasuredVariableExist (treatment_p, data_p))
 																{
 																	OperationStatus import_status;
-																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding Treatment for row " SIZET_FMT, i);
+																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
 
-																	import_status = SaveTreatment (treatment_p, job_p, data_p);
+																	import_status = SaveMeasuredVariable (treatment_p, job_p, data_p);
 
 
 																	if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
@@ -679,20 +679,20 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 																		}
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save Treatment for row " SIZET_FMT, i);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
 																			success_flag = false;
 																		}
 
-																}		/* if (!DoesTreatmentExist (treatment_p)) */
+																}		/* if (!DoesMeasuredVariableExist (treatment_p)) */
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing Treatment for row " SIZET_FMT, i);
+																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
 																}
 
 														}		/* if (material_p) */
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateTreatment failed with internal name \"%s\"  for row " SIZET_FMT, internal_name_s ? internal_name_s : "", i);
+															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with internal name \"%s\"  for row " SIZET_FMT, internal_name_s ? internal_name_s : "", i);
 														}
 
 													if (!treatment_p)
@@ -762,7 +762,7 @@ static bool AddTreatmentsFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 
 							if (treatment_p)
 								{
-									FreeTreatment (treatment_p);
+									FreeMeasuredVariable (treatment_p);
 								}
 
 						}		/* if (row_size > 0) */
@@ -854,22 +854,22 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 }
 
 
-bool DoesTreatmentExist (Treatment *treatment_p, const DFWFieldTrialServiceData *data_p)
+bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const DFWFieldTrialServiceData *data_p)
 {
 	bool exists_flag = false;
 
-	if ((treatment_p -> tr_trait_term_p) && (treatment_p -> tr_measurement_term_p) && (treatment_p -> tr_unit_term_p))
+	if ((treatment_p -> mv_trait_term_p) && (treatment_p -> mv_measurement_term_p) && (treatment_p -> mv_unit_term_p))
 		{
-			Treatment *saved_treatment_p = GetTreatmentBySchemaURLs (treatment_p -> tr_trait_term_p -> st_url_s, treatment_p -> tr_measurement_term_p -> st_url_s, treatment_p -> tr_unit_term_p -> st_url_s, data_p);
+			MeasuredVariable *saved_treatment_p = GetMeasuredVariableBySchemaURLs (treatment_p -> mv_trait_term_p -> st_url_s, treatment_p -> mv_measurement_term_p -> st_url_s, treatment_p -> mv_unit_term_p -> st_url_s, data_p);
 
 			if (saved_treatment_p)
 				{
 					exists_flag = true;
-					FreeTreatment (saved_treatment_p);
+					FreeMeasuredVariable (saved_treatment_p);
 				}
 
 		}
 
-		return exists_flag;
+	return exists_flag;
 }
 

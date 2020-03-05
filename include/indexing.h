@@ -50,7 +50,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexTrials (ServiceJob *job_p, LuceneTool 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexTreatments (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p);
 
 
 #ifdef __cplusplus

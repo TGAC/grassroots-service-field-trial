@@ -78,9 +78,9 @@ SRCS 	= \
 	submit_phenotypes.c \
 	submit_plots.c \
 	submit_study.c \
-	submit_treatments.c \
-	treatment.c \
-	treatment_jobs.c \
+	submit_measured_variables.c \
+	measured_variable.c \
+	measured_variable_jobs.c \
 	
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

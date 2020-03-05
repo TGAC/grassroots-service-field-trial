@@ -21,7 +21,7 @@
  */
 
 
-#include <treatment_jobs.h>
+#include "measured_variable_jobs.h"
 #include "submission_service.h"
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
@@ -163,7 +163,7 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (c
 										{
 											if (!GetSubmissionMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
 												{
-													if (!GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p))
+													if (!GetSubmissionMeasuredVariableParameterTypeForNamedParameter (param_name_s, pt_p))
 														{
 															if (!GetSubmissionRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p))
 																{
@@ -173,7 +173,7 @@ static bool GetDFWFieldTrialSubmissionServiceParameterTypesForNamedParameters (c
 																		}
 																}		/* if (!GetSearchRowPhenotypeParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
-														}		/* if (!GetSubmissionTreatmentParameterTypeForNamedParameter (param_name_s, pt_p)) */
+														}		/* if (!GetSubmissionMeasuredVariableParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
 												}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
@@ -273,7 +273,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 												{
 													if (AddSubmissionMaterialParams (data_p, params_p))
 														{
-															if (AddSubmissionTreatmentParams (data_p, params_p))
+															if (AddSubmissionMeasuredVariableParams (data_p, params_p))
 																{
 																	if (AddSubmissionRowPhenotypeParams (data_p, params_p, resource_p))
 																		{
@@ -440,7 +440,7 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, DFWFiel
 						{
 							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
-									if (ReindexTreatments (job_p, lucene_p, update_flag, data_p))
+									if (ReindexMeasuredVariables (job_p, lucene_p, update_flag, data_p))
 										{
 											++ num_succeeded;
 										}
@@ -508,13 +508,13 @@ static ServiceJobSet *RunDFWFieldTrialSubmissionService (Service *service_p, Par
 																{
 																	if (!RunForSubmissionMaterialParams (data_p, param_set_p, job_p))
 																		{
-																			if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p))
+																			if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p))
 																				{
 																					if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p))
 																						{
 																						}		/* if (!RunForSubmissionRowPhenotypeParams (data_p, param_set_p, job_p)) */
 
-																				}		/* if (!RunForSubmissionTreatmentParams (data_p, param_set_p, job_p)) */
+																				}		/* if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p)) */
 
 																		}		/* if (!RunForMaterialParams (data_p, param_set_p, job_p)) */
 

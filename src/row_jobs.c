@@ -21,7 +21,7 @@
  */
 
 
-#include <treatment_jobs.h>
+#include "measured_variable_jobs.h"
 #include "row_jobs.h"
 #include "plot_jobs.h"
 #include "string_utils.h"
@@ -347,7 +347,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 															if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
 																{
-																	Treatment *treatment_p = GetTreatmentByVariableName (key_s, data_p);
+																	MeasuredVariable *treatment_p = GetMeasuredVariableByVariableName (key_s, data_p);
 
 																	if (treatment_p)
 																		{
@@ -445,7 +445,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 																			if (!added_phenotype_flag)
 																				{
-																					FreeTreatment (treatment_p);
+																					FreeMeasuredVariable (treatment_p);
 																				}
 
 																		}		/* if (phenotype_p) */

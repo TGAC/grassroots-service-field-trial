@@ -24,7 +24,7 @@
 #include "study_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
-#include "treatment_jobs.h"
+#include "measured_variable_jobs.h"
 
 
 bool IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
@@ -81,7 +81,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const DFWFieldTrialServiceDat
 					++ num_succeeded;
 				}
 
-			if (ReindexTreatments (job_p, lucene_p, update_flag, service_data_p))
+			if (ReindexMeasuredVariables (job_p, lucene_p, update_flag, service_data_p))
 				{
 					++ num_succeeded;
 				}
@@ -166,15 +166,14 @@ bool ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, c
 }
 
 
-
-bool ReindexTreatments (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
+bool ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const DFWFieldTrialServiceData *service_data_p)
 {
 	bool success_flag = false;
-	json_t *trials_p = GetAllTreatmentsAsJSON (service_data_p, NULL);
+	json_t *trials_p = GetAllMeasuredVariablesAsJSON (service_data_p, NULL);
 
 	if (trials_p)
 		{
-			if (SetLuceneToolName (lucene_p, "index_treatments"))
+			if (SetLuceneToolName (lucene_p, "index_measured_variables"))
 				{
 					success_flag = IndexLucene (lucene_p, trials_p, update_flag);
 				}
