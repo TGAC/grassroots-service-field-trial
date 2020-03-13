@@ -107,6 +107,7 @@ STUDY_PREFIX const char *ST_NUMBER_OF_PLOT_ROWS_S STUDY_VAL ("num_rows");
 
 STUDY_PREFIX const char *ST_NUMBER_OF_PLOT_COLUMN_S STUDY_VAL ("num_columns");
 
+STUDY_PREFIX const char *ST_NUMBER_OF_REPLICATES_S STUDY_VAL ("num_replicates");
 
 
 STUDY_PREFIX const char *ST_PLOT_LENGTH_S STUDY_VAL ("plot_length");
@@ -185,6 +186,8 @@ typedef struct Study
 
 	uint32 *st_num_columns_p;
 
+	uint32 * st_num_replicates_p;
+
 	char *st_weather_link_s;
 
 	/**
@@ -216,7 +219,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 											const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
 											MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const double64 *min_ph_p, const double64 *max_ph_p, const char *description_s,
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
-											const uint32 *num_rows_p, const uint32 *num_cols_p, const double64 *plot_width_p, const double64 *plot_length_p,
+											const uint32 *num_rows_p, const uint32 *num_cols_p, const uint32 *num_replicates_p, const double64 *plot_width_p, const double64 *plot_length_p,
 											const char *st_weather_link_s, const json_t *shape_p,
 											const DFWFieldTrialServiceData *data_p);
 

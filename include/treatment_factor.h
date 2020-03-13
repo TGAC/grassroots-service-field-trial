@@ -37,7 +37,15 @@
  */
 typedef struct TreatmentFactor
 {
-	char *tf_name_s;
+	//Study *parent_study_p;
+
+	SchemaTerm *tf_ontology_term_p;
+
+	char *tf_notes_s;
+
+	char *tf_abbreviation_s;
+
+
 
 	/**
 	 * A list of KeyValuePairNodes defining the different treatment levels
@@ -58,7 +66,7 @@ typedef struct TreatmentFactorNode
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#ifdef ALLOCATE_TREATMNET_FACTOR_TAGS
+#ifdef ALLOCATE_TREATMENT_FACTOR_TAGS
 	#define TREATMENT_FACTOR_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
 	#define TREATMENT_FACTOR_VAL(x)	= x
 	#define TREATMENT_FACTOR_CONCAT_VAL(x,y)	= x y
@@ -73,6 +81,7 @@ typedef struct TreatmentFactorNode
 
 TREATMENT_FACTOR_PREFIX const char *TF_NAME_S TREATMENT_FACTOR_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 TREATMENT_FACTOR_PREFIX const char *TF_VALUES_S TREATMENT_FACTOR_VAL ("values");
+TREATMENT_FACTOR_PREFIX const char *TF_TERM_S TREATMENT_FACTOR_VAL ("term");
 
 
 
@@ -83,7 +92,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (const char * const name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactor (TreatmentFactor *treatment_p);
 

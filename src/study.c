@@ -76,7 +76,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 											const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
 											MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const double64 *min_ph_p, const double64 *max_ph_p, const char *description_s,
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
-											const uint32 *num_rows_p, const uint32 *num_cols_p, const double64 *plot_width_p, const double64 *plot_length_p,
+											const uint32 *num_rows_p, const uint32 *num_cols_p, const uint32 *num_replicates_p, const double64 *plot_width_p, const double64 *plot_length_p,
 											const char *weather_s, const json_t *shape_p,
 											const DFWFieldTrialServiceData *data_p)
 {
@@ -156,52 +156,63 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 
 																																					if (CopyValidUnsignedInteger (num_cols_p, &copied_num_cols_p))
 																																						{
-																																							json_t *copied_shape_p = NULL;
+																																							uint32 *copied_num_replicates_p = NULL;
 
-																																							if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p)))
+																																							if (CopyValidUnsignedInteger (num_replicates_p, &copied_num_replicates_p))
 																																								{
-																																									Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																																									json_t *copied_shape_p = NULL;
 
-																																									if (study_p)
+																																									if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p)))
 																																										{
-																																											study_p -> st_id_p = id_p;
-																																											study_p -> st_name_s = copied_name_s;
-																																											study_p -> st_data_url_s = copied_url_s;
-																																											study_p -> st_soil_type_s = copied_soil_s;
-																																											study_p -> st_aspect_s = copied_aspect_s;
-																																											study_p -> st_slope_s = copied_slope_s;
-																																											study_p -> st_sowing_date_p = copied_sowing_date_p;
-																																											study_p -> st_harvest_date_p = copied_harvest_date_p;
-																																											study_p -> st_parent_p = parent_field_trial_p;
-																																											study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
-																																											study_p -> st_location_p = location_p;
-																																											study_p -> st_plots_p = plots_p;
-																																											study_p -> st_min_ph_p = copied_min_ph_p;
-																																											study_p -> st_max_ph_p = copied_max_ph_p;
-																																											study_p -> st_current_crop_p = current_crop_p;
-																																											study_p -> st_previous_crop_p = previous_crop_p;
-																																											study_p -> st_description_s = copied_description_s;
-																																											study_p -> st_growing_conditions_s = copied_growing_conditions_s;
-																																											study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
-																																											study_p -> st_design_s = copied_design_s;
+																																											Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-																																											study_p -> st_default_plot_width_p = copied_plot_width_p;
-																																											study_p -> st_default_plot_length_p = copied_plot_length_p;
-																																											study_p -> st_num_rows_p = copied_num_rows_p;
-																																											study_p -> st_num_columns_p = copied_num_cols_p;
+																																											if (study_p)
+																																												{
+																																													study_p -> st_id_p = id_p;
+																																													study_p -> st_name_s = copied_name_s;
+																																													study_p -> st_data_url_s = copied_url_s;
+																																													study_p -> st_soil_type_s = copied_soil_s;
+																																													study_p -> st_aspect_s = copied_aspect_s;
+																																													study_p -> st_slope_s = copied_slope_s;
+																																													study_p -> st_sowing_date_p = copied_sowing_date_p;
+																																													study_p -> st_harvest_date_p = copied_harvest_date_p;
+																																													study_p -> st_parent_p = parent_field_trial_p;
+																																													study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
+																																													study_p -> st_location_p = location_p;
+																																													study_p -> st_plots_p = plots_p;
+																																													study_p -> st_min_ph_p = copied_min_ph_p;
+																																													study_p -> st_max_ph_p = copied_max_ph_p;
+																																													study_p -> st_current_crop_p = current_crop_p;
+																																													study_p -> st_previous_crop_p = previous_crop_p;
+																																													study_p -> st_description_s = copied_description_s;
+																																													study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																																													study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																																													study_p -> st_design_s = copied_design_s;
 
-																																											study_p -> st_weather_link_s = copied_weather_s;
-																																											study_p -> st_shape_p = copied_shape_p;
+																																													study_p -> st_default_plot_width_p = copied_plot_width_p;
+																																													study_p -> st_default_plot_length_p = copied_plot_length_p;
+																																													study_p -> st_num_rows_p = copied_num_rows_p;
+																																													study_p -> st_num_columns_p = copied_num_cols_p;
+																																													study_p -> st_num_replicates_p = copied_num_replicates_p;
 
-																																											return study_p;
+																																													study_p -> st_weather_link_s = copied_weather_s;
+																																													study_p -> st_shape_p = copied_shape_p;
+
+																																													return study_p;
+																																												}
+
+																																											if (copied_shape_p)
+																																												{
+																																													json_decref (copied_shape_p);
+																																												}
+																																										}		/* if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p))) */
+
+																																									if (copied_num_replicates_p)
+																																										{
+																																											FreeMemory (copied_num_replicates_p);
 																																										}
 
-																																									if (copied_shape_p)
-																																										{
-																																											json_decref (copied_shape_p);
-																																										}
-																																								}		/* if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p))) */
-
+																																								}		/* if (CopyValidUnsignedInteger (num_cols_p, &copied_num_replicates_p)) */
 
 
 																																							if (copied_num_cols_p)
@@ -941,6 +952,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																					double64 *plot_length_p = NULL;
 																					uint32 *num_plot_rows_p = NULL;
 																					uint32 *num_plot_columns_p = NULL;
+																					uint32 *num_replicates_p = NULL;
 																					const char *weather_s = GetJSONString (json_p, ST_WEATHER_S);
 																					const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
 
@@ -963,6 +975,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 
 																					GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_PLOT_ROWS_S, &num_plot_rows_p);
 																					GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_PLOT_COLUMN_S, &num_plot_columns_p);
+																					GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_REPLICATES_S, &num_replicates_p);
 
 																					GetValidRealFromJSON (json_p, ST_PLOT_WIDTH_S, &plot_width_p);
 																					GetValidRealFromJSON (json_p, ST_PLOT_LENGTH_S, &plot_length_p);
@@ -971,7 +984,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 
 																					study_p = AllocateStudy (id_p, name_s, soil_s, data_url_s, aspect_s, slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																																	 min_ph_p, max_ph_p, description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s,
-																																	 num_plot_rows_p, num_plot_columns_p, plot_width_p, plot_length_p,
+																																	 num_plot_rows_p, num_plot_columns_p, num_replicates_p, plot_width_p, plot_length_p,
 																																	 weather_s, shape_p,
 																																	 data_p);
 
@@ -1007,6 +1020,11 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 																							FreeMemory (num_plot_columns_p);
 																						}
 
+
+																					if (num_replicates_p)
+																						{
+																							FreeMemory (num_replicates_p);
+																						}
 
 																					if (plot_width_p)
 																						{
@@ -1401,7 +1419,10 @@ static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json
 						{
 							if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_PLOT_COLUMN_S, study_p -> st_num_columns_p))
 								{
-									return true;
+									if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_REPLICATES_S, study_p -> st_num_replicates_p))
+										{
+											return true;
+										}
 								}
 						}
 				}
