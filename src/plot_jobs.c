@@ -860,6 +860,11 @@ static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTr
 				{
 					plots_table_p = GeneratePlotsTemplate (study_p);
 				}
+			else
+				{
+					/* it's an empty table */
+					plots_table_p = json_array ();
+				}
 		}
 
 	return plots_table_p;
