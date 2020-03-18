@@ -35,7 +35,7 @@
 
 static const char *GetDrillingSubmissionServiceName (Service *service_p);
 
-static const char *GetDrillingSubmissionServiceDesciption (Service *service_p);
+static const char *GetDrillingSubmissionServiceDescription (Service *service_p);
 
 static const char *GetDrillingSubmissionServiceInformationUri (Service *service_p);
 
@@ -72,7 +72,7 @@ Service *GetDrillingSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetDrillingSubmissionServiceName,
-														 GetDrillingSubmissionServiceDesciption,
+														 GetDrillingSubmissionServiceDescription,
 														 GetDrillingSubmissionServiceInformationUri,
 														 RunDrillingSubmissionService,
 														 NULL,
@@ -112,7 +112,7 @@ static const char *GetDrillingSubmissionServiceName (Service * UNUSED_PARAM (ser
 }
 
 
-static const char *GetDrillingSubmissionServiceDesciption (Service * UNUSED_PARAM (service_p))
+static const char *GetDrillingSubmissionServiceDescription (Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial drilling layouts";
 }

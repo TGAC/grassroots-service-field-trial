@@ -37,7 +37,9 @@
 
 static const char *GetMaterialSubmissionServiceName (const Service *service_p);
 
-static const char *GetMaterialSubmissionServiceDesciption (const Service *service_p);
+static const char *GetMaterialSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetMaterialSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetMaterialSubmissionServiceInformationUri (const Service *service_p);
 
@@ -72,7 +74,8 @@ Service *GetMaterialSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetMaterialSubmissionServiceName,
-														 GetMaterialSubmissionServiceDesciption,
+														 GetMaterialSubmissionServiceDescription,
+														 GetMaterialSubmissionServiceAlias,
 														 GetMaterialSubmissionServiceInformationUri,
 														 RunMaterialSubmissionService,
 														 NULL,
@@ -112,9 +115,15 @@ static const char *GetMaterialSubmissionServiceName (const Service * UNUSED_PARA
 }
 
 
-static const char *GetMaterialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetMaterialSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial Materials";
+}
+
+
+static const char *GetMaterialSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_material";
 }
 
 

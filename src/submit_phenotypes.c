@@ -38,7 +38,9 @@
 
 static const char *GetPhenotypesSubmissionServiceName (const Service *service_p);
 
-static const char *GetPhenotypesSubmissionServiceDesciption (const Service *service_p);
+static const char *GetPhenotypesSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetPhenotypesSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetPhenotypesSubmissionServiceInformationUri (const Service *service_p);
 
@@ -73,7 +75,8 @@ Service *GetPhenotypesSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetPhenotypesSubmissionServiceName,
-														 GetPhenotypesSubmissionServiceDesciption,
+														 GetPhenotypesSubmissionServiceDescription,
+														 GetPhenotypesSubmissionServiceAlias,
 														 GetPhenotypesSubmissionServiceInformationUri,
 														 RunPhenotypesSubmissionService,
 														 NULL,
@@ -113,11 +116,16 @@ static const char *GetPhenotypesSubmissionServiceName (const Service * UNUSED_PA
 }
 
 
-static const char *GetPhenotypesSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetPhenotypesSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial phenotypes data";
 }
 
+
+static const char *GetPhenotypesSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_phenotypes";
+}
 
 static const char *GetPhenotypesSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {

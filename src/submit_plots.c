@@ -36,7 +36,9 @@
 
 static const char *GetPlotsSubmissionServiceName (const Service *service_p);
 
-static const char *GetPlotsSubmissionServiceDesciption (const Service *service_p);
+static const char *GetPlotsSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetPlotsSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetPlotsSubmissionServiceInformationUri (const Service *service_p);
 
@@ -71,7 +73,8 @@ Service *GetPlotsSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetPlotsSubmissionServiceName,
-														 GetPlotsSubmissionServiceDesciption,
+														 GetPlotsSubmissionServiceDescription,
+														 GetPlotsSubmissionServiceAlias,
 														 GetPlotsSubmissionServiceInformationUri,
 														 RunPlotsSubmissionService,
 														 NULL,
@@ -114,9 +117,15 @@ static const char *GetPlotsSubmissionServiceName (const Service * UNUSED_PARAM (
 }
 
 
-static const char *GetPlotsSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetPlotsSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial plots";
+}
+
+
+static const char *GetPlotsSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_plots";
 }
 
 

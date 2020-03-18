@@ -38,7 +38,9 @@
 
 static const char *GetGeneBankSubmissionServiceName (const Service *service_p);
 
-static const char *GetGeneBankSubmissionServiceDesciption (const Service *service_p);
+static const char *GetGeneBankSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetGeneBankSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetGeneBankSubmissionServiceInformationUri (const Service *service_p);
 
@@ -73,7 +75,8 @@ Service *GetGeneBankSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetGeneBankSubmissionServiceName,
-														 GetGeneBankSubmissionServiceDesciption,
+														 GetGeneBankSubmissionServiceDescription,
+														 GetGeneBankSubmissionServiceAlias,
 														 GetGeneBankSubmissionServiceInformationUri,
 														 RunGeneBankSubmissionService,
 														 NULL,
@@ -113,11 +116,16 @@ static const char *GetGeneBankSubmissionServiceName (const Service * UNUSED_PARA
 }
 
 
-static const char *GetGeneBankSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetGeneBankSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial GeneBanks";
 }
 
+
+static const char *GetGeneBankSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_gene_bank";
+}
 
 static const char *GetGeneBankSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {

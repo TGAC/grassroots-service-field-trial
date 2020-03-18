@@ -53,7 +53,9 @@ static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_B
 
 static const char *GetDFWFieldTrialSubmissionServiceName (const Service *service_p);
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (const Service *service_p);
+static const char *GetDFWFieldTrialSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetDFWFieldTrialSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetDFWFieldTrialSubmissionServiceInformationUri (const Service *service_p);
 
@@ -94,7 +96,8 @@ Service *GetDFWFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetDFWFieldTrialSubmissionServiceName,
-														 GetDFWFieldTrialSubmissionServiceDesciption,
+														 GetDFWFieldTrialSubmissionServiceDescription,
+														 GetDFWFieldTrialSubmissionServiceAlias,
 														 GetDFWFieldTrialSubmissionServiceInformationUri,
 														 RunDFWFieldTrialSubmissionService,
 														 IsResourceForDFWFieldTrialSubmissionService,
@@ -135,11 +138,16 @@ static const char *GetDFWFieldTrialSubmissionServiceName (const Service * UNUSED
 }
 
 
-static const char *GetDFWFieldTrialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial data";
 }
 
+
+static const char *GetDFWFieldTrialSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit";
+}
 
 static const char *GetDFWFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {

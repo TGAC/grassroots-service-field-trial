@@ -65,7 +65,9 @@ static const uint32 S_DEFAULT_PAGE_SIZE = 10;
 
 static const char *GetDFWFieldTrialSearchServiceName (const Service *service_p);
 
-static const char *GetDFWFieldTrialSearchServiceDesciption (const Service *service_p);
+static const char *GetDFWFieldTrialSearchServiceDescription (const Service *service_p);
+
+static const char *GetDFWFieldTrialSearchServiceAlias (const Service *service_p);
 
 static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *service_p);
 
@@ -118,7 +120,8 @@ Service *GetDFWFieldTrialSearchService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetDFWFieldTrialSearchServiceName,
-														 GetDFWFieldTrialSearchServiceDesciption,
+														 GetDFWFieldTrialSearchServiceDescription,
+														 GetDFWFieldTrialSearchServiceAlias,
 														 GetDFWFieldTrialSearchServiceInformationUri,
 														 RunDFWFieldTrialSearchService,
 														 IsResourceForDFWFieldTrialSearchService,
@@ -159,11 +162,16 @@ static const char *GetDFWFieldTrialSearchServiceName (const Service * UNUSED_PAR
 }
 
 
-static const char *GetDFWFieldTrialSearchServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetDFWFieldTrialSearchServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to search field trial data";
 }
 
+
+static const char *GetDFWFieldTrialSearchServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "search";
+}
 
 static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {

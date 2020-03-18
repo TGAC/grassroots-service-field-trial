@@ -35,7 +35,9 @@
 
 static const char *GetFieldTrialSubmissionServiceName (const Service *service_p);
 
-static const char *GetFieldTrialSubmissionServiceDesciption (const Service *service_p);
+static const char *GetFieldTrialSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetFieldTrialSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetFieldTrialSubmissionServiceInformationUri (const Service *service_p);
 
@@ -71,7 +73,8 @@ Service *GetFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetFieldTrialSubmissionServiceName,
-														 GetFieldTrialSubmissionServiceDesciption,
+														 GetFieldTrialSubmissionServiceDescription,
+														 GetFieldTrialSubmissionServiceAlias,
 														 GetFieldTrialSubmissionServiceInformationUri,
 														 RunFieldTrialSubmissionService,
 														 NULL,
@@ -111,12 +114,17 @@ static const char *GetFieldTrialSubmissionServiceName (const Service * UNUSED_PA
 }
 
 
-static const char *GetFieldTrialSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetFieldTrialSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "Add a Field Trial to the system. Following the same nomenclature as <a href='https://brapi.docs.apiary.io/'>BrAPI</a>,"
 			" a Field Trial contains multiple Studies. This is equivalent to an Investigation in <a href='https://www.miappe.org/'>MIAPPE</a>.";
 }
 
+
+static const char *GetFieldTrialSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_trial";
+}
 
 static const char *GetFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {

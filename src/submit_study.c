@@ -34,8 +34,9 @@
 
 
 
+static const char *GetStudySubmissionServiceDescription (const Service *service_p);
 
-static const char *GetStudySubmissionServiceDesciption (const Service *service_p);
+static const char *GetStudySubmissionServiceAlias (const Service *service_p);
 
 static const char *GetStudySubmissionServiceInformationUri (const Service *service_p);
 
@@ -70,7 +71,8 @@ Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetStudySubmissionServiceName,
-														 GetStudySubmissionServiceDesciption,
+														 GetStudySubmissionServiceDescription,
+														 GetStudySubmissionServiceAlias,
 														 GetStudySubmissionServiceInformationUri,
 														 RunStudySubmissionService,
 														 NULL,
@@ -113,10 +115,16 @@ const char *GetStudySubmissionServiceName (const Service * UNUSED_PARAM (service
 }
 
 
-static const char *GetStudySubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetStudySubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "Following the same nomenclature as <a href='https://brapi.docs.apiary.io/'>BrAPI</a>, a Study is a phenotyping experiment "
 			"taking place at a single location. One or more Studies can take place within a single Trial.";
+}
+
+
+static const char *GetStudySubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_study";
 }
 
 

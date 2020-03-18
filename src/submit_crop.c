@@ -37,7 +37,9 @@
 
 static const char *GetCropSubmissionServiceName (const Service *service_p);
 
-static const char *GetCropSubmissionServiceDesciption (const Service *service_p);
+static const char *GetCropSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetCropSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetCropSubmissionServiceInformationUri (const Service *service_p);
 
@@ -72,7 +74,8 @@ Service *GetCropSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetCropSubmissionServiceName,
-														 GetCropSubmissionServiceDesciption,
+														 GetCropSubmissionServiceDescription,
+														 GetCropSubmissionServiceAlias,
 														 GetCropSubmissionServiceInformationUri,
 														 RunCropSubmissionService,
 														 NULL,
@@ -112,9 +115,15 @@ static const char *GetCropSubmissionServiceName (const Service * UNUSED_PARAM (s
 }
 
 
-static const char *GetCropSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial crop data";
+}
+
+
+static const char *GetCropSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_crops";
 }
 
 

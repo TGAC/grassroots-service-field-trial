@@ -264,6 +264,8 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected");
 
+/** The prefix to use for Field Trial Service aliases. */
+#define DFT_GROUP_ALIAS_PREFIX_S "field_trial/"
 
 
 #ifdef __cplusplus

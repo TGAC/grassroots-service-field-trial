@@ -35,7 +35,9 @@
 
 static const char *GetLocationSubmissionServiceName (const Service *service_p);
 
-static const char *GetLocationSubmissionServiceDesciption (const Service *service_p);
+static const char *GetLocationSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetLocationSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetLocationSubmissionServiceInformationUri (const Service *service_p);
 
@@ -70,7 +72,8 @@ Service *GetLocationSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetLocationSubmissionServiceName,
-														 GetLocationSubmissionServiceDesciption,
+														 GetLocationSubmissionServiceDescription,
+														 GetLocationSubmissionServiceAlias,
 														 GetLocationSubmissionServiceInformationUri,
 														 RunLocationSubmissionService,
 														 NULL,
@@ -110,9 +113,15 @@ static const char *GetLocationSubmissionServiceName (const Service * UNUSED_PARA
 }
 
 
-static const char *GetLocationSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial locations";
+}
+
+
+static const char *GetLocationSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_location";
 }
 
 

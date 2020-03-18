@@ -38,7 +38,9 @@
 
 static const char *GetMeasuredVariableSubmissionServiceName (const Service *service_p);
 
-static const char *GetMeasuredVariableSubmissionServiceDesciption (const Service *service_p);
+static const char *GetMeasuredVariableSubmissionServiceDescription (const Service *service_p);
+
+static const char *GetMeasuredVariableSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service *service_p);
 
@@ -73,7 +75,8 @@ Service *GetMeasuredVariablesSubmissionService (GrassrootsServer *grassroots_p)
 				{
 					if (InitialiseService (service_p,
 														 GetMeasuredVariableSubmissionServiceName,
-														 GetMeasuredVariableSubmissionServiceDesciption,
+														 GetMeasuredVariableSubmissionServiceDescription,
+														 GetMeasuredVariableSubmissionServiceAlias,
 														 GetMeasuredVariableSubmissionServiceInformationUri,
 														 RunMeasuredVariableSubmissionService,
 														 NULL,
@@ -113,11 +116,16 @@ static const char *GetMeasuredVariableSubmissionServiceName (const Service * UNU
 }
 
 
-static const char *GetMeasuredVariableSubmissionServiceDesciption (const Service * UNUSED_PARAM (service_p))
+static const char *GetMeasuredVariableSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
 	return "A service to submit field trial measured variables";
 }
 
+
+static const char *GetMeasuredVariableSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+{
+	return DFT_GROUP_ALIAS_PREFIX_S "submit_measured_variables";
+}
 
 static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
