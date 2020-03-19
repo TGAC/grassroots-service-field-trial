@@ -124,7 +124,7 @@ static const char *GetMeasuredVariableSubmissionServiceDescription (const Servic
 
 static const char *GetMeasuredVariableSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_measured_variables";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_measured_variables";
 }
 
 static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))

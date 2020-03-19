@@ -123,7 +123,7 @@ static const char *GetMaterialSubmissionServiceDescription (const Service * UNUS
 
 static const char *GetMaterialSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_material";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_material";
 }
 
 

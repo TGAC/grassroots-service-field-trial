@@ -170,7 +170,7 @@ static const char *GetDFWFieldTrialSearchServiceDescription (const Service * UNU
 
 static const char *GetDFWFieldTrialSearchServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "search";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "search";
 }
 
 static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service * UNUSED_PARAM (service_p))

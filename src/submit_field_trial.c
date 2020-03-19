@@ -123,7 +123,7 @@ static const char *GetFieldTrialSubmissionServiceDescription (const Service * UN
 
 static const char *GetFieldTrialSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_trial";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_trial";
 }
 
 static const char *GetFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))

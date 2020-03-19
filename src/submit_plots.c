@@ -125,7 +125,7 @@ static const char *GetPlotsSubmissionServiceDescription (const Service * UNUSED_
 
 static const char *GetPlotsSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_plots";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_plots";
 }
 
 

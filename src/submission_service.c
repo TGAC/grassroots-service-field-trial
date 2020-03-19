@@ -146,7 +146,7 @@ static const char *GetDFWFieldTrialSubmissionServiceDescription (const Service *
 
 static const char *GetDFWFieldTrialSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit";
 }
 
 static const char *GetDFWFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))

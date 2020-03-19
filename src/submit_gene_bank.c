@@ -124,7 +124,7 @@ static const char *GetGeneBankSubmissionServiceDescription (const Service * UNUS
 
 static const char *GetGeneBankSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_gene_bank";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_gene_bank";
 }
 
 static const char *GetGeneBankSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))

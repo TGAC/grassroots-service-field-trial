@@ -123,7 +123,7 @@ static const char *GetCropSubmissionServiceDescription (const Service * UNUSED_P
 
 static const char *GetCropSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_crops";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_crops";
 }
 
 

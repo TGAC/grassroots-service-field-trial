@@ -121,7 +121,7 @@ static const char *GetLocationSubmissionServiceDescription (const Service * UNUS
 
 static const char *GetLocationSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_location";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_location";
 }
 
 

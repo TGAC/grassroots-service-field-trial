@@ -124,7 +124,7 @@ static const char *GetStudySubmissionServiceDescription (const Service * UNUSED_
 
 static const char *GetStudySubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S "submit_study";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_study";
 }
 
 
