@@ -800,7 +800,18 @@ bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *pa
 
 											if (!built_query_success_flag)
 												{
-													AddErrorMessageToServiceJob (job_p, "Parent field trial id error", id_s);
+													const char *prefix_s = "Failed to build Field Trial query";
+													char *error_s = ConcatenateVarargsStrings (prefix_s, " for ", id_s, NULL);
+
+													if (error_s)
+														{
+															AddParameterErrorMessageToServiceJob  (job_p, S_SEARCH_TRIAL_ID_S.npt_name_s, S_SEARCH_TRIAL_ID_S.npt_type, error_s);
+															FreeCopiedString (error_s);
+														}
+													else
+														{
+															AddParameterErrorMessageToServiceJob  (job_p, S_SEARCH_TRIAL_ID_S.npt_name_s, S_SEARCH_TRIAL_ID_S.npt_type, prefix_s);
+														}
 												}
 										}		/* if (query_p) */
 

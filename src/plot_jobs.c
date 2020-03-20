@@ -1101,7 +1101,7 @@ static bool AddErrorForTableCell (ServiceJob *job_p, const json_t *table_row_p, 
 						{
 							if (SetJSONString (error_p, JOB_ERROR_S, message_s))
 								{
-									if (AddCompoundErrorToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, error_p))
+									if (AddCompoundErrorToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, error_p))
 										{
 											return true;
 										}
