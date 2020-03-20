@@ -479,11 +479,11 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 						{
 							const double64 *latitude_p = NULL;
 
-							if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_p))
+							if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_p)) && (latitude_p != NULL))
 								{
 									const double64 *longitude_p = NULL;
 
-									if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_p))
+									if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_p)) && (longitude_p != NULL))
 										{
 											const double64 *elevation_p = NULL;
 											double64 elevation;
@@ -497,17 +497,41 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 												{
 													if (SetAddressCentreCoordinate (address_p, *latitude_p, *longitude_p, elevation_p))
 														{
-															success_flag = DetermineAddressForGPSLocation (address_p, NULL, grassroots_p);
+															success_flag = true;
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set GPS coordinate to [ %lf, %lf ] for %s", *latitude_p, *longitude_p, address_p -> ad_name_s);
+															AddErrorMessageToServiceJob (job_p, JOB_ERROR_S, "Failed to save GPS coordinate");
 														}
 												}
 										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Longitude for %s", address_p -> ad_name_s);
+											AddErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, "Value required when using your own specified GPS Coordinates");
+										}
+
 
 								}		/* if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Latitude for %s", address_p -> ad_name_s);
+									AddErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, "Value required when using your own specified GPS Coordinates");
+								}
 
 						}		/* if (use_gps_value.st_boolean_value) */
 					else
 						{
-							success_flag = DetermineGPSLocationForAddress (address_p, NULL, grassroots_p);
+							if (DetermineGPSLocationForAddress (address_p, NULL, grassroots_p))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "DetermineGPSLocationForAddress faialed for %s", address_p -> ad_name_s);
+									AddErrorMessageToServiceJob (job_p, JOB_ERROR_S, "Unable to determine GPS coordinate");
+								}
 						}
 
 
