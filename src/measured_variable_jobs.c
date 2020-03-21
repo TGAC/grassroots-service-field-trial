@@ -725,14 +725,8 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 												}		/* if (unit_p) */
 											else
 												{
-													char *row_s = GetRowAsString (i);
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Unit for row " SIZET_FMT, i);
-
-													if (row_s)
-														{
-															AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Unit");
-															FreeCopiedString (row_s);
-														}
+													AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create Unit", i, NULL);
 												}
 
 											if (!treatment_p)
@@ -743,14 +737,8 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 										}		/* if (method_p) */
 									else
 										{
-											char *row_s = GetRowAsString (i);
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Method for row " SIZET_FMT, i);
-
-											if (row_s)
-												{
-													AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Method");
-													FreeCopiedString (row_s);
-												}
+											AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create Method", i, NULL);
 										}
 
 									if (!treatment_p)
@@ -761,15 +749,8 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 								}		/* if (trait_p) */
 							else
 								{
-									char *row_s = GetRowAsString (i);
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get Trait for row " SIZET_FMT, i);
-
-									if (row_s)
-										{
-											AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Trait");
-											FreeCopiedString (row_s);
-										}
-
+									AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create Trait", i, NULL);
 								}
 
 							if (treatment_p)
