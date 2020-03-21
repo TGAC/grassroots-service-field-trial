@@ -641,7 +641,19 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 
 															if (row_s)
 																{
-																	AddErrorMessageToServiceJob (job_p, row_s, "Failed to get Method");
+																	const char *prefix_s = "Failed to get Method";
+																	char *error_s = ConcatenateVarargsStrings (prefix_s, " for ", row_s, NULL);
+
+																	if (error_s)
+																		{
+																			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, error_s);
+																			FreeCopiedString (error_s);
+																		}
+																	else
+																		{
+																			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, prefix_s);
+																		}
+
 																	FreeCopiedString (row_s);
 																}
 

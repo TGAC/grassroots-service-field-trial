@@ -263,56 +263,6 @@ bool AddErrorMessage (json_t *errors_p, const json_t *values_p, const size_t row
 
 
 
-bool AddErrorMessage (ServiceJob *job_p, const json_t *value_p, const char *error_s, const int index)
-{
-	char *dump_s = json_dumps (value_p, JSON_INDENT (2) | JSON_PRESERVE_ORDER);
-	const char *id_s = GetJSONString (value_p, "id");
-	bool added_error_flag = false;
-
-
-	if (id_s)
-		{
-			added_error_flag = AddErrorMessageToServiceJob (job_p, id_s, error_s);
-		}
-	else
-		{
-			char *index_s = GetIntAsString (index);
-
-			if (index_s)
-				{
-					char *row_s = ConcatenateStrings ("row ", index_s);
-
-					if (row_s)
-						{
-							added_error_flag = AddErrorMessageToServiceJob (job_p, row_s, error_s);
-
-							FreeCopiedString (row_s);
-						}
-
-					FreeCopiedString (index_s);
-				}
-
-		}
-
-	if (!added_error_flag)
-		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "failed to add %s to client feedback messsage", error_s);
-		}
-
-
-	if (dump_s)
-		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to import \"%s\": error=%s", dump_s, error_s);
-			free (dump_s);
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to import error=%s", dump_s, error_s);
-		}
-
-	return added_error_flag;
-}
-
 
 
 static Service **AddValidService (Service **service_pp, Service *service_p)

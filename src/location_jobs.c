@@ -502,14 +502,14 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 													else
 														{
 															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set GPS coordinate to [ %lf, %lf ] for %s", *latitude_p, *longitude_p, address_p -> ad_name_s);
-															AddErrorMessageToServiceJob (job_p, JOB_ERROR_S, "Failed to save GPS coordinate");
+															AddGeneralErrorMessageToServiceJob (job_p, "Failed to save GPS coordinate");
 														}
 												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Longitude for %s", address_p -> ad_name_s);
-											AddErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, "Value required when using your own specified GPS Coordinates");
+											AddParameterErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, LOCATION_LONGITUDE.npt_type, "Value required when using your own specified GPS Coordinates");
 										}
 
 
@@ -517,7 +517,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 							else
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Latitude for %s", address_p -> ad_name_s);
-									AddErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, "Value required when using your own specified GPS Coordinates");
+									AddParameterErrorMessageToServiceJob (job_p, LOCATION_LATITUDE.npt_name_s, LOCATION_LATITUDE.npt_type, "Value required when using your own specified GPS Coordinates");
 								}
 
 						}		/* if (use_gps_value.st_boolean_value) */
@@ -530,7 +530,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 							else
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "DetermineGPSLocationForAddress faialed for %s", address_p -> ad_name_s);
-									AddErrorMessageToServiceJob (job_p, JOB_ERROR_S, "Unable to determine GPS coordinate");
+									AddGeneralErrorMessageToServiceJob (job_p, "Unable to determine GPS coordinate");
 								}
 						}
 

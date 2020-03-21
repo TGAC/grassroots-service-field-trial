@@ -45,8 +45,6 @@ DFW_FIELD_TRIAL_SERVICE_API void ReleaseServices (ServicesArray *services_p);
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddErrorMessage (ServiceJob *job_p, const json_t *value_p, const char *error_s, const int index);
-
 #ifdef __cplusplus
 }
 #endif
