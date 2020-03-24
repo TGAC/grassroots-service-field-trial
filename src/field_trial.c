@@ -185,6 +185,44 @@ void FreeFieldTrial (FieldTrial *trial_p)
 }
 
 
+uint32 GetNumberOfFieldTrialStudies (const FieldTrial *trial_p)
+{
+	return (trial_p -> ft_studies_p ? trial_p -> ft_studies_p -> ll_size : 0);
+}
+
+
+bool RemoveFieldTrialStudy (FieldTrial *trial_p, Study *study_p)
+{
+	bool removed_flag = false;
+
+	if (trial_p -> ft_studies_p)
+		{
+			StudyNode *node_p = (StudyNode *) (trial_p -> ft_studies_p -> ll_head_p);
+
+			while (node_p && !removed_flag)
+				{
+					if (node_p -> stn_study_p == study_p)
+						{
+							LinkedListRemove (trial_p -> ft_studies_p, & (node_p -> stn_node));
+
+							node_p -> stn_study_p = NULL;
+							FreeStudyNode (& (node_p -> stn_node));
+							removed_flag = true;
+						}
+
+
+					if (!removed_flag)
+						{
+							node_p = (StudyNode *) (node_p -> stn_node.ln_next_p);
+						}
+				}
+		}
+
+
+	return removed_flag;
+}
+
+
 LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTrialServiceData *data_p)
 {
 	LinkedList *trials_p = GetFieldTrialsByNameFromMongoDB (data_p, trial_s);

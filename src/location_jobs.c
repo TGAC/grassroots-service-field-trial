@@ -550,10 +550,9 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 									success_flag = false;
 								}
 
-							FreeAddress (address_p);
 						}
 
-
+					FreeAddress (address_p);
 				}		/* if (address_p) */
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value)) */

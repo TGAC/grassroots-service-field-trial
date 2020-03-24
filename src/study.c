@@ -464,11 +464,23 @@ void FreeStudy (Study *study_p)
 			FreeMemory (study_p -> st_num_columns_p);
 		}
 
+
+	if (study_p -> st_num_replicates_p)
+		{
+			FreeMemory (study_p -> st_num_replicates_p);
+		}
+
+
 	if (study_p -> st_parent_p)
 		{
 			if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
 				{
-					//FreeFieldTrial (study_p -> st_parent_p);
+					RemoveFieldTrialStudy (study_p -> st_parent_p, study_p);
+
+					if (GetNumberOfFieldTrialStudies (study_p -> st_parent_p) == 0)
+						{
+							FreeFieldTrial (study_p -> st_parent_p);
+						}
 				}
 		}
 

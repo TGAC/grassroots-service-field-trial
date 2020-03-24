@@ -150,6 +150,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByName (const char * con
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveFieldTrialStudy (FieldTrial *trial_p, struct Study *study_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL uint32 GetNumberOfFieldTrialStudies (const FieldTrial *trial_p);
+
+
 #ifdef __cplusplus
 }
 #endif
