@@ -99,11 +99,18 @@ Service *GetMeasuredVariablesSubmissionService (GrassrootsServer *grassroots_p)
 								}
 
 						}		/* if (InitialiseService (.... */
+					else
+						{
+							if (!service_p -> se_data_p)
+								{
+									FreeDFWFieldTrialServiceData (data_p);
+								}
+						}
 
-					FreeDFWFieldTrialServiceData (data_p);
-				}
+				}		/* if (data_p) */
 
-			FreeMemory (service_p);
+
+			FreeService (service_p);
 		}		/* if (service_p) */
 
 	return NULL;
