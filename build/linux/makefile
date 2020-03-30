@@ -9,6 +9,21 @@ endif
 
 include $(DIR_BUILD_CONFIG)/project.properties
 
+# include the configuration details of any dependencies
+-include $(DIR_BUILD)/user.prefs
+
+# BEGIN LIBEXIF CONFIGURATION
+ifneq ($(LIBEXIF_HOME),)
+DIR_LIBEXIF := $(LIBEXIF_HOME)
+else
+DIR_LIBEXIF := /usr/local
+endif
+export DIR_LIBEXIF_INC := $(DIR_LIBEXIF)/include
+export DIR_LIBEXIF_LIB := $(DIR_LIBEXIF)/lib
+# END LIBEXIF CONFIGURATION
+
+
+
 VPATH := $(DIR_SRC)
 
 BUILD		:= debug
@@ -38,7 +53,8 @@ INCLUDES = \
 	-I$(DIR_MONGODB_INC) \
 	-I$(DIR_BSON_INC) \
 	-I$(DIR_SQLITE_INC) \
-	-I$(DIR_GRASSROOTS_LUCENE_INC)
+	-I$(DIR_GRASSROOTS_LUCENE_INC) \
+	-I$(DIR_LIBEXIF_INC)
 	
 SRCS 	= \
 	crop.c \
@@ -52,6 +68,7 @@ SRCS 	= \
 	field_trial_mongodb.c \
 	gene_bank.c \
 	gene_bank_jobs.c \
+	image_util.c \
 	indexing.c \
 	instrument.c \
 	json_processor.c \
@@ -101,6 +118,7 @@ LIB_LDFLAGS = 	\
 	-L$(DIR_JANSSON_LIB) -ljansson \
 	-L$(DIR_MONGODB_LIB) -lmongoc-1.0 \
 	-L$(DIR_BSON_LIB) -lbson-1.0 \
+	-L$(DIR_LIBEXIF_LIB) -lexif \
 	
 LDFLAGS += $(LIB_LDFLAGS)
 
