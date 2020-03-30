@@ -58,6 +58,7 @@ ImageMetadata *GetImageMetadataForImageFile (const char *path_s)
 
 											if (entry_p)
 												{
+													static bool GetDatestamp (struct tm *time_p)
 
 												}
 
@@ -66,11 +67,7 @@ ImageMetadata *GetImageMetadataForImageFile (const char *path_s)
 						}
 				}
 
-			entry_p = exif_data_get_entry (exif_p, EXIF_TAG_DATE_TIME_ORIGINAL);
-			if (entry_p)
-				{
-					ProcessStandardEntry (entry_p, "DATE");
-				}
+
 
 
 			entry_p = exif_data_get_entry (exif_p, EXIF_TAG_PIXEL_X_DIMENSION);
@@ -92,6 +89,24 @@ ImageMetadata *GetImageMetadataForImageFile (const char *path_s)
   return metadata_p;
 }
 
+
+static struct tm *GetDatestamp (void)
+{
+	bool success_flag = false;
+	ExifEntry *entry_p = exif_data_get_entry (exif_p, EXIF_TAG_DATE_TIME_ORIGINAL);
+
+	if (entry_p)
+		{
+			if (entry_p -> format == EXIF_FORMAT_ASCII)
+				{
+					struct tm *time_p = GetTimeFromString (entry_p -> data);
+
+					return time_p;
+				}
+		}
+
+	return NULL;
+}
 
 
 static bool GetGPSValue (ExifContent *gps_content_p, double *gps_value_p, const ExifTag direction_tag, const ExifTag reference_tag, const char negative_reference_value)

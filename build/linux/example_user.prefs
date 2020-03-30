@@ -3,4 +3,4 @@
 #
 # Set this to where you have the libexif directory 
 # containing "include" and "lib" subdirectories.
-export HTSLIB_HOME := $(DIR_GRASSROOTS_EXTRAS)/htslib
+export LIBEXIF_HOME := /opt/libexif
