@@ -23,85 +23,151 @@
 #include <ctype.h>
 
 #include "libexif/exif-data.h"
+
 #include "image_util.h"
+#include "time_util.h"
+#include "memory_allocations.h"
 
 
+
+static bool GetImageDimension (ExifData *exif_p, const ExifTag tag, uint32 *value_p);
 static bool GetGPSValue (ExifContent *gps_content_p, double *gps_value_p, const ExifTag direction_tag, const ExifTag reference_tag, const char negative_reference_value);
+static struct tm *GetDatestamp (ExifData *exif_p);
+static Coordinate *GetGPSCoordinate (ExifData *exif_p);
 
 
 ImageMetadata *GetImageMetadataForImageFile (const char *path_s)
 {
-	ImageMetadata *metadata_p = NULL;
   ExifData *exif_p = exif_data_new_from_file (path_s);
 
   if (exif_p)
     {
-			ExifEntry *entry_p;
-			ExifContent *gps_content_p = exif_p -> ifd [EXIF_IFD_GPS];
-			Coordinate *coord_p = NULL;
+  		Coordinate *coord_p = GetGPSCoordinate (exif_p);
 
-			if (gps_content_p)
-				{
-					double latitude;
+  		if (coord_p)
+  			{
+					struct tm *datestamp_p = GetDatestamp (exif_p);
 
-					if (GetGPSValue (gps_content_p, &latitude, EXIF_TAG_GPS_LATITUDE, EXIF_TAG_GPS_LATITUDE_REF, 'S'))
+					if (datestamp_p)
 						{
-							double longitude;
+							uint32 width;
 
-							if (GetGPSValue (gps_content_p, &longitude, EXIF_TAG_GPS_LONGITUDE, EXIF_TAG_GPS_LONGITUDE_REF, 'W'))
+							if (GetImageDimension (exif_p, EXIF_TAG_PIXEL_X_DIMENSION, &width))
 								{
-									coord_p = AllocateCoordinate (latitude, longitude);
+									uint32 height;
 
-									if (coord_p)
+									if (GetImageDimension (exif_p, EXIF_TAG_PIXEL_Y_DIMENSION, &height))
 										{
-											entry_p = exif_data_get_entry (exif_p, EXIF_TAG_DATE_TIME_ORIGINAL);
+											ImageMetadata *metadata_p = AllocateImageMetadata (coord_p, datestamp_p, width, height);
 
-											if (entry_p)
+											if (metadata_p)
 												{
-													static bool GetDatestamp (struct tm *time_p)
-
+													return metadata_p;
 												}
 
 										}
+
 								}
+
+							FreeTime (datestamp_p);
 						}
-				}
 
-
-
-
-			entry_p = exif_data_get_entry (exif_p, EXIF_TAG_PIXEL_X_DIMENSION);
-			if (entry_p)
-				{
-					ProcessStandardEntry (entry_p, "X");
-				}
-
-
-			entry_p = exif_data_get_entry (exif_p, EXIF_TAG_PIXEL_Y_DIMENSION);
-			if (entry_p)
-				{
-					ProcessStandardEntry (entry_p, "Y");
+					FreeCoordinate (coord_p);
 				}
 
       exif_data_unref (exif_p);
     }
 
-  return metadata_p;
+  return NULL;
 }
 
 
-static struct tm *GetDatestamp (void)
+ImageMetadata *AllocateImageMetadata (Coordinate *coord_p, struct tm *time_p, uint32 width, uint32 height)
+{
+	ImageMetadata *metadata_p = (ImageMetadata *) AllocMemory (sizeof (ImageMetadata));
+
+	if (metadata_p)
+		{
+			metadata_p -> im_coord_p = coord_p;
+			metadata_p -> im_date_p = time_p;
+			metadata_p -> im_width = width;
+			metadata_p -> im_height = height;
+
+			return metadata_p;
+		}
+
+	return NULL;
+}
+
+
+void FreeImageMetadata (ImageMetadata *metadata_p)
+{
+	FreeCoordinate (metadata_p -> im_coord_p);
+	FreeTime (metadata_p -> im_date_p);
+	FreeMemory (metadata_p);
+}
+
+
+static bool GetImageDimension (ExifData *exif_p, const ExifTag tag, uint32 *value_p)
 {
 	bool success_flag = false;
+	ExifEntry *entry_p = exif_data_get_entry (exif_p, tag);
+
+	if (entry_p)
+		{
+			if (entry_p -> format == EXIF_FORMAT_LONG)
+				{
+					const ExifByteOrder byte_order = exif_data_get_byte_order (exif_p);
+					ExifLong l = exif_get_long (entry_p -> data, byte_order);
+
+					*value_p = l;
+					success_flag = true;
+				}
+		}		/* if (entry_p) */
+
+	return success_flag;
+}
+
+
+static struct tm *GetDatestamp (ExifData *exif_p)
+{
 	ExifEntry *entry_p = exif_data_get_entry (exif_p, EXIF_TAG_DATE_TIME_ORIGINAL);
 
 	if (entry_p)
 		{
 			if (entry_p -> format == EXIF_FORMAT_ASCII)
 				{
-					struct tm *time_p = GetTimeFromString (entry_p -> data);
+					struct tm *time_p = GetTimeFromString ((const char *) (entry_p -> data));
 
 					return time_p;
+				}
+		}
+
+	return NULL;
+}
+
+
+static Coordinate *GetGPSCoordinate (ExifData *exif_p)
+{
+	ExifContent *gps_content_p = exif_p -> ifd [EXIF_IFD_GPS];
+
+	if (gps_content_p)
+		{
+			double latitude;
+
+			if (GetGPSValue (gps_content_p, &latitude, EXIF_TAG_GPS_LATITUDE, EXIF_TAG_GPS_LATITUDE_REF, 'S'))
+				{
+					double longitude;
+
+					if (GetGPSValue (gps_content_p, &longitude, EXIF_TAG_GPS_LONGITUDE, EXIF_TAG_GPS_LONGITUDE_REF, 'W'))
+						{
+							Coordinate *coord_p = AllocateCoordinate (latitude, longitude);
+
+							if (coord_p)
+								{
+									return coord_p;
+								}
+						}
 				}
 		}
 

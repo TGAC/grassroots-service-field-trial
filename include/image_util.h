@@ -34,6 +34,11 @@ typedef struct ImageMetadata
 	Coordinate *im_coord_p;
 
 	struct tm *im_date_p;
+
+	uint32 im_width;
+
+	uint32 im_height;
+
 } ImageMetadata;
 
 
@@ -43,6 +48,13 @@ extern "C"
 {
 #endif
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL ImageMetadata *GetImageMetadataForImageFile (const char *path_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL ImageMetadata *AllocateImageMetadata (Coordinate *coord_p, struct tm *time_p, uint32 width, uint32 height);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeImageMetadata (ImageMetadata *metadata_p);
 
 
 #ifdef __cplusplus
