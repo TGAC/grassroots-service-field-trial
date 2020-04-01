@@ -94,7 +94,7 @@ static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
 static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
 
 
-static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
+static Parameter *GetAndAddAspectParameter (const char *aspect_s, DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
 
 
 static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s);
@@ -428,7 +428,7 @@ static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, co
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Layout", false, data_p, param_set_p);
 	Parameter *param_p;
 
-	if ((param_p = GetAndAddAspectParameter (dfw_data_p, param_set_p, group_p)) != NULL)
+	if ((param_p = GetAndAddAspectParameter (aspect_s, dfw_data_p, param_set_p, group_p)) != NULL)
 		{
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", slope_s, PL_ALL)) != NULL)
 				{
@@ -1101,6 +1101,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 				{
 					if (parent_field_trial_id_s)
 						{
+							bool study_freed_flag = false;
 							FieldTrial *trial_p = GetUniqueFieldTrialBySearchString (parent_field_trial_id_s, VF_STORAGE, data_p);
 
 							if (trial_p)
@@ -1111,7 +1112,6 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 										{
 											if (location_s)
 												{
-													bool study_freed_flag = false;
 													Location *location_p = GetUniqueLocationBySearchString (location_s, VF_STORAGE, data_p);
 
 													if (location_p)
@@ -1249,7 +1249,10 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTria
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_LOCATIONS_LIST.npt_name_s);
 										}
 
-									FreeFieldTrial (trial_p);
+									if (!study_freed_flag)
+										{
+											FreeFieldTrial (trial_p);
+										}
 								}
 							else
 								{
@@ -1579,7 +1582,7 @@ const KeyValuePair *GetAspect (const char *aspect_value_s)
 
 	for (i = S_NUM_DIRECTIONS; i > 0; -- i, ++ aspect_p)
 		{
-			if ((Stricmp (aspect_p -> kvp_key_s, aspect_value_s) == 0) || (strcmp (aspect_p -> kvp_key_s, aspect_value_s) == 0))
+			if ((Stricmp (aspect_p -> kvp_value_s, aspect_value_s) == 0) || (strcmp (aspect_p -> kvp_key_s, aspect_value_s) == 0))
 				{
 					return aspect_p;
 				}
@@ -1809,10 +1812,42 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 }
 
 
-static Parameter *GetAndAddAspectParameter (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
+static Parameter *GetAndAddAspectParameter (const char *aspect_s, DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
 {
 	const char *def_s = (S_DIRECTIONS_P + S_UNKNOWN_DIRECTION_INDEX) -> kvp_value_s;
-	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, STUDY_ASPECT.npt_type, STUDY_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", def_s, PL_ALL);
+	Parameter *param_p = NULL;
+
+	/*
+	 * Is the given aspect on our list?
+	 */
+	if (aspect_s)
+		{
+			uint32 i = S_NUM_DIRECTIONS;
+			const KeyValuePair *direction_p = S_DIRECTIONS_P;
+			bool success_flag = false;
+
+			while (i > 0)
+				{
+					if (strcmp (direction_p -> kvp_value_s, aspect_s) == 0)
+						{
+							def_s = aspect_s;
+							/* force exit from loop */
+							i = 0;
+						}
+					else
+						{
+							-- i;
+							++ direction_p;
+						}
+				}
+		}
+
+	if (def_s != aspect_s)
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown aspect \"%s\"", aspect_s);
+		}
+
+	param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, STUDY_ASPECT.npt_type, STUDY_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", def_s, PL_ALL);
 
 	if (param_p)
 		{
