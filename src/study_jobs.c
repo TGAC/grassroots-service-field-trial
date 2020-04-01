@@ -211,7 +211,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 																	if (param_p)
 																		{
-																			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p))
+																			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, false))
 																				{
 																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL)) != NULL)
 																						{

@@ -148,7 +148,7 @@ static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionFieldTrialParams (data_p, params_p))
+			if (AddSubmissionFieldTrialParams (data_p, params_p, resource_p))
 				{
 					return params_p;
 				}

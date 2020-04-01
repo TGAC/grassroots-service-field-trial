@@ -269,7 +269,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionFieldTrialParams (data_p, params_p))
+			if (AddSubmissionFieldTrialParams (data_p, params_p, resource_p))
 				{
 					if (AddSubmissionStudyParams (data_p, params_p, resource_p))
 						{
