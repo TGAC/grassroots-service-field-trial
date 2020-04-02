@@ -81,6 +81,18 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool FindAndAddResultToServiceJob (const char *id_
 																																 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p),
 																																 const DFWFieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **ph_pp);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidUnsignedIntFromJSON (const json_t *study_json_p, const char *key_s, uint32 **value_pp);
+
+
 #ifdef __cplusplus
 }
 #endif

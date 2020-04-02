@@ -658,6 +658,109 @@ LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFiel
 }
 
 
+bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s)
+{
+	bool success_flag = false;
+
+	if (IsStringEmpty (value_s))
+		{
+			success_flag = SetJSONNull (value_p, key_s);
+		}
+	else
+		{
+			success_flag = SetJSONString (value_p, key_s, value_s);
+		}
+
+	return success_flag;
+}
+
+
+bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p)
+{
+	bool success_flag = false;
+
+	if (value_p)
+		{
+			success_flag = SetJSONReal (json_p, key_s, *value_p);
+		}
+	else
+		{
+			success_flag = SetJSONNull (json_p, key_s);
+		}
+
+	return success_flag;
+}
+
+
+bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p)
+{
+	bool success_flag = false;
+
+	if (value_p)
+		{
+			success_flag = SetJSONInteger (json_p, key_s, *value_p);
+		}
+	else
+		{
+			success_flag = SetJSONNull (json_p, key_s);
+		}
+
+	return success_flag;
+
+}
+
+
+bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **ph_pp)
+{
+	bool success_flag = false;
+	double64 d;
+
+	if (GetJSONReal (study_json_p, key_s, &d))
+		{
+			if (CopyValidReal (&d, ph_pp))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_json_p, "Failed to copy double value for \"%s\"", key_s);
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+bool GetValidUnsignedIntFromJSON (const json_t *study_json_p, const char *key_s, uint32 **value_pp)
+{
+	bool success_flag = false;
+	uint32 u;
+
+	if (GetJSONUnsignedInteger (study_json_p, key_s, &u))
+		{
+			if (CopyValidUnsignedInteger (&u, value_pp))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_json_p, "Failed to copy uint32 value for \"%s\"", key_s);
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
 static char *GetCacheFilename (const char *id_s, const DFWFieldTrialServiceData *data_p)
 {
 	char *filename_s = NULL;
