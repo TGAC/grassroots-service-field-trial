@@ -127,7 +127,7 @@ static const char *GetLocationSubmissionServiceAlias (const Service * UNUSED_PAR
 
 static const char *GetLocationSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
-	return NULL;
+	return "https://grassroots.tools/docs/user/services/field_trial/submit_location.html";
 }
 
 

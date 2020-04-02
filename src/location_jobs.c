@@ -35,6 +35,9 @@ static const char *DEFAULT_COORD_PRECISION_S = "6";
 
 static const char * const S_UNSET_LOCATION_S = "Any Location";
 
+static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
+
+
 /*
  * Experimental Area parameters
  */
@@ -99,7 +102,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 					town_s = address_p -> ad_town_s;
 					county_s = address_p -> ad_county_s;
 					country_s = address_p -> ad_country_code_s;
-					post_code_s = address_p -> ad_country_s;
+					post_code_s = address_p -> ad_postcode_s;
 
 					if (address_p -> ad_gps_centre_p)
 						{
@@ -122,7 +125,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 		{
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Load Location", "Edit an existing location", id_s, PL_ADVANCED)) != NULL)
 				{
-					if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
+					if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, active_location_p, S_EMPTY_LIST_OPTION_S))
 						{
 							/*
 							 * We want to update all of the values in the form
@@ -189,6 +192,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																						{
 																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
 																						}
+																				}
 																			else
 																				{
 																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_USE_GPS.npt_name_s);
@@ -251,7 +255,11 @@ bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, LOCATION_NAME.npt_name_s) == 0)
+	if (strcmp (param_name_s, LOCATION_ID.npt_name_s) == 0)
+		{
+			*pt_p = LOCATION_ID.npt_type;
+		}
+	else if (strcmp (param_name_s, LOCATION_NAME.npt_name_s) == 0)
 		{
 			*pt_p = LOCATION_NAME.npt_type;
 		}
@@ -522,6 +530,28 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 	OperationStatus status = OS_FAILED;
 	bool success_flag = false;
 	const char *name_s = NULL;
+	const char *id_s = NULL;
+	bson_oid_t *id_p = NULL;
+
+	/*
+	 * Get the existing location id if specified
+	 */
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_ID.npt_name_s, &id_s);
+
+	if (id_s)
+		{
+			if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
+				{
+					id_p = GetBSONOidFromString (id_s);
+
+					if (!id_p)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load location \"%s\" for editing", id_s);
+							return false;
+						}
+				}
+		}		/* if (id_value.st_string_value_s) */
+
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_s))
 		{
@@ -560,12 +590,8 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 									if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_p)) && (longitude_p != NULL))
 										{
 											const double64 *elevation_p = NULL;
-											double64 elevation;
 
-											if (GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_p))
-												{
-													elevation_p = &elevation;
-												}
+											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_p);
 
 											if (latitude_p && longitude_p)
 												{
@@ -612,7 +638,6 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 					if (success_flag)
 						{
 							const uint32 order = 0;
-							bson_oid_t *id_p = NULL;
 							Location *location_p = AllocateLocation (address_p, order, id_p);
 
 							if (location_p)
@@ -639,7 +664,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 
 
-bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const bool add_any_flag)
+bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Location *active_location_p, const char *extra_option_s)
 {
 	bool success_flag = false;
 	bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
@@ -654,9 +679,17 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, String
 
 					success_flag = true;
 
-					if (success_flag)
+					if (num_results > 0)
 						{
-							if (num_results > 0)
+							/*
+							 * If there's an empty option, add it
+							 */
+							if (extra_option_s)
+								{
+									success_flag = CreateAndAddStringParameterOption (param_p, extra_option_s, extra_option_s);
+								}
+
+							if (success_flag)
 								{
 									size_t i = 0;
 									const char *param_value_s = GetStringParameterCurrentValue (param_p);
@@ -830,7 +863,32 @@ Location *GetLocationFromResource (Resource *resource_p, const NamedParameterTyp
 
 					if (params_json_p)
 						{
-							const char *id_s = GetLocationDefaultValueFromJSON (location_param_type.npt_name_s, params_json_p);
+							const char *id_s =  NULL;
+							const size_t num_entries = json_array_size (params_json_p);
+							size_t i;
+
+							for (i = 0; i < num_entries; ++ i)
+								{
+									const json_t *param_json_p = json_array_get (params_json_p, i);
+									const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+									if (name_s)
+										{
+											if (strcmp (name_s, location_param_type.npt_name_s) == 0)
+												{
+													id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
+
+													if (!id_s)
+														{
+															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, location_param_type.npt_name_s);
+														}
+
+													/* force exit from loop */
+													i = num_entries;
+												}
+										}		/* if (name_s) */
+
+								}		/* if (params_json_p) */
 
 							/*
 							 * Do we have an existing study id?

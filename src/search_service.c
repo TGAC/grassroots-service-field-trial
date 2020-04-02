@@ -175,7 +175,7 @@ static const char *GetDFWFieldTrialSearchServiceAlias (const Service * UNUSED_PA
 
 static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
-	return NULL;
+	return "https://grassroots.tools/docs/user/services/field_trial/search_services.html";
 }
 
 

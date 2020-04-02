@@ -83,7 +83,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionLocationParameterTypeForNamedPar
 DFW_FIELD_TRIAL_SERVICE_LOCAL Address *GetAddressFromLocationString (const char *location_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const bool add_any_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Location *active_location_p, const char *extra_option_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p);

@@ -128,7 +128,7 @@ static const char *GetFieldTrialSubmissionServiceAlias (const Service * UNUSED_P
 
 static const char *GetFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
-	return NULL;
+	return "https://grassroots.tools/docs/user/services/field_trial/submit_trial.html";
 }
 
 

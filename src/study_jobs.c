@@ -215,7 +215,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																				{
 																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL)) != NULL)
 																						{
-																							if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, false))
+																							if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, NULL))
 																								{
 																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the study", description_s, PL_ALL)) != NULL)
 																										{
@@ -686,7 +686,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", NULL, PL_ADVANCED)) != NULL)
 												{
-													if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, (StringParameter *) param_p, true))
+													if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, GetUnsetLocationValue ()))
 														{
 															struct tm t;
 

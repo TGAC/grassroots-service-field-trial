@@ -130,7 +130,7 @@ static const char *GetStudySubmissionServiceAlias (const Service * UNUSED_PARAM 
 
 static const char *GetStudySubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
-	return NULL;
+	return "https://grassroots.tools/docs/user/services/field_trial/submit_study.html";
 }
 
 

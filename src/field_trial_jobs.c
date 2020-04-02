@@ -131,7 +131,7 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 {
 	bool job_done_flag = false;
 	const char *name_s = NULL;
-	const char *id_s;
+	const char *id_s = NULL;
 	bson_oid_t *trial_id_p = NULL;
 
 	/*
@@ -827,7 +827,7 @@ FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParamete
 
 									if (!trial_p)
 										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Study with id \"%s\"", trial_id_s);
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Field Trial with id \"%s\"", trial_id_s);
 										}
 
 								}		/* if (study_id_s) */
@@ -852,7 +852,7 @@ FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParamete
 
 static const char *GetFieldTrialDefaultValueFromJSON (const char *trial_id_param_s, const json_t *params_json_p)
 {
-	const char *trial_id_s;
+	const char *trial_id_s = NULL;
 
 	if (params_json_p)
 		{
