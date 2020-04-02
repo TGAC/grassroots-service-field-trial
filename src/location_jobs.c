@@ -63,43 +63,79 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 
 
-bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
+bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Location", false, data_p, param_set_p);
+	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	const char * const def_country_s = "GB";
+	const bool def_use_coords_flag = true;
+	char *id_s = NULL;
+	const char *name_s = NULL;
+	const char *street_s = NULL;
+	const char *town_s = NULL;
+	const char *county_s = NULL;
+	const char *country_s = def_country_s;
+	const char *post_code_s = NULL;
+	const double64 *latitude_p = NULL;
+	const double64 *longiitude_p = NULL;
+	const double64 *altitude_p = NULL;
+	const bool *use_coords_p = def_use_coords_flag;
+	Location *active_location_p = GetLocationFromResource (resource_p, LOCATION_ID, dfw_data_p);
+	bool defaults_flag = false;
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", NULL, PL_ALL)) != NULL)
+
+	if (active_location_p && (active_location_p -> lo_address_p))
+		{
+			const Address *address_p = active_location_p -> lo_address_p;
+
+			name_s = address_p -> ad_name_s;
+			street_s = address_p -> ad_street_s;
+			town_s = address_p -> ad_town_s;
+			county_s = address_p -> ad_county_s;
+			country_s = address_p -> ad_country_code_s;
+			post_code_s = address_p -> ad_country_s;
+
+			if (address_p -> ad_gps_centre_p)
+				{
+					latitude_p = address_p -> ad_gps_centre_p -> co_x;
+					longiitude_p = address_p -> ad_gps_centre_p -> co_y;
+					use_coords_p = &def_use_coords_flag;
+				}
+
+			altitude_p = address_p -> ad_elevation_p;
+		}
+
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", name_s, PL_ALL)) != NULL)
 		{
 			param_p -> pa_required_flag = true;
 
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", NULL, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", street_s, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", NULL, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", town_s, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", NULL, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", county_s, PL_ALL)) != NULL)
 								{
-									const char * const def_country_s = "GB";
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", def_country_s, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", country_s, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", NULL, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", post_code_s, PL_ALL)) != NULL)
 												{
-													bool use_gps_flag = true;
-
-													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_name_s, "Supply your own GPS coordinates", "Use your own GPS values, uncheck this to look up the GPS values using the location instead", &use_gps_flag, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_name_s, "Supply your own GPS coordinates", "Use your own GPS values, uncheck this to look up the GPS values using the location instead", use_coords_p, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", NULL, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", latitude_p, PL_ALL)) != NULL)
 																{
 																	const char *precision_s = DEFAULT_COORD_PRECISION_S;
 
 																	if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																		{
-																			if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", NULL, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", longiitude_p, PL_ALL)) != NULL)
 																				{
 																					if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
 																						{
-																							if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", NULL, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", altitude_p, PL_ALL)) != NULL)
 																								{
 																									success_flag = true;
 																								}

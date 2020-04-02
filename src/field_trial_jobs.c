@@ -803,7 +803,7 @@ FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParamete
 {
 	FieldTrial *trial_p = NULL;
 
-	/*
+	/*GetFieldTrialFromResourceGetFieldTrialFromResource
 	 * Have we been set some parameter values to refresh from?
 	 */
 	if (resource_p && (resource_p -> re_data_p))
