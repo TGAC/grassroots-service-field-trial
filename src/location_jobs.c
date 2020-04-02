@@ -79,124 +79,162 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 	const char *country_s = def_country_s;
 	const char *post_code_s = NULL;
 	const double64 *latitude_p = NULL;
-	const double64 *longiitude_p = NULL;
+	const double64 *longitude_p = NULL;
 	const double64 *altitude_p = NULL;
-	const bool *use_coords_p = def_use_coords_flag;
+	const bool *use_coords_p = &def_use_coords_flag;
 	Location *active_location_p = GetLocationFromResource (resource_p, LOCATION_ID, dfw_data_p);
 	bool defaults_flag = false;
 
 
 	if (active_location_p && (active_location_p -> lo_address_p))
 		{
-			const Address *address_p = active_location_p -> lo_address_p;
+			id_s = GetBSONOidAsString (active_location_p -> lo_id_p);
 
-			name_s = address_p -> ad_name_s;
-			street_s = address_p -> ad_street_s;
-			town_s = address_p -> ad_town_s;
-			county_s = address_p -> ad_county_s;
-			country_s = address_p -> ad_country_code_s;
-			post_code_s = address_p -> ad_country_s;
-
-			if (address_p -> ad_gps_centre_p)
+			if (id_s)
 				{
-					latitude_p = address_p -> ad_gps_centre_p -> co_x;
-					longiitude_p = address_p -> ad_gps_centre_p -> co_y;
-					use_coords_p = &def_use_coords_flag;
-				}
+					const Address *address_p = active_location_p -> lo_address_p;
 
-			altitude_p = address_p -> ad_elevation_p;
-		}
+					name_s = address_p -> ad_name_s;
+					street_s = address_p -> ad_street_s;
+					town_s = address_p -> ad_town_s;
+					county_s = address_p -> ad_county_s;
+					country_s = address_p -> ad_country_code_s;
+					post_code_s = address_p -> ad_country_s;
 
-
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", name_s, PL_ALL)) != NULL)
-		{
-			param_p -> pa_required_flag = true;
-
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", street_s, PL_ALL)) != NULL)
-				{
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", town_s, PL_ALL)) != NULL)
+					if (address_p -> ad_gps_centre_p)
 						{
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", county_s, PL_ALL)) != NULL)
-								{
-
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", country_s, PL_ALL)) != NULL)
-										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", post_code_s, PL_ALL)) != NULL)
-												{
-													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_name_s, "Supply your own GPS coordinates", "Use your own GPS values, uncheck this to look up the GPS values using the location instead", use_coords_p, PL_ALL)) != NULL)
-														{
-															if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", latitude_p, PL_ALL)) != NULL)
-																{
-																	const char *precision_s = DEFAULT_COORD_PRECISION_S;
-
-																	if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
-																		{
-																			if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", longiitude_p, PL_ALL)) != NULL)
-																				{
-																					if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
-																						{
-																							if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", altitude_p, PL_ALL)) != NULL)
-																								{
-																									success_flag = true;
-																								}
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_ALTITUDE.npt_name_s);
-																								}
-																						}
-																					else
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddParameterKeyValuePair failed for \"%s\": \"%s\"", PA_DOUBLE_PRECISION_S, precision_s);
-																						}
-																				}
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
-																				}
-																		}
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddParameterKeyValuePair failed for \"%s\": \"%s\"", PA_DOUBLE_PRECISION_S, precision_s);
-																		}
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
-																}														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_USE_GPS.npt_name_s);
-														}
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_POSTCODE.npt_name_s);
-												}
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_COUNTRY.npt_name_s);
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_COUNTY.npt_name_s);
-								}
+							latitude_p = & (address_p -> ad_gps_centre_p -> co_x);
+							longitude_p = & (address_p -> ad_gps_centre_p -> co_y);
+							use_coords_p = &def_use_coords_flag;
 						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_TOWN.npt_name_s);
-						}
-				}
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_STREET.npt_name_s);
+
+					altitude_p = address_p -> ad_elevation_p;
+
+					defaults_flag = true;
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_NAME.npt_name_s);
+			defaults_flag = true;
 		}
+
+	if (defaults_flag)
+		{
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Load Location", "Edit an existing location", id_s, PL_ADVANCED)) != NULL)
+				{
+					if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
+						{
+							/*
+							 * We want to update all of the values in the form
+							 * when a user selects a study from the list so
+							 * we need to make the parameter automatically
+							 * refresh the values. So we set the
+							 * pa_refresh_service_flag to true.
+							 */
+							param_p -> pa_refresh_service_flag = true;
+
+
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_NAME.npt_type, LOCATION_NAME.npt_name_s, "Name", "The building name or number", name_s, PL_ALL)) != NULL)
+								{
+									param_p -> pa_required_flag = true;
+
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_STREET.npt_type, LOCATION_STREET.npt_name_s, "Street", "The street", street_s, PL_ALL)) != NULL)
+										{
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_TOWN.npt_type, LOCATION_TOWN.npt_name_s, "Town", "The town, city or village", town_s, PL_ALL)) != NULL)
+												{
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTY.npt_type, LOCATION_COUNTY.npt_name_s, "County", "The county or state", county_s, PL_ALL)) != NULL)
+														{
+
+															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_COUNTRY.npt_type, LOCATION_COUNTRY.npt_name_s, "Country", "The country", country_s, PL_ALL)) != NULL)
+																{
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_POSTCODE.npt_type, LOCATION_POSTCODE.npt_name_s, "Postal code", "The postcode", post_code_s, PL_ALL)) != NULL)
+																		{
+																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_USE_GPS.npt_name_s, "Supply your own GPS coordinates", "Use your own GPS values, uncheck this to look up the GPS values using the location instead", use_coords_p, PL_ALL)) != NULL)
+																				{
+																					if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LATITUDE.npt_type, LOCATION_LATITUDE.npt_name_s, "Latitude", "The latitude of the location", latitude_p, PL_ALL)) != NULL)
+																						{
+																							const char *precision_s = DEFAULT_COORD_PRECISION_S;
+
+																							if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
+																								{
+																									if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_LONGITUDE.npt_type, LOCATION_LONGITUDE.npt_name_s, "Longitude", "The longitude of the location", longitude_p, PL_ALL)) != NULL)
+																										{
+																											if (AddParameterKeyStringValuePair (param_p, PA_DOUBLE_PRECISION_S, precision_s))
+																												{
+																													if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", altitude_p, PL_ALL)) != NULL)
+																														{
+																															success_flag = true;
+																														}
+																													else
+																														{
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_ALTITUDE.npt_name_s);
+																														}
+																												}
+																											else
+																												{
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddParameterKeyValuePair failed for \"%s\": \"%s\"", PA_DOUBLE_PRECISION_S, precision_s);
+																												}
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
+																										}
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddParameterKeyValuePair failed for \"%s\": \"%s\"", PA_DOUBLE_PRECISION_S, precision_s);
+																								}
+																						}
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
+																						}														}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_USE_GPS.npt_name_s);
+																				}
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_POSTCODE.npt_name_s);
+																		}
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_COUNTRY.npt_name_s);
+																}
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_COUNTY.npt_name_s);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_TOWN.npt_name_s);
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_STREET.npt_name_s);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_NAME.npt_name_s);
+								}
+
+						}
+
+				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Load Location", "Edit an existing location", id_s, PL_ADVANCED)) != NULL) */
+
+
+
+
+
+		}		/* if (defaults_flag) */
+
+
 	return success_flag;
 }
 
@@ -774,5 +812,54 @@ bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const Vie
 	return success_flag;
 }
 
+
+Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, DFWFieldTrialServiceData *dfw_data_p)
+{
+	Location *location_p = NULL;
+
+	/*
+	 * Have we been set some parameter values to refresh from?
+	 */
+	if (resource_p && (resource_p -> re_data_p))
+		{
+			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
+
+			if (param_set_json_p)
+				{
+					json_t *params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
+
+					if (params_json_p)
+						{
+							const char *id_s = GetLocationDefaultValueFromJSON (location_param_type.npt_name_s, params_json_p);
+
+							/*
+							 * Do we have an existing study id?
+							 */
+							if (id_s)
+								{
+									location_p = GetLocationByIdString (id_s, VF_CLIENT_FULL , dfw_data_p);
+
+									if (!location_p)
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Location with id \"%s\"", id_s);
+										}
+
+								}		/* if (study_id_s) */
+
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
+				}
+
+		}		/* if (resource_p && (resource_p -> re_data_p)) */
+
+	return location_p;
+}
 
 

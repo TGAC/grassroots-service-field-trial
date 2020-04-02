@@ -71,7 +71,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
@@ -101,6 +101,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllLocationsAsJSON (const DFWFieldTrial
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, DFWFieldTrialServiceData *dfw_data_p);
 
 
 #ifdef __cplusplus

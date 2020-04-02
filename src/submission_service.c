@@ -273,7 +273,7 @@ static ParameterSet *GetDFWFieldTrialSubmissionServiceParameters (Service *servi
 				{
 					if (AddSubmissionStudyParams (data_p, params_p, resource_p))
 						{
-							if (AddSubmissionLocationParams (data_p, params_p))
+							if (AddSubmissionLocationParams (data_p, params_p, resource_p))
 								{
 									if (AddSubmissionPlotParams (data_p, params_p, resource_p))
 										{
