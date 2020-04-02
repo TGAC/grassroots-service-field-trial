@@ -188,7 +188,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																					else
 																						{
 																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_LATITUDE.npt_name_s);
-																						}														}
+																						}
 																			else
 																				{
 																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_USE_GPS.npt_name_s);
