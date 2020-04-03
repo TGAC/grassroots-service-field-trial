@@ -22,6 +22,7 @@
 
 #define ALLOCATE_FIELD_TRIAL_CONSTANTS (1)
 #include "field_trial_jobs.h"
+#include "field_trial_mongodb.h"
 
 #include "field_trial.h"
 #include "string_utils.h"
@@ -148,6 +149,18 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 					if (!trial_id_p)
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load trial \"%s\" for editing", id_s);
+							char *error_s = ConcatenateVarargsStrings ("Failed to load trial with id: '", id_s, "' for editing");
+
+							if (error_s)
+								{
+									AddParameterErrorMessageToServiceJob (job_p, FIELD_TRIAL_ID.npt_name_s, FIELD_TRIAL_ID.npt_type, error_s);
+									FreeCopiedString (error_s);
+								}
+							else
+								{
+									AddParameterErrorMessageToServiceJob (job_p, FIELD_TRIAL_ID.npt_name_s, FIELD_TRIAL_ID.npt_type, "Failed to find existing trial");
+								}
+
 							return false;
 						}
 				}
@@ -160,18 +173,63 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 			if (!IsStringEmpty (name_s))
 				{
 					const char *team_s = NULL;
+					FieldTrial *existing_trial_p = NULL;
 
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-					/* It's a job for FieldTrials */
-					if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
+					/*
+					 * Does the trial already exist?
+					 */
+					existing_trial_p = GetFieldTrialFromMongoDB (data_p, name_s, team_s);
+
+					if (existing_trial_p)
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\"", name_s, team_s);
+							char *error_s = ConcatenateVarargsStrings ("Trial already exists, name: '", name_s, "' team: '", team_s, "'", NULL);
+
+							if (error_s)
+								{
+									AddGeneralErrorMessageToServiceJob (job_p, error_s);
+									FreeCopiedString (error_s);
+								}
+							else
+								{
+									AddGeneralErrorMessageToServiceJob (job_p, "Trial already exists");
+								}
+
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Trial already exists, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s, id_s);
+						}		/* if (existing_trial_p) */
+					else
+						{
+							/* It's a job for FieldTrials */
+							if (AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
+								{
+									SetServiceJobStatus (job_p, OS_SUCCEEDED);
+								}
+							else
+								{
+									char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "'", NULL);
+
+									if (error_s)
+										{
+											AddGeneralErrorMessageToServiceJob (job_p, error_s);
+											FreeCopiedString (error_s);
+										}
+									else
+										{
+											AddGeneralErrorMessageToServiceJob (job_p, "Failed to add Field Trial");
+										}
+
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s, id_s);
+								}
 						}
 
-					job_done_flag = true;
+				}		/* if (!IsStringEmpty (name_s)) */
+			else
+				{
+
 				}
 
+			job_done_flag = true;
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
 
 	return job_done_flag;
