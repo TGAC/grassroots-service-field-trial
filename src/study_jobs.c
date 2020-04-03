@@ -180,7 +180,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 
 	if (defaults_flag)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", id_s, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", id_s, PL_ALL)) != NULL)
 				{
 					if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
 						{

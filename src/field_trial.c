@@ -40,9 +40,9 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid
 
 	if (copied_name_s)
 		{
-			char *copied_team_s = EasyCopyToNewString (team_s);
+			char *copied_team_s = NULL;
 
-			if (copied_team_s)
+			if ((team_s == NULL) || (copied_team_s = EasyCopyToNewString (team_s)))
 				{
 					LinkedList *areas_p = AllocateLinkedList (FreeStudyNode);
 
@@ -231,6 +231,7 @@ LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTria
 }
 
 
+
 json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
@@ -349,22 +350,18 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServ
 	if (name_s)
 		{
 			const char *team_s = GetJSONString (json_p, FT_TEAM_S);
+			bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-			if (team_s)
+			if (id_p)
 				{
-					bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
-
-					if (id_p)
+					if (GetMongoIdFromJSON (json_p, id_p))
 						{
-							if (GetMongoIdFromJSON (json_p, id_p))
-								{
-									FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
+							FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
 
-									return trial_p;
-								}
-
-							FreeBSONOid (id_p);
+							return trial_p;
 						}
+
+					FreeBSONOid (id_p);
 				}
 		}
 

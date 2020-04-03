@@ -123,7 +123,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 
 	if (defaults_flag)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Load Location", "Edit an existing location", id_s, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Load Location", "Edit an existing location", id_s, PL_ALL)) != NULL)
 				{
 					if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, active_location_p, S_EMPTY_LIST_OPTION_S))
 						{

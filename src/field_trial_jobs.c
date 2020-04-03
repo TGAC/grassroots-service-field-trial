@@ -85,7 +85,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	if (defaults_flag)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
 				{
 					if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
 						{
