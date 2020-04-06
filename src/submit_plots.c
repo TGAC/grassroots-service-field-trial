@@ -131,7 +131,7 @@ static const char *GetPlotsSubmissionServiceAlias (const Service * UNUSED_PARAM 
 
 static const char *GetPlotsSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
 {
-	return "https://grassroots.tools/docs/user/services/field_trial/submit_plots.html";
+	return "https://grassroots.tools/docs/user/services/field_trial/submit_plots.md";
 }
 
 
