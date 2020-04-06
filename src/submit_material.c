@@ -127,9 +127,11 @@ static const char *GetMaterialSubmissionServiceAlias (const Service * UNUSED_PAR
 }
 
 
-static const char *GetMaterialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
+static const char *GetMaterialSubmissionServiceInformationUri (const Service *service_p)
 {
-	return NULL;
+	const char *url_s = GetServiceInformationPage (service_p);
+
+	return url_s;
 }
 
 

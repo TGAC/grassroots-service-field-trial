@@ -127,11 +127,12 @@ static const char *GetCropSubmissionServiceAlias (const Service * UNUSED_PARAM (
 }
 
 
-static const char *GetCropSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
+static const char *GetCropSubmissionServiceInformationUri (const Service *service_p)
 {
-	return NULL;
-}
+	const char *url_s = GetServiceInformationPage (service_p);
 
+	return url_s;
+}
 
 
 static bool GetCropSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)

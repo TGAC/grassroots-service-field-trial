@@ -125,9 +125,16 @@ static const char *GetLocationSubmissionServiceAlias (const Service * UNUSED_PAR
 }
 
 
-static const char *GetLocationSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
+static const char *GetLocationSubmissionServiceInformationUri (const Service *service_p)
 {
-	return "https://grassroots.tools/docs/user/services/field_trial/submit_location.md";
+	const char *url_s = GetServiceInformationPage (service_p);
+
+	if (!url_s)
+		{
+			url_s = "https://grassroots.tools/docs/user/services/field_trial/submit_location.md";
+		}
+
+	return url_s;
 }
 
 

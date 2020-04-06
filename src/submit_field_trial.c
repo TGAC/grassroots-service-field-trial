@@ -126,11 +126,18 @@ static const char *GetFieldTrialSubmissionServiceAlias (const Service * UNUSED_P
 	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_trial";
 }
 
-static const char *GetFieldTrialSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
-{
-	return "https://grassroots.tools/docs/user/services/field_trial/submit_trial.md";
-}
 
+static const char *GetFieldTrialSubmissionServiceInformationUri (const Service *service_p)
+{
+	const char *url_s = GetServiceInformationPage (service_p);
+
+	if (!url_s)
+		{
+			url_s = "https://grassroots.tools/docs/user/services/field_trial/submit_trial.md";
+		}
+
+	return url_s;
+}
 
 
 static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)

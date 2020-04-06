@@ -127,9 +127,12 @@ static const char *GetPhenotypesSubmissionServiceAlias (const Service * UNUSED_P
 	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_phenotypes";
 }
 
-static const char *GetPhenotypesSubmissionServiceInformationUri (const Service * UNUSED_PARAM (service_p))
+
+static const char *GetPhenotypesSubmissionServiceInformationUri (const Service *service_p)
 {
-	return NULL;
+	const char *url_s = GetServiceInformationPage (service_p);
+
+	return url_s;
 }
 
 

@@ -173,9 +173,17 @@ static const char *GetDFWFieldTrialSearchServiceAlias (const Service * UNUSED_PA
 	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "search";
 }
 
-static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service * UNUSED_PARAM (service_p))
+
+static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *service_p)
 {
-	return "https://grassroots.tools/docs/user/services/field_trial/search_services.md";
+	const char *url_s = GetServiceInformationPage (service_p);
+
+	if (!url_s)
+		{
+			url_s = "https://grassroots.tools/docs/user/services/field_trial/search_services.md";
+		}
+
+	return url_s;
 }
 
 

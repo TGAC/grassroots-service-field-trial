@@ -118,10 +118,13 @@ static const char *GetDrillingSubmissionServiceDescription (Service * UNUSED_PAR
 }
 
 
-static const char *GetDrillingSubmissionServiceInformationUri (Service * UNUSED_PARAM (service_p))
+static const char *GetDrillingSubmissionServiceInformationUri (Service * service_p)
 {
-	return NULL;
+	const char *url_s = GetServiceInformationPage (service_p);
+
+	return url_s;
 }
+
 
 
 
