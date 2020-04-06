@@ -205,6 +205,7 @@ OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldT
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to index location \"%s\" as JSON to Lucene", location_p -> lo_address_p -> ad_name_s);
+									AddGeneralErrorMessageToServiceJob (job_p, "Location saved but failed to index for searching");
 								}
 						}
 
@@ -217,6 +218,8 @@ OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldT
 				}
 
 		}		/* if (location_p -> lo_id_p) */
+
+	SetServiceJobStatus (job_p, status);
 
 	return status;
 }

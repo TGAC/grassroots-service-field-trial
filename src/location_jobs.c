@@ -657,8 +657,6 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value)) */
 
 
-	SetServiceJobStatus (job_p, status);
-
 	return ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED));
 }
 

@@ -341,7 +341,8 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 							else
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index MeasuredVariable \"%s\" as JSON to Lucene", treatment_p -> mv_internal_name_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index Measured Variable \"%s\" as JSON to Lucene", treatment_p -> mv_internal_name_s);
+									AddGeneralErrorMessageToServiceJob (job_p, "Measured Variable saved but failed to index for searching");
 								}
 
 						}
@@ -351,6 +352,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 
 		}		/* if (treatment_p -> mv_id_p) */
 
+	SetServiceJobStatus (job_p, status);
 
 	return status;
 }

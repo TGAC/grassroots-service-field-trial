@@ -136,6 +136,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServic
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (trial_p -> ft_id_p), &selector_p);
+	OperationStatus status = OS_FAILED;
 
 	if (success_flag)
 		{
@@ -147,11 +148,14 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServic
 						{
 							if (IndexData (job_p, field_trial_json_p))
 								{
-									success_flag = true;
+									status = OS_SUCCEEDED;
 								}
 							else
 								{
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_trial_json_p, "Failed to index FieldTrial \"%s\" as JSON to Lucene", trial_p -> ft_name_s);
+									AddGeneralErrorMessageToServiceJob (job_p, "Trial saved but failed to index for searching");
+
+									status = OS_PARTIALLY_SUCCEEDED;
 								}
 
 						}		/* if (SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p)) */
@@ -160,6 +164,8 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServic
 				}		/* if (field_trial_json_p) */
 
 		}		/* if (success_flag) */
+
+	SetServiceJobStatus (job_p, status);
 
 	return success_flag;
 }

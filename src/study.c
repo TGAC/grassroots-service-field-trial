@@ -636,6 +636,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to index Study \"%s\" as JSON to Lucene", study_p -> st_name_s);
+									AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
 								}
 						}
 
@@ -643,6 +644,8 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 				}		/* if (study_json_p) */
 
 		}		/* if (success_flag) */
+
+	SetServiceJobStatus (job_p, status);
 
 	return status;
 }

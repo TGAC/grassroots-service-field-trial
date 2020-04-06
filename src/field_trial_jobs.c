@@ -201,11 +201,7 @@ bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, Paramet
 					else
 						{
 							/* It's a job for FieldTrials */
-							if (AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
-								{
-									SetServiceJobStatus (job_p, OS_SUCCEEDED);
-								}
-							else
+							if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
 								{
 									char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "'", NULL);
 
@@ -599,18 +595,15 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Stri
 
 static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, DFWFieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
 	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
 
 	if (trial_p)
 		{
-			success_flag = SaveFieldTrial (trial_p, job_p, data_p);
+			SaveFieldTrial (trial_p, job_p, data_p);
 			FreeFieldTrial (trial_p);
 		}
 
-	SetServiceJobStatus (job_p, success_flag ? OS_SUCCEEDED : OS_FAILED);
-
-	return success_flag;
+	return ((job_p -> sj_status == OS_PARTIALLY_SUCCEEDED) || (job_p -> sj_status == OS_SUCCEEDED));
 }
 
 
