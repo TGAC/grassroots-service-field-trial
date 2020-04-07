@@ -628,11 +628,9 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to clear potential cached Study \"%s\"", study_p -> st_name_s);
 								}
 
-							if (IndexData (job_p, study_json_p))
-								{
-									status = OS_SUCCEEDED;
-								}
-							else
+							status = IndexData (job_p, study_json_p);
+
+							if (status != OS_SUCCEEDED)
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to index Study \"%s\" as JSON to Lucene", study_p -> st_name_s);

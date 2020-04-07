@@ -284,23 +284,20 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 
 
 
-bool IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
+OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
 
 	if (lucene_p)
 		{
-			if (IndexLucene (lucene_p, data_to_index_p, true))
-				{
-					success_flag = true;
-				}
+			status = IndexLucene (lucene_p, data_to_index_p, true);
 
 			FreeLuceneTool (lucene_p);
 		}		/* if (lucene_p) */
 
-	return success_flag;
+	return status;
 }
 
 
@@ -314,48 +311,61 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 		{
 			/* clear the index initially ...*/
 			bool update_flag = false;
-			uint32 num_succeeded = 0;
-			const uint32 num_reindexes = 4;
+			OperationStatus temp_status = ReindexStudies (job_p, lucene_p, update_flag, service_data_p);
+			uint32 fully_succeeded_count = 0;
+			uint32 partially_succeeded_count = 0;
 
-			status = OS_SUCCEEDED;
-
-
-			if (ReindexStudies (job_p, lucene_p, update_flag, service_data_p))
+			if (temp_status == OS_SUCCEEDED)
 				{
-					++ num_succeeded;
+					++ fully_succeeded_count;
+				}
+			else if (temp_status == OS_PARTIALLY_SUCCEEDED)
+				{
+					++ partially_succeeded_count;
 				}
 
 			/* ... then update it from here */
 			update_flag = true;
 
-			if (ReindexTrials (job_p, lucene_p, update_flag, service_data_p))
+			temp_status = ReindexTrials (job_p, lucene_p, update_flag, service_data_p);
+			if (temp_status == OS_SUCCEEDED)
 				{
-					++ num_succeeded;
+					++ fully_succeeded_count;
+				}
+			else if (temp_status == OS_PARTIALLY_SUCCEEDED)
+				{
+					++ partially_succeeded_count;
 				}
 
-			if (ReindexLocations (job_p, lucene_p, update_flag, service_data_p))
+			temp_status = ReindexLocationss (job_p, lucene_p, update_flag, service_data_p);
+			if (temp_status == OS_SUCCEEDED)
 				{
-					++ num_succeeded;
+					++ fully_succeeded_count;
+				}
+			else if (temp_status == OS_PARTIALLY_SUCCEEDED)
+				{
+					++ partially_succeeded_count;
 				}
 
-			if (ReindexMeasuredVariables (job_p, lucene_p, update_flag, service_data_p))
+			temp_status = ReindexVariables (job_p, lucene_p, update_flag, service_data_p);
+			if (temp_status == OS_SUCCEEDED)
 				{
-					++ num_succeeded;
+					++ fully_succeeded_count;
+				}
+			else if (temp_status == OS_PARTIALLY_SUCCEEDED)
+				{
+					++ partially_succeeded_count;
 				}
 
-
-			if (num_succeeded == num_reindexes)
+			if (fully_succeeded_count == 4)
 				{
 					status = OS_SUCCEEDED;
 				}
-			else if (num_succeeded > 0)
+			else if ((fully_succeeded_count > 0) || (partially_succeeded_count > 0))
 				{
 					status = OS_PARTIALLY_SUCCEEDED;
 				}
-			else
-				{
-					status = OS_FAILED;
-				}
+
 
 			FreeLuceneTool (lucene_p);
 		}		/* if (lucene_p) */
@@ -366,79 +376,78 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 }
 
 
-bool ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	json_t *studies_p = GetAllStudiesAsJSONInViewFormat (service_data_p, VF_CLIENT_FULL);
 
 	if (studies_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_studies"))
 				{
-					success_flag = IndexLucene (lucene_p, studies_p, update_flag);
+					status = IndexLucene (lucene_p, studies_p, update_flag);
 				}
 
 			json_decref (studies_p);
 		}
 
-	return success_flag;
+	return status;
 }
 
 
-bool ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+OperationStatus ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	json_t *locations_p = GetAllLocationsAsJSON (service_data_p, NULL);
 
 	if (locations_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_locations"))
 				{
-					success_flag = IndexLucene (lucene_p, locations_p, update_flag);
+					status = IndexLucene (lucene_p, locations_p, update_flag);
 				}
-
 			json_decref (locations_p);
 		}
 
-	return success_flag;
+	return status;
 }
 
 
-bool ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	json_t *trials_p = GetAllFieldTrialsAsJSON (service_data_p, NULL);
 
 	if (trials_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_trials"))
 				{
-					success_flag = IndexLucene (lucene_p, trials_p, update_flag);
+					status = IndexLucene (lucene_p, trials_p, update_flag);
 				}
 
 			json_decref (trials_p);
 		}
 
-	return success_flag;
+	return status;
 }
 
 
-bool ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	json_t *trials_p = GetAllMeasuredVariablesAsJSON (service_data_p, NULL);
 
 	if (trials_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_measured_variables"))
 				{
-					success_flag = IndexLucene (lucene_p, trials_p, update_flag);
+					status = IndexLucene (lucene_p, trials_p, update_flag);
 				}
 
 			json_decref (trials_p);
 		}
 
-	return success_flag;
+	return status;
 }
 
 

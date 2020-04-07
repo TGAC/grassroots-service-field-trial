@@ -146,11 +146,9 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceDa
 				{
 					if (SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p))
 						{
-							if (IndexData (job_p, field_trial_json_p))
-								{
-									status = OS_SUCCEEDED;
-								}
-							else
+							status = IndexData (job_p, field_trial_json_p);
+
+							if (status != OS_SUCCEEDED)
 								{
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_trial_json_p, "Failed to index FieldTrial \"%s\" as JSON to Lucene", trial_p -> ft_name_s);
 									AddGeneralErrorMessageToServiceJob (job_p, "Trial saved but failed to index for searching");

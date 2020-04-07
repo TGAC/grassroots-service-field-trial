@@ -334,11 +334,9 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 				{
 					if (SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT], selector_p))
 						{
-							if (IndexData (job_p, phenotype_json_p))
-								{
-									status = OS_SUCCEEDED;
-								}
-							else
+							status = IndexData (job_p, phenotype_json_p);
+
+							if (status != OS_SUCCEEDED)
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index Measured Variable \"%s\" as JSON to Lucene", treatment_p -> mv_internal_name_s);

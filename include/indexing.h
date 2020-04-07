@@ -38,22 +38,22 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL	Service *GetFieldTrialIndexingService (GrassrootsServer *grassroots_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL	bool IndexData (ServiceJob *job_p, const json_t *data_to_index_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL	OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
 
 
 #ifdef __cplusplus
