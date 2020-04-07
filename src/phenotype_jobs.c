@@ -40,11 +40,11 @@ static const char * const S_ROW_INDEX_TITLE_S = "Plot ID";
  * Static declarations
  */
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
-static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, Study *area_p, const DFWFieldTrialServiceData *data_p);
+static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, Study *area_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -59,7 +59,7 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these phenotype are from", NULL, PL_ALL)) != NULL)
 		{
-			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+			const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
 			if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL, false))
 				{
@@ -120,7 +120,7 @@ bool GetSubmissionPhenotypesParameterTypeForNamedParameter (const char *param_na
 }
 
 
-bool RunForSubmissionPhenotypesParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionPhenotypesParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const json_t *phenotypes_json_p = NULL;
@@ -172,7 +172,7 @@ bool RunForSubmissionPhenotypesParams (DFWFieldTrialServiceData *data_p, Paramet
  * Static definitions
  */
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPES_TABLE.npt_type, S_PHENOTYPES_TABLE.npt_name_s, "Plot data to upload", "The data to upload", NULL,  PL_ALL);
 
@@ -227,7 +227,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;

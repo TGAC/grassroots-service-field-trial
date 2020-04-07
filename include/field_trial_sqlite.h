@@ -18,10 +18,10 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByNameFromSQLite (DFWFieldTrialServiceData *data_p, const char *name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByNameFromSQLite (FieldTrialServiceData *data_p, const char *name_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialByNameToSQLite (DFWFieldTrialServiceData *data_p, FieldTrial *trial_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialByNameToSQLite (FieldTrialServiceData *data_p, FieldTrial *trial_p);
 
 
 #ifdef __cplusplus

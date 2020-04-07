@@ -13,8 +13,8 @@
 
 
 void InitialiseJSONProcessor (struct JSONProcessor *processor_p,
-															json_t *(*process_plot_json_fn) (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p),
-															json_t *(*process_row_json_fn) (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p),
+															json_t *(*process_plot_json_fn) (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p),
+															json_t *(*process_row_json_fn) (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p),
 															void (*free_fn) (struct JSONProcessor *processor_p))
 {
 	processor_p -> jp_process_row_json_fn = process_row_json_fn;
@@ -36,7 +36,7 @@ void FreeJSONProcessor (struct JSONProcessor *processor_p)
 }
 
 
-json_t *ProcessPlotJSON (struct JSONProcessor *processor_p, Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p)
+json_t *ProcessPlotJSON (struct JSONProcessor *processor_p, Plot *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p)
 {
 	json_t *plot_json_p = NULL;
 
@@ -53,7 +53,7 @@ json_t *ProcessPlotJSON (struct JSONProcessor *processor_p, Plot *plot_p, ViewFo
 }
 
 
-json_t *ProcessRowJSON (struct JSONProcessor *processor_p, Row *row_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p)
+json_t *ProcessRowJSON (struct JSONProcessor *processor_p, Row *row_p, ViewFormat format, const FieldTrialServiceData *service_data_p)
 {
 	json_t *row_json_p = NULL;
 

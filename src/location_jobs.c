@@ -62,7 +62,7 @@ static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_
 /*
  * static declarations
  */
-static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
+static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
 
 
@@ -71,7 +71,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Location", false, data_p, param_set_p);
-	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	const char * const def_country_s = "GB";
 	const bool def_use_coords_flag = true;
 	char *id_s = NULL;
@@ -243,7 +243,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 }
 
 
-bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionLocationParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool success_flag = AddLocation (job_p, param_set_p, data_p);
 
@@ -366,7 +366,7 @@ bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSearchLocationParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const bool *get_all_flag_p = NULL;
@@ -525,7 +525,7 @@ Address *GetAddressFromLocationString (const char *location_s)
 
 
 
-static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
+static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag = false;
@@ -662,7 +662,7 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldT
 
 
 
-bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Location *active_location_p, const char *extra_option_s)
+bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Location *active_location_p, const char *extra_option_s)
 {
 	bool success_flag = false;
 	bson_t *opts_p =  BCON_NEW ( "sort", "{", "name", BCON_INT32 (1), "}");
@@ -776,7 +776,7 @@ bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, String
 }
 
 
-json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllLocationsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;
 
@@ -791,7 +791,7 @@ json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *o
 }
 
 
-bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *location_json_p = GetLocationAsJSON (location_p);
@@ -844,7 +844,7 @@ bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const Vie
 }
 
 
-Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, DFWFieldTrialServiceData *dfw_data_p)
+Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	Location *location_p = NULL;
 

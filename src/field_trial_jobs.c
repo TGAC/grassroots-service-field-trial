@@ -42,12 +42,12 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, DFWFieldTrialServiceData *data_p);
+static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, FieldTrialServiceData *data_p);
 
 
-static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **team_ss);
 
@@ -59,7 +59,7 @@ static const char *GetFieldTrialDefaultValueFromJSON (const char *trial_id_param
 
 bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
-	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	char *id_s = NULL;
@@ -117,7 +117,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
 								}
 
-						}		/* if (SetUpFieldTrialsListParameter ((DFWFieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, true)) */
+						}		/* if (SetUpFieldTrialsListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, true)) */
 
 				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ADVANCED)) != NULL) */
 
@@ -128,7 +128,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 }
 
 
-bool RunForSubmissionFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const char *name_s = NULL;
@@ -355,7 +355,7 @@ bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s
 }
 
 
-bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSearchFieldTrialParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	const bool *full_data_flag_p = NULL;
 	bool job_done_flag = false;
@@ -444,7 +444,7 @@ bool RunForSearchFieldTrialParams (DFWFieldTrialServiceData *data_p, ParameterSe
 }
 
 
-json_t *GetAllFieldTrialsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;
 
@@ -459,7 +459,7 @@ json_t *GetAllFieldTrialsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t 
 }
 
 
-bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag)
+bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	json_t *results_p = GetAllFieldTrialsAsJSON (data_p, NULL);
@@ -593,7 +593,7 @@ bool SetUpFieldTrialsListParameter (const DFWFieldTrialServiceData *data_p, Stri
 }
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, DFWFieldTrialServiceData *data_p)
+static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
 
@@ -608,7 +608,7 @@ static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *te
 
 
 
-static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -652,7 +652,7 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 }
 
 
-json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p)
+json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = NULL;
 	FieldTrial *trial_p = GetFieldTrialByIdString (id_s, format, data_p);
@@ -678,7 +678,7 @@ json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONP
 }
 
 
-bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, format, data_p);
@@ -697,7 +697,7 @@ bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const Vi
 }
 
 
-bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	FieldTrial *trial_p = GetFieldTrialFromJSON (trial_json_p, data_p);
@@ -719,7 +719,7 @@ bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p,
 
 
 
-static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	OperationStatus status = OS_FAILED_TO_START;
@@ -850,7 +850,7 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 
 
 
-FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParameterType trial_param_type, DFWFieldTrialServiceData *dfw_data_p)
+FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	FieldTrial *trial_p = NULL;
 

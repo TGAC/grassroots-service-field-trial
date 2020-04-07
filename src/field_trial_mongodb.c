@@ -26,12 +26,12 @@
 
 
 
-static LinkedList *GetMatchingFieldTrialsFromMongoDB (const DFWFieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
+static LinkedList *GetMatchingFieldTrialsFromMongoDB (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
 
 
 
 
-LinkedList *GetFieldTrialsByNameFromMongoDB (const DFWFieldTrialServiceData *data_p, const char *name_s)
+LinkedList *GetFieldTrialsByNameFromMongoDB (const FieldTrialServiceData *data_p, const char *name_s)
 {
 	const char *keys_ss [] = { FT_NAME_S, NULL };
 	const char *values_ss [] = { name_s, NULL };
@@ -40,7 +40,7 @@ LinkedList *GetFieldTrialsByNameFromMongoDB (const DFWFieldTrialServiceData *dat
 }
 
 
-LinkedList *GetFieldTrialsByTeamFromMongoDB (const DFWFieldTrialServiceData *data_p, const char *team_s)
+LinkedList *GetFieldTrialsByTeamFromMongoDB (const FieldTrialServiceData *data_p, const char *team_s)
 {
 	const char *keys_ss [] = { FT_TEAM_S, NULL };
 	const char *values_ss [] = { team_s, NULL };
@@ -49,7 +49,7 @@ LinkedList *GetFieldTrialsByTeamFromMongoDB (const DFWFieldTrialServiceData *dat
 }
 
 
-FieldTrial *GetFieldTrialFromMongoDB (const DFWFieldTrialServiceData *data_p, const char *name_s, const char *team_s)
+FieldTrial *GetFieldTrialFromMongoDB (const FieldTrialServiceData *data_p, const char *name_s, const char *team_s)
 {
 	FieldTrial *trial_p = NULL;
 	const char *keys_ss [] = { FT_NAME_S, FT_TEAM_S, NULL };
@@ -78,7 +78,7 @@ FieldTrial *GetFieldTrialFromMongoDB (const DFWFieldTrialServiceData *data_p, co
 
 
 
-static LinkedList *GetMatchingFieldTrialsFromMongoDB (const DFWFieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss)
+static LinkedList *GetMatchingFieldTrialsFromMongoDB (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss)
 {
 	LinkedList *field_trials_list_p = AllocateLinkedList (FreeFieldTrialNode);
 

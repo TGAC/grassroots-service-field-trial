@@ -21,7 +21,7 @@ static const char * const S_TEAM_COLUMN_S = "team";
 static json_t *GetFieldTrialAsDBJSON (const FieldTrial *trial_p);
 
 
-bool AddFieldTrialToSQLite (DFWFieldTrialServiceData *data_p, FieldTrial *trial_p)
+bool AddFieldTrialToSQLite (FieldTrialServiceData *data_p, FieldTrial *trial_p)
 {
 	bool success_flag = false;
 	SQLiteTool *tool_p = data_p -> dftsd_sqlite_p;
@@ -68,7 +68,7 @@ static json_t *GetFieldTrialAsDBJSON (const FieldTrial *trial_p)
 }
 
 
-FieldTrial *GetFieldTrialByIDFromSQLiteDB (const uint32 id, DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialByIDFromSQLiteDB (const uint32 id, FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	char *id_s = ConvertIntegerToString (id);

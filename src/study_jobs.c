@@ -79,10 +79,10 @@ static const char * const S_UNKNOWN_CROP_OPTION_S = "Unknown";
  * STATIC DECLARATIONS
  */
 
-static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
+static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
 
-static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p);
+static bool GetStudyForGivenId (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p);
 
 
 static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p);
@@ -91,16 +91,16 @@ static bool AddStudyLocationCriteria (bson_t *query_p, ParameterSet *param_set_p
 static bool AddStudyDateCriteria (bson_t *query_p, ParameterSet *param_set_p);
 
 
-static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
+static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format);
 
 
-static Parameter *GetAndAddAspectParameter (const char *aspect_s, DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
+static Parameter *GetAndAddAspectParameter (const char *aspect_s, FieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
 
 
 static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s);
 
 
-static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTrialServiceData *data_p);
+static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const FieldTrialServiceData *data_p);
 
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
 
@@ -123,7 +123,7 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p);
 
 
-static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, DFWFieldTrialServiceData *dfw_data_p);
+static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, FieldTrialServiceData *dfw_data_p);
 
 /*
  * API DEFINITIONS
@@ -134,7 +134,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
-	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 
 	char *id_s = NULL;
 	const char *name_s = NULL;
@@ -422,7 +422,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 }
 
 
-static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, DFWFieldTrialServiceData *dfw_data_p)
+static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, FieldTrialServiceData *dfw_data_p)
 {
 	ServiceData *data_p = & (dfw_data_p -> dftsd_base_data);
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Layout", false, data_p, param_set_p);
@@ -455,7 +455,7 @@ static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, co
 }
 
 
-bool RunForSubmissionStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool success_flag = AddStudy (job_p, param_set_p, data_p);
 
@@ -686,7 +686,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", NULL, PL_ADVANCED)) != NULL)
 												{
-													if (SetUpLocationsListParameter ((DFWFieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, GetUnsetLocationValue ()))
+													if (SetUpLocationsListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, GetUnsetLocationValue ()))
 														{
 															struct tm t;
 
@@ -746,7 +746,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForSearchStudyParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const bool *search_flag_p = NULL;
@@ -1066,7 +1066,7 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 
 
 
-static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
+static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	const char *id_s = NULL;
@@ -1304,7 +1304,7 @@ static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSe
 }
 
 
-bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, JSONProcessor *processor_p, DFWFieldTrialServiceData *data_p)
+bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, JSONProcessor *processor_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *study_json_p = GetStudyAsJSON (study_p, format, processor_p, data_p);
@@ -1346,7 +1346,7 @@ bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat f
 }
 
 
-json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p)
+json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
 {
 	json_t *results_p = NULL;
 
@@ -1367,7 +1367,7 @@ json_t *GetAllStudiesAsJSON (const DFWFieldTrialServiceData *data_p)
 }
 
 
-bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
+bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	json_t *results_p = GetAllStudiesAsJSON (data_p);
@@ -1483,7 +1483,7 @@ bool SetUpStudiesListParameter (const DFWFieldTrialServiceData *data_p, StringPa
 }
 
 
-json_t *GetAllStudiesAsJSONInViewFormat (const DFWFieldTrialServiceData *data_p, const ViewFormat format)
+json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, const ViewFormat format)
 {
 	json_t *raw_results_p = GetAllStudiesAsJSON (data_p);
 	json_t *formatted_results_p = NULL;
@@ -1592,7 +1592,7 @@ const KeyValuePair *GetAspect (const char *aspect_value_s)
 }
 
 
-static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p)
+static bool GetStudyForGivenId (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p)
 {
 	bool job_done_flag = false;
 	const char *id_s = NULL;
@@ -1611,7 +1611,7 @@ static bool GetStudyForGivenId (DFWFieldTrialServiceData *data_p, ParameterSet *
 }
 
 
-json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **study_name_ss, const DFWFieldTrialServiceData *data_p)
+json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **study_name_ss, const FieldTrialServiceData *data_p)
 {
 	json_t *study_json_p = NULL;
 
@@ -1669,7 +1669,7 @@ json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProces
 }
 
 
-void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	char *study_name_s = NULL;
@@ -1704,7 +1704,7 @@ void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, Ser
 }
 
 
-static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
+static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, ServiceJob *job_p, ViewFormat format)
 {
 	bool job_done_flag = false;
 
@@ -1812,7 +1812,7 @@ static bool GetMatchingStudies (bson_t *query_p, DFWFieldTrialServiceData *data_
 }
 
 
-static Parameter *GetAndAddAspectParameter (const char *aspect_s, DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
+static Parameter *GetAndAddAspectParameter (const char *aspect_s, FieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
 {
 	const char *def_s = (S_DIRECTIONS_P + S_UNKNOWN_DIRECTION_INDEX) -> kvp_value_s;
 	Parameter *param_p = NULL;
@@ -2009,7 +2009,7 @@ char *GetStudyAsString (const Study *study_p)
 }
 
 
-static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const DFWFieldTrialServiceData *data_p)
+static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
@@ -2060,7 +2060,7 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 
 													if (id_s)
 														{
-															Study *study_p = GetStudyByIdString (id_s, VF_STORAGE, (DFWFieldTrialServiceData *) data_p);
+															Study *study_p = GetStudyByIdString (id_s, VF_STORAGE, (FieldTrialServiceData *) data_p);
 
 															if (study_p)
 																{
@@ -2089,7 +2089,7 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 }
 
 
-Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, DFWFieldTrialServiceData *dfw_data_p)
+Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	Study *study_p = NULL;
 

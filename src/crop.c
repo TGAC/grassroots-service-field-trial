@@ -28,7 +28,7 @@
 #include "string_utils.h"
 
 
-static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 Crop *AllocateCrop (bson_oid_t *id_p, const char *name_s, const char *argovoc_preferred_term_s, const char *agrovoc_uri_s, char **synonyms_ss)
@@ -177,7 +177,7 @@ void FreeCrop (Crop *crop_p)
 }
 
 
-json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *res_p = json_object ();
 
@@ -285,7 +285,7 @@ json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const DFWFieldTria
 
 
 
-Crop *GetCropFromJSON (const json_t *crop_json_p, const DFWFieldTrialServiceData *data_p)
+Crop *GetCropFromJSON (const json_t *crop_json_p, const FieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (crop_json_p, CR_NAME_S);
 
@@ -424,7 +424,7 @@ Crop *GetCropFromJSON (const json_t *crop_json_p, const DFWFieldTrialServiceData
 }
 
 
-bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p)
+bool SaveCrop (Crop *crop_p, const FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (crop_p -> cr_id_p), &selector_p);
@@ -446,7 +446,7 @@ bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-Crop *GetCropByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p)
+Crop *GetCropByIdString (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	Crop *crop_p = (Crop *) GetDFWObjectByIdString (id_s, DFTD_CROP, GetCropCallback, VF_STORAGE, data_p);
 
@@ -454,7 +454,7 @@ Crop *GetCropByIdString (const char *id_s, const DFWFieldTrialServiceData *data_
 }
 
 
-static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	return GetCropFromJSON (json_p, data_p);
 }

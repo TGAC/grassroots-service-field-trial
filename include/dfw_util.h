@@ -34,10 +34,10 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL	void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL	void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyValidDate (const struct tm *src_p, struct tm **dest_pp);
@@ -59,27 +59,27 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool PrepareSaveData (bson_oid_t **id_pp, bson_t *
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddContext (json_t *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p));
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *SearchObjects (const FieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const FieldTrialServiceData *service_data_p));
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool CacheStudy (const char *id_s, const json_t *study_json_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool CacheStudy (const char *id_s, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCachedStudy (const char *id_s, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ClearCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool ClearCachedStudy (const char *id_s, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
-																																 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p),
-																																 const DFWFieldTrialServiceData *data_p);
+																																 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p),
+																																 const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p);

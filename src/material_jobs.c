@@ -76,9 +76,9 @@ static const bool S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG = true;
 
 static json_t *GetTableParameterHints (void);
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
-static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
+static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const FieldTrialServiceData *data_p);
 
 
 
@@ -97,7 +97,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 
 			if ((string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
 				{
-					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+					const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
 					if (SetUpStudiesListParameter (dfw_service_data_p, string_param_p, NULL, false))
 						{
@@ -105,7 +105,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 
 							if (string_param_p)
 								{
-									if (SetUpGenBanksListParameter ((DFWFieldTrialServiceData *) data_p, string_param_p))
+									if (SetUpGenBanksListParameter ((FieldTrialServiceData *) data_p, string_param_p))
 										{
 											const char c = S_DEFAULT_COLUMN_DELIMITER;
 											Parameter *param_p;
@@ -129,7 +129,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 }
 
 
-bool RunForSubmissionMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionMaterialParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const json_t *materials_json_p = NULL;
@@ -258,7 +258,7 @@ bool AddSearchMaterialParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForSearchMaterialParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSearchMaterialParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const char *accession_s = NULL;
@@ -324,7 +324,7 @@ bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, 
 
 
 
-OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag = true;
@@ -587,7 +587,7 @@ static json_t *GetTableParameterHints (void)
 }
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_MATERIAL_TABLE.npt_type, S_MATERIAL_TABLE.npt_name_s, "Material data to upload", "The data to upload", NULL, PL_ALL);
 
@@ -625,7 +625,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 
 
-static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
+static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -814,7 +814,7 @@ typedef struct MaterialsHighlighter
 } MaterialsHighlighter;
 
 
-static json_t *HighlightRowsWithMaterial (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p)
+static json_t *HighlightRowsWithMaterial (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p)
 {
 	MaterialsHighlighter *highlighter_p = (MaterialsHighlighter *) processor_p;
 

@@ -87,17 +87,17 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p);
 static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p);
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, DFWFieldTrialServiceData *data_p);
+static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
 
 
 static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
 
-static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, DFWFieldTrialServiceData *data_p);
+static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
 
 
 typedef struct
 {
-	DFWFieldTrialServiceData *sd_service_data_p;
+	FieldTrialServiceData *sd_service_data_p;
 	ServiceJob *sd_job_p;
 	ViewFormat sd_format;
 } SearchData;
@@ -114,7 +114,7 @@ Service *GetDFWFieldTrialSearchService (GrassrootsServer *grassroots_p)
 
 	if (service_p)
 		{
-			DFWFieldTrialServiceData *data_p = AllocateDFWFieldTrialServiceData ();
+			FieldTrialServiceData *data_p = AllocateFieldTrialServiceData ();
 
 			if (data_p)
 				{
@@ -138,14 +138,14 @@ Service *GetDFWFieldTrialSearchService (GrassrootsServer *grassroots_p)
 														 grassroots_p))
 						{
 
-							if (ConfigureDFWFieldTrialService (data_p, grassroots_p))
+							if (ConfigureFieldTrialService (data_p, grassroots_p))
 								{
 									return service_p;
 								}
 
 						}		/* if (InitialiseService (.... */
 
-					FreeDFWFieldTrialServiceData (data_p);
+					FreeFieldTrialServiceData (data_p);
 				}
 
 			FreeMemory (service_p);
@@ -187,7 +187,7 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *s
 }
 
 
-static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, DFWFieldTrialServiceData *data_p)
+static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p)
 {
 	StringParameter *param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", S_ANY_FACET_S, PL_ALL);
 
@@ -221,7 +221,7 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 
 	if (params_p)
 		{
-			DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) service_p -> se_data_p;
+			FieldTrialServiceData *data_p = (FieldTrialServiceData *) service_p -> se_data_p;
 			ParameterGroup *group_p = NULL;
 			Parameter *param_p = NULL;
 
@@ -358,7 +358,7 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p)
 {
 	bool success_flag = true;
 
-	FreeDFWFieldTrialServiceData ((DFWFieldTrialServiceData *) (service_p -> se_data_p));;
+	FreeFieldTrialServiceData ((FieldTrialServiceData *) (service_p -> se_data_p));;
 
 	return success_flag;
 }
@@ -366,7 +366,7 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p)
 
 static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
-	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
 	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "DFWFieldTrial");
 
@@ -627,7 +627,7 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 }
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, DFWFieldTrialServiceData *data_p)
+static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);

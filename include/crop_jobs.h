@@ -42,13 +42,13 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionCropParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionCropParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s);
 
 #ifdef __cplusplus
 }

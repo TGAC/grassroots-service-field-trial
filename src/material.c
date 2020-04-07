@@ -30,7 +30,7 @@
 
 static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);
 
-static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
+static Material *SearchForMaterial (bson_t *query_p, const FieldTrialServiceData *data_p);
 
 static bool SetValidJSONString (json_t *material_json_p, const char *key_s, const char *value_s);
 
@@ -43,7 +43,7 @@ static char *GetRegex (const char *accession_s);
 
 
 
-Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s, bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s, bson_oid_t *gene_bank_id_p, const FieldTrialServiceData *data_p)
 {
 	char *copied_accession_s = NULL;
 
@@ -154,7 +154,7 @@ void FreeMaterial (Material *material_p)
 }
 
 
-json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *material_json_p = json_object ();
 
@@ -257,7 +257,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 
 
-Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
 
@@ -338,7 +338,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 }
 
 
-bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
+bool SaveMaterial (Material *material_p, const FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (material_p -> ma_id_p), &selector_p);
@@ -362,7 +362,7 @@ bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p)
 
 
 
-Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
+Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const FieldTrialServiceData *data_p)
 {
 	Material *material_p = GetMaterialByAccession (accession_s, gene_bank_p, true, data_p);
 
@@ -393,7 +393,7 @@ Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gen
 
 
 
-Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const bool case_sensitive_flag, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const bool case_sensitive_flag, const FieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
 	bson_t *query_p = bson_new ();
@@ -455,7 +455,7 @@ Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p
 }
 
 
-Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialById (const bson_oid_t *material_id_p, const FieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
 	bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (material_id_p));
@@ -495,7 +495,7 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialS
 }
 
 
-static Material *SearchForMaterial (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+static Material *SearchForMaterial (bson_t *query_p, const FieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
 

@@ -84,16 +84,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *AllocateCrop (bson_oid_t *id_p, const char *
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeCrop (Crop *crop_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropFromJSON (const json_t *crop_json_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropFromJSON (const json_t *crop_json_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveCrop (Crop *crop_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveCrop (Crop *crop_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropByIdString (const char *id_s, const FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

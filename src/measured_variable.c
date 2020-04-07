@@ -33,7 +33,7 @@
  * static declarations
  */
 
-static bool CreateInstrumentFromMeasuredVariableJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p);
+static bool CreateInstrumentFromMeasuredVariableJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p);
 
 static bool AddSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p);
 
@@ -207,7 +207,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 }
 
 
-MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, const DFWFieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p)
 {
 	SchemaTerm *trait_p = GetChildSchemTermFromJSON (phenotype_json_p, MV_TRAIT_S);
 
@@ -321,7 +321,7 @@ MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, c
 }
 
 
-OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob *job_p, const DFWFieldTrialServiceData *data_p)
+OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob *job_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -377,7 +377,7 @@ static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, co
 }
 
 
-MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, const char *method_url_s, const char *unit_url_s, const DFWFieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, const char *method_url_s, const char *unit_url_s, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *treatment_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -433,7 +433,7 @@ MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, cons
 
 
 
-MeasuredVariable *GetMeasuredVariableByIdString (const char *id_s, const DFWFieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableByIdString (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *treatment_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -452,7 +452,7 @@ MeasuredVariable *GetMeasuredVariableByIdString (const char *id_s, const DFWFiel
 
 
 
-MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, const DFWFieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *treatment_p = NULL;
 

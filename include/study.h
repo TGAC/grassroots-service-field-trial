@@ -221,7 +221,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
 											const uint32 *num_rows_p, const uint32 *num_cols_p, const uint32 *num_replicates_p, const double64 *plot_width_p, const double64 *plot_length_p,
 											const char *st_weather_link_s, const json_t *shape_p,
-											const DFWFieldTrialServiceData *data_p);
+											const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
@@ -230,17 +230,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL StudyNode *AllocateStudyNode (Study *study_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudyNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetStudyPlots (Study *study_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyByIdString (const char *arst_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyByIdString (const char *arst_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *arst_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *arst_id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *study_p);
 

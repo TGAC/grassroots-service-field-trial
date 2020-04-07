@@ -156,15 +156,15 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL PlotNode *AllocatePlotNode (Plot *plot_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotNode (ListItem *node_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_area_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SavePlot (Plot *plot_p, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowToPlot (Plot *plot_p, struct Row *row_p);
@@ -172,7 +172,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowToPlot (Plot *plot_p, struct Row *row_p
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index);
 
-//DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p);
+//DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index);
 

@@ -135,7 +135,7 @@ Instrument *GetInstrumentFromJSON (const json_t *instrument_json_p)
 }
 
 
-bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *data_p)
+bool SaveInstrument (Instrument *instrument_p, const FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (instrument_p -> in_id_p), &selector_p);
@@ -158,7 +158,7 @@ bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *d
 
 
 
-Instrument *GetInstrumentById (const bson_oid_t *instrument_id_p, const DFWFieldTrialServiceData *data_p)
+Instrument *GetInstrumentById (const bson_oid_t *instrument_id_p, const FieldTrialServiceData *data_p)
 {
 	Instrument *instrument_p = NULL;
 

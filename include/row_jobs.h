@@ -39,19 +39,19 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionRowPhenotypeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionRowPhenotypeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByRackIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByRackIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllRowsContainingMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllRowsContainingMaterial (Material *material_p, const FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

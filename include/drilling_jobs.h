@@ -41,7 +41,7 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionDrillingParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionDrillingParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionDrillingParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionDrillingParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);

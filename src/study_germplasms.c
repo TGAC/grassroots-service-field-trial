@@ -10,7 +10,7 @@
 
 
 
-Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, bool gru_flag, bool cleaned_flag, uint32 tgw, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, bool gru_flag, bool cleaned_flag, uint32 tgw, const Study *area_p, const bson_oid_t *gene_bank_id_p, const FieldTrialServiceData *data_p)
 {
 	char *copied_accession_s = NULL;
 
@@ -185,7 +185,7 @@ Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const cha
 }
 
 
-Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm_id_s, const Study *area_p, const DFWFieldTrialServiceData *data_p)
+Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm_id_s, const Study *area_p, const FieldTrialServiceData *data_p)
 {
 	char *copied_germplasm_id_s = EasyCopyToNewString (germplasm_id_s);
 
@@ -215,7 +215,7 @@ Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm
 
 
 
-Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p)
+Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const FieldTrialServiceData *data_p)
 {
 	Material *material_p = GetMaterialByGermplasmID (material_s, area_p, data_p);
 
@@ -235,7 +235,7 @@ Material *GetOrCreateMaterialByInternalName (const char *material_s, Study *area
 
 
 
-json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *material_json_p = json_object ();
 
@@ -440,7 +440,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 
 
-Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
 
@@ -572,7 +572,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 }
 
 
-Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p)
+Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const FieldTrialServiceData *data_p)
 {
 	Material *material_p = NULL;
 	bson_t *query_p = BCON_NEW (MA_GERMPLASM_ID_S, BCON_UTF8 (material_s), MA_EXPERIMENTAL_AREA_ID_S, BCON_OID (area_p -> st_id_p));
@@ -597,7 +597,7 @@ Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const
 
 
 
-static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p)
+static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_json_p, Study *area_p, GeneBank *gene_bank_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;

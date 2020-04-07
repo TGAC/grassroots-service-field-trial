@@ -32,9 +32,9 @@
 #include "int_linked_list.h"
 
 
-static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
-static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
+static Plot *SearchForPlot (bson_t *query_p, const FieldTrialServiceData *data_p);
 
 
 
@@ -185,7 +185,7 @@ void FreePlotNode (ListItem *node_p)
 }
 
 
-bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
+bool SavePlot (Plot *plot_p, const FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (plot_p -> pl_id_p), &selector_p);
@@ -207,7 +207,7 @@ bool SavePlot (Plot *plot_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
 {
 	json_t *plot_json_p = json_object ();
 
@@ -360,7 +360,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row;
@@ -562,7 +562,7 @@ bool AddRowToPlot (Plot *plot_p, Row *row_p)
 }
 
 
-bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialServiceData *data_p)
+bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -611,7 +611,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialService
 
 
 
-//Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const DFWFieldTrialServiceData *data_p)
+//Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const FieldTrialServiceData *data_p)
 //{
 //	Plot *plot_p = NULL;
 //	bson_t *query_p = BCON_NEW (PL_INDEX_S, BCON_INT32 (plot_index), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
@@ -637,7 +637,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const DFWFieldTrialService
 //}
 
 
-static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+static Plot *SearchForPlot (bson_t *query_p, const FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
@@ -688,7 +688,7 @@ static Plot *SearchForPlot (bson_t *query_p, const DFWFieldTrialServiceData *dat
 }
 
 
-static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *rows_json_p = json_array ();

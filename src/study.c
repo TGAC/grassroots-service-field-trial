@@ -39,23 +39,23 @@
 /*
  * STATIC PROTOTYPES
  */
-static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
 
 static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
-static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const DFWFieldTrialServiceData *data_p);
+static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p);
 
-static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialServiceData *data_p);
+static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
-static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
 
-static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -68,7 +68,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
 											const uint32 *num_rows_p, const uint32 *num_cols_p, const uint32 *num_replicates_p, const double64 *plot_width_p, const double64 *plot_length_p,
 											const char *weather_s, const json_t *shape_p,
-											const DFWFieldTrialServiceData *data_p)
+											const FieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -515,7 +515,7 @@ void FreeStudyNode (ListItem *node_p)
 }
 
 
-bool AddStudyPlotsJSONDirectly (Study *study_p, json_t *study_json_p,  const DFWFieldTrialServiceData *data_p)
+bool AddStudyPlotsJSONDirectly (Study *study_p, json_t *study_json_p,  const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -523,7 +523,7 @@ bool AddStudyPlotsJSONDirectly (Study *study_p, json_t *study_json_p,  const DFW
 }
 
 
-bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p)
+bool GetStudyPlots (Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -598,7 +598,7 @@ bool GetStudyPlots (Study *study_p, const DFWFieldTrialServiceData *data_p)
 }
 
 
-OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
+OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -651,7 +651,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, DFWFieldTrialServi
 }
 
 
-json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
 {
 	json_t *study_json_p = json_object ();
 
@@ -889,7 +889,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 }
 
 
-Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, ST_NAME_S);
 	Study *study_p = NULL;
@@ -1103,7 +1103,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const DF
 }
 
 
-Study *GetStudyByIdString (const char *study_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyByIdString (const char *study_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Study *study_p = GetDFWObjectByIdString (study_id_s, DFTD_STUDY, GetStudyCallback, format, data_p);
 
@@ -1111,7 +1111,7 @@ Study *GetStudyByIdString (const char *study_id_s, const ViewFormat format, cons
 }
 
 
-Study *GetStudyById (bson_oid_t *study_id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Study *GetStudyById (bson_oid_t *study_id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Study *study_p = GetDFWObjectById (study_id_p, DFTD_STUDY, GetStudyCallback, format, data_p);
 
@@ -1148,7 +1148,7 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p)
 
 
 
-static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -1178,7 +1178,7 @@ static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFo
 }
 
 
-static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const DFWFieldTrialServiceData *data_p)
+static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p)
 {
 	Crop *crop_p = NULL;
 	bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
@@ -1222,13 +1222,13 @@ static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const 
 }
 
 
-static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	return GetStudyFromJSON (json_p, format, data_p);
 }
 
 
-static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *plots_json_p = json_array ();
@@ -1287,7 +1287,7 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 
 
 
-static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialServiceData *data_p)
+static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p)
 {
 	int32 res = -1;
 
@@ -1325,7 +1325,7 @@ static int32 GetNumberOfPlotsInStudy (const Study *study_p, const DFWFieldTrialS
 /*
  * For Client formats
  */
-static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
 	json_t *field_trial_json_p = json_object ();
 
@@ -1349,7 +1349,7 @@ static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, con
 }
 
 
-static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
 	if (SetNonTrivialDouble (study_json_p, ST_PLOT_WIDTH_S, study_p -> st_default_plot_width_p))
 		{

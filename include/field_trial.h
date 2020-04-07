@@ -112,42 +112,42 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialStudies (FieldTrial *trial_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialIdAsString (const FieldTrial *trial_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialStudy (FieldTrial *trial_p, struct Study *study_p, MEM_FLAG mf);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialAsString (const FieldTrial *trial_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByName (const char * const trial_s, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveFieldTrialStudy (FieldTrial *trial_p, struct Study *study_p);

@@ -132,7 +132,7 @@ char *GetFieldTrialIdAsString (const FieldTrial *trial_p)
 }
 
 
-bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
+bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (trial_p -> ft_id_p), &selector_p);
@@ -229,7 +229,7 @@ bool RemoveFieldTrialStudy (FieldTrial *trial_p, Study *study_p)
 }
 
 
-LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTrialServiceData *data_p)
+LinkedList *GetFieldTrialsByName (const char * const trial_s, const FieldTrialServiceData *data_p)
 {
 	LinkedList *trials_p = GetFieldTrialsByNameFromMongoDB (data_p, trial_s);
 
@@ -238,7 +238,7 @@ LinkedList *GetFieldTrialsByName (const char * const trial_s, const DFWFieldTria
 
 
 
-json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
 
@@ -271,7 +271,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 
 
 
-bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
@@ -349,7 +349,7 @@ bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, cons
 }
 
 
-FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
+FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const FieldTrialServiceData * UNUSED_PARAM (data_p))
 {
 	const char *name_s = GetJSONString (json_p, FT_NAME_S);
 
@@ -406,7 +406,7 @@ void FreeFieldTrialNode (ListItem *node_p)
  * The trial could be the bson_oid or a name so check
  */
 
-FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 
@@ -439,7 +439,7 @@ FieldTrial *GetUniqueFieldTrialBySearchString (const char *trial_s, const ViewFo
 }
 
 
-FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	char *id_s = GetBSONOidAsString (id_p);
@@ -456,7 +456,7 @@ FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, 
 
 
 
-FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -563,7 +563,7 @@ bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p, MEM_FLAG mf)
 
 
 
-bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 

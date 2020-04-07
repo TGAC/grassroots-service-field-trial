@@ -86,7 +86,7 @@ static const KeyValuePair *S_FERTILIZERS_P [] =
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p);
 static json_t *GetTableParameterHints (void);
 
 
@@ -106,7 +106,7 @@ bool AddTreatmentFactorParameters (ParameterSet *param_set_p, Study *active_stud
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, TF_NAME.npt_type, TF_NAME.npt_name_s, "Treatment Factor", "Create a Treatment Factor for this Study", NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p,  (const DFWFieldTrialServiceData *) data_p)) != NULL)
+					if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p,  (const FieldTrialServiceData *) data_p)) != NULL)
 						{
 							success_flag = true;
 						}
@@ -119,7 +119,7 @@ bool AddTreatmentFactorParameters (ParameterSet *param_set_p, Study *active_stud
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	bool success_flag = false;

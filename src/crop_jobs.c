@@ -80,7 +80,7 @@ bool AddSubmissionCropParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-bool RunForSubmissionCropParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionCropParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const char *name_s = NULL;
@@ -234,7 +234,7 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool SetUpCropsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s)
+bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s)
 {
 	bool success_flag = false;
 

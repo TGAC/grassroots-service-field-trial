@@ -79,10 +79,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetInstrumentAsJSON (const Instrument *ins
 DFW_FIELD_TRIAL_SERVICE_LOCAL Instrument *GetInstrumentFromJSON (const json_t *phenotype_json_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveInstrument (Instrument *instrument_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveInstrument (Instrument *instrument_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Instrument *GetInstrumentById (const bson_oid_t *instrument_id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Instrument *GetInstrumentById (const bson_oid_t *instrument_id_p, const FieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }

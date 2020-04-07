@@ -64,10 +64,10 @@ static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimi
 static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_JSON_TABLE};
 
 
-static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p);
+static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const FieldTrialServiceData *data_p);
 
 
 static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, TermType expected_type, MongoTool *mongo_p);
@@ -91,7 +91,7 @@ bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *par
 
 			if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 				{
-					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+					const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
 					if ((param_p = GetMeasuredVariablesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
@@ -106,7 +106,7 @@ bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *par
 }
 
 
-bool RunForSubmissionMeasuredVariableParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionMeasuredVariableParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const json_t *phenotypes_json_p = NULL;
@@ -169,7 +169,7 @@ bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 			if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 				{
-					const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+					const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
 					if ((param_p = GetMeasuredVariablesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
@@ -186,7 +186,7 @@ bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 
 
-json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
+json_t *GetAllTraitsAsJSON (const FieldTrialServiceData *data_p)
 {
 	json_t *traits_p = NULL;
 
@@ -247,7 +247,7 @@ json_t *GetAllTraitsAsJSON (const DFWFieldTrialServiceData *data_p)
 
 
 
-MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
 
@@ -329,7 +329,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const D
 }
 
 
-json_t *GetAllMeasuredVariablesAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;
 
@@ -403,7 +403,7 @@ char *GetMeasuredVariableAsString (const MeasuredVariable *treatment_p)
 }
 
 
-bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treatment_p, const ViewFormat format, DFWFieldTrialServiceData *data_p)
+bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treatment_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *treatment_json_p = GetMeasuredVariableAsJSON (treatment_p, format);
@@ -535,7 +535,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, S_PHENOTYPE_TABLE.npt_name_s, "MeasuredVariable data to upload", "The data to upload", NULL, PL_ALL);
 
@@ -588,7 +588,7 @@ static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_se
 	"Unit Name": "Julian date (JD)"
 }
  */
-static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const DFWFieldTrialServiceData *data_p)
+static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -847,7 +847,7 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 }
 
 
-bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const DFWFieldTrialServiceData *data_p)
+bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const FieldTrialServiceData *data_p)
 {
 	bool exists_flag = false;
 

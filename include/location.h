@@ -102,25 +102,25 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocationNode (ListItem *node_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetLocationAsJSON (Location *location_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromJSON (const json_t *location_json_p, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetLocationAsString (const Location *location_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationById (bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationById (bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationByIdString (const char *location_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationByIdString (const char *location_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetLocationsByName (DFWFieldTrialServiceData *data_p, const char *location_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetLocationsByName (FieldTrialServiceData *data_p, const char *location_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

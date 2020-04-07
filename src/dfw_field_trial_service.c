@@ -49,7 +49,7 @@
 #include "study_jobs.h"
 #include "location_jobs.h"
 #include "plot_jobs.h"
-
+#include "indexing.h"
 
 #ifdef _DEBUG
 #define DFW_FIELD_TRIAL_SERVICE_DEBUG	(STM_LEVEL_FINER)
@@ -84,6 +84,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
 	Service *phenotypes_submission_service_p = GetPhenotypesSubmissionService (grassroots_p);
+	Service *indexing_service_p = GetFieldTrialIndexingService (grassroots_p);
 
 	if (all_in_one_submission_service_p)
 		{
@@ -140,6 +141,10 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
+	if (indexing_service_p)
+		{
+			++ num_services;
+		}
 
 	if (num_services)
 		{
@@ -161,6 +166,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, treatments_submission_service_p);
 					service_pp = AddValidService (service_pp, crop_submission_service_p);
 					service_pp = AddValidService (service_pp, phenotypes_submission_service_p);
+					service_pp = AddValidService (service_pp, indexing_service_p);
 
 					return services_p;
 				}
@@ -219,6 +225,11 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	if (phenotypes_submission_service_p)
 		{
 			FreeService (phenotypes_submission_service_p);
+		}
+
+	if (indexing_service_p)
+		{
+			FreeService (indexing_service_p);
 		}
 
 	return NULL;

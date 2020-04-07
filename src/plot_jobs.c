@@ -88,21 +88,21 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p,  const DFWFieldTrialServiceData *data_p);
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p,  const FieldTrialServiceData *data_p);
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const FieldTrialServiceData *data_p);
 
-static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData *service_data_p);
+static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p);
 
-static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTrialServiceData *service_data_p);
+static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const FieldTrialServiceData *service_data_p);
 
-static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const DFWFieldTrialServiceData *service_data_p);
+static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const FieldTrialServiceData *service_data_p);
 
-static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const DFWFieldTrialServiceData *data_p);
+static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const double64 *width_p, const double64 *height_p);
 
@@ -115,7 +115,7 @@ static json_t *GeneratePlotsTemplate (const Study *study_p);
 
 bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
-	DFWFieldTrialServiceData *dfw_data_p = (DFWFieldTrialServiceData *) data_p;
+	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots", false, data_p, param_set_p);
@@ -173,7 +173,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 }
 
 
-bool RunForSubmissionPlotParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const char *study_id_s = NULL;
@@ -325,7 +325,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
@@ -390,7 +390,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
+static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
@@ -611,7 +611,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 }
 
 
-static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const DFWFieldTrialServiceData *data_p)
+static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	double width = 0.0;
 	Plot *plot_p = NULL;
@@ -687,7 +687,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 }
 
 
-Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
@@ -704,7 +704,7 @@ Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const DFWFieldTrialServiceD
 }
 
 
-Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study_p, const DFWFieldTrialServiceData *data_p)
+Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
@@ -721,7 +721,7 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study
 
 
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
@@ -761,7 +761,7 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const DFWFieldTrial
 }
 
 
-static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTrialServiceData *service_data_p)
+static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *plots_table_p = NULL;
 
@@ -829,7 +829,7 @@ static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const DFWFieldTr
 }
 
 
-static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const DFWFieldTrialServiceData *service_data_p)
+static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = true;
 	LinkedList *rows_p = plot_p -> pl_rows_p;
@@ -950,7 +950,7 @@ static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const 
 }
 
 
-static json_t *GetPlotTableRow (const Row *row_p, const DFWFieldTrialServiceData *service_data_p)
+static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *table_row_p = json_object ();
 

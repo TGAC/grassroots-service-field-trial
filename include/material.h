@@ -169,13 +169,13 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL	Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, bool gru_flag, bool cleaned_flag, uint32 tgw, const Study *area_p, const bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL	Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, bool gru_flag, bool cleaned_flag, uint32 tgw, const Study *area_p, const bson_oid_t *gene_bank_id_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm_id_s, const Study *area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByGermplasmID (bson_oid_t *id_p, const char *germplasm_id_s, const Study *area_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s, bson_oid_t *gene_bank_id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s, bson_oid_t *gene_bank_id_p, const FieldTrialServiceData *data_p);
 
 
 
@@ -191,27 +191,27 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetMaterialInternalName (Material *material_p
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMaterial (Material *material_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveMaterial (Material *material_p, const DFWFieldTrialServiceData *data_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material*GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveMaterial (Material *material_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const DFWFieldTrialServiceData *data_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const DFWFieldTrialServiceData *data_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *LoadMaterial (const int32 material_id, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const bool case_sensitive_flag, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material*GetOrCreateMaterialByInternalName (const char *material_s, Study *area_p, const FieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetOrCreateMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByGermplasmID (const char *material_s, Study *area_p, const FieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialById (const bson_oid_t *material_id_p, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Material *GetMaterialByAccession (const char *accession_s, GeneBank *gene_bank_p, const bool case_sensitive_flag, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsMaterialComplete (const Material * const material_p);

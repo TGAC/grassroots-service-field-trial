@@ -95,7 +95,7 @@ typedef enum
  *
  * @extends ServiceData
  */
-typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
+typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 {
 	/** The base ServiceData. */
 	ServiceData dftsd_base_data;
@@ -138,7 +138,7 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ DFWFieldTrialServiceData
 	 */
 	const char *dftsd_study_cache_path_s;
 
-} DFWFieldTrialServiceData;
+} FieldTrialServiceData;
 
 
 
@@ -273,13 +273,13 @@ extern "C"
 {
 #endif
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialServiceData *AllocateFieldTrialServiceData (void);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialServiceData (FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p, GrassrootsServer *grassroots_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer *grassroots_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const DFWFieldTrialData data_type);
@@ -288,7 +288,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const DFWFieldTri
 DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const char *type_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetImageForDatatype (const DFWFieldTrialServiceData *data_p, const char *data_type_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char *data_type_s);
 
 
 #ifdef __cplusplus

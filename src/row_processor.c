@@ -10,7 +10,7 @@
 #include "streams.h"
 
 
-static json_t *HighlightPlotsContainingMaterial (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p);
+static json_t *HighlightPlotsContainingMaterial (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p);
 
 
 JSONProcessor *AllocateRowProcessor (struct Material *material_p)
@@ -29,7 +29,7 @@ JSONProcessor *AllocateRowProcessor (struct Material *material_p)
 }
 
 
-static json_t *HighlightPlotsContainingMaterial (struct JSONProcessor *processor_p, Row *row_p, ViewFormat format, const DFWFieldTrialServiceData *service_data_p)
+static json_t *HighlightPlotsContainingMaterial (struct JSONProcessor *processor_p, Row *row_p, ViewFormat format, const FieldTrialServiceData *service_data_p)
 {
 	RowProcessor *row_processor_p = (RowProcessor *) processor_p;
 	json_t *row_json_p = GetRowAsJSON (row_p, format, NULL, service_data_p);

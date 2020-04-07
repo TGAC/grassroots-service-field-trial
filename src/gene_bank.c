@@ -32,9 +32,9 @@
  * static declarations
  */
 
-static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceData *data_p);
+static GeneBank *SearchForGeneBank (bson_t *query_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -244,7 +244,7 @@ GeneBank *GetGeneBankFromJSON (const json_t *gene_bank_json_p)
 }
 
 
-bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
+bool SaveGeneBank (GeneBank *gene_bank_p, FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = false;
@@ -281,7 +281,7 @@ bool SaveGeneBank (GeneBank *gene_bank_p, DFWFieldTrialServiceData *data_p)
 }
 
 
-GeneBank *GetGeneBankByName (const char *name_s, const DFWFieldTrialServiceData *data_p)
+GeneBank *GetGeneBankByName (const char *name_s, const FieldTrialServiceData *data_p)
 {
 	GeneBank *gene_bank_p = NULL;
 	bson_t *query_p = BCON_NEW (GB_NAME_S, BCON_UTF8 (name_s));
@@ -306,7 +306,7 @@ GeneBank *GetGeneBankByName (const char *name_s, const DFWFieldTrialServiceData 
 }
 
 
-static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceData *data_p)
+static GeneBank *SearchForGeneBank (bson_t *query_p, const FieldTrialServiceData *data_p)
 {
 	GeneBank *gene_bank_p = NULL;
 
@@ -357,7 +357,7 @@ static GeneBank *SearchForGeneBank (bson_t *query_p, const DFWFieldTrialServiceD
 }
 
 
-GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	GeneBank *gene_bank_p = GetDFWObjectById (id_p, DFTD_GENE_BANK, GetGeneBankCallback, format, data_p);
 
@@ -365,7 +365,7 @@ GeneBank *GetGeneBankById (const bson_oid_t *id_p, const ViewFormat format, cons
 }
 
 
-GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	GeneBank *gene_bank_p = GetDFWObjectByIdString (gene_bank_id_s, DFTD_GENE_BANK, GetGeneBankCallback, format, data_p);
 
@@ -373,7 +373,7 @@ GeneBank *GetGeneBankByIdString (const char *gene_bank_id_s, const ViewFormat fo
 }
 
 
-static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
+static void *GetGeneBankCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData * UNUSED_PARAM (data_p))
 {
 	return GetGeneBankFromJSON (json_p);
 }

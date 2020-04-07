@@ -27,9 +27,9 @@
 #include "dfw_util.h"
 #include "indexing.h"
 
-static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const DFWFieldTrialServiceData *service_data_p);
+static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const FieldTrialServiceData *service_data_p);
 
 
 
@@ -137,7 +137,7 @@ json_t *GetLocationAsJSON (Location *location_p)
 }
 
 
-Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTrialServiceData * UNUSED_PARAM (data_p))
+Location *GetLocationFromJSON (const json_t *location_json_p, const FieldTrialServiceData * UNUSED_PARAM (data_p))
 {
 	uint32 order;
 
@@ -183,7 +183,7 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const DFWFieldTria
 
 
 
-OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldTrialServiceData *data_p)
+OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -226,7 +226,7 @@ OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, DFWFieldT
 
 
 
-Location *GetLocationById (bson_oid_t *id_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Location *GetLocationById (bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Location *location_p = GetDFWObjectById (id_p, DFTD_LOCATION, GetLocationFromJSONCallback, format, data_p);
 
@@ -234,7 +234,7 @@ Location *GetLocationById (bson_oid_t *id_p, const ViewFormat format, const DFWF
 }
 
 
-Location *GetLocationByIdString (const char *location_id_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Location *GetLocationByIdString (const char *location_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Location *location_p = GetDFWObjectByIdString (location_id_s, DFTD_LOCATION, GetLocationFromJSONCallback, format, data_p);
 
@@ -249,7 +249,7 @@ Location *GetLocationByIdString (const char *location_id_s, const ViewFormat for
  * The search string could be the bson_oid or a name so check
  */
 
-Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Location *location_p = NULL;
 
@@ -292,7 +292,7 @@ Location *GetUniqueLocationBySearchString (const char *location_s, const ViewFor
 }
 
 
-static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const DFWFieldTrialServiceData *service_data_p)
+static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = false;
 	Location *location_p = GetLocationFromJSON (location_json_p, service_data_p);
@@ -330,7 +330,7 @@ char *GetLocationAsString (const Location *location_p)
 }
 
 
-static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	return GetLocationFromJSON (location_json_p, data_p);
 }

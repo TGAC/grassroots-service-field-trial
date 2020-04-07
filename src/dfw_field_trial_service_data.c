@@ -44,9 +44,9 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 };
 
 
-DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
+FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 {
-	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) AllocMemory (sizeof (DFWFieldTrialServiceData));
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) AllocMemory (sizeof (FieldTrialServiceData));
 
 	if (data_p)
 		{
@@ -64,7 +64,7 @@ DFWFieldTrialServiceData *AllocateDFWFieldTrialServiceData (void)
 }
 
 
-void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p)
+void FreeFieldTrialServiceData (FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_mongo_p)
 		{
@@ -75,7 +75,7 @@ void FreeDFWFieldTrialServiceData (DFWFieldTrialServiceData *data_p)
 }
 
 
-bool ConfigureDFWFieldTrialService (DFWFieldTrialServiceData *data_p, GrassrootsServer *grassroots_p)
+bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer *grassroots_p)
 {
 	bool success_flag = false;
 	const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
@@ -168,7 +168,7 @@ DFWFieldTrialData GetDatatypeFromString (const char *type_s)
 
 
 
-const char *GetImageForDatatype (const DFWFieldTrialServiceData *data_p, const char *data_type_s)
+const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char *data_type_s)
 {
 	const char *image_s = NULL;
 	const json_t *images_config_p = json_object_get (data_p -> dftsd_base_data.sd_config_p, "images");

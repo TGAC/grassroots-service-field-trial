@@ -135,12 +135,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL RowNode *AllocateRowNode (Row *row_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-//DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag);
+//DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const FieldTrialServiceData *data_p, bool insert_flag);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationToRow (Row *row_p, Observation *observation_p);
 

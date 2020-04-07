@@ -35,13 +35,13 @@
 #endif
 
 
-static char *GetCacheFilename (const char *id_s, const DFWFieldTrialServiceData *data_p);
+static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p);
 
 
 
 bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
-																	 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const DFWFieldTrialServiceData *data_p),
-																	 const DFWFieldTrialServiceData *data_p)
+																	 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p),
+																	 const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	char *name_s = NULL;
@@ -78,7 +78,7 @@ bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, Se
 
 
 
-bool CacheStudy (const char *id_s, const json_t *study_json_p, const DFWFieldTrialServiceData *data_p)
+bool CacheStudy (const char *id_s, const json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -112,7 +112,7 @@ bool CacheStudy (const char *id_s, const json_t *study_json_p, const DFWFieldTri
 }
 
 
-json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p)
+json_t *GetCachedStudy (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	json_t *study_json_p = NULL;
 
@@ -172,7 +172,7 @@ json_t *GetCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p
 }
 
 
-bool ClearCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p)
+bool ClearCachedStudy (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 	char *filename_s = GetCacheFilename (id_s, data_p);
@@ -192,7 +192,7 @@ bool ClearCachedStudy (const char *id_s, const DFWFieldTrialServiceData *data_p)
 }
 
 
-void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -278,7 +278,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 }
 
 
-void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p), const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 
@@ -561,7 +561,7 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 
 
-bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const DFWFieldTrialServiceData *data_p)
+bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	const char *type_s = GetDatatypeAsString (data_type);
@@ -583,7 +583,7 @@ bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const DFWFieldT
 }
 
 
-LinkedList *SearchObjects (const DFWFieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const DFWFieldTrialServiceData *service_data_p))
+LinkedList *SearchObjects (const FieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const FieldTrialServiceData *service_data_p))
 {
 	LinkedList *results_list_p = AllocateLinkedList (free_list_item_fn);
 
@@ -761,7 +761,7 @@ bool GetValidUnsignedIntFromJSON (const json_t *study_json_p, const char *key_s,
 
 
 
-static char *GetCacheFilename (const char *id_s, const DFWFieldTrialServiceData *data_p)
+static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	char *filename_s = NULL;
 	char *local_filename_s = ConcatenateStrings (id_s, ".json");

@@ -62,25 +62,25 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMeasuredVariableParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMeasuredVariableParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMeasuredVariableParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllMeasuredVariablesAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetMeasuredVariableAsString (const MeasuredVariable *treatment_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treatment_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treatment_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const FieldTrialServiceData *data_p);
 
 
 

@@ -33,7 +33,7 @@
 
 static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
 
-static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p);
+static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p);
 
 
 Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
@@ -147,7 +147,7 @@ void FreeRowNode (ListItem *node_p)
 
 
 
-json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const DFWFieldTrialServiceData *data_p)
+json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
 {
 	json_t *row_json_p = json_object ();
 
@@ -312,7 +312,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 }
 
 
-Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const DFWFieldTrialServiceData *data_p)
+Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
 	Material *material_to_use_p = material_p;
@@ -491,7 +491,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 }
 
 //
-//bool SaveRow (Row *row_p, const DFWFieldTrialServiceData *data_p, bool insert_flag)
+//bool SaveRow (Row *row_p, const FieldTrialServiceData *data_p, bool insert_flag)
 //{
 //	bson_t *selector_p = NULL;
 //	bool success_flag = false;
@@ -639,7 +639,7 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 
 
 
-static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const DFWFieldTrialServiceData *data_p)
+static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	const json_t *observations_json_p = json_object_get (row_json_p, RO_OBSERVATIONS_S);

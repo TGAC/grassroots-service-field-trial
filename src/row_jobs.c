@@ -52,9 +52,9 @@ static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE = { "RO phenotype data uplo
 static NamedParameterType S_STUDIES_LIST = { "RO Study", PT_STRING };
 
 
-static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
+static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p);
 
 
 static json_t *GetTableParameterHints (void);
@@ -75,7 +75,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+			const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study to update the phenotypes for", NULL, PL_ALL)) != NULL)
 				{
@@ -102,7 +102,7 @@ bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_s
 }
 
 
-bool RunForSubmissionRowPhenotypeParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionRowPhenotypeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const char *study_id_s = NULL;
@@ -216,7 +216,7 @@ static json_t *GetTableParameterHints (void)
 }
 
 
-static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, PL_ALL);
 
@@ -295,7 +295,7 @@ static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *rack_stu
 }
 
 
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
+static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -526,7 +526,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 }
 
 
-Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const DFWFieldTrialServiceData *data_p)
+Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
 	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_INDEX_S, NULL);

@@ -34,7 +34,7 @@ static NamedParameterType S_GENE_BANK_API_URL = { "GB API Url", PT_STRING };
 static NamedParameterType S_ADD_GENE_BANK = { "GB Add Gene Bank", PT_BOOLEAN };
 
 
-static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p);
+static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
 
 /*
@@ -98,7 +98,7 @@ bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p
 }
 
 
-bool RunForSubmissionGeneBankParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionGeneBankParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const bool *add_flag_p = NULL;
@@ -148,7 +148,7 @@ bool GetSubmissionGeneBankParameterTypeForNamedParameter (const char *param_name
 
 
 
-bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p)
+bool SetUpGenBanksListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p)
 {
 	bool success_flag = false;
 
@@ -234,7 +234,7 @@ bool SetUpGenBanksListParameter (const DFWFieldTrialServiceData *data_p, StringP
 
 
 
-static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, DFWFieldTrialServiceData *data_p)
+static bool AddGeneBank (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	const char *name_s = NULL;

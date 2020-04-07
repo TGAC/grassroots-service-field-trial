@@ -38,9 +38,9 @@ static bool AddObservationNatureToJSON (const ObservationNature phenotype_nature
 
 static bool GetObservationNatureFromJSON (ObservationNature *phenotype_nature_p, const json_t *doc_p);
 
-static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p);
+static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p);
 
-static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p);
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -383,7 +383,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 }
 
 
-Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p)
+Observation *GetObservationFromJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p)
 {
 	Observation *observation_p = NULL;
 	struct tm *date_p = NULL;
@@ -464,7 +464,7 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, const DFW
 }
 
 
-bool SaveObservation (Observation *observation_p, const DFWFieldTrialServiceData *data_p)
+bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *data_p)
 {
 	bson_t *selector_p = NULL;
 	bool success_flag = PrepareSaveData (& (observation_p -> ob_id_p), &selector_p);
@@ -541,7 +541,7 @@ bool AreObservationsMatching (const Observation *observation_0_p, const Observat
  * static definitions
  */
 
-static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const DFWFieldTrialServiceData *data_p)
+static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	Instrument *instrument_p = NULL;
@@ -631,7 +631,7 @@ static bool GetObservationNatureFromJSON (ObservationNature *nature_p, const jso
 
 
 
-static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const DFWFieldTrialServiceData *data_p)
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
 	const json_t *val_p = json_object_get (observation_json_p, OB_PHENOTYPE_S);

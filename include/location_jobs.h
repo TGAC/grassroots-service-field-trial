@@ -74,7 +74,7 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionLocationParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
@@ -83,13 +83,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionLocationParameterTypeForNamedPar
 DFW_FIELD_TRIAL_SERVICE_LOCAL Address *GetAddressFromLocationString (const char *location_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const DFWFieldTrialServiceData *data_p, StringParameter *param_p, const Location *active_location_p, const char *extra_option_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Location *active_location_p, const char *extra_option_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchLocationParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchLocationParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
@@ -97,13 +97,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchLocationParameterTypeForNamedParamet
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetUnsetLocationValue (void);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllLocationsAsJSON (const DFWFieldTrialServiceData *data_p, bson_t *opts_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllLocationsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, DFWFieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, DFWFieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, FieldTrialServiceData *dfw_data_p);
 
 
 #ifdef __cplusplus

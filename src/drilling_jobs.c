@@ -64,11 +64,11 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
  */
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
-static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p);
+static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_json_p, Study *study_p, const FieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -86,7 +86,7 @@ bool AddSubmissionDrillingParams (ServiceData *data_p, ParameterSet *param_set_p
 
 	if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Experimental Areas", "The available experimental areas", def, PL_ALL)) != NULL)
 		{
-			const DFWFieldTrialServiceData *dfw_service_data_p = (DFWFieldTrialServiceData *) data_p;
+			const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
 			if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL, false))
 				{
@@ -124,7 +124,7 @@ bool AddSubmissionDrillingParams (ServiceData *data_p, ParameterSet *param_set_p
 }
 
 
-bool RunForSubmissionDrillingParams (DFWFieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionDrillingParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	SharedType value;
@@ -216,7 +216,7 @@ bool GetSubmissionDrillingParameterTypeForNamedParameter (const char *param_name
  */
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const DFWFieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
@@ -296,7 +296,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_json_p, Study *study_p, const DFWFieldTrialServiceData *data_p)
+static bool AddDrillingsFromJSON (ServiceJob *job_p, const json_t *drillings_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;

@@ -67,7 +67,7 @@ Service *GetPlotsSubmissionService (GrassrootsServer *grassroots_p)
 
 	if (service_p)
 		{
-			DFWFieldTrialServiceData *data_p = AllocateDFWFieldTrialServiceData ();
+			FieldTrialServiceData *data_p = AllocateFieldTrialServiceData ();
 
 			if (data_p)
 				{
@@ -91,14 +91,14 @@ Service *GetPlotsSubmissionService (GrassrootsServer *grassroots_p)
 														 grassroots_p))
 						{
 
-							if (ConfigureDFWFieldTrialService (data_p, grassroots_p))
+							if (ConfigureFieldTrialService (data_p, grassroots_p))
 								{
 									return service_p;
 								}
 
 						}		/* if (InitialiseService (.... */
 
-					FreeDFWFieldTrialServiceData (data_p);
+					FreeFieldTrialServiceData (data_p);
 				}
 
 			FreeMemory (service_p);
@@ -192,7 +192,7 @@ static bool ClosePlotsSubmissionService (Service *service_p)
 {
 	bool success_flag = true;
 
-	FreeDFWFieldTrialServiceData ((DFWFieldTrialServiceData *) (service_p -> se_data_p));
+	FreeFieldTrialServiceData ((FieldTrialServiceData *) (service_p -> se_data_p));
 
 	return success_flag;
 }
@@ -201,7 +201,7 @@ static bool ClosePlotsSubmissionService (Service *service_p)
 
 static ServiceJobSet *RunPlotsSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
-	DFWFieldTrialServiceData *data_p = (DFWFieldTrialServiceData *) (service_p -> se_data_p);
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
 	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Plots");
 
