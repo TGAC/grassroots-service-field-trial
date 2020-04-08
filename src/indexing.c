@@ -337,7 +337,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			temp_status = ReindexLocationss (job_p, lucene_p, update_flag, service_data_p);
+			temp_status = ReindexLocations (job_p, lucene_p, update_flag, service_data_p);
 			if (temp_status == OS_SUCCEEDED)
 				{
 					++ fully_succeeded_count;
@@ -347,7 +347,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			temp_status = ReindexVariables (job_p, lucene_p, update_flag, service_data_p);
+			temp_status = ReindexMeasuredVariables (job_p, lucene_p, update_flag, service_data_p);
 			if (temp_status == OS_SUCCEEDED)
 				{
 					++ fully_succeeded_count;

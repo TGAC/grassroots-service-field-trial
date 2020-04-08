@@ -920,13 +920,39 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																{
 																	if (! (location_p = GetLocationById (location_id_p, format, data_p)))
 																		{
+																			char *id_s = GetBSONOidAsString (location_p);
+
+																			if (id_s)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed for %s", id_s);
+																					FreeCopiedString (id_s);
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed");
+																				}
+
 																			success_flag = false;
 																		}
 																	else if (! (trial_p = GetFieldTrialById (parent_field_trial_id_p, format, data_p)))
 																		{
+																			char *id_s = GetBSONOidAsString (parent_field_trial_id_p);
+
+																			if (id_s)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed for %s", id_s);
+																					FreeCopiedString (id_s);
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed");
+																				}
+
+
 																			success_flag = false;
 																		}
-																}
+
+																}		/* if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL)) */
 
 															if (success_flag)
 																{
@@ -1041,13 +1067,14 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																						}
 
 
-
 																					/*
 																					 * If the Study wasn't allocated, free any allocated
 																					 * resources.
 																					 */
 																					if (!study_p)
 																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "AllocateStudy failed");
+
 																							if (current_crop_p)
 																								{
 																									FreeCrop (current_crop_p);
@@ -1058,10 +1085,13 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																									FreeCrop (previous_crop_p);
 																								}
 
-																						}
-
+																						}		/* if (!study_p) */
 
 																				}		/* if (CreateValidDateFromJSON (json_p, ST_HARVEST_DATE_S, &harvest_date_p)) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "CreateValidDateFromJSON failed for %s", ST_HARVEST_DATE_S);
+																				}
 
 																			/*
 																			 * The dates are copied by AllocateStudy so we can free our values.
@@ -1072,9 +1102,17 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																				}
 
 																		}		/* if (CreateValidDateFromJSON (json_p, ST_SOWING_DATE_S, &sowing_date_p)) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "CreateValidDateFromJSON failed for %s", ST_SOWING_DATE_S);
+																		}
 
 																}		/* if (success_flag) */
 
+														}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetMongoIdFromJSON failed to get %s", ST_LOCATION_S);
 														}
 
 													if (!study_p)
@@ -1083,19 +1121,42 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 														}
 
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for the study id for %s", name_s);
+												}
 
 										}		/* if (GetNamedIdFromJSON (json_p, ST_LOCATION_S, address_id_p)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed to get %s", ST_LOCATION_S);
+										}
 
 									FreeBSONOid (location_id_p);
 								}		/* if (location_id_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for location for %s", name_s);
+								}
 
 						}		/* if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed to get %s", ST_PARENT_FIELD_TRIAL_S);
+						}
 
 					FreeBSONOid (parent_field_trial_id_p);
 				}		/* if (parent_field_trial_id_p) */
-
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for parent field trial for %s", name_s);
+				}
 
 		}		/* if (name_s) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get %s", ST_NAME_S);
+		}
 
 	return study_p;
 }

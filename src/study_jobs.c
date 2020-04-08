@@ -1536,7 +1536,7 @@ json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, co
 											else
 												{
 													success_flag = false;
-													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, entry_p, "GetStudyAsJSON failed in format %d", format);
+													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, entry_p, "GetStudyFromJSON failed in format %d", format);
 												}
 
 										}		/* while ((i < num_results) && success_flag) */
