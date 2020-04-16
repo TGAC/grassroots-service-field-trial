@@ -532,7 +532,10 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 								{
 									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ADVANCED)) != NULL)
 										{
-											return params_p;
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_TREATMENTS.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ADVANCED)) != NULL)
+												{
+													return params_p;
+												}
 										}
 								}
 						}
