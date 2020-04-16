@@ -673,42 +673,62 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 							if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size))
 								{
 									SearchData sd;
+									const uint32 from = page_number * page_size;
+									const uint32 to = from + page_size - 1;
 
 									sd.sd_service_data_p = data_p;
 									sd.sd_job_p = job_p;
 									sd.sd_format = fmt;
 
-									const uint32 from = page_number * page_size;
-									const uint32 to = from + page_size - 1;
+									status = ParseLuceneResults (lucene_p, from, to, AddResultsFromLuceneResults, &sd);
 
-									if (ParseLuceneResults (lucene_p, from, to, AddResultsFromLuceneResults, &sd))
+									if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 										{
+											bool added_metadata_flag = false;
 											json_error_t error;
 											json_t *metadata_p = json_pack_ex (&error, 0, "{s:i,s:i,s:i}",
-																								 LT_NUM_TOTAL_HITS_S, lucene_p -> lt_num_total_hits,
-																								 LT_HITS_START_INDEX_S, lucene_p -> lt_hits_from_index,
-																								 LT_HITS_END_INDEX_S, lucene_p -> lt_hits_to_index);
+																												 LT_NUM_TOTAL_HITS_S, lucene_p -> lt_num_total_hits,
+																												 LT_HITS_START_INDEX_S, lucene_p -> lt_hits_from_index,
+																												 LT_HITS_END_INDEX_S, lucene_p -> lt_hits_to_index);
 
 											if (metadata_p)
 												{
 													if (AddLuceneFacetResultsToJSON (lucene_p, metadata_p))
 														{
-															status = OS_SUCCEEDED;
-														}
-													else
-														{
-															status = OS_PARTIALLY_SUCCEEDED;
+															added_metadata_flag = true;
 														}
 
 													job_p -> sj_metadata_p = metadata_p;
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to create metadata for lucene hits");
+												}
 
-										}		/* if (ParseLuceneResults (lucene_p, GetIdsFromLuceneResults, &sd)) */
+											if ((!added_metadata_flag) && (status == OS_SUCCEEDED))
+												{
+													status = OS_PARTIALLY_SUCCEEDED;
+												}
+
+										}		/* if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED)) */
+									else
+										{
+											const char *status_s = GetOperationStatusAsString (status);
+
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ParseLuceneResults failed for \"%s\"", keyword_s);
+										}
 
 								}		/* if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SearchLucene for \"%s\" failed", keyword_s);
+								}
 
 						}		/* if (SetLuceneToolName ("search_keywords")) */
-
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetLuceneToolName to \"search-keywords\" failed");
+						}
 
 
 					if (facets_p)
@@ -717,9 +737,17 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 						}
 
 				}		/* if (success_flag) */
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to allocate facets list for \"%s\"", keyword_s);
+				}
 
 			FreeLuceneTool (lucene_p);
 		}		/* if (lucene_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to allocate lucene tool for \"%s\"", keyword_s);
+		}
 
 
 	SetServiceJobStatus (job_p, status);
