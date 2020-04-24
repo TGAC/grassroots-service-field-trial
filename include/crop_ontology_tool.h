@@ -80,6 +80,16 @@ typedef struct COScaleClass
 } COScaleClass;
 
 
+typedef struct CONominalScale
+{
+	COScaleClass cons_base;
+
+	size_t cons_num_categories;
+	char **cons_categories_ss;
+
+} NominalScale;
+
+
 typedef struct COTerm
 {
 	TermType cot_type;
