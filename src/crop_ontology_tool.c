@@ -374,6 +374,7 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 	char *lower_limit_s = NULL;
 	char *upper_limit_s = NULL;
 	char *decimal_place_s = NULL;
+	char *scale_class_s = NULL;
 
 	if (name_key_s)
 		{
@@ -435,6 +436,10 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 							else if (strcmp (key_s, "Decimal places"))
 								{
 									decimal_place_s = GetTermEnglishValue (entry_p);
+								}
+							else if (strcmp (key_s, "Scale class"))
+								{
+									scale_class_s = GetTermEnglishValue (entry_p);
 								}
 						}
 				}
@@ -583,3 +588,136 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 	return term_p;
 }
 
+
+/*
+[
+  {
+    "key": "name",
+    "value": "{\"english\":\"cm\"}"
+  },
+  {
+    "key": "created_at",
+    "value": "Mon May 30 11:21:30 UTC 2016"
+  },
+  {
+    "key": "ontology_id",
+    "value": "CO_327"
+  },
+  {
+    "key": "ontology_name",
+    "value": "Pearl millet"
+  },
+  {
+    "key": "Lower limit",
+    "value": "{\"english\":\"0.0\"}"
+  },
+  {
+    "key": "Scale name",
+    "value": "{\"english\":\"cm\"}"
+  },
+  {
+    "key": "language",
+    "value": "EN"
+  },
+  {
+    "key": "Scale class",
+    "value": "{\"english\":\"Numerical\"}"
+  }
+]
+
+
+[
+  {
+    "key": "name",
+    "value": "{\"english\":\"Visual Flower color scale\"}"
+  },
+  {
+    "key": "created_at",
+    "value": "Tue Sep 03 07:52:43 UTC 2019"
+  },
+  {
+    "key": "ontology_id",
+    "value": "CO_341"
+  },
+  {
+    "key": "ontology_name",
+    "value": "Pigeonpea"
+  },
+  {
+    "key": "Scale name",
+    "value": "{\"english\":\"Visual Flower color scale\"}"
+  },
+  {
+    "key": "Category 3",
+    "value": "{\"english\":\"3= orange yellow\"}"
+  },
+  {
+    "key": "Category 2",
+    "value": "{\"english\":\"2= yellow\"}"
+  },
+  {
+    "key": "Category 5",
+    "value": "{\"english\":\"5= red\"}"
+  },
+  {
+    "key": "language",
+    "value": "EN"
+  },
+  {
+    "key": "Category 4",
+    "value": "{\"english\":\"4= purple\"}"
+  },
+  {
+    "key": "Scale class",
+    "value": "{\"english\":\"Nominal\"}"
+  },
+  {
+    "key": "Category 1",
+    "value": "{\"english\":\"1= Light yellow\"}"
+  }
+]
+
+*/
+
+COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
+{
+	COScaleClass *class_p = NULL;
+	const size_t num_entries = json_array_size (unit_json_p);
+	size_t i = 0;
+
+	while (i < num_entries)
+		{
+			json_t *entry_p = json_array_get (unit_json_p, i);
+			const char *key_s = GetJSONString (entry_p, "key");
+
+			if (key_s)
+				{
+					if (strcmp (key_s, "Scale class") == 0)
+						{
+							char *scale_class_s = GetTermEnglishValue (entry_p);
+
+							if (scale_class_s)
+								{
+									if (strcmp (scale_class_s, "Nominal") == 0)
+										{
+											NominalCOScaleClass *nominal_p = AllocateNominalCOScaleClass (entry_p);
+										}
+
+									FreeCopiedString (scale_class_s);
+								}
+						}
+				}
+		}
+
+	return class_p;
+}
+
+
+typedef struct CONominalScale
+{
+	COScaleClass cons_base;
+
+	size_t cons_num_categories;
+	char **cons_categories_ss;
+
+} NominalScale;
