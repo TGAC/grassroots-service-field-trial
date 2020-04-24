@@ -22,13 +22,13 @@
 
 
 #define ALLOCATE_PLOT_TAGS (1)
-#include "plot.h"
+#include "/plot.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
-#include "row.h"
-#include "dfw_util.h"
+#include "/row.h"
+#include "/dfw_util.h"
 #include "time_util.h"
-#include "study.h"
+#include "/study.h"
 #include "int_linked_list.h"
 
 

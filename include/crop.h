@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_H_
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_CROP_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_CROP_H_
 
 #include "dfw_field_trial_service_library.h"
 #include "dfw_field_trial_service_data.h"
@@ -100,4 +100,4 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropByIdString (const char *id_s, const F
 }
 #endif
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_H_ */
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_CROP_H_ */

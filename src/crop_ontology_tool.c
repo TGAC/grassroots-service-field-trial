@@ -83,8 +83,8 @@
 
 #include <string.h>
 
-#include "crop_ontology_tool.h"
-#include "measured_variable.h"
+#include "/crop_ontology_tool.h"
+#include "/measured_variable.h"
 #include "curl_tools.h"
 #include "jansson.h"
 #include "string_utils.h"

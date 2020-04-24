@@ -21,12 +21,12 @@
  */
 
 #define ALLOCATE_FIELD_TRIAL_CONSTANTS (1)
-#include "field_trial_jobs.h"
-#include "field_trial_mongodb.h"
+#include "/field_trial_jobs.h"
+#include "/field_trial_mongodb.h"
 
-#include "field_trial.h"
+#include "/field_trial.h"
 #include "string_utils.h"
-#include "dfw_util.h"
+#include "/dfw_util.h"
 
 #include "boolean_parameter.h"
 

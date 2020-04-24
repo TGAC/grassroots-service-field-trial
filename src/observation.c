@@ -23,12 +23,12 @@
 #include <string.h>
 
 #define ALLOCATE_OBSERVATION_TAGS (1)
-#include "observation.h"
+#include "/observation.h"
 
 #include "time_util.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
-#include "dfw_util.h"
+#include "/dfw_util.h"
 
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };

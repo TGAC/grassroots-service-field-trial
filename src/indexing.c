@@ -20,11 +20,11 @@
  *      Author: billy
  */
 
-#include "indexing.h"
-#include "study_jobs.h"
-#include "location_jobs.h"
-#include "field_trial_jobs.h"
-#include "measured_variable_jobs.h"
+#include "/indexing.h"
+#include "/study_jobs.h"
+#include "/location_jobs.h"
+#include "/field_trial_jobs.h"
+#include "/measured_variable_jobs.h"
 #include "audit.h"
 
 #include "boolean_parameter.h"
@@ -37,7 +37,7 @@ static NamedParameterType S_REINDEX_ALL_DATA = { "SS Reindex all data", PT_BOOLE
 static NamedParameterType S_REINDEX_TRIALS = { "SS Reindex trials", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOOLEAN };
-static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured variables", PT_BOOLEAN };
 
 
 
@@ -241,7 +241,7 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 								}
 						}
 
-					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TREATMENTS.npt_name_s, &index_flag_p))
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, &index_flag_p))
 						{
 							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
@@ -499,9 +499,9 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_REINDEX_LOCATIONS.npt_type;
 		}
-	else if (strcmp (param_name_s, S_REINDEX_TREATMENTS.npt_name_s) == 0)
+	else if (strcmp (param_name_s, S_REINDEX_MEASURED_VARIABLES.npt_name_s) == 0)
 		{
-			*pt_p = S_REINDEX_TREATMENTS.npt_type;
+			*pt_p = S_REINDEX_MEASURED_VARIABLES.npt_type;
 		}
 	else
 		{
@@ -532,7 +532,7 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 								{
 									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ADVANCED)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_TREATMENTS.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ADVANCED)) != NULL)
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ADVANCED)) != NULL)
 												{
 													return params_p;
 												}

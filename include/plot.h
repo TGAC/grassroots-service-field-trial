@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_PLOT_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_PLOT_H_
 
 #include "dfw_field_trial_service_library.h"
 #include "study.h"
@@ -186,4 +186,4 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByRackIndex (Plot *plot_
 
 
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_PLOT_H_ */
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_PLOT_H_ */

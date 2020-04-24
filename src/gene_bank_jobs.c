@@ -21,8 +21,8 @@
  */
 
 
-#include "gene_bank_jobs.h"
-#include "gene_bank.h"
+#include "/gene_bank_jobs.h"
+#include "/gene_bank.h"
 #include "streams.h"
 
 #include "boolean_parameter.h"

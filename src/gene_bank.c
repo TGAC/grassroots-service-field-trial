@@ -21,8 +21,8 @@
  */
 
 #define ALLOCATE_GENE_BANK_TAGS (1)
-#include "gene_bank.h"
-#include "dfw_util.h"
+#include "/gene_bank.h"
+#include "/dfw_util.h"
 
 #include "memory_allocations.h"
 #include "string_utils.h"

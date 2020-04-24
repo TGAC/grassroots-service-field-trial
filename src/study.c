@@ -21,16 +21,16 @@
  */
 
 #define ALLOCATE_STUDY_TAGS (1)
-#include "study.h"
+#include "/study.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
-#include "plot.h"
-#include "location.h"
-#include "dfw_util.h"
+#include "/plot.h"
+#include "/location.h"
+#include "/dfw_util.h"
 #include "time_util.h"
 
-#include "study_jobs.h"
-#include "indexing.h"
+#include "/study_jobs.h"
+#include "/indexing.h"
 
 /*
  * DB COLUMN NAMES

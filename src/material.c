@@ -21,11 +21,11 @@
  */
 
 #define ALLOCATE_MATERIAL_TAGS (1)
-#include "material.h"
+#include "/material.h"
 #include "memory_allocations.h"
 #include "string_utils.h"
-#include "gene_bank.h"
-#include "dfw_util.h"
+#include "/gene_bank.h"
+#include "/dfw_util.h"
 
 
 static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);

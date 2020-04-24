@@ -21,10 +21,10 @@
  */
 
 
-#include "plot.h"
-#include "drilling_jobs.h"
-#include "study_jobs.h"
-#include "material.h"
+#include "/plot.h"
+#include "/drilling_jobs.h"
+#include "/study_jobs.h"
+#include "/material.h"
 #include "time_util.h"
 
 typedef enum

@@ -21,14 +21,14 @@
  */
 
 
-#include "measured_variable_jobs.h"
-#include "row_jobs.h"
-#include "plot_jobs.h"
+#include "/measured_variable_jobs.h"
+#include "/row_jobs.h"
+#include "/plot_jobs.h"
 #include "string_utils.h"
-#include "study_jobs.h"
+#include "/study_jobs.h"
 #include "math_utils.h"
 #include "time_util.h"
-#include "observation.h"
+#include "/observation.h"
 
 
 #include "char_parameter.h"
