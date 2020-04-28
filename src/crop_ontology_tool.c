@@ -83,8 +83,8 @@
 
 #include <string.h>
 
-#include "/crop_ontology_tool.h"
-#include "/measured_variable.h"
+#include "crop_ontology_tool.h"
+#include "measured_variable.h"
 #include "curl_tools.h"
 #include "jansson.h"
 #include "string_utils.h"
@@ -702,6 +702,10 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 										{
 											NominalCOScaleClass *nominal_p = AllocateNominalCOScaleClass (entry_p);
 										}
+									else if (strcmp (scale_class_s, "Nominal") == 0)
+										{
+
+										}
 
 									FreeCopiedString (scale_class_s);
 								}
@@ -713,11 +717,3 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 }
 
 
-typedef struct CONominalScale
-{
-	COScaleClass cons_base;
-
-	size_t cons_num_categories;
-	char **cons_categories_ss;
-
-} NominalScale;
