@@ -700,7 +700,7 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 								{
 									if (strcmp (scale_class_s, "Nominal") == 0)
 										{
-											NominalCOScaleClass *nominal_p = AllocateNominalCOScaleClass (entry_p);
+											CONominalScale *nominal_p = AllocateNominalCOScaleClass (entry_p);
 										}
 
 									FreeCopiedString (scale_class_s);
@@ -713,11 +713,3 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 }
 
 
-typedef struct CONominalScale
-{
-	COScaleClass cons_base;
-
-	size_t cons_num_categories;
-	char **cons_categories_ss;
-
-} NominalScale;
