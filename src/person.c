@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-#include "/person.h"
+#include "person.h"
 
 
 Person *AllocatePerson ()

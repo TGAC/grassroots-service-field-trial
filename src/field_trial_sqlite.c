@@ -7,7 +7,7 @@
 
 
 
-#include "/field_trial_sqlite.h"
+#include "field_trial_sqlite.h"
 
 #include "sqlite_tool.h"
 #include "string_utils.h"

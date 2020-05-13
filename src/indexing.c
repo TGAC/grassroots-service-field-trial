@@ -20,11 +20,11 @@
  *      Author: billy
  */
 
-#include "/indexing.h"
-#include "/study_jobs.h"
-#include "/location_jobs.h"
-#include "/field_trial_jobs.h"
-#include "/measured_variable_jobs.h"
+#include "indexing.h"
+#include "study_jobs.h"
+#include "location_jobs.h"
+#include "field_trial_jobs.h"
+#include "measured_variable_jobs.h"
 #include "audit.h"
 
 #include "boolean_parameter.h"

@@ -25,14 +25,14 @@
 
 
 
-typedef struct CONominalScale
+typedef struct NominalCOScaleClass
 {
 	COScaleClass cons_base;
 
 	size_t cons_num_categories;
 	char **cons_categories_ss;
 
-} NominalScale;
+} NominalCOScaleClass;
 
 
 

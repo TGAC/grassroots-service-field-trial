@@ -21,14 +21,14 @@
  */
 
 #define ALLOCATE_ROW_TAGS (1)
-#include "/row.h"
+#include "row.h"
 
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "streams.h"
-#include "/observation.h"
-#include "/dfw_util.h"
-#include "/plot_jobs.h"
+#include "observation.h"
+#include "dfw_util.h"
+#include "plot_jobs.h"
 
 
 static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);

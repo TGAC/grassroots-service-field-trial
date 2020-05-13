@@ -21,11 +21,11 @@
  */
 
 #define ALLOCATE_LOCATION_TAGS (1)
-#include "/location.h"
+#include "location.h"
 #include "memory_allocations.h"
-#include "/study.h"
-#include "/dfw_util.h"
-#include "/indexing.h"
+#include "study.h"
+#include "dfw_util.h"
+#include "indexing.h"
 
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 

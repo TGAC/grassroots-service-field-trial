@@ -23,8 +23,8 @@
 
 
 
-#include "/measured_variable_jobs.h"
-#include "/submit_measured_variables.h"
+#include "measured_variable_jobs.h"
+#include "submit_measured_variables.h"
 
 #include "audit.h"
 

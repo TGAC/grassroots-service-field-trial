@@ -7,11 +7,11 @@
 
 #include <string.h>
 
-#include "/observation.h"
-#include "/phenotype_jobs.h"
-#include "/study.h"
+#include "observation.h"
+#include "phenotype_jobs.h"
+#include "study.h"
 #include "streams.h"
-#include "/study_jobs.h"
+#include "study_jobs.h"
 #include "string_utils.h"
 
 #include "char_parameter.h"

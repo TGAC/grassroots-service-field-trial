@@ -21,17 +21,17 @@
  */
 
 
-#include "/plot_jobs.h"
+#include "plot_jobs.h"
 
-#include "/plot.h"
+#include "plot.h"
 #include "time_util.h"
 #include "string_utils.h"
-#include "/study_jobs.h"
+#include "study_jobs.h"
 #include "math_utils.h"
-#include "/material.h"
-#include "/row.h"
-#include "/gene_bank.h"
-#include "/dfw_util.h"
+#include "material.h"
+#include "row.h"
+#include "gene_bank.h"
+#include "dfw_util.h"
 
 #include "char_parameter.h"
 #include "json_parameter.h"
@@ -613,77 +613,71 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const FieldTrialServiceData *data_p)
 {
-	double width = 0.0;
+	double *width_p = NULL;
+	double *length_p = NULL;
 	Plot *plot_p = NULL;
+	const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
+	const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
+	struct tm *sowing_date_p = NULL;
+	struct tm *harvest_date_p = NULL;
+	const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
 
-	if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width))
+
+	GetValidRealFromJSON (table_row_json_p, S_WIDTH_TITLE_S, &width_p);
+	GetValidRealFromJSON (table_row_json_p, S_LENGTH_TITLE_S, &length_p);
+
+
+
+	if (date_s)
 		{
-			double length = 0.0;
+			sowing_date_p = GetTimeFromString (date_s);
 
-			if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length))
+			if (!sowing_date_p)
 				{
-					const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
-					const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
-					struct tm *sowing_date_p = NULL;
-					struct tm *harvest_date_p = NULL;
-					const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
-
-
-					if (date_s)
-						{
-							sowing_date_p = GetTimeFromString (date_s);
-
-							if (!sowing_date_p)
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
-								}
-						}
-
-					date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
-					if (date_s)
-						{
-							harvest_date_p = GetTimeFromString (date_s);
-
-							if (!harvest_date_p)
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
-								}
-						}
-
-					plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width, length, row, column, treatment_s, comment_s, study_p);
-
-					if (plot_p)
-						{
-							if (SavePlot (plot_p, data_p))
-								{
-									return plot_p;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
-
-								}		/* if (!SavePlot (plot_p, data_p)) */
-
-							FreePlot (plot_p);
-						}		/* if (plot_p) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
-						}
-
-				}		/* if (GetJSONStringAsDouble (table_row_json_p, S_LENGTH_TITLE_S, &length)) */
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_LENGTH_TITLE_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get sowing date from \"%s\"", date_s);
 				}
-
-		}		/* if (GetJSONStringAsDouble (table_row_json_p, S_WIDTH_TITLE_S, &width) */
-	else
-		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_WIDTH_TITLE_S);
 		}
 
-	return NULL;
+	date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
+	if (date_s)
+		{
+			harvest_date_p = GetTimeFromString (date_s);
+
+			if (!harvest_date_p)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get harvest date from \"%s\"", date_s);
+				}
+		}
+
+	plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatment_s, comment_s, study_p);
+
+	if (plot_p)
+		{
+			if (!SavePlot (plot_p, data_p))
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
+
+					FreePlot (plot_p);
+					plot_p = NULL;
+				}		/* if (!SavePlot (plot_p, data_p)) */
+		}		/* if (plot_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
+		}
+
+	if (width_p)
+		{
+			FreeMemory (width_p);
+		}
+
+	if (length_p)
+		{
+			FreeMemory (length_p);
+		}
+
+
+	return plot_p;
 }
 
 
@@ -965,9 +959,9 @@ static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *s
 				{
 					if ((plot_p -> pl_column_index == 0) || (SetJSONInteger (table_row_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index)))
 						{
-							if ((CompareDoubles (plot_p -> pl_length, 0.0) <= 0) || (SetJSONReal (table_row_p, S_LENGTH_TITLE_S, plot_p -> pl_length)))
+							if ((plot_p -> pl_length_p == NULL) || (SetJSONReal (table_row_p, S_LENGTH_TITLE_S, * (plot_p -> pl_length_p))))
 								{
-									if ((CompareDoubles (plot_p -> pl_width, 0.0) <= 0) || (SetJSONReal (table_row_p, S_WIDTH_TITLE_S, plot_p -> pl_width)))
+									if ((plot_p -> pl_width_p == NULL) || (SetJSONReal (table_row_p, S_WIDTH_TITLE_S, * (plot_p -> pl_width_p))))
 										{
 											if ((plot_p -> pl_comment_s == NULL) || (SetJSONString (table_row_p, S_COMMENT_TITLE_S, plot_p -> pl_comment_s)))
 												{

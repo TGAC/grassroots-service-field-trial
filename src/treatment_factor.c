@@ -21,7 +21,7 @@
  */
 
 #define ALLOCATE_TREATMENT_FACTOR_TAGS (1)
-#include "/treatment_factor.h"
+#include "treatment_factor.h"
 #include "string_utils.h"
 #include "memory_allocations.h"
 #include "streams.h"

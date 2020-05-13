@@ -98,9 +98,9 @@ typedef struct Plot
 	 * Plots
 	 */
 
-	double64 pl_width;
+	double64 *pl_width_p;
 
-	double64 pl_length;
+	double64 *pl_length_p;
 
 	char *pl_treatments_s;
 
@@ -141,7 +141,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 width, const double64 length,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p,
 																									const uint32 row_index, const uint32 column_index,
 																								 const char *treatments_s, const char *comment_s, Study *parent_p);
 

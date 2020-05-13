@@ -22,16 +22,16 @@
 
 
 #define ALLOCATE_FIELD_TRIAL_TAGS (1)
-#include "/field_trial.h"
-#include "/field_trial_mongodb.h"
-#include "/dfw_field_trial_service_data.h"
+#include "field_trial.h"
+#include "field_trial_mongodb.h"
+#include "dfw_field_trial_service_data.h"
 #include "string_utils.h"
-#include "/study.h"
+#include "study.h"
 #include "memory_allocations.h"
 #include "streams.h"
-#include "/dfw_util.h"
-#include "/indexing.h"
-#include "/json_processor.h"
+#include "dfw_util.h"
+#include "indexing.h"
+#include "json_processor.h"
 
 
 FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p)

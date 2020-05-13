@@ -21,14 +21,14 @@
  */
 
 
-#include "/material_jobs.h"
+#include "material_jobs.h"
 #include "string_utils.h"
-#include "/study_jobs.h"
-#include "/gene_bank.h"
-#include "/gene_bank_jobs.h"
-#include "/row_jobs.h"
+#include "study_jobs.h"
+#include "gene_bank.h"
+#include "gene_bank_jobs.h"
+#include "row_jobs.h"
 #include "string_int_pair.h"
-#include "/row_processor.h"
+#include "row_processor.h"
 
 #include "char_parameter.h"
 #include "boolean_parameter.h"

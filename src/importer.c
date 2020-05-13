@@ -29,12 +29,12 @@
 #include "byte_buffer.h"
 #include "curl_tools.h"
 
-#include "/location_jobs.h"
-#include "/field_trial_jobs.h"
-#include "/study_jobs.h"
-#include "/field_trial.h"
+#include "location_jobs.h"
+#include "field_trial_jobs.h"
+#include "study_jobs.h"
+#include "field_trial.h"
 #include "schema_keys.h"
-#include "/submit_study.h"
+#include "submit_study.h"
 
 
 typedef enum

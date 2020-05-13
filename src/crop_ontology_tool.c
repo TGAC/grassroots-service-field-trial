@@ -91,7 +91,7 @@
 #include "streams.h"
 #include "schema_term.h"
 #include "json_util.h"
-
+#include "nominal_scale_class.h"
 
 /*
  * static declarations

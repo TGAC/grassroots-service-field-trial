@@ -21,11 +21,11 @@
  */
 
 
-#include "/submit_study.h"
+#include "submit_study.h"
 
 #include "audit.h"
 
-#include "/study_jobs.h"
+#include "study_jobs.h"
 
 
 /*

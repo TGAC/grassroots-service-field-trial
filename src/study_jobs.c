@@ -21,16 +21,16 @@
  */
 
 #define ALLOCATE_STUDY_JOB_CONSTANTS (1)
-#include "/study_jobs.h"
+#include "study_jobs.h"
 
-#include "/study.h"
-#include "/location.h"
+#include "study.h"
+#include "location.h"
 #include "string_utils.h"
-#include "/crop_jobs.h"
-#include "/location_jobs.h"
-#include "/field_trial_jobs.h"
-#include "/treatment_factor_jobs.h"
-#include "/dfw_util.h"
+#include "crop_jobs.h"
+#include "location_jobs.h"
+#include "field_trial_jobs.h"
+#include "treatment_factor_jobs.h"
+#include "dfw_util.h"
 #include "key_value_pair.h"
 #include "time_util.h"
 

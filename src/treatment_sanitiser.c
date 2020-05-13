@@ -25,7 +25,7 @@
 #include "jansson.h"
 #include "typedefs.h"
 #include "schema_term.h"
-#include "/crop_ontology_tool.h"
+#include "crop_ontology_tool.h"
 #include "json_util.h"
 
 

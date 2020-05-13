@@ -25,13 +25,13 @@
 
 #include "jansson.h"
 
-#include "/dfw_field_trial_service_data.h"
+#include "dfw_field_trial_service_data.h"
 #include "mongodb_util.h"
 #include "mongo_client_manager.h"
 #include "mongodb_tool.h"
 
-#include "/row.h"
-#include "/plot.h"
+#include "row.h"
+#include "plot.h"
 #include "bson/bson.h"
 
 /**

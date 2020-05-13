@@ -24,7 +24,7 @@
 
 #include "libexif/exif-data.h"
 
-#include "/image_util.h"
+#include "image_util.h"
 #include "time_util.h"
 #include "memory_allocations.h"
 

@@ -21,8 +21,8 @@
  */
 
 #define ALLOCATE_CROP_TAGS (1)
-#include "/crop.h"
-#include "/dfw_util.h"
+#include "crop.h"
+#include "dfw_util.h"
 
 #include "memory_allocations.h"
 #include "string_utils.h"

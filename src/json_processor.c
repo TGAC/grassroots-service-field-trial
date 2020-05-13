@@ -5,10 +5,10 @@
  *      Author: billy
  */
 
-#include "/json_processor.h"
-#include "/plot.h"
-#include "/row.h"
-#include "/material.h"
+#include "json_processor.h"
+#include "plot.h"
+#include "row.h"
+#include "material.h"
 
 
 
