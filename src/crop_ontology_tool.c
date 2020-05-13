@@ -91,7 +91,7 @@
 #include "streams.h"
 #include "schema_term.h"
 #include "json_util.h"
-
+#include "nominal_scale_class.h"
 
 /*
  * static declarations
@@ -701,6 +701,10 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 									if (strcmp (scale_class_s, "Nominal") == 0)
 										{
 											CONominalScale *nominal_p = AllocateNominalCOScaleClass (entry_p);
+										}
+									else if (strcmp (scale_class_s, "Nominal") == 0)
+										{
+
 										}
 
 									FreeCopiedString (scale_class_s);

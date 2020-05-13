@@ -14,18 +14,26 @@
 ** limitations under the License.
 */
 /*
- * submit_plots.h
+ * nominal_scale_class.h
  *
- *  Created on: 25 Oct 2019
+ *  Created on: 28 Apr 2020
  *      Author: billy
  */
 
-#ifndef SERVICES_FIELD_TRIALS_INCLUDE_SUBMIT_PLOTS_H_
-#define SERVICES_FIELD_TRIALS_INCLUDE_SUBMIT_PLOTS_H_
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_NOMINAL_SCALE_CLASS_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_NOMINAL_SCALE_CLASS_H_
 
 
-#include "dfw_field_trial_service_data.h"
-#include "dfw_field_trial_service_library.h"
+
+typedef struct NominalCOScaleClass
+{
+	COScaleClass cons_base;
+
+	size_t cons_num_categories;
+	char **cons_categories_ss;
+
+} NominalCOScaleClass;
+
 
 
 
@@ -34,12 +42,13 @@ extern "C"
 {
 #endif
 
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetPlotsSubmissionService (GrassrootsServer *grassroots_p);
+NominalCOScaleClass *AllocateNominalCOScaleClass (const json_t *def_p);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SERVICES_FIELD_TRIALS_INCLUDE_SUBMIT_PLOTS_H_ */
+
+
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_NOMINAL_SCALE_CLASS_H_ */

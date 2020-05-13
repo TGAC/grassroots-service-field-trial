@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#ifndef SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_ONTOLOGY_TOOL_H_
-#define SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_ONTOLOGY_TOOL_H_
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_CROP_ONTOLOGY_TOOL_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_CROP_ONTOLOGY_TOOL_H_
 
 
 
@@ -79,15 +79,6 @@ typedef struct COScaleClass
 	ParameterType cosc_type;
 } COScaleClass;
 
-
-typedef struct CONominalScale
-{
-	COScaleClass cons_base;
-
-	size_t cons_num_categories;
-	char **cons_categories_ss;
-
-} NominalScale;
 
 
 typedef struct COTerm
@@ -148,4 +139,4 @@ DFW_FIELD_TRIAL_SERVICE_API SchemaTerm *GetCropOnotologySchemaTerm (const char *
 
 
 
-#endif /* SERVICES_DFW_FIELD_TRIAL_SERVICE_INCLUDE_CROP_ONTOLOGY_TOOL_H_ */
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_CROP_ONTOLOGY_TOOL_H_ */
