@@ -463,6 +463,39 @@ bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *p
 }
 
 
+
+bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, STUDY_NUM_PLOT_ROWS.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_NUM_PLOT_ROWS.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_NUM_PLOT_COLS.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_NUM_PLOT_COLS.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_NUM_REPLICATES.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_NUM_REPLICATES.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_WIDTH.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_WIDTH.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_LENGTH.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_LENGTH.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
 bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	bool success_flag = true;
@@ -539,26 +572,6 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		{
 			*pt_p = STUDY_PHENOTYPE_GATHERING_NOTES.npt_type;
 		}
-	else if (strcmp (param_name_s, STUDY_NUM_PLOT_ROWS.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_NUM_PLOT_ROWS.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_NUM_PLOT_COLS.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_NUM_PLOT_COLS.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_NUM_REPLICATES.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_NUM_REPLICATES.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_PLOT_WIDTH.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_PLOT_WIDTH.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_PLOT_LENGTH.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_PLOT_LENGTH.npt_type;
-		}
 	else if (strcmp (param_name_s, STUDY_WEATHER_LINK.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_WEATHER_LINK.npt_type;
@@ -569,7 +582,7 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		}
 	else
 		{
-			success_flag = false;
+			success_flag = GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (param_name_s, pt_p);
 		}
 
 	return success_flag;

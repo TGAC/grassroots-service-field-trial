@@ -920,7 +920,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																{
 																	if (! (location_p = GetLocationById (location_id_p, format, data_p)))
 																		{
-																			char *id_s = GetBSONOidAsString (location_p);
+																			char *id_s = GetBSONOidAsString (location_id_p);
 
 																			if (id_s)
 																				{
