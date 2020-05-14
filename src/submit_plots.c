@@ -119,7 +119,7 @@ static const char *GetPlotsSubmissionServiceName (const Service * UNUSED_PARAM (
 
 static const char *GetPlotsSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "A service to submit field trial plots";
+	return "A service to submit field trial plots.";
 }
 
 
