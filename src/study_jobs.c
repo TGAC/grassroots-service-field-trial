@@ -488,6 +488,14 @@ bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *pa
 		{
 			*pt_p = STUDY_PLOT_LENGTH.npt_type;
 		}
+	else if (strcmp (param_name_s, STUDY_SOWING_YEAR.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_SOWING_YEAR.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_HARVEST_YEAR.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_HARVEST_YEAR.npt_type;
+		}
 	else
 		{
 			success_flag = false;
@@ -515,14 +523,6 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	else if (strcmp (param_name_s, STUDY_LINK.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_LINK.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_SOWING_YEAR.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_SOWING_YEAR.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_HARVEST_YEAR.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_HARVEST_YEAR.npt_type;
 		}
 	else if (strcmp (param_name_s, STUDY_FIELD_TRIALS_LIST.npt_name_s) == 0)
 		{

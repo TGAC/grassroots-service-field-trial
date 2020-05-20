@@ -287,10 +287,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 
 											if (success_flag)
 												{
-													Material *material_p = NULL;
-
-													material_p = AllocateMaterialByAccession (id_p, accession_s, gene_bank_id_p, data_p);
-
+													Material *material_p = AllocateMaterialByAccession (id_p, accession_s, gene_bank_id_p, data_p);
 
 													if (material_p)
 														{
