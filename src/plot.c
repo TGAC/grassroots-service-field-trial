@@ -237,6 +237,12 @@ bool SavePlot (Plot *plot_p, const FieldTrialServiceData *data_p)
 					json_decref (plot_json_p);
 				}		/* if (plot_json_p) */
 
+
+			if (selector_p)
+				{
+					bson_free (selector_p);
+				}
+
 		}		/* if (plot_p -> pl_id_p) */
 
 	return success_flag;

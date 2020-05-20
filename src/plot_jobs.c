@@ -392,6 +392,11 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 				}		/* if (success_flag) */
 
+			if (plots_json_p)
+				{
+					json_decref (plots_json_p);
+				}
+
 			json_decref (hints_p);
 		}		/* if (hints_p) */
 
