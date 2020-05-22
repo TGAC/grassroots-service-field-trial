@@ -700,7 +700,7 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 								{
 									if (strcmp (scale_class_s, "Nominal") == 0)
 										{
-											CONominalScale *nominal_p = AllocateNominalCOScaleClass (entry_p);
+											NominalCOScaleClass *nominal_p = AllocateNominalCOScaleClass (entry_p);
 										}
 									else if (strcmp (scale_class_s, "Nominal") == 0)
 										{
