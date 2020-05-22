@@ -1527,19 +1527,14 @@ json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, co
 
 													if (formatted_study_json_p)
 														{
-															if (json_array_append_new (formatted_results_p, formatted_study_json_p) == 0)
+															if (json_array_append_new (formatted_results_p, formatted_study_json_p) != 0)
 																{
-																}
-															else
-																{
-																	success_flag = false;
 																	json_decref (formatted_study_json_p);
 																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, formatted_results_p, "Failed to append formatted study for \"%s\"", study_p -> st_name_s);
 																}
 														}		/* if (formatted_study_json_p) */
 													else
 														{
-															success_flag = false;
 															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, formatted_results_p, "GetStudyAsJSON failed in format %d for study \"%s\"", format, study_p -> st_name_s);
 														}
 
@@ -1547,10 +1542,10 @@ json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, co
 												}		/* if (study_p) */
 											else
 												{
-													success_flag = false;
 													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, entry_p, "GetStudyFromJSON failed in format %d", format);
 												}
 
+											++ i;
 										}		/* while ((i < num_results) && success_flag) */
 
 								}		/* if (formatted_results_p) */
