@@ -1529,7 +1529,6 @@ json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, co
 														{
 															if (json_array_append_new (formatted_results_p, formatted_study_json_p) == 0)
 																{
-																	++ i;
 																}
 															else
 																{
