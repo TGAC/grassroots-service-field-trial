@@ -97,10 +97,12 @@ void FreeMaterial (Material *material_p)
 			FreeBSONOid (material_p -> ma_id_p);
 		}
 
+	/*
 	if (material_p -> ma_gene_bank_id_p)
 		{
 			FreeBSONOid (material_p -> ma_gene_bank_id_p);
 		}
+	*/
 
 	if (material_p -> ma_accession_s)
 		{
