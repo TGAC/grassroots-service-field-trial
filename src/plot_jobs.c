@@ -510,10 +510,18 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																								{
 																									Row *row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
 																									bool is_existing_row_flag = true;
+																									const MEM_FLAG material_mem = MF_SHALLOW_COPY;
 
-																									if (!row_p)
+																									if (row_p)
 																										{
-																											row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, MF_SHALLOW_COPY, plot_p);
+																											/*
+																											 * update existing row
+																											 */
+																											UpdateRow (row_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate);
+																										}
+																									else
+																										{
+																											row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
 																											is_existing_row_flag = false;
 																										}
 

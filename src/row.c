@@ -580,6 +580,41 @@ bool AddObservationToRow (Row *row_p, Observation *observation_p)
 }
 
 
+void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate)
+{
+	if (row_p -> ro_rack_index != rack_plotwise_index)
+		{
+			row_p -> ro_rack_index = rack_plotwise_index;
+		}
+
+	if (row_p -> ro_material_p != material_p)
+		{
+			if ((row_p -> ro_material_mem == MF_DEEP_COPY) || (row_p -> ro_material_mem == MF_SHALLOW_COPY))
+				{
+					if (row_p -> ro_material_p)
+						{
+							FreeMaterial (row_p -> ro_material_p);
+						}
+				}
+
+			row_p -> ro_material_p = material_p;
+			row_p -> ro_material_mem = material_mem;
+		}
+
+	if (control_rep_flag != IsRowGenotypeControl (row_p))
+		{
+			SetRowGenotypeControl (row_p, control_rep_flag);
+		}
+
+	if (!control_rep_flag)
+		{
+			if (row_p -> ro_replicate_index != replicate)
+				{
+					row_p -> ro_replicate_index = replicate;
+				}
+		}
+}
+
 
 static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format)
 {
