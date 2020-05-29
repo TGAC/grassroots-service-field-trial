@@ -417,6 +417,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 			size_t num_empty_rows = 0;
 			size_t num_imported = 0;
 			bool imported_row_flag;
+			char *study_id_s = NULL;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
@@ -492,7 +493,6 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																							int32 replicate = 1;
 																							const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
 																							bool control_rep_flag = false;
-																							Row *row_p = NULL;
 
 																							if (rep_s)
 																								{
@@ -508,7 +508,14 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 																							if (success_flag)
 																								{
-																									row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, MF_SHALLOW_COPY, plot_p);
+																									Row *row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
+																									bool is_existing_row_flag = true;
+
+																									if (!row_p)
+																										{
+																											row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, MF_SHALLOW_COPY, plot_p);
+																											is_existing_row_flag = false;
+																										}
 
 																									if (row_p)
 																										{
@@ -517,7 +524,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 																													SetRowGenotypeControl (row_p, true);
 																												}
 
-																											if (AddRowToPlot (plot_p, row_p))
+																											if (is_existing_row_flag || (AddRowToPlot (plot_p, row_p)))
 																												{
 																													if (SavePlot (plot_p, data_p))
 																														{
@@ -617,7 +624,26 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 					status = OS_PARTIALLY_SUCCEEDED;
 				}
 
+			/*
+			 * As the plots have been updated, clear any cached study
+			 */
+			study_id_s = GetBSONOidAsString (study_p -> st_id_p);
+
+			if (study_id_s)
+				{
+					if (!ClearCachedStudy (study_id_s, data_p))
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to clear cached Study with id \"%s\"", study_id_s);
+						}
+
+					FreeCopiedString (study_id_s);
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id for Study \"%s\"", study_p -> st_name_s);
+				}
 		}		/* if (json_is_array (plots_json_p)) */
+
 
 
 	SetServiceJobStatus (job_p, status);

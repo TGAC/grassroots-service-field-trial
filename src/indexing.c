@@ -33,11 +33,21 @@
  * Static declarations
  */
 
+/*
+ * indexing parameters
+ */
 static NamedParameterType S_REINDEX_ALL_DATA = { "SS Reindex all data", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_TRIALS = { "SS Reindex trials", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured variables", PT_BOOLEAN };
+
+
+/*
+ * caching parameters
+ */
+static NamedParameterType S_CACHE_CLEAR = { "SS clear study cache", PT_LARGE_STRING };
+static NamedParameterType S_CACHE_LIST = { "SS list study cache", PT_BOOLEAN };
 
 
 
@@ -59,6 +69,9 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
+static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
+
+
 static ParameterSet *IsResourceForFieldTrialIndexingService (Service *service_p, Resource *resource_p, Handler *handler_p);
 
 static ServiceMetadata *GetFieldTrialIndexingServiceMetadata (Service *service_p);
@@ -69,6 +82,7 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service *service_p, Para
 
 static bool CloseFieldTrialIndexingService (Service *service_p);
 
+static void GetCacheList (ServiceJob *job_p, const FieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -283,6 +297,84 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 
 
 
+/*
+ * static NamedParameterType S_CACHE_CLEAR = { "SS clear study cache", PT_LARGE_STRING };
+static NamedParameterType S_CACHE_LIST = { "SS list study cache", PT_BOOLEAN };
+ *
+ */
+
+static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+{
+	bool done_flag = false;
+	OperationStatus status = GetServiceJobStatus (job_p);
+	const bool *index_flag_p = NULL;
+
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CACHE_LIST.npt_name_s, &index_flag_p))
+		{
+			if ((index_flag_p != NULL) && (*index_flag_p == true))
+				{
+					GetCacheList (job_p, data_p);
+
+					done_flag = true;
+				}
+		}
+
+	if (!done_flag)
+		{
+			const char *entries_s = NULL;
+
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_CACHE_CLEAR.npt_name_s, &entries_s))
+				{
+					if (entries_s)
+						{
+							if (strcmp (entries_s, "*") == 0)
+								{
+
+								}
+							else
+								{
+									/*
+									 * Get the cache entries to clear
+									 */
+									LinkedList *entries_p = ParseStringToStringLinkedList (entries_s, " ", true);
+
+									if (entries_p)
+										{
+											StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
+
+											while (node_p)
+												{
+													if (!RemoveFile (node_p -> sln_string_s))
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", node_p -> sln_string_s);
+														}
+
+													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+												}
+
+											FreeLinkedList (entries_p);
+										}
+								}
+
+						}
+				}
+
+			SetServiceJobStatus (job_p, status);
+
+		}		/* if (!done_flag) */
+
+
+	return done_flag;
+}
+
+
+static void GetCacheList (ServiceJob *job_p, const FieldTrialServiceData *data_p)
+{
+
+
+
+}
+
 
 OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
 {
@@ -469,7 +561,12 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 				{
 					if (!RunReindexing (param_set_p, job_p, data_p))
 						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunReindexing failed");
+						}
 
+					if (!RunCaching (param_set_p, job_p, data_p))
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunCaching failed");
 						}
 
 				}
@@ -503,6 +600,14 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_REINDEX_MEASURED_VARIABLES.npt_type;
 		}
+	else if (strcmp (param_name_s, S_CACHE_CLEAR.npt_name_s) == 0)
+		{
+			*pt_p = S_CACHE_CLEAR.npt_type;
+		}
+	else if (strcmp (param_name_s, S_CACHE_LIST.npt_name_s) == 0)
+		{
+			*pt_p = S_CACHE_LIST.npt_type;
+		}
 	else
 		{
 			success_flag = false;
@@ -522,24 +627,35 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 			Parameter *param_p = NULL;
+			ParameterGroup *indexing_group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
 			bool b = false;
 
-			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ADVANCED)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ADVANCED)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ADVANCED)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ADVANCED)) != NULL)
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ADVANCED)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, NULL, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ADVANCED)) != NULL)
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ADVANCED)) != NULL)
 												{
-													return params_p;
+													ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
+
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ADVANCED)) != NULL)
+														{
+															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ADVANCED)) != NULL)
+																{
+																	return params_p;
+																}
+														}
 												}
 										}
 								}
 						}
 				}
+
+			FreeParameterSet (params_p);
 		}		/* if (params_p) */
 
 	return NULL;

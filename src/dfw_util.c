@@ -764,23 +764,28 @@ bool GetValidUnsignedIntFromJSON (const json_t *study_json_p, const char *key_s,
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	char *filename_s = NULL;
-	char *local_filename_s = ConcatenateStrings (id_s, ".json");
 
-	if (local_filename_s)
+	if (data_p -> dftsd_study_cache_path_s)
 		{
-			filename_s = MakeFilename (data_p -> dftsd_study_cache_path_s, local_filename_s);
+			char *local_filename_s = ConcatenateStrings (id_s, ".json");
 
-			if (!filename_s)
+			if (local_filename_s)
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get main cache filename for \"%s\" and \"%s\"", data_p -> dftsd_study_cache_path_s, local_filename_s);
-				}		/* if (filename_s) */
+					filename_s = MakeFilename (data_p -> dftsd_study_cache_path_s, local_filename_s);
 
-			FreeCopiedString (local_filename_s);
-		}		/* if (local_filename_s) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get local cache filename for \"%s\"", id_s);
+					if (!filename_s)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get main cache filename for \"%s\" and \"%s\"", data_p -> dftsd_study_cache_path_s, local_filename_s);
+						}		/* if (filename_s) */
+
+					FreeCopiedString (local_filename_s);
+				}		/* if (local_filename_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get local cache filename for \"%s\"", id_s);
+				}
 		}
+
 
 	return filename_s;
 }
