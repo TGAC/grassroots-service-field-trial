@@ -587,7 +587,7 @@ void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material
 			row_p -> ro_rack_index = rack_plotwise_index;
 		}
 
-	if (row_p -> ro_material_p != material_p)
+	if (row_p -> ro_material_p -> ma_id_p != material_p -> ma_id_p)
 		{
 			if ((row_p -> ro_material_mem == MF_DEEP_COPY) || (row_p -> ro_material_mem == MF_SHALLOW_COPY))
 				{
@@ -613,6 +613,7 @@ void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material
 					row_p -> ro_replicate_index = replicate;
 				}
 		}
+
 }
 
 
