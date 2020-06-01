@@ -33,6 +33,7 @@
 #include "gene_bank.h"
 #include "dfw_util.h"
 
+#include "boolean_parameter.h"
 #include "char_parameter.h"
 #include "double_parameter.h"
 #include "json_parameter.h"
@@ -77,6 +78,7 @@ static const char * const S_COMMENT_TITLE_S = "Comment";
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
 static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_JSON_TABLE};
 
+static NamedParameterType S_APPEND = { "PL Append", PT_BOOLEAN};
 
 static NamedParameterType S_STUDIES_LIST = { "PL Study", PT_STRING };
 
@@ -111,6 +113,8 @@ static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const 
 static json_t *GeneratePlotsTemplate (const Study *study_p);
 
 static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, ParameterSet *param_set_p);
+
+static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -152,7 +156,16 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 
 							if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
 								{
-									success_flag = true;
+									bool append_flag = false;
+
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND.npt_name_s, "Append to existing plots", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ADVANCED)) != NULL)
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_APPEND.npt_name_s);
+										}
 								}
 							else
 								{
@@ -209,9 +222,26 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 									if (num_rows > 0)
 										{
-											if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
+											const bool *append_flag_p = NULL;
+											bool success_flag = true;
+
+											GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND.npt_name_s, &append_flag_p);
+
+											if (append_flag_p && (*append_flag_p))
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+													if (!RemoveExistingPlotsForStudy (study_p, data_p))
+														{
+															success_flag = false;
+															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to remove existing plots for study \"%s\"", study_id_s);
+														}
+												}
+
+											if (success_flag)
+												{
+													if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+														}
 												}
 
 										}		/* if (num_rows > 0) */
@@ -265,6 +295,10 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 	else if (strcmp (param_name_s, S_PLOT_TABLE.npt_name_s) == 0)
 		{
 			*pt_p = S_PLOT_TABLE.npt_type;
+		}
+	else if (strcmp (param_name_s, S_APPEND.npt_name_s) == 0)
+		{
+			*pt_p = S_APPEND.npt_type;
 		}
 	else
 		{
@@ -762,6 +796,25 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study
 	return plot_p;
 }
 
+
+static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+		{
+			bson_t *query_p = BCON_NEW (PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
+
+			if (query_p)
+				{
+					success_flag = RemoveMongoDocumentsByBSON (data_p -> dftsd_mongo_p, query_p, false);
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+		}
+
+	return success_flag;
+}
 
 
 static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const FieldTrialServiceData *data_p)
