@@ -158,7 +158,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 								{
 									bool append_flag = false;
 
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND.npt_name_s, "Append to existing plots", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ADVANCED)) != NULL)
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND.npt_name_s, "Append to existing plots", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
 										{
 											success_flag = true;
 										}
@@ -227,7 +227,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 											GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND.npt_name_s, &append_flag_p);
 
-											if (append_flag_p && (*append_flag_p))
+											if (!append_flag_p || (! (*append_flag_p)))
 												{
 													if (!RemoveExistingPlotsForStudy (study_p, data_p))
 														{
