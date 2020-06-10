@@ -78,7 +78,7 @@ static const char * const S_COMMENT_TITLE_S = "Comment";
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
 static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_JSON_TABLE};
 
-static NamedParameterType S_APPEND = { "PL Append", PT_BOOLEAN};
+static NamedParameterType S_AMEND = { "PL Amend", PT_BOOLEAN};
 
 static NamedParameterType S_STUDIES_LIST = { "PL Study", PT_STRING };
 
@@ -158,13 +158,13 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 								{
 									bool append_flag = false;
 
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND.npt_name_s, "Append to existing plots", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_AMEND.npt_name_s, "Append to existing plot data", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
 										{
 											success_flag = true;
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_APPEND.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AMEND.npt_name_s);
 										}
 								}
 							else
@@ -225,7 +225,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 											const bool *append_flag_p = NULL;
 											bool success_flag = true;
 
-											GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND.npt_name_s, &append_flag_p);
+											GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_AMEND.npt_name_s, &append_flag_p);
 
 											if (!append_flag_p || (! (*append_flag_p)))
 												{
@@ -296,9 +296,9 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 		{
 			*pt_p = S_PLOT_TABLE.npt_type;
 		}
-	else if (strcmp (param_name_s, S_APPEND.npt_name_s) == 0)
+	else if (strcmp (param_name_s, S_AMEND.npt_name_s) == 0)
 		{
-			*pt_p = S_APPEND.npt_type;
+			*pt_p = S_AMEND.npt_type;
 		}
 	else
 		{
