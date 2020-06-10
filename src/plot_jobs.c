@@ -412,7 +412,10 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 								{
 									if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 										{
-											success_flag = true;
+											if (AddParameterKeyStringValuePair (param_p, PA_TABLE_ADD_COLUMNS_FLAG_S, "true"))
+												{
+													success_flag = true;
+												}
 										}
 								}
 
@@ -462,6 +465,16 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 					 */
 					if (json_object_size (table_row_json_p) > 0)
 						{
+							/*
+							 * For the first r
+							 */
+							/*
+							if ((i > 0) || (!IsHeaderRow (table_row_json_p)))
+								{
+
+								}
+	*/
+
 							const char *gene_bank_s = GetJSONString (table_row_json_p, S_GENE_BANK_S);
 							GeneBank *gene_bank_p = NULL;
 
