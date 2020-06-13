@@ -215,7 +215,7 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_ROW_INDEX_TITLE_S, PT_TIME, hints_p))
+			if (AddColumnParameterHint (S_ROW_INDEX_TITLE_S, NULL, PT_TIME, true, hints_p))
 				{
 					return hints_p;
 				}

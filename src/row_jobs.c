@@ -198,11 +198,11 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_ROW_S, PT_UNSIGNED_INT, hints_p))
+			if (AddColumnParameterHint (S_ROW_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 				{
-					if (AddColumnParameterHint (S_COLUMN_S, PT_UNSIGNED_INT, hints_p))
+					if (AddColumnParameterHint (S_COLUMN_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 						{
-							if (AddColumnParameterHint (S_RACK_S, PT_UNSIGNED_INT, hints_p))
+							if (AddColumnParameterHint (S_RACK_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 								{
 									return hints_p;
 								}

@@ -466,43 +466,43 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_TRAIT_ID_S, PT_STRING, hints_p))
+			if (AddColumnParameterHint (S_TRAIT_ID_S, NULL, PT_STRING, true, hints_p))
 				{
-					if (AddColumnParameterHint (S_TRAIT_ABBREVIATION_S, PT_STRING, hints_p))
+					if (AddColumnParameterHint (S_TRAIT_ABBREVIATION_S, NULL, PT_STRING, true, hints_p))
 						{
-							if (AddColumnParameterHint (S_TRAIT_NAME_S, PT_STRING, hints_p))
+							if (AddColumnParameterHint (S_TRAIT_NAME_S, NULL, PT_STRING, true, hints_p))
 								{
-									if (AddColumnParameterHint (S_TRAIT_DESCRIPTION_S, PT_STRING, hints_p))
+									if (AddColumnParameterHint (S_TRAIT_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 										{
-											if (AddColumnParameterHint (S_METHOD_ID_S, PT_STRING, hints_p))
+											if (AddColumnParameterHint (S_METHOD_ID_S, NULL, PT_STRING, true, hints_p))
 												{
-													if (AddColumnParameterHint (S_METHOD_ABBREVIATION_S, PT_STRING, hints_p))
+													if (AddColumnParameterHint (S_METHOD_ABBREVIATION_S, NULL, PT_STRING, true, hints_p))
 														{
-															if (AddColumnParameterHint (S_METHOD_NAME_S, PT_STRING, hints_p))
+															if (AddColumnParameterHint (S_METHOD_NAME_S, NULL, PT_STRING, true, hints_p))
 																{
-																	if (AddColumnParameterHint (S_METHOD_DESCRIPTION_S, PT_STRING, hints_p))
+																	if (AddColumnParameterHint (S_METHOD_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_UNIT_ID_S, PT_STRING, hints_p))
+																			if (AddColumnParameterHint (S_UNIT_ID_S, NULL, PT_STRING, true, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_UNIT_ABBREVIATION_S, PT_STRING, hints_p))
+																					if (AddColumnParameterHint (S_UNIT_ABBREVIATION_S, NULL, PT_STRING, true, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_UNIT_NAME_S, PT_STRING, hints_p))
+																							if (AddColumnParameterHint (S_UNIT_NAME_S, NULL, PT_STRING, true, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_UNIT_DESCRIPTION_S, PT_STRING, hints_p))
+																									if (AddColumnParameterHint (S_UNIT_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 																										{
-																											if (AddColumnParameterHint (S_VARIABLE_ID_S, PT_STRING, hints_p))
+																											if (AddColumnParameterHint (S_VARIABLE_ID_S, NULL, PT_STRING, true, hints_p))
 																												{
-																													if (AddColumnParameterHint (S_VARIABLE_NAME_S, PT_STRING, hints_p))
+																													if (AddColumnParameterHint (S_VARIABLE_NAME_S, NULL, PT_STRING, true, hints_p))
 																														{
-																															if (AddColumnParameterHint (S_VARIABLE_DESCRIPTION_S, PT_STRING, hints_p))
+																															if (AddColumnParameterHint (S_VARIABLE_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 																																{
-																																	if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, PT_STRING, hints_p))
+																																	if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 																																		{
-																																			if (AddColumnParameterHint (S_FORM_ABBREVIATION_S, PT_STRING, hints_p))
+																																			if (AddColumnParameterHint (S_FORM_ABBREVIATION_S, NULL, PT_STRING, true, hints_p))
 																																				{
-																																					if (AddColumnParameterHint (S_FORM_NAME_S, PT_STRING, hints_p))
+																																					if (AddColumnParameterHint (S_FORM_NAME_S, NULL, PT_STRING, true, hints_p))
 																																						{
-																																							if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, PT_STRING, hints_p))
+																																							if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 																																								{
 																																									return hints_p;
 																																								}
