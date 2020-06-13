@@ -92,7 +92,7 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p,  const FieldTrialServiceData *data_p);
+static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *study_p,  const FieldTrialServiceData *data_p);
 
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p);
 
@@ -207,7 +207,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 			if (study_p)
 				{
-					const json_t *plots_table_p = NULL;
+					json_t *plots_table_p = NULL;
 
 					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &plots_table_p))
 						{
@@ -325,27 +325,28 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_SOWING_TITLE_S, PT_TIME, hints_p))
+			if (AddColumnParameterHint (S_SOWING_TITLE_S, "Sowing date of the plot. If left blank, then the *Sowing date* specified for the Study will be used.", PT_TIME, false, hints_p))
 				{
-					if (AddColumnParameterHint (S_HARVEST_TITLE_S, PT_TIME, hints_p))
+					if (AddColumnParameterHint (S_HARVEST_TITLE_S, "Harvest date of the plot. If left blank, then the *Harvest date* specified for the Study will be used.", PT_TIME, false, hints_p))
 						{
-							if (AddColumnParameterHint (S_WIDTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
+							if (AddColumnParameterHint (S_WIDTH_TITLE_S, "This is the width, in metres, of each plot. If left blank, then the *Plot width* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
 								{
-									if (AddColumnParameterHint (S_LENGTH_TITLE_S, PT_UNSIGNED_REAL, hints_p))
+									if (AddColumnParameterHint (S_LENGTH_TITLE_S, "This is the length, in metres, of each plot. If left blank, then the *Plot height* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
 										{
-											if (AddColumnParameterHint (S_INDEX_TITLE_S, PT_UNSIGNED_INT, hints_p))
+											if (AddColumnParameterHint (S_INDEX_TITLE_S, "The ID of the rack. This is a number given to uniquely identify each rack in the Study similar to a primary key in a database."
+													"If GeoJSON and/or images are available, this will be used to identify which plot this information refers to.", PT_UNSIGNED_INT, true, hints_p))
 												{
-													if (AddColumnParameterHint (S_ROW_TITLE_S, PT_UNSIGNED_INT, hints_p))
+													if (AddColumnParameterHint (S_ROW_TITLE_S, "Row number of the plot. The numbering starts at 1 at the left-hand edge of the plots.", PT_UNSIGNED_INT, true, hints_p))
 														{
-															if (AddColumnParameterHint (S_COLUMN_TITLE_S, PT_UNSIGNED_INT, hints_p))
+															if (AddColumnParameterHint (S_COLUMN_TITLE_S, " Column number of the plot. The numbering starts at 1 at the bottom-edge of the plots.", PT_UNSIGNED_INT, true, hints_p))
 																{
-																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, PT_UNSIGNED_INT, hints_p))
+																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, "Which replicate is planted in this rack.", PT_UNSIGNED_INT, false, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_RACK_TITLE_S, PT_UNSIGNED_INT, hints_p))
+																			if (AddColumnParameterHint (S_RACK_TITLE_S, "The number of this rack within the plot.", PT_UNSIGNED_INT, true, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
+																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, "This is the unique identifier from a particular seed/gene bank to identify the material.", PT_STRING, true, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, PT_STRING, hints_p))
+																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, "Any comments for the plot.", PT_STRING, false, hints_p))
 																								{
 																									return hints_p;
 																								}
@@ -442,7 +443,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
@@ -458,7 +459,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 			for (i = 0; i < num_rows; ++ i)
 				{
-					const json_t *table_row_json_p = json_array_get (plots_json_p, i);
+					json_t *table_row_json_p = json_array_get (plots_json_p, i);
 
 					/*
 					 * Is the row non-empty?
@@ -574,6 +575,40 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, const json_t *plots_json_p, Stu
 
 																									if (row_p)
 																										{
+																											/*
+																											 * Remove any of the normal plot keys
+																											 */
+																											json_object_del (table_row_json_p, S_SOWING_TITLE_S);
+																											json_object_del (table_row_json_p, S_HARVEST_TITLE_S);
+																											json_object_del (table_row_json_p, S_WIDTH_TITLE_S);
+																											json_object_del (table_row_json_p, S_LENGTH_TITLE_S);
+																											json_object_del (table_row_json_p, S_INDEX_TITLE_S);
+																											json_object_del (table_row_json_p, S_ROW_TITLE_S);
+																											json_object_del (table_row_json_p, S_COLUMN_TITLE_S);
+																											json_object_del (table_row_json_p, S_RACK_TITLE_S);
+																											json_object_del (table_row_json_p, S_ACCESSION_TITLE_S);
+																											json_object_del (table_row_json_p, S_GENE_BANK_S);
+																											json_object_del (table_row_json_p, S_TREATMENT_TITLE_S);
+																											json_object_del (table_row_json_p, S_REPLICATE_TITLE_S);
+																											json_object_del (table_row_json_p, S_COMMENT_TITLE_S);
+
+
+																											/*
+																											 * If there are any columns left, try to add them as observations
+																											 */
+																											if (json_object_size (table_row_json_p) > 0)
+																												{
+																													OperationStatus obs_status = AddObservationValuesToRow (row_p, table_row_json_p, study_p, data_p);
+
+																													if (obs_status != OS_SUCCEEDED)
+																														{
+
+																														}
+
+																												}		/* if (json_object_size (table_row_json_p) > 0) */
+
+
+
 																											if (control_rep_flag)
 																												{
 																													SetRowGenotypeControl (row_p, true);

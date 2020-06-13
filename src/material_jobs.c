@@ -539,31 +539,31 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_SPECIES_NAME_TITLE_S, PT_STRING, hints_p))
+			if (AddColumnParameterHint (S_SPECIES_NAME_TITLE_S, NULL, PT_STRING, true, hints_p))
 				{
-					if (AddColumnParameterHint (S_GERMPLASM_ID_TITLE_S, PT_STRING, hints_p))
+					if (AddColumnParameterHint (S_GERMPLASM_ID_TITLE_S, NULL, PT_STRING, true, hints_p))
 						{
-							if (AddColumnParameterHint (S_TYPE_TITLE_S, PT_STRING, hints_p))
+							if (AddColumnParameterHint (S_TYPE_TITLE_S, NULL, PT_STRING, false, hints_p))
 								{
-									if (AddColumnParameterHint (S_SELECTION_REASON_TITLE_S, PT_STRING, hints_p))
+									if (AddColumnParameterHint (S_SELECTION_REASON_TITLE_S, NULL, PT_STRING, false, hints_p))
 										{
-											if (AddColumnParameterHint (S_GENERATION_TITLE_S, PT_STRING, hints_p))
+											if (AddColumnParameterHint (S_GENERATION_TITLE_S, NULL, PT_STRING, false, hints_p))
 												{
-													if (AddColumnParameterHint (S_SEED_SUPPLIER_TITLE_S, PT_STRING, hints_p))
+													if (AddColumnParameterHint (S_SEED_SUPPLIER_TITLE_S, NULL, PT_STRING, false, hints_p))
 														{
-															if (AddColumnParameterHint (S_SEED_SOURCE_TITLE_S, PT_STRING, hints_p))
+															if (AddColumnParameterHint (S_SEED_SOURCE_TITLE_S, NULL, PT_STRING, false, hints_p))
 																{
-																	if (AddColumnParameterHint (S_GERMPLASM_ORIGIN_TITLE_S, PT_STRING, hints_p))
+																	if (AddColumnParameterHint (S_GERMPLASM_ORIGIN_TITLE_S, NULL, PT_STRING, false, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_IN_GRU_TITLE_S, PT_BOOLEAN, hints_p))
+																			if (AddColumnParameterHint (S_IN_GRU_TITLE_S, NULL, PT_BOOLEAN, true, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_GRU_ACCESSION_TITLE_S, PT_STRING, hints_p))
+																					if (AddColumnParameterHint (S_GRU_ACCESSION_TITLE_S, NULL, PT_STRING, false, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_TGW_TITLE_S, PT_UNSIGNED_INT, hints_p))
+																							if (AddColumnParameterHint (S_TGW_TITLE_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_SEED_TREATMENT_TITLE_S, PT_STRING, hints_p))
+																									if (AddColumnParameterHint (S_SEED_TREATMENT_TITLE_S, NULL, PT_STRING, false, hints_p))
 																										{
-																											if (AddColumnParameterHint (S_CLEANED_TITLE_S, PT_BOOLEAN, hints_p))
+																											if (AddColumnParameterHint (S_CLEANED_TITLE_S, NULL, PT_BOOLEAN, false, hints_p))
 																												{
 																													return hints_p;
 																												}

@@ -198,11 +198,11 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_ROW_S, PT_UNSIGNED_INT, hints_p))
+			if (AddColumnParameterHint (S_ROW_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 				{
-					if (AddColumnParameterHint (S_COLUMN_S, PT_UNSIGNED_INT, hints_p))
+					if (AddColumnParameterHint (S_COLUMN_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 						{
-							if (AddColumnParameterHint (S_RACK_S, PT_UNSIGNED_INT, hints_p))
+							if (AddColumnParameterHint (S_RACK_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 								{
 									return hints_p;
 								}
@@ -326,142 +326,9 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 									if (row_p)
 										{
-											bool loop_success_flag = true;
-											void *iterator_p = json_object_iter (observation_json_p);
+											OperationStatus import_row_status = AddObservationValuesToRow (row_p, observation_json_p, study_p, data_p);
 
-											while (iterator_p && loop_success_flag)
-												{
-													const char *key_s = json_object_iter_key (iterator_p);
-													json_t *value_p = json_object_iter_value (iterator_p);
-
-													/*
-													 * ignore our column names
-													 */
-													if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
-														{
-															/*
-															 * make sure it isn't a date column
-															 */
-															const char * const DATE_ENDING_S = " date";
-															const char * const CORRECTED_ENDING_S = " corrected";
-
-															if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
-																{
-																	MeasuredVariable *treatment_p = GetMeasuredVariableByVariableName (key_s, data_p);
-
-																	if (treatment_p)
-																		{
-																			Observation *observation_p = NULL;
-																			bool added_phenotype_flag = false;
-																			const char *raw_value_s = json_string_value (value_p);
-																			const char *corrected_value_s = NULL;
-																			char *column_header_s = NULL;
-
-																			/* corrected value */
-																			column_header_s = ConcatenateStrings (key_s, CORRECTED_ENDING_S);
-																			if (column_header_s)
-																				{
-																					corrected_value_s = GetJSONString (observation_json_p, column_header_s);
-																					FreeCopiedString (column_header_s);
-																				}		/* if (column_header_s) */
-
-
-																			if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s)))
-																				{
-																					const char *growth_stage_s = NULL;
-																					const char *method_s = NULL;
-																					ObservationNature nature = ON_ROW;
-																					Instrument *instrument_p = NULL;
-																					bson_oid_t *observation_id_p = GetNewBSONOid ();
-																					struct tm *observation_date_p = NULL;
-
-																					/*
-																					 * assume failure to import
-																					 */
-																					loop_success_flag = false;
-
-																					/* date */
-																					column_header_s = ConcatenateStrings (key_s, DATE_ENDING_S);
-																					if (column_header_s)
-																						{
-																							const char *date_s = GetJSONString (observation_json_p, column_header_s);
-
-																							if (date_s)
-																								{
-																									observation_date_p = GetTimeFromString (date_s);
-																								}
-
-																							FreeCopiedString (column_header_s);
-																						}		/* if (column_header_s) */
-
-																					if (observation_id_p)
-																						{
-																							observation_p = AllocateObservation (observation_id_p, observation_date_p, treatment_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
-
-																							if (observation_p)
-																								{
-																									if (AddObservationToRow (row_p, observation_p))
-																										{
-																											added_phenotype_flag = true;
-																											loop_success_flag = true;
-																										}
-																									else
-																										{
-																											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																											bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
-																											FreeObservation (observation_p);
-																										}
-
-																								}		/* if (observation_p) */
-																							else
-																								{
-																									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																									bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
-
-																									FreeBSONOid (observation_id_p);
-																								}
-
-																						}		/* if (observation_id_p) */
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
-																						}
-
-																					if (observation_date_p)
-																						{
-																							FreeTime (observation_date_p);
-																						}
-																				}		/* if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s))) */
-																			else
-																				{
-																					PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value for \"%s\", skipping", key_s);
-																				}
-
-																			if (!added_phenotype_flag)
-																				{
-																					FreeMeasuredVariable (treatment_p);
-																				}
-
-																		}		/* if (phenotype_p) */
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get phenotype with variable name \"%s\"", key_s);
-																		}
-
-																}		/* if (! (DoesStringEndWith (mapped_key_s, "date"))) */
-
-														}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
-
-													iterator_p = json_object_iter_next (observation_json_p, iterator_p);
-												}		/* while (iterator_p && loop_success_flag) */
-
-											if (loop_success_flag)
+											if ((import_row_status == OS_PARTIALLY_SUCCEEDED) || (import_row_status == OS_SUCCEEDED))
 												{
 													if (SavePlot (row_p -> ro_plot_p, data_p))
 														{
@@ -473,7 +340,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 															bson_oid_to_string (study_p -> st_id_p, id_s);
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save row " INT32_FMT " for Study \"%s\"", rack_index, id_s);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to save row " INT32_FMT " for Study \"%s\"", rack_index, id_s);
 														}
 												}		/* if (loop_success_flag) */
 
@@ -485,7 +352,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 											bson_oid_to_string (study_p -> st_id_p, id_s);
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row " INT32_FMT " for Study \"%s\"", rack_index, id_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get row " INT32_FMT " for Study \"%s\"", rack_index, id_s);
 										}
 
 								}		/* if (GetIntegerFromJSON (observation_json_p, S_PLOT_INDEX_S, &plot_index)) */
@@ -523,6 +390,166 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 	SetServiceJobStatus (job_p, status);
 
 	return success_flag;
+}
+
+
+
+
+
+OperationStatus AddObservationValuesToRow (Row *row_p, const json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+
+	bool loop_success_flag = true;
+	void *iterator_p = json_object_iter (observation_json_p);
+	size_t imported_obs = 0;
+	size_t total_obs = 0;
+
+	while (iterator_p && loop_success_flag)
+		{
+			const char *key_s = json_object_iter_key (iterator_p);
+			json_t *value_p = json_object_iter_value (iterator_p);
+
+			/*
+			 * ignore our column names
+			 */
+			if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
+				{
+					/*
+					 * make sure it isn't a date column
+					 */
+					const char * const DATE_ENDING_S = " date";
+					const char * const CORRECTED_ENDING_S = " corrected";
+
+					if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
+						{
+							MeasuredVariable *treatment_p = GetMeasuredVariableByVariableName (key_s, data_p);
+
+							if (treatment_p)
+								{
+									Observation *observation_p = NULL;
+									bool added_phenotype_flag = false;
+									const char *raw_value_s = json_string_value (value_p);
+									const char *corrected_value_s = NULL;
+									char *column_header_s = NULL;
+
+									/* corrected value */
+									column_header_s = ConcatenateStrings (key_s, CORRECTED_ENDING_S);
+									if (column_header_s)
+										{
+											corrected_value_s = GetJSONString (observation_json_p, column_header_s);
+											FreeCopiedString (column_header_s);
+										}		/* if (column_header_s) */
+
+
+									if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s)))
+										{
+											const char *growth_stage_s = NULL;
+											const char *method_s = NULL;
+											ObservationNature nature = ON_ROW;
+											Instrument *instrument_p = NULL;
+											bson_oid_t *observation_id_p = GetNewBSONOid ();
+											struct tm *observation_date_p = NULL;
+
+											++ total_obs;
+
+											/*
+											 * assume failure to import
+											 */
+											loop_success_flag = false;
+
+											/* date */
+											column_header_s = ConcatenateStrings (key_s, DATE_ENDING_S);
+											if (column_header_s)
+												{
+													const char *date_s = GetJSONString (observation_json_p, column_header_s);
+
+													if (date_s)
+														{
+															observation_date_p = GetTimeFromString (date_s);
+														}
+
+													FreeCopiedString (column_header_s);
+												}		/* if (column_header_s) */
+
+											if (observation_id_p)
+												{
+													observation_p = AllocateObservation (observation_id_p, observation_date_p, treatment_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
+
+													if (observation_p)
+														{
+															if (AddObservationToRow (row_p, observation_p))
+																{
+																	++ imported_obs;
+																	added_phenotype_flag = true;
+																	loop_success_flag = true;
+																}
+															else
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+																	FreeObservation (observation_p);
+																}
+
+														}		/* if (observation_p) */
+													else
+														{
+															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+															bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
+
+															FreeBSONOid (observation_id_p);
+														}
+
+												}		/* if (observation_id_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
+												}
+
+											if (observation_date_p)
+												{
+													FreeTime (observation_date_p);
+												}
+										}		/* if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s))) */
+									else
+										{
+											PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value for \"%s\", skipping", key_s);
+										}
+
+									if (!added_phenotype_flag)
+										{
+											FreeMeasuredVariable (treatment_p);
+										}
+
+								}		/* if (phenotype_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get phenotype with variable name \"%s\"", key_s);
+								}
+
+						}		/* if (! (DoesStringEndWith (mapped_key_s, "date"))) */
+
+				}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
+
+			iterator_p = json_object_iter_next (observation_json_p, iterator_p);
+		}		/* while (iterator_p && loop_success_flag) */
+
+	if (imported_obs == total_obs)
+		{
+			status = OS_SUCCEEDED;
+		}
+	else if (imported_obs > 0)
+		{
+			status = OS_PARTIALLY_SUCCEEDED;
+		}
+
+	return status;
 }
 
 

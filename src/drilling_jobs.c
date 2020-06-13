@@ -264,19 +264,19 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_INDEX_TITLE_S, PT_UNSIGNED_INT, hints_p))
+			if (AddColumnParameterHint (S_INDEX_TITLE_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 				{
-					if (AddColumnParameterHint (S_ROW_TITLE_S, PT_UNSIGNED_INT, hints_p))
+					if (AddColumnParameterHint (S_ROW_TITLE_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 						{
-							if (AddColumnParameterHint (S_COLUMN_TITLE_S, PT_UNSIGNED_INT, hints_p))
+							if (AddColumnParameterHint (S_COLUMN_TITLE_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 								{
-									if (AddColumnParameterHint (S_REPLICATE_TITLE_S, PT_UNSIGNED_INT, hints_p))
+									if (AddColumnParameterHint (S_REPLICATE_TITLE_S, NULL, PT_UNSIGNED_INT, false, hints_p))
 										{
-											if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
+											if (AddColumnParameterHint (S_ACCESSION_TITLE_S, NULL, PT_STRING, false, hints_p))
 												{
-													if (AddColumnParameterHint (S_SOWING_DATE_TITLE_S, PT_STRING, hints_p))
+													if (AddColumnParameterHint (S_SOWING_DATE_TITLE_S, NULL, PT_STRING, false, hints_p))
 														{
-															if (AddColumnParameterHint (S_SOWING_RATE_TITLE_S, PT_STRING, hints_p))
+															if (AddColumnParameterHint (S_SOWING_RATE_TITLE_S, NULL, PT_STRING, false, hints_p))
 																{
 																	return hints_p;
 																}
