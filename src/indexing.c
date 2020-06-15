@@ -28,6 +28,7 @@
 #include "audit.h"
 
 #include "boolean_parameter.h"
+#include "string_utils.h"
 
 /*
  * Static declarations
@@ -309,70 +310,249 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 	OperationStatus status = GetServiceJobStatus (job_p);
 	const bool *index_flag_p = NULL;
 
-	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CACHE_LIST.npt_name_s, &index_flag_p))
+
+	if (data_p -> dftsd_study_cache_path_s)
 		{
-			if ((index_flag_p != NULL) && (*index_flag_p == true))
+
+			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CACHE_LIST.npt_name_s, &index_flag_p))
 				{
-					GetCacheList (job_p, data_p);
-
-					done_flag = true;
-				}
-		}
-
-	if (!done_flag)
-		{
-			const char *entries_s = NULL;
-
-			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_CACHE_CLEAR.npt_name_s, &entries_s))
-				{
-					if (entries_s)
+					if ((index_flag_p != NULL) && (*index_flag_p == true))
 						{
-							if (strcmp (entries_s, "*") == 0)
-								{
+							GetCacheList (job_p, data_p);
 
-								}
-							else
-								{
-									/*
-									 * Get the cache entries to clear
-									 */
-									LinkedList *entries_p = ParseStringToStringLinkedList (entries_s, " ", true);
-
-									if (entries_p)
-										{
-											StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
-
-											while (node_p)
-												{
-													if (!RemoveFile (node_p -> sln_string_s))
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", node_p -> sln_string_s);
-														}
-
-													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
-												}
-
-											FreeLinkedList (entries_p);
-										}
-								}
-
+							done_flag = true;
 						}
 				}
 
-			SetServiceJobStatus (job_p, status);
+			if (!done_flag)
+				{
+					const char *entries_s = NULL;
 
-		}		/* if (!done_flag) */
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_CACHE_CLEAR.npt_name_s, &entries_s))
+						{
+							if (entries_s)
+								{
+									if (strcmp (entries_s, "*") == 0)
+										{
 
+										}
+									else
+										{
+											/*
+											 * Get the cache entries to clear
+											 */
+											LinkedList *entries_p = ParseStringToStringLinkedList (entries_s, " ", true);
+
+											if (entries_p)
+												{
+													const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
+
+
+													StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
+
+													while (node_p)
+														{
+															const char * const suffix_s = ".json";
+															char *filename_s = NULL;
+
+															if (!DoesStringEndWith (node_p -> sln_string_s, suffix_s))
+																{
+																	filename_s = ConcatenateVarArgsStrings (node_p -> sln_string_s, suffix_s);
+
+																	if (!filename_s)
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for cache filename  file \"%s\" and \"%s\"", node_p -> sln_string_s, suffix_s);
+																		}
+																}
+															else
+																{
+																	filename_s = node_p -> sln_string_s;
+																}
+
+
+															if (!RemoveFile (filename_s))
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", node_p -> sln_string_s);
+																}
+
+															if (filename_s != node_p -> sln_string_s)
+																{
+																	FreeCopiedString (filename_s);
+																}
+
+															node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+														}
+
+													FreeLinkedList (entries_p);
+												}
+										}
+
+								}
+
+						}
+
+					SetServiceJobStatus (job_p, status);
+				}		/* if (!done_flag) */
+
+		}		/* if (data_p -> dftsd_study_cache_path_s) */
 
 	return done_flag;
 }
 
 
-static void GetCacheList (ServiceJob *job_p, const FieldTrialServiceData *data_p)
+static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p)
 {
+	if (data_p -> dftsd_study_cache_path_s)
+		{
+			LinkedList *filenames_p = GetAllCacheFiles (data_p -> dftsd_study_cache_path_s, true);
+
+			if (filenames_p)
+				{
+					OperationStatus status = OS_FAILED;
+					json_t *files_array_p = json_array ();
+
+					if (json_array_p)
+						{
+							size_t array_size;
+							StringListNode *node_p = (StringListNode *) (filenames_p -> ll_head_p);
+							FileInformation info;
+							const char sep = GetFileSeparatorChar ();
+
+							InitFileInformation (&info);
+
+							while (node_p)
+								{
+									if (CalculateFileInformation (node_p -> sln_string_s, &info))
+										{
+											const char *filename_s;
+
+											if (full_path_flag)
+												{
+													filename_s = node_p -> sln_string_s;
+												}
+											else
+												{
+													filename_s = strrchr (node_p -> sln_string_s, sep);
+												}
+
+
+											if (filename_s)
+												{
+													json_t *file_p = json_object ();
+
+													if (file_p)
+														{
+															bool added_flag = false;
+
+															if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "name", filename_s))
+																{
+																	struct tm timestamp;
+
+																	if (localtime_r (& (info.fi_last_modified), &timestamp))
+																		{
+																			char *time_s = GetTimeAsString (&timestamp, true);
+
+																			if (time_s)
+																				{
+																					if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "DateTime", time_s))
+																						{
+																							char *bytes_s = ConvertLongToString (info.fi_size);
+
+																							if (bytes_s)
+																								{
+																									char *size_s = ConcatenateStrings (bytes_s, " B");
+
+																									if (size_s)
+																										{
+																											if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "fileSize", size_s))
+																												{
+																													if (json_array_append_new (files_array_p, str_p) == 0)
+																														{
+																															added_flag = true;
+																														}
+
+																												}
+
+																											FreeCopiedString (size_s);
+																										}
+
+																									FreeCopiedString (bytes_s);
+																								}
+
+
+																						}
+
+																					FreeCopiedString (time_s);
+																				}
+
+																		}
+																}
+
+															if (!added_flag)
+																{
+																	json_decref (file_p);
+																}
+														}		/* if (file_p) */
+
+												}
+
+										}		/* if (CalculateFileInformation (node_p -> sln_string_s, &info)) */
+
+									json_t *str_p = json_string (node_p -> sln_string_s);
+
+									if (str_p)
+										{
+											if (json_array_append_new (files_array_p, str_p) != 0)
+												{
+													json_decref (str_p);
+												}
+										}
+
+									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+								}
+
+							array_size = json_array_size (files_array_p);
+
+							if (filenames_p -> ll_size == array_size)
+								{
+									status = OS_SUCCEEDED;
+								}
+							else if (array_size > 0)
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+								}
+						}
+
+					FreeLinkedList (filenames_p);
+				}		/* if (filenames_p) */
+
+		}		/* if (data_p -> dftsd_study_cache_path_s) */
 
 
 
+}
+
+
+static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_path_flag)
+{
+	LinkedList *files_p = NULL;
+	char *pattern_s = ConcatenateStrings (cache_path_s, "*.json");
+
+	if (pattern_s)
+		{
+			if (! (files_p = GetMatchingFiles (pattern_s, full_path_flag)))
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMatchingFiles failed for pattern: \"%s\"", pattern_s);
+				}
+
+			FreeCopiedString (pattern_s);
+		}		/* if (pattern_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concat strings for cache file pattern: \"%s\"", cache_path_s);
+		}
+
+	return files_p;
 }
 
 
