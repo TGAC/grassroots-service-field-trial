@@ -29,6 +29,8 @@
 
 #include "boolean_parameter.h"
 #include "string_utils.h"
+#include "math_utils.h"
+#include "time_util.h"
 
 /*
  * Static declarations
@@ -83,7 +85,12 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service *service_p, Para
 
 static bool CloseFieldTrialIndexingService (Service *service_p);
 
-static void GetCacheList (ServiceJob *job_p, const FieldTrialServiceData *data_p);
+static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p);
+
+static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_path_flag);
+
+static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length);
+
 
 /*
  * API definitions
@@ -318,7 +325,7 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 				{
 					if ((index_flag_p != NULL) && (*index_flag_p == true))
 						{
-							GetCacheList (job_p, data_p);
+							GetCacheList (job_p, false, data_p);
 
 							done_flag = true;
 						}
@@ -346,42 +353,44 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 											if (entries_p)
 												{
 													const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
-
-
+													const size_t cache_path_length = strlen (cache_path_s);
 													StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
+													size_t num_removed = 0;
 
 													while (node_p)
 														{
-															const char * const suffix_s = ".json";
-															char *filename_s = NULL;
+															char *filename_s = GetFullCacheFilename (node_p -> sln_string_s, cache_path_s, cache_path_length);
 
-															if (!DoesStringEndWith (node_p -> sln_string_s, suffix_s))
+															if (filename_s)
 																{
-																	filename_s = ConcatenateVarArgsStrings (node_p -> sln_string_s, suffix_s);
-
-																	if (!filename_s)
+																	if (RemoveFile (filename_s))
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for cache filename  file \"%s\" and \"%s\"", node_p -> sln_string_s, suffix_s);
+																			++ num_removed;
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", node_p -> sln_string_s);
+																		}
+
+																	if (filename_s != node_p -> sln_string_s)
+																		{
+																			FreeCopiedString (filename_s);
 																		}
 																}
-															else
-																{
-																	filename_s = node_p -> sln_string_s;
-																}
 
-
-															if (!RemoveFile (filename_s))
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", node_p -> sln_string_s);
-																}
-
-															if (filename_s != node_p -> sln_string_s)
-																{
-																	FreeCopiedString (filename_s);
-																}
 
 															node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 														}
+
+													if (num_removed == entries_p -> ll_size)
+														{
+															status = OS_SUCCEEDED;
+														}
+													else if (num_removed > 0)
+														{
+															status = OS_PARTIALLY_SUCCEEDED;
+														}
+
 
 													FreeLinkedList (entries_p);
 												}
@@ -400,6 +409,52 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 }
 
 
+static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length)
+{
+	char *filename_s = NULL;
+	const char * const suffix_s = ".json";
+
+	if (!DoesStringEndWith (name_s, suffix_s))
+		{
+			filename_s = ConcatenateStrings (name_s, suffix_s);
+
+			if (!filename_s)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for \"%s\" and \"%s\"", name_s, suffix_s);
+				}
+		}
+	else
+		{
+			filename_s = (char *) name_s;
+		}
+
+	if (filename_s)
+		{
+			/*
+			 * Is it the full path?
+			 */
+			if (strncmp (cache_path_s, filename_s, cache_path_length) != 0)
+				{
+					char *full_filename_s = MakeFilename (cache_path_s, filename_s);
+
+					if (!full_filename_s)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "MakeFilename failed for \"%s\" and \"%s\"", cache_path_s, filename_s);
+						}
+
+					if (filename_s != name_s)
+						{
+							FreeCopiedString (filename_s);
+						}
+
+					filename_s = full_filename_s;
+
+				}
+		}		/* if (filename_s) */
+
+	return filename_s;
+}
+
 static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_study_cache_path_s)
@@ -411,11 +466,12 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 					OperationStatus status = OS_FAILED;
 					json_t *files_array_p = json_array ();
 
-					if (json_array_p)
+					if (files_array_p)
 						{
 							size_t array_size;
 							StringListNode *node_p = (StringListNode *) (filenames_p -> ll_head_p);
 							FileInformation info;
+							json_t *dest_record_p = NULL;
 							const char sep = GetFileSeparatorChar ();
 
 							InitFileInformation (&info);
@@ -433,6 +489,12 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 											else
 												{
 													filename_s = strrchr (node_p -> sln_string_s, sep);
+
+													if (filename_s)
+														{
+															/* scroll past the file separator char */
+															++ filename_s;
+														}
 												}
 
 
@@ -466,7 +528,7 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 																										{
 																											if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "fileSize", size_s))
 																												{
-																													if (json_array_append_new (files_array_p, str_p) == 0)
+																													if (json_array_append_new (files_array_p, file_p) == 0)
 																														{
 																															added_flag = true;
 																														}
@@ -498,16 +560,6 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 
 										}		/* if (CalculateFileInformation (node_p -> sln_string_s, &info)) */
 
-									json_t *str_p = json_string (node_p -> sln_string_s);
-
-									if (str_p)
-										{
-											if (json_array_append_new (files_array_p, str_p) != 0)
-												{
-													json_decref (str_p);
-												}
-										}
-
 									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 								}
 
@@ -521,8 +573,29 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
 								}
+
+							if (status != OS_FAILED)
+								{
+									dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, "Cached Files", files_array_p);
+
+									if (dest_record_p)
+										{
+											if (!AddResultToServiceJob (job_p, dest_record_p))
+												{
+													json_decref (dest_record_p);
+													status = OS_FAILED;
+												}
+
+										}		/* if (dest_record_p) */
+									else
+										{
+											status = OS_FAILED;
+										}
+								}
+
 						}
 
+					SetServiceJobStatus (job_p, status);
 					FreeLinkedList (filenames_p);
 				}		/* if (filenames_p) */
 

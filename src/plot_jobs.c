@@ -26,6 +26,7 @@
 #include "plot.h"
 #include "time_util.h"
 #include "string_utils.h"
+#include "row_jobs.h"
 #include "study_jobs.h"
 #include "math_utils.h"
 #include "material.h"
@@ -209,7 +210,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 				{
 					json_t *plots_table_p = NULL;
 
-					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &plots_table_p))
+					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
 						{
 							job_done_flag = true;
 
