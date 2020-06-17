@@ -29,6 +29,7 @@
 
 #include "boolean_parameter.h"
 #include "string_utils.h"
+#include "time_util.h"
 
 /*
  * Static declarations
@@ -83,7 +84,10 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service *service_p, Para
 
 static bool CloseFieldTrialIndexingService (Service *service_p);
 
-static void GetCacheList (ServiceJob *job_p, const FieldTrialServiceData *data_p);
+
+static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p);
+
+static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_path_flag);
 
 /*
  * API definitions
@@ -318,7 +322,7 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 				{
 					if ((index_flag_p != NULL) && (*index_flag_p == true))
 						{
-							GetCacheList (job_p, data_p);
+							GetCacheList (job_p, true, data_p);
 
 							done_flag = true;
 						}
@@ -411,7 +415,7 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 					OperationStatus status = OS_FAILED;
 					json_t *files_array_p = json_array ();
 
-					if (json_array_p)
+					if (files_array_p)
 						{
 							size_t array_size;
 							StringListNode *node_p = (StringListNode *) (filenames_p -> ll_head_p);
@@ -466,7 +470,7 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 																										{
 																											if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "fileSize", size_s))
 																												{
-																													if (json_array_append_new (files_array_p, str_p) == 0)
+																													if (json_array_append_new (files_array_p, file_p) == 0)
 																														{
 																															added_flag = true;
 																														}
