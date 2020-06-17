@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * indexing.c
  *
@@ -29,6 +29,7 @@
 
 #include "boolean_parameter.h"
 #include "string_utils.h"
+#include "math_utils.h"
 #include "time_util.h"
 
 /*
@@ -84,14 +85,12 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service *service_p, Para
 
 static bool CloseFieldTrialIndexingService (Service *service_p);
 
-
 static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p);
 
 static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_path_flag);
 
-/*
- * API definitions
- */
+static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length);
+
 
 
 /*
@@ -110,23 +109,23 @@ Service *GetFieldTrialIndexingService (GrassrootsServer *grassroots_p)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetFieldTrialIndexingServiceName,
-														 GetFieldTrialIndexingServiceDescription,
-														 GetFieldTrialIndexingServiceAlias,
-														 GetFieldTrialIndexingServiceInformationUri,
-														 RunFieldTrialIndexingService,
-														 IsResourceForFieldTrialIndexingService,
-														 GetFieldTrialIndexingServiceParameters,
-														 GetIndexingParameterTypeForNamedParameter,
-														 ReleaseFieldTrialIndexingServiceParameters,
-														 CloseFieldTrialIndexingService,
-														 NULL,
-														 false,
-														 SY_SYNCHRONOUS,
-														 (ServiceData *) data_p,
-														 GetFieldTrialIndexingServiceMetadata,
-														 NULL,
-														 grassroots_p))
+																 GetFieldTrialIndexingServiceName,
+																 GetFieldTrialIndexingServiceDescription,
+																 GetFieldTrialIndexingServiceAlias,
+																 GetFieldTrialIndexingServiceInformationUri,
+																 RunFieldTrialIndexingService,
+																 IsResourceForFieldTrialIndexingService,
+																 GetFieldTrialIndexingServiceParameters,
+																 GetIndexingParameterTypeForNamedParameter,
+																 ReleaseFieldTrialIndexingServiceParameters,
+																 CloseFieldTrialIndexingService,
+																 NULL,
+																 false,
+																 SY_SYNCHRONOUS,
+																 (ServiceData *) data_p,
+																 GetFieldTrialIndexingServiceMetadata,
+																 NULL,
+																 grassroots_p))
 						{
 
 							if (ConfigureFieldTrialService (data_p, grassroots_p))
@@ -301,19 +300,11 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 }
 
 
-
-/*
- * static NamedParameterType S_CACHE_CLEAR = { "SS clear study cache", PT_LARGE_STRING };
-static NamedParameterType S_CACHE_LIST = { "SS list study cache", PT_BOOLEAN };
- *
- */
-
 static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	bool done_flag = false;
 	OperationStatus status = GetServiceJobStatus (job_p);
 	const bool *index_flag_p = NULL;
-
 
 	if (data_p -> dftsd_study_cache_path_s)
 		{
@@ -322,7 +313,7 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 				{
 					if ((index_flag_p != NULL) && (*index_flag_p == true))
 						{
-							GetCacheList (job_p, true, data_p);
+							GetCacheList (job_p, false, data_p);
 
 							done_flag = true;
 						}
@@ -336,45 +327,39 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 						{
 							if (entries_s)
 								{
+									LinkedList *entries_p = NULL;
+
 									if (strcmp (entries_s, "*") == 0)
 										{
-
+											entries_p = GetAllCacheFiles (data_p -> dftsd_study_cache_path_s, false);
 										}
 									else
 										{
 											/*
 											 * Get the cache entries to clear
 											 */
-											LinkedList *entries_p = ParseStringToStringLinkedList (entries_s, " ", true);
+											entries_p = ParseStringToStringLinkedList (entries_s, " ", true);
+										}
 
-											if (entries_p)
+
+									if (entries_p)
+										{
+											const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
+											const size_t cache_path_length = strlen (cache_path_s);
+											StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
+											size_t num_removed = 0;
+
+											while (node_p)
 												{
-													const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
+													char *filename_s = GetFullCacheFilename (node_p -> sln_string_s, cache_path_s, cache_path_length);
 
-
-													StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
-
-													while (node_p)
+													if (filename_s)
 														{
-															const char * const suffix_s = ".json";
-															char *filename_s = NULL;
-
-															if (!DoesStringEndWith (node_p -> sln_string_s, suffix_s))
+															if (RemoveFile (filename_s))
 																{
-																	filename_s = ConcatenateVarArgsStrings (node_p -> sln_string_s, suffix_s);
-
-																	if (!filename_s)
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for cache filename  file \"%s\" and \"%s\"", node_p -> sln_string_s, suffix_s);
-																		}
+																	++ num_removed;
 																}
 															else
-																{
-																	filename_s = node_p -> sln_string_s;
-																}
-
-
-															if (!RemoveFile (filename_s))
 																{
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", node_p -> sln_string_s);
 																}
@@ -383,14 +368,24 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 																{
 																	FreeCopiedString (filename_s);
 																}
-
-															node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 														}
 
-													FreeLinkedList (entries_p);
-												}
-										}
 
+													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+												}
+
+											if (num_removed == entries_p -> ll_size)
+												{
+													status = OS_SUCCEEDED;
+												}
+											else if (num_removed > 0)
+												{
+													status = OS_PARTIALLY_SUCCEEDED;
+												}
+
+
+											FreeLinkedList (entries_p);
+										}
 								}
 
 						}
@@ -403,6 +398,52 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 	return done_flag;
 }
 
+
+static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length)
+{
+	char *filename_s = NULL;
+	const char * const suffix_s = ".json";
+
+	if (!DoesStringEndWith (name_s, suffix_s))
+		{
+			filename_s = ConcatenateStrings (name_s, suffix_s);
+
+			if (!filename_s)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for \"%s\" and \"%s\"", name_s, suffix_s);
+				}
+		}
+	else
+		{
+			filename_s = (char *) name_s;
+		}
+
+	if (filename_s)
+		{
+			/*
+			 * Is it the full path?
+			 */
+			if (strncmp (cache_path_s, filename_s, cache_path_length) != 0)
+				{
+					char *full_filename_s = MakeFilename (cache_path_s, filename_s);
+
+					if (!full_filename_s)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "MakeFilename failed for \"%s\" and \"%s\"", cache_path_s, filename_s);
+						}
+
+					if (filename_s != name_s)
+						{
+							FreeCopiedString (filename_s);
+						}
+
+					filename_s = full_filename_s;
+
+				}
+		}		/* if (filename_s) */
+
+	return filename_s;
+}
 
 static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p)
 {
@@ -420,6 +461,7 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 							size_t array_size;
 							StringListNode *node_p = (StringListNode *) (filenames_p -> ll_head_p);
 							FileInformation info;
+							json_t *dest_record_p = NULL;
 							const char sep = GetFileSeparatorChar ();
 
 							InitFileInformation (&info);
@@ -437,6 +479,12 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 											else
 												{
 													filename_s = strrchr (node_p -> sln_string_s, sep);
+
+													if (filename_s)
+														{
+															/* scroll past the file separator char */
+															++ filename_s;
+														}
 												}
 
 
@@ -502,16 +550,6 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 
 										}		/* if (CalculateFileInformation (node_p -> sln_string_s, &info)) */
 
-									json_t *str_p = json_string (node_p -> sln_string_s);
-
-									if (str_p)
-										{
-											if (json_array_append_new (files_array_p, str_p) != 0)
-												{
-													json_decref (str_p);
-												}
-										}
-
 									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 								}
 
@@ -525,8 +563,29 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
 								}
+
+							if (status != OS_FAILED)
+								{
+									dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, "Cached Files", files_array_p);
+
+									if (dest_record_p)
+										{
+											if (!AddResultToServiceJob (job_p, dest_record_p))
+												{
+													json_decref (dest_record_p);
+													status = OS_FAILED;
+												}
+
+										}		/* if (dest_record_p) */
+									else
+										{
+											status = OS_FAILED;
+										}
+								}
+
 						}
 
+					SetServiceJobStatus (job_p, status);
 					FreeLinkedList (filenames_p);
 				}		/* if (filenames_p) */
 
@@ -856,9 +915,9 @@ static ServiceMetadata *GetFieldTrialIndexingServiceMetadata (Service *service_p
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
-		"The study of genetic constitution of a living entity, such as an individual, and organism, a cell and so on, "
-		"typically with respect to a particular observable phenotypic traits, or resources concerning such traits, which "
-		"might be an aspect of biochemistry, physiology, morphology, anatomy, development and so on.");
+																							 "The study of genetic constitution of a living entity, such as an individual, and organism, a cell and so on, "
+																							 "typically with respect to a particular observable phenotypic traits, or resources concerning such traits, which "
+																							 "might be an aspect of biochemistry, physiology, morphology, anatomy, development and so on.");
 
 	if (category_p)
 		{
@@ -877,7 +936,7 @@ static ServiceMetadata *GetFieldTrialIndexingServiceMetadata (Service *service_p
 
 							term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "data_0968";
 							input_p = AllocateSchemaTerm (term_url_s, "Keyword",
-								"Boolean operators (AND, OR and NOT) and wildcard characters may be allowed. Keyword(s) or phrase(s) used (typically) for text-searching purposes.");
+																						"Boolean operators (AND, OR and NOT) and wildcard characters may be allowed. Keyword(s) or phrase(s) used (typically) for text-searching purposes.");
 
 							if (input_p)
 								{
@@ -912,7 +971,7 @@ static ServiceMetadata *GetFieldTrialIndexingServiceMetadata (Service *service_p
 																							/* Phenotype */
 																							term_url_s = CONTEXT_PREFIX_EXPERIMENTAL_FACTOR_ONTOLOGY_S "EFO_0000651";
 																							output_p = AllocateSchemaTerm (term_url_s, "phenotype", "The observable form taken by some character (or group of characters) "
-																								"in an individual or an organism, excluding pathology and disease. The detectable outward manifestations of a specific genotype.");
+																																						 "in an individual or an organism, excluding pathology and disease. The detectable outward manifestations of a specific genotype.");
 
 																							if (output_p)
 																								{
@@ -921,7 +980,7 @@ static ServiceMetadata *GetFieldTrialIndexingServiceMetadata (Service *service_p
 																											/* Genotype */
 																											term_url_s = CONTEXT_PREFIX_EXPERIMENTAL_FACTOR_ONTOLOGY_S "EFO_0000513";
 																											output_p = AllocateSchemaTerm (term_url_s, "genotype", "Information, making the distinction between the actual physical material "
-																												"(e.g. a cell) and the information about the genetic content (genotype).");
+																																										 "(e.g. a cell) and the information about the genetic content (genotype).");
 
 																											if (output_p)
 																												{
