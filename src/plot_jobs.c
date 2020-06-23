@@ -343,7 +343,7 @@ static json_t *GetTableParameterHints (void)
 																{
 																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, "Which replicate is planted in this rack.", PT_UNSIGNED_INT, false, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_RACK_TITLE_S, "The number of this rack within the plot.", PT_UNSIGNED_INT, true, hints_p))
+																			if (AddColumnParameterHint (S_RACK_TITLE_S, "Within the plot, this is the number of the cassette that is filled for drilling.", PT_UNSIGNED_INT, true, hints_p))
 																				{
 																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, "This is the unique identifier from a particular seed/gene bank to identify the material.", PT_STRING, true, hints_p))
 																						{
