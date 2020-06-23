@@ -2159,7 +2159,7 @@ static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet
 						{
 							if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL))
 								{
-									if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Plot height", "The default height, in metres, of each plot", NULL, PL_ALL))
+									if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Plot length", "The default length, in metres, of each plot", NULL, PL_ALL))
 										{
 											return true;
 										}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */

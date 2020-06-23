@@ -1228,7 +1228,7 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 								{
 									param_p -> pa_read_only_flag = true;
 
-									if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Default plot height", "The default height, in metres, of each plot", length_p, PL_ALL))
+									if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Default plot length", "The default length, in metres, of each plot", length_p, PL_ALL))
 										{
 											param_p -> pa_read_only_flag = true;
 
