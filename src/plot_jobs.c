@@ -482,7 +482,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 
 							imported_row_flag = false;
 
-							if (!gene_bank_s)
+							if (IsStringEmpty (gene_bank_s))
 								{
 									/* default to using the GRU */
 									gene_bank_s = "Germplasm Resources Unit";
@@ -543,7 +543,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																							const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
 																							bool control_rep_flag = false;
 
-																							if (rep_s)
+																							if (!IsStringEmpty (rep_s))
 																								{
 																									if (Stricmp (rep_s, RO_REPLICATE_CONTROL_S) == 0)
 																										{
@@ -758,9 +758,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 	GetValidRealFromJSON (table_row_json_p, S_WIDTH_TITLE_S, &width_p);
 	GetValidRealFromJSON (table_row_json_p, S_LENGTH_TITLE_S, &length_p);
 
-
-
-	if (date_s)
+	if (!IsStringEmpty (date_s))
 		{
 			sowing_date_p = GetTimeFromString (date_s);
 
@@ -771,7 +769,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 		}
 
 	date_s = GetJSONString (table_row_json_p, S_HARVEST_TITLE_S);
-	if (date_s)
+	if (!IsStringEmpty (date_s))
 		{
 			harvest_date_p = GetTimeFromString (date_s);
 

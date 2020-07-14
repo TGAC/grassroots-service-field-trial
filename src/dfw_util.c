@@ -25,7 +25,7 @@
 #include "time_util.h"
 #include "string_utils.h"
 #include "schema_keys.h"
-
+#include "math_utils.h"
 
 
 #ifdef _DEBUG
@@ -710,25 +710,60 @@ bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *
 }
 
 
-bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **ph_pp)
+bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **answer_pp)
 {
 	bool success_flag = false;
-	double64 d;
+	bool got_value_flag = false;
+	const json_t *value_p = json_object_get (study_json_p, key_s);
 
-	if (GetJSONReal (study_json_p, key_s, &d))
+	if (value_p)
 		{
-			if (CopyValidReal (&d, ph_pp))
+			double64 d;
+
+			if (json_is_number (value_p))
 				{
-					success_flag = true;
+					if (GetJSONReal (value_p, key_s, &d))
+						{
+							got_value_flag = true;
+						}
+					else
+						{
+
+						}
+				}
+			else if (json_is_string (value_p))
+				{
+					const char *value_s = json_string_value (value_p);
+
+					if (!IsStringEmpty (value_s))
+						{
+							if (GetValidRealNumber (&value_s, &d, NULL))
+								{
+									got_value_flag = true;
+								}
+						}
+					else
+						{
+							success_flag = true;
+						}
 				}
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_json_p, "Failed to copy double value for \"%s\"", key_s);
+					success_flag = true;
 				}
-		}
-	else
-		{
-			success_flag = true;
+
+			if (got_value_flag)
+				{
+					if (CopyValidReal (&d, answer_pp))
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_json_p, "Failed to copy double value for \"%s\"", key_s);
+						}
+				}
+
 		}
 
 	return success_flag;

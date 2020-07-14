@@ -180,7 +180,7 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *s
 
 	if (!url_s)
 		{
-			url_s = "https://grassroots.tools/docs/user/services/field_trial/search_services.md";
+			url_s = "https://grassroots.tools/docs/user/services/field_trial/search_portal.md";
 		}
 
 	return url_s;
