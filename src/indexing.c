@@ -394,6 +394,10 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 				}		/* if (!done_flag) */
 
 		}		/* if (data_p -> dftsd_study_cache_path_s) */
+	else
+		{
+			PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No cache path has been set");
+		}
 
 	return done_flag;
 }

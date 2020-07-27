@@ -722,14 +722,8 @@ bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double
 
 			if (json_is_number (value_p))
 				{
-					if (GetJSONReal (value_p, key_s, &d))
-						{
-							got_value_flag = true;
-						}
-					else
-						{
-
-						}
+					d = json_number_value (value_p);
+					got_value_flag = true;
 				}
 			else if (json_is_string (value_p))
 				{
