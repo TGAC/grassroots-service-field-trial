@@ -101,7 +101,6 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 										}
 								}
 
-
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
