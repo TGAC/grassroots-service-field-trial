@@ -1194,7 +1194,7 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data from Study", false, data_p, params_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data for Study", false, data_p, params_p);
 	struct tm *sowing_date_p = NULL;
 	struct tm *harvest_date_p = NULL;
 	uint32 *num_replicates_p = NULL;

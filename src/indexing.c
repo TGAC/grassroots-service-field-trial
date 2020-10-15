@@ -31,6 +31,35 @@
 #include "string_utils.h"
 #include "math_utils.h"
 #include "time_util.h"
+#include <bits/types/struct_tm.h>
+#include <stddef.h>
+#include <string.h>
+#include <time.h>
+#include "../../../core/server/lucene/include/lucene_tool.h"
+#include "../../../core/server/server/include/grassroots_server.h"
+#include "../../../core/server/services/include/providers_state_table.h"
+#include "../../../core/server/services/include/schema_term.h"
+#include "../../../core/server/services/include/service.h"
+#include "../../../core/server/services/include/service_job.h"
+#include "../../../core/server/services/include/service_metadata.h"
+#include "../../../core/shared/handler/include/handler.h"
+#include "../../../core/shared/parameters/include/parameter.h"
+#include "../../../core/shared/parameters/include/parameter_group.h"
+#include "../../../core/shared/parameters/include/parameter_set.h"
+#include "../../../core/shared/parameters/include/parameter_type.h"
+#include "../../../core/shared/parameters/include/string_parameter.h"
+#include "../../../core/shared/util/include/containers/linked_list.h"
+#include "../../../core/shared/util/include/containers/string_linked_list.h"
+#include "../../../core/shared/util/include/data_resource.h"
+#include "../../../core/shared/util/include/io/filesystem_utils.h"
+#include "../../../core/shared/util/include/io/streams.h"
+#include "../../../core/shared/util/include/json_util.h"
+#include "../../../core/shared/util/include/memory_allocations.h"
+#include "../../../core/shared/util/include/operation.h"
+#include "../../../core/shared/util/include/schema_keys.h"
+#include "../../../core/shared/util/include/typedefs.h"
+#include "../../../core/shared/util/include/user_details.h"
+#include "../include/dfw_field_trial_service_data.h"
 
 /*
  * Static declarations
@@ -525,37 +554,83 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 																													if (json_array_append_new (files_array_p, file_p) == 0)
 																														{
 																															added_flag = true;
+																														}		/* if (json_array_append_new (files_array_p, file_p) == 0) */
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, file_p, "Failed to add json item for \"%s\"", node_p -> sln_string_s);
 																														}
 
+																												}		/* if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "fileSize", size_s)) */
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, file_p, "Failed to set \"%s\": \"%s\" for \"%s\"", CONTEXT_PREFIX_SCHEMA_ORG_S "fileSize", size_s, node_p -> sln_string_s);
 																												}
 
 																											FreeCopiedString (size_s);
+																										}		/* if (size_s) */
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "ConcatenateStrings failed for \"%s\" and \" B\" for \"%s\"", bytes_s, node_p -> sln_string_s);
 																										}
 
 																									FreeCopiedString (bytes_s);
+																								}		/* if (bytes_s) */
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to get size as string from " SIZET_FMT " for  \"%s\"", info.fi_size, node_p -> sln_string_s);
 																								}
 
-
+																						}		/* if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "DateTime", time_s)) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, file_p, "Failed to set \"%s\": \"%s\" for \"%s\"", CONTEXT_PREFIX_SCHEMA_ORG_S "DateTime", time_s, node_p -> sln_string_s);
 																						}
 
 																					FreeCopiedString (time_s);
+																				}		/* if (time_s) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, file_p, "GetTimeAsString for \"%s\"", node_p -> sln_string_s);
 																				}
 
+																		}		/* if (localtime_r (& (info.fi_last_modified), &timestamp)) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, file_p, "Failed to calculate local time for \"%s\"", node_p -> sln_string_s);
 																		}
+
+																}		/* if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "name", filename_s)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, file_p, "Failed to set \"%s\": \"%s\" for \"%s\"", CONTEXT_PREFIX_SCHEMA_ORG_S "name", filename_s, node_p -> sln_string_s);
 																}
+
 
 															if (!added_flag)
 																{
 																	json_decref (file_p);
 																}
-														}		/* if (file_p) */
 
+														}		/* if (file_p) */
+													else
+														{
+															PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to allocate JSON cache data for \"%s\"", node_p -> sln_string_s);
+														}
+
+												}		/* if (filename_s) */
+											else
+												{
+													PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Could not determine local filename from \"%s\"", node_p -> sln_string_s);
 												}
 
 										}		/* if (CalculateFileInformation (node_p -> sln_string_s, &info)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "CalculateFileInformation failed for in \"%s\"", node_p -> sln_string_s);
+										}
 
 									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
-								}
+								}		/* while (node_p) */
 
 							array_size = json_array_size (files_array_p);
 
@@ -578,13 +653,19 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 												{
 													json_decref (dest_record_p);
 													status = OS_FAILED;
+													PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "AddResultToServiceJob failed for cached files in \"%s\"", data_p -> dftsd_study_cache_path_s);
 												}
 
 										}		/* if (dest_record_p) */
 									else
 										{
 											status = OS_FAILED;
+											PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "GetResourceAsJSONByParts failed for cached files in \"%s\"", data_p -> dftsd_study_cache_path_s);
 										}
+								}		/* if (status != OS_FAILED */
+							else
+								{
+									PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed getting cached files data in \"%s\"", data_p -> dftsd_study_cache_path_s);
 								}
 
 						}
@@ -592,10 +673,16 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 					SetServiceJobStatus (job_p, status);
 					FreeLinkedList (filenames_p);
 				}		/* if (filenames_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "No cached files in \"%s\"", data_p -> dftsd_study_cache_path_s);
+				}
 
 		}		/* if (data_p -> dftsd_study_cache_path_s) */
-
-
+	else
+		{
+			PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "No studies cache path set");
+		}
 
 }
 
