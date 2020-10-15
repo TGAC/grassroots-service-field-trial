@@ -20,6 +20,11 @@
  *      Author: billy
  */
 
+#include <stddef.h>
+#include <string.h>
+#include <time.h>
+
+
 #include "indexing.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -31,35 +36,32 @@
 #include "string_utils.h"
 #include "math_utils.h"
 #include "time_util.h"
-#include <bits/types/struct_tm.h>
-#include <stddef.h>
-#include <string.h>
-#include <time.h>
-#include "../../../core/server/lucene/include/lucene_tool.h"
-#include "../../../core/server/server/include/grassroots_server.h"
-#include "../../../core/server/services/include/providers_state_table.h"
-#include "../../../core/server/services/include/schema_term.h"
-#include "../../../core/server/services/include/service.h"
-#include "../../../core/server/services/include/service_job.h"
-#include "../../../core/server/services/include/service_metadata.h"
-#include "../../../core/shared/handler/include/handler.h"
-#include "../../../core/shared/parameters/include/parameter.h"
-#include "../../../core/shared/parameters/include/parameter_group.h"
-#include "../../../core/shared/parameters/include/parameter_set.h"
-#include "../../../core/shared/parameters/include/parameter_type.h"
-#include "../../../core/shared/parameters/include/string_parameter.h"
-#include "../../../core/shared/util/include/containers/linked_list.h"
-#include "../../../core/shared/util/include/containers/string_linked_list.h"
-#include "../../../core/shared/util/include/data_resource.h"
-#include "../../../core/shared/util/include/io/filesystem_utils.h"
-#include "../../../core/shared/util/include/io/streams.h"
-#include "../../../core/shared/util/include/json_util.h"
-#include "../../../core/shared/util/include/memory_allocations.h"
-#include "../../../core/shared/util/include/operation.h"
-#include "../../../core/shared/util/include/schema_keys.h"
-#include "../../../core/shared/util/include/typedefs.h"
-#include "../../../core/shared/util/include/user_details.h"
-#include "../include/dfw_field_trial_service_data.h"
+
+#include "lucene_tool.h"
+#include "grassroots_server.h"
+#include "providers_state_table.h"
+#include "schema_term.h"
+#include "service.h"
+#include "service_job.h"
+#include "service_metadata.h"
+#include "handler.h"
+#include "parameter.h"
+#include "parameter_group.h"
+#include "parameter_set.h"
+#include "parameter_type.h"
+#include "string_parameter.h"
+#include "linked_list.h"
+#include "string_linked_list.h"
+#include "data_resource.h"
+#include "filesystem_utils.h"
+#include "streams.h"
+#include "json_util.h"
+#include "memory_allocations.h"
+#include "operation.h"
+#include "schema_keys.h"
+#include "typedefs.h"
+#include "user_details.h"
+#include "dfw_field_trial_service_data.h"
 
 /*
  * Static declarations
