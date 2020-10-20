@@ -44,6 +44,24 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 };
 
 
+static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
+{
+	"Field Trial",
+	"Study",
+	"Location",
+	"Plot",
+/*	"Grassroots:Row", */
+ 	"Material",
+	"Drilling",
+	"Phenotype",
+	"Observation",
+	"Instrument",
+	"Gene Bank",
+	"Crop"
+};
+
+
+
 FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) AllocMemory (sizeof (FieldTrialServiceData));
@@ -140,6 +158,19 @@ const char *GetDatatypeAsString (const DFWFieldTrialData data_type)
 	if (data_type < DFTD_NUM_TYPES)
 		{
 			type_s =  * (S_TYPES_SS + data_type);
+		}
+
+	return type_s;
+}
+
+
+const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type)
+{
+	const char *type_s = NULL;
+
+	if (data_type < DFTD_NUM_TYPES)
+		{
+			type_s =  * (S_TYPE_DESCRIPTIONS_SS + data_type);
 		}
 
 	return type_s;

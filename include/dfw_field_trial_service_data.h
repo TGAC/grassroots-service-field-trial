@@ -285,6 +285,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool ConfigureFieldTrialService (FieldTrialService
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const DFWFieldTrialData data_type);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const char *type_s);
 
 

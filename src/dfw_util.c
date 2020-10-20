@@ -550,9 +550,17 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 	if (type_s)
 		{
-			if (SetJSONString (doc_p, "@type", type_s))
+			const char *description_s = GetDatatypeAsString (data_type);
+
+			if (description_s)
 				{
-					success_flag = true;
+					if (SetJSONString (doc_p, INDEXING_TYPE_S, type_s))
+						{
+							if (SetJSONString (doc_p, INDEXING_TYPE_DESCRIPTION_S, description_s))
+								{
+									success_flag = true;
+								}
+						}
 				}
 		}
 
