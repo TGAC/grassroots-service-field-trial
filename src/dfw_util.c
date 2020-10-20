@@ -550,7 +550,7 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 	if (type_s)
 		{
-			const char *description_s = GetDatatypeAsString (data_type);
+			const char *description_s = GetDatatypeDescriptionAsString (data_type);
 
 			if (description_s)
 				{
@@ -560,8 +560,25 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 								{
 									success_flag = true;
 								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, doc_p, "SetJSONString () failed for \"%s\": \"%s\"", INDEXING_TYPE_DESCRIPTION_S, description_s);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, doc_p, "SetJSONString () failed for \"%s\": \"%s\"", INDEXING_TYPE_S, type_s);
 						}
 				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetDatatypeDescriptionAsString () failed for %d", data_type);
+				}
+
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetDatatypeAsString () failed for %d", data_type);
 		}
 
 	return success_flag;
