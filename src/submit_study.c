@@ -53,6 +53,8 @@ static bool CloseStudySubmissionService (Service *service_p);
 
 static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p);
 
+static json_t *GetStudyIndexingData (Service *service_p);
+
 
 /*
  * API definitions
@@ -85,7 +87,7 @@ Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetStudySubmissionServiceMetadata,
-														 NULL,
+														 GetStudyIndexingData,
 														 grassroots_p))
 						{
 
@@ -397,6 +399,47 @@ static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p)
 	else
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate category term %s for service metadata", term_url_s);
+		}
+
+	return NULL;
+}
+
+
+static json_t *GetStudyIndexingData (Service *service_p)
+{
+	json_t *indexing_docs_p = json_array ();
+
+	if (indexing_docs_p)
+		{
+			FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+			json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
+
+			if (src_studies_p)
+				{
+					if (json_is_array (src_studies_p))
+						{
+							size_t i;
+							json_t *src_study_p;
+
+							json_array_foreach (src_studies_p, i, src_study_p)
+								{
+
+								}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+
+						}		/* if (json_is_array (src_studies_p)) */
+
+					json_decref (src_studies_p);
+				}		/* if (src_studies_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No studies for \"%s\"", GetServiceName (service_p));
+				}
+
+			return indexing_docs_p;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate indexing_docs_p for \"%s\"", GetServiceName (service_p));
 		}
 
 	return NULL;
