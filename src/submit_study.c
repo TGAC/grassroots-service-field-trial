@@ -407,39 +407,64 @@ static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p)
 
 static json_t *GetStudyIndexingData (Service *service_p)
 {
-	json_t *indexing_docs_p = json_array ();
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+	json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
 
-	if (indexing_docs_p)
+	if (src_studies_p)
 		{
-			FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-			json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
-
-			if (src_studies_p)
+			if (json_is_array (src_studies_p))
 				{
-					if (json_is_array (src_studies_p))
+					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+					size_t i;
+					json_t *src_study_p;
+					size_t num_added = 0;
+
+					json_array_foreach (src_studies_p, i, src_study_p)
 						{
-							size_t i;
-							json_t *src_study_p;
+							bson_oid_t id;
 
-							json_array_foreach (src_studies_p, i, src_study_p)
+							if (GetMongoIdFromJSON (src_study_p, &id))
 								{
+									json_t *phenotypes_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
 
-								}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+									if (phenotypes_p)
+										{
+											if (json_object_set_new (src_study_p, "phenotypes", phenotypes_p) == 0)
+												{
+													++ num_added;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add phenotypes");
+													json_decref (phenotypes_p);
+												}
+										}
 
-						}		/* if (json_is_array (src_studies_p)) */
+									if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
+										{
 
-					json_decref (src_studies_p);
-				}		/* if (src_studies_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No studies for \"%s\"", GetServiceName (service_p));
-				}
+											json_object_del (src_study_p, ST_PARENT_FIELD_TRIAL_S);
+										}
 
-			return indexing_docs_p;
-		}
+									if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
+										{
+
+											json_object_del (src_study_p, ST_LOCATION_ID_S);
+										}
+
+									json_object_del (src_study_p, MONGO_ID_S);
+
+								}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
+
+						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+
+				}		/* if (json_is_array (src_studies_p)) */
+
+			return src_studies_p;
+		}		/* if (src_studies_p) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate indexing_docs_p for \"%s\"", GetServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No studies for \"%s\"", GetServiceName (service_p));
 		}
 
 	return NULL;

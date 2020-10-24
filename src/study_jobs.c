@@ -46,6 +46,7 @@
 #include "signed_int_parameter.h"
 #include "unsigned_int_parameter.h"
 #include "json_parameter.h"
+#include "mongodb_tool.h"
 
 
 /*
@@ -129,6 +130,10 @@ static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet
 
 
 static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, FieldTrialServiceData *dfw_data_p);
+
+
+static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p);
+
 
 /*
  * API DEFINITIONS
@@ -1416,11 +1421,11 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 									if (reply_p)
 										{
 											size_t length;
-											json_t *results_p = ConvertBSONValueToJSON (reply_p);
+											json_t *results_p = ConvertBSONToJSON (reply_p);
 
 											if (results_p)
 												{
-													json_t *oid_values_p = json_object_get ("values");
+													json_t *oid_values_p = json_object_get (results_p, "values");
 
 													if (oid_values_p)
 														{
@@ -1536,7 +1541,7 @@ static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p)
 				{
 					if (SetJSONString (value_p, INDEXING_DESCRIPTION_S, term_p -> st_description_s))
 						{
-							if (json_array_append_new (phenotypes_p, value_p))
+							if (json_array_append_new (phenotypes_p, value_p) == 0)
 								{
 									return true;
 								}
