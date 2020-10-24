@@ -34,6 +34,11 @@
 #include "key_value_pair.h"
 #include "time_util.h"
 
+#include "plot.h"
+#include "row.h"
+#include "observation.h"
+
+
 #include "string_parameter.h"
 #include "double_parameter.h"
 #include "time_parameter.h"
@@ -1380,6 +1385,172 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
 }
 
 
+
+json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
+{
+	json_t *phenotypes_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+		{
+			char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
+
+
+			if (key_s)
+				{
+					bson_t *command_p = BCON_NEW ("distinct",
+																 BCON_UTF8 (data_p -> dftsd_collection_ss [DFTD_PLOT]),
+																 "key",
+																 BCON_UTF8 (key_s),
+																 "query",
+																 "{",
+																 PL_PARENT_STUDY_S,
+																 BCON_OID (study_id_p),
+																 "}");
+
+					if (command_p)
+						{
+							bson_t *reply_p = NULL;
+
+							if (RunMongoCommand (data_p -> dftsd_mongo_p, command_p, &reply_p))
+								{
+									if (reply_p)
+										{
+											size_t length;
+											json_t *results_p = ConvertBSONValueToJSON (reply_p);
+
+											if (results_p)
+												{
+													json_t *oid_values_p = json_object_get ("values");
+
+													if (oid_values_p)
+														{
+															if (json_is_array (oid_values_p))
+																{
+																	phenotypes_p = json_array ();
+
+																	if (phenotypes_p)
+																		{
+																			json_t *oid_value_p;
+																			size_t i;
+
+																			json_array_foreach (oid_values_p, i, oid_value_p)
+																				{
+																					const char *oid_s = GetJSONString (oid_value_p, "$oid");
+
+																					if (oid_s)
+																						{
+																							bson_oid_t *phenotype_id_p = GetBSONOidFromString (oid_s);
+
+																							if (phenotype_id_p)
+																								{
+																									MeasuredVariable *variable_p = GetMeasuredVariableById (phenotype_id_p, data_p);
+
+																									if (variable_p)
+																										{
+																											AddTermToJSON (variable_p -> mv_trait_term_p, phenotypes_p);
+																											AddTermToJSON (variable_p -> mv_measurement_term_p, phenotypes_p);
+
+																											FreeMeasuredVariable (variable_p);
+																										}		/* if (variable_p) */
+
+																								}		/* if (phenotype_id_p) */
+
+																						}		/* if (oid_s) */
+
+																				}		/* json_array_foreach (oids_p, i, oid_p) */
+
+																		}		/* if (phenotypes_p) */
+
+
+																}		/* if (json_is_array (oids_p)) */
+
+														}		/* if (oids_p) */
+
+
+													json_decref (results_p);
+												}		/* if (results_p) */
+
+
+											bson_destroy (reply_p);
+										}		/* if (reply_p) */
+									else
+										{
+											size_t length;
+											char *json_s = bson_as_json (command_p, &length);
+
+											if (json_s)
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply for \"%s\"", json_s);
+													bson_free (json_s);
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply");
+												}
+
+										}
+								}		/* if (RunMongoCommand (data_p -> dftsd_mongo_p, command_p, &reply_p)) */
+							else
+								{
+									size_t length;
+									char *json_s = bson_as_json (command_p, &length);
+
+									if (json_s)
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand failed for \"%s\"", json_s);
+											bson_free (json_s);
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand failed");
+										}
+								}
+
+							bson_destroy (command_p);
+						}		/* if (command_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create command");
+						}
+
+					FreeCopiedString (key_s);
+				}		/* if (key_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
+				}
+		}
+
+
+	return phenotypes_p;
+}
+
+
+static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p)
+{
+	json_t *value_p = json_object ();
+
+	if (value_p)
+		{
+			if (SetJSONString (value_p, INDEXING_NAME_S, term_p -> st_name_s))
+				{
+					if (SetJSONString (value_p, INDEXING_DESCRIPTION_S, term_p -> st_description_s))
+						{
+							if (json_array_append_new (phenotypes_p, value_p))
+								{
+									return true;
+								}
+						}
+
+				}
+
+			json_decref (value_p);
+		}		/* if (value_p) */
+
+	return false;
+}
+
+
 bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
@@ -1682,6 +1853,14 @@ void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, Ser
 	char *study_name_s = NULL;
 	json_t *study_json_p = GetStudyJSONForId (id_s, format, processor_p, &study_name_s, data_p);
 
+	bson_oid_t *study_id_p = GetBSONOidFromString (id_s);
+
+	if (study_id_p)
+		{
+			GetStudyDistinctPhenotypes (study_id_p, data_p);
+		}
+
+
 	if (study_json_p)
 		{
 			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_name_s, study_json_p);
@@ -1733,6 +1912,7 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 
 							for (i = 0; i < num_results; ++ i)
 								{
+									Study *study_p = NULL;
 									json_t *entry_p = json_array_get (results_p, i);
 
 									if (format == VF_CLIENT_FULL)
@@ -1753,7 +1933,7 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 
 										}		/* if (format == VF_CLIENT_FULL) */
 
-									Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
+									study_p = GetStudyFromJSON (entry_p, format, data_p);
 
 									if (study_p)
 										{
