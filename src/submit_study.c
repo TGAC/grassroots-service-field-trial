@@ -442,17 +442,63 @@ static json_t *GetStudyIndexingData (Service *service_p)
 
 									if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
 										{
+											FieldTrial *trial_p = GetFieldTrialById (&id, VF_STORAGE, data_p);
 
 											json_object_del (src_study_p, ST_PARENT_FIELD_TRIAL_S);
+
+											if (trial_p)
+												{
+													json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, VF_CLIENT_MINIMAL, data_p);
+
+													if (trial_json_p)
+														{
+															json_object_del (trial_json_p, MONGO_ID_S);
+
+															if (json_object_set_new (src_study_p, ST_PARENT_FIELD_TRIAL_S, trial_json_p) == 0)
+																{
+
+																}
+															else
+																{
+																	json_decref (trial_json_p);
+																}
+														}
+
+													FreeFieldTrial (trial_p);
+												}		/* if (trial_p) */
+
 										}
 
 									if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
 										{
+											Location *location_p = GetLocationById (&id, VF_STORAGE, data_p);
 
 											json_object_del (src_study_p, ST_LOCATION_ID_S);
+
+											if (location_p)
+												{
+													json_t *location_json_p = GetLocationAsJSON (location_p);
+
+													if (location_json_p)
+														{
+															json_object_del (location_json_p, MONGO_ID_S);
+
+															if (json_object_set_new (src_study_p, ST_LOCATION_S, location_json_p) == 0)
+																{
+
+																}
+															else
+																{
+																	json_decref (location_json_p);
+																}
+
+														}
+
+													FreeLocation (location_p);
+												}		/* if (location_p) */
+
 										}
 
-									json_object_del (src_study_p, MONGO_ID_S);
 
 								}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
 
