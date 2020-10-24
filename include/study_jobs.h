@@ -151,6 +151,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FindAndAddStudyToServiceJob (const char *id_s
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **study_name_ss, const FieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctPhenotypes (const Study * const study_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif
