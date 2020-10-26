@@ -70,6 +70,8 @@ PLOT_PREFIX const char *PL_RACK_INDICES_S PLOT_VAL ("rack_indices");
 
 PLOT_PREFIX const char *PL_COMMENT_S PLOT_VAL ("comment");
 
+PLOT_PREFIX const char *PL_URL_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
+
 
 PLOT_PREFIX int32 PL_UNSET_ID PLOT_VAL (INT32_MAX);
 
@@ -119,6 +121,11 @@ typedef struct Plot
 	 */
 	LinkedList *pl_rows_p;
 
+	/**
+	 * A url for any images, data for this plot
+	 */
+	char *pl_link_s;
+
 } Plot;
 
 
@@ -143,11 +150,7 @@ extern "C"
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p,
 																									const uint32 row_index, const uint32 column_index,
-																								 const char *treatments_s, const char *comment_s, Study *parent_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlotFromDrillingData (bson_oid_t *id_p, const struct tm *sowing_date_p, const uint32 plot_index, const uint32 row_index,
-																																	const uint32 column_index, const uint32 replicate, const char *sowing_rate_s, Study *parent_p);
-
+																								 const char *treatments_s, const char *comment_s, const char *url_s, Study *parent_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 
