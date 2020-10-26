@@ -253,6 +253,11 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																																																{
 																																																	if (AddDefaultPlotsParameters (data_p, param_set_p))
 																																																		{
+																																																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Plots GeoJSON", "The GeoJSON for the vertices of the plots layout", shape_p, PL_ALL)) != NULL)
+																																																				{
+																																																					success_flag = true;
+																																																				}
+
 																																																			/*
 																																																			if (AddTreatmentFactorParameters (param_set_p, active_study_p, data_p))
 																																																				{
@@ -264,7 +269,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 																																																				}
 																																																			 */
 
-																																																			success_flag = true;
 																																																		}
 																																																	else
 																																																		{

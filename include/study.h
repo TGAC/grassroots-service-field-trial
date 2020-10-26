@@ -117,7 +117,7 @@ STUDY_PREFIX const char *ST_PLOT_WIDTH_S STUDY_VAL ("plot_width");
 
 STUDY_PREFIX const char *ST_WEATHER_S STUDY_VAL ("weather");
 
-STUDY_PREFIX const char *ST_SHAPE_S STUDY_VAL ("shape_dat");
+STUDY_PREFIX const char *ST_SHAPE_S STUDY_VAL ("shape_data");
 
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
