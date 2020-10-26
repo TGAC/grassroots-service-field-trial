@@ -1862,7 +1862,7 @@ void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, Ser
 
 	if (study_id_p)
 		{
-			GetStudyDistinctPhenotypes (study_id_p, data_p);
+			GetStudyDistinctPhenotypesAsJSON (study_id_p, data_p);
 		}
 
 
