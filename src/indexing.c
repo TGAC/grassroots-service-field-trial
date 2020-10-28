@@ -896,7 +896,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 			if (param_set_p)
 				{
-					const char *id_s = GetParameterFromParameterSetByName (param_set_p, S_REMOVE_STUDY_PLOTS);
+					const char *id_s = NULL;
 
 					if (!RunReindexing (param_set_p, job_p, data_p))
 						{
@@ -908,7 +908,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunCaching failed");
 						}
 
-					if (id_s)
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &id_s))
 						{
 							OperationStatus plot_status = RemovePlotsForStudyById (id_s);
 

@@ -2335,9 +2335,38 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 }
 
 
-OperationStatus RemovePlotsForStudyById (const char *id_s)
+OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+		{
+			bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
+			if (id_p)
+				{
+					bson_t *query_p = bson_new ();
+
+					if (query_p)
+						{
+							if (BSON_APPEND_OID (query_p, PL_PARENT_STUDY_S, id_p))
+								{
+									if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
+										{
+											status = OS_SUCCEEDED;
+										}
+
+								}
+
+							bson_free (query_p);
+						}
+
+					FreeBSONOid (id_p);
+				}		/* if (id_p) */
+
+
+		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
 
 	return status;
 }

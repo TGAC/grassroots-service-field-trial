@@ -155,6 +155,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyJSONForId (const char *id_s, const
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif
