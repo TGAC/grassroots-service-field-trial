@@ -2335,6 +2335,14 @@ Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType stud
 }
 
 
+OperationStatus RemovePlotsForStudyById (const char *id_s)
+{
+	OperationStatus status = OS_FAILED;
+
+	return status;
+}
+
+
 static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p)
 {
 	bool success_flag = false;

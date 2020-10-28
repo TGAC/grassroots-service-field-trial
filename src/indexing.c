@@ -75,6 +75,7 @@ static NamedParameterType S_REINDEX_TRIALS = { "SS Reindex trials", PT_BOOLEAN }
 static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured variables", PT_BOOLEAN };
+static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
 
 
 /*
@@ -181,19 +182,19 @@ Service *GetFieldTrialIndexingService (GrassrootsServer *grassroots_p)
 
 static const char *GetFieldTrialIndexingServiceName (const Service * UNUSED_PARAM (service_p))
 {
-	return "Manage Field Trial indexes";
+	return "Manage Field Trial data";
 }
 
 
 static const char *GetFieldTrialIndexingServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "A service to index field trial data";
+	return "A service to manage field trial data";
 }
 
 
 static const char *GetFieldTrialIndexingServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "indexing";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "manager";
 }
 
 
@@ -895,6 +896,8 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 			if (param_set_p)
 				{
+					const char *id_s = GetParameterFromParameterSetByName (param_set_p, S_REMOVE_STUDY_PLOTS);
+
 					if (!RunReindexing (param_set_p, job_p, data_p))
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunReindexing failed");
@@ -904,6 +907,16 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunCaching failed");
 						}
+
+					if (id_s)
+						{
+							OperationStatus plot_status = RemovePlotsForStudyById (id_s);
+
+							if (plot_status != OS_SUCCEEDED)
+								{
+
+								}
+						}		/* if (id_s) */
 
 				}
 		}
@@ -944,6 +957,10 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_CACHE_LIST.npt_type;
 		}
+	else if (strcmp (param_name_s, S_REMOVE_STUDY_PLOTS.npt_name_s) == 0)
+		{
+			*pt_p = S_REMOVE_STUDY_PLOTS.npt_type;
+		}
 	else
 		{
 			success_flag = false;
@@ -966,23 +983,28 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 			ParameterGroup *indexing_group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
 			bool b = false;
 
-			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ADVANCED)) != NULL)
+			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ADVANCED)) != NULL)
+					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ADVANCED)) != NULL)
+							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ADVANCED)) != NULL)
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ADVANCED)) != NULL)
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ALL)) != NULL)
 												{
 													ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
 
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ADVANCED)) != NULL)
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ADVANCED)) != NULL)
+															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
 																{
-																	return params_p;
+																	ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", &b, PL_ALL)) != NULL)
+																		{
+																			return params_p;
+																		}
 																}
 														}
 												}
