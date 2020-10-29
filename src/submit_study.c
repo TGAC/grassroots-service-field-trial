@@ -425,20 +425,28 @@ static json_t *GetStudyIndexingData (Service *service_p)
 
 							if (GetMongoIdFromJSON (src_study_p, &id))
 								{
-									json_t *phenotypes_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
+									json_t *values_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
 
-									if (phenotypes_p)
+									if (values_p)
 										{
-											if (json_object_set_new (src_study_p, "phenotypes", phenotypes_p) == 0)
-												{
-													++ num_added;
-												}
-											else
+											if (json_object_set_new (src_study_p, "phenotypes", values_p) != 0)
 												{
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add phenotypes");
-													json_decref (phenotypes_p);
+													json_decref (values_p);
 												}
 										}
+
+									values_p = GetStudyDistinctAccessionsAsJSON (&id, dfw_data_p);
+
+									if (values_p)
+										{
+											if (json_object_set_new (src_study_p, "accessions", values_p) != 0)
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add accessions");
+													json_decref (values_p);
+												}
+										}
+
 
 									if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
 										{

@@ -910,7 +910,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &id_s))
 						{
-							OperationStatus plot_status = RemovePlotsForStudyById (id_s);
+							OperationStatus plot_status = RemovePlotsForStudyById (id_s, data_p);
 
 							if (plot_status != OS_SUCCEEDED)
 								{
