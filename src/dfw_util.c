@@ -814,6 +814,58 @@ bool GetValidUnsignedIntFromJSON (const json_t *study_json_p, const char *key_s,
 }
 
 
+json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s)
+{
+/*
+	"@context": "https://schema.org",
+  "@type": "ImageObject",
+  "author": "Jane Doe",
+  "contentLocation": "Puerto Vallarta, Mexico",
+  "contentUrl": "mexico-beach.jpg",
+  "datePublished": "2008-01-25",
+  "description": "I took this picture while on vacation last year.",
+  "name": "Beach in Mexico"
+*/
+	json_t *image_json_p = json_object ();
+
+  if (image_json_p)
+  	{
+  		if (SetJSONString (image_json_p, "@type", "ImageObject"))
+  			{
+  	  		if (SetJSONString (image_json_p, "contentUrl", image_url_s))
+  	  			{
+  	  	  		if ((!thumbnail_url_s) || (SetJSONString (image_json_p, "thumbnail", thumbnail_url_s)))
+  	  	  			{
+  	  	  				return image_json_p;
+  	  	  			}		/* if (SetJSONString (image_json_p, "thumbnail, thumbnail_url_s)) */
+  	  				else
+  	  					{
+  	  						PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, image_json_p, "Failed to set \"thumbnail\": \"%s\"", thumbnail_url_s);
+  	  					}
+
+  	  			}		/* if (SetJSONString (image_json_p, "contentUrl", image_url_s)) */
+  				else
+  					{
+  						PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, image_json_p, "Failed to set \"contentUrl\": \"%s\"", image_url_s);
+  					}
+
+  			}		/* if (SetJSONString (image_json_p, "@type", "ImageObject")) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, image_json_p, "Failed to set \"@type\": \"ImageObject\" for \"%s\"", image_url_s);
+				}
+
+  		json_decref (image_json_p);
+  	}		/* if (image_json_p) */
+  else
+  	{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create image object for \"%s\"", image_url_s);
+  	}
+
+  return NULL;
+}
+
+
 
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {

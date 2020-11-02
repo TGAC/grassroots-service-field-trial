@@ -74,7 +74,8 @@ static const char * const S_GENE_BANK_S = "Gene Bank";
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
 static const char * const S_COMMENT_TITLE_S = "Comment";
-static const char * const S_URL_TITLE_S = "Link";
+static const char * const S_IMAGE_TITLE_S = "Image";
+static const char * const S_THUMBNAIL_TITLE_S = "Thumbnail";
 
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
@@ -350,9 +351,12 @@ static json_t *GetTableParameterHints (void)
 																						{
 																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, "Any comments for the plot.", PT_STRING, false, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_URL_TITLE_S, "Any links for more images or data for this plot.", PT_STRING, false, hints_p))
+																									if (AddColumnParameterHint (S_IMAGE_TITLE_S, "The link for an full-sized image of this plot.", PT_STRING, false, hints_p))
 																										{
-																											return hints_p;
+																											if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, "The link for a thumbnail image of this plot.", PT_STRING, false, hints_p))
+																												{
+																													return hints_p;
+																												}
 																										}
 																								}
 																						}
@@ -754,7 +758,8 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 	Plot *plot_p = NULL;
 	const char *treatment_s = GetJSONString (table_row_json_p, S_TREATMENT_TITLE_S);
 	const char *comment_s = GetJSONString (table_row_json_p, S_COMMENT_TITLE_S);
-	const char *link_s = GetJSONString (table_row_json_p, S_URL_TITLE_S);
+	const char *image_s = GetJSONString (table_row_json_p, S_IMAGE_TITLE_S);
+	const char *thumbnail_s = GetJSONString (table_row_json_p, S_THUMBNAIL_TITLE_S);
 	struct tm *sowing_date_p = NULL;
 	struct tm *harvest_date_p = NULL;
 	const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
@@ -784,7 +789,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 				}
 		}
 
-	plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatment_s, comment_s, link_s, study_p);
+	plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatment_s, comment_s, image_s, thumbnail_s, study_p);
 
 	if (plot_p)
 		{

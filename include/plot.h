@@ -70,8 +70,9 @@ PLOT_PREFIX const char *PL_RACK_INDICES_S PLOT_VAL ("rack_indices");
 
 PLOT_PREFIX const char *PL_COMMENT_S PLOT_VAL ("comment");
 
-PLOT_PREFIX const char *PL_URL_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
+PLOT_PREFIX const char *PL_IMAGE_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "image");
 
+PLOT_PREFIX const char *PL_THUMBNAIL_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "thumbnail");
 
 PLOT_PREFIX int32 PL_UNSET_ID PLOT_VAL (INT32_MAX);
 
@@ -122,9 +123,16 @@ typedef struct Plot
 	LinkedList *pl_rows_p;
 
 	/**
-	 * A url for any images, data for this plot
+	 * A url for any images,
 	 */
-	char *pl_link_s;
+	char *pl_image_url_s;
+
+
+	/**
+	 * A url for any images thumbnail,
+	 */
+	char *pl_thumbnail_url_s;
+
 
 } Plot;
 
@@ -148,9 +156,9 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p,
-																									const uint32 row_index, const uint32 column_index,
-																								 const char *treatments_s, const char *comment_s, const char *url_s, Study *parent_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p, const uint32 row_index,
+																									const uint32 column_index, const char *treatments_s, const char *comment_s, const char *image_s, const char *thumbnail_s, Study *parent_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 

@@ -64,17 +64,17 @@ static NamedParameterType S_SEARCH_TRIAL_ID_S = { "Get all studies for this Fiel
 static const uint32 S_UNKNOWN_DIRECTION_INDEX = S_NUM_DIRECTIONS - 1;
 
 static const KeyValuePair S_DIRECTIONS_P [] =
-		{
-				{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
-				{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
-				{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
-				{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
-				{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
-				{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
-				{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
-				{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
-				{ ST_UNKNOWN_DIRECTION_S, ST_UNKNOWN_DIRECTION_S},
-		};
+{
+	{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
+	{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
+	{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
+	{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
+	{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
+	{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
+	{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
+	{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
+	{ ST_UNKNOWN_DIRECTION_S, ST_UNKNOWN_DIRECTION_S},
+};
 
 
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
@@ -114,29 +114,13 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 static const char *GetStudyDefaultValueFromJSON (const char *study_id_param_s, const json_t *params_json_p);
 
 
-static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
-																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
-																						const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp,
-																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp,
-																						const char **weather_ss, const json_t **shape_pp,
-																						double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
-																						uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
-																						double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp);
+static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss);
 
 
-
-static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
-													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
-														const char **phenotype_gathering_notes_ss,struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp,
-														double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
-														uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
-														double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp);
-
-static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p);
+static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params_p, const Study *study_p);
 
 
-static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, FieldTrialServiceData *dfw_data_p);
+static bool AddLayoutParams (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *dfw_data_p);
 
 
 static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p);
@@ -156,69 +140,38 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
  * API DEFINITIONS
  */
 
-bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Resource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, params_p);
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 
+	Study *active_study_p = GetStudyFromResource (resource_p, STUDY_ID, dfw_data_p);
+	bool defaults_flag = false;
+
 	char *id_s = NULL;
-	const char *name_s = NULL;
-	const char *soil_s = NULL;
-	const char *link_s = NULL;
-	const char *slope_s = NULL;
-	const char *aspect_s = NULL;
 	char *this_crop_s= NULL;
 	char *previous_crop_s = NULL;
 	char *trial_s = NULL;
 	char *location_s = NULL;
-	const char *description_s = NULL;
-	struct tm *sowing_time_p = NULL;
-	struct tm *harvest_time_p = NULL;
-	Study *active_study_p = GetStudyFromResource (resource_p, STUDY_ID, dfw_data_p);
-	bool defaults_flag = false;
-	double64 *ph_min_p = NULL;
-	double64 *ph_max_p = NULL;
-	const char *growing_conditions_s = NULL;
-	const char *design_s = NULL;
-	const char *phenotype_notes_s = NULL;
-	const char *weather_s = NULL;
-	const json_t *shape_p = NULL;
-	double64 *plot_horizontal_gap_p = NULL;
-	double64 *plot_vertical_gap_p = NULL;
-	uint32 *plots_rows_per_block_p = NULL;
-	uint32 *plots_columns_per_block_p = NULL;
-	double64 *plot_block_horizontal_gap_p = NULL;
-	double64 *plot_block_vertical_gap_p = NULL;
-
 
 	if (active_study_p)
 		{
-			if (SetUpDefaultsFromExistingStudy (active_study_p, &id_s, &name_s, &soil_s, &link_s, &slope_s, &aspect_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s, &description_s,
-																					&design_s, &growing_conditions_s, &phenotype_notes_s, &sowing_time_p, &harvest_time_p, &ph_min_p, &ph_max_p,
-																					&weather_s, &shape_p,
-																					&plot_horizontal_gap_p, &plot_vertical_gap_p, &plots_rows_per_block_p, &plots_columns_per_block_p,
-																					&plot_block_horizontal_gap_p, &plot_block_vertical_gap_p))
+			if (SetUpDefaultsFromExistingStudy (active_study_p, &id_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s))
 				{
 					defaults_flag = true;
 				}
 		}
 	else
 		{
-			if (SetUpDefaults (&id_s, &name_s, &soil_s, &link_s, &slope_s, &aspect_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s, &description_s,
-												 &design_s, &growing_conditions_s, &phenotype_notes_s, &sowing_time_p, &harvest_time_p, &ph_min_p, &ph_max_p,
-												 &weather_s, &shape_p,
-												&plot_horizontal_gap_p, &plot_vertical_gap_p, &plots_rows_per_block_p, &plots_columns_per_block_p,
-												&plot_block_horizontal_gap_p, &plot_block_vertical_gap_p))
-				{
-					defaults_flag = true;
-				}
+			id_s = (char *) S_EMPTY_LIST_OPTION_S;
+			defaults_flag = true;
 		}
 
 	if (defaults_flag)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", id_s, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", id_s, PL_ALL)) != NULL)
 				{
 					if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
 						{
@@ -231,57 +184,56 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 							 */
 							param_p -> pa_refresh_service_flag = true;
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", name_s, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", active_study_p ? active_study_p -> st_name_s : NULL, PL_ALL)) != NULL)
 								{
 									param_p -> pa_required_flag = true;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SOIL.npt_type, STUDY_SOIL.npt_name_s, "Soil", "The soil of the Study", soil_s, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SOIL.npt_type, STUDY_SOIL.npt_name_s, "Soil", "The soil of the Study", active_study_p ? active_study_p -> st_soil_type_s : NULL, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", link_s, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", active_study_p ? active_study_p -> st_data_url_s : NULL, PL_ALL)) != NULL)
 												{
-
-													if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Study", sowing_time_p, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Sowing date", "The sowing year for the Study", active_study_p ? active_study_p -> st_sowing_date_p : NULL, PL_ALL)) != NULL)
 														{
 
-															if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, param_set_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Study", harvest_time_p, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Harvest date", "The harvest date for the Study", active_study_p ? active_study_p -> st_harvest_date_p : NULL, PL_ALL)) != NULL)
 																{
-																	param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_FIELD_TRIALS_LIST.npt_type, STUDY_FIELD_TRIALS_LIST.npt_name_s, "Field trials", "The available field trials", trial_s, PL_ALL);
+																	param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_FIELD_TRIALS_LIST.npt_type, STUDY_FIELD_TRIALS_LIST.npt_name_s, "Field trials", "The available field trials", trial_s, PL_ALL);
 
 																	if (param_p)
 																		{
-																			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, false))
+																			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_parent_p : NULL, false))
 																				{
-																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL)) != NULL)
+																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL)) != NULL)
 																						{
-																							if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, NULL))
+																							if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_location_p : NULL, NULL))
 																								{
-																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the study", description_s, PL_ALL)) != NULL)
+																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the study", active_study_p ? active_study_p -> st_description_s : NULL, PL_ALL)) != NULL)
 																										{
-																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", design_s, PL_ALL)) != NULL)
+																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", active_study_p ? active_study_p -> st_design_s : NULL, PL_ALL)) != NULL)
 																												{
-																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_GROWING_CONDITIONS.npt_type, STUDY_GROWING_CONDITIONS.npt_name_s, "Growing Conditions", "Information about the Growing conditions", growing_conditions_s, PL_ALL)) != NULL)
+																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_GROWING_CONDITIONS.npt_type, STUDY_GROWING_CONDITIONS.npt_name_s, "Growing Conditions", "Information about the Growing conditions", active_study_p ? active_study_p -> st_growing_conditions_s : NULL, PL_ALL)) != NULL)
 																														{
-																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype Gathering", "Notes on how the Phenotype information was gathered", phenotype_notes_s, PL_ALL)) != NULL)
+																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype Gathering", "Notes on how the Phenotype information was gathered", active_study_p ? active_study_p -> st_phenotype_gathering_notes_s : NULL, PL_ALL)) != NULL)
 																																{
-																																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", weather_s, PL_ALL)) != NULL)
+																																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", active_study_p ? active_study_p -> st_weather_link_s : NULL, PL_ALL)) != NULL)
 																																		{
-																																			if (AddLayoutParams (param_set_p, aspect_s, slope_s, shape_p, dfw_data_p))
+																																			if (AddLayoutParams (params_p, active_study_p, dfw_data_p))
 																																				{
-																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", this_crop_s, PL_ALL)) != NULL)
+																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", this_crop_s, PL_ALL)) != NULL)
 																																						{
 																																							if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
 																																								{
-																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
+																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
 																																										{
 																																											if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, S_UNKNOWN_CROP_OPTION_S))
 																																												{
-																																													if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
+																																													if (AddPhParameter (data_p, params_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
 																																														{
-																																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																															if (AddPhParameter (data_p, params_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
 																																																{
-																																																	if (AddDefaultPlotsParameters (data_p, param_set_p))
+																																																	if (AddDefaultPlotsParameters (data_p, params_p, active_study_p))
 																																																		{
-																																																			if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Plots GeoJSON", "The GeoJSON for the vertices of the plots layout", shape_p, PL_ALL)) != NULL)
+																																																			if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Plots GeoJSON", "The GeoJSON for the vertices of the plots layout", active_study_p ? active_study_p -> st_shape_p : NULL, PL_ALL)) != NULL)
 																																																				{
 																																																					success_flag = true;
 																																																				}
@@ -464,19 +416,64 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 }
 
 
-static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, const char *slope_s, const json_t *shape_data_p, FieldTrialServiceData *dfw_data_p)
+
+static bool AddLayoutParams (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *dfw_data_p)
 {
 	ServiceData *data_p = & (dfw_data_p -> dftsd_base_data);
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Layout", false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Layout", false, data_p, params_p);
 	Parameter *param_p;
 
-	if ((param_p = GetAndAddAspectParameter (aspect_s, dfw_data_p, param_set_p, group_p)) != NULL)
+	if ((param_p = GetAndAddAspectParameter (study_p ? study_p -> st_aspect_s : NULL, dfw_data_p, params_p, group_p)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", slope_s, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", study_p ? study_p -> st_slope_s : NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, param_set_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Shape data", "The shape data for the plots in GeoJSON format", shape_data_p, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Shape data", "The shape data for the plots in GeoJSON format", study_p ? study_p -> st_shape_p : NULL, PL_ALL)) != NULL)
 						{
-							return true;
+							if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_HGAP.npt_type, STUDY_PLOT_HGAP.npt_name_s, "Horizontal plot gap", "The distance (in metres) between plots in a row.", study_p ? study_p -> st_plot_horizontal_gap_p : NULL, PL_ALL))
+								{
+									if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_VGAP.npt_type, STUDY_PLOT_VGAP.npt_name_s, "Vertical plot gap", "The distance (in metres) between plots in a column.", study_p ? study_p -> st_plot_vertical_gap_p : NULL, PL_ALL))
+										{
+											if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s, "Plot rows per block", "The number of rows of plots in a block", study_p ? study_p -> st_plots_rows_per_block_p : NULL, PL_ALL))
+												{
+													if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s, "Plot columns per block", "The number of columns of plots in a block", study_p ? study_p -> st_plots_columns_per_block_p : NULL, PL_ALL))
+														{
+															if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_BLOCK_HGAP.npt_type, STUDY_PLOT_BLOCK_HGAP.npt_name_s, "Horizontal plot block gap", "The distance (in metres) between blocks of plots in a row.", study_p ? study_p -> st_plot_block_horizontal_gap_p : NULL, PL_ALL))
+																{
+																	if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_BLOCK_VGAP.npt_type, STUDY_PLOT_BLOCK_VGAP.npt_name_s, "Vertical plot block gap", "The distance (in metres) between blocks of plots in a column.", study_p ? study_p -> st_plot_block_vertical_gap_p : NULL, PL_ALL))
+																		{
+																			return true;
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_BLOCK_VGAP.npt_name_s);
+																		}
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_BLOCK_HGAP.npt_name_s);
+																}
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_VGAP.npt_name_s);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s);
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s);
+										}
+
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s);
+								}
+
 						}
 					else
 						{
@@ -490,7 +487,7 @@ static bool AddLayoutParams (ParameterSet *param_set_p, const char *aspect_s, co
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed with aspect \"%s\"", aspect_s ? aspect_s : "NULL");
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAndAddAspectParameter failed with aspect \"%s\"", study_p ? study_p -> st_aspect_s : "NULL");
 		}
 
 	return false;
@@ -621,6 +618,30 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	else if (strcmp (param_name_s, STUDY_SHAPE_DATA.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_SHAPE_DATA.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_ROWS_PER_BLOCK.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_COLS_PER_BLOCK.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_HGAP.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_HGAP.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_VGAP.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_VGAP.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_BLOCK_HGAP.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_BLOCK_HGAP.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_PLOT_BLOCK_VGAP.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_PLOT_BLOCK_VGAP.npt_type;
 		}
 	else
 		{
@@ -972,14 +993,7 @@ static const char *GetStudyDefaultValueFromJSON (const char *study_id_param_s, c
 
 
 
-static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss,
-																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
-																						const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp,
-																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp,
-																						const char **weather_ss, const json_t **shape_pp,
-																						double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
-																						uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
-																						double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp)
+static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss)
 {
 	bool success_flag = false;
 	char *study_id_s = GetBSONOidAsString (study_p -> st_id_p);
@@ -1031,15 +1045,18 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 											if (got_crops_flag)
 												{
 													*id_ss = study_id_s;
+	/*
 													*name_ss = study_p -> st_name_s;
 													*soil_ss = study_p -> st_soil_type_s;
 													*link_ss = study_p -> st_data_url_s;
 													*slope_ss = study_p -> st_slope_s;
 													*aspect_ss = study_p -> st_aspect_s;
+*/
 													*this_crop_ss = current_crop_id_s;
 													*previous_crop_ss = previous_crop_id_s;
 													*trial_ss = field_trial_id_s;
 													*location_ss = location_id_s;
+	/*
 													*description_ss = study_p -> st_description_s;
 													*design_ss = study_p -> st_design_s;
 													*growing_conditons_ss = study_p -> st_growing_conditions_s;
@@ -1056,7 +1073,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 													*plots_cols_per_block_pp = study_p -> st_plots_columns_per_block_p;
 													*plot_block_horizontal_gap_pp = study_p -> st_plot_block_horizontal_gap_p;
 													*plot_block_vertical_gap_pp = study_p -> st_plot_block_vertical_gap_p;
-
+*/
 													return true;
 
 												}		/* if (got_crops_flag) */
@@ -1091,48 +1108,6 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy study id");
 		}
-
-	return success_flag;
-}
-
-
-
-static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
-													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, const char **design_ss, const char **growing_conditons_ss,
-														const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp,
-														double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
-														uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
-														double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp)
-{
-	bool success_flag = true;
-
-	*id_ss = (char *) S_EMPTY_LIST_OPTION_S;
-	*name_ss = NULL;
-	*soil_ss = NULL;
-	*link_ss = NULL;
-	*slope_ss = NULL;
-	*aspect_ss = NULL;
-	*this_crop_ss = NULL;
-	*previous_crop_ss = NULL;
-	*trial_ss = NULL;
-	*location_ss = NULL;
-	*notes_ss = NULL;
-	*design_ss = NULL;
-	*growing_conditons_ss = NULL;
-	*phenotype_gathering_notes_ss = NULL;
-	*sowing_time_pp = NULL;
-	*harvest_time_pp = NULL;
-	*ph_min_pp = NULL;
-	*ph_max_pp = NULL;
-	*weather_ss = NULL;
-	*shape_pp = NULL;
-	*plot_horizontal_gap_pp = NULL;
-	*plot_vertical_gap_pp = NULL;
-	*plots_rows_per_block_pp = NULL;
-	*plots_cols_per_block_pp = NULL;
-	*plot_block_horizontal_gap_pp = NULL;
-	*plot_block_vertical_gap_pp = NULL;
 
 	return success_flag;
 }
@@ -2507,20 +2482,20 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
-static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p)
+static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params_p, const Study *study_p)
 {
 	bool success_flag = false;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data", false, service_data_p, params_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data", false, data_p, params_p);
 
-	if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Number of plot rows", "The number of plot rows", NULL, PL_ALL))
+	if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Number of plot rows", "The number of plot rows", study_p ? study_p -> st_num_rows_p : NULL, PL_ALL))
 		{
-			if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_COLS.npt_name_s, "Number of plot columns", "The number of plot columns", NULL, PL_ALL))
+			if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_PLOT_COLS.npt_name_s, "Number of plot columns", "The number of plot columns", study_p ? study_p -> st_num_columns_p : NULL, PL_ALL))
 				{
-					if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Number of replicates", "The number of replicates", NULL, PL_ALL))
+					if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Number of replicates", "The number of replicates", study_p ? study_p -> st_num_replicates_p : NULL, PL_ALL))
 						{
-							if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL))
+							if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Plot width", "The default width, in metres, of each plot", study_p ? study_p -> st_default_plot_width_p : NULL, PL_ALL))
 								{
-									if (EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Plot length", "The default length, in metres, of each plot", NULL, PL_ALL))
+									if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Plot length", "The default length, in metres, of each plot", study_p ? study_p -> st_default_plot_length_p : NULL, PL_ALL))
 										{
 											return true;
 										}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */

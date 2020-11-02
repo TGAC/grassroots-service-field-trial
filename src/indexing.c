@@ -1001,7 +1001,7 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																{
 																	ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
 
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", &b, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
 																		{
 																			return params_p;
 																		}

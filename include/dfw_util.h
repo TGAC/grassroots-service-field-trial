@@ -93,6 +93,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidRealFromJSON (const json_t *study_jso
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidUnsignedIntFromJSON (const json_t *study_json_p, const char *key_s, uint32 **value_pp);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s);
+
+
 #ifdef __cplusplus
 }
 #endif
