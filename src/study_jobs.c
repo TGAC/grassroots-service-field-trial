@@ -118,13 +118,20 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
 																						const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp,
 																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp,
-																						const char **weather_ss, const json_t **shape_pp);
+																						const char **weather_ss, const json_t **shape_pp,
+																						double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
+																						uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
+																						double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp);
+
+
 
 static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
 													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
 														const char **phenotype_gathering_notes_ss,struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp);
-
+													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp,
+														double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
+														uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
+														double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp);
 
 static bool AddDefaultPlotsParameters (ServiceData *service_data_p, ParameterSet *params_p);
 
@@ -178,12 +185,21 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 	const char *phenotype_notes_s = NULL;
 	const char *weather_s = NULL;
 	const json_t *shape_p = NULL;
+	double64 *plot_horizontal_gap_p = NULL;
+	double64 *plot_vertical_gap_p = NULL;
+	uint32 *plots_rows_per_block_p = NULL;
+	uint32 *plots_columns_per_block_p = NULL;
+	double64 *plot_block_horizontal_gap_p = NULL;
+	double64 *plot_block_vertical_gap_p = NULL;
+
 
 	if (active_study_p)
 		{
 			if (SetUpDefaultsFromExistingStudy (active_study_p, &id_s, &name_s, &soil_s, &link_s, &slope_s, &aspect_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s, &description_s,
 																					&design_s, &growing_conditions_s, &phenotype_notes_s, &sowing_time_p, &harvest_time_p, &ph_min_p, &ph_max_p,
-																					&weather_s, &shape_p))
+																					&weather_s, &shape_p,
+																					&plot_horizontal_gap_p, &plot_vertical_gap_p, &plots_rows_per_block_p, &plots_columns_per_block_p,
+																					&plot_block_horizontal_gap_p, &plot_block_vertical_gap_p))
 				{
 					defaults_flag = true;
 				}
@@ -192,7 +208,9 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, R
 		{
 			if (SetUpDefaults (&id_s, &name_s, &soil_s, &link_s, &slope_s, &aspect_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s, &description_s,
 												 &design_s, &growing_conditions_s, &phenotype_notes_s, &sowing_time_p, &harvest_time_p, &ph_min_p, &ph_max_p,
-												 &weather_s, &shape_p))
+												 &weather_s, &shape_p,
+												&plot_horizontal_gap_p, &plot_vertical_gap_p, &plots_rows_per_block_p, &plots_columns_per_block_p,
+												&plot_block_horizontal_gap_p, &plot_block_vertical_gap_p))
 				{
 					defaults_flag = true;
 				}
@@ -958,7 +976,10 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 																						char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss, const char **description_ss, const char **design_ss, const char **growing_conditons_ss,
 																						const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp,
 																						struct tm **harvest_time_pp, double64 **ph_min_pp, double64 **ph_max_pp,
-																						const char **weather_ss, const json_t **shape_pp)
+																						const char **weather_ss, const json_t **shape_pp,
+																						double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
+																						uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
+																						double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp)
 {
 	bool success_flag = false;
 	char *study_id_s = GetBSONOidAsString (study_p -> st_id_p);
@@ -1029,6 +1050,12 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 													*ph_max_pp = study_p -> st_max_ph_p;
 													*weather_ss = study_p -> st_weather_link_s;
 													*shape_pp = study_p -> st_shape_p;
+													*plot_horizontal_gap_pp = study_p -> st_plot_horizontal_gap_p;
+													*plot_vertical_gap_pp = study_p -> st_plot_vertical_gap_p;
+													*plots_rows_per_block_pp = study_p -> st_plots_rows_per_block_p;
+													*plots_cols_per_block_pp = study_p -> st_plots_columns_per_block_p;
+													*plot_block_horizontal_gap_pp = study_p -> st_plot_block_horizontal_gap_p;
+													*plot_block_vertical_gap_pp = study_p -> st_plot_block_vertical_gap_p;
 
 													return true;
 
@@ -1073,7 +1100,10 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil_ss, const char **link_ss, const char **slope_ss, const char **aspect_ss, char **this_crop_ss,
 													 char **previous_crop_ss, char **trial_ss, char **location_ss, const char **notes_ss, const char **design_ss, const char **growing_conditons_ss,
 														const char **phenotype_gathering_notes_ss, struct tm **sowing_time_pp, struct tm **harvest_time_pp,
-													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp)
+													 double64 **ph_min_pp, double64 **ph_max_pp, const char **weather_ss, const json_t **shape_pp,
+														double64 **plot_horizontal_gap_pp, double64 **plot_vertical_gap_pp,
+														uint32 **plots_rows_per_block_pp, uint32 **plots_cols_per_block_pp,
+														double64 **plot_block_horizontal_gap_pp, double64 **plot_block_vertical_gap_pp)
 {
 	bool success_flag = true;
 
@@ -1097,6 +1127,12 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **soil
 	*ph_max_pp = NULL;
 	*weather_ss = NULL;
 	*shape_pp = NULL;
+	*plot_horizontal_gap_pp = NULL;
+	*plot_vertical_gap_pp = NULL;
+	*plots_rows_per_block_pp = NULL;
+	*plots_cols_per_block_pp = NULL;
+	*plot_block_horizontal_gap_pp = NULL;
+	*plot_block_vertical_gap_pp = NULL;
 
 	return success_flag;
 }
@@ -1190,6 +1226,14 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																					const char *weather_s = NULL;
 																					const json_t *shape_p = NULL;
 
+																					const double64 *plot_horizontal_gap_p = NULL;
+																					const double64 *plot_vertical_gap_p = NULL;
+																					const uint32 *plots_rows_per_block_p = NULL;
+																					const uint32 *plots_columns_per_block_p = NULL;
+																					const double64 *plot_block_horizontal_gap_p = NULL;
+																					const double64 *plot_block_vertical_gap_p = NULL;
+
+
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
 																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
@@ -1223,6 +1267,8 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																																	 growing_conditions_s, phenotype_notes_s,
 																																	 num_rows_p, num_cols_p, num_replicates_p, plot_width_p, plot_length_p,
 																																	 weather_s, shape_p,
+																																	 plot_horizontal_gap_p, plot_vertical_gap_p, plots_rows_per_block_p, plots_columns_per_block_p,
+																																	 plot_block_horizontal_gap_p, plot_block_vertical_gap_p,
 																																	 data_p);
 
 																					if (study_p)
