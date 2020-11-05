@@ -216,6 +216,13 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 																																																									study_p -> st_weather_link_s = copied_weather_s;
 																																																									study_p -> st_shape_p = copied_shape_p;
 
+																																																									study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
+																																																									study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
+																																																									study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
+																																																									study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
+																																																									study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
+																																																									study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
+
 																																																									return study_p;
 																																																								}
 
@@ -789,8 +796,6 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																																{
 																																	if ((!study_p -> st_shape_p) || (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0))
 																																		{
-
-
 																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p))
 																																				{
 																																					if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p))
@@ -799,9 +804,9 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																																								{
 																																									if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p))
 																																										{
-																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p))
+																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p))
 																																												{
-																																													if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_block_vertical_gap_p))
+																																													if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p))
 																																														{
 																																															bool add_item_flag = false;
 
