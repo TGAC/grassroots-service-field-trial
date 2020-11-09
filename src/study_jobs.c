@@ -427,47 +427,39 @@ static bool AddLayoutParams (ParameterSet *params_p, const Study *study_p, Field
 		{
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SLOPE.npt_type, STUDY_SLOPE.npt_name_s, "Slope", "The slope of the Study", study_p ? study_p -> st_slope_s : NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Shape data", "The shape data for the plots in GeoJSON format", study_p ? study_p -> st_shape_p : NULL, PL_ALL)) != NULL)
+					if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_HGAP.npt_type, STUDY_PLOT_HGAP.npt_name_s, "Horizontal plot gap", "The distance (in metres) between plots in a row.", study_p ? study_p -> st_plot_horizontal_gap_p : NULL, PL_ALL))
 						{
-							if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_HGAP.npt_type, STUDY_PLOT_HGAP.npt_name_s, "Horizontal plot gap", "The distance (in metres) between plots in a row.", study_p ? study_p -> st_plot_horizontal_gap_p : NULL, PL_ALL))
+							if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_VGAP.npt_type, STUDY_PLOT_VGAP.npt_name_s, "Vertical plot gap", "The distance (in metres) between plots in a column.", study_p ? study_p -> st_plot_vertical_gap_p : NULL, PL_ALL))
 								{
-									if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_VGAP.npt_type, STUDY_PLOT_VGAP.npt_name_s, "Vertical plot gap", "The distance (in metres) between plots in a column.", study_p ? study_p -> st_plot_vertical_gap_p : NULL, PL_ALL))
+									if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s, "Plot rows per block", "The number of rows of plots in a block", study_p ? study_p -> st_plots_rows_per_block_p : NULL, PL_ALL))
 										{
-											if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s, "Plot rows per block", "The number of rows of plots in a block", study_p ? study_p -> st_plots_rows_per_block_p : NULL, PL_ALL))
+											if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s, "Plot columns per block", "The number of columns of plots in a block", study_p ? study_p -> st_plots_columns_per_block_p : NULL, PL_ALL))
 												{
-													if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s, "Plot columns per block", "The number of columns of plots in a block", study_p ? study_p -> st_plots_columns_per_block_p : NULL, PL_ALL))
+													if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_BLOCK_HGAP.npt_type, STUDY_PLOT_BLOCK_HGAP.npt_name_s, "Horizontal plot block gap", "The distance (in metres) between blocks of plots in a row.", study_p ? study_p -> st_plot_block_horizontal_gap_p : NULL, PL_ALL))
 														{
-															if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_BLOCK_HGAP.npt_type, STUDY_PLOT_BLOCK_HGAP.npt_name_s, "Horizontal plot block gap", "The distance (in metres) between blocks of plots in a row.", study_p ? study_p -> st_plot_block_horizontal_gap_p : NULL, PL_ALL))
+															if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_BLOCK_VGAP.npt_type, STUDY_PLOT_BLOCK_VGAP.npt_name_s, "Vertical plot block gap", "The distance (in metres) between blocks of plots in a column.", study_p ? study_p -> st_plot_block_vertical_gap_p : NULL, PL_ALL))
 																{
-																	if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_BLOCK_VGAP.npt_type, STUDY_PLOT_BLOCK_VGAP.npt_name_s, "Vertical plot block gap", "The distance (in metres) between blocks of plots in a column.", study_p ? study_p -> st_plot_block_vertical_gap_p : NULL, PL_ALL))
-																		{
-																			return true;
-																		}
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_BLOCK_VGAP.npt_name_s);
-																		}
+																	return true;
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_BLOCK_HGAP.npt_name_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_BLOCK_VGAP.npt_name_s);
 																}
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_VGAP.npt_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_BLOCK_HGAP.npt_name_s);
 														}
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_VGAP.npt_name_s);
 												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s);
 										}
-
 								}
 							else
 								{
@@ -477,8 +469,9 @@ static bool AddLayoutParams (ParameterSet *params_p, const Study *study_p, Field
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SHAPE_DATA.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s);
 						}
+
 				}
 			else
 				{
