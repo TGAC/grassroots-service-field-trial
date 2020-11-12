@@ -32,6 +32,7 @@
 #include "dfw_util.h"
 
 
+#include "boolean_parameter.h"
 #include "unsigned_int_parameter.h"
 #include "string_parameter.h"
 
@@ -93,7 +94,7 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p);
 static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p);
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, LuceneTool *lucene_p, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
+static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *facets_p, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
 
 
 static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
@@ -101,6 +102,10 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
 
 static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
+
+static bool AddFacetParameterToList (const char *name_s, ParameterSet *params_p, LinkedList *facets_p);
+
+static LinkedList *GetFacets (ParameterSet *params_p);
 
 
 typedef struct
@@ -227,13 +232,13 @@ static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p,
 {
 	bool b = false;
 
-	if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_STUDY.npt_type, S_FACET_STUDY.npt_name_s, "Study", "Search across all Studies", &b, PL_ALL))
+	if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_STUDY.npt_name_s, "Study", "Search across all Studies", &b, PL_ALL))
 		{
-			if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_FIELD_TRIAL.npt_type, S_FACET_FIELD_TRIAL.npt_name_s, "Field Trial", "Search across all Trials", &b, PL_ALL))
+			if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_FIELD_TRIAL.npt_name_s, "Field Trial", "Search across all Trials", &b, PL_ALL))
 				{
-					if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_LOCATION.npt_type, S_FACET_LOCATION.npt_name_s, "Location", "Search across all Locations", &b, PL_ALL))
+					if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_LOCATION.npt_name_s, "Location", "Search across all Locations", &b, PL_ALL))
 						{
-							if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_VARIABLE.npt_type, S_FACET_VARIABLE.npt_name_s, "Measured Variable", "Search across all Measured Variables", &b, PL_ALL))
+							if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_VARIABLE.npt_name_s, "Measured Variable", "Search across all Measured Variables", &b, PL_ALL))
 								{
 									return true;
 								}
@@ -410,13 +415,67 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p)
 	return success_flag;
 }
 
-static char *GetFacetsParameterValue
+
+static bool AddFacetParameterToList (const char *name_s, ParameterSet *params_p, LinkedList *facets_p)
+{
+	bool success_flag = true;
+	const bool *b_p = NULL;
+
+	GetCurrentBooleanParameterValueFromParameterSet (params_p, name_s, &b_p);
+
+	if (b_p && (*b_p))
+		{
+			StringListNode *node_p = AllocateStringListNode (name_s, MF_SHADOW_USE);
+
+			if (node_p)
+				{
+					LinkedListAddTail (facets_p, & (node_p -> sln_node));
+				}
+			else
+				{
+					success_flag = false;
+				}
+		}
+
+	return success_flag;
+}
+
+
+static LinkedList *GetFacets (ParameterSet *params_p)
+{
+	LinkedList *facets_p = AllocateStringLinkedList ();
+
+	if (facets_p)
+		{
+			if (AddFacetParameterToList (S_FACET_FIELD_TRIAL.npt_name_s, params_p, facets_p))
+				{
+					if (AddFacetParameterToList (S_FACET_STUDY.npt_name_s, params_p, facets_p))
+						{
+							if (AddFacetParameterToList (S_FACET_LOCATION.npt_name_s, params_p, facets_p))
+								{
+									if (AddFacetParameterToList (S_FACET_VARIABLE.npt_name_s, params_p, facets_p))
+										{
+											return facets_p;
+										}
+
+								}
+
+						}
+
+				}
+
+			FreeLinkedList (facets_p);
+		}
+
+	return NULL;
+}
+
 
 static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "DFWFieldTrial");
+	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Field Trial Search");
 
 	if (service_p -> se_jobs_p)
 		{
@@ -433,26 +492,25 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 					 */
 					if (param_set_p -> ps_current_level == PL_SIMPLE)
 						{
-							const char *keyword_s = NULL;
-							const char *facet_s = NULL;
-							const uint32 *page_number_p = NULL;
-							const uint32 *page_size_p = NULL;
+							LinkedList *facets_p = GetFacets (param_set_p);
 
-							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_s);
-
-							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &page_number_p);
-							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &page_size_p);
-
-
-							GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
-							LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
-
-							if (lucene_p)
+							if (facets_p)
 								{
-									SearchFieldTrialsForKeyword (keyword_s, facet_s, page_number_p ? *page_number_p : S_DEFAULT_PAGE_NUMBER, page_size_p ? *page_size_p : S_DEFAULT_PAGE_SIZE, job_p, VF_CLIENT_MINIMAL, data_p);
+									const char *keyword_s = NULL;
+									const uint32 *page_number_p = NULL;
+									const uint32 *page_size_p = NULL;
 
-									FreeLuceneTool (lucene_p);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_s);
+
+									GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &page_number_p);
+									GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &page_size_p);
+
+									SearchFieldTrialsForKeyword (keyword_s, facets_p, page_number_p ? *page_number_p : S_DEFAULT_PAGE_NUMBER, page_size_p ? *page_size_p : S_DEFAULT_PAGE_SIZE, job_p, VF_CLIENT_MINIMAL, data_p);
+
+									FreeLinkedList (facets_p);
 								}
+
+
 
 						}
 					else if (param_set_p -> ps_current_level == PL_ADVANCED)
@@ -675,48 +733,54 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 }
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, LuceneTool *lucene_p, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p)
+static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *facet_values_p, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
+	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
 
 	if (lucene_p)
 		{
-			bool success_flag = true;
 			LinkedList *facets_p = NULL;
+			bool success_flag = true;
 
-			if (facets_p)
+			/*
+			 * Get all the facets specified
+			 */
+			if (facet_values_p)
 				{
-					bool facet_flag = false;
+					facets_p = AllocateLinkedList (FreeKeyValuePairNode);
 
-
-					if (facet_flag)
+					if (facets_p)
 						{
-							KeyValuePairNode *facet_p = AllocateKeyValuePairNodeByParts (lucene_p -> lt_facet_key_s, facet_s);
+							bool success_flag = true;
+							StringListNode *facet_str_p = (StringListNode *) (facet_values_p -> ll_head_p);
 
-							if (facet_p)
+							while (facet_str_p && success_flag)
 								{
-									LinkedListAddTail (facets_p, & (facet_p -> kvpn_node));
-								}		/* if (facet_p) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateKeyValuePairNode for facet \"type\": \"%s\" failed", facet_s);
-									success_flag = false;
+									KeyValuePairNode *facet_p = AllocateKeyValuePairNodeByParts (lucene_p -> lt_facet_key_s, facet_str_p -> sln_string_s);
+
+									if (facet_p)
+										{
+											LinkedListAddTail (facets_p, & (facet_p -> kvpn_node));
+
+											facet_str_p = (StringListNode *) (facet_str_p -> sln_node.ln_next_p);
+										}		/* if (facet_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateKeyValuePairNode for facet \"type\": \"%s\" failed", facet_str_p -> sln_string_s);
+											success_flag = false;
+										}
+
 								}
+						}		/* if (facets_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateLinkedList for facets failed");
+							success_flag = false;
 						}
 
-				}		/* if (facets_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateLinkedList for facet \"%s\" failed", facet_s);
-					success_flag = false;
-				}
-
-				}		/* if (facet_s) */
-
-
-
-
+				}		/* if (facet_values_p) */
 
 
 			if (success_flag)
