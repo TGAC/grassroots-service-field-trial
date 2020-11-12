@@ -808,7 +808,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *studies_p = GetAllStudiesAsJSONInViewFormat (service_data_p, VF_CLIENT_FULL);
+	json_t *studies_p = GetStudyIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
 
 	if (studies_p)
 		{

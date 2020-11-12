@@ -53,10 +53,16 @@ static NamedParameterType S_FACET = { "FT Facet", PT_STRING };
 static NamedParameterType S_PAGE_NUMBER = { "FT Results Page Number", PT_UNSIGNED_INT };
 static NamedParameterType S_PAGE_SIZE = { "FT Results Page Size", PT_UNSIGNED_INT };
 
+static NamedParameterType S_FACET_STUDY = { "FT Study Facet", PT_BOOLEAN };
+static NamedParameterType S_FACET_FIELD_TRIAL = { "FT Trial Facet", PT_BOOLEAN };
+static NamedParameterType S_FACET_VARIABLE = { "FT Measured Variable", PT_BOOLEAN };
+static NamedParameterType S_FACET_LOCATION = { "FT Location Facet", PT_BOOLEAN };
+
+
 static const char * const S_ANY_FACET_S = "<ANY>";
 static const char * const S_FIELD_TRIAL_FACET_S = "Field Trial";
 static const char * const S_STUDY_FACET_S = "Study";
-static const char * const S_TREATMENT_FACET_S = "Measured Variable";
+static const char * const S_VARIABLE_FACET_S = "Measured Variable";
 static const char * const S_LOCATION_FACET_S = "Location";
 
 static const uint32 S_DEFAULT_PAGE_NUMBER = 0;
@@ -87,12 +93,14 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p);
 static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_p);
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
+static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, LuceneTool *lucene_p, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
 
 
 static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
 
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
+
+static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
 
 
 typedef struct
@@ -199,7 +207,7 @@ static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *gro
 						{
 							if (CreateAndAddStringParameterOption (param_p, S_STUDY_FACET_S, S_STUDY_FACET_S))
 								{
-									if (CreateAndAddStringParameterOption (param_p, S_TREATMENT_FACET_S, S_TREATMENT_FACET_S))
+									if (CreateAndAddStringParameterOption (param_p, S_VARIABLE_FACET_S, S_VARIABLE_FACET_S))
 										{
 											if (CreateAndAddStringParameterOption (param_p, S_LOCATION_FACET_S, S_LOCATION_FACET_S))
 												{
@@ -215,6 +223,29 @@ static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *gro
 }
 
 
+static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p)
+{
+	bool b = false;
+
+	if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_STUDY.npt_type, S_FACET_STUDY.npt_name_s, "Study", "Search across all Studies", &b, PL_ALL))
+		{
+			if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_FIELD_TRIAL.npt_type, S_FACET_FIELD_TRIAL.npt_name_s, "Field Trial", "Search across all Trials", &b, PL_ALL))
+				{
+					if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_LOCATION.npt_type, S_FACET_LOCATION.npt_name_s, "Location", "Search across all Locations", &b, PL_ALL))
+						{
+							if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_VARIABLE.npt_type, S_FACET_VARIABLE.npt_name_s, "Measured Variable", "Search across all Measured Variables", &b, PL_ALL))
+								{
+									return true;
+								}
+						}
+				}
+		}
+
+	return false;
+}
+
+
+
 static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial search service parameters", "The parameters used for the DFWFieldTrial search service");
@@ -227,7 +258,7 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", NULL, PL_SIMPLE)) != NULL)
 				{
-					if (AddFacetParameter (params_p, group_p, data_p))
+					if (AddFacetParameters (params_p, group_p, data_p))
 						{
 							uint32 def = S_DEFAULT_PAGE_NUMBER;
 
@@ -323,6 +354,22 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 		{
 			*pt_p = S_PAGE_SIZE.npt_type;
 		}
+	else if (strcmp (param_name_s, S_FACET_STUDY.npt_name_s) == 0)
+		{
+			*pt_p = S_FACET_STUDY.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FACET_FIELD_TRIAL.npt_name_s) == 0)
+		{
+			*pt_p = S_FACET_FIELD_TRIAL.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FACET_LOCATION.npt_name_s) == 0)
+		{
+			*pt_p = S_FACET_LOCATION.npt_type;
+		}
+	else if (strcmp (param_name_s, S_FACET_VARIABLE.npt_name_s) == 0)
+		{
+			*pt_p = S_FACET_VARIABLE.npt_type;
+		}
 	else
 		{
 			if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
@@ -363,6 +410,7 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p)
 	return success_flag;
 }
 
+static char *GetFacetsParameterValue
 
 static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
@@ -391,21 +439,21 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 							const uint32 *page_size_p = NULL;
 
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_KEYWORD.npt_name_s, &keyword_s);
-							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_FACET.npt_name_s, &facet_s);
-
-							if (facet_s)
-								{
-									if (strcmp (facet_s, S_ANY_FACET_S) == 0)
-										{
-											facet_s = NULL;
-										}
-								}
 
 							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_NUMBER.npt_name_s, &page_number_p);
 							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_PAGE_SIZE.npt_name_s, &page_size_p);
 
 
-							SearchFieldTrialsForKeyword (keyword_s, facet_s, page_number_p ? *page_number_p : S_DEFAULT_PAGE_NUMBER, page_size_p ? *page_size_p : S_DEFAULT_PAGE_SIZE, job_p, VF_CLIENT_MINIMAL, data_p);
+							GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
+							LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
+
+							if (lucene_p)
+								{
+									SearchFieldTrialsForKeyword (keyword_s, facet_s, page_number_p ? *page_number_p : S_DEFAULT_PAGE_NUMBER, page_size_p ? *page_size_p : S_DEFAULT_PAGE_SIZE, job_p, VF_CLIENT_MINIMAL, data_p);
+
+									FreeLuceneTool (lucene_p);
+								}
+
 						}
 					else if (param_set_p -> ps_current_level == PL_ADVANCED)
 						{
@@ -627,22 +675,22 @@ static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_P
 }
 
 
-static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p)
+static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *facet_s, const uint32 page_number, const uint32 page_size, LuceneTool *lucene_p, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
-	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
 
 	if (lucene_p)
 		{
 			bool success_flag = true;
 			LinkedList *facets_p = NULL;
 
-			if (facet_s)
+			if (facets_p)
 				{
-					facets_p = AllocateLinkedList (FreeKeyValuePairNode);
+					bool facet_flag = false;
 
-					if (facets_p)
+
+					if (facet_flag)
 						{
 							KeyValuePairNode *facet_p = AllocateKeyValuePairNodeByParts (lucene_p -> lt_facet_key_s, facet_s);
 
@@ -655,15 +703,20 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, const char *face
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateKeyValuePairNode for facet \"type\": \"%s\" failed", facet_s);
 									success_flag = false;
 								}
-
-						}		/* if (facets_p) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateLinkedList for facet \"%s\" failed", facet_s);
-							success_flag = false;
 						}
 
+				}		/* if (facets_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateLinkedList for facet \"%s\" failed", facet_s);
+					success_flag = false;
+				}
+
 				}		/* if (facet_s) */
+
+
+
+
 
 
 			if (success_flag)
@@ -758,7 +811,7 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 {
 	bool success_flag = false;
 	SearchData *search_data_p = (SearchData *) data_p;
-	const char *id_s = GetDocumentFieldValue (document_p, MONGO_ID_S);
+	const char *id_s = GetDocumentFieldValue (document_p, LUCENE_ID_S);
 
 	if (id_s)
 		{

@@ -170,6 +170,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctAccessionsAsJSON (bson_oid
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyIndexingData (Service *service_p);
+
+
+
 #ifdef __cplusplus
 }
 #endif
