@@ -119,7 +119,7 @@ static LinkedList *GetMatchingFieldTrialsFromMongoDB (const FieldTrialServiceDat
 											for (i = 0; i < size; ++ i)
 												{
 													json_t *result_p = json_array_get (results_p, i);
-													FieldTrial *trial_p = GetFieldTrialFromJSON (result_p, data_p);
+													FieldTrial *trial_p = GetFieldTrialFromJSON (result_p, VF_STORAGE, data_p);
 
 													if (trial_p)
 														{

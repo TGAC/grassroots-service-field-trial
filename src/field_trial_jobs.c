@@ -27,7 +27,7 @@
 #include "field_trial.h"
 #include "string_utils.h"
 #include "dfw_util.h"
-
+#include "program_jobs.h"
 #include "boolean_parameter.h"
 
 /*
@@ -49,9 +49,9 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **team_ss);
+static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
 
-static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, const char **name_ss, const char **team_ss);
+static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
 
 static const char *GetFieldTrialDefaultValueFromJSON (const char *trial_id_param_s, const json_t *params_json_p);
 
@@ -63,6 +63,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	char *id_s = NULL;
+	char *program_id_s = NULL;
 	const char *name_s = NULL;
 	const char *team_s = NULL;
 	FieldTrial *active_trial_p = GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, dfw_data_p);
@@ -70,14 +71,14 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	if (active_trial_p)
 		{
-			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &name_s, &team_s))
+			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &program_id_s, &name_s, &team_s))
 				{
 					defaults_flag = true;
 				}
 		}
 	else
 		{
-			if (SetUpDefaults (&id_s, &name_s, &team_s))
+			if (SetUpDefaults (&id_s, &program_id_s, &name_s, &team_s))
 				{
 					defaults_flag = true;
 				}
@@ -99,23 +100,32 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 							 */
 							param_p -> pa_refresh_service_flag = true;
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
-								{
-									param_p -> pa_required_flag = true;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
-										{
-											success_flag = true;
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
-										}
-								}
-							else
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part if", id_s, PL_ALL)) != NULL)
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
+									if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
+										{
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
+												{
+													param_p -> pa_required_flag = true;
+
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
+														{
+															success_flag = true;
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
+												}
+										}
 								}
+
+
 
 						}		/* if (SetUpFieldTrialsListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, true)) */
 
@@ -251,6 +261,10 @@ bool GetSubmissionFieldTrialParameterTypeForNamedParameter (const char *param_na
 	else if (strcmp (param_name_s, FIELD_TRIAL_ADD.npt_name_s) == 0)
 		{
 			*pt_p = FIELD_TRIAL_ADD.npt_type;
+		}
+	else if (strcmp (param_name_s, FIELD_TRIAL_PARENT_ID.npt_name_s) == 0)
+		{
+			*pt_p = FIELD_TRIAL_PARENT_ID.npt_type;
 		}
 	else
 		{
@@ -595,7 +609,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 
 static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, FieldTrialServiceData *data_p)
 {
-	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, id_p);
+	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, NULL, MF_ALREADY_FREED, id_p);
 
 	if (trial_p)
 		{
@@ -814,11 +828,12 @@ static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char
 
 
 
-static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **team_ss)
+static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss)
 {
 	bool success_flag = true;
 
 	*id_ss = (char *) S_EMPTY_LIST_OPTION_S;
+	*program_id_ss = (char *) S_EMPTY_LIST_OPTION_S;
 	*name_ss = NULL;
 	*team_ss = NULL;
 
@@ -827,25 +842,46 @@ static bool SetUpDefaults (char **id_ss, const char **name_ss, const char **team
 
 
 
-static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, const char **name_ss, const char **team_ss)
+static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss)
 {
-	bool success_flag = false;
 	char *trial_id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
 	if (trial_id_s)
 		{
-			*id_ss = trial_id_s;
-			*name_ss = trial_p -> ft_name_s;
-			*team_ss = trial_p -> ft_team_s;
+			if (trial_id_s)
+				{
+					char *program_id_s = NULL;
 
-			return true;
+					if (trial_p -> ft_parent_p)
+						{
+							program_id_s = GetBSONOidAsString (trial_p -> ft_parent_p -> pr_id_p);
+
+							if (!program_id_s)
+								{
+									FreeCopiedString (trial_id_s);
+									return false;
+								}
+						}
+
+					*id_ss = trial_id_s;
+					*program_id_ss = program_id_s;
+					*name_ss = trial_p -> ft_name_s;
+					*team_ss = trial_p -> ft_team_s;
+
+					return true;
+				}		/* if (trial_id_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy trial id");
+				}
+
 		}		/* if (trial_id_s) */
 	else
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy trial id");
 		}
 
-	return success_flag;
+	return false;
 }
 
 

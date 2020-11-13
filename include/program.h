@@ -137,6 +137,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialsToProgramJSON (Program *program
 DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetUniqueProgramBySearchString (const char *program_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
 #ifdef __cplusplus
 }
 #endif

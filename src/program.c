@@ -25,6 +25,7 @@
 #include "program.h"
 
 #include "memory_allocations.h"
+#include "dfw_util.h"
 
 
 Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
@@ -270,11 +271,10 @@ bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, co
 				{
 					FieldTrialNode *node_p = (FieldTrialNode *) (program_p -> pr_trials_p -> ll_head_p);
 					bool ok_flag = true;
-					JSONProcessor *processor_p = NULL;
 
 					while (node_p && ok_flag)
 						{
-							json_t *trial_p = GetFieldTrialAsJSON (node_p -> ftn_field_trial_p, format, processor_p, data_p);
+							json_t *trial_p = GetFieldTrialAsJSON (node_p -> ftn_field_trial_p, format, data_p);
 
 							if (trial_p)
 								{
@@ -371,3 +371,33 @@ Program *GetUniqueProgramBySearchString (const char *program_s, const ViewFormat
 	return program_p;
 }
 
+
+
+
+Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Program *program_p = NULL;
+
+	if (bson_oid_is_valid (program_id_s, strlen (program_id_s)))
+		{
+			bson_oid_t *id_p = GetBSONOidFromString (program_id_s);
+
+			if (id_p)
+				{
+					program_p = (Program *) GetDFWObjectById (id_p, DFTD_PROGRAM, GetProgramFromJSON, format, data_p);
+
+					FreeBSONOid (id_p);
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create BSON OID for \"%s\"", program_id_s);
+				}
+
+		}		/* if (bson_oid_is_valid (field_trial_id_s, strlen (field_trial_id_s))) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" is not a valid oid", program_id_s);
+		}
+
+	return program_p;
+}
