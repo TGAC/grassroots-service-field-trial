@@ -45,6 +45,7 @@
 #include "submit_crop.h"
 #include "submit_plots.h"
 #include "submit_phenotypes.h"
+#include "submit_program.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -85,6 +86,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
 	Service *phenotypes_submission_service_p = GetPhenotypesSubmissionService (grassroots_p);
 	Service *indexing_service_p = GetFieldTrialIndexingService (grassroots_p);
+	Service *program_submission_service_p = GetProgramSubmissionService (grassroots_p);
 
 	if (all_in_one_submission_service_p)
 		{
@@ -146,6 +148,12 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
+
+	if (program_submission_service_p)
+		{
+			++ num_services;
+		}
+
 	if (num_services)
 		{
 			ServicesArray *services_p = AllocateServicesArray (num_services);
@@ -167,6 +175,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, crop_submission_service_p);
 					service_pp = AddValidService (service_pp, phenotypes_submission_service_p);
 					service_pp = AddValidService (service_pp, indexing_service_p);
+					service_pp = AddValidService (service_pp, program_submission_service_p);
 
 					return services_p;
 				}
@@ -231,6 +240,12 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 		{
 			FreeService (indexing_service_p);
 		}
+
+	if (program_submission_service_p)
+		{
+			FreeService (program_submission_service_p);
+		}
+
 
 	return NULL;
 }

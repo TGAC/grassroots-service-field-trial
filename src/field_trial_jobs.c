@@ -101,9 +101,9 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 							param_p -> pa_refresh_service_flag = true;
 
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part if", id_s, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part of", id_s, PL_ALL)) != NULL)
 								{
-									if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
+									if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
 												{

@@ -83,6 +83,7 @@ SRCS 	= \
 	plot.c \
 	plot_jobs.c \
 	program.c \
+	program_jobs.c \
 	row.c \
 	row_jobs.c \
 	row_processor.c \
