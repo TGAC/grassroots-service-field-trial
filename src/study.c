@@ -49,8 +49,6 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
 static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p);
-
 static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
 static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
@@ -1157,7 +1155,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 
 																					GetValidUnsignedIntFromJSON (json_p, ST_PLOT_ROWS_PER_BLOCK_S, &plot_rows_per_block_p);
 																					GetValidUnsignedIntFromJSON (json_p, ST_PLOT_COLS_PER_BLOCK_S, &plots_columns_per_block_p);
-#
+
 																					GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_H_GAP_S, &plot_block_horizontal_gap_p);
 																					GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_V_GAP_S, &plot_block_vertical_gap_p);
 
@@ -1388,49 +1386,6 @@ static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFo
 	return success_flag;
 }
 
-
-static Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p)
-{
-	Crop *crop_p = NULL;
-	bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
-
-	if (crop_id_p)
-		{
-			if (GetNamedIdFromJSON (json_p, key_s, crop_id_p))
-				{
-					char *id_s = GetBSONOidAsString (crop_id_p);
-
-					if (id_s)
-						{
-							crop_p = GetCropByIdString (id_s, data_p);
-
-							if (!crop_p)
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
-								}
-
-							FreeCopiedString (id_s);
-						}		/* if (id_s) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetBSONOidAsString for \"%s\"", key_s);
-						}
-
-				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed for \"%s\"", key_s);
-				}
-
-			FreeBSONOid (crop_id_p);
-		}		/* if (crop_id_p) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
-		}
-
-	return crop_p;
-}
 
 
 static void *GetStudyCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)

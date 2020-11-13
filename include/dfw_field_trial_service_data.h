@@ -37,6 +37,7 @@
 
 typedef enum
 {
+	DFTD_PROGRAM,
 	DFTD_FIELD_TRIAL,
 	DFTD_STUDY,
 	DFTD_LOCATION,
@@ -162,7 +163,15 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
  *
  * @ingroup dfw_field_trial_service
  */
-DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_S DFW_FIELD_TRIAL_VAL ("FieldTrials");
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PROGRAM_S DFW_FIELD_TRIAL_VAL ("Programs");
+
+
+/**
+ * The key for specifying the object containing the fields data
+ *
+ * @ingroup dfw_field_trial_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_TRIALS_S DFW_FIELD_TRIAL_VAL ("FieldTrials");
 
 /**
  * The key for specifying the object containing the experimental area data

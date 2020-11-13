@@ -32,12 +32,17 @@
 
 /* forward declarations */
 struct Study;
-
+struct Program;
 
 
 typedef struct FieldTrial
 {
 	bson_oid_t *ft_id_p;
+
+	struct Program *ft_parent_p;
+
+	MEM_FLAG ft_parent_program_mem;
+
 
 	/**
 	 * Name of the field trial
@@ -93,6 +98,8 @@ FIELD_TRIAL_PREFIX const char *FT_ID_S FIELD_TRIAL_VAL ("_id");
 
 FIELD_TRIAL_PREFIX const char *FT_STUDIES_S FIELD_TRIAL_VAL ("studies");
 
+FIELD_TRIAL_PREFIX const char *FT_PARENT_PROGRAM_S FIELD_TRIAL_VAL ("parent_program");
+
 
 #ifdef __cplusplus
 extern "C"
@@ -100,13 +107,9 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, bson_oid_t *id_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrialWithIdAsString (const char *name_s, const char *team_s, const char *id_s);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, struct Program *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
-
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p);
 
@@ -114,9 +117,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialStudies (FieldTrial *trial_p);
 

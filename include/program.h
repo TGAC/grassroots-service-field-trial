@@ -35,43 +35,115 @@
 #include "typedefs.h"
 #include "person.h"
 
-/*
- *
- *         "abbreviation": "P1",
-        "commonCropName": "Tomatillo",
-        "documentationURL": "https://brapi.org",
-        "leadPerson": "Name Nameson",
-        "leadPersonDbId": "person1",
-        "leadPersonName": "Name Nameson",
-        "name": "Program 1",
-        "objective": "Global Population Improvement",
-        "programDbId": "1",
-        "programName": "Program 1"
- */
+
 
 typedef struct Program
 {
 	bson_oid_t *pr_id_p;
 
+	char *pr_abbreviation_s;
+
 	char *pr_common_crop_name_s;
 
 	char *pr_documentation_url_s;
-
-	char *pr_abbreviation_s;
 
 	char *pr_name_s;
 
 	char *pr_objective_s;
 
-	Person *pr_lead_person_p;
+	/**
+	 * The name of the program leader
+	 */
+	char *pr_pi_name_s;
 
 	/**
 	 * A LinkedList of FieldTrialNodes
 	 * for all of the FieldTrials in this
 	 * Program.
 	 */
-	LinkedList *ea_trials_p;
+	LinkedList *pr_trials_p;
 
 } Program;
 
+
+typedef struct ProgramNode
+{
+	ListItem pn_node;
+	Program *pn_program_p;
+} ProgramNode;
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_PROGRAM_TAGS
+	#define PROGRAM_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define PROGRAM_VAL(x)	= x
+	#define PROGRAM_CONCAT_VAL(x,y)	= x y
+#else
+	#define PROGRAM_PREFIX extern
+	#define PROGRAM_VAL(x)
+	#define PROGRAM_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+
+PROGRAM_PREFIX const char *PR_NAME_S PROGRAM_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
+
+PROGRAM_PREFIX const char *PR_OBJECTIVE_S PROGRAM_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "description");
+
+PROGRAM_PREFIX const char *PR_ID_S PROGRAM_VAL ("_id");
+
+PROGRAM_PREFIX const char *PR_TRIALS_S PROGRAM_VAL ("trials");
+
+PROGRAM_PREFIX const char *PR_DOCUMENTATION_URL_S PROGRAM_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
+
+PROGRAM_PREFIX const char *PR_PI_NAME_S PROGRAM_VAL ("principal_investigator");
+
+PROGRAM_PREFIX const char *PR_CROP_S PROGRAM_VAL ("crop");
+
+PROGRAM_PREFIX const char *PR_ABBREVIATION_S PROGRAM_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "alternateName");
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgram (Program *program_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgramFieldTrial (Program *program_p, FieldTrial *trial_p, MEM_FLAG mf);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL uint32 GetNumberOfProgramFieldTrials (const Program *program_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramFromJSON (const json_t *json_p, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetUniqueProgramBySearchString (const char *program_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif /* SERVICES_FIELD_TRIALS_INCLUDE_PROGRAM_H_ */
+
+
+
+

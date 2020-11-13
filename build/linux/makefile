@@ -82,6 +82,7 @@ SRCS 	= \
 	phenotype_jobs.c \
 	plot.c \
 	plot_jobs.c \
+	program.c \
 	row.c \
 	row_jobs.c \
 	row_processor.c \
@@ -96,6 +97,7 @@ SRCS 	= \
 	submit_material.c \
 	submit_phenotypes.c \
 	submit_plots.c \
+	submit_program.c \
 	submit_study.c \
 	submit_measured_variables.c \
 	treatment_factor.c \

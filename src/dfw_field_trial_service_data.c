@@ -29,6 +29,7 @@
 
 static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 {
+	"Grassroots:Program",
 	"Grassroots:FieldTrial",
 	"Grassroots:Study",
 	"Grassroots:Location",
@@ -46,6 +47,7 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 
 static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 {
+	"Program",
 	"Field Trial",
 	"Study",
 	"Location",
@@ -119,7 +121,8 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 										}
 								}
 
-							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAM) = DFT_PROGRAM_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;

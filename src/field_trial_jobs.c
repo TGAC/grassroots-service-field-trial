@@ -491,7 +491,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 									while ((i < num_results) && success_flag)
 										{
 											json_t *entry_p = json_array_get (results_p, i);
-											FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, data_p);
+											FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
 
 											if (trial_p)
 												{
@@ -700,7 +700,7 @@ bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const Vi
 bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	FieldTrial *trial_p = GetFieldTrialFromJSON (trial_json_p, data_p);
+	FieldTrial *trial_p = GetFieldTrialFromJSON (trial_json_p, format, data_p);
 
 	if (trial_p)
 		{

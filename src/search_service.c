@@ -510,8 +510,6 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 									FreeLinkedList (facets_p);
 								}
 
-
-
 						}
 					else if (param_set_p -> ps_current_level == PL_ADVANCED)
 						{

@@ -434,92 +434,113 @@ json_t *GetStudyIndexingData (Service *service_p)
 						{
 							bson_oid_t id;
 
-							if (GetMongoIdFromJSON (src_study_p, &id))
+							if (AddDatatype (src_study_p, DFTD_STUDY))
 								{
-									json_t *values_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
-
-									if (values_p)
+									if (GetMongoIdFromJSON (src_study_p, &id))
 										{
-											if (json_object_set_new (src_study_p, "phenotypes", values_p) != 0)
+											Crop *crop_p = NULL;
+											json_t *values_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
+
+											if (values_p)
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add phenotypes");
-													json_decref (values_p);
-												}
-										}
-
-									values_p = GetStudyDistinctAccessionsAsJSON (&id, dfw_data_p);
-
-									if (values_p)
-										{
-											if (json_object_set_new (src_study_p, "accessions", values_p) != 0)
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add accessions");
-													json_decref (values_p);
-												}
-										}
-
-
-									if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
-										{
-											FieldTrial *trial_p = GetFieldTrialById (&id, VF_STORAGE, data_p);
-
-											json_object_del (src_study_p, ST_PARENT_FIELD_TRIAL_S);
-
-											if (trial_p)
-												{
-													json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, VF_CLIENT_MINIMAL, data_p);
-
-													if (trial_json_p)
+													if (json_object_set_new (src_study_p, "phenotypes", values_p) != 0)
 														{
-															json_object_del (trial_json_p, MONGO_ID_S);
-
-															if (json_object_set_new (src_study_p, ST_PARENT_FIELD_TRIAL_S, trial_json_p) == 0)
-																{
-
-																}
-															else
-																{
-																	json_decref (trial_json_p);
-																}
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add phenotypes");
+															json_decref (values_p);
 														}
+												}
 
-													FreeFieldTrial (trial_p);
-												}		/* if (trial_p) */
+											values_p = GetStudyDistinctAccessionsAsJSON (&id, dfw_data_p);
 
-										}
-
-									if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
-										{
-											Location *location_p = GetLocationById (&id, VF_STORAGE, data_p);
-
-											json_object_del (src_study_p, ST_LOCATION_ID_S);
-
-											if (location_p)
+											if (values_p)
 												{
-													json_t *location_json_p = GetLocationAsJSON (location_p);
-
-													if (location_json_p)
+													if (json_object_set_new (src_study_p, "accessions", values_p) != 0)
 														{
-															json_object_del (location_json_p, MONGO_ID_S);
-
-															if (json_object_set_new (src_study_p, ST_LOCATION_S, location_json_p) == 0)
-																{
-
-																}
-															else
-																{
-																	json_decref (location_json_p);
-																}
-
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add accessions");
+															json_decref (values_p);
 														}
-
-													FreeLocation (location_p);
-												}		/* if (location_p) */
-
-										}
+												}
 
 
-								}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
+											if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
+												{
+													FieldTrial *trial_p = GetFieldTrialById (&id, VF_STORAGE, data_p);
+
+													json_object_del (src_study_p, ST_PARENT_FIELD_TRIAL_S);
+
+													if (trial_p)
+														{
+															json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, VF_CLIENT_MINIMAL, data_p);
+
+															if (trial_json_p)
+																{
+																	json_object_del (trial_json_p, MONGO_ID_S);
+
+																	if (json_object_set_new (src_study_p, ST_PARENT_FIELD_TRIAL_S, trial_json_p) == 0)
+																		{
+
+																		}
+																	else
+																		{
+																			json_decref (trial_json_p);
+																		}
+																}
+
+															FreeFieldTrial (trial_p);
+														}		/* if (trial_p) */
+
+												}
+
+											if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
+												{
+													Location *location_p = GetLocationById (&id, VF_STORAGE, data_p);
+
+													json_object_del (src_study_p, ST_LOCATION_ID_S);
+
+													if (location_p)
+														{
+															json_t *location_json_p = GetLocationAsJSON (location_p);
+
+															if (location_json_p)
+																{
+																	json_object_del (location_json_p, MONGO_ID_S);
+
+																	if (json_object_set_new (src_study_p, ST_LOCATION_S, location_json_p) == 0)
+																		{
+
+																		}
+																	else
+																		{
+																			json_decref (location_json_p);
+																		}
+
+																}
+
+															FreeLocation (location_p);
+														}		/* if (location_p) */
+
+												}		/* */
+
+
+											crop_p = GetStoredCropValue (src_study_p, ST_CURRENT_CROP_S, data_p);
+											if (crop_p)
+												{
+													SetJSONString (src_study_p, ST_CURRENT_CROP_S, crop_p -> cr_name_s);
+													FreeCrop (crop_p);
+												}
+
+											crop_p = GetStoredCropValue (src_study_p, ST_PREVIOUS_CROP_S, data_p);
+											if (crop_p)
+												{
+													SetJSONString (src_study_p, ST_PREVIOUS_CROP_S, crop_p -> cr_name_s);
+													FreeCrop (crop_p);
+												}
+
+
+										}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
+
+								}
+
 
 						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
 
@@ -534,6 +555,51 @@ json_t *GetStudyIndexingData (Service *service_p)
 
 	return NULL;
 }
+
+
+Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p)
+{
+	Crop *crop_p = NULL;
+	bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+
+	if (crop_id_p)
+		{
+			if (GetNamedIdFromJSON (json_p, key_s, crop_id_p))
+				{
+					char *id_s = GetBSONOidAsString (crop_id_p);
+
+					if (id_s)
+						{
+							crop_p = GetCropByIdString (id_s, data_p);
+
+							if (!crop_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
+								}
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetBSONOidAsString for \"%s\"", key_s);
+						}
+
+				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed for \"%s\"", key_s);
+				}
+
+			FreeBSONOid (crop_id_p);
+		}		/* if (crop_id_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
+		}
+
+	return crop_p;
+}
+
 
 
 
