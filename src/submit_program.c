@@ -110,7 +110,7 @@ Service *GetProgramSubmissionService (GrassrootsServer *grassroots_p)
 
 static const char *GetProgramSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
-	return "Submit Program";
+	return "Submit Field Trial Program";
 }
 
 

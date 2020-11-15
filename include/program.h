@@ -128,7 +128,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL uint32 GetNumberOfProgramFieldTrials (const Progra
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramFromJSON (const json_t *json_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
@@ -138,6 +138,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetUniqueProgramBySearchString (const cha
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveProgram (Program *program_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }

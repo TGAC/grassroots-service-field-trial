@@ -26,6 +26,7 @@
 
 #include "memory_allocations.h"
 #include "dfw_util.h"
+#include "indexing.h"
 
 
 Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
@@ -195,7 +196,7 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 
 
 
-Program *GetProgramFromJSON (const json_t *json_p, const FieldTrialServiceData *data_p)
+Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, PR_NAME_S);
 
@@ -400,4 +401,40 @@ Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format
 		}
 
 	return program_p;
+}
+
+
+
+OperationStatus SaveProgram (Program *program_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	bson_t *selector_p = NULL;
+	bool success_flag = PrepareSaveData (& (program_p -> pr_id_p), &selector_p);
+
+	if (success_flag)
+		{
+			json_t *program_json_p = GetProgramAsJSON (program_p, VF_STORAGE, data_p);
+
+			if (program_json_p)
+				{
+					if (SaveMongoData (data_p -> dftsd_mongo_p, program_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAM], selector_p))
+						{
+							status = IndexData (job_p, program_json_p);
+
+							if (status != OS_SUCCEEDED)
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, program_json_p, "Failed to index Program \"%s\" as JSON to Lucene", program_p -> pr_name_s);
+									AddGeneralErrorMessageToServiceJob (job_p, "Program saved but failed to index for searching");
+								}
+						}
+
+					json_decref (program_json_p);
+				}		/* if (program_json_p) */
+
+		}		/* if (success_flag) */
+
+	SetServiceJobStatus (job_p, status);
+
+	return status;
 }
