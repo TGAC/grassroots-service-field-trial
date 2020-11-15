@@ -29,6 +29,12 @@
 #include "indexing.h"
 
 
+static LinkedList *GetMatchingPrograms (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
+
+static void *GetProgramObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+
 Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
 {
 	char *copied_abbreviation_s = NULL;
@@ -170,15 +176,21 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 														{
 															if (AddCompoundIdToJSON (program_json_p, program_p -> pr_id_p))
 																{
-																	if (AddFieldTrialsToProgramJSON (program_p, program_json_p, format, data_p))
+																	if (AddDatatype (program_json_p, DFTD_PROGRAM))
 																		{
-																			if (AddDatatype (program_json_p, DFTD_FIELD_TRIAL))
+																			bool success_flag = true;
+
+																			if (format == VF_CLIENT_FULL)
 																				{
-																					return program_json_p;
+																					if (!AddFieldTrialsToProgramJSON (program_p, program_json_p, format, data_p))
+																						{
+																							success_flag = false;
+																						}
 																				}
+
+																			return program_json_p;
 																		}
 																}
-
 														}
 												}
 										}
@@ -193,7 +205,6 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 	return NULL;
 
 }
-
 
 
 Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
@@ -373,6 +384,127 @@ Program *GetUniqueProgramBySearchString (const char *program_s, const ViewFormat
 }
 
 
+LinkedList *GetProgramsByName (const char * const program_s, const FieldTrialServiceData *data_p)
+{
+	const char *keys_ss [] = { PR_NAME_S, NULL };
+	const char *values_ss [] = { program_s, NULL };
+
+	return GetMatchingPrograms (data_p, keys_ss, values_ss);
+}
+
+
+static LinkedList *GetMatchingPrograms (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss)
+{
+	LinkedList *field_trials_list_p = AllocateLinkedList (FreeFieldTrialNode);
+
+	if (field_trials_list_p)
+		{
+			bson_t *query_p = bson_new ();
+
+			if (query_p)
+				{
+					const char **key_ss = keys_ss;
+					const char **value_ss = values_ss;
+					bool success_flag = true;
+
+					while (success_flag && (*key_ss != NULL) && (*value_ss != NULL))
+						{
+							if (BSON_APPEND_UTF8 (query_p, *key_ss, *value_ss))
+								{
+									++ key_ss;
+									++ value_ss;
+								}
+							else
+								{
+									success_flag = false;
+								}
+						}
+
+					if (success_flag)
+						{
+							if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
+								{
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+									if (results_p)
+										{
+											const size_t size = json_array_size (results_p);
+											size_t i = 0;
+
+											for (i = 0; i < size; ++ i)
+												{
+													json_t *result_p = json_array_get (results_p, i);
+													FieldTrial *trial_p = GetFieldTrialFromJSON (result_p, VF_STORAGE, data_p);
+
+													if (trial_p)
+														{
+															FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p);
+
+															if (node_p)
+																{
+																	LinkedListAddTail (field_trials_list_p, & (node_p -> ftn_node));
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to create FieldTrialNode");
+																}
+
+														}		/* if (trial_p) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get FieldTrial from JSON");
+														}
+
+												}		/* for (i = 0; i < size; ++ i) */
+
+
+											json_decref (results_p);
+										}		/* if (results_p) */
+
+								}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo tool collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]);
+								}
+
+						}		/* if (success_flag) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add query");
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+
+
+		}		/* if (field_trials_list_p) */
+
+	return field_trials_list_p;
+}
+
+
+
+
+
+Program *GetProgramById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Program *program_p = NULL;
+	char *id_s = GetBSONOidAsString (id_p);
+
+	if (id_s)
+		{
+			program_p = GetProgramByIdString (id_s, format, data_p);
+
+			FreeCopiedString (id_s);
+		}
+
+	return program_p;
+}
+
+static void *GetProgramObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	return (void *) GetProgramFromJSON (json_p, format, data_p);
+}
 
 
 Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
@@ -385,7 +517,8 @@ Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format
 
 			if (id_p)
 				{
-					program_p = (Program *) GetDFWObjectById (id_p, DFTD_PROGRAM, GetProgramFromJSON, format, data_p);
+					void *obj_p = GetDFWObjectById (id_p, DFTD_PROGRAM, GetProgramObjectFromJSON, format, data_p);
+					program_p = (Program *) obj_p;
 
 					FreeBSONOid (id_p);
 				}
@@ -438,3 +571,37 @@ OperationStatus SaveProgram (Program *program_p, ServiceJob *job_p, FieldTrialSe
 
 	return status;
 }
+
+
+
+bool RemoveProgramFieldTrial (Program *program_p, FieldTrial *trial_p)
+{
+	bool removed_flag = false;
+
+	if (program_p -> pr_trials_p)
+		{
+			FieldTrialNode *node_p = (FieldTrialNode *) (program_p -> pr_trials_p -> ll_head_p);
+
+			while (node_p && !removed_flag)
+				{
+					if (node_p -> ftn_field_trial_p == trial_p)
+						{
+							LinkedListRemove (program_p -> pr_trials_p, & (node_p -> ftn_node));
+
+							node_p -> ftn_field_trial_p = NULL;
+							FreeStudyNode (& (node_p -> ftn_node));
+							removed_flag = true;
+						}
+
+
+					if (!removed_flag)
+						{
+							node_p = (FieldTrialNode *) (node_p -> ftn_node.ln_next_p);
+						}
+				}
+		}
+
+
+	return removed_flag;
+}
+

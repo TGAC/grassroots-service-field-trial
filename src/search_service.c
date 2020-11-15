@@ -751,7 +751,6 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *face
 
 					if (facets_p)
 						{
-							bool success_flag = true;
 							StringListNode *facet_str_p = (StringListNode *) (facet_values_p -> ll_head_p);
 
 							while (facet_str_p && success_flag)
