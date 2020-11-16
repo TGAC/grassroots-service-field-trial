@@ -277,7 +277,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 														}		/* if (trial_p -> ft_parent_p) */
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_parent_p -> pr_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_name_s);
 														}
 												}
 										}
@@ -411,24 +411,21 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 
 									if (GetNamedIdFromJSON (json_p, FT_PARENT_PROGRAM_S, program_id_p))
 										{
-											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+											if (! (program_p = GetProgramById (program_id_p, format, data_p)))
 												{
-													if (! (program_p = GetProgramById (program_id_p, format, data_p)))
+													char *id_s = GetBSONOidAsString (program_id_p);
+
+													if (id_s)
 														{
-															char *id_s = GetBSONOidAsString (program_id_p);
-
-															if (id_s)
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetProgramById failed for %s", id_s);
-																	FreeCopiedString (id_s);
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetProgramById failed");
-																}
-
-															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetProgramById failed for %s", id_s);
+															FreeCopiedString (id_s);
 														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetProgramById failed");
+														}
+
+													success_flag = false;
 												}
 
 										}		/* if (GetNamedIdFromJSON (json_p, FT_PARENT_PROGRAM_S, program_id_p)) */
