@@ -253,7 +253,32 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 										{
 											if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 												{
-													success_flag = true;
+													if (trial_p -> ft_parent_p)
+														{
+															json_t *program_p = GetProgramAsJSON (trial_p -> ft_parent_p, format, data_p);
+
+															if (program_p)
+																{
+																	if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0)
+																		{
+																			success_flag = true;
+																		}		/* if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add program \"%s\" to json", trial_p -> ft_parent_p -> pr_name_s);
+																			json_decref (program_p);
+																		}
+																}		/* if (program_p) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to get json for program \"%s\" in format %d", trial_p -> ft_parent_p -> pr_name_s, format);
+																}
+
+														}		/* if (trial_p -> ft_parent_p) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_parent_p -> pr_name_s);
+														}
 												}
 										}
 									else if (format == VF_STORAGE)

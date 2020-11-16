@@ -33,6 +33,7 @@ static LinkedList *GetMatchingPrograms (const FieldTrialServiceData *data_p, con
 
 static void *GetProgramObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
+static bool AddFullDetailsToProgramJSON (const Program *program_p, json_t *program_json_p);
 
 
 Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
@@ -166,35 +167,45 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 				{
 					if (SetNonTrivialString (program_json_p, PR_PI_NAME_S, program_p -> pr_pi_name_s))
 						{
-							if (SetNonTrivialString (program_json_p, PR_DOCUMENTATION_URL_S, program_p -> pr_documentation_url_s))
+							if (AddDatatype (program_json_p, DFTD_PROGRAM))
 								{
-									if (SetNonTrivialString (program_json_p, PR_OBJECTIVE_S, program_p -> pr_objective_s))
+									bool success_flag = false;
+
+									switch (format)
 										{
-											if (SetNonTrivialString (program_json_p, PR_ABBREVIATION_S, program_p -> pr_abbreviation_s))
+											case VF_CLIENT_FULL:
 												{
-													if (SetNonTrivialString (program_json_p, PR_CROP_S, program_p -> pr_common_crop_name_s))
+													if (AddFullDetailsToProgramJSON (program_p, program_json_p))
 														{
-															if (AddCompoundIdToJSON (program_json_p, program_p -> pr_id_p))
+															if (AddFieldTrialsToProgramJSON (program_p, program_json_p, format, data_p))
 																{
-																	if (AddDatatype (program_json_p, DFTD_PROGRAM))
-																		{
-																			bool success_flag = true;
-
-																			if (format == VF_CLIENT_FULL)
-																				{
-																					if (!AddFieldTrialsToProgramJSON (program_p, program_json_p, format, data_p))
-																						{
-																							success_flag = false;
-																						}
-																				}
-
-																			return program_json_p;
-																		}
+																	success_flag = true;
 																}
 														}
 												}
+												break;
+
+											case VF_STORAGE:
+												{
+													if (AddFullDetailsToProgramJSON (program_p, program_json_p))
+														{
+															success_flag = true;
+														}
+												}
+												break;
+
+											case VF_CLIENT_MINIMAL:
+											default:
+												success_flag = true;
+												break;
+										}
+
+									if (success_flag)
+										{
+											return program_json_p;
 										}
 								}
+
 						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
 
 				}		/* if (json_object_set_new (trial_json_p, name_key_s, json_string (trial_p -> ft_name_s)) == 0) */
@@ -605,3 +616,29 @@ bool RemoveProgramFieldTrial (Program *program_p, FieldTrial *trial_p)
 	return removed_flag;
 }
 
+
+
+
+
+static bool AddFullDetailsToProgramJSON (const Program *program_p, json_t *program_json_p)
+{
+	if (SetNonTrivialString (program_json_p, PR_DOCUMENTATION_URL_S, program_p -> pr_documentation_url_s))
+		{
+			if (SetNonTrivialString (program_json_p, PR_OBJECTIVE_S, program_p -> pr_objective_s))
+				{
+					if (SetNonTrivialString (program_json_p, PR_ABBREVIATION_S, program_p -> pr_abbreviation_s))
+						{
+							if (SetNonTrivialString (program_json_p, PR_CROP_S, program_p -> pr_common_crop_name_s))
+								{
+									if (AddCompoundIdToJSON (program_json_p, program_p -> pr_id_p))
+										{
+											return true;
+
+										}
+								}
+						}
+				}
+		}
+
+	return false;
+}
