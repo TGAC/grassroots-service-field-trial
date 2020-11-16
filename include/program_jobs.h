@@ -76,6 +76,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionProgramParameterTypeForNamedPara
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionProgramParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgramToServiceJob (ServiceJob *job_p, Program *program_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

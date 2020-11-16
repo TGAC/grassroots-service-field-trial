@@ -30,6 +30,7 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
+static bool AddProgramToServiceJobResult (ServiceJob *job_p, Program *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 
@@ -385,3 +386,46 @@ static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrial
 	return ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED));
 }
 
+
+bool AddProgramToServiceJob (ServiceJob *job_p, Program *program_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *program_json_p = GetProgramAsJSON (program_p, format, data_p);
+
+	if (program_json_p)
+		{
+			if (AddProgramToServiceJobResult (job_p, program_p, program_json_p, format, data_p))
+				{
+					success_flag = true;
+				}
+
+			json_decref (program_json_p);
+		}		/* if (program_json_p) */
+
+	return success_flag;
+}
+
+
+static bool AddProgramToServiceJobResult (ServiceJob *job_p, Program *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, program_p -> pr_name_s, program_json_p);
+
+	if (dest_record_p)
+		{
+			AddImage (dest_record_p, DFTD_PROGRAM, data_p);
+
+			if (AddResultToServiceJob (job_p, dest_record_p))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					json_decref (dest_record_p);
+				}
+
+		}		/* if (dest_record_p) */
+
+	return success_flag;
+}

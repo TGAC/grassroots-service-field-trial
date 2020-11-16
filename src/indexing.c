@@ -30,6 +30,7 @@
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
 #include "measured_variable_jobs.h"
+#include "program_jobs.h"
 #include "audit.h"
 
 #include "boolean_parameter.h"
@@ -75,6 +76,7 @@ static NamedParameterType S_REINDEX_TRIALS = { "SS Reindex trials", PT_BOOLEAN }
 static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured variables", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_PROGRAMS = { "SS Reindex programs", PT_BOOLEAN };
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
 
 
@@ -306,6 +308,23 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 									done_flag = true;
 								}
 						}
+
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_PROGRAMS.npt_name_s, &index_flag_p))
+						{
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
+								{
+									if (ReindexPrograms (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
 
 					FreeLuceneTool (lucene_p);
 				}		/* if (lucene_p) */
@@ -743,7 +762,9 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 			OperationStatus temp_status = ReindexStudies (job_p, lucene_p, update_flag, service_data_p);
 			uint32 fully_succeeded_count = 0;
 			uint32 partially_succeeded_count = 0;
+			uint32 total_count = 0;
 
+			++ total_count;
 			if (temp_status == OS_SUCCEEDED)
 				{
 					++ fully_succeeded_count;
@@ -757,6 +778,8 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 			update_flag = true;
 
 			temp_status = ReindexTrials (job_p, lucene_p, update_flag, service_data_p);
+			++ total_count;
+
 			if (temp_status == OS_SUCCEEDED)
 				{
 					++ fully_succeeded_count;
@@ -767,6 +790,8 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 				}
 
 			temp_status = ReindexLocations (job_p, lucene_p, update_flag, service_data_p);
+			++ total_count;
+
 			if (temp_status == OS_SUCCEEDED)
 				{
 					++ fully_succeeded_count;
@@ -777,6 +802,8 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 				}
 
 			temp_status = ReindexMeasuredVariables (job_p, lucene_p, update_flag, service_data_p);
+			++ total_count;
+
 			if (temp_status == OS_SUCCEEDED)
 				{
 					++ fully_succeeded_count;
@@ -786,7 +813,19 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			if (fully_succeeded_count == 4)
+			temp_status = ReindexPrograms (job_p, lucene_p, update_flag, service_data_p);
+			++ total_count;
+			if (temp_status == OS_SUCCEEDED)
+				{
+					++ fully_succeeded_count;
+				}
+			else if (temp_status == OS_PARTIALLY_SUCCEEDED)
+				{
+					++ partially_succeeded_count;
+				}
+
+
+			if (fully_succeeded_count == total_count)
 				{
 					status = OS_SUCCEEDED;
 				}
@@ -818,6 +857,26 @@ OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool up
 				}
 
 			json_decref (studies_p);
+		}
+
+	return status;
+}
+
+
+
+OperationStatus ReindexPrograms (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+	json_t *programs_p = GetAllProgramsAsJSON (service_data_p, NULL);
+
+	if (programs_p)
+		{
+			if (SetLuceneToolName (lucene_p, "index_programs"))
+				{
+					status = IndexLucene (lucene_p, programs_p, update_flag);
+				}
+
+			json_decref (programs_p);
 		}
 
 	return status;
@@ -864,16 +923,16 @@ OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool upd
 OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *trials_p = GetAllMeasuredVariablesAsJSON (service_data_p, NULL);
+	json_t *variables_p = GetAllMeasuredVariablesAsJSON (service_data_p, NULL);
 
-	if (trials_p)
+	if (variables_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_measured_variables"))
 				{
-					status = IndexLucene (lucene_p, trials_p, update_flag);
+					status = IndexLucene (lucene_p, variables_p, update_flag);
 				}
 
-			json_decref (trials_p);
+			json_decref (variables_p);
 		}
 
 	return status;
@@ -949,6 +1008,10 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_REINDEX_MEASURED_VARIABLES.npt_type;
 		}
+	else if (strcmp (param_name_s, S_REINDEX_PROGRAMS.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_PROGRAMS.npt_type;
+		}
 	else if (strcmp (param_name_s, S_CACHE_CLEAR.npt_name_s) == 0)
 		{
 			*pt_p = S_CACHE_CLEAR.npt_type;
@@ -993,17 +1056,20 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 										{
 											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ALL)) != NULL)
 												{
-													ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
-
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_PROGRAMS.npt_name_s, "Reindex all Programs", "Reindex all Programs into Lucene", &b, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
-																{
-																	ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+															ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
 
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+																{
+																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
 																		{
-																			return params_p;
+																			ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																				{
+																					return params_p;
+																				}
 																		}
 																}
 														}

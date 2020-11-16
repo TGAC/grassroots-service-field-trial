@@ -41,7 +41,7 @@ static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *da
 
 bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
 																	 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p),
-																	 const FieldTrialServiceData *data_p)
+																	 const DFWFieldTrialData datatype, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	char *name_s = NULL;
@@ -53,6 +53,8 @@ bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, Se
 
 			if (dest_record_p)
 				{
+					AddImage (dest_record_p, datatype, data_p);
+
 					if (AddResultToServiceJob (job_p, dest_record_p))
 						{
 							status = OS_SUCCEEDED;

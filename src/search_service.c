@@ -28,6 +28,7 @@
 #include "material_jobs.h"
 #include "location_jobs.h"
 #include "gene_bank_jobs.h"
+#include "program_jobs.h"
 #include "material_jobs.h"
 #include "dfw_util.h"
 
@@ -58,6 +59,7 @@ static NamedParameterType S_FACET_STUDY = { "FT Study Facet", PT_BOOLEAN };
 static NamedParameterType S_FACET_FIELD_TRIAL = { "FT Trial Facet", PT_BOOLEAN };
 static NamedParameterType S_FACET_VARIABLE = { "FT Measured Variable", PT_BOOLEAN };
 static NamedParameterType S_FACET_LOCATION = { "FT Location Facet", PT_BOOLEAN };
+static NamedParameterType S_FACET_PROGRAM = { "FT Program", PT_BOOLEAN };
 
 
 static const char * const S_ANY_FACET_S = "<ANY>";
@@ -65,6 +67,7 @@ static const char * const S_FIELD_TRIAL_FACET_S = "Field Trial";
 static const char * const S_STUDY_FACET_S = "Study";
 static const char * const S_VARIABLE_FACET_S = "Measured Variable";
 static const char * const S_LOCATION_FACET_S = "Location";
+static const char * const S_PROGRAM_FACET_S = "Program";
 
 static const uint32 S_DEFAULT_PAGE_NUMBER = 0;
 static const uint32 S_DEFAULT_PAGE_SIZE = 10;
@@ -103,7 +106,7 @@ static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *gro
 
 static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
 
-static bool AddFacetParameterToList (const char *name_s, ParameterSet *params_p, LinkedList *facets_p);
+static bool AddFacetParameterToList (const char *name_s, const char *value_s, ParameterSet *params_p, LinkedList *facets_p);
 
 static LinkedList *GetFacets (ParameterSet *params_p);
 
@@ -240,7 +243,10 @@ static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p,
 						{
 							if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_VARIABLE.npt_name_s, "Measured Variable", "Search across all Measured Variables", &b, PL_ALL))
 								{
-									return true;
+									if (EasyCreateAndAddBooleanParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET_PROGRAM.npt_name_s, "Program", "Search across all Programs", &b, PL_ALL))
+										{
+											return true;
+										}
 								}
 						}
 				}
@@ -375,6 +381,10 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 		{
 			*pt_p = S_FACET_VARIABLE.npt_type;
 		}
+	else if (strcmp (param_name_s, S_FACET_PROGRAM.npt_name_s) == 0)
+		{
+			*pt_p = S_FACET_PROGRAM.npt_type;
+		}
 	else
 		{
 			if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
@@ -416,7 +426,7 @@ static bool CloseDFWFieldTrialSearchService (Service *service_p)
 }
 
 
-static bool AddFacetParameterToList (const char *name_s, ParameterSet *params_p, LinkedList *facets_p)
+static bool AddFacetParameterToList (const char *name_s, const char *value_s, ParameterSet *params_p, LinkedList *facets_p)
 {
 	bool success_flag = true;
 	const bool *b_p = NULL;
@@ -425,7 +435,7 @@ static bool AddFacetParameterToList (const char *name_s, ParameterSet *params_p,
 
 	if (b_p && (*b_p))
 		{
-			StringListNode *node_p = AllocateStringListNode (name_s, MF_SHADOW_USE);
+			StringListNode *node_p = AllocateStringListNode (value_s, MF_SHADOW_USE);
 
 			if (node_p)
 				{
@@ -447,17 +457,19 @@ static LinkedList *GetFacets (ParameterSet *params_p)
 
 	if (facets_p)
 		{
-			if (AddFacetParameterToList (S_FACET_FIELD_TRIAL.npt_name_s, params_p, facets_p))
+			if (AddFacetParameterToList (S_FACET_FIELD_TRIAL.npt_name_s, S_FIELD_TRIAL_FACET_S, params_p, facets_p))
 				{
-					if (AddFacetParameterToList (S_FACET_STUDY.npt_name_s, params_p, facets_p))
+					if (AddFacetParameterToList (S_FACET_STUDY.npt_name_s, S_STUDY_FACET_S, params_p, facets_p))
 						{
-							if (AddFacetParameterToList (S_FACET_LOCATION.npt_name_s, params_p, facets_p))
+							if (AddFacetParameterToList (S_FACET_LOCATION.npt_name_s, S_LOCATION_FACET_S, params_p, facets_p))
 								{
-									if (AddFacetParameterToList (S_FACET_VARIABLE.npt_name_s, params_p, facets_p))
+									if (AddFacetParameterToList (S_FACET_VARIABLE.npt_name_s, S_VARIABLE_FACET_S, params_p, facets_p))
 										{
-											return facets_p;
+											if (AddFacetParameterToList (S_FACET_PROGRAM.npt_name_s, S_PROGRAM_FACET_S, params_p, facets_p))
+												{
+													return facets_p;
+												}
 										}
-
 								}
 
 						}
@@ -906,7 +918,7 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 								break;
 
 							case DFTD_STUDY:
-								success_flag = FindAndAddResultToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_job_p, NULL, GetStudyJSONForId, search_data_p -> sd_service_data_p);
+								success_flag = FindAndAddResultToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_job_p, NULL, GetStudyJSONForId, DFTD_STUDY, search_data_p -> sd_service_data_p);
 								break;
 
 							case DFTD_TREATMENT:
@@ -954,6 +966,26 @@ static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint3
 											FreeLocation (location_p);
 										}
 								}
+							break;
+
+						case DFTD_PROGRAM:
+							{
+								Program *program_p = GetProgramByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+
+								if (program_p)
+									{
+										if (AddProgramToServiceJob (search_data_p -> sd_job_p, program_p, VF_CLIENT_FULL, search_data_p -> sd_service_data_p))
+											{
+												success_flag = true;
+											}
+										else
+											{
+												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Program %s to ServiceJob", program_p -> pr_name_s);
+											}
+
+										FreeProgram (program_p);
+									}
+							}
 							break;
 
 						default:

@@ -79,7 +79,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool ClearCachedStudy (const char *id_s, const Fie
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
 																																 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p),
-																																 const FieldTrialServiceData *data_p);
+																																 const DFWFieldTrialData datatype, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p);
