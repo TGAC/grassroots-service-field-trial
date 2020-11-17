@@ -868,6 +868,43 @@ json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s)
 }
 
 
+const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *params_json_p)
+{
+	const char *id_s = NULL;
+
+	if (params_json_p)
+		{
+			const size_t num_entries = json_array_size (params_json_p);
+			size_t i;
+
+			for (i = 0; i < num_entries; ++ i)
+				{
+					const json_t *param_json_p = json_array_get (params_json_p, i);
+					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+					if (name_s)
+						{
+							if (strcmp (name_s, id_param_s) == 0)
+								{
+									id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
+
+									if (!id_s)
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, id_param_s);
+										}
+
+									/* force exit from loop */
+									i = num_entries;
+								}
+						}		/* if (name_s) */
+
+				}		/* for (i = 0; i < num_entries; ++ i) */
+
+		}		/* if (params_json_p) */
+
+	return id_s;
+}
+
 
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {

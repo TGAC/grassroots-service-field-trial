@@ -234,7 +234,7 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s)
+bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Crop *active_crop_p, const char *empty_option_s)
 {
 	bool success_flag = false;
 
@@ -254,7 +254,16 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 								{
 									size_t i;
 									const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
-									const char *default_crop_s = GetJSONString (service_config_p, "default_crop");
+									const char *default_crop_s = NULL;
+
+									if (active_crop_p)
+										{
+											default_crop_s = active_crop_p -> cr_name_s;
+										}
+									else
+										{
+											default_crop_s = GetJSONString (service_config_p, "default_crop");
+										}
 
 									/*
 									 * If there's an empty option, add it

@@ -43,7 +43,7 @@ typedef struct Program
 
 	char *pr_abbreviation_s;
 
-	char *pr_common_crop_name_s;
+	Crop *pr_crop_p;
 
 	char *pr_documentation_url_s;
 
@@ -113,7 +113,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgram (Program *program_p);

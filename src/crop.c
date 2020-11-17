@@ -446,6 +446,25 @@ bool SaveCrop (Crop *crop_p, const FieldTrialServiceData *data_p)
 }
 
 
+Crop *GetCropById (const bson_oid_t *id_p, const FieldTrialServiceData *data_p)
+{
+	Crop *crop_p = NULL;
+	char *id_s = GetBSONOidAsString (id_p);
+
+	if (id_s)
+		{
+			crop_p = GetCropByIdString (id_s, data_p);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetBSONOidAsString failed for crop");
+		}
+
+	return crop_p;
+}
+
+
+
 Crop *GetCropByIdString (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	Crop *crop_p = (Crop *) GetDFWObjectByIdString (id_s, DFTD_CROP, GetCropCallback, VF_STORAGE, data_p);

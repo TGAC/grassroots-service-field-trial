@@ -96,6 +96,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveCrop (Crop *crop_p, const FieldTrialServi
 DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropByIdString (const char *id_s, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetCropById (const bson_oid_t *id_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

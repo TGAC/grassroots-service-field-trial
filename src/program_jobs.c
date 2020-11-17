@@ -23,6 +23,7 @@
 #define ALLOCATE_PROGRAM_JOB_CONSTANTS (1)
 #include "program_jobs.h"
 #include "crop_jobs.h"
+#include "dfw_util.h"
 
 
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
@@ -32,6 +33,7 @@ static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrial
 
 static bool AddProgramToServiceJobResult (ServiceJob *job_p, Program *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
+static bool SetUpDefaultsFromExistingProgram (const Program *program_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss);
 
 
 bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -41,22 +43,20 @@ bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p,
 	Parameter *param_p = NULL;
 	char *id_s = NULL;
 	char *abbreviation_s = NULL;
-	char *crop_s = NULL;
 	char *documentation_url_s = NULL;
 	char *name_s = NULL;
 	char *objective_s = NULL;
 	char *pi_name_s = NULL;
-	Program *active_program_p = NULL; //GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, dfw_data_p);
+	Crop *crop_p = NULL;
+	Program *active_program_p = GetProgramFromResource (resource_p, PROGRAM_ID, dfw_data_p);
 	bool defaults_flag = false;
 
 	if (active_program_p)
 		{
-			/*
-			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &program_id_s, &name_s, &team_s))
+			if (SetUpDefaultsFromExistingProgram (active_program_p, &id_s,  &name_s, &abbreviation_s, &crop_p, &documentation_url_s, &objective_s, &pi_name_s))
 				{
 					defaults_flag = true;
 				}
-				*/
 		}
 	else
 		{
@@ -80,15 +80,15 @@ bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p,
 							 */
 							param_p -> pa_refresh_service_flag = true;
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_NAME.npt_type, PROGRAM_NAME.npt_name_s, "Name", "The name of the Prgram", name_s, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_NAME.npt_type, PROGRAM_NAME.npt_name_s, "Name", "The name of the Program", name_s, PL_ALL)) != NULL)
 								{
 									param_p -> pa_required_flag = true;
 
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_ABBREVIATION.npt_type, PROGRAM_ABBREVIATION.npt_name_s, "Abbreviation", "The abbreviation for the Program", abbreviation_s, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_CROP.npt_type, PROGRAM_CROP.npt_name_s, "Crop", "The crop for the Program", crop_s, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_CROP.npt_type, PROGRAM_CROP.npt_name_s, "Crop", "The crop for the Program", NULL, PL_ALL)) != NULL)
 												{
-													if (SetUpCropsListParameter (data_p, param_p, S_EMPTY_LIST_OPTION_S))
+													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, crop_p, S_EMPTY_LIST_OPTION_S))
 														{
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_OBJECTIVE.npt_type, PROGRAM_OBJECTIVE.npt_name_s, "Objective", "The Program's objective", objective_s, PL_ALL)) != NULL)
 																{
@@ -121,6 +121,11 @@ bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p,
 
 		}		/* if (defaults_flag) */
 
+
+	if (active_program_p)
+		{
+			FreeProgram (active_program_p);
+		}
 
 	return success_flag;
 }
@@ -348,13 +353,25 @@ static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrial
 					const char *crop_s = NULL;
 					const char *url_s = NULL;
 					const char *objective_s = NULL;
+					bson_oid_t *crop_id_p = NULL;
 
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_ABBREVIATION.npt_name_s, &abbreviation_s);
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_CROP.npt_name_s, &crop_s);
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_URL.npt_name_s, &url_s);
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_OBJECTIVE.npt_name_s, &objective_s);
 
-					program_p = AllocateProgram (program_id_p, abbreviation_s, crop_s, url_s, name_s, objective_s, pi_s);
+					if (bson_oid_is_valid (crop_s, strlen (crop_s)))
+						{
+							crop_id_p = GetBSONOidFromString (crop_s);
+
+							if (!crop_id_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get crop id for \"%s\"", crop_s);
+								}
+						}		/* if (bson_oid_is_valid (crop_s, strlen (crop_s))) */
+
+
+					program_p = AllocateProgram (program_id_p, abbreviation_s, crop_id_p, url_s, name_s, objective_s, pi_s);
 
 					if (program_p)
 						{
@@ -366,6 +383,13 @@ static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrial
 								}
 
 							FreeProgram (program_p);
+						}
+					else
+						{
+							if (crop_id_p)
+								{
+									FreeBSONOid (crop_id_p);
+								}
 						}
 
 				}
@@ -406,6 +430,34 @@ bool AddProgramToServiceJob (ServiceJob *job_p, Program *program_p, const ViewFo
 }
 
 
+
+static bool SetUpDefaultsFromExistingProgram (const Program *program_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss)
+{
+	char *program_id_s = GetBSONOidAsString (program_p -> pr_id_p);
+
+	if (program_id_s)
+		{
+			*id_ss = program_id_s;
+			*name_ss = program_p -> pr_name_s;
+			*abbreviation_ss = program_p -> pr_abbreviation_s;
+			*crop_pp = program_p -> pr_crop_p;
+			*documentation_url_ss = program_p -> pr_documentation_url_s;
+			*objective_ss = program_p -> pr_objective_s;
+			*pi_name_ss = program_p -> pr_pi_name_s;
+
+			return true;
+		}		/* if (tprogrma_id_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy program id for \"%s\"", program_p -> pr_name_s);
+		}
+
+	return false;
+
+}
+
+
+
 static bool AddProgramToServiceJobResult (ServiceJob *job_p, Program *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -429,3 +481,56 @@ static bool AddProgramToServiceJobResult (ServiceJob *job_p, Program *program_p,
 
 	return success_flag;
 }
+
+
+
+Program *GetProgramFromResource (Resource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p)
+{
+	Program *program_p = NULL;
+
+	/*
+	 * Have we been set some parameter values to refresh from?
+	 */
+	if (resource_p && (resource_p -> re_data_p))
+		{
+			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
+
+			if (param_set_json_p)
+				{
+					json_t *params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
+
+					if (params_json_p)
+						{
+							const char *program_id_s = GetIDDefaultValueFromJSON (program_param_type.npt_name_s, params_json_p);
+
+							/*
+							 * Do we have an existing program id?
+							 */
+							if (program_id_s)
+								{
+									program_p = GetProgramByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+
+									if (!program_p)
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Program with id \"%s\"", program_id_s);
+										}
+
+								}		/* if (study_id_s) */
+
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
+				}
+
+		}		/* if (resource_p && (resource_p -> re_data_p)) */
+
+	return program_p;
+}
+
+

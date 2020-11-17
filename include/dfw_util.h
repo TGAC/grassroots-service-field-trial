@@ -96,6 +96,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidUnsignedIntFromJSON (const json_t *st
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *params_json_p);
+
 #ifdef __cplusplus
 }
 #endif

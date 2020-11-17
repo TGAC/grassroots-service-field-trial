@@ -27,7 +27,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-
+#include "crop.h"
 #include "string_parameter.h"
 
 
@@ -48,7 +48,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionCropParams (FieldTrialService
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *empty_option_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Crop *active_crop_p, const char *empty_option_s);
+
 
 #ifdef __cplusplus
 }

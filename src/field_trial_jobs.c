@@ -53,8 +53,6 @@ static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name
 
 static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
 
-static const char *GetFieldTrialDefaultValueFromJSON (const char *trial_id_param_s, const json_t *params_json_p);
-
 
 
 bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -133,6 +131,10 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 		}		/* if (defaults_flag) */
 
+	if (active_trial_p)
+		{
+			FreeFieldTrial (active_trial_p);
+		}
 
 	return success_flag;
 }
@@ -848,37 +850,29 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 
 	if (trial_id_s)
 		{
-			if (trial_id_s)
-				{
-					char *program_id_s = NULL;
+			char *program_id_s = NULL;
 
-					if (trial_p -> ft_parent_p)
+			if (trial_p -> ft_parent_p)
+				{
+					program_id_s = GetBSONOidAsString (trial_p -> ft_parent_p -> pr_id_p);
+
+					if (!program_id_s)
 						{
-							program_id_s = GetBSONOidAsString (trial_p -> ft_parent_p -> pr_id_p);
-
-							if (!program_id_s)
-								{
-									FreeCopiedString (trial_id_s);
-									return false;
-								}
+							FreeCopiedString (trial_id_s);
+							return false;
 						}
-
-					*id_ss = trial_id_s;
-					*program_id_ss = program_id_s;
-					*name_ss = trial_p -> ft_name_s;
-					*team_ss = trial_p -> ft_team_s;
-
-					return true;
-				}		/* if (trial_id_s) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy trial id");
 				}
 
+			*id_ss = trial_id_s;
+			*program_id_ss = program_id_s;
+			*name_ss = trial_p -> ft_name_s;
+			*team_ss = trial_p -> ft_team_s;
+
+			return true;
 		}		/* if (trial_id_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy trial id");
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy trial id for \"%s\"", trial_p -> ft_name_s);
 		}
 
 	return false;
@@ -903,7 +897,7 @@ FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParamete
 
 					if (params_json_p)
 						{
-							const char *trial_id_s = GetFieldTrialDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
+							const char *trial_id_s = GetIDDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing trial id?
@@ -933,44 +927,5 @@ FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParamete
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
 	return trial_p;
-}
-
-
-
-static const char *GetFieldTrialDefaultValueFromJSON (const char *trial_id_param_s, const json_t *params_json_p)
-{
-	const char *trial_id_s = NULL;
-
-	if (params_json_p)
-		{
-			const size_t num_entries = json_array_size (params_json_p);
-			size_t i;
-
-			for (i = 0; i < num_entries; ++ i)
-				{
-					const json_t *param_json_p = json_array_get (params_json_p, i);
-					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
-
-					if (name_s)
-						{
-							if (strcmp (name_s, trial_id_param_s) == 0)
-								{
-									trial_id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
-
-									if (!trial_id_s)
-										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, trial_id_param_s);
-										}
-
-									/* force exit from loop */
-									i = num_entries;
-								}
-						}		/* if (name_s) */
-
-				}		/* for (i = 0; i < num_entries; ++ i) */
-
-		}		/* if (params_json_p) */
-
-	return trial_id_s;
 }
 

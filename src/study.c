@@ -31,6 +31,8 @@
 
 #include "study_jobs.h"
 #include "indexing.h"
+#include "program.h"
+
 
 /*
  * DB COLUMN NAMES
@@ -54,6 +56,9 @@ static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServ
 static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
+
+
+static bool AddGrandParentProgramToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -823,7 +828,14 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																																																						{
 																																																							if (AddParentFieldTrialToJSON (study_p, study_json_p, data_p))
 																																																								{
-																																																									add_item_flag = true;
+																																																									if (AddGrandParentProgramToJSON (study_p, study_json_p, format, data_p))
+																																																										{
+																																																											add_item_flag = true;
+																																																										}
+																																																									else
+																																																										{
+																																																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add grandparent program to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
+																																																										}
 																																																								}
 																																																							else
 																																																								{
@@ -1493,26 +1505,79 @@ static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServ
  */
 static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
-	json_t *field_trial_json_p = json_object ();
-
-	if (field_trial_json_p)
+	if (study_p -> st_parent_p)
 		{
-			if (AddCompoundIdToJSON (field_trial_json_p, study_p -> st_parent_p -> ft_id_p))
+			json_t *field_trial_json_p = json_object ();
+
+			if (field_trial_json_p)
 				{
-					if (SetJSONString (field_trial_json_p, FT_NAME_S, study_p -> st_parent_p -> ft_name_s))
+					if (AddCompoundIdToJSON (field_trial_json_p, study_p -> st_parent_p -> ft_id_p))
 						{
-							if (json_object_set_new (study_json_p, ST_PARENT_FIELD_TRIAL_S, field_trial_json_p) == 0)
+							if (SetJSONString (field_trial_json_p, FT_NAME_S, study_p -> st_parent_p -> ft_name_s))
 								{
-									return true;
+									if (SetJSONString (field_trial_json_p, FT_TEAM_S, study_p -> st_parent_p -> ft_team_s))
+										{
+											if (json_object_set_new (study_json_p, ST_PARENT_FIELD_TRIAL_S, field_trial_json_p) == 0)
+												{
+													return true;
+												}
+										}
 								}
 						}
-				}
 
-			json_decref (field_trial_json_p);
+					json_decref (field_trial_json_p);
+				}
 		}
 
 	return false;
 }
+
+
+/*
+ * For Client formats
+ */
+static bool AddGrandParentProgramToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	FieldTrial *trial_p = study_p -> st_parent_p;
+
+	if (trial_p)
+		{
+			Program *program_p = trial_p -> ft_parent_p;
+
+			if (program_p)
+				{
+					json_t *program_json_p = GetProgramAsJSON (program_p, format, data_p);
+
+					if (program_json_p)
+						{
+							if (json_object_set_new (study_json_p, FT_PARENT_PROGRAM_S, program_json_p) == 0)
+								{
+									return true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, program_json_p, "Failed to add program to study \"%s\"", study_p -> st_name_s);
+									json_decref (program_json_p);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get program \"%s\" as json", program_p  -> pr_name_s);
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "no program for trial \"%s\"", trial_p -> ft_name_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "no parent program for study \"%s\"", study_p -> st_name_s);
+		}
+
+	return false;
+}
+
 
 
 static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)

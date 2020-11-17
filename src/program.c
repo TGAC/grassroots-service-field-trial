@@ -36,83 +36,73 @@ static void *GetProgramObjectFromJSON (const json_t *json_p, const ViewFormat fo
 static bool AddFullDetailsToProgramJSON (const Program *program_p, json_t *program_json_p);
 
 
-Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, const char *common_crop_name_s, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
+Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
 {
 	char *copied_abbreviation_s = NULL;
 
 	if ((abbreviation_s == NULL) || (copied_abbreviation_s = EasyCopyToNewString (abbreviation_s)))
 		{
-			char *copied_crop_s = NULL;
+			char *copied_documentation_url_s = NULL;
 
-			if ((common_crop_name_s == NULL) || (copied_crop_s = EasyCopyToNewString (common_crop_name_s)))
+			if ((documentation_url_s == NULL) || (copied_documentation_url_s = EasyCopyToNewString (documentation_url_s)))
 				{
-					char *copied_documentation_url_s = NULL;
+					char *copied_name_s = EasyCopyToNewString (name_s);
 
-					if ((documentation_url_s == NULL) || (copied_documentation_url_s = EasyCopyToNewString (documentation_url_s)))
+					if (copied_name_s)
 						{
-							char *copied_name_s = EasyCopyToNewString (name_s);
+							char *copied_objective_s = NULL;
 
-							if (copied_name_s)
+							if ((objective_s == NULL) || (copied_objective_s = EasyCopyToNewString (objective_s)))
 								{
-									char *copied_objective_s = NULL;
+									char *copied_pi_s = EasyCopyToNewString (pi_name_s);
 
-									if ((objective_s == NULL) || (copied_objective_s = EasyCopyToNewString (objective_s)))
+									if (copied_pi_s)
 										{
-											char *copied_pi_s = EasyCopyToNewString (pi_name_s);
+											LinkedList *trials_p = AllocateLinkedList (FreeFieldTrialNode);
 
-											if (copied_pi_s)
+											if (trials_p)
 												{
-													LinkedList *trials_p = AllocateLinkedList (FreeFieldTrialNode);
+													Program *program_p = (Program *) AllocMemory (sizeof (Program));
 
-													if (trials_p)
+													if (program_p)
 														{
-															Program *program_p = (Program *) AllocMemory (sizeof (Program));
+															program_p -> pr_abbreviation_s = copied_abbreviation_s;
+															program_p -> pr_crop_p = crop_p;
+															program_p -> pr_documentation_url_s = copied_documentation_url_s;
+															program_p -> pr_id_p = id_p;
+															program_p -> pr_name_s = copied_name_s;
+															program_p -> pr_objective_s = copied_objective_s;
+															program_p -> pr_pi_name_s = copied_pi_s;
+															program_p -> pr_trials_p = trials_p;
 
-															if (program_p)
-																{
-																	program_p -> pr_abbreviation_s = copied_abbreviation_s;
-																	program_p -> pr_common_crop_name_s = copied_crop_s;
-																	program_p -> pr_documentation_url_s = copied_documentation_url_s;
-																	program_p -> pr_id_p = id_p;
-																	program_p -> pr_name_s = copied_name_s;
-																	program_p -> pr_objective_s = copied_objective_s;
-																	program_p -> pr_pi_name_s = copied_pi_s;
-																	program_p -> pr_trials_p = trials_p;
+															return program_p;
+														}		/* if (program_p) */
 
-																	return program_p;
-																}		/* if (program_p) */
+													FreeLinkedList (trials_p);
+												}		/* if (trials_p) */
 
-															FreeLinkedList (trials_p);
-														}		/* if (trials_p) */
-
-													FreeCopiedString (copied_pi_s);
-												}		/* if (copied_pi_s) */
+											FreeCopiedString (copied_pi_s);
+										}		/* if (copied_pi_s) */
 
 
-											if (copied_objective_s)
-												{
-													FreeCopiedString (copied_objective_s);
-												}
+									if (copied_objective_s)
+										{
+											FreeCopiedString (copied_objective_s);
+										}
 
-										}		/* if ((objective_s == NULL) || (copied_objective_s = EasyCopyToNewString (objective_s))) */
+								}		/* if ((objective_s == NULL) || (copied_objective_s = EasyCopyToNewString (objective_s))) */
 
-									FreeCopiedString (copied_name_s);
-								}		/* if (copied_name_s) */
+							FreeCopiedString (copied_name_s);
+						}		/* if (copied_name_s) */
 
 
-							if (copied_documentation_url_s)
-								{
-									FreeCopiedString (copied_documentation_url_s);
-								}
-
-						}		/* if ((documentation_url_s == NULL) || (copied_documentation_url_s = EasyCopyToNewString (documentation_url_s))) */
-
-					if (copied_crop_s)
+					if (copied_documentation_url_s)
 						{
-							FreeCopiedString (copied_crop_s);
+							FreeCopiedString (copied_documentation_url_s);
 						}
 
-				}		/* if ((common_crop_name_s == NULL) || (copied_crop_s = EasyCopyToNewString (common_crop_name_s))) */
+				}		/* if ((documentation_url_s == NULL) || (copied_documentation_url_s = EasyCopyToNewString (documentation_url_s))) */
+
 
 			if (copied_abbreviation_s)
 				{
@@ -132,9 +122,9 @@ void FreeProgram (Program *program_p)
 			FreeCopiedString (program_p -> pr_abbreviation_s);
 		}
 
-	if (program_p -> pr_common_crop_name_s)
+	if (program_p -> pr_crop_p)
 		{
-			FreeCopiedString (program_p -> pr_common_crop_name_s);
+			FreeCrop (program_p -> pr_crop_p);
 		}
 
 	if (program_p -> pr_documentation_url_s)
@@ -152,6 +142,13 @@ void FreeProgram (Program *program_p)
 	FreeCopiedString (program_p -> pr_pi_name_s);
 
 	FreeLinkedList (program_p -> pr_trials_p);
+
+
+	if (program_p -> pr_id_p)
+		{
+			FreeBSONOid (program_p -> pr_id_p);
+		}
+
 
 	FreeMemory (program_p);
 }
@@ -175,6 +172,14 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 										{
 											case VF_CLIENT_FULL:
 												{
+													if (program_p -> pr_crop_p)
+														{
+															if (SetJSONString (program_json_p, PR_CROP_S, program_p -> pr_crop_p -> cr_name_s))
+																{
+
+																}
+														}		/* if (program_p -> pr_crop_id_p) */
+
 													if (AddFullDetailsToProgramJSON (program_p, program_json_p))
 														{
 															if (AddFieldTrialsToProgramJSON (program_p, program_json_p, format, data_p))
@@ -189,7 +194,10 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 												{
 													if (AddFullDetailsToProgramJSON (program_p, program_json_p))
 														{
-															success_flag = true;
+															if ((! (program_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (program_json_p, program_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
+																{
+																	success_flag = true;
+																}
 														}
 												}
 												break;
@@ -234,17 +242,40 @@ Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, cons
 						{
 							if (GetMongoIdFromJSON (json_p, id_p))
 								{
+									Program *program_p = NULL;
 									const char *objective_s = GetJSONString (json_p, PR_OBJECTIVE_S);
 									const char *documentation_url_s = GetJSONString (json_p, PR_DOCUMENTATION_URL_S);
-									const char *crop_s = GetJSONString (json_p, PR_CROP_S);
 									const char *abbreviation_s = GetJSONString (json_p, PR_ABBREVIATION_S);
+									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+									Crop *crop_p = NULL;
 
-									Program *program_p = AllocateProgram (id_p, abbreviation_s, crop_s, documentation_url_s, name_s, objective_s, pi_s);
+									if (crop_id_p)
+										{
+											if (GetNamedIdFromJSON (json_p, PR_CROP_S, crop_id_p))
+												{
+													crop_p = GetCropById (crop_id_p, data_p);
+												}
+										}
+
+									program_p = AllocateProgram (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_s);
 
 									if (program_p)
 										{
 											return program_p;
 										}
+
+
+									if (crop_id_p)
+										{
+											FreeBSONOid (crop_id_p);
+										}
+
+									if (crop_p)
+										{
+											FreeCrop (crop_p);
+										}
+
+
 								}
 
 							FreeBSONOid (id_p);
@@ -628,13 +659,9 @@ static bool AddFullDetailsToProgramJSON (const Program *program_p, json_t *progr
 				{
 					if (SetNonTrivialString (program_json_p, PR_ABBREVIATION_S, program_p -> pr_abbreviation_s))
 						{
-							if (SetNonTrivialString (program_json_p, PR_CROP_S, program_p -> pr_common_crop_name_s))
+							if (AddCompoundIdToJSON (program_json_p, program_p -> pr_id_p))
 								{
-									if (AddCompoundIdToJSON (program_json_p, program_p -> pr_id_p))
-										{
-											return true;
-
-										}
+									return true;
 								}
 						}
 				}
