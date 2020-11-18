@@ -116,7 +116,7 @@ static const char *GetProgramSubmissionServiceName (const Service * UNUSED_PARAM
 
 static const char *GetProgramSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "Add a Program to the system. A Program contains one or Trials.";
+	return "Add a Program to the system. A Program contains one or more Trials.";
 }
 
 
