@@ -92,7 +92,7 @@ bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p,
 														{
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_OBJECTIVE.npt_type, PROGRAM_OBJECTIVE.npt_name_s, "Objective", "The Program's objective", objective_s, PL_ALL)) != NULL)
 																{
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_URL.npt_type, PROGRAM_URL.npt_name_s, "Url", "The web page documenting this Program", documentation_url_s, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_URL.npt_type, PROGRAM_URL.npt_name_s, "Web address", "The web page documenting this Program", documentation_url_s, PL_ALL)) != NULL)
 																		{
 																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_PI_NAME.npt_type, PROGRAM_PI_NAME.npt_name_s, "Principal Investigator", "The Program's lead", pi_name_s, PL_ALL)) != NULL)
 																				{
