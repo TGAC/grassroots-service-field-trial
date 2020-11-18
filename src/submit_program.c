@@ -116,8 +116,7 @@ static const char *GetProgramSubmissionServiceName (const Service * UNUSED_PARAM
 
 static const char *GetProgramSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "Add a Program to the system. Following the same nomenclature as <a href='https://brapi.docs.apiary.io/'>BrAPI</a>,"
-			" a Program contains multiple Field Trials. This is equivalent to an Investigation in <a href='https://www.miappe.org/'>MIAPPE</a>.";
+	return "Add a Program to the system. A Program contains one or Trials.";
 }
 
 
@@ -133,7 +132,7 @@ static const char *GetProgramSubmissionServiceInformationUri (const Service *ser
 
 	if (!url_s)
 		{
-			url_s = "https://grassroots.tools/docs/user/services/program/submit_trial.md";
+			url_s = "https://grassroots.tools/docs/user/services/program/submit_program.md";
 		}
 
 	return url_s;
