@@ -98,14 +98,20 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 							 */
 							param_p -> pa_refresh_service_flag = true;
 
-
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part of", id_s, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
-										{
-											param_p -> pa_required_flag = true;
+									param_p -> pa_required_flag = true;
 
-											if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part of", program_id_s, PL_ALL)) != NULL)
+										{
+											Program *program_p = NULL;
+
+											if (program_id_s)
+												{
+													program_p = GetProgramByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+												}
+
+											if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, program_p, true))
 												{
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 														{
@@ -116,13 +122,20 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
 														}
 												}
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
+
+											if (program_p)
+												{
+													FreeProgram (program_p);
+												}
 										}
 
 								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
+								}
+
+
 
 
 

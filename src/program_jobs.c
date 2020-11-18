@@ -96,6 +96,8 @@ bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p,
 																		{
 																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAM_PI_NAME.npt_type, PROGRAM_PI_NAME.npt_name_s, "Principal Investigator", "The Program's lead", pi_name_s, PL_ALL)) != NULL)
 																				{
+																					param_p -> pa_required_flag = true;
+
 																					success_flag = true;
 																				}
 																			else
@@ -350,28 +352,19 @@ static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrial
 				{
 					Program *program_p = NULL;
 					const char *abbreviation_s = NULL;
-					const char *crop_s = NULL;
+					const char *crop_id_s = NULL;
 					const char *url_s = NULL;
 					const char *objective_s = NULL;
-					bson_oid_t *crop_id_p = NULL;
+					Crop *crop_p = NULL;
 
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_ABBREVIATION.npt_name_s, &abbreviation_s);
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_CROP.npt_name_s, &crop_s);
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_CROP.npt_name_s, &crop_id_s);
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_URL.npt_name_s, &url_s);
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAM_OBJECTIVE.npt_name_s, &objective_s);
 
-					if (bson_oid_is_valid (crop_s, strlen (crop_s)))
-						{
-							crop_id_p = GetBSONOidFromString (crop_s);
+					crop_p = GetCropByIdString (crop_id_s, data_p);
 
-							if (!crop_id_p)
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get crop id for \"%s\"", crop_s);
-								}
-						}		/* if (bson_oid_is_valid (crop_s, strlen (crop_s))) */
-
-
-					program_p = AllocateProgram (program_id_p, abbreviation_s, crop_id_p, url_s, name_s, objective_s, pi_s);
+					program_p = AllocateProgram (program_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, pi_s);
 
 					if (program_p)
 						{
@@ -386,9 +379,9 @@ static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrial
 						}
 					else
 						{
-							if (crop_id_p)
+							if (crop_p)
 								{
-									FreeBSONOid (crop_id_p);
+									FreeCrop (crop_p);
 								}
 						}
 
