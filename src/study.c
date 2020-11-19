@@ -28,6 +28,7 @@
 #include "location.h"
 #include "dfw_util.h"
 #include "time_util.h"
+#include "crop_jobs.h"
 
 #include "study_jobs.h"
 #include "indexing.h"

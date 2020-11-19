@@ -71,6 +71,7 @@
 /*
  * indexing parameters
  */
+static NamedParameterType S_CLEAR_DATA = { "SS Clear all data", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_ALL_DATA = { "SS Reindex all data", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_TRIALS = { "SS Reindex trials", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN };
@@ -222,12 +223,19 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 	bool done_flag = false;
 	OperationStatus status = GetServiceJobStatus (job_p);
 	const bool *index_flag_p = NULL;
+	bool clear_flag = false;
+	bool update_flag = false;
+
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &clear_flag))
+		{
+			update_flag = !clear_flag;
+		}
 
 	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_ALL_DATA.npt_name_s, &index_flag_p))
 		{
 			if ((index_flag_p != NULL) && (*index_flag_p == true))
 				{
-					ReindexAllData (job_p, data_p);
+					ReindexAllData (job_p, update_flag, data_p);
 
 					done_flag = true;
 				}
@@ -242,8 +250,6 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 
 			if (lucene_p)
 				{
-					bool update_flag = false;
-
 					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &index_flag_p))
 						{
 							if ((index_flag_p != NULL) && (*index_flag_p == true))
@@ -749,7 +755,7 @@ OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
 }
 
 
-OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *service_data_p)
+OperationStatus ReindexAllData (ServiceJob *job_p, const bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
@@ -757,8 +763,6 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 
 	if (lucene_p)
 		{
-			/* clear the index initially ...*/
-			bool update_flag = false;
 			OperationStatus temp_status = ReindexStudies (job_p, lucene_p, update_flag, service_data_p);
 			uint32 fully_succeeded_count = 0;
 			uint32 partially_succeeded_count = 0;
@@ -774,10 +778,8 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			/* ... then update it from here */
-			update_flag = true;
 
-			temp_status = ReindexTrials (job_p, lucene_p, update_flag, service_data_p);
+			temp_status = ReindexTrials (job_p, lucene_p, true, service_data_p);
 			++ total_count;
 
 			if (temp_status == OS_SUCCEEDED)
@@ -789,7 +791,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			temp_status = ReindexLocations (job_p, lucene_p, update_flag, service_data_p);
+			temp_status = ReindexLocations (job_p, lucene_p, true, service_data_p);
 			++ total_count;
 
 			if (temp_status == OS_SUCCEEDED)
@@ -801,7 +803,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			temp_status = ReindexMeasuredVariables (job_p, lucene_p, update_flag, service_data_p);
+			temp_status = ReindexMeasuredVariables (job_p, lucene_p, true, service_data_p);
 			++ total_count;
 
 			if (temp_status == OS_SUCCEEDED)
@@ -813,7 +815,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *
 					++ partially_succeeded_count;
 				}
 
-			temp_status = ReindexPrograms (job_p, lucene_p, update_flag, service_data_p);
+			temp_status = ReindexPrograms (job_p, lucene_p, true, service_data_p);
 			++ total_count;
 			if (temp_status == OS_SUCCEEDED)
 				{
@@ -867,7 +869,7 @@ OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool up
 OperationStatus ReindexPrograms (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *programs_p = GetAllProgramsAsJSON (service_data_p, NULL);
+	json_t *programs_p = GetProgramIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
 
 	if (programs_p)
 		{
@@ -988,7 +990,11 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_REINDEX_ALL_DATA.npt_name_s) == 0)
+	if (strcmp (param_name_s, S_CLEAR_DATA.npt_name_s) == 0)
+		{
+			*pt_p = S_CLEAR_DATA.npt_type;
+		}
+	else if (strcmp (param_name_s, S_REINDEX_ALL_DATA.npt_name_s) == 0)
 		{
 			*pt_p = S_REINDEX_ALL_DATA.npt_type;
 		}
@@ -1046,29 +1052,32 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 			ParameterGroup *indexing_group_p = CreateAndAddParameterGroupToParameterSet ("Indexing", false, data_p, params_p);
 			bool b = false;
 
-			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_CLEAR_DATA.npt_name_s, "Clear all data", "Clear all data prior to any reindexing", &b, PL_ALL)) != NULL)
 				{
-					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_ALL_DATA.npt_name_s, "Reindex all data", "Reindex all data into Lucene", &b, PL_ALL)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p,S_REINDEX_TRIALS.npt_name_s, "Reindex all Field Trials", "Reindex all Field Trials into Lucene", &b, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_STUDIES.npt_name_s, "Reindex all Studies", "Reindex all Studies into Lucene", &b, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_LOCATIONS.npt_name_s, "Reindex all Locations", "Reindex all Locations into Lucene", &b, PL_ALL)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_PROGRAMS.npt_name_s, "Reindex all Programs", "Reindex all Programs into Lucene", &b, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ALL)) != NULL)
 														{
-															ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
-
-															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_PROGRAMS.npt_name_s, "Reindex all Programs", "Reindex all Programs into Lucene", &b, PL_ALL)) != NULL)
 																{
-																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
-																		{
-																			ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+																	ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
 
-																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+																		{
+																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
 																				{
-																					return params_p;
+																					ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+
+																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																						{
+																							return params_p;
+																						}
 																				}
 																		}
 																}

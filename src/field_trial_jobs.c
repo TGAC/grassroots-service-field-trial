@@ -111,7 +111,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 													program_p = GetProgramByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
 												}
 
-											if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, program_p, true))
+											if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, program_p, false))
 												{
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 														{

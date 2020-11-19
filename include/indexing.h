@@ -41,7 +41,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL	Service *GetFieldTrialIndexingService (GrassrootsS
 DFW_FIELD_TRIAL_SERVICE_LOCAL	OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexAllData (ServiceJob *job_p, const FieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexAllData (ServiceJob *job_p, const bool update_flag, const FieldTrialServiceData *service_data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);

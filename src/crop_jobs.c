@@ -329,6 +329,53 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 }
 
 
+
+Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p)
+{
+	Crop *crop_p = NULL;
+	bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+
+	if (crop_id_p)
+		{
+			if (GetNamedIdFromJSON (json_p, key_s, crop_id_p))
+				{
+					char *id_s = GetBSONOidAsString (crop_id_p);
+
+					if (id_s)
+						{
+							crop_p = GetCropByIdString (id_s, data_p);
+
+							if (!crop_p)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
+								}
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetBSONOidAsString for \"%s\"", key_s);
+						}
+
+				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed for \"%s\"", key_s);
+				}
+
+			FreeBSONOid (crop_id_p);
+		}		/* if (crop_id_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
+		}
+
+	return crop_p;
+}
+
+
+
+
 static bool SetDefaultCropValue (StringParameter *param_p, const char *crop_id_s)
 {
 	bool success_flag = false;

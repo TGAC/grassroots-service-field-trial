@@ -51,6 +51,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionCropParameterTypeForNamedParamet
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Crop *active_crop_p, const char *empty_option_s);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

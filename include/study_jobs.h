@@ -173,9 +173,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemovePlotsForStudyById (const cha
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyIndexingData (Service *service_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p);
-
-
 #ifdef __cplusplus
 }
 #endif

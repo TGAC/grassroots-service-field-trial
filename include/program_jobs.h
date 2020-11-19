@@ -83,6 +83,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgramToServiceJob (ServiceJob *job_p, Pr
 DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramFromResource (Resource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgramIndexingData (Service *service_p);
+
+
 #ifdef __cplusplus
 }
 #endif

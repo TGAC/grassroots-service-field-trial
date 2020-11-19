@@ -87,7 +87,7 @@ Service *GetProgramSubmissionService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetProgramSubmissionServiceMetadata,
-														 NULL,
+														 GetProgramIndexingData,
 														 grassroots_p))
 						{
 

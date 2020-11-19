@@ -315,6 +315,57 @@ bool GetSubmissionProgramParameterTypeForNamedParameter (const char *param_name_
 }
 
 
+json_t *GetProgramIndexingData (Service *service_p)
+{
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+	json_t *src_programs_p = GetAllProgramsAsJSON (data_p, NULL);
+
+	if (src_programs_p)
+		{
+			if (json_is_array (src_programs_p))
+				{
+					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+					size_t i;
+					json_t *src_program_p;
+					size_t num_added = 0;
+
+					json_array_foreach (src_programs_p, i, src_program_p)
+						{
+							bson_oid_t id;
+
+							if (AddDatatype (src_program_p, DFTD_PROGRAM))
+								{
+									if (GetMongoIdFromJSON (src_program_p, &id))
+										{
+											Crop *crop_p = GetStoredCropValue (src_program_p, PR_CROP_S, data_p);
+
+											if (crop_p)
+												{
+													SetJSONString (src_program_p, PR_CROP_S, crop_p -> cr_name_s);
+													FreeCrop (crop_p);
+												}
+
+										}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
+
+								}
+
+
+						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+
+				}		/* if (json_is_array (src_studies_p)) */
+
+			return src_programs_p;
+		}		/* if (src_studies_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No programs for \"%s\"", GetServiceName (service_p));
+		}
+
+	return NULL;
+}
+
+
+
 
 
 static bool AddProgram (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
