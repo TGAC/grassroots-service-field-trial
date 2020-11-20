@@ -928,7 +928,7 @@ OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool upd
 OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *variables_p = GetLocationIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
+	json_t *variables_p = GetMeasuredVariableIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
 
 
 	if (variables_p)
