@@ -196,21 +196,16 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
 		{
+			const char *team_s = NULL;
+
 			if (!IsStringEmpty (name_s))
 				{
-					const char *team_s = NULL;
-					FieldTrial *existing_trial_p = NULL;
 
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-					/*
-					 * Does the trial already exist?
-					 */
-					existing_trial_p = GetFieldTrialFromMongoDB (data_p, name_s, team_s);
-
-					if (existing_trial_p)
+					if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
 						{
-							char *error_s = ConcatenateVarargsStrings ("Trial already exists, name: '", name_s, "' team: '", team_s, "'", NULL);
+							char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "'", NULL);
 
 							if (error_s)
 								{
@@ -219,36 +214,18 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 								}
 							else
 								{
-									AddGeneralErrorMessageToServiceJob (job_p, "Trial already exists");
+									AddGeneralErrorMessageToServiceJob (job_p, "Failed to add Field Trial");
 								}
 
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Trial already exists, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s, id_s);
-						}		/* if (existing_trial_p) */
-					else
-						{
-							/* It's a job for FieldTrials */
-							if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
-								{
-									char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "'", NULL);
-
-									if (error_s)
-										{
-											AddGeneralErrorMessageToServiceJob (job_p, error_s);
-											FreeCopiedString (error_s);
-										}
-									else
-										{
-											AddGeneralErrorMessageToServiceJob (job_p, "Failed to add Field Trial");
-										}
-
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s, id_s);
-								}
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s, id_s);
 						}
 
 				}		/* if (!IsStringEmpty (name_s)) */
 			else
 				{
+					AddGeneralErrorMessageToServiceJob (job_p, "Name is required");
 
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s ? team_s : "", id_s);
 				}
 
 			job_done_flag = true;
