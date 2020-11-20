@@ -86,7 +86,7 @@ Service *GetLocationSubmissionService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetLocationSubmissionServiceMetadata,
-														 NULL,
+														 GetLocationIndexingData,
 														 grassroots_p))
 						{
 

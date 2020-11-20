@@ -776,6 +776,45 @@ bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringPar
 }
 
 
+json_t *GetLocationIndexingData (Service *service_p)
+{
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+	json_t *locations_p = GetAllLocationsAsJSON (data_p, NULL);
+
+	if (locations_p)
+		{
+			if (json_is_array (locations_p))
+				{
+					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+					size_t i;
+					json_t *location_p;
+					size_t num_added = 0;
+
+					json_array_foreach (locations_p, i, location_p)
+						{
+							bson_oid_t id;
+
+							if (AddDatatype (location_p, DFTD_LOCATION))
+								{
+
+								}
+
+
+						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+
+				}		/* if (json_is_array (src_studies_p)) */
+
+			return locations_p;
+		}		/* if (src_studies_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Locations for \"%s\"", GetServiceName (service_p));
+		}
+
+	return NULL;
+}
+
+
 json_t *GetAllLocationsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;

@@ -106,6 +106,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddLocationToServiceJob (ServiceJob *job_p, L
 DFW_FIELD_TRIAL_SERVICE_LOCAL Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, FieldTrialServiceData *dfw_data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetLocationIndexingData (Service *service_p);
+
 #ifdef __cplusplus
 }
 #endif

@@ -329,6 +329,45 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const F
 }
 
 
+json_t *GetMeasuredVariableIndexingData (Service *service_p)
+{
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+	json_t *measured_variables_p = GetAllMeasuredVariablesAsJSON (data_p, NULL);
+
+	if (measured_variables_p)
+		{
+			if (json_is_array (measured_variables_p))
+				{
+					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+					size_t i;
+					json_t *measured_variable_p;
+					size_t num_added = 0;
+
+					json_array_foreach (measured_variables_p, i, measured_variable_p)
+						{
+							bson_oid_t id;
+
+							if (AddDatatype (measured_variable_p, DFTD_TREATMENT))
+								{
+
+								}
+
+
+						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+
+				}		/* if (json_is_array (src_studies_p)) */
+
+			return measured_variables_p;
+		}		/* if (src_studies_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No measured variables for \"%s\"", GetServiceName (service_p));
+		}
+
+	return NULL;
+}
+
+
 json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
 {
 	json_t *results_p = NULL;

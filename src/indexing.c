@@ -223,12 +223,15 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 	bool done_flag = false;
 	OperationStatus status = GetServiceJobStatus (job_p);
 	const bool *index_flag_p = NULL;
-	bool clear_flag = false;
+	const bool *clear_flag_p = NULL;
 	bool update_flag = false;
 
-	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &clear_flag))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &clear_flag_p))
 		{
-			update_flag = !clear_flag;
+			if (clear_flag_p)
+				{
+					update_flag = ! (*clear_flag_p);
+				}
 		}
 
 	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_ALL_DATA.npt_name_s, &index_flag_p))
@@ -888,7 +891,7 @@ OperationStatus ReindexPrograms (ServiceJob *job_p, LuceneTool *lucene_p, bool u
 OperationStatus ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *locations_p = GetAllLocationsAsJSON (service_data_p, NULL);
+	json_t *locations_p = GetLocationIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
 
 	if (locations_p)
 		{
@@ -906,7 +909,7 @@ OperationStatus ReindexLocations (ServiceJob *job_p, LuceneTool *lucene_p, bool 
 OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *trials_p = GetAllFieldTrialsAsJSON (service_data_p, NULL);
+	json_t *trials_p = GetFieldTrialIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
 
 	if (trials_p)
 		{
@@ -925,7 +928,8 @@ OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool upd
 OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *variables_p = GetAllMeasuredVariablesAsJSON (service_data_p, NULL);
+	json_t *variables_p = GetLocationIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
+
 
 	if (variables_p)
 		{

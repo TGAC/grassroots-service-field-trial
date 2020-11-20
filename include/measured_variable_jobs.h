@@ -83,6 +83,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToServiceJob (ServiceJob *
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMeasuredVariableIndexingData (Service *service_p);
 
 
 #ifdef __cplusplus

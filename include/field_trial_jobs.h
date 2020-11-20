@@ -78,6 +78,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchFieldTrialParameterTypeForNamedParam
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_triel_p, const bool empty_option_flag);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialIndexingData (Service *service_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
 
 

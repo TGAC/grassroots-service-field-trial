@@ -87,7 +87,7 @@ Service *GetFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetFieldTrialSubmissionServiceMetadata,
-														 NULL,
+														 GetFieldTrialIndexingData,
 														 grassroots_p))
 						{
 

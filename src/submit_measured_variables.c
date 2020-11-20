@@ -89,7 +89,7 @@ Service *GetMeasuredVariablesSubmissionService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetMeasuredVariableSubmissionServiceMetadata,
-														 NULL,
+														 GetMeasuredVariableIndexingData,
 														 grassroots_p))
 						{
 

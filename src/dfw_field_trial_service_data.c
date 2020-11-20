@@ -37,7 +37,7 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 /*	"Grassroots:Row", */
  	"Grassroots:Material",
 	"Grassroots:Drilling",
-	"Grassroots:Phenotype",
+	"Grassroots:MeasuredVariable",
 	"Grassroots:Observation",
 	"Grassroots:Instrument",
 	"Grassroots:GeneBank",
@@ -55,7 +55,7 @@ static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 /*	"Grassroots:Row", */
  	"Material",
 	"Drilling",
-	"Phenotype",
+	"Measured Variable",
 	"Observation",
 	"Instrument",
 	"Gene Bank",
