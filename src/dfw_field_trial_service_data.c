@@ -29,7 +29,7 @@
 
 static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 {
-	"Grassroots:Program",
+	"Grassroots:Programme",
 	"Grassroots:FieldTrial",
 	"Grassroots:Study",
 	"Grassroots:Location",
@@ -47,7 +47,7 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 
 static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 {
-	"Program",
+	"Programme",
 	"Field Trial",
 	"Study",
 	"Location",
