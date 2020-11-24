@@ -100,7 +100,8 @@ static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_
 static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *facets_p, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
 
 
-static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p);
+static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uint32 index, void *data_p);
+
 
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
 
@@ -806,7 +807,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *face
 									sd.sd_job_p = job_p;
 									sd.sd_format = fmt;
 
-									status = ParseLuceneResults (lucene_p, from, to, AddResultsFromLuceneResults, &sd);
+									status = ParseLuceneResults (lucene_p, from, to, AddFieldTrialResultsFromLuceneResults, &sd);
 
 									if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 										{
@@ -880,15 +881,15 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *face
 }
 
 
-static bool AddResultsFromLuceneResults (LuceneDocument *document_p, const uint32 index, void *data_p)
+static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uint32 index, void *data_p)
 {
 	bool success_flag = false;
 	SearchData *search_data_p = (SearchData *) data_p;
-	const char *id_s = GetDocumentFieldValue (document_p, LUCENE_ID_S);
+	const char *id_s = GetJSONString (document_p, LUCENE_ID_S);
 
 	if (id_s)
 		{
-			const char *type_s = GetDocumentFieldValue (document_p, "@type");
+			const char *type_s = GetJSONString (document_p, "@type");
 
 			if (type_s)
 				{
