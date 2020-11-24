@@ -21,7 +21,7 @@
  */
 
 
-#define ALLOCATE_PHENOTYPE_TAGS (1)
+#define ALLOCATE_MEASURED_VARIABLE_TAGS (1)
 #include "measured_variable.h"
 #include "memory_allocations.h"
 #include "string_utils.h"

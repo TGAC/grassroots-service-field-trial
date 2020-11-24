@@ -31,7 +31,7 @@
 #include "typedefs.h"
 #include "jansson.h"
 #include "schema_term.h"
-
+#include "schema_keys.h"
 
 
 
@@ -56,14 +56,14 @@ typedef struct MeasuredVariable
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#ifdef ALLOCATE_PHENOTYPE_TAGS
+#ifdef ALLOCATE_MEASURED_VARIABLE_TAGS
 	#define MEASURED_VARIABLE_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
 	#define MEASURED_VARIABLE_VAL(x)	= x
 	#define MEASURED_VARIABLE_CONCAT_VAL(x,y)	= x y
 #else
 	#define MEASURED_VARIABLE_PREFIX extern
 	#define MEASURED_VARIABLE_VAL(x)
-	#define TREATMENTE_CONCAT_VAL(x,y)
+	#define MEASURED_VARIABLE_CONCAT_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
@@ -83,6 +83,7 @@ MEASURED_VARIABLE_PREFIX const char *MV_VALUE_S MEASURED_VARIABLE_VAL ("value");
 
 MEASURED_VARIABLE_PREFIX const char *MV_INTERNAL_NAME_S MEASURED_VARIABLE_VAL ("internal_name");
 
+MEASURED_VARIABLE_PREFIX const char *MV_NAME_S MEASURED_VARIABLE_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 
 
 #ifdef __cplusplus

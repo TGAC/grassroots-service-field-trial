@@ -338,18 +338,28 @@ json_t *GetMeasuredVariableIndexingData (Service *service_p)
 		{
 			if (json_is_array (measured_variables_p))
 				{
-					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 					size_t i;
 					json_t *measured_variable_p;
 					size_t num_added = 0;
 
 					json_array_foreach (measured_variables_p, i, measured_variable_p)
 						{
-							bson_oid_t id;
-
 							if (AddDatatype (measured_variable_p, DFTD_TREATMENT))
 								{
+									json_t *variable_p = json_object_get (measured_variable_p, MV_VARIABLE_S);
 
+									if (variable_p)
+										{
+											const char *name_s = GetJSONString (variable_p, SCHEMA_TERM_NAME_S);
+
+											if (name_s)
+												{
+													if (SetJSONString (measured_variable_p, MV_NAME_S, name_s))
+														{
+															++ num_added;
+														}
+												}
+										}
 								}
 
 
