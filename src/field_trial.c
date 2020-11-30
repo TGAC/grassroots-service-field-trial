@@ -37,7 +37,7 @@
 
 
 
-FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, Program *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p)
+FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -174,11 +174,11 @@ void FreeFieldTrial (FieldTrial *trial_p)
 		{
 			if ((trial_p -> ft_parent_program_mem == MF_DEEP_COPY) || (trial_p -> ft_parent_program_mem == MF_SHALLOW_COPY))
 				{
-					RemoveProgramFieldTrial (trial_p -> ft_parent_p, trial_p);
+					RemoveProgrammeFieldTrial (trial_p -> ft_parent_p, trial_p);
 
-					if (GetNumberOfProgramFieldTrials (trial_p -> ft_parent_p) == 0)
+					if (GetNumberOfProgrammeFieldTrials (trial_p -> ft_parent_p) == 0)
 						{
-							FreeProgram (trial_p -> ft_parent_p);
+							FreeProgramme (trial_p -> ft_parent_p);
 						}
 				}
 		}
@@ -255,7 +255,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 												{
 													if (trial_p -> ft_parent_p)
 														{
-															json_t *program_p = GetProgramAsJSON (trial_p -> ft_parent_p, format, data_p);
+															json_t *program_p = GetProgrammeAsJSON (trial_p -> ft_parent_p, format, data_p);
 
 															if (program_p)
 																{
@@ -407,11 +407,11 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 							if (program_id_p)
 								{
 									bool success_flag = true;
-									Program *program_p = NULL;
+									Programme *program_p = NULL;
 
 									if (GetNamedIdFromJSON (json_p, FT_PARENT_PROGRAM_S, program_id_p))
 										{
-											if (! (program_p = GetProgramById (program_id_p, format, data_p)))
+											if (! (program_p = GetProgrammeById (program_id_p, format, data_p)))
 												{
 													char *id_s = GetBSONOidAsString (program_id_p);
 

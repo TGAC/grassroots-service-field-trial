@@ -86,7 +86,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
 	Service *phenotypes_submission_service_p = GetPhenotypesSubmissionService (grassroots_p);
 	Service *indexing_service_p = GetFieldTrialIndexingService (grassroots_p);
-	Service *program_submission_service_p = GetProgramSubmissionService (grassroots_p);
+	Service *programme_submission_service_p = GetProgrammeSubmissionService (grassroots_p);
 
 	if (all_in_one_submission_service_p)
 		{
@@ -149,7 +149,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 		}
 
 
-	if (program_submission_service_p)
+	if (programme_submission_service_p)
 		{
 			++ num_services;
 		}
@@ -175,7 +175,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, crop_submission_service_p);
 					service_pp = AddValidService (service_pp, phenotypes_submission_service_p);
 					service_pp = AddValidService (service_pp, indexing_service_p);
-					service_pp = AddValidService (service_pp, program_submission_service_p);
+					service_pp = AddValidService (service_pp, programme_submission_service_p);
 
 					return services_p;
 				}
@@ -241,9 +241,9 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			FreeService (indexing_service_p);
 		}
 
-	if (program_submission_service_p)
+	if (programme_submission_service_p)
 		{
-			FreeService (program_submission_service_p);
+			FreeService (programme_submission_service_p);
 		}
 
 

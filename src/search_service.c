@@ -971,11 +971,11 @@ static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uin
 
 						case DFTD_PROGRAM:
 							{
-								Program *program_p = GetProgramByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+								Programme *program_p = GetProgrammeByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
 
 								if (program_p)
 									{
-										if (AddProgramToServiceJob (search_data_p -> sd_job_p, program_p, VF_CLIENT_FULL, search_data_p -> sd_service_data_p))
+										if (AddProgrammeToServiceJob (search_data_p -> sd_job_p, program_p, VF_CLIENT_FULL, search_data_p -> sd_service_data_p))
 											{
 												success_flag = true;
 											}
@@ -984,7 +984,7 @@ static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uin
 												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Program %s to ServiceJob", program_p -> pr_name_s);
 											}
 
-										FreeProgram (program_p);
+										FreeProgramme (program_p);
 									}
 							}
 							break;

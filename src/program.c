@@ -29,14 +29,14 @@
 #include "indexing.h"
 
 
-static LinkedList *GetMatchingPrograms (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
+static LinkedList *GetMatchingProgrammes (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
 
-static void *GetProgramObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+static void *GetProgrammeObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static bool AddFullDetailsToProgramJSON (const Program *program_p, json_t *program_json_p);
+static bool AddFullDetailsToProgrammeJSON (const Programme *programme_p, json_t *programme_json_p);
 
 
-Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
+Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s)
 {
 	char *copied_abbreviation_s = NULL;
 
@@ -62,21 +62,21 @@ Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, Crop *cr
 
 											if (trials_p)
 												{
-													Program *program_p = (Program *) AllocMemory (sizeof (Program));
+													Programme *programme_p = (Programme *) AllocMemory (sizeof (Programme));
 
-													if (program_p)
+													if (programme_p)
 														{
-															program_p -> pr_abbreviation_s = copied_abbreviation_s;
-															program_p -> pr_crop_p = crop_p;
-															program_p -> pr_documentation_url_s = copied_documentation_url_s;
-															program_p -> pr_id_p = id_p;
-															program_p -> pr_name_s = copied_name_s;
-															program_p -> pr_objective_s = copied_objective_s;
-															program_p -> pr_pi_name_s = copied_pi_s;
-															program_p -> pr_trials_p = trials_p;
+															programme_p -> pr_abbreviation_s = copied_abbreviation_s;
+															programme_p -> pr_crop_p = crop_p;
+															programme_p -> pr_documentation_url_s = copied_documentation_url_s;
+															programme_p -> pr_id_p = id_p;
+															programme_p -> pr_name_s = copied_name_s;
+															programme_p -> pr_objective_s = copied_objective_s;
+															programme_p -> pr_pi_name_s = copied_pi_s;
+															programme_p -> pr_trials_p = trials_p;
 
-															return program_p;
-														}		/* if (program_p) */
+															return programme_p;
+														}		/* if (programme_p) */
 
 													FreeLinkedList (trials_p);
 												}		/* if (trials_p) */
@@ -115,56 +115,56 @@ Program *AllocateProgram (bson_oid_t *id_p, const char *abbreviation_s, Crop *cr
 }
 
 
-void FreeProgram (Program *program_p)
+void FreeProgramme (Programme *programme_p)
 {
-	if (program_p -> pr_abbreviation_s)
+	if (programme_p -> pr_abbreviation_s)
 		{
-			FreeCopiedString (program_p -> pr_abbreviation_s);
+			FreeCopiedString (programme_p -> pr_abbreviation_s);
 		}
 
-	if (program_p -> pr_crop_p)
+	if (programme_p -> pr_crop_p)
 		{
-			FreeCrop (program_p -> pr_crop_p);
+			FreeCrop (programme_p -> pr_crop_p);
 		}
 
-	if (program_p -> pr_documentation_url_s)
+	if (programme_p -> pr_documentation_url_s)
 		{
-			FreeCopiedString (program_p -> pr_documentation_url_s);
+			FreeCopiedString (programme_p -> pr_documentation_url_s);
 		}
 
-	if (program_p -> pr_objective_s)
+	if (programme_p -> pr_objective_s)
 		{
-			FreeCopiedString (program_p -> pr_objective_s);
+			FreeCopiedString (programme_p -> pr_objective_s);
 		}
 
-	FreeCopiedString (program_p -> pr_name_s);
+	FreeCopiedString (programme_p -> pr_name_s);
 
-	FreeCopiedString (program_p -> pr_pi_name_s);
+	FreeCopiedString (programme_p -> pr_pi_name_s);
 
-	FreeLinkedList (program_p -> pr_trials_p);
+	FreeLinkedList (programme_p -> pr_trials_p);
 
 
-	if (program_p -> pr_id_p)
+	if (programme_p -> pr_id_p)
 		{
-			FreeBSONOid (program_p -> pr_id_p);
+			FreeBSONOid (programme_p -> pr_id_p);
 		}
 
 
-	FreeMemory (program_p);
+	FreeMemory (programme_p);
 }
 
 
-json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	json_t *program_json_p = json_object ();
+	json_t *programme_json_p = json_object ();
 
-	if (program_json_p)
+	if (programme_json_p)
 		{
-			if (SetNonTrivialString (program_json_p, PR_NAME_S, program_p -> pr_name_s))
+			if (SetNonTrivialString (programme_json_p, PR_NAME_S, programme_p -> pr_name_s))
 				{
-					if (SetNonTrivialString (program_json_p, PR_PI_NAME_S, program_p -> pr_pi_name_s))
+					if (SetNonTrivialString (programme_json_p, PR_PI_NAME_S, programme_p -> pr_pi_name_s))
 						{
-							if (AddDatatype (program_json_p, DFTD_PROGRAM))
+							if (AddDatatype (programme_json_p, DFTD_PROGRAM))
 								{
 									bool success_flag = false;
 
@@ -172,17 +172,17 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 										{
 											case VF_CLIENT_FULL:
 												{
-													if (program_p -> pr_crop_p)
+													if (programme_p -> pr_crop_p)
 														{
-															if (SetJSONString (program_json_p, PR_CROP_S, program_p -> pr_crop_p -> cr_name_s))
+															if (SetJSONString (programme_json_p, PR_CROP_S, programme_p -> pr_crop_p -> cr_name_s))
 																{
 
 																}
-														}		/* if (program_p -> pr_crop_id_p) */
+														}		/* if (programme_p -> pr_crop_id_p) */
 
-													if (AddFullDetailsToProgramJSON (program_p, program_json_p))
+													if (AddFullDetailsToProgrammeJSON (programme_p, programme_json_p))
 														{
-															if (AddFieldTrialsToProgramJSON (program_p, program_json_p, format, data_p))
+															if (AddFieldTrialsToProgrammeJSON (programme_p, programme_json_p, format, data_p))
 																{
 																	success_flag = true;
 																}
@@ -192,9 +192,9 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 
 											case VF_STORAGE:
 												{
-													if (AddFullDetailsToProgramJSON (program_p, program_json_p))
+													if (AddFullDetailsToProgrammeJSON (programme_p, programme_json_p))
 														{
-															if ((! (program_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (program_json_p, program_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
+															if ((! (programme_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (programme_json_p, programme_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
 																{
 																	success_flag = true;
 																}
@@ -210,7 +210,7 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 
 									if (success_flag)
 										{
-											return program_json_p;
+											return programme_json_p;
 										}
 								}
 
@@ -218,15 +218,15 @@ json_t *GetProgramAsJSON (Program *program_p, const ViewFormat format, const Fie
 
 				}		/* if (json_object_set_new (trial_json_p, name_key_s, json_string (trial_p -> ft_name_s)) == 0) */
 
-			json_decref (program_json_p);
-		}		/* if (program_json_p) */
+			json_decref (programme_json_p);
+		}		/* if (programme_json_p) */
 
 	return NULL;
 
 }
 
 
-Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, PR_NAME_S);
 
@@ -242,7 +242,7 @@ Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, cons
 						{
 							if (GetMongoIdFromJSON (json_p, id_p))
 								{
-									Program *program_p = NULL;
+									Programme *programme_p = NULL;
 									const char *objective_s = GetJSONString (json_p, PR_OBJECTIVE_S);
 									const char *documentation_url_s = GetJSONString (json_p, PR_DOCUMENTATION_URL_S);
 									const char *abbreviation_s = GetJSONString (json_p, PR_ABBREVIATION_S);
@@ -257,11 +257,11 @@ Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, cons
 												}
 										}
 
-									program_p = AllocateProgram (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_s);
+									programme_p = AllocateProgramme (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_s);
 
-									if (program_p)
+									if (programme_p)
 										{
-											return program_p;
+											return programme_p;
 										}
 
 
@@ -287,17 +287,17 @@ Program *GetProgramFromJSON (const json_t *json_p, const ViewFormat format, cons
 }
 
 
-bool AddProgramFieldTrial (Program *program_p, FieldTrial *trial_p, MEM_FLAG mf)
+bool AddProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p, MEM_FLAG mf)
 {
 	bool success_flag = false;
 	FieldTrialNode *node_p = AllocateFieldTrialNode (trial_p);
 
 	if (node_p)
 		{
-			trial_p -> ft_parent_p = program_p;
+			trial_p -> ft_parent_p = programme_p;
 			trial_p -> ft_parent_program_mem = mf;
 
-			LinkedListAddTail (program_p -> pr_trials_p, & (node_p -> ftn_node));
+			LinkedListAddTail (programme_p -> pr_trials_p, & (node_p -> ftn_node));
 			success_flag  = true;
 		}
 
@@ -306,24 +306,24 @@ bool AddProgramFieldTrial (Program *program_p, FieldTrial *trial_p, MEM_FLAG mf)
 
 
 
-uint32 GetNumberOfProgramFieldTrials (const Program *program_p)
+uint32 GetNumberOfProgrammeFieldTrials (const Programme *programme_p)
 {
-	return (program_p -> pr_trials_p ? program_p -> pr_trials_p -> ll_size : 0);
+	return (programme_p -> pr_trials_p ? programme_p -> pr_trials_p -> ll_size : 0);
 }
 
 
 
-bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+bool AddFieldTrialsToProgrammeJSON (Programme *programme_p, json_t *programme_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
-	if (program_p -> pr_trials_p -> ll_size > 0)
+	if (programme_p -> pr_trials_p -> ll_size > 0)
 		{
 			json_t *trials_p = json_array ();
 
 			if (trials_p)
 				{
-					FieldTrialNode *node_p = (FieldTrialNode *) (program_p -> pr_trials_p -> ll_head_p);
+					FieldTrialNode *node_p = (FieldTrialNode *) (programme_p -> pr_trials_p -> ll_head_p);
 					bool ok_flag = true;
 
 					while (node_p && ok_flag)
@@ -339,7 +339,7 @@ bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, co
 									else
 										{
 											ok_flag = false;
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_p, "Failed to add Field Trial json to array for program \"%s\" - \"%s\"", program_p -> pr_name_s, program_p -> pr_pi_name_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_p, "Failed to add Field Trial json to array for program \"%s\" - \"%s\"", programme_p -> pr_name_s, programme_p -> pr_pi_name_s);
 										}
 								}
 							else
@@ -355,7 +355,7 @@ bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, co
 
 					if (ok_flag)
 						{
-							if (json_object_set_new (program_json_p, PR_TRIALS_S, trials_p) == 0)
+							if (json_object_set_new (programme_json_p, PR_TRIALS_S, trials_p) == 0)
 								{
 									success_flag = true;
 								}
@@ -365,7 +365,7 @@ bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, co
 
 									ok_flag = false;
 
-									bson_oid_to_string (program_p -> pr_id_p, buffer_s);
+									bson_oid_to_string (programme_p -> pr_id_p, buffer_s);
 
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trials_p, "Failed to add Trial json to Prpgram \"%s\"", buffer_s);
 
@@ -376,7 +376,7 @@ bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, co
 				}		/* if (exp_areas_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Trials json object for Program \"%s\" - \"%s\"", program_p -> pr_name_s, program_p -> pr_pi_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Trials json object for Program \"%s\" - \"%s\"", programme_p -> pr_name_s, programme_p -> pr_pi_name_s);
 				}
 
 		}		/* if (trial_p -> ft_studies_p -> ll_size > 0) */
@@ -394,48 +394,48 @@ bool AddFieldTrialsToProgramJSON (Program *program_p, json_t *program_json_p, co
  * The Program could be the bson_oid or a name so check
  */
 
-Program *GetUniqueProgramBySearchString (const char *program_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+Programme *GetUniqueProgrammeBySearchString (const char *programme_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	Program *program_p = NULL;
+	Programme *programme_p = NULL;
 
-	if (bson_oid_is_valid (program_s, strlen (program_s)))
+	if (bson_oid_is_valid (programme_s, strlen (programme_s)))
 		{
-			program_p = GetProgramByIdString (program_s, format, data_p);
+			programme_p = GetProgrammeByIdString (programme_s, format, data_p);
 		}
 
-	if (!program_p)
+	if (!programme_p)
 		{
-			LinkedList *programs_p = GetProgramsByName (program_s, data_p);
+			LinkedList *programs_p = GetProgrammesByName (programme_s, data_p);
 
 			if (programs_p)
 				{
 					if (programs_p -> ll_size == 1)
 						{
-							ProgramNode *node_p = (ProgramNode *) (programs_p -> ll_head_p);
+							ProgrammeNode *node_p = (ProgrammeNode *) (programs_p -> ll_head_p);
 
 							/* Remove the program from the node */
-							program_p = node_p -> pn_program_p;
-							node_p -> pn_program_p = NULL;
+							programme_p = node_p -> pn_programme_p;
+							node_p -> pn_programme_p = NULL;
 						}
 
 					FreeLinkedList (programs_p);
 				}
 		}
 
-	return program_p;
+	return programme_p;
 }
 
 
-LinkedList *GetProgramsByName (const char * const program_s, const FieldTrialServiceData *data_p)
+LinkedList *GetProgrammesByName (const char * const programme_s, const FieldTrialServiceData *data_p)
 {
 	const char *keys_ss [] = { PR_NAME_S, NULL };
-	const char *values_ss [] = { program_s, NULL };
+	const char *values_ss [] = { programme_s, NULL };
 
-	return GetMatchingPrograms (data_p, keys_ss, values_ss);
+	return GetMatchingProgrammes (data_p, keys_ss, values_ss);
 }
 
 
-static LinkedList *GetMatchingPrograms (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss)
+static LinkedList *GetMatchingProgrammes (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss)
 {
 	LinkedList *field_trials_list_p = AllocateLinkedList (FreeFieldTrialNode);
 
@@ -528,30 +528,30 @@ static LinkedList *GetMatchingPrograms (const FieldTrialServiceData *data_p, con
 
 
 
-Program *GetProgramById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+Programme *GetProgrammeById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	Program *program_p = NULL;
+	Programme *programme_p = NULL;
 	char *id_s = GetBSONOidAsString (id_p);
 
 	if (id_s)
 		{
-			program_p = GetProgramByIdString (id_s, format, data_p);
+			programme_p = GetProgrammeByIdString (id_s, format, data_p);
 
 			FreeCopiedString (id_s);
 		}
 
-	return program_p;
+	return programme_p;
 }
 
-static void *GetProgramObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+static void *GetProgrammeObjectFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	return (void *) GetProgramFromJSON (json_p, format, data_p);
+	return (void *) GetProgrammeFromJSON (json_p, format, data_p);
 }
 
 
-Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+Programme *GetProgrammeByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	Program *program_p = NULL;
+	Programme *programme_p = NULL;
 
 	if (bson_oid_is_valid (program_id_s, strlen (program_id_s)))
 		{
@@ -559,8 +559,8 @@ Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format
 
 			if (id_p)
 				{
-					void *obj_p = GetDFWObjectById (id_p, DFTD_PROGRAM, GetProgramObjectFromJSON, format, data_p);
-					program_p = (Program *) obj_p;
+					void *obj_p = GetDFWObjectById (id_p, DFTD_PROGRAM, GetProgrammeObjectFromJSON, format, data_p);
+					programme_p = (Programme *) obj_p;
 
 					FreeBSONOid (id_p);
 				}
@@ -575,37 +575,37 @@ Program *GetProgramByIdString (const char *program_id_s, const ViewFormat format
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" is not a valid oid", program_id_s);
 		}
 
-	return program_p;
+	return programme_p;
 }
 
 
 
-OperationStatus SaveProgram (Program *program_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
-	bool success_flag = PrepareSaveData (& (program_p -> pr_id_p), &selector_p);
+	bool success_flag = PrepareSaveData (& (programme_p -> pr_id_p), &selector_p);
 
 	if (success_flag)
 		{
-			json_t *program_json_p = GetProgramAsJSON (program_p, VF_STORAGE, data_p);
+			json_t *programme_json_p = GetProgrammeAsJSON (programme_p, VF_STORAGE, data_p);
 
-			if (program_json_p)
+			if (programme_json_p)
 				{
-					if (SaveMongoData (data_p -> dftsd_mongo_p, program_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAM], selector_p))
+					if (SaveMongoData (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAM], selector_p))
 						{
-							status = IndexData (job_p, program_json_p);
+							status = IndexData (job_p, programme_json_p);
 
 							if (status != OS_SUCCEEDED)
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, program_json_p, "Failed to index Program \"%s\" as JSON to Lucene", program_p -> pr_name_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to index Program \"%s\" as JSON to Lucene", programme_p -> pr_name_s);
 									AddGeneralErrorMessageToServiceJob (job_p, "Program saved but failed to index for searching");
 								}
 						}
 
-					json_decref (program_json_p);
-				}		/* if (program_json_p) */
+					json_decref (programme_json_p);
+				}		/* if (programme_json_p) */
 
 		}		/* if (success_flag) */
 
@@ -616,19 +616,19 @@ OperationStatus SaveProgram (Program *program_p, ServiceJob *job_p, FieldTrialSe
 
 
 
-bool RemoveProgramFieldTrial (Program *program_p, FieldTrial *trial_p)
+bool RemoveProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p)
 {
 	bool removed_flag = false;
 
-	if (program_p -> pr_trials_p)
+	if (programme_p -> pr_trials_p)
 		{
-			FieldTrialNode *node_p = (FieldTrialNode *) (program_p -> pr_trials_p -> ll_head_p);
+			FieldTrialNode *node_p = (FieldTrialNode *) (programme_p -> pr_trials_p -> ll_head_p);
 
 			while (node_p && !removed_flag)
 				{
 					if (node_p -> ftn_field_trial_p == trial_p)
 						{
-							LinkedListRemove (program_p -> pr_trials_p, & (node_p -> ftn_node));
+							LinkedListRemove (programme_p -> pr_trials_p, & (node_p -> ftn_node));
 
 							node_p -> ftn_field_trial_p = NULL;
 							FreeStudyNode (& (node_p -> ftn_node));
@@ -651,15 +651,15 @@ bool RemoveProgramFieldTrial (Program *program_p, FieldTrial *trial_p)
 
 
 
-static bool AddFullDetailsToProgramJSON (const Program *program_p, json_t *program_json_p)
+static bool AddFullDetailsToProgrammeJSON (const Programme *programme_p, json_t *programme_json_p)
 {
-	if (SetNonTrivialString (program_json_p, PR_DOCUMENTATION_URL_S, program_p -> pr_documentation_url_s))
+	if (SetNonTrivialString (programme_json_p, PR_DOCUMENTATION_URL_S, programme_p -> pr_documentation_url_s))
 		{
-			if (SetNonTrivialString (program_json_p, PR_OBJECTIVE_S, program_p -> pr_objective_s))
+			if (SetNonTrivialString (programme_json_p, PR_OBJECTIVE_S, programme_p -> pr_objective_s))
 				{
-					if (SetNonTrivialString (program_json_p, PR_ABBREVIATION_S, program_p -> pr_abbreviation_s))
+					if (SetNonTrivialString (programme_json_p, PR_ABBREVIATION_S, programme_p -> pr_abbreviation_s))
 						{
-							if (AddCompoundIdToJSON (program_json_p, program_p -> pr_id_p))
+							if (AddCompoundIdToJSON (programme_json_p, programme_p -> pr_id_p))
 								{
 									return true;
 								}

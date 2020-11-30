@@ -42,7 +42,7 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, FieldTrialServiceData *data_p);
+static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p);
 
 
 static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p);
@@ -104,14 +104,14 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part of", program_id_s, PL_ALL)) != NULL)
 										{
-											Program *program_p = NULL;
+											Programme *program_p = NULL;
 
 											if (program_id_s)
 												{
-													program_p = GetProgramByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+													program_p = GetProgrammeByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
 												}
 
-											if (SetUpProgramsListParameter (dfw_data_p, (StringParameter *) param_p, program_p, false))
+											if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, program_p, false))
 												{
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 														{
@@ -125,7 +125,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 											if (program_p)
 												{
-													FreeProgram (program_p);
+													FreeProgramme (program_p);
 												}
 										}
 
@@ -160,6 +160,8 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 	const char *name_s = NULL;
 	const char *id_s = NULL;
 	bson_oid_t *trial_id_p = NULL;
+	const char *programme_id_s = NULL;
+	Programme *programme_p = NULL;
 
 	/*
 	 * Get the existing study id if specified
@@ -193,6 +195,35 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 		}		/* if (id_value.st_string_value_s) */
 
 
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_PARENT_ID.npt_name_s, &programme_id_s);
+
+	if (programme_id_s)
+		{
+			if (strcmp (S_EMPTY_LIST_OPTION_S, programme_id_s) != 0)
+				{
+					programme_p = GetProgrammeByIdString (programme_id_s, VF_STORAGE, data_p);
+
+					if (!programme_p)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find programme \"%s\" for editing", programme_id_s);
+							char *error_s = ConcatenateVarargsStrings ("Failed to find programme with id: '", programme_id_s, "' for editing");
+
+							if (error_s)
+								{
+									AddParameterErrorMessageToServiceJob (job_p, FIELD_TRIAL_PARENT_ID.npt_name_s, FIELD_TRIAL_PARENT_ID.npt_type, error_s);
+									FreeCopiedString (error_s);
+								}
+							else
+								{
+									AddParameterErrorMessageToServiceJob (job_p, FIELD_TRIAL_PARENT_ID.npt_name_s, FIELD_TRIAL_PARENT_ID.npt_type, "Failed to find existing trial");
+								}
+
+							return false;
+						}
+				}
+		}		/* if (id_value.st_string_value_s) */
+
+
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
 		{
@@ -200,12 +231,11 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 			if (!IsStringEmpty (name_s))
 				{
-
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-					if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, data_p))
+					if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, programme_p, data_p))
 						{
-							char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "'", NULL);
+							char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
 
 							if (error_s)
 								{
@@ -217,7 +247,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 									AddGeneralErrorMessageToServiceJob (job_p, "Failed to add Field Trial");
 								}
 
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\"", name_s, team_s, id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
 						}
 
 				}		/* if (!IsStringEmpty (name_s)) */
@@ -640,9 +670,9 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 }
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, FieldTrialServiceData *data_p)
+static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p)
 {
-	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, NULL, MF_ALREADY_FREED, id_p);
+	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, id_p);
 
 	if (trial_p)
 		{

@@ -1543,11 +1543,11 @@ static bool AddGrandParentProgramToJSON (Study *study_p, json_t *study_json_p, c
 
 	if (trial_p)
 		{
-			Program *program_p = trial_p -> ft_parent_p;
+			Programme *program_p = trial_p -> ft_parent_p;
 
 			if (program_p)
 				{
-					json_t *program_json_p = GetProgramAsJSON (program_p, format, data_p);
+					json_t *program_json_p = GetProgrammeAsJSON (program_p, format, data_p);
 
 					if (program_json_p)
 						{

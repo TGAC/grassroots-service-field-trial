@@ -34,7 +34,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetProgramSubmissionService (GrassrootsServer *grassroots_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Service *GetProgrammeSubmissionService (GrassrootsServer *grassroots_p);
 
 
 #ifdef __cplusplus

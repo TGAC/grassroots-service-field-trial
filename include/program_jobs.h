@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#ifndef SERVICES_FIELD_TRIALS_INCLUDE_PROGRAM_JOBS_H_
-#define SERVICES_FIELD_TRIALS_INCLUDE_PROGRAM_JOBS_H_
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_PROGRAMME_JOBS_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_PROGRAMME_JOBS_H_
 
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
@@ -32,12 +32,12 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#ifdef ALLOCATE_PROGRAM_JOB_CONSTANTS
-	#define PROGRAM_JOB_PREFIX DFW_FIELD_TRIAL_SERVICE_API
-	#define PROGRAM_JOB_STRUCT_VAL(x,y)	= { x, y}
+#ifdef ALLOCATE_PROGRAMME_JOB_CONSTANTS
+	#define PROGRAMME_JOB_PREFIX DFW_FIELD_TRIAL_SERVICE_API
+	#define PROGRAMME_JOB_STRUCT_VAL(x,y)	= { x, y}
 #else
-	#define PROGRAM_JOB_PREFIX extern
-	#define PROGRAM_JOB_STRUCT_VAL(x,y)
+	#define PROGRAMME_JOB_PREFIX extern
+	#define PROGRAMME_JOB_STRUCT_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
@@ -46,13 +46,13 @@
 /*
  * Study parameters
  */
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_ID PROGRAM_JOB_STRUCT_VAL("PR Id", PT_STRING);
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_ABBREVIATION PROGRAM_JOB_STRUCT_VAL("PR Abbreviation", PT_STRING);
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_CROP PROGRAM_JOB_STRUCT_VAL("PR Crop", PT_STRING);
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_URL PROGRAM_JOB_STRUCT_VAL("PR Url", PT_STRING);
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_NAME PROGRAM_JOB_STRUCT_VAL("PR Name", PT_STRING);
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_OBJECTIVE PROGRAM_JOB_STRUCT_VAL("PR Objective", PT_LARGE_STRING);
-PROGRAM_JOB_PREFIX NamedParameterType PROGRAM_PI_NAME PROGRAM_JOB_STRUCT_VAL("PR PI Name", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_ID PROGRAMME_JOB_STRUCT_VAL("PR Id", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_ABBREVIATION PROGRAMME_JOB_STRUCT_VAL("PR Abbreviation", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_CROP PROGRAMME_JOB_STRUCT_VAL("PR Crop", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_URL PROGRAMME_JOB_STRUCT_VAL("PR Url", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_NAME PROGRAMME_JOB_STRUCT_VAL("PR Name", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_OBJECTIVE PROGRAMME_JOB_STRUCT_VAL("PR Objective", PT_LARGE_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_PI_NAME PROGRAMME_JOB_STRUCT_VAL("PR PI Name", PT_STRING);
 
 
 
@@ -62,28 +62,28 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpProgramsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Program *active_program_p, const bool empty_option_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Programme *active_program_p, const bool empty_option_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgramParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllProgramsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionProgramParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionProgramParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgramToServiceJob (ServiceJob *job_p, Program *program_p, const ViewFormat format, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammeToServiceJob (ServiceJob *job_p, Programme *program_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Program *GetProgramFromResource (Resource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeFromResource (Resource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgramIndexingData (Service *service_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeIndexingData (Service *service_p);
 
 
 #ifdef __cplusplus
@@ -91,4 +91,4 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgramIndexingData (Service *service_p
 #endif
 
 
-#endif /* SERVICES_FIELD_TRIALS_INCLUDE_PROGRAM_JOBS_H_ */
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_PROGRAMME_JOBS_H_ */

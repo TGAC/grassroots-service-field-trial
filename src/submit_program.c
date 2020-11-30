@@ -33,27 +33,27 @@
 
 
 
-static const char *GetProgramSubmissionServiceName (const Service *service_p);
+static const char *GetProgrammeSubmissionServiceName (const Service *service_p);
 
-static const char *GetProgramSubmissionServiceDescription (const Service *service_p);
+static const char *GetProgrammeSubmissionServiceDescription (const Service *service_p);
 
-static const char *GetProgramSubmissionServiceAlias (const Service *service_p);
+static const char *GetProgrammeSubmissionServiceAlias (const Service *service_p);
 
-static const char *GetProgramSubmissionServiceInformationUri (const Service *service_p);
+static const char *GetProgrammeSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetProgramSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
 
-static bool GetProgramSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
+static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static void ReleaseProgramSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
+static void ReleaseProgrammeSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunProgramSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
-static ParameterSet *IsResourceForProgramSubmissionService (Service *service_p, Resource *resource_p, Handler *handler_p);
+static ParameterSet *IsResourceForProgrammeSubmissionService (Service *service_p, Resource *resource_p, Handler *handler_p);
 
-static bool CloseProgramSubmissionService (Service *service_p);
+static bool CloseProgrammeSubmissionService (Service *service_p);
 
-static ServiceMetadata *GetProgramSubmissionServiceMetadata (Service *service_p);
+static ServiceMetadata *GetProgrammeSubmissionServiceMetadata (Service *service_p);
 
 
 /*
@@ -61,7 +61,7 @@ static ServiceMetadata *GetProgramSubmissionServiceMetadata (Service *service_p)
  */
 
 
-Service *GetProgramSubmissionService (GrassrootsServer *grassroots_p)
+Service *GetProgrammeSubmissionService (GrassrootsServer *grassroots_p)
 {
 	Service *service_p = (Service *) AllocMemory (sizeof (Service));
 
@@ -72,22 +72,22 @@ Service *GetProgramSubmissionService (GrassrootsServer *grassroots_p)
 			if (data_p)
 				{
 					if (InitialiseService (service_p,
-														 GetProgramSubmissionServiceName,
-														 GetProgramSubmissionServiceDescription,
-														 GetProgramSubmissionServiceAlias,
-														 GetProgramSubmissionServiceInformationUri,
-														 RunProgramSubmissionService,
+														 GetProgrammeSubmissionServiceName,
+														 GetProgrammeSubmissionServiceDescription,
+														 GetProgrammeSubmissionServiceAlias,
+														 GetProgrammeSubmissionServiceInformationUri,
+														 RunProgrammeSubmissionService,
 														 NULL,
-														 GetProgramSubmissionServiceParameters,
-														 GetProgramSubmissionServiceParameterTypesForNamedParameters,
-														 ReleaseProgramSubmissionServiceParameters,
-														 CloseProgramSubmissionService,
+														 GetProgrammeSubmissionServiceParameters,
+														 GetProgrammeSubmissionServiceParameterTypesForNamedParameters,
+														 ReleaseProgrammeSubmissionServiceParameters,
+														 CloseProgrammeSubmissionService,
 														 NULL,
 														 false,
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
-														 GetProgramSubmissionServiceMetadata,
-														 GetProgramIndexingData,
+														 GetProgrammeSubmissionServiceMetadata,
+														 GetProgrammeIndexingData,
 														 grassroots_p))
 						{
 
@@ -108,25 +108,25 @@ Service *GetProgramSubmissionService (GrassrootsServer *grassroots_p)
 }
 
 
-static const char *GetProgramSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
+static const char *GetProgrammeSubmissionServiceName (const Service * UNUSED_PARAM (service_p))
 {
-	return "Submit Field Trial Program";
+	return "Submit Field Trial Programme";
 }
 
 
-static const char *GetProgramSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
+static const char *GetProgrammeSubmissionServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "Add a Program to the system. A Program contains one or more Trials.";
+	return "Add a Programme to the system. A Programme contains one or more Trials.";
 }
 
 
-static const char *GetProgramSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
+static const char *GetProgrammeSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
 	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_prgoram";
 }
 
 
-static const char *GetProgramSubmissionServiceInformationUri (const Service *service_p)
+static const char *GetProgrammeSubmissionServiceInformationUri (const Service *service_p)
 {
 	const char *url_s = GetServiceInformationPage (service_p);
 
@@ -139,35 +139,35 @@ static const char *GetProgramSubmissionServiceInformationUri (const Service *ser
 }
 
 
-static bool GetProgramSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionProgramParameterTypeForNamedParameter (param_name_s, pt_p);
+	return GetSubmissionProgrammeParameterTypeForNamedParameter (param_name_s, pt_p);
 }
 
 
 
-static ParameterSet *GetProgramSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p = AllocateParameterSet ("Program submission service parameters", "The parameters used for the Program submission service");
+	ParameterSet *params_p = AllocateParameterSet ("Programme submission service parameters", "The parameters used for the Programme submission service");
 
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionProgramParams (data_p, params_p, resource_p))
+			if (AddSubmissionProgrammeParams (data_p, params_p, resource_p))
 				{
 					return params_p;
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionProgramParams failed");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionProgrammeParams failed");
 				}
 
 			FreeParameterSet (params_p);
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetProgramSubmissionServiceName (service_p));
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s ParameterSet", GetProgrammeSubmissionServiceName (service_p));
 		}
 
 	return NULL;
@@ -178,7 +178,7 @@ static ParameterSet *GetProgramSubmissionServiceParameters (Service *service_p, 
 
 
 
-static void ReleaseProgramSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
+static void ReleaseProgrammeSubmissionServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
 {
 	FreeParameterSet (params_p);
 }
@@ -186,7 +186,7 @@ static void ReleaseProgramSubmissionServiceParameters (Service * UNUSED_PARAM (s
 
 
 
-static bool CloseProgramSubmissionService (Service *service_p)
+static bool CloseProgrammeSubmissionService (Service *service_p)
 {
 	bool success_flag = true;
 
@@ -197,7 +197,7 @@ static bool CloseProgramSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunProgramSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -211,10 +211,10 @@ static ServiceJobSet *RunProgramSubmissionService (Service *service_p, Parameter
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionProgramParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionProgrammeParams (data_p, param_set_p, job_p))
 				{
 
-				}		/* if (!RunForProgramParams (data_p, param_set_p, job_p)) */
+				}		/* if (!RunForProgrammeParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
@@ -224,7 +224,7 @@ static ServiceJobSet *RunProgramSubmissionService (Service *service_p, Parameter
 }
 
 
-static ServiceMetadata *GetProgramSubmissionServiceMetadata (Service *service_p)
+static ServiceMetadata *GetProgrammeSubmissionServiceMetadata (Service *service_p)
 {
 	const char *term_url_s = CONTEXT_PREFIX_EDAM_ONTOLOGY_S "topic_0625";
 	SchemaTerm *category_p = AllocateSchemaTerm (term_url_s, "Genotype and phenotype",
@@ -402,7 +402,7 @@ static ServiceMetadata *GetProgramSubmissionServiceMetadata (Service *service_p)
 
 
 
-static ParameterSet *IsResourceForProgramSubmissionService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
+static ParameterSet *IsResourceForProgrammeSubmissionService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
 }

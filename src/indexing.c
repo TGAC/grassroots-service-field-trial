@@ -322,7 +322,7 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 						{
 							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
-									if (ReindexPrograms (job_p, lucene_p, update_flag, data_p))
+									if (ReindexProgrammes (job_p, lucene_p, update_flag, data_p))
 										{
 											++ num_succeeded;
 										}
@@ -818,7 +818,7 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const bool update_flag, const
 					++ partially_succeeded_count;
 				}
 
-			temp_status = ReindexPrograms (job_p, lucene_p, true, service_data_p);
+			temp_status = ReindexProgrammes (job_p, lucene_p, true, service_data_p);
 			++ total_count;
 			if (temp_status == OS_SUCCEEDED)
 				{
@@ -869,19 +869,19 @@ OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool up
 
 
 
-OperationStatus ReindexPrograms (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+OperationStatus ReindexProgrammes (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *programs_p = GetProgramIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
+	json_t *programmes_p = GetProgrammeIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
 
-	if (programs_p)
+	if (programmes_p)
 		{
 			if (SetLuceneToolName (lucene_p, "index_programs"))
 				{
-					status = IndexLucene (lucene_p, programs_p, update_flag);
+					status = IndexLucene (lucene_p, programmes_p, update_flag);
 				}
 
-			json_decref (programs_p);
+			json_decref (programmes_p);
 		}
 
 	return status;

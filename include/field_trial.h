@@ -32,14 +32,14 @@
 
 /* forward declarations */
 struct Study;
-struct Program;
+struct Programme;
 
 
 typedef struct FieldTrial
 {
 	bson_oid_t *ft_id_p;
 
-	struct Program *ft_parent_p;
+	struct Programme *ft_parent_p;
 
 	MEM_FLAG ft_parent_program_mem;
 
@@ -107,7 +107,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, struct Program *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, struct Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
 
