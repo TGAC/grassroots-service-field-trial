@@ -31,37 +31,52 @@
 #include "schema_keys.h"
 #include "jansson.h"
 
+typedef struct TreatmentFactor TreatmentFactor;
 
 /**
- * A treatmnet applied to the plots within a study.
+ * A treatment applied to the plots within a study.
  */
-typedef struct TreatmentFactor
+struct TreatmentFactor
 {
-	//Study *parent_study_p;
+	bson_oid_t *tf_id_p;
 
 	SchemaTerm *tf_ontology_term_p;
 
-	char *tf_notes_s;
+	const char **parent_names_ss;
 
-	char *tf_abbreviation_s;
+	const char **synonyms_ss;
 
+};
+
+
+
+
+/**
+ * A treatment applied to the plots within a study.
+ */
+typedef struct TreatmentFactorLevels
+{
+	bson_oid_t *tfl_treatment_id_p;
+
+	Study *tfl_parent_study_p;
 
 
 	/**
 	 * A list of KeyValuePairNodes defining the different treatment levels
 	 *
 	 */
-	LinkedList *tf_values_p;
-} TreatmentFactor;
+	LinkedList *tlf_values_p;
+} TreatmentFactorLevels;
 
 
 
-typedef struct TreatmentFactorNode
+typedef struct TreatmentFactorLevelsNode
 {
-	ListItem tfn_node;
+	ListItem tfln_node;
 
-	TreatmentFactor *tfn_treatment_p;
-} TreatmentFactorNode;
+	TreatmentFactorLevels *tfln_p;
+} TreatmentFactorLevelsNode;
+
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
