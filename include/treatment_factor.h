@@ -42,10 +42,9 @@ struct TreatmentFactor
 
 	SchemaTerm *tf_ontology_term_p;
 
-	const char **tf_parent_names_ss;
+	char **tf_parent_names_ss;
 
-	const char **tf_synonyms_ss;
-
+	char **tf_synonyms_ss;
 };
 
 
@@ -95,9 +94,9 @@ struct TreatmentFactor
 
 
 TREATMENT_FACTOR_PREFIX const char *TF_NAME_S TREATMENT_FACTOR_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
-TREATMENT_FACTOR_PREFIX const char *TF_VALUES_S TREATMENT_FACTOR_VAL ("values");
 TREATMENT_FACTOR_PREFIX const char *TF_TERM_S TREATMENT_FACTOR_VAL ("term");
-
+TREATMENT_FACTOR_PREFIX const char *TF_PARENTS_S TREATMENT_FACTOR_VAL ("parents");
+TREATMENT_FACTOR_PREFIX const char *TF_SYNONYMS_S TREATMENT_FACTOR_VAL ("synonyms");
 
 
 
@@ -107,7 +106,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, char **parent_names_ss, const bool copy_parents_flag, char **synonyms_ss, const bool copy_synonyms_flag, bson_oid_t *id_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactor (TreatmentFactor *treatment_p);
 

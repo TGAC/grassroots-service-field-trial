@@ -28,8 +28,78 @@
 #include "jansson.h"
 
 
-TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, const char **parent_names_ss, const char **synonyms_ss, bson_oid_t *id_p)
+
+static char **GetStringsFromJSON (const json_t *treatment_json_p, const char *key_s);
+
+static char **CopyArrayOfStrings (char **src_ss);
+
+static bool AddStringsToJSON (const char *key_s,  char **values_ss, json_t *json_p);
+
+
+
+TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, char **parent_names_ss, const bool copy_parents_flag, char **synonyms_ss, const bool copy_synonyms_flag, bson_oid_t *id_p)
 {
+	TreatmentFactor *treatment_p = (TreatmentFactor *) AllocMemory (sizeof (TreatmentFactor));
+
+	if (treatment_p)
+		{
+			bool success_flag = true;
+			char **copied_parents_ss = NULL;
+
+			if (parent_names_ss && copy_parents_flag)
+				{
+					copied_parents_ss = CopyArrayOfStrings (parent_names_ss);
+
+					if (!copied_parents_ss)
+						{
+							success_flag = false;
+						}
+
+				}		/* if (parent_names_ss) */
+			else
+				{
+					copied_parents_ss = parent_names_ss;
+				}
+
+			if (success_flag)
+				{
+					char **copied_synonyms_ss = NULL;
+
+					if (synonyms_ss && copy_synonyms_flag)
+						{
+							copied_synonyms_ss = CopyArrayOfStrings (synonyms_ss);
+
+							if (!copied_synonyms_ss)
+								{
+									success_flag = false;
+								}
+						}		/* if (parent_names_ss) */
+					else
+						{
+							copied_synonyms_ss = synonyms_ss;
+						}
+
+					if (success_flag)
+						{
+							treatment_p -> tf_ontology_term_p = term_p;
+							treatment_p -> tf_id_p = id_p;
+							treatment_p -> tf_parent_names_ss = copied_parents_ss;
+							treatment_p -> tf_synonyms_ss = copied_synonyms_ss;
+
+							return treatment_p;
+						}
+
+				}		/* if (success_flag) */
+
+			if (copied_parents_ss && copy_parents_flag)
+				{
+					FreeStringArray (copied_parents_ss);
+				}
+
+			FreeMemory (treatment_p);
+		}		/* if (treatment_p) */
+
+	return NULL;
 }
 
 
@@ -39,25 +109,13 @@ void FreeTreatmentFactor (TreatmentFactor *treatment_p)
 
 	if (treatment_p -> tf_parent_names_ss)
 		{
-			char **value_ss = treatment_p -> tf_parent_names_ss;
-
-			while (*value_ss)
-				{
-					FreeCopiedString (*value_ss);
-					++ value_ss;
-				}
+			FreeStringArray (treatment_p -> tf_parent_names_ss);
 		}
 
 
 	if (treatment_p -> tf_synonyms_ss)
 		{
-			char **value_ss = treatment_p -> tf_synonyms_ss;
-
-			while (*value_ss)
-				{
-					FreeCopiedString (*value_ss);
-					++ value_ss;
-				}
+			FreeStringArray (treatment_p -> tf_synonyms_ss);
 		}
 
 	FreeBSONOid (treatment_p -> tf_id_p);
@@ -65,11 +123,6 @@ void FreeTreatmentFactor (TreatmentFactor *treatment_p)
 	FreeMemory (treatment_p);
 }
 
-
-static char **CopyArrayOfStrings (const char **src_ss)
-{
-
-}
 
 
 //bool AddTreatmentFactorValueByParts (TreatmentFactor *treatment_p, const char *name_s, const char *value_s)
@@ -147,148 +200,246 @@ static char **CopyArrayOfStrings (const char **src_ss)
 
 json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_p)
 {
-	json_t *tf_json_p = json_object ();
+	json_t *term_json_p = GetSchemaTermAsJSON (treatment_p -> tf_ontology_term_p);
 
-	if (tf_json_p)
+	if (term_json_p)
 		{
-			json_t *term_json_p = GetSchemaTermAsJSON (treatment_p -> tf_ontology_term_p);
-
-			if (term_json_p)
+			if ((! (treatment_p -> tf_parent_names_ss)) || (AddStringsToJSON (TF_PARENTS_S, treatment_p -> tf_parent_names_ss, term_json_p)))
 				{
-					if (json_object_set_new (tf_json_p, TF_TERM_S, term_json_p))
+					if ((! (treatment_p -> tf_synonyms_ss)) || (AddStringsToJSON (TF_SYNONYMS_S, treatment_p -> tf_synonyms_ss, term_json_p)))
 						{
-							bool success_flag = true;
-
-							if (treatment_p -> tf_values_p -> ll_size)
+							if (AddCompoundIdToJSON (term_json_p, treatment_p -> tf_id_p))
 								{
-									json_t *factors_json_p = json_array ();
-
-									if (factors_json_p)
-										{
-											if (json_object_set_new (tf_json_p, TF_VALUES_S, factors_json_p) == 0)
-												{
-													KeyValuePairNode *node_p = (KeyValuePairNode *) (treatment_p -> tf_values_p -> ll_head_p);
-
-													while (success_flag && node_p)
-														{
-															const KeyValuePair *kvp_p = node_p -> kvpn_pair_p;
-															json_t *kvp_json_p = GetKeyValuePairAsJSON (kvp_p);
-
-															if (kvp_json_p)
-																{
-																	if (json_array_append_new (factors_json_p, kvp_json_p) == 0)
-																		{
-																			node_p = (KeyValuePairNode *) (node_p -> kvpn_node.ln_next_p);
-																		}
-																	else
-																		{
-																			success_flag = false;
-																		}
-																}
-															else
-																{
-																	success_flag = false;
-																}
-														}
-												}
-											else
-												{
-													json_decref (factors_json_p);
-												}
-
-										}		/* if (factors_json_p) */
-									else
-										{
-
-										}
-
-								}		/* if (treatment_p -> tf_values_p -> ll_size) */
-
-							if (success_flag)
-								{
-									return tf_json_p;
+									return term_json_p;
 								}
 
-						}		/* if (json_obiect_set_new (tf_json_p, TF_TERM_S, term_json_p)) */
-					else
-						{
-							json_decref (term_json_p);
 						}
 
-				}		/* if (term_json_p) */
+				}
 
-
-			json_decref (tf_json_p);
-		}		/* if (tf_json_p) */
+			json_decref (term_json_p);
+		}		/* if (term_json_p) */
 
 	return NULL;
 }
+
+
 
 
 TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_json_p)
 {
-	const json_t *term_json_p = json_object_get (treatment_json_p, TF_TERM_S);
+	bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-	if (term_json_p)
+	if (id_p)
 		{
-			SchemaTerm *term_p = GetSchemaTermFromJSON (term_json_p);
-
-			if (term_p)
+			if (GetMongoIdFromJSON (treatment_json_p, id_p))
 				{
-					TreatmentFactor *tf_p = AllocateTreatmentFactor (term_p);
+					SchemaTerm *term_p = GetSchemaTermFromJSON (treatment_json_p);
 
-					if (tf_p)
+					if (term_p)
 						{
-							json_t *values_p = json_object_get (treatment_json_p, TF_VALUES_S);
-							bool success_flag = true;
+							char **parents_ss = GetStringsFromJSON (treatment_json_p, TF_PARENTS_S);
+							char **synonyms_ss = GetStringsFromJSON (treatment_json_p, TF_SYNONYMS_S);
+							TreatmentFactor *tf_p = AllocateTreatmentFactor (term_p, parents_ss, false, synonyms_ss, false, id_p);
 
-							if (values_p)
-								{
-									const size_t size = json_array_size (values_p);
-									size_t i = 0;
-
-									while ((i < size) && success_flag)
-										{
-											const json_t *entry_p = json_array_get (values_p, i);
-											KeyValuePair  *pair_p = GetKeyValuePairFromJSON (entry_p);
-
-											if (pair_p)
-												{
-													if (AddTreatmentFactorValue (tf_p, pair_p))
-														{
-															++ i;
-														}
-													else
-														{
-															FreeKeyValuePair (pair_p);
-															success_flag = false;
-														}
-												}		/* if (pair_p) */
-											else
-												{
-													success_flag = false;
-												}
-
-										}		/* while ((i < size) && success_flag) */
-
-								}		/* if (values_p) */
-
-							if (success_flag)
+							if (tf_p)
 								{
 									return tf_p;
 								}
 
-							FreeTreatmentFactor (tf_p);
-						}		/* if (tf_p) */
+							if (parents_ss)
+								{
+									FreeStringArray (parents_ss);
+								}		/* if (parents_ss) */
+
+							if (synonyms_ss)
+								{
+									FreeStringArray (synonyms_ss);
+								}		/* if (synonyms_ss) */
+
+
+							FreeSchemaTerm (term_p);
+						}		/* if (term_p) */
+
+				}		/* if (GetMongoIdFromJSON (treatment_json_p, id_p)) */
+
+
+			FreeBSONOid (id_p);
+		}		/* if (id_p) */
+
+	return NULL;
+}
+
+
+
+
+static bool AddStringsToJSON (const char *key_s, char **values_ss, json_t *json_p)
+{
+	json_t *strings_p = json_array ();
+
+	if (strings_p)
+		{
+			bool b = true;
+
+			while (b && (*values_ss))
+				{
+					json_t *value_p = json_string (*values_ss);
+
+					if (value_p)
+						{
+							if (json_array_append_new (strings_p, value_p) == 0)
+								{
+									++ values_ss;
+								}
+							else
+								{
+									b = false;
+								}
+						}
 					else
 						{
-							FreeSchemaTerm (term_p);
+							b = false;
 						}
+				}
 
-				}		/* if (term_json_p) */
+			if (b)
+				{
+					if (json_object_set_new (json_p, key_s, strings_p) == 0)
+						{
+							return true;
+						}
+				}
 
-		}
+			json_decref (strings_p);
+		}		/* if (strings_p) */
+
+
+	return false;
+}
+
+
+static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *key_s)
+{
+	json_t *json_p = json_object_get (treatment_json_p, key_s);
+
+	if (json_p)
+		{
+			if (json_is_array (json_p))
+				{
+					const size_t size = json_array_size (json_p);
+					char **values_ss = (char **) AllocMemoryArray (size + 1, sizeof (char *));
+
+					if (values_ss)
+						{
+							bool success_flag = true;
+							size_t i = 0;
+							char **value_ss = values_ss;
+
+							while (success_flag && (i < size))
+								{
+									const json_t *str_json_p = json_array_get (json_p, i);
+									const char *src_s = json_string_value (str_json_p);
+
+									if (src_s)
+										{
+											*value_ss = EasyCopyToNewString (src_s);
+
+											if (*value_ss)
+												{
+													++ value_ss;
+												}
+											else
+												{
+													size_t j = 0;
+
+													for (j = i; j > 0; -- j, -- value_ss)
+														{
+															FreeCopiedString (*value_ss);
+														}
+
+													success_flag = false;
+												}
+										}
+
+									++ i;
+								}
+
+							if (success_flag)
+								{
+									return values_ss;
+								}
+
+							FreeMemory (values_ss);
+						}		/* if (values_ss) */
+
+
+				}		/* if (json_is_array (json_p)) */
+
+		}		/* if (json_p) */
 
 
 	return NULL;
 }
+
+
+
+static char **CopyArrayOfStrings (char **src_ss)
+{
+	size_t i = 0;
+	size_t size = 0;
+	char **array_ss = NULL;
+	char **value_ss = src_ss;
+
+	while (*value_ss)
+		{
+			if (*value_ss)
+				{
+					++ value_ss;
+					++ i;
+				}
+			else
+				{
+					size = i;
+				}
+		}
+
+	array_ss = (char **) AllocMemoryArray (size + 1, sizeof (char *));
+
+	if (array_ss)
+		{
+			char **dest_ss = array_ss;
+			bool success_flag = true;
+
+			value_ss = src_ss;
+			i = 0;
+
+			while ((i < size) && success_flag)
+				{
+					char *value_s = EasyCopyToNewString (*value_ss);
+
+					if (value_s)
+						{
+							*dest_ss = value_s;
+							++ dest_ss;
+							++ i;
+						}
+					else
+						{
+							char **temp_ss = array_ss;
+							success_flag = false;
+
+							while (*temp_ss)
+								{
+									FreeCopiedString (*temp_ss);
+									++ temp_ss;
+								}
+
+							FreeMemory (array_ss);
+							array_ss = NULL;
+						}
+				}
+		}
+
+	return array_ss;
+}
+
