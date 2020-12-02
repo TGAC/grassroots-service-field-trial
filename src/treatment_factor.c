@@ -28,116 +28,120 @@
 #include "jansson.h"
 
 
-TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p)
+TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, const char **parent_names_ss, const char **synonyms_ss, bson_oid_t *id_p)
 {
-	LinkedList *list_p = AllocateLinkedList (FreeTreatmentFactorNode);
-
-	if (list_p)
-		{
-			TreatmentFactor *treatment_factor_p = (TreatmentFactor *) AllocMemory (sizeof (TreatmentFactor));
-
-			if (treatment_factor_p)
-				{
-					treatment_factor_p -> tf_ontology_term_p = term_p;
-					treatment_factor_p -> tf_values_p = list_p;
-
-					return treatment_factor_p;
-				}		/* if (treatment_factor_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for TreatmentFactor");
-				}
-
-			FreeLinkedList (list_p);
-		}		/* if (list_p) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate list for TreatmentFactor");
-		}
-
-	return NULL;
 }
 
 
 void FreeTreatmentFactor (TreatmentFactor *treatment_p)
 {
 	FreeSchemaTerm (treatment_p -> tf_ontology_term_p);
-	FreeLinkedList (treatment_p -> tf_values_p);
+
+	if (treatment_p -> tf_parent_names_ss)
+		{
+			char **value_ss = treatment_p -> tf_parent_names_ss;
+
+			while (*value_ss)
+				{
+					FreeCopiedString (*value_ss);
+					++ value_ss;
+				}
+		}
+
+
+	if (treatment_p -> tf_synonyms_ss)
+		{
+			char **value_ss = treatment_p -> tf_synonyms_ss;
+
+			while (*value_ss)
+				{
+					FreeCopiedString (*value_ss);
+					++ value_ss;
+				}
+		}
+
+	FreeBSONOid (treatment_p -> tf_id_p);
 
 	FreeMemory (treatment_p);
 }
 
 
-bool AddTreatmentFactorValueByParts (TreatmentFactor *treatment_p, const char *name_s, const char *value_s)
+static char **CopyArrayOfStrings (const char **src_ss)
 {
-	bool success_flag = false;
-	KeyValuePair *pair_p = AllocateKeyValuePair (name_s, value_s);
 
-	if (pair_p)
-		{
-			if (AddTreatmentFactorValue (treatment_p, pair_p))
-				{
-					success_flag = true;
-				}
-			else
-				{
-					FreeKeyValuePair (pair_p);
-				}
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", name_s, value_s);
-		}
-
-	return success_flag;
 }
 
 
-bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, KeyValuePair *pair_p)
-{
-	bool success_flag = false;
-	KeyValuePairNode *node_p = AllocateKeyValuePairNode (pair_p);
+//bool AddTreatmentFactorValueByParts (TreatmentFactor *treatment_p, const char *name_s, const char *value_s)
+//{
+//	bool success_flag = false;
+//	KeyValuePair *pair_p = AllocateKeyValuePair (name_s, value_s);
+//
+//	if (pair_p)
+//		{
+//			if (AddTreatmentFactorValue (treatment_p, pair_p))
+//				{
+//					success_flag = true;
+//				}
+//			else
+//				{
+//					FreeKeyValuePair (pair_p);
+//				}
+//		}
+//	else
+//		{
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", name_s, value_s);
+//		}
+//
+//	return success_flag;
+//}
+//
+//
+//bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, KeyValuePair *pair_p)
+//{
+//	bool success_flag = false;
+//	KeyValuePairNode *node_p = AllocateKeyValuePairNode (pair_p);
+//
+//	if (node_p)
+//		{
+//			LinkedListAddTail (treatment_p -> tf_values_p, & (node_p -> kvpn_node));
+//		}
+//	else
+//		{
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", pair_p -> kvp_key_s, pair_p -> kvp_value_s);
+//		}
+//
+//	return success_flag;
+//}
 
-	if (node_p)
-		{
-			LinkedListAddTail (treatment_p -> tf_values_p, & (node_p -> kvpn_node));
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", pair_p -> kvp_key_s, pair_p -> kvp_value_s);
-		}
 
-	return success_flag;
-}
-
-
-TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p)
-{
-	TreatmentFactorNode *node_p = (TreatmentFactorNode *) AllocMemory (sizeof (TreatmentFactorNode));
-
-	if (node_p)
-		{
-			InitListItem (& (node_p -> tfn_node));
-			node_p -> tfn_treatment_p = treatment_p;
-
-			return node_p;
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactorNode for treatment \"%s\"", treatment_p -> tf_ontology_term_p -> st_name_s);
-		}
-
-	return NULL;
-}
-
-
-void FreeTreatmentFactorNode (ListItem *node_p)
-{
-	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) node_p;
-
-	FreeTreatmentFactor (tf_node_p -> tfn_treatment_p);
-	FreeMemory (tf_node_p);
-}
+//TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p)
+//{
+//	TreatmentFactorNode *node_p = (TreatmentFactorNode *) AllocMemory (sizeof (TreatmentFactorNode));
+//
+//	if (node_p)
+//		{
+//			InitListItem (& (node_p -> tfn_node));
+//			node_p -> tfn_treatment_p = treatment_p;
+//
+//			return node_p;
+//		}
+//	else
+//		{
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactorNode for treatment \"%s\"", treatment_p -> tf_ontology_term_p -> st_name_s);
+//		}
+//
+//	return NULL;
+//}
+//
+//
+//void FreeTreatmentFactorNode (ListItem *node_p)
+//{
+//	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) node_p;
+//
+//	FreeTreatmentFactor (tf_node_p -> tfn_treatment_p);
+//	FreeMemory (tf_node_p);
+//}
 
 
 

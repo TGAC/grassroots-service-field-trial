@@ -42,40 +42,40 @@ struct TreatmentFactor
 
 	SchemaTerm *tf_ontology_term_p;
 
-	const char **parent_names_ss;
+	const char **tf_parent_names_ss;
 
-	const char **synonyms_ss;
+	const char **tf_synonyms_ss;
 
 };
 
 
 
 
-/**
- * A treatment applied to the plots within a study.
- */
-typedef struct TreatmentFactorLevels
-{
-	bson_oid_t *tfl_treatment_id_p;
+///**
+// * A treatment applied to the plots within a study.
+// */
+//typedef struct TreatmentFactorLevels
+//{
+//	bson_oid_t *tfl_treatment_id_p;
+//
+//	Study *tfl_parent_study_p;
+//
+//
+//	/**
+//	 * A list of KeyValuePairNodes defining the different treatment levels
+//	 *
+//	 */
+//	LinkedList *tlf_values_p;
+//} TreatmentFactorLevels;
 
-	Study *tfl_parent_study_p;
 
 
-	/**
-	 * A list of KeyValuePairNodes defining the different treatment levels
-	 *
-	 */
-	LinkedList *tlf_values_p;
-} TreatmentFactorLevels;
-
-
-
-typedef struct TreatmentFactorLevelsNode
-{
-	ListItem tfln_node;
-
-	TreatmentFactorLevels *tfln_p;
-} TreatmentFactorLevelsNode;
+//typedef struct TreatmentFactorLevelsNode
+//{
+//	ListItem tfln_node;
+//
+//	TreatmentFactorLevels *tfln_p;
+//} TreatmentFactorLevelsNode;
 
 
 
@@ -115,7 +115,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueByParts (TreatmentFact
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, KeyValuePair *pair_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p);
+//DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactorNode (ListItem *treatment_node_p);
 
