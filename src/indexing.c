@@ -1111,19 +1111,22 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 												{
 													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_MEASURED_VARIABLES.npt_name_s, "Reindex all Measured Variables", "Reindex all Measured Variables into Lucene", &b, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_PROGRAMS.npt_name_s, "Reindex all Programs", "Reindex all Programs into Lucene", &b, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_PROGRAMS.npt_name_s, "Reindex all Programmes", "Reindex all Programmes into Lucene", &b, PL_ALL)) != NULL)
 																{
-																	ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
-
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_REINDEX_TREATMENTS.npt_name_s, "Reindex all Treatments", "Reindex all Treatments into Lucene", &b, PL_ALL)) != NULL)
 																		{
-																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
-																				{
-																					ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+																			ParameterGroup *caching_group_p = CreateAndAddParameterGroupToParameterSet ("Cache", false, data_p, params_p);
 
-																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+																				{
+																					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_LIST.npt_name_s, "List cached Studies", "Get the ids and dates of all of the cached Studies", &b, PL_ALL)) != NULL)
 																						{
-																							return params_p;
+																							ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
+
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																								{
+																									return params_p;
+																								}
 																						}
 																				}
 																		}
