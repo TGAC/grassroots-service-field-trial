@@ -190,7 +190,7 @@ json_t *GetAllTraitsAsJSON (const FieldTrialServiceData *data_p)
 {
 	json_t *traits_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
 			bson_t *query_p = NULL;
 			bson_t *opts_p =  BCON_NEW ( "sort", "{", MONGO_ID_S, BCON_INT32 (1), "}");
@@ -251,7 +251,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const F
 {
 	MeasuredVariable *phenotype_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
 			char *key_s = ConcatenateVarargsStrings (MV_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
 
@@ -322,7 +322,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const F
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_TREATMENT]);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]);
 		}
 
 	return phenotype_p;
@@ -344,7 +344,7 @@ json_t *GetMeasuredVariableIndexingData (Service *service_p)
 
 					json_array_foreach (measured_variables_p, i, measured_variable_p)
 						{
-							if (AddDatatype (measured_variable_p, DFTD_TREATMENT))
+							if (AddDatatype (measured_variable_p, DFTD_MEASURED_VARIABLE))
 								{
 									json_t *variable_p = json_object_get (measured_variable_p, MV_VARIABLE_S);
 
@@ -382,7 +382,7 @@ json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson
 {
 	json_t *results_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
 			bson_t *query_p = NULL;
 
@@ -469,7 +469,7 @@ bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treat
 
 							if (dest_record_p)
 								{
-									AddImage (dest_record_p, DFTD_TREATMENT, data_p);
+									AddImage (dest_record_p, DFTD_MEASURED_VARIABLE, data_p);
 
 									if (AddResultToServiceJob (job_p, dest_record_p))
 										{

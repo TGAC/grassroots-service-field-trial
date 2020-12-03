@@ -24,10 +24,27 @@
 #define SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_FACTOR_JOBS_H_
 
 #include "dfw_field_trial_service_library.h"
-#include "study.h"
+#include "treatment_factor.h"
 
 
-bool AddTreatmentFactorParameters (ParameterSet *param_set_p, Study *active_study_p, const ServiceData *data_p);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentIndexingData (Service *service_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllTreatmentsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_FACTOR_JOBS_H_ */

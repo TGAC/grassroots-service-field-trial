@@ -122,7 +122,7 @@ static const char *GetProgrammeSubmissionServiceDescription (const Service * UNU
 
 static const char *GetProgrammeSubmissionServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_prgoram";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "submit_programme";
 }
 
 
@@ -132,7 +132,7 @@ static const char *GetProgrammeSubmissionServiceInformationUri (const Service *s
 
 	if (!url_s)
 		{
-			url_s = "https://grassroots.tools/docs/user/services/program/submit_program.md";
+			url_s = "https://grassroots.tools/docs/user/services/field_trials/submit_programme.md";
 		}
 
 	return url_s;

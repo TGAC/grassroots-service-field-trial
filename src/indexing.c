@@ -31,6 +31,7 @@
 #include "field_trial_jobs.h"
 #include "measured_variable_jobs.h"
 #include "program_jobs.h"
+#include "treatment_factor_jobs.h"
 #include "audit.h"
 
 #include "boolean_parameter.h"
@@ -78,6 +79,7 @@ static NamedParameterType S_REINDEX_STUDIES = { "SS Reindex studies", PT_BOOLEAN
 static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured variables", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_PROGRAMS = { "SS Reindex programs", PT_BOOLEAN };
+static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_BOOLEAN };
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
 
 
@@ -333,6 +335,24 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 									done_flag = true;
 								}
 						}
+
+
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TREATMENTS.npt_name_s, &index_flag_p))
+						{
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
+								{
+									if (ReindexTreatments (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
 
 
 					FreeLuceneTool (lucene_p);
@@ -869,6 +889,25 @@ OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool up
 
 
 
+OperationStatus ReindexTreatments (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+	json_t *treatments_p = GetTreatmentIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
+
+	if (treatments_p)
+		{
+			if (SetLuceneToolName (lucene_p, "index_treatments"))
+				{
+					status = IndexLucene (lucene_p, treatments_p, update_flag);
+				}
+
+			json_decref (treatments_p);
+		}
+
+	return status;
+}
+
+
 OperationStatus ReindexProgrammes (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
@@ -876,7 +915,7 @@ OperationStatus ReindexProgrammes (ServiceJob *job_p, LuceneTool *lucene_p, bool
 
 	if (programmes_p)
 		{
-			if (SetLuceneToolName (lucene_p, "index_programs"))
+			if (SetLuceneToolName (lucene_p, "index_programmes"))
 				{
 					status = IndexLucene (lucene_p, programmes_p, update_flag);
 				}
@@ -1021,6 +1060,10 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 	else if (strcmp (param_name_s, S_REINDEX_PROGRAMS.npt_name_s) == 0)
 		{
 			*pt_p = S_REINDEX_PROGRAMS.npt_type;
+		}
+	else if (strcmp (param_name_s, S_REINDEX_TREATMENTS.npt_name_s) == 0)
+		{
+			*pt_p = S_REINDEX_TREATMENTS.npt_type;
 		}
 	else if (strcmp (param_name_s, S_CACHE_CLEAR.npt_name_s) == 0)
 		{

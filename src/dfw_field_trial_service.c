@@ -46,6 +46,7 @@
 #include "submit_plots.h"
 #include "submit_phenotypes.h"
 #include "submit_program.h"
+#include "submit_treatment.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -81,12 +82,13 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *location_submission_service_p = GetLocationSubmissionService (grassroots_p);
 	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService (grassroots_p);
 	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
-	Service *treatments_submission_service_p = GetMeasuredVariablesSubmissionService (grassroots_p);
+	Service *measured_variables_submission_service_p = GetMeasuredVariablesSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
 	Service *phenotypes_submission_service_p = GetPhenotypesSubmissionService (grassroots_p);
 	Service *indexing_service_p = GetFieldTrialIndexingService (grassroots_p);
 	Service *programme_submission_service_p = GetProgrammeSubmissionService (grassroots_p);
+	Service *treatments_submission_service_p = GetTreatmentSubmissionService (grassroots_p);
 
 	if (all_in_one_submission_service_p)
 		{
@@ -123,7 +125,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
-	if (treatments_submission_service_p)
+	if (measured_variables_submission_service_p)
 		{
 			++ num_services;
 		}
@@ -154,6 +156,11 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
+	if (treatments_submission_service_p)
+		{
+			++ num_services;
+		}
+
 	if (num_services)
 		{
 			ServicesArray *services_p = AllocateServicesArray (num_services);
@@ -171,11 +178,12 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, gene_bank_submission_service_p);
 					service_pp = AddValidService (service_pp, material_submission_service_p);
 					service_pp = AddValidService (service_pp, plots_submission_service_p);
-					service_pp = AddValidService (service_pp, treatments_submission_service_p);
+					service_pp = AddValidService (service_pp, measured_variables_submission_service_p);
 					service_pp = AddValidService (service_pp, crop_submission_service_p);
 					service_pp = AddValidService (service_pp, phenotypes_submission_service_p);
 					service_pp = AddValidService (service_pp, indexing_service_p);
 					service_pp = AddValidService (service_pp, programme_submission_service_p);
+					service_pp = AddValidService (service_pp, treatments_submission_service_p);
 
 					return services_p;
 				}
@@ -221,9 +229,9 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			FreeService (plots_submission_service_p);
 		}
 
-	if (treatments_submission_service_p)
+	if (measured_variables_submission_service_p)
 		{
-			FreeService (treatments_submission_service_p);
+			FreeService (measured_variables_submission_service_p);
 		}
 
 	if (crop_submission_service_p)
@@ -246,6 +254,10 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			FreeService (programme_submission_service_p);
 		}
 
+	if (treatments_submission_service_p)
+		{
+			FreeService (treatments_submission_service_p);
+		}
 
 	return NULL;
 }

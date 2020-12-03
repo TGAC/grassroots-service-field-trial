@@ -22,6 +22,7 @@
 
 
 #include "treatment_factor_jobs.h"
+#include "dfw_util.h"
 
 #include "json_parameter.h"
 #include "string_parameter.h"
@@ -86,16 +87,62 @@ static const KeyValuePair *S_FERTILIZERS_P [] =
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p);
-static json_t *GetTableParameterHints (void);
+
+
+json_t *GetAllTreatmentsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
+{
+	json_t *results_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+		{
+			bson_t *query_p = NULL;
+
+			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT])) */
+
+	return results_p;
+}
 
 
 
+json_t *GetTreatmentIndexingData (Service *service_p)
+{
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+	json_t *src_treatments_p = GetAllTreatmentsAsJSON (data_p, NULL);
+
+	if (src_treatments_p)
+		{
+			if (json_is_array (src_treatments_p))
+				{
+					size_t i;
+					json_t *src_treatment_p;
+					size_t num_added = 0;
+
+					json_array_foreach (src_treatments_p, i, src_treatment_p)
+						{
+							if (AddDatatype (src_treatment_p, DFTD_TREATMENT))
+								{
+
+								}
+
+
+						}		/* json_array_foreach (src_treatments_p, i, src_study_p) */
+
+				}		/* if (json_is_array (src_treatments_p)) */
+
+			return src_treatments_p;
+		}		/* if (src_treatments_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No programs for \"%s\"", GetServiceName (service_p));
+		}
+
+	return NULL;
+}
 
 
 
-
-bool AddTreatmentFactorParameters (ParameterSet *param_set_p, Study *active_study_p, const ServiceData *data_p)
+bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("TreatmemtFactors", true, data_p, param_set_p);
@@ -106,89 +153,11 @@ bool AddTreatmentFactorParameters (ParameterSet *param_set_p, Study *active_stud
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, TF_NAME.npt_type, TF_NAME.npt_name_s, "Treatment Factor", "Create a Treatment Factor for this Study", NULL, PL_ALL)) != NULL)
 				{
-					if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p,  (const FieldTrialServiceData *) data_p)) != NULL)
-						{
-							success_flag = true;
-						}
+					success_flag = true;
 				}
 
 		}		/* if (group_p) */
 
 	return success_flag;
 }
-
-
-
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p)
-{
-	Parameter *param_p = NULL;
-	bool success_flag = false;
-	json_t *hints_p = GetTableParameterHints ();
-
-	if (hints_p)
-		{
-			json_t *treatmnent_factors_json_p = NULL;
-
-			if (active_study_p)
-				{
-
-					success_flag = true;
-
-				}
-			else
-				{
-					success_flag = true;
-				}
-
-			if (success_flag)
-				{
-					param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, TF_VALUES.npt_type, TF_VALUES.npt_name_s, "Plot data to upload", "The data to upload", NULL, PL_ALL);
-
-					if (param_p)
-						{
-							success_flag = false;
-
-							if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
-								{
-									success_flag = true;
-								}
-
-							if (!success_flag)
-								{
-									FreeParameter (param_p);
-									param_p = NULL;
-								}
-
-						}		/* if (param_p) */
-
-				}		/* if (success_flag) */
-
-			json_decref (hints_p);
-		}		/* if (hints_p) */
-
-
-	return param_p;
-}
-
-
-static json_t *GetTableParameterHints (void)
-{
-	json_t *hints_p = json_array ();
-
-	if (hints_p)
-		{
-			if (AddColumnParameterHint (S_LABEL_TITLE_S, NULL, PT_STRING, false, hints_p))
-				{
-					if (AddColumnParameterHint (S_VALUE_TITLE_S, NULL, PT_STRING, false, hints_p))
-						{
-							return hints_p;
-						}
-				}
-
-			json_decref (hints_p);
-		}
-
-	return NULL;
-}
-
 

@@ -101,6 +101,7 @@ SRCS 	= \
 	submit_program.c \
 	submit_study.c \
 	submit_measured_variables.c \
+	submit_treatment.c \
 	treatment_factor.c \
 	treatment_factor_jobs.c
 		

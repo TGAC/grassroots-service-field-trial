@@ -41,7 +41,8 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 	"Grassroots:Observation",
 	"Grassroots:Instrument",
 	"Grassroots:GeneBank",
-	"Grassroots:Crop"
+	"Grassroots:Crop",
+	"Grassroots:Treatment"
 };
 
 
@@ -59,7 +60,8 @@ static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 	"Observation",
 	"Instrument",
 	"Gene Bank",
-	"Crop"
+	"Crop",
+	"Treatment"
 };
 
 
@@ -128,7 +130,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							* ((data_p -> dftsd_collection_ss) + DFTD_PLOT) = DFT_PLOT_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_MATERIAL) = DFT_MATERIAL_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_S;
-							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_PHENOTYPE_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_MEASURED_VARIABLE) = DFT_PHENOTYPE_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_OBSERVATION) = DFT_OBSERVATION_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_INSTRUMENT) = DFT_INSTRUMENT_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;

@@ -59,6 +59,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexMeasuredVariables (ServiceJ
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexProgrammes (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ReindexTreatments (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

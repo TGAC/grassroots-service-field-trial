@@ -160,7 +160,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 														{
 															if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> mv_id_p))
 																{
-																	if (AddDatatype (phenotype_json_p, DFTD_TREATMENT))
+																	if (AddDatatype (phenotype_json_p, DFTD_MEASURED_VARIABLE))
 																		{
 																			return phenotype_json_p;
 																		}
@@ -332,7 +332,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 
 			if (phenotype_json_p)
 				{
-					if (SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT], selector_p))
+					if (SaveMongoData (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], selector_p))
 						{
 							status = IndexData (job_p, phenotype_json_p);
 
@@ -380,7 +380,7 @@ MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, cons
 	MeasuredVariable *treatment_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
 			bson_t *query_p = AllocateBSON ();
 
@@ -454,7 +454,7 @@ MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, con
 {
 	MeasuredVariable *treatment_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
 			bson_t *query_p = BCON_NEW (MONGO_ID_S, BCON_OID (phenotype_id_p));
 

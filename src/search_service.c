@@ -922,7 +922,7 @@ static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uin
 								success_flag = FindAndAddResultToServiceJob (id_s, search_data_p -> sd_format, search_data_p -> sd_job_p, NULL, GetStudyJSONForId, DFTD_STUDY, search_data_p -> sd_service_data_p);
 								break;
 
-							case DFTD_TREATMENT:
+							case DFTD_MEASURED_VARIABLE:
 								{
 									MeasuredVariable *treatment_p = GetMeasuredVariableByIdString (id_s, search_data_p -> sd_service_data_p);
 
