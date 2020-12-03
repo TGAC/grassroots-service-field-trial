@@ -850,6 +850,18 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const bool update_flag, const
 				}
 
 
+			temp_status = ReindexTreatments (job_p, lucene_p, true, service_data_p);
+			++ total_count;
+			if (temp_status == OS_SUCCEEDED)
+				{
+					++ fully_succeeded_count;
+				}
+			else if (temp_status == OS_PARTIALLY_SUCCEEDED)
+				{
+					++ partially_succeeded_count;
+				}
+
+
 			if (fully_succeeded_count == total_count)
 				{
 					status = OS_SUCCEEDED;

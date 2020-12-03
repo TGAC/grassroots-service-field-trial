@@ -136,6 +136,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							* ((data_p -> dftsd_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_S;
 							// * ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
 						}
 					else
 						{
