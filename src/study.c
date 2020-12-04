@@ -227,6 +227,8 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 																																																									study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
 																																																									study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
 
+																																																									study_p -> st_treatments_p = NULL;
+
 																																																									return study_p;
 																																																								}
 
@@ -596,6 +598,12 @@ void FreeStudy (Study *study_p)
 		{
 			FreeMemory (study_p -> st_plot_block_vertical_gap_p);
 		}
+
+	if (study_p -> st_treatments_p)
+		{
+			FreeLinkedList (study_p -> st_treatments_p);
+		}
+
 
 	FreeMemory (study_p);
 }
@@ -1602,4 +1610,62 @@ static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json
 
 	return false;
 }
+
+
+static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format)
+{
+	bool success_flag = false;
+
+	if (study_p -> st_treatments_p)
+		{
+			json_t *treatments_json_p = json_array ();
+
+			if (treatments_json_p)
+				{
+					bool b = true;
+					TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+
+					while (node_p && b)
+						{
+							json_t *treatment_json_p = GetTreatmentFactorAsJSON (node_p -> tfn_p, format);
+
+							if (treatment_json_p)
+								{
+									if (json_array_append_new (treatments_json_p, treatment_json_p) == 0)
+										{
+											node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+										}
+									else
+										{
+											json_decref (treatment_json_p);
+											b = false;
+										}
+								}
+							else
+								{
+									b = false;
+								}
+
+						}
+
+					if (json_array_size (treatments_json_p) == study_p -> st_treatments_p -> ll_size)
+						{
+							if (json_object_set_new (study_json_p, ST_TREATMENTS_S, treatments_json_p) == 0)
+								{
+									return true;
+								}
+						}
+
+					json_decref (treatments_json_p);
+				}		/* if (treatments_json_p) */
+
+		}		/* if (study_p -> st_treatments_p) */
+	else
+		{
+			return true;
+		}
+
+	return false;
+}
+
 

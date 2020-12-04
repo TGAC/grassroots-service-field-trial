@@ -20,9 +20,15 @@
  *      Author: billy
  */
 
-#include "treatment_factor.h"
-#include "memory_allocations.h"
+
+#include "jansson.h"
+#include "json_util.h"
 #include "key_value_pair.h"
+#include "memory_allocations.h"
+#include "mongodb_tool.h"
+#include "study.h"
+#include "treatment_factor.h"
+#include "typedefs.h"
 
 
 static const char *S_STUDY_ID_S = "study_id";
@@ -183,37 +189,78 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 }
 
 
-TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p)
+TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, Study *parent_study_p)
 {
 	TreatmentFactor *tf_p = NULL;
-	bson_oid_t *study_id_p = GetNewUnitialisedBSONOid ();
+	bson_oid_t *treatment_id_p = GetNewUnitialisedBSONOid ();
 
-	if (study_id_p)
+	if (treatment_id_p)
 		{
-			if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, study_id_p))
+			if (GetNamedIdFromJSON (treatment_factor_json_p, S_TREATMENT_ID_S, treatment_id_p))
 				{
-					bson_oid_t *treatment_id_p = GetNewUnitialisedBSONOid ();
+					Treatment *treatment_p = NULL;
 
-					if (treatment_id_p)
+					tf_p = AllocateTreatmentFactor (treatment_p, parent_study_p );
+
+					if (tf_p)
 						{
-							if (GetNamedIdFromJSON (treatment_factor_json_p, S_TREATMENT_ID_S, treatment_id_p))
+							bool success_flag = false;
+							json_t *values_p = json_object_get (treatment_factor_json_p, S_VALUES_S);
+
+							if (values_p)
 								{
-									json_t *values_p = json_object_get (treatment_factor_json_p, S_VALUES_S);
-
-									if (values_p)
+									if (json_is_array (values_p))
 										{
+											const size_t num_values = json_array_size (values_p);
+											size_t i;
 
-										}		/* if (values_p) */
+											for (i = 0; i < num_values; ++ i)
+												{
+													const json_t *value_p = json_array_get (values_p, i);
+													const char *key_s = GetJSONString (value_p, S_VALUES_KEY_S);
 
-								}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, treatment_id_p)) */
+													if (key_s)
+														{
+															const char *value_s = GetJSONString (value_p, S_VALUES_VALUE_S);
 
-							FreeBSONOid (treatment_id_p);
-						}		/* if (treatment_id_p) */
+															if (value_s)
+																{
+																	if (AddTreatmentFactorValue (tf_p, key_s, value_s))
+																		{
 
-				}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, study_id_p)) */
+																		}		/* if (AddTreatmentFactorValue (tf_p, key_s, value_s)) */
 
-			FreeBSONOid (study_id_p);
-		}		/* if (study_id_p) */
+																}		/* if (value_s) */
+
+														}			/* if (key_s) */
+
+												}		/* for (i = 0; i < num_values; ++ i) */
+
+											if (tf_p -> tf_values_p -> ll_size == num_values)
+												{
+													success_flag = true;
+												}
+
+										}		/* if (json_is_array (values_p)) */
+
+								}		/* if (values_p) */
+							else
+								{
+									success_flag = true;
+								}
+
+							if (!success_flag)
+								{
+									FreeTreatmentFactor (tf_p);
+									tf_p = NULL;
+								}
+
+						}		/* if (tf_p) */
+
+				}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, treatment_id_p)) */
+
+			FreeBSONOid (treatment_id_p);
+		}		/* if (treatment_id_p) */
 
 	return tf_p;
 }
@@ -267,12 +314,15 @@ static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p)
 				{
 					if (SetJSONString (entry_p, S_VALUES_VALUE_S, pair_p -> kvp_value_s))
 						{
-							return entry_p;
+							if (json_array_append_new (array_p, entry_p) == 0)
+								{
+									return true;
+								}
 						}
 				}
 
 			json_decref (entry_p);
 		}
 
-	return NULL;
+	return false;
 }
