@@ -192,9 +192,27 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 		{
 			if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, study_id_p))
 				{
+					bson_oid_t *treatment_id_p = GetNewUnitialisedBSONOid ();
+
+					if (treatment_id_p)
+						{
+							if (GetNamedIdFromJSON (treatment_factor_json_p, S_TREATMENT_ID_S, treatment_id_p))
+								{
+									json_t *values_p = json_object_get (treatment_factor_json_p, S_VALUES_S);
+
+									if (values_p)
+										{
+
+										}		/* if (values_p) */
+
+								}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, treatment_id_p)) */
+
+							FreeBSONOid (treatment_id_p);
+						}		/* if (treatment_id_p) */
 
 				}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, study_id_p)) */
 
+			FreeBSONOid (study_id_p);
 		}		/* if (study_id_p) */
 
 	return tf_p;
