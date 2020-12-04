@@ -34,7 +34,8 @@
 typedef struct Treatment Treatment;
 
 /**
- * A treatment applied to the plots within a study.
+ * A treatment defines an experimental process
+ * that can be applied.
  */
 struct Treatment
 {
@@ -50,31 +51,7 @@ struct Treatment
 
 
 
-///**
-// * A treatment applied to the plots within a study.
-// */
-//typedef struct TreatmentLevels
-//{
-//	bson_oid_t *tfl_treatment_id_p;
-//
-//	Study *tfl_parent_study_p;
-//
-//
-//	/**
-//	 * A list of KeyValuePairNodes defining the different treatment levels
-//	 *
-//	 */
-//	LinkedList *tlf_values_p;
-//} TreatmentLevels;
 
-
-
-//typedef struct TreatmentLevelsNode
-//{
-//	ListItem tfln_node;
-//
-//	TreatmentLevels *tfln_p;
-//} TreatmentLevelsNode;
 
 
 

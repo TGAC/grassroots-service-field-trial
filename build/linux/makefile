@@ -103,6 +103,7 @@ SRCS 	= \
 	submit_measured_variables.c \
 	submit_treatment.c \
 	treatment.c \
+	treatment_factor.c \
 	treatment_jobs.c
 		
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
