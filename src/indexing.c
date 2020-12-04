@@ -31,7 +31,7 @@
 #include "field_trial_jobs.h"
 #include "measured_variable_jobs.h"
 #include "program_jobs.h"
-#include "treatment_factor_jobs.h"
+#include "treatment_jobs.h"
 #include "audit.h"
 
 #include "boolean_parameter.h"

@@ -12,7 +12,7 @@
 
 #include "audit.h"
 
-#include "treatment_factor_jobs.h"
+#include "treatment_jobs.h"
 
 /*
  * Static declarations

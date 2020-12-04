@@ -14,14 +14,14 @@
 ** limitations under the License.
 */
 /*
- * treatment_factor_jobs.c
+ * treatment_jobs.c
  *
  *  Created on: 6 Mar 2020
  *      Author: billy
  */
 
 
-#include "treatment_factor_jobs.h"
+#include "treatment_jobs.h"
 #include "dfw_util.h"
 
 #include "json_parameter.h"
@@ -31,9 +31,9 @@
 /**
  * The NamedParameterType for the target chromosome parameter.
  */
-static NamedParameterType TF_NAME = { "Name", PT_STRING };
-static NamedParameterType TF_DESCRIPTION = { "Description", PT_STRING };
-static NamedParameterType TF_VALUES = { "Levels", PT_JSON_TABLE };
+static NamedParameterType TR_NAME = { "Name", PT_STRING };
+static NamedParameterType TR_DESCRIPTION = { "Description", PT_STRING };
+static NamedParameterType TR_VALUES = { "Levels", PT_JSON_TABLE };
 
 static const char * const S_LABEL_TITLE_S = "Label";
 static const char * const S_VALUE_TITLE_S = "Value";
@@ -151,7 +151,7 @@ bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_
 		{
 			Parameter *param_p = NULL;
 
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, TF_NAME.npt_type, TF_NAME.npt_name_s, "Treatment Factor", "Create a Treatment Factor for this Study", NULL, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, TR_NAME.npt_type, TR_NAME.npt_name_s, "Treatment Factor", "Create a Treatment Factor for this Study", NULL, PL_ALL)) != NULL)
 				{
 					success_flag = true;
 				}

@@ -20,11 +20,11 @@
  *      Author: billy
  */
 
-#ifndef SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_FACTOR_JOBS_H_
-#define SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_FACTOR_JOBS_H_
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_JOBS_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_JOBS_H_
 
 #include "dfw_field_trial_service_library.h"
-#include "treatment_factor.h"
+#include "treatment.h"
 
 
 #ifdef __cplusplus
@@ -47,4 +47,4 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllTreatmentsAsJSON (const FieldTrialSe
 #endif
 
 
-#endif /* SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_FACTOR_JOBS_H_ */
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_TREATMENT_JOBS_H_ */

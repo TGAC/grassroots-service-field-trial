@@ -20,8 +20,8 @@
  *      Author: billy
  */
 
-#define ALLOCATE_TREATMENT_FACTOR_TAGS (1)
-#include "treatment_factor.h"
+#define ALLOCATE_TREATMENT_TAGS (1)
+#include "treatment.h"
 #include "string_utils.h"
 #include "memory_allocations.h"
 #include "streams.h"
@@ -37,9 +37,9 @@ static bool AddStringsToJSON (const char *key_s,  char **values_ss, json_t *json
 
 
 
-TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, char **parent_names_ss, const bool copy_parents_flag, char **synonyms_ss, const bool copy_synonyms_flag, bson_oid_t *id_p)
+Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const bool copy_parents_flag, char **synonyms_ss, const bool copy_synonyms_flag, bson_oid_t *id_p)
 {
-	TreatmentFactor *treatment_p = (TreatmentFactor *) AllocMemory (sizeof (TreatmentFactor));
+	Treatment *treatment_p = (Treatment *) AllocMemory (sizeof (Treatment));
 
 	if (treatment_p)
 		{
@@ -81,10 +81,10 @@ TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, char **parent_name
 
 					if (success_flag)
 						{
-							treatment_p -> tf_ontology_term_p = term_p;
-							treatment_p -> tf_id_p = id_p;
-							treatment_p -> tf_parent_names_ss = copied_parents_ss;
-							treatment_p -> tf_synonyms_ss = copied_synonyms_ss;
+							treatment_p -> tr_ontology_term_p = term_p;
+							treatment_p -> tr_id_p = id_p;
+							treatment_p -> tr_parent_names_ss = copied_parents_ss;
+							treatment_p -> tr_synonyms_ss = copied_synonyms_ss;
 
 							return treatment_p;
 						}
@@ -103,36 +103,36 @@ TreatmentFactor *AllocateTreatmentFactor (SchemaTerm *term_p, char **parent_name
 }
 
 
-void FreeTreatmentFactor (TreatmentFactor *treatment_p)
+void FreeTreatment (Treatment *treatment_p)
 {
-	FreeSchemaTerm (treatment_p -> tf_ontology_term_p);
+	FreeSchemaTerm (treatment_p -> tr_ontology_term_p);
 
-	if (treatment_p -> tf_parent_names_ss)
+	if (treatment_p -> tr_parent_names_ss)
 		{
-			FreeStringArray (treatment_p -> tf_parent_names_ss);
+			FreeStringArray (treatment_p -> tr_parent_names_ss);
 		}
 
 
-	if (treatment_p -> tf_synonyms_ss)
+	if (treatment_p -> tr_synonyms_ss)
 		{
-			FreeStringArray (treatment_p -> tf_synonyms_ss);
+			FreeStringArray (treatment_p -> tr_synonyms_ss);
 		}
 
-	FreeBSONOid (treatment_p -> tf_id_p);
+	FreeBSONOid (treatment_p -> tr_id_p);
 
 	FreeMemory (treatment_p);
 }
 
 
 
-//bool AddTreatmentFactorValueByParts (TreatmentFactor *treatment_p, const char *name_s, const char *value_s)
+//bool AddTreatmentValueByParts (Treatment *treatment_p, const char *name_s, const char *value_s)
 //{
 //	bool success_flag = false;
 //	KeyValuePair *pair_p = AllocateKeyValuePair (name_s, value_s);
 //
 //	if (pair_p)
 //		{
-//			if (AddTreatmentFactorValue (treatment_p, pair_p))
+//			if (AddTreatmentValue (treatment_p, pair_p))
 //				{
 //					success_flag = true;
 //				}
@@ -143,34 +143,34 @@ void FreeTreatmentFactor (TreatmentFactor *treatment_p)
 //		}
 //	else
 //		{
-//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", name_s, value_s);
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Treatment value for \"%s\": \"s\"", name_s, value_s);
 //		}
 //
 //	return success_flag;
 //}
 //
 //
-//bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, KeyValuePair *pair_p)
+//bool AddTreatmentValue (Treatment *treatment_p, KeyValuePair *pair_p)
 //{
 //	bool success_flag = false;
 //	KeyValuePairNode *node_p = AllocateKeyValuePairNode (pair_p);
 //
 //	if (node_p)
 //		{
-//			LinkedListAddTail (treatment_p -> tf_values_p, & (node_p -> kvpn_node));
+//			LinkedListAddTail (treatment_p -> tr_values_p, & (node_p -> kvpn_node));
 //		}
 //	else
 //		{
-//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactor value for \"%s\": \"s\"", pair_p -> kvp_key_s, pair_p -> kvp_value_s);
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Treatment value for \"%s\": \"s\"", pair_p -> kvp_key_s, pair_p -> kvp_value_s);
 //		}
 //
 //	return success_flag;
 //}
 
 
-//TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_p)
+//TreatmentNode *AllocateTreatmentNode (Treatment *treatment_p)
 //{
-//	TreatmentFactorNode *node_p = (TreatmentFactorNode *) AllocMemory (sizeof (TreatmentFactorNode));
+//	TreatmentNode *node_p = (TreatmentNode *) AllocMemory (sizeof (TreatmentNode));
 //
 //	if (node_p)
 //		{
@@ -181,34 +181,34 @@ void FreeTreatmentFactor (TreatmentFactor *treatment_p)
 //		}
 //	else
 //		{
-//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentFactorNode for treatment \"%s\"", treatment_p -> tf_ontology_term_p -> st_name_s);
+//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate TreatmentNode for treatment \"%s\"", treatment_p -> tr_ontology_term_p -> st_name_s);
 //		}
 //
 //	return NULL;
 //}
 //
 //
-//void FreeTreatmentFactorNode (ListItem *node_p)
+//void FreeTreatmentNode (ListItem *node_p)
 //{
-//	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) node_p;
+//	TreatmentNode *tr_node_p = (TreatmentNode *) node_p;
 //
-//	FreeTreatmentFactor (tf_node_p -> tfn_treatment_p);
-//	FreeMemory (tf_node_p);
+//	FreeTreatment (tr_node_p -> tfn_treatment_p);
+//	FreeMemory (tr_node_p);
 //}
 
 
 
-json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_p)
+json_t *GetTreatmentAsJSON (const Treatment *treatment_p)
 {
-	json_t *term_json_p = GetSchemaTermAsJSON (treatment_p -> tf_ontology_term_p);
+	json_t *term_json_p = GetSchemaTermAsJSON (treatment_p -> tr_ontology_term_p);
 
 	if (term_json_p)
 		{
-			if ((! (treatment_p -> tf_parent_names_ss)) || (AddStringsToJSON (TF_PARENTS_S, treatment_p -> tf_parent_names_ss, term_json_p)))
+			if ((! (treatment_p -> tr_parent_names_ss)) || (AddStringsToJSON (TR_PARENTS_S, treatment_p -> tr_parent_names_ss, term_json_p)))
 				{
-					if ((! (treatment_p -> tf_synonyms_ss)) || (AddStringsToJSON (TF_SYNONYMS_S, treatment_p -> tf_synonyms_ss, term_json_p)))
+					if ((! (treatment_p -> tr_synonyms_ss)) || (AddStringsToJSON (TR_SYNONYMS_S, treatment_p -> tr_synonyms_ss, term_json_p)))
 						{
-							if (AddCompoundIdToJSON (term_json_p, treatment_p -> tf_id_p))
+							if (AddCompoundIdToJSON (term_json_p, treatment_p -> tr_id_p))
 								{
 									return term_json_p;
 								}
@@ -226,7 +226,7 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_p)
 
 
 
-TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_json_p)
+Treatment *GetTreatmentFromJSON (const json_t *treatment_json_p)
 {
 	bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
@@ -238,13 +238,13 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_json_p)
 
 					if (term_p)
 						{
-							char **parents_ss = GetStringsFromJSON (treatment_json_p, TF_PARENTS_S);
-							char **synonyms_ss = GetStringsFromJSON (treatment_json_p, TF_SYNONYMS_S);
-							TreatmentFactor *tf_p = AllocateTreatmentFactor (term_p, parents_ss, false, synonyms_ss, false, id_p);
+							char **parents_ss = GetStringsFromJSON (treatment_json_p, TR_PARENTS_S);
+							char **synonyms_ss = GetStringsFromJSON (treatment_json_p, TR_SYNONYMS_S);
+							Treatment *tr_p = AllocateTreatment (term_p, parents_ss, false, synonyms_ss, false, id_p);
 
-							if (tf_p)
+							if (tr_p)
 								{
-									return tf_p;
+									return tr_p;
 								}
 
 							if (parents_ss)
