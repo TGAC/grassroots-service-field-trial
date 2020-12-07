@@ -22,6 +22,10 @@
 
 #include "treatment_factor_jobs.h"
 
+#include "string_parameter.h"
+#include "json_parameter.h"
+
+#include "study_jobs.h"
 
 
 static NamedParameterType TFJ_STUDY = { "Study", PT_STRING };
@@ -35,10 +39,17 @@ static const char * const S_VALUE_TITLE_S = "Value";
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
+
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, TreatmentFactor *active_tf_p, const FieldTrialServiceData *data_p);
+
+static json_t *GetTableParameterHints (void);
+
+
 bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	Parameter *param_p;
 	const char *study_id_s = (char *) S_EMPTY_LIST_OPTION_S;
+	TreatmentFactor *active_tf_p = NULL;
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_STUDY.npt_type, TFJ_STUDY.npt_name_s, "Study", "Study to load Treatment Factors for", study_id_s, PL_ALL)) != NULL)
 		{
@@ -46,6 +57,10 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 
 			if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, NULL, true))
 				{
+					if (GetTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
+						{
+							return true;
+						}
 
 				}		/* if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, NULL, true)) */
 		}
@@ -69,6 +84,18 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 			while (node_p && loop_flag)
 				{
 					TreatmentFactor *tf_p = node_p -> tfn_p;
+					const char *name_s = GetTreatmentFactorName (tf_p);
+					char *id_s = GetBSONOidAsString (tf_p -> tf_treatment_p -> tr_id_p);
+
+					if (id_s)
+						{
+							if (!CreateAndAddStringParameterOption (param_p, name_s, id_s))
+								{
+									loop_flag = false;
+								}
+
+							FreeCopiedString (id_s);
+						}
 
 					if (loop_flag)
 						{
@@ -76,109 +103,6 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 						}
 
 				}		/* while (node_p && loop_flag) */
-
-			if (json_is_array (results_p))
-				{
-					const size_t num_results = json_array_size (results_p);
-
-					success_flag = true;
-
-					/*
-					 * If there's an empty option, add it
-					 */
-					if (empty_option_flag)
-						{
-							success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
-						}
-
-					if (success_flag)
-						{
-							if (num_results > 0)
-								{
-									size_t i = 0;
-									const char *param_value_s = GetStringParameterCurrentValue (param_p);
-
-									while ((i < num_results) && success_flag)
-										{
-											json_t *entry_p = json_array_get (results_p, i);
-											Study *study_p = GetStudyFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-											if (study_p)
-												{
-													char *id_s = GetBSONOidAsString (study_p -> st_id_p);
-
-													if (id_s)
-														{
-															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																{
-																	value_set_flag = true;
-																}
-
-															if (!CreateAndAddStringParameterOption (param_p, id_s, study_p -> st_name_s))
-																{
-																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s,  study_p -> st_name_s);
-																}
-
-															FreeCopiedString (id_s);
-														}
-													else
-														{
-															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Study BSON oid");
-														}
-
-													FreeStudy (study_p);
-												}		/* if (study_p) */
-
-
-											if (success_flag)
-												{
-													++ i;
-												}
-
-										}		/* while ((i < num_results) && success_flag) */
-
-									/*
-									 * If the parameter's value isn't on the list, reset it
-									 */
-									if (!value_set_flag)
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing studies", param_value_s);
-										}
-
-								}		/* if (num_results > 0) */
-							else
-								{
-									/* nothing to add */
-									success_flag = true;
-								}
-
-						}		/* if (success_flag) */
-
-
-				}		/* if (json_is_array (results_p)) */
-
-			json_decref (results_p);
-		}		/* if (results_p) */
-
-	if (success_flag)
-		{
-			if (active_study_p)
-				{
-					char *id_s = GetBSONOidAsString (active_study_p -> st_id_p);
-
-					if (id_s)
-						{
-							success_flag = SetStringParameterDefaultValue (param_p, id_s);
-							FreeCopiedString (id_s);
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id string for active study \"%s\"", active_study_p -> st_name_s);
-							success_flag = false;
-						}
-				}
 		}
 
 	return success_flag;
@@ -198,7 +122,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 			if (active_tf_p)
 				{
-					tf_json_p = GetStudyPlotsForSubmissionTable (active_tf_p, data_p);
+					tf_json_p = GetTreatmentFactorValuesAsJSON (active_tf_p);
 
 					if (tf_json_p)
 						{
@@ -239,9 +163,9 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 				}		/* if (success_flag) */
 
-			if (plots_json_p)
+			if (tf_json_p)
 				{
-					json_decref (plots_json_p);
+					json_decref (tf_json_p);
 				}
 
 			json_decref (hints_p);
@@ -250,5 +174,27 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 	return param_p;
 }
+
+
+static json_t *GetTableParameterHints (void)
+{
+	json_t *hints_p = json_array ();
+
+	if (hints_p)
+		{
+			if (AddColumnParameterHint (S_LABEL_TITLE_S, "The label to use for the Treatment Factor level.", PT_STRING, false, hints_p))
+				{
+					if (AddColumnParameterHint (S_VALUE_TITLE_S, "The value or description for the Treatment Factor level", PT_STRING, false, hints_p))
+						{
+							return hints_p;
+						}
+				}
+
+			json_decref (hints_p);
+		}
+
+	return NULL;
+}
+
 
 

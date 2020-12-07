@@ -73,7 +73,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (Treatment *treatment_factor_p, Study *study_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (Treatment *treatment_factor_p, struct Study *study_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactor (TreatmentFactor *treatment_factor_p);
 
@@ -88,6 +88,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL size_t *GetNumberOfTreatmentFactorValues (const Tr
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, const ViewFormat format);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, struct Study *parent_study_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorName (const TreatmentFactor *treatment_factor_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p);
 
 #ifdef _cplusplus
 }

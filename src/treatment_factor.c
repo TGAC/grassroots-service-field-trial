@@ -44,7 +44,6 @@ static const char *S_VALUES_VALUE_S = "value";
  * Static Declarations
  */
 
-static json_t *GetValuesAsJSON (LinkedList *values_p);
 
 static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p);
 
@@ -132,7 +131,7 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 
 	if (tf_json_p)
 		{
-			json_t *values_json_p = GetValuesAsJSON (treatment_factor_p -> tf_values_p);
+			json_t *values_json_p = GetTreatmentFactorValuesAsJSON (treatment_factor_p);
 
 			if (values_json_p)
 				{
@@ -266,19 +265,24 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 }
 
 
+const char *GetTreatmentFactorName (const TreatmentFactor *treatment_factor_p)
+{
+	return treatment_factor_p -> tf_treatment_p -> tr_ontology_term_p -> st_name_s;
+}
+
 
 /*
  * Static Definitions
  */
 
-static json_t *GetValuesAsJSON (LinkedList *values_p)
+json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p)
 {
 	json_t *values_json_p = json_array ();
 
 	if (values_json_p)
 		{
 			bool success_flag = true;
-			KeyValuePairNode *node_p = (KeyValuePairNode *) (values_p -> ll_head_p);
+			KeyValuePairNode *node_p = (KeyValuePairNode *) (treatment_factor_p -> tf_values_p -> ll_head_p);
 
 			while (node_p && success_flag)
 				{
