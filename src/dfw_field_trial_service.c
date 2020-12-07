@@ -47,6 +47,8 @@
 #include "submit_phenotypes.h"
 #include "submit_program.h"
 #include "submit_treatment.h"
+#include "submit_treatment_factor.h"
+
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -89,6 +91,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *indexing_service_p = GetFieldTrialIndexingService (grassroots_p);
 	Service *programme_submission_service_p = GetProgrammeSubmissionService (grassroots_p);
 	Service *treatments_submission_service_p = GetTreatmentSubmissionService (grassroots_p);
+	Service *treatment_factor_submission_service_p = GetTreatmentFactorSubmissionService (grassroots_p);
 
 	if (all_in_one_submission_service_p)
 		{
@@ -161,6 +164,11 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 			++ num_services;
 		}
 
+	if (treatment_factor_submission_service_p)
+		{
+			++ num_services;
+		}
+
 	if (num_services)
 		{
 			ServicesArray *services_p = AllocateServicesArray (num_services);
@@ -184,6 +192,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, indexing_service_p);
 					service_pp = AddValidService (service_pp, programme_submission_service_p);
 					service_pp = AddValidService (service_pp, treatments_submission_service_p);
+					service_pp = AddValidService (service_pp, treatment_factor_submission_service_p);
 
 					return services_p;
 				}
@@ -257,6 +266,11 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	if (treatments_submission_service_p)
 		{
 			FreeService (treatments_submission_service_p);
+		}
+
+	if (treatment_factor_submission_service_p)
+		{
+			FreeService (treatment_factor_submission_service_p);
 		}
 
 	return NULL;
