@@ -28,9 +28,9 @@
 #include "study_jobs.h"
 
 
-static NamedParameterType TFJ_STUDY = { "Study", PT_STRING };
-static NamedParameterType TFJ_TREATMENT = { "Treatment", PT_STRING };
-
+static NamedParameterType TFJ_STUDY_ID = { "Study ID", PT_STRING };
+static NamedParameterType TFJ_TREATMENT_ID = { "Treatment ID", PT_STRING };
+static NamedParameterType TFJ_TREATMENT_NAME = { "Treatment Name", PT_STRING };
 static NamedParameterType TFJ_VALUES = { "Levels", PT_JSON_TABLE };
 
 static const char * const S_LABEL_TITLE_S = "Label";
@@ -50,22 +50,124 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 	Parameter *param_p;
 	const char *study_id_s = (char *) S_EMPTY_LIST_OPTION_S;
 	TreatmentFactor *active_tf_p = NULL;
+	FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
+	Study *active_study_p = GetStudyFromResource (resource_p, TFJ_STUDY_ID, ft_data_p);
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_STUDY.npt_type, TFJ_STUDY.npt_name_s, "Study", "Study to load Treatment Factors for", study_id_s, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_STUDY_ID.npt_type, TFJ_STUDY_ID.npt_name_s, "Study", "Study to load Treatment Factors for", study_id_s, PL_ALL)) != NULL)
 		{
-			FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
 
 			if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, NULL, true))
 				{
-					if (GetTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
+					const char *treatment_id_s = (char *) S_EMPTY_LIST_OPTION_S;
+
+					/* We want to update all of the values in the form
+					 * when a user selects a study from the list so
+					 * we need to make the parameter automatically
+					 * refresh the values. So we set the
+					 * pa_refresh_service_flag to true.
+					 */
+					param_p -> pa_refresh_service_flag = true;
+
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_TREATMENT_ID.npt_type, TFJ_TREATMENT_ID.npt_name_s, "Load Treatment", "Edit an existing treatment", treatment_id_s, PL_ALL)) != NULL)
 						{
-							return true;
+							if (SetUpTreatmentFactorsListParameter (ft_data_p, (StringParameter *) param_p, active_study_p, false))
+								{
+									const char *active_tf_name_s = NULL;
+
+									/*
+									 * We want to update all of the values in the form
+									 * when a user selects a study from the list so
+									 * we need to make the parameter automatically
+									 * refresh the values. So we set the
+									 * pa_refresh_service_flag to true.
+									 */
+									param_p -> pa_refresh_service_flag = true;
+
+
+									if (active_tf_p)
+										{
+											active_tf_name_s = GetTreatmentFactorName (active_tf_p);
+										}
+
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL)) != NULL)
+										{
+											if (GetTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
+												{
+													return true;
+												}
+										}
+
+								}
 						}
 
 				}		/* if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, NULL, true)) */
 		}
 
 	return false;
+}
+
+
+bool GetSubmissionTreatmentFactorParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+	if (strcmp (param_name_s, TFJ_STUDY_ID.npt_name_s) == 0)
+		{
+			*pt_p = TFJ_STUDY_ID.npt_type;
+		}
+	else if (strcmp (param_name_s, TFJ_TREATMENT_ID.npt_name_s) == 0)
+		{
+			*pt_p = TFJ_TREATMENT_ID.npt_type;
+		}
+	else if (strcmp (param_name_s, TFJ_TREATMENT_NAME.npt_name_s) == 0)
+		{
+			*pt_p = TFJ_TREATMENT_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, TFJ_VALUES.npt_name_s) == 0)
+		{
+			*pt_p = TFJ_VALUES.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
+bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	const char *study_id_s = NULL;
+
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_STUDY_ID.npt_name_s, &study_id_s))
+		{
+			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
+
+			if (study_p)
+				{
+					const char *tf_id_s = NULL;
+
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_ID.npt_name_s, &tf_id_s))
+						{
+							job_done_flag = true;
+
+						}
+					FreeStudy (study_p);
+				}		/* if (study_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
+				}
+
+		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", TFJ_STUDY_ID.npt_name_s);
+		}
+
+	return job_done_flag;
 }
 
 
@@ -76,7 +178,7 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 	bool success_flag = false;
 	bool value_set_flag = false;
 
-	if (active_study_p -> st_treatments_p)
+	if (active_study_p && (active_study_p -> st_treatments_p))
 		{
 			bool loop_flag = true;
 			TreatmentFactorNode *node_p = (TreatmentFactorNode *) (active_study_p -> st_treatments_p -> ll_head_p);
@@ -103,6 +205,11 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 						}
 
 				}		/* while (node_p && loop_flag) */
+		}
+	else
+		{
+			/* nothing to add to the list */
+			success_flag = true;
 		}
 
 	return success_flag;
@@ -182,7 +289,7 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_LABEL_TITLE_S, "The label to use for the Treatment Factor level.", PT_STRING, false, hints_p))
+			if (AddColumnParameterHint (S_LABEL_TITLE_S, "The label to use for the Treatment Factor level", PT_STRING, false, hints_p))
 				{
 					if (AddColumnParameterHint (S_VALUE_TITLE_S, "The value or description for the Treatment Factor level", PT_STRING, false, hints_p))
 						{

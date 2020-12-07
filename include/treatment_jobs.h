@@ -36,6 +36,12 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionTreatmentParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentIndexingData (Service *service_p);
 
 

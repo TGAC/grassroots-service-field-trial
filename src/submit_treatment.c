@@ -188,7 +188,7 @@ static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, Paramet
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Field Trial");
+	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "Submit Treatment");
 
 	if (service_p -> se_jobs_p)
 		{

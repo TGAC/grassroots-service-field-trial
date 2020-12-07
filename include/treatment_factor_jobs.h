@@ -43,11 +43,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentFactorParams (ServiceDa
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const struct Study *active_study_p, const bool empty_option_flag);
 
 
-#ifdef __cplusplus
-}
-#endif
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionTreatmentFactorParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 #ifdef __cplusplus

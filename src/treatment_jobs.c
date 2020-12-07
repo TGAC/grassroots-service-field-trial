@@ -31,12 +31,12 @@
 /**
  * The NamedParameterType for the target chromosome parameter.
  */
-static NamedParameterType TR_NAME = { "Name", PT_STRING };
-static NamedParameterType TR_DESCRIPTION = { "Description", PT_STRING };
-static NamedParameterType TR_VALUES = { "Levels", PT_JSON_TABLE };
+static NamedParameterType TR_NAME = { "TR Name", PT_STRING };
+static NamedParameterType TR_DESCRIPTION = { "TR Description", PT_LARGE_STRING };
+static NamedParameterType TR_ONOTOLOGY_URL = { "TR Web Address", PT_STRING };
+static NamedParameterType TR_PARENT_NAME = { "TR Parent", PT_STRING };
+static NamedParameterType TR_SYNONYMS = { "TR Parent", PT_LARGE_STRING };
 
-static const char * const S_LABEL_TITLE_S = "Label";
-static const char * const S_VALUE_TITLE_S = "Value";
 
 
 /*
@@ -141,6 +141,41 @@ json_t *GetTreatmentIndexingData (Service *service_p)
 }
 
 
+bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag = true;
+
+
+	if (strcmp (param_name_s, TR_NAME.npt_name_s) == 0)
+		{
+			*pt_p = TR_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, TR_DESCRIPTION.npt_name_s) == 0)
+		{
+			*pt_p = TR_DESCRIPTION.npt_type;
+		}
+	else if (strcmp (param_name_s, TR_ONOTOLOGY_URL.npt_name_s) == 0)
+		{
+			*pt_p = TR_ONOTOLOGY_URL.npt_type;
+		}
+	else if (strcmp (param_name_s, TR_PARENT_NAME.npt_name_s) == 0)
+		{
+			*pt_p = TR_PARENT_NAME.npt_type;
+		}
+	else if (strcmp (param_name_s, TR_SYNONYMS.npt_name_s) == 0)
+		{
+			*pt_p = TR_SYNONYMS.npt_type;
+		}
+	else
+		{
+			success_flag = false;
+		}
+
+
+	return success_flag;
+}
+
+
 
 bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
@@ -159,5 +194,34 @@ bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_
 		}		/* if (group_p) */
 
 	return success_flag;
+}
+
+
+
+bool RunForSubmissionTreatmentParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	const char *name_s = NULL;
+
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TR_NAME.npt_name_s, &name_s))
+		{
+			const char *description_s = NULL;
+
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TR_DESCRIPTION.npt_name_s, &description_s))
+				{
+
+				}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, TR_DESCRIPTION.npt_name_s, &description_s)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", TR_DESCRIPTION.npt_name_s);
+				}
+
+		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, TR_NAME.npt_name_s, &name_s)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", TR_NAME.npt_name_s);
+		}
+
+	return job_done_flag;
 }
 
