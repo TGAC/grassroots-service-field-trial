@@ -116,7 +116,7 @@ TreatmentFactorNode *AllocateTreatmentFactortNode (TreatmentFactor *treatment_fa
 }
 
 
-void FreeTreatmentNode (ListItem *node_p)
+void FreeTreatmentFactorNode (ListItem *node_p)
 {
 	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) node_p;
 
@@ -189,7 +189,7 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 }
 
 
-TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, Study *parent_study_p)
+TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, struct Study *parent_study_p)
 {
 	TreatmentFactor *tf_p = NULL;
 	bson_oid_t *treatment_id_p = GetNewUnitialisedBSONOid ();

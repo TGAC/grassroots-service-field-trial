@@ -81,7 +81,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValue (TreatmentFactor *tre
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorNode *AllocateTreatmentFactortNode (TreatmentFactor *treatment_factor_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentNode (ListItem *treatment_node_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactorNode (ListItem *treatment_node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL size_t *GetNumberOfTreatmentFactorValues (const TreatmentFactor *treatment_factor_p);
 
