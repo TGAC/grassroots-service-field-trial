@@ -1714,7 +1714,7 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p)
 
 					if (tf_p)
 						{
-							TreatmentFactorNode *node_p = AllocateTreatmentFactortNode (tf_p);
+							TreatmentFactorNode *node_p = AllocateTreatmentFactorNode (tf_p);
 
 							if (node_p)
 								{

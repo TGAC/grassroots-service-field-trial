@@ -2638,10 +2638,12 @@ TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_
 
 	while (node_p)
 		{
-			tf_p = node_p -> tfn_p;
+			TreatmentFactor *temp_p = node_p -> tfn_p;
 
-			if (bson_oid_equal (treatment_id_p, tf_p -> tf_treatment_p -> tr_id_p))
+			if (bson_oid_equal (treatment_id_p, temp_p -> tf_treatment_p -> tr_id_p))
 				{
+					tf_p = temp_p;
+
 					/* force exit from loop */
 					node_p = NULL;
 				}
@@ -2661,7 +2663,21 @@ TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_
 				{
 					tf_p = AllocateTreatmentFactor (treatment_p, study_p);
 
-					if (!tf_p)
+					if (tf_p)
+						{
+							TreatmentFactorNode *node_p = AllocateTreatmentFactorNode (tf_p);
+
+							if (node_p)
+								{
+									LinkedListAddTail (study_p -> st_treatments_p, node_p);
+								}
+							else
+								{
+									FreeTreatmentFactor (tf_p);
+									tf_p = NULL;
+								}
+						}
+					else
 						{
 							FreeTreatment (treatment_p);
 						}		/* if (!tf_p) */

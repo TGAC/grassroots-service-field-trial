@@ -101,7 +101,7 @@ bool AddTreatmentFactorValue (TreatmentFactor *treatment_factor_p, const char *n
 }
 
 
-TreatmentFactorNode *AllocateTreatmentFactortNode (TreatmentFactor *treatment_factor_p)
+TreatmentFactorNode *AllocateTreatmentFactorNode (TreatmentFactor *treatment_factor_p)
 {
 	TreatmentFactorNode *node_p = (TreatmentFactorNode *) AllocMemory (sizeof (TreatmentFactorNode));
 

@@ -144,7 +144,7 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_STUDY_ID.npt_name_s, &study_id_s))
 		{
-			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
+			Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_MINIMAL, data_p);
 
 			if (study_p)
 				{
@@ -218,7 +218,10 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 															if (success_flag)
 																{
-																	SaveStudy (study_p, job_p, data_p);
+																	if (!SaveStudy (study_p, job_p, data_p))
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save adding Treatment Factor \"%s\" to Study \"%s\"", GetTreatmentFactorName (tf_p), study_p -> st_name_s);
+																		}
 																}
 
 														}		/* if (tf_p) */
