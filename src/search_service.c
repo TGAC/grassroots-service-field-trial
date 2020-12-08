@@ -394,6 +394,10 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 		{
 			*pt_p = S_FACET_PROGRAMME.npt_type;
 		}
+	else if (strcmp (param_name_s, S_FACET_TREATMENT.npt_name_s) == 0)
+		{
+			*pt_p = S_FACET_TREATMENT.npt_type;
+		}
 	else
 		{
 			if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))

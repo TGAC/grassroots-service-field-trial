@@ -188,6 +188,89 @@ Treatment *GetTreatmentByIdString (const char *treatment_id_s, const ViewFormat 
 }
 
 
+Treatment *GetTreatmentById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Treatment *treatment_p = GetDFWObjectById (id_p, DFTD_TREATMENT, GetTreatmentCallback, format, data_p);
+
+	return treatment_p;
+}
+
+
+Treatment *GetTreatmentByURL (const char *term_url_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Treatment *treatment_p = NULL;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_TREATMENT]))
+		{
+			bson_t *query_p = bson_new ();
+
+			if (query_p)
+				{
+					if (BSON_APPEND_UTF8 (query_p, SCHEMA_TERM_URL_S, term_url_s))
+						{
+							json_t *results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL);
+
+							if (results_p)
+								{
+									if (json_is_array (results_p))
+										{
+											size_t num_results = json_array_size (results_p);
+
+											if (num_results == 1)
+												{
+													json_t *res_p = json_array_get (results_p, 0);
+
+													treatment_p = GetTreatmentFromJSON (res_p);
+
+													if (!treatment_p)
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "failed to get Treatment for url \"%s\"", term_url_s);
+														}
+
+												}		/* if (num_results == 1) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "" SIZET_FMT " results when searching for Treatment with term_url_s \"%s\"", num_results, term_url_s);
+												}
+
+										}		/* if (json_is_array (results_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array");
+										}
+
+									json_decref (results_p);
+								}		/* if (results_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for Treatment with id \"%s\"", term_url_s);
+								}
+
+						}		/* if (BSON_APPEND_UTF8 (query_p, TR_TERM_S, term_url_s)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for Treatment with id \"%s\"", term_url_s);
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for term \"%s\"", term_url_s);
+				}
+
+		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [collection_type])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_TREATMENT]);
+		}
+
+
+	return treatment_p;
+}
+
+
 
 bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {

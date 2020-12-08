@@ -51,6 +51,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllTreatmentsAsJSON (const FieldTrialSe
 DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentByIdString (const char *treatment_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentByURL (const char *term_url_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

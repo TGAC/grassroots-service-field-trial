@@ -26,6 +26,7 @@
 #include "json_parameter.h"
 
 #include "study_jobs.h"
+#include "treatment_jobs.h"
 
 
 static NamedParameterType TFJ_STUDY_ID = { "Study ID", PT_STRING };
@@ -147,76 +148,96 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 			if (study_p)
 				{
-					const char *tf_id_s = NULL;
+					const char *tf_url_s = NULL;
 
-					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_ID.npt_name_s, &tf_id_s))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_NAME.npt_name_s, &tf_url_s))
 						{
-							const json_t *factors_json_p = NULL;
+							Treatment *treatment_p = GetTreatmentByURL (tf_url_s, VF_STORAGE, data_p);
 
-							if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p))
+							if (treatment_p)
 								{
-									size_t num_values = 0;
+									const json_t *factors_json_p = NULL;
 
-									if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0))
+									if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p))
 										{
-											TreatmentFactor *tf_p = GetOrCreateTreatmentFactorForStudy (study_p, tf_id_s);
+											size_t num_values = 0;
 
-											if (tf_p)
+											if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0))
 												{
-													size_t i = 0;
-													bool success_flag = true;
+													TreatmentFactor *tf_p = GetOrCreateTreatmentFactorForStudy (study_p, treatment_p -> tr_id_p, data_p);
 
-													while ((i < num_values) && success_flag)
+													if (tf_p)
 														{
-															const json_t *factor_json_p = json_array_get (factors_json_p, i);
-															const char *name_s = GetJSONString (factor_json_p, S_LABEL_TITLE_S);
+															size_t i = 0;
+															bool success_flag = true;
 
-															if (name_s)
+															while ((i < num_values) && success_flag)
 																{
-																	const char *value_s = GetJSONString (factor_json_p, S_VALUE_TITLE_S);
+																	const json_t *factor_json_p = json_array_get (factors_json_p, i);
 
-																	if (value_s)
+																	if (json_object_size (factor_json_p) > 0)
 																		{
-																			if (AddTreatmentFactorValue (tf_p, name_s, value_s))
-																				{
-																					++ i;
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add factor \"%s\": \"s\" to treatment \"%s\" in study \"%s\"", name_s, value_s, GetTreatmentFactorName (tf_p), study_p -> st_name_s);
-																					success_flag = false;
-																				}		/* if (AddTreatmentFactorValue (tf_p, name_s, value_s)) */
+																			const char *name_s = GetJSONString (factor_json_p, S_LABEL_TITLE_S);
 
-																		}		/* if (value_s) */
+																				if (name_s)
+																					{
+																						const char *value_s = GetJSONString (factor_json_p, S_VALUE_TITLE_S);
+
+																						if (value_s)
+																							{
+																								if (AddTreatmentFactorValue (tf_p, name_s, value_s))
+																									{
+																										++ i;
+																									}
+																								else
+																									{
+																										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add factor \"%s\": \"s\" to treatment \"%s\" in study \"%s\"", name_s, value_s, GetTreatmentFactorName (tf_p), study_p -> st_name_s);
+																										success_flag = false;
+																									}		/* if (AddTreatmentFactorValue (tf_p, name_s, value_s)) */
+
+																							}		/* if (value_s) */
+																						else
+																							{
+																								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_VALUE_TITLE_S);
+																								success_flag = false;
+																							}
+
+																					}		/* if (name_s) */
+																				else
+																					{
+																						PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_LABEL_TITLE_S);
+																						success_flag = false;
+																					}
+																		}
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_VALUE_TITLE_S);
-																			success_flag = false;
+																			++ i;
 																		}
 
-																}		/* if (name_s) */
-															else
+																}		/* while ((i < num_values) && success_flag) */
+
+															if (success_flag)
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_LABEL_TITLE_S);
-																	success_flag = false;
+																	SaveStudy (study_p, job_p, data_p);
 																}
 
-														}		/* while ((i < num_values) && success_flag) */
+														}		/* if (tf_p) */
 
-													if (success_flag)
-														{
-															SaveStudy (study_p, job_p, data_p);
-														}
+												}		/* if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0)) */
 
-												}		/* if (tf_p) */
+										}		/* if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p)) */
 
-										}		/* if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0)) */
-
-								}		/* if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p)) */
+									FreeTreatment (treatment_p);
+								}		/* if (treatment_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Treatment for url \"%s\"", tf_url_s);
+								}
 
 							job_done_flag = true;
 
-						}
+						}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_NAME.npt_name_s, &tf_url_s)) */
+
 					FreeStudy (study_p);
 				}		/* if (study_p) */
 			else
