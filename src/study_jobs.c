@@ -37,7 +37,7 @@
 #include "plot.h"
 #include "row.h"
 #include "observation.h"
-
+#include "treatment_factor.h"
 
 #include "string_parameter.h"
 #include "double_parameter.h"
@@ -2629,6 +2629,15 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 
 	return status;
 }
+
+
+TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const char *tf_id_s)
+{
+	TreatmentFactor *tf_p = NULL;
+
+	return tf_p;
+}
+
 
 
 static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params_p, const Study *study_p)

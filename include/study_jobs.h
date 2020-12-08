@@ -103,6 +103,8 @@ STUDY_JOB_PREFIX NamedParameterType STUDY_PLOT_BLOCK_HGAP STUDY_JOB_STRUCT_VAL("
 STUDY_JOB_PREFIX NamedParameterType STUDY_PLOT_BLOCK_VGAP STUDY_JOB_STRUCT_VAL("ST Plot Block Vertical Gap", PT_UNSIGNED_REAL);
 
 
+/* forward declarations */
+struct TreatmentFactor;
 
 
 
@@ -171,6 +173,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemovePlotsForStudyById (const cha
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyIndexingData (Service *service_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const char *tf_id_s);
 
 
 #ifdef __cplusplus

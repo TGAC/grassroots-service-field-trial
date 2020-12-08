@@ -80,14 +80,18 @@ static NamedParameterType TR_SYNONYMS = { "TR Parent", PT_LARGE_STRING };
             potassium sulfate exposure
  */
 
-static const KeyValuePair *S_FERTILIZERS_P [] =
-{
 
-};
+/*
+ * STATIC DECLARATIONS
+ */
+
+static void *GetTreatmentCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 
-
+/*
+ * API DEFINITIONS
+ */
 
 json_t *GetAllTreatmentsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
 {
@@ -176,6 +180,14 @@ bool GetSubmissionTreatmentParameterTypeForNamedParameter (const char *param_nam
 }
 
 
+Treatment *GetTreatmentByIdString (const char *treatment_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Treatment *treatment_p = GetDFWObjectByIdString (treatment_id_s, DFTD_TREATMENT, GetTreatmentCallback, format, data_p);
+
+	return treatment_p;
+}
+
+
 
 bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
@@ -223,5 +235,17 @@ bool RunForSubmissionTreatmentParams (FieldTrialServiceData *data_p, ParameterSe
 		}
 
 	return job_done_flag;
+}
+
+
+
+/*
+ * STATIC DEFINITIONS
+ */
+
+
+static void *GetTreatmentCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	return GetTreatmentFromJSON (json_p);
 }
 

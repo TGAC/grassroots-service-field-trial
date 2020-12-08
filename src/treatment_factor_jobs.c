@@ -151,6 +151,69 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_ID.npt_name_s, &tf_id_s))
 						{
+							const json_t *factors_json_p = NULL;
+
+							if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p))
+								{
+									size_t num_values = 0;
+
+									if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0))
+										{
+											TreatmentFactor *tf_p = GetOrCreateTreatmentFactorForStudy (study_p, tf_id_s);
+
+											if (tf_p)
+												{
+													size_t i = 0;
+													bool success_flag = true;
+
+													while ((i < num_values) && success_flag)
+														{
+															const json_t *factor_json_p = json_array_get (factors_json_p, i);
+															const char *name_s = GetJSONString (factor_json_p, S_LABEL_TITLE_S);
+
+															if (name_s)
+																{
+																	const char *value_s = GetJSONString (factor_json_p, S_VALUE_TITLE_S);
+
+																	if (value_s)
+																		{
+																			if (AddTreatmentFactorValue (tf_p, name_s, value_s))
+																				{
+																					++ i;
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add factor \"%s\": \"s\" to treatment \"%s\" in study \"%s\"", name_s, value_s, GetTreatmentFactorName (tf_p), study_p -> st_name_s);
+																					success_flag = false;
+																				}		/* if (AddTreatmentFactorValue (tf_p, name_s, value_s)) */
+
+																		}		/* if (value_s) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_VALUE_TITLE_S);
+																			success_flag = false;
+																		}
+
+																}		/* if (name_s) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_LABEL_TITLE_S);
+																	success_flag = false;
+																}
+
+														}		/* while ((i < num_values) && success_flag) */
+
+													if (success_flag)
+														{
+															SaveStudy (study_p, job_p, data_p);
+														}
+
+												}		/* if (tf_p) */
+
+										}		/* if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0)) */
+
+								}		/* if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p)) */
+
 							job_done_flag = true;
 
 						}
