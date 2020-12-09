@@ -266,19 +266,24 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 	bool success_flag = false;
 	bool value_set_flag = false;
 
+	/*
+	 * If there's an empty option, add it
+	 */
+	if (empty_option_flag)
+		{
+			if (!CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S))
+				{
+					return false;
+				}
+		}
+
+
+
 	if (active_study_p && (active_study_p -> st_treatments_p))
 		{
 			bool loop_flag = true;
 			TreatmentFactorNode *node_p = (TreatmentFactorNode *) (active_study_p -> st_treatments_p -> ll_head_p);
 			size_t num_added = 0;
-
-			/*
-			 * If there's an empty option, add it
-			 */
-			if (empty_option_flag)
-				{
-					loop_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
-				}
 
 
 			while (node_p && loop_flag)
