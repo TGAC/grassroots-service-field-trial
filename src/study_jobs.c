@@ -1921,6 +1921,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 					if (id_s)
 						{
 							success_flag = SetStringParameterDefaultValue (param_p, id_s);
+							success_flag = SetStringParameterCurrentValue (param_p, id_s);
 							FreeCopiedString (id_s);
 						}
 					else
@@ -2665,11 +2666,11 @@ TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_
 
 					if (tf_p)
 						{
-							TreatmentFactorNode *node_p = AllocateTreatmentFactorNode (tf_p);
+							node_p = AllocateTreatmentFactorNode (tf_p);
 
 							if (node_p)
 								{
-									LinkedListAddTail (study_p -> st_treatments_p, node_p);
+									LinkedListAddTail (study_p -> st_treatments_p, & (node_p -> tfn_node));
 								}
 							else
 								{

@@ -29,6 +29,7 @@
 #include "study.h"
 #include "treatment_factor.h"
 #include "typedefs.h"
+#include "treatment_jobs.h"
 
 
 static const char *S_STUDY_ID_S = "study_id";
@@ -188,7 +189,7 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 }
 
 
-TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, struct Study *parent_study_p)
+TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, struct Study *parent_study_p, const FieldTrialServiceData *data_p)
 {
 	TreatmentFactor *tf_p = NULL;
 	bson_oid_t *treatment_id_p = GetNewUnitialisedBSONOid ();
@@ -197,7 +198,8 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 		{
 			if (GetNamedIdFromJSON (treatment_factor_json_p, S_TREATMENT_ID_S, treatment_id_p))
 				{
-					Treatment *treatment_p = NULL;
+
+					Treatment *treatment_p = GetTreatmentById (treatment_id_p, VF_STORAGE, data_p);
 
 					tf_p = AllocateTreatmentFactor (treatment_p, parent_study_p );
 

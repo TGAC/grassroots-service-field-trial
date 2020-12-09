@@ -64,7 +64,7 @@ static bool AddGrandParentProgramToJSON (Study *study_p, json_t *study_json_p, c
 
 static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format);
 
-static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p);
+static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -1210,7 +1210,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 
 																					if (study_p)
 																						{
-																							if (AddTreatmentsFromJSON (study_p, json_p))
+																							if (AddTreatmentsFromJSON (study_p, json_p, data_p))
 																								{
 																									return study_p;
 																								}
@@ -1697,7 +1697,7 @@ static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, con
 }
 
 
-static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p)
+static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 	const json_t *treatment_factors_json_p = json_object_get (study_json_p, ST_TREATMENTS_S);
@@ -1710,7 +1710,7 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p)
 			for (i = 0; i < size; ++ i)
 				{
 					const json_t *treatment_factor_json_p = json_array_get (treatment_factors_json_p, i);
-					TreatmentFactor *tf_p = GetTreatmentFactorFromJSON (treatment_factor_json_p, study_p);
+					TreatmentFactor *tf_p = GetTreatmentFactorFromJSON (treatment_factor_json_p, study_p, data_p);
 
 					if (tf_p)
 						{

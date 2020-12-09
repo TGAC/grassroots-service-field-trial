@@ -49,17 +49,16 @@ static json_t *GetTableParameterHints (void);
 bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	Parameter *param_p;
-	const char *study_id_s = (char *) S_EMPTY_LIST_OPTION_S;
+	const char *study_id_s = S_EMPTY_LIST_OPTION_S;
 	TreatmentFactor *active_tf_p = NULL;
 	FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
 	Study *active_study_p = GetStudyFromResource (resource_p, TFJ_STUDY_ID, ft_data_p);
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_STUDY_ID.npt_type, TFJ_STUDY_ID.npt_name_s, "Study", "Study to load Treatment Factors for", study_id_s, PL_ALL)) != NULL)
 		{
-
-			if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, NULL, true))
+			if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, active_study_p, true))
 				{
-					const char *treatment_id_s = (char *) S_EMPTY_LIST_OPTION_S;
+					const char *treatment_id_s = S_EMPTY_LIST_OPTION_S;
 
 					/* We want to update all of the values in the form
 					 * when a user selects a study from the list so
@@ -71,7 +70,7 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_TREATMENT_ID.npt_type, TFJ_TREATMENT_ID.npt_name_s, "Load Treatment", "Edit an existing treatment", treatment_id_s, PL_ALL)) != NULL)
 						{
-							if (SetUpTreatmentFactorsListParameter (ft_data_p, (StringParameter *) param_p, active_study_p, false))
+							if (SetUpTreatmentFactorsListParameter (ft_data_p, (StringParameter *) param_p, active_study_p, active_tf_p, true))
 								{
 									const char *active_tf_name_s = NULL;
 
@@ -227,10 +226,12 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 														}		/* if (tf_p) */
 
 												}		/* if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0)) */
-
+											else
+												{
+													FreeTreatment (treatment_p);
+												}
 										}		/* if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p)) */
 
-									FreeTreatment (treatment_p);
 								}		/* if (treatment_p) */
 							else
 								{
@@ -260,7 +261,7 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 
 
-bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
+bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const TreatmentFactor *active_tf_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	bool value_set_flag = false;
@@ -269,6 +270,16 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 		{
 			bool loop_flag = true;
 			TreatmentFactorNode *node_p = (TreatmentFactorNode *) (active_study_p -> st_treatments_p -> ll_head_p);
+			size_t num_added = 0;
+
+			/*
+			 * If there's an empty option, add it
+			 */
+			if (empty_option_flag)
+				{
+					loop_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
+				}
+
 
 			while (node_p && loop_flag)
 				{
@@ -278,7 +289,11 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 
 					if (id_s)
 						{
-							if (!CreateAndAddStringParameterOption (param_p, name_s, id_s))
+							if (CreateAndAddStringParameterOption (param_p, id_s, name_s))
+								{
+									++ num_added;
+								}
+							else
 								{
 									loop_flag = false;
 								}
@@ -292,6 +307,11 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 						}
 
 				}		/* while (node_p && loop_flag) */
+
+			if (num_added == active_study_p -> st_treatments_p -> ll_size)
+				{
+					success_flag = true;
+				}
 		}
 	else
 		{
