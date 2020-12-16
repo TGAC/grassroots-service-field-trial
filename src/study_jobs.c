@@ -30,6 +30,7 @@
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
 #include "treatment_jobs.h"
+#include "treatment_factor_jobs.h"
 #include "dfw_util.h"
 #include "key_value_pair.h"
 #include "time_util.h"
@@ -135,6 +136,8 @@ static bool AddPhenotype (const char *oid_s, json_t *values_p, const FieldTrialS
 static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_s, bool (*add_value_fn) (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p), const FieldTrialServiceData *data_p);
 
 
+static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p);
+
 
 /*
  * API DEFINITIONS
@@ -237,8 +240,8 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 																																																					success_flag = true;
 																																																				}
 
-																																																			/*
-																																																			if (AddTreatmentFactorParameters (param_set_p, active_study_p, data_p))
+
+																																																			if (AddTreatmentFactorParameters (params_p, active_study_p, data_p))
 																																																				{
 
 																																																				}
@@ -246,7 +249,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 																																																				{
 																																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddTreatmentFactorParameters failed");
 																																																				}
-																																																			 */
+
 
 																																																		}
 																																																	else
@@ -2721,3 +2724,25 @@ static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params
 
 	return success_flag;
 }
+
+
+
+static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p)
+{
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("TreatmentFactors", true, data_p, params_p);
+
+	if (group_p)
+		{
+			const char *active_tf_name_s = NULL;
+			Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, NULL, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL);
+
+			if (param_p)
+				{
+					return true;
+				}
+		}
+
+	return false;
+}
+
+

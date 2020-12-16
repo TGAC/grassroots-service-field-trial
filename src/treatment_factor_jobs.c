@@ -20,6 +20,7 @@
  *      Author: billy
  */
 
+#define ALLOCATE_TREATMENT_FACTOR_JOB_CONSTANTS (1)
 #include "treatment_factor_jobs.h"
 
 #include "string_parameter.h"
@@ -28,11 +29,6 @@
 #include "study_jobs.h"
 #include "treatment_jobs.h"
 
-
-static NamedParameterType TFJ_STUDY_ID = { "Study ID", PT_STRING };
-static NamedParameterType TFJ_TREATMENT_ID = { "Treatment ID", PT_STRING };
-static NamedParameterType TFJ_TREATMENT_NAME = { "Treatment Name", PT_STRING };
-static NamedParameterType TFJ_VALUES = { "Levels", PT_JSON_TABLE };
 
 static const char * const S_LABEL_TITLE_S = "Label";
 static const char * const S_VALUE_TITLE_S = "Value";
