@@ -37,8 +37,6 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, TreatmentFactor *active_tf_p, const FieldTrialServiceData *data_p);
-
 static json_t *GetTableParameterHints (void);
 
 
@@ -87,7 +85,7 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL)) != NULL)
 										{
-											if (GetTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
+											if (GetTreatmentFactorTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
 												{
 													return true;
 												}
@@ -325,7 +323,7 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, TreatmentFactor *active_tf_p, const FieldTrialServiceData *data_p)
+Parameter *GetTreatmentFactorTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, TreatmentFactor *active_tf_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	bool success_flag = false;

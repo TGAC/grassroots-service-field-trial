@@ -2729,16 +2729,21 @@ static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params
 
 static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p)
 {
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("TreatmentFactors", true, data_p, params_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatment Factors", true, & (data_p -> dftsd_base_data), params_p);
 
 	if (group_p)
 		{
 			const char *active_tf_name_s = NULL;
-			Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, NULL, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL);
+			Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL);
 
 			if (param_p)
 				{
-					return true;
+					TreatmentFactor *active_tf_p = NULL;
+
+					if (GetTreatmentFactorTableParameter (params_p, group_p, active_tf_p, data_p))
+						{
+							return true;
+						}
 				}
 		}
 

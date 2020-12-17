@@ -70,6 +70,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionTreatmentFactorParameterTypeForN
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Parameter *GetTreatmentFactorTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, TreatmentFactor *active_tf_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif
