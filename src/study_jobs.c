@@ -2740,10 +2740,10 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 				{
 					TreatmentFactor *active_tf_p = NULL;
 
+					group_p -> pg_repeatable_param_p = param_p;
+
 					if ((param_p = GetTreatmentFactorTableParameter (params_p, group_p, active_tf_p, data_p)) != NULL)
 						{
-							group_p -> pg_repeatable_param_p = param_p;
-
 							return true;
 						}
 				}
