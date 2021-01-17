@@ -26,7 +26,7 @@
 #include "audit.h"
 
 #include "study_jobs.h"
-
+#include "treatment_factor_jobs.h"
 
 /*
  * Static declarations
@@ -53,6 +53,7 @@ static bool CloseStudySubmissionService (Service *service_p);
 
 static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p);
 
+static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
 
 
 /*
@@ -92,6 +93,8 @@ Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 
 							if (ConfigureFieldTrialService (data_p, grassroots_p))
 								{
+									service_p -> se_custom_parameter_decoder_fn = CreateStudyParameterFromJSON;
+
 									return service_p;
 								}
 
@@ -404,4 +407,19 @@ static ServiceMetadata *GetStudySubmissionServiceMetadata (Service *service_p)
 }
 
 
+static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag)
+{
+	Parameter *param_p = NULL;
+	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
 
+	if (IsTreatmentFactorParameter (name_s))
+		{
+
+		}
+	else
+		{
+			param_p = CreateParameterFromJSON (param_json_p, service_p, concise_flag);
+		}
+
+	return param_p;
+}

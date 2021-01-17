@@ -101,6 +101,14 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 }
 
 
+bool IsTreatmentFactorParameter (const char * const param_name_s)
+{
+	ParameterType pt;
+
+	return GetSubmissionTreatmentFactorParameterTypeForNamedParameter (param_name_s, &pt);
+}
+
+
 bool GetSubmissionTreatmentFactorParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	bool success_flag = true;
