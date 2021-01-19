@@ -28,6 +28,8 @@
 #include "study_jobs.h"
 #include "treatment_factor_jobs.h"
 
+#include "string_array_parameter.h"
+
 /*
  * Static declarations
  */
@@ -411,12 +413,49 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 {
 	Parameter *param_p = NULL;
 	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+	bool done_flag = false;
 
 	if (IsTreatmentFactorParameter (name_s))
 		{
+			json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
+			const char *param_name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+			if (param_name_s)
+				{
+					if (strcmp (param_name_s, TFJ_TREATMENT_NAME.npt_name_s) == 0)
+						{
+							if (current_value_p)
+								{
+									if (json_is_array (current_value_p))
+										{
+											StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag);
+
+											if (string_array_param_p)
+												{
+													param_p = & (string_array_param_p -> sap_base_param);
+												}
+										}
+									else
+										{
+											StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag);
+
+											if (string_param_p)
+												{
+													param_p = & (string_param_p -> sp_base_param);
+												}
+										}
+
+								}
+						}
+					else if (strcmp (param_name_s, TFJ_VALUES.npt_name_s) == 0)
+						{
+
+						}
+				}		/* if (param_name_s) */
 
 		}
-	else
+
+	if (!param_p)
 		{
 			param_p = CreateParameterFromJSON (param_json_p, service_p, concise_flag);
 		}

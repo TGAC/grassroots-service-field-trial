@@ -41,6 +41,7 @@
 #include "treatment_factor.h"
 
 #include "string_parameter.h"
+#include "string_array_parameter.h"
 #include "double_parameter.h"
 #include "time_parameter.h"
 #include "boolean_parameter.h"
@@ -241,7 +242,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 																																																				}
 
 
-																																																			if (AddTreatmentFactorParameters (params_p, active_study_p, data_p))
+																																																			if (AddTreatmentFactorParameters (params_p, active_study_p, dfw_data_p))
 																																																				{
 
 																																																				}
@@ -1265,6 +1266,50 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 	const char *id_s = NULL;
 	const char *name_s = NULL;
 	bson_oid_t *study_id_p = NULL;
+	size_t num_treatment_names = 0;
+	size_t num_treatment_levels = 0;
+
+	Parameter *param_p = GetParameterFromParameterSetByName (param_set_p, TFJ_TREATMENT_NAME.npt_name_s);
+
+	if (param_p)
+		{
+			if (IsStringArrayParameter (param_p))
+				{
+					StringArrayParameter *tf_names_p = (StringArrayParameter *) param_p;
+					num_treatment_names = GetNumberOfStringArrayCurrentParameterValues (tf_names_p);
+				}
+			else if (IsStringParameter (param_p))
+				{
+					StringParameter *tf_names_p = (StringParameter *) param_p;
+
+					const char *value_s = GetStringParameterCurrentValue (tf_names_p);
+
+					if (value_s)
+						{
+							num_treatment_names = 1;
+						}
+				}
+
+		}
+
+	param_p = GetParameterFromParameterSetByName (param_set_p, TFJ_VALUES.npt_name_s);
+
+	if (param_p)
+		{
+			JSONParameter *tf_levels_p = (JSONParameter *) param_p;
+			const json_t *levels_json_p = GetJSONParameterCurrentValue (tf_levels_p);
+
+			if (levels_json_p)
+				{
+					if (json_is_array (levels_json_p))
+						{
+							num_treatment_levels = json_array_size (levels_json_p);
+						}
+				}
+		}
+
+
+
 
 	/*
 	 * Get the existing study id if specified
