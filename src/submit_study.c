@@ -29,6 +29,7 @@
 #include "treatment_factor_jobs.h"
 
 #include "string_array_parameter.h"
+#include "json_parameter.h"
 
 /*
  * Static declarations
@@ -449,7 +450,12 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 						}
 					else if (strcmp (param_name_s, TFJ_VALUES.npt_name_s) == 0)
 						{
+							JSONParameter *json_param_p  = AllocateJSONParameterFromJSON (param_json_p, service_p, concise_flag);
 
+							if (json_param_p)
+								{
+									param_p = & (json_param_p -> jp_base_param);
+								}
 						}
 				}		/* if (param_name_s) */
 
