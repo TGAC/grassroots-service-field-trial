@@ -429,7 +429,8 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 								{
 									if (json_is_array (current_value_p))
 										{
-											StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag);
+											ParameterType pt = PT_STRING_ARRAY;
+											StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
 
 											if (string_array_param_p)
 												{
@@ -438,7 +439,7 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 										}
 									else
 										{
-											StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag);
+											StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, & (TFJ_TREATMENT_NAME.npt_type));
 
 											if (string_param_p)
 												{
@@ -450,7 +451,7 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 						}
 					else if (strcmp (param_name_s, TFJ_VALUES.npt_name_s) == 0)
 						{
-							JSONParameter *json_param_p  = AllocateJSONParameterFromJSON (param_json_p, service_p, concise_flag);
+							JSONParameter *json_param_p  = AllocateJSONParameterFromJSON (param_json_p, service_p, concise_flag, & (TFJ_VALUES.npt_type));
 
 							if (json_param_p)
 								{
