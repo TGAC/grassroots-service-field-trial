@@ -175,7 +175,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemovePlotsForStudyById (const cha
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyIndexingData (Service *service_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

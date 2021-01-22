@@ -139,6 +139,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 
 static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p);
 
+static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const DFWFieldTrialData *data_p);
 
 /*
  * API DEFINITIONS
@@ -1268,19 +1269,19 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 	bson_oid_t *study_id_p = NULL;
 	size_t num_treatment_names = 0;
 	size_t num_treatment_levels = 0;
+	Parameter *treatment_names_p = GetParameterFromParameterSetByName (param_set_p, TFJ_TREATMENT_NAME.npt_name_s);
+	Parameter *treatment_levels_p = GetParameterFromParameterSetByName (param_set_p, TFJ_VALUES.npt_name_s);
 
-	Parameter *param_p = GetParameterFromParameterSetByName (param_set_p, TFJ_TREATMENT_NAME.npt_name_s);
-
-	if (param_p)
+	if (treatment_names_p)
 		{
-			if (IsStringArrayParameter (param_p))
+			if (IsStringArrayParameter (treatment_names_p))
 				{
-					StringArrayParameter *tf_names_p = (StringArrayParameter *) param_p;
+					StringArrayParameter *tf_names_p = (StringArrayParameter *) treatment_names_p;
 					num_treatment_names = GetNumberOfStringArrayCurrentParameterValues (tf_names_p);
 				}
-			else if (IsStringParameter (param_p))
+			else if (IsStringParameter (treatment_names_p))
 				{
-					StringParameter *tf_names_p = (StringParameter *) param_p;
+					StringParameter *tf_names_p = (StringParameter *) treatment_names_p;
 
 					const char *value_s = GetStringParameterCurrentValue (tf_names_p);
 
@@ -1292,11 +1293,11 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 		}
 
-	param_p = GetParameterFromParameterSetByName (param_set_p, TFJ_VALUES.npt_name_s);
+	treatment_levels_p = GetParameterFromParameterSetByName (param_set_p, TFJ_VALUES.npt_name_s);
 
-	if (param_p)
+	if (treatment_levels_p)
 		{
-			JSONParameter *tf_levels_p = (JSONParameter *) param_p;
+			JSONParameter *tf_levels_p = (JSONParameter *) treatment_levels_p;
 			const json_t *levels_json_p = GetJSONParameterCurrentValue (tf_levels_p);
 
 			if (levels_json_p)
@@ -1309,225 +1310,242 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 		}
 
 
-
-
-	/*
-	 * Get the existing study id if specified
-	 */
-	GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &id_s);
-
-	if (id_s)
+	if (num_treatment_levels == num_treatment_names)
 		{
-			if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
+			/*
+			 * Get the existing study id if specified
+			 */
+			GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &id_s);
+
+			if (id_s)
 				{
-					study_id_p = GetBSONOidFromString (id_s);
-
-					if (!study_id_p)
+					if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load study \"%s\" for editing", id_s);
-							return false;
-						}
-				}
-		}		/* if (id_value.st_string_value_s) */
+							study_id_p = GetBSONOidFromString (id_s);
 
-
-	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &name_s))
-		{
-			const char *parent_field_trial_id_s = NULL;
-
-			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_id_s))
-				{
-					if (parent_field_trial_id_s)
-						{
-							bool study_freed_flag = false;
-							FieldTrial *trial_p = GetUniqueFieldTrialBySearchString (parent_field_trial_id_s, VF_STORAGE, data_p);
-
-							if (trial_p)
+							if (!study_id_p)
 								{
-									const char *location_s = NULL;
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load study \"%s\" for editing", id_s);
+									return false;
+								}
+						}
+				}		/* if (id_value.st_string_value_s) */
 
-									if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &location_s))
+
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_NAME.npt_name_s, &name_s))
+				{
+					const char *parent_field_trial_id_s = NULL;
+
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_FIELD_TRIALS_LIST.npt_name_s, &parent_field_trial_id_s))
+						{
+							if (parent_field_trial_id_s)
+								{
+									bool study_freed_flag = false;
+									FieldTrial *trial_p = GetUniqueFieldTrialBySearchString (parent_field_trial_id_s, VF_STORAGE, data_p);
+
+									if (trial_p)
 										{
-											if (location_s)
+											const char *location_s = NULL;
+
+											if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &location_s))
 												{
-													Location *location_p = GetUniqueLocationBySearchString (location_s, VF_STORAGE, data_p);
-
-													if (location_p)
+													if (location_s)
 														{
-															const char *notes_s = NULL;
+															Location *location_p = GetUniqueLocationBySearchString (location_s, VF_STORAGE, data_p);
 
-															if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_DESCRIPTION.npt_name_s, &notes_s))
+															if (location_p)
 																{
-																	Crop *current_crop_p = NULL;
-																	const char *crop_s = NULL;
+																	const char *notes_s = NULL;
 
-																	GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_THIS_CROP.npt_name_s, &crop_s);
-
-																	if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &current_crop_p, data_p)))
+																	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_DESCRIPTION.npt_name_s, &notes_s))
 																		{
-																			Crop *previous_crop_p = NULL;
+																			Crop *current_crop_p = NULL;
+																			const char *crop_s = NULL;
 
-																			GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &crop_s);
+																			GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_THIS_CROP.npt_name_s, &crop_s);
 
-																			if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &previous_crop_p, data_p)))
+																			if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &current_crop_p, data_p)))
 																				{
-																					Study *study_p = NULL;
-																					const char *soil_s = NULL;
-																					const char *aspect_s = NULL;
-																					const char *slope_s = NULL;
-																					const char *data_link_s = NULL;
-																					const char *design_s = NULL;
-																					const char *growing_conditions_s = NULL;
-																					const char *phenotype_notes_s = NULL;
-																					const struct tm *sowing_date_p = NULL;
-																					const struct tm *harvest_date_p = NULL;
-																					const double64 *min_ph_p = NULL;
-																					const double64 *max_ph_p = NULL;
-																					const uint32 *num_rows_p = NULL;
-																					const uint32 *num_cols_p = NULL;
-																					const uint32 *num_replicates_p = NULL;
-																					const double64 *plot_width_p = NULL;
-																					const double64 *plot_length_p = NULL;
-																					const char *weather_s = NULL;
-																					const json_t *shape_p = NULL;
+																					Crop *previous_crop_p = NULL;
 
-																					const double64 *plot_horizontal_gap_p = NULL;
-																					const double64 *plot_vertical_gap_p = NULL;
-																					const uint32 *plots_rows_per_block_p = NULL;
-																					const uint32 *plots_columns_per_block_p = NULL;
-																					const double64 *plot_block_horizontal_gap_p = NULL;
-																					const double64 *plot_block_vertical_gap_p = NULL;
+																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_PREVIOUS_CROP.npt_name_s, &crop_s);
 
-
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_s);
-
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_DESIGN.npt_name_s, &design_s);
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_GROWING_CONDITIONS.npt_name_s, &growing_conditions_s);
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, &phenotype_notes_s);
-
-																					GetCurrentTimeParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_date_p);
-																					GetCurrentTimeParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_date_p);
-
-
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_p);
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_p);
-
-																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_ROWS.npt_name_s, &num_rows_p);
-																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_COLS.npt_name_s, &num_cols_p);
-																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_REPLICATES.npt_name_s, &num_replicates_p);
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_WIDTH.npt_name_s, &plot_width_p);
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_LENGTH.npt_name_s, &plot_length_p);
-
-
-																					GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_WEATHER_LINK.npt_name_s, &weather_s);
-
-																					GetCurrentJSONParameterValueFromParameterSet (param_set_p, STUDY_SHAPE_DATA.npt_name_s, &shape_p);
-
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_HGAP.npt_name_s, &plot_horizontal_gap_p);
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_VGAP.npt_name_s, &plot_vertical_gap_p);
-																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s, &plots_rows_per_block_p);
-																					GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s, &plots_columns_per_block_p);
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_HGAP.npt_name_s, &plot_block_horizontal_gap_p);
-																					GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_VGAP.npt_name_s, &plot_block_vertical_gap_p);
-
-																					study_p = AllocateStudy (study_id_p, name_s, soil_s, data_link_s, aspect_s,
-																																	 slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
-																																	 min_ph_p, max_ph_p, notes_s, design_s,
-																																	 growing_conditions_s, phenotype_notes_s,
-																																	 num_rows_p, num_cols_p, num_replicates_p, plot_width_p, plot_length_p,
-																																	 weather_s, shape_p,
-																																	 plot_horizontal_gap_p, plot_vertical_gap_p, plots_rows_per_block_p, plots_columns_per_block_p,
-																																	 plot_block_horizontal_gap_p, plot_block_vertical_gap_p,
-																																	 data_p);
-
-																					if (study_p)
+																					if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &previous_crop_p, data_p)))
 																						{
-																							status = SaveStudy (study_p, job_p, data_p);
+																							Study *study_p = NULL;
+																							const char *soil_s = NULL;
+																							const char *aspect_s = NULL;
+																							const char *slope_s = NULL;
+																							const char *data_link_s = NULL;
+																							const char *design_s = NULL;
+																							const char *growing_conditions_s = NULL;
+																							const char *phenotype_notes_s = NULL;
+																							const struct tm *sowing_date_p = NULL;
+																							const struct tm *harvest_date_p = NULL;
+																							const double64 *min_ph_p = NULL;
+																							const double64 *max_ph_p = NULL;
+																							const uint32 *num_rows_p = NULL;
+																							const uint32 *num_cols_p = NULL;
+																							const uint32 *num_replicates_p = NULL;
+																							const double64 *plot_width_p = NULL;
+																							const double64 *plot_length_p = NULL;
+																							const char *weather_s = NULL;
+																							const json_t *shape_p = NULL;
 
-																							if (status == OS_FAILED)
+																							const double64 *plot_horizontal_gap_p = NULL;
+																							const double64 *plot_vertical_gap_p = NULL;
+																							const uint32 *plots_rows_per_block_p = NULL;
+																							const uint32 *plots_columns_per_block_p = NULL;
+																							const double64 *plot_block_horizontal_gap_p = NULL;
+																							const double64 *plot_block_vertical_gap_p = NULL;
+
+
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_s);
+
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_DESIGN.npt_name_s, &design_s);
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_GROWING_CONDITIONS.npt_name_s, &growing_conditions_s);
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, &phenotype_notes_s);
+
+																							GetCurrentTimeParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_date_p);
+																							GetCurrentTimeParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_date_p);
+
+
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_p);
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_p);
+
+																							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_ROWS.npt_name_s, &num_rows_p);
+																							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_COLS.npt_name_s, &num_cols_p);
+																							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_REPLICATES.npt_name_s, &num_replicates_p);
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_WIDTH.npt_name_s, &plot_width_p);
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_LENGTH.npt_name_s, &plot_length_p);
+
+
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_WEATHER_LINK.npt_name_s, &weather_s);
+
+																							GetCurrentJSONParameterValueFromParameterSet (param_set_p, STUDY_SHAPE_DATA.npt_name_s, &shape_p);
+
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_HGAP.npt_name_s, &plot_horizontal_gap_p);
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_VGAP.npt_name_s, &plot_vertical_gap_p);
+																							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_PLOT_ROWS_PER_BLOCK.npt_name_s, &plots_rows_per_block_p);
+																							GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s, &plots_columns_per_block_p);
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_HGAP.npt_name_s, &plot_block_horizontal_gap_p);
+																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_VGAP.npt_name_s, &plot_block_vertical_gap_p);
+
+																							study_p = AllocateStudy (study_id_p, name_s, soil_s, data_link_s, aspect_s,
+																																			 slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
+																																			 min_ph_p, max_ph_p, notes_s, design_s,
+																																			 growing_conditions_s, phenotype_notes_s,
+																																			 num_rows_p, num_cols_p, num_replicates_p, plot_width_p, plot_length_p,
+																																			 weather_s, shape_p,
+																																			 plot_horizontal_gap_p, plot_vertical_gap_p, plots_rows_per_block_p, plots_columns_per_block_p,
+																																			 plot_block_horizontal_gap_p, plot_block_vertical_gap_p,
+																																			 data_p);
+
+																							if (study_p)
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+
+																									if (AddTreatmentFactorsToStudy (study_p, treatment_names_p, treatment_levels_p, num_treatment_levels, data_p))
+																										{
+																											status = SaveStudy (study_p, job_p, data_p);
+
+																											if (status == OS_FAILED)
+																												{
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																												}
+
+																										}
+																									else
+																										{
+																											status = OS_FAILED_TO_START;
+																										}
+
+
+
+																									FreeStudy (study_p);
+																									study_freed_flag = true;
 																								}
 
-																							FreeStudy (study_p);
-																							study_freed_flag = true;
-																						}
+
+																							if (!study_freed_flag)
+																								{
+																									if (previous_crop_p)
+																										{
+																											FreeCrop (previous_crop_p);
+																										}
+																								}
+																						}		/* if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p)) */
 
 
 																					if (!study_freed_flag)
 																						{
-																							if (previous_crop_p)
+																							if (current_crop_p)
 																								{
-																									FreeCrop (previous_crop_p);
+																									FreeCrop (current_crop_p);
 																								}
 																						}
-																				}		/* if (GetValidCrop (previous_crop_value.st_string_value_s, &previous_crop_p)) */
+																				}		/* if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p)) */
+
+																		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NOTES.npt_name_s, &notes_value)) */
+																	else
+																		{
+
+																		}
 
 
-																			if (!study_freed_flag)
-																				{
-																					if (current_crop_p)
-																						{
-																							FreeCrop (current_crop_p);
-																						}
-																				}
-																		}		/* if (GetValidCrop (current_crop_value.st_string_value_s, &current_crop_p)) */
 
-																}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_NOTES.npt_name_s, &notes_value)) */
+																	if (!study_freed_flag)
+																		{
+																			FreeLocation (location_p);
+																		}
+																}		/* if (location_p) */
 															else
 																{
-
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find Location named \"%s\"", location_s);
 																}
 
-
-
-															if (!study_freed_flag)
-																{
-																	FreeLocation (location_p);
-																}
-														}		/* if (location_p) */
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find Location named \"%s\"", location_s);
-														}
-
-												}		/* if (location_id_s) */
+														}		/* if (location_id_s) */
 
 
 
-										}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &name_value)) */
+												}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, STUDY_LOCATIONS_LIST.npt_name_s, &name_value)) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_LOCATIONS_LIST.npt_name_s);
+												}
+
+											if (!study_freed_flag)
+												{
+													FreeFieldTrial (trial_p);
+												}
+										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_LOCATIONS_LIST.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find Field Trial named \"%s\"", parent_field_trial_id_s);
 										}
 
-									if (!study_freed_flag)
-										{
-											FreeFieldTrial (trial_p);
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find Field Trial named \"%s\"", parent_field_trial_id_s);
-								}
+								}		/* if (parent_field_trial_id_s) */
 
-						}		/* if (parent_field_trial_id_s) */
 
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_FIELD_TRIALS_LIST.npt_name_s);
+						}
 
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_FIELD_TRIALS_LIST.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_NAME.npt_name_s);
 				}
 
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study parameter %s", STUDY_NAME.npt_name_s);
-		}
+
+		}		/* if (num_treatment_levels == num_treatment_names) */
+
+
+
 
 
 	SetServiceJobStatus (job_p, status);
@@ -2680,7 +2698,7 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
-TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, FieldTrialServiceData *data_p)
+TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p)
 {
 	TreatmentFactor *tf_p = NULL;
 	TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
@@ -2795,6 +2813,61 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 		}
 
 	return false;
+}
+
+
+static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const DFWFieldTrialData *data_p)
+{
+	bool success_flag = true;
+
+	const json_t *levels_json_p = GetJSONParameterCurrentValue (treatment_levels_p);
+
+	if (IsStringParameter (treatment_names_p))
+		{
+			const char *name_s = GetStringParameterCurrentValue (treatment_names_p);
+			const json_t *level_p = json_array_get (levels_json_p, 0);
+
+			if (!AddTreatmentFactorToStudy (name_s, level_p, study_p, data_p))
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, level_p, "Failed to add treatment factor \"%s\" to study \"%s\"", name_s, study_p -> st_name_s);
+
+					success_flag = false;
+				}
+		}
+	else if (IsStringArrayParameter (treatment_names_p))
+		{
+			const char **values_ss = GetStringArrayParameterCurrentValues (treatment_names_p);
+
+			if (values_ss)
+				{
+					const char **value_ss = values_ss;
+					size_t i = 0;
+
+					while (success_flag && (*value_ss))
+						{
+							const json_t *level_p = json_array_get (levels_json_p, i);
+
+							if (AddTreatmentFactorToStudy (*value_ss, level_p, study_p, data_p))
+								{
+									++ i;
+									++ value_ss;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, level_p, "Failed to add treatment factor \"%s\" to study \"%s\"", *value_ss, study_p -> st_name_s);
+									success_flag = false;
+								}
+						}
+
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Treatment Parameter \"%s\" is not a string or string array, its type is %lu, to study \"%s\"", treatment_names_p -> pa_type, treatment_names_p -> pa_name_s, study_p -> st_name_s);
+			success_flag = false;
+		}
+
+	return success_flag;
 }
 
 

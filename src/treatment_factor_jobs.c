@@ -202,9 +202,9 @@ bool AddTreatmentFactorToStudy (const char *treatment_url_s, const json_t *facto
 
 								}		/* while ((i < num_values) && success_flag) */
 
-							if (!success_flag)
+							if (i != num_values)
 								{
-
+									success_flag = false;
 								}
 
 						}		/* if (tf_p) */
@@ -221,7 +221,7 @@ bool AddTreatmentFactorToStudy (const char *treatment_url_s, const json_t *facto
 
 		}		/* if ((json_is_array (factors_json_p)) && ((num_values = json_array_size (factors_json_p)) > 0)) */
 
-
+	return success_flag;
 }
 
 
