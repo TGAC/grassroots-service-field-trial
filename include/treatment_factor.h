@@ -89,6 +89,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorAsJSON (const TreatmentF
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json_p, struct Study *parent_study_p, const FieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorValue (TreatmentFactor *treatment_p, const char *name_s);
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorName (const TreatmentFactor *treatment_factor_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p);

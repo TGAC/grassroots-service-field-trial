@@ -106,7 +106,8 @@ SRCS 	= \
 	treatment.c \
 	treatment_factor.c \
 	treatment_jobs.c \
-	treatment_factor_jobs.c 
+	treatment_factor_jobs.c \
+	treatment_factor_value.c \
 		
 CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
 

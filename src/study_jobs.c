@@ -139,7 +139,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 
 static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p);
 
-static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const DFWFieldTrialData *data_p);
+static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const FieldTrialServiceData *data_p);
 
 /*
  * API DEFINITIONS
@@ -2816,15 +2816,15 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 }
 
 
-static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const DFWFieldTrialData *data_p)
+static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
-	const json_t *levels_json_p = GetJSONParameterCurrentValue (treatment_levels_p);
+	const json_t *levels_json_p = GetJSONParameterCurrentValue ((JSONParameter *) treatment_levels_p);
 
 	if (IsStringParameter (treatment_names_p))
 		{
-			const char *name_s = GetStringParameterCurrentValue (treatment_names_p);
+			const char *name_s = GetStringParameterCurrentValue ((StringParameter *) treatment_names_p);
 			const json_t *level_p = json_array_get (levels_json_p, 0);
 
 			if (!AddTreatmentFactorToStudy (name_s, level_p, study_p, data_p))
@@ -2836,7 +2836,7 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 		}
 	else if (IsStringArrayParameter (treatment_names_p))
 		{
-			const char **values_ss = GetStringArrayParameterCurrentValues (treatment_names_p);
+			const char **values_ss = GetStringArrayParameterCurrentValues ((StringArrayParameter *) treatment_names_p);
 
 			if (values_ss)
 				{

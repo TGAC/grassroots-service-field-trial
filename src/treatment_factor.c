@@ -126,6 +126,28 @@ void FreeTreatmentFactorNode (ListItem *node_p)
 }
 
 
+const char *GetTreatmentFactorValue (TreatmentFactor *treatment_p, const char *name_s)
+{
+	KeyValuePairNode *node_p = (KeyValuePairNode *) (treatment_p -> tf_values_p -> ll_head_p);
+
+	while (node_p)
+		{
+			const KeyValuePair *pair_p = node_p -> kvpn_pair_p;
+
+			if (strcmp (pair_p -> kvp_key_s, name_s) == 0)
+				{
+					return (pair_p -> kvp_value_s);
+				}
+			else
+				{
+					node_p = (KeyValuePairNode *) (node_p -> kvpn_node.ln_next_p);
+				}
+		}
+
+	return NULL;
+}
+
+
 json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, const ViewFormat format)
 {
 	json_t *tf_json_p = json_object ();
