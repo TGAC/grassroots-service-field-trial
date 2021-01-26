@@ -26,6 +26,8 @@
 #include "string_utils.h"
 
 
+static const bson_oid_t *GetTreatmentId (const TreatmentFactorValue *tfv_p);
+
 
 TreatmentFactorValue *AllocateTreatmentFactorValue (TreatmentFactor *treatment_factor_p, const char *label_s)
 {
@@ -86,3 +88,45 @@ const char *GetTreatmentFactorLabelValue (const TreatmentFactorValue *treatment_
 {
 	return GetTreatmentFactorValue (treatment_factor_value_p -> tfv_factor_p, treatment_factor_value_p -> tfv_label_s);
 }
+
+
+bool AreTreatmentFactorValuesMatching (const TreatmentFactorValue *tfv_0_p, const TreatmentFactorValue *tfv_1_p)
+{
+	bool match_flag = false;
+	bson_oid_t *id_0_p = GetTreatmentId (tfv_0_p);
+
+	if (id_0_p)
+		{
+			bson_oid_t *id_1_p = GetTreatmentId (tfv_1_p);
+
+			if (id_1_p)
+				{
+					if (bson_oid_equal (id_0_p, id_1_p))
+						{
+							match_flag = true;
+						}
+				}
+		}
+
+	return match_flag;
+}
+
+
+static const bson_oid_t *GetTreatmentId (const TreatmentFactorValue *tfv_p)
+{
+	const TreatmentFactor *tf_p = tfv_p -> tfv_factor_p;
+
+	if (tf_p)
+		{
+			const Treatment *treatment_p = tf_p -> tf_treatment_p;
+
+			if (treatment_p)
+				{
+					return treatment_p -> tr_id_p;
+				}
+		}
+
+	return NULL;
+}
+
+

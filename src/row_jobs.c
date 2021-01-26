@@ -30,7 +30,8 @@
 #include "time_util.h"
 #include "observation.h"
 #include "treatment.h"
-
+#include "treatment_factor.h"
+#include "treatment_jobs.h"
 
 #include "char_parameter.h"
 #include "json_parameter.h"
@@ -132,7 +133,7 @@ bool RunForSubmissionRowPhenotypeParams (FieldTrialServiceData *data_p, Paramete
 
 									if (num_rows > 0)
 										{
-											if (AddTreatmentFactorsFromjson (job_p, rows_json_p, study_p, data_p))
+											//if (AddTreatmentFactorsFromJSON (job_p, rows_json_p, study_p, data_p))
 												{
 
 												}
@@ -301,12 +302,6 @@ static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *rack_stu
 }
 
 
-static bool AddTreatmentFactorsFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p)
-{
-
-
-}
-
 static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
@@ -407,191 +402,81 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
-	OperationStatus status = OS_FAILED;
-
-	bool loop_success_flag = true;
-	size_t imported_obs = 0;
-	size_t total_obs = 0;
-  void *temp_p;
-	json_t *value_p;
+	OperationStatus status = OS_IDLE;
+	void *temp_p = NULL;
 	const char *key_s;
+	json_t *value_p;
+	size_t num_treatments = 0;
+	size_t num_added = 0;
 
 	json_object_foreach_safe (plot_json_p, temp_p, key_s, value_p)
 		{
-			/* is it a treatment factor? */
+			/* Is it a treatment? */
 			Treatment *treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
+
 
 			if (treatment_p)
 				{
+					/*
+					 * Does the Study have a TreatmentFactor for this
+					 * Treatment?
+					 */
+					TreatmentFactor *tf_p = GetTreatmentFactorForStudy (study_p, treatment_p -> tr_id_p, data_p);
+
+					if (tf_p)
+						{
+							if (json_is_string (value_p))
+								{
+									const char *name_s = json_string_value (value_p);
+									const char *value_s = GetTreatmentFactorValue (tf_p, name_s);
+
+									/* Is it a valid defined label? */
+									if (value_s)
+										{
+											if (AddTreatmentFactorValueToRow (row_p, tf_p, value_s))
+												{
+													++ num_added;
+												}
+										}
+								}
+
+
+							FreeTreatmentFactor (tf_p);
+						}
+					else
+						{
+							FreeTreatment (treatment_p);
+						}
 
 					/*
-					 * Since the key refers to a Treatment, we can delete it from the
-					 * parent json as we've processed it.
+					 * We know that it's a Treatment so remove it from any later processing
+					 * and increment the number that we've seen
 					 */
 					json_object_del (plot_json_p, key_s);
-					FreeTreatment (treatment_p);
+					++ num_treatments;
+
 				}		/* if (treatment_p) */
 
-		}		/* json_object_foreach_safe (plot_json_p, temp_p, key_s, value_p) */
+		}		/* json_array_foreach_safe (plot_json_p, temp_p, key_s, value_p) */
 
-			while (iterator_p && loop_success_flag)
+	if (num_treatments > 0)
+		{
+			if (num_added == num_treatments)
 				{
-					const char *key_s = json_object_iter_key (iterator_p);
-					json_t *value_p = json_object_iter_value (iterator_p);
-
-					/*
-					 * ignore our column names
-					 */
-					if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
-						{
-							/*
-							 * make sure it isn't a date column
-							 */
-							const char * const DATE_ENDING_S = " date";
-							const char * const CORRECTED_ENDING_S = " corrected";
-
-							if ((!DoesStringEndWith (key_s, DATE_ENDING_S)) && (!DoesStringEndWith (key_s, CORRECTED_ENDING_S)))
-								{
-									MeasuredVariable *measured_variable_p = GetMeasuredVariableByVariableName (key_s, data_p);
-
-									if (measured_variable_p)
-										{
-											Observation *observation_p = NULL;
-											bool added_phenotype_flag = false;
-											const char *raw_value_s = json_string_value (value_p);
-											const char *corrected_value_s = NULL;
-											char *column_header_s = NULL;
-
-											/* corrected value */
-											column_header_s = ConcatenateStrings (key_s, CORRECTED_ENDING_S);
-											if (column_header_s)
-												{
-													corrected_value_s = GetJSONString (observation_json_p, column_header_s);
-													FreeCopiedString (column_header_s);
-												}		/* if (column_header_s) */
-
-
-											if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s)))
-												{
-													const char *growth_stage_s = NULL;
-													const char *method_s = NULL;
-													ObservationNature nature = ON_ROW;
-													Instrument *instrument_p = NULL;
-													bson_oid_t *observation_id_p = GetNewBSONOid ();
-													struct tm *observation_date_p = NULL;
-
-													++ total_obs;
-
-													/*
-													 * assume failure to import
-													 */
-													loop_success_flag = false;
-
-													/* date */
-													column_header_s = ConcatenateStrings (key_s, DATE_ENDING_S);
-													if (column_header_s)
-														{
-															const char *date_s = GetJSONString (observation_json_p, column_header_s);
-
-															if (date_s)
-																{
-																	observation_date_p = GetTimeFromString (date_s);
-
-																	if (observation_date_p)
-																		{
-																			if (!AddStringToStringLinkedList (processed_keys_p, column_header_s, MF_DEEP_COPY))
-																				{
-
-																				}
-																		}
-																}
-
-															FreeCopiedString (column_header_s);
-														}		/* if (column_header_s) */
-
-													if (observation_id_p)
-														{
-															observation_p = AllocateObservation (observation_id_p, observation_date_p, measured_variable_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
-
-															if (observation_p)
-																{
-																	if (AddObservationToRow (row_p, observation_p))
-																		{
-																			++ imported_obs;
-																			added_phenotype_flag = true;
-																			loop_success_flag = true;
-																		}
-																	else
-																		{
-																			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																			bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
-																			FreeObservation (observation_p);
-																		}
-
-																}		/* if (observation_p) */
-															else
-																{
-																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																	bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
-
-																	FreeBSONOid (observation_id_p);
-																}
-
-														}		/* if (observation_id_p) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
-														}
-
-													if (observation_date_p)
-														{
-															FreeTime (observation_date_p);
-														}
-												}		/* if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s))) */
-											else
-												{
-													PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value for \"%s\", skipping", key_s);
-												}
-
-											if (!added_phenotype_flag)
-												{
-													FreeMeasuredVariable (measured_variable_p);
-												}
-
-										}		/* if (phenotype_p) */
-									else
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get phenotype with variable name \"%s\"", key_s);
-										}
-
-								}		/* if (! (DoesStringEndWith (mapped_key_s, "date"))) */
-
-						}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
-
-					iterator_p = json_object_iter_next (observation_json_p, iterator_p);
-				}		/* while (iterator_p && loop_success_flag) */
-
-
-
-
-	if (imported_obs == total_obs)
-		{
-			status = OS_SUCCEEDED;
-		}
-	else if (imported_obs > 0)
-		{
-			status = OS_PARTIALLY_SUCCEEDED;
+					status = OS_SUCCEEDED;
+				}
+			else if (num_added > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+			else
+				{
+					status = OS_FAILED;
+				}
 		}
 
 	return status;
 }
-
 
 
 
@@ -875,4 +760,37 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const Field
 	return row_p;
 }
 
+
+bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactor *tf_p, const char *value_s)
+{
+	bool success_flag = false;
+	TreatmentFactorValue *tf_value_p = AllocateTreatmentFactorValue (tf_p, value_s);
+
+	if (tf_value_p)
+		{
+			TreatmentFactorValueNode *node_p = AllocateTreatmentFactorValueNode (tf_value_p);
+
+			if (node_p)
+				{
+					LinkedListAddTail (row_p -> ro_treatment_factor_values_p, & (node_p -> tfvn_node));
+					success_flag = true;
+				}
+			else
+				{
+					const char * const tf_name_s = GetTreatmentFactorName (tf_p);
+
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateTreatmentFactorValueNode () failed for \"%s\", and \"%s\"", tf_name_s, value_s);
+
+					FreeTreatmentFactorValue (tf_value_p);
+				}
+		}
+	else
+		{
+			const char * const tf_name_s = GetTreatmentFactorName (tf_p);
+
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateTreatmentFactorValue () failed for \"%s\", and \"%s\"", tf_name_s, value_s);
+		}
+
+	return success_flag;
+}
 

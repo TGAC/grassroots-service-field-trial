@@ -22,6 +22,7 @@
 
 
 #include "treatment_jobs.h"
+#include "treatment.h"
 #include "dfw_util.h"
 
 #include "json_parameter.h"

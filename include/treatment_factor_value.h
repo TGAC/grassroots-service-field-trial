@@ -62,6 +62,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactorValueNode (ListItem *treat
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorLabelValue (const TreatmentFactorValue *treatment_factor_value_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreTreatmentFactorValuesMatching (const TreatmentFactorValue *tfv_0_p, const TreatmentFactorValue *tfv_1_p);
+
 
 #ifdef _cplusplus
 }

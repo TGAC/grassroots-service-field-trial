@@ -37,6 +37,10 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p);
 
 
+static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p);
+
+
+
 Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
 {
 	if (material_p)
@@ -47,47 +51,59 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 				{
 					LinkedList *tf_values_p = AllocateLinkedList (FreeTreatmentFactorValueNode);
 
-
-					Row *row_p = (Row *) AllocMemory (sizeof (Row));
-
-					if (row_p)
+					if (tf_values_p)
 						{
-							bool success_flag = true;
+							Row *row_p = (Row *) AllocMemory (sizeof (Row));
 
-							if (!id_p)
+							if (row_p)
 								{
-									id_p = GetNewBSONOid ();
+									bool success_flag = true;
 
 									if (!id_p)
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate BSON oid for row at [" UINT32_FMT ", " UINT32_FMT "] for study \"%s\"", parent_plot_p -> pl_parent_p -> st_name_s);
-											success_flag = false;
+											id_p = GetNewBSONOid ();
+
+											if (!id_p)
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate BSON oid for row at [" UINT32_FMT ", " UINT32_FMT "] for study \"%s\"", parent_plot_p -> pl_parent_p -> st_name_s);
+													success_flag = false;
+												}
 										}
-								}
 
-							if (success_flag)
+									if (success_flag)
+										{
+											row_p -> ro_id_p = id_p;
+
+											row_p -> ro_rack_index = rack_index;
+											row_p -> ro_by_study_index = study_index;
+											row_p -> ro_material_p = material_p;
+											row_p -> ro_material_mem = material_mem;
+											row_p -> ro_plot_p = parent_plot_p;
+											row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
+											row_p -> ro_observations_p = observations_p;
+											row_p -> ro_treatment_factor_values_p = tf_values_p;
+											row_p -> ro_replicate_index = replicate;
+											row_p -> ro_replicate_control_flag = false;
+
+											return row_p;
+										}
+
+									FreeMemory (row_p);
+								}
+							else
 								{
-									row_p -> ro_id_p = id_p;
-
-									row_p -> ro_rack_index = rack_index;
-									row_p -> ro_by_study_index = study_index;
-									row_p -> ro_material_p = material_p;
-									row_p -> ro_material_mem = material_mem;
-									row_p -> ro_plot_p = parent_plot_p;
-									row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
-									row_p -> ro_observations_p = observations_p;
-									row_p -> ro_replicate_index = replicate;
-									row_p -> ro_replicate_control_flag = false;
-
-									return row_p;
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
 								}
 
-							FreeMemory (row_p);
-						}
+							FreeLinkedList (tf_values_p);
+						}		/* if (tf_values_p) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate treatment factors list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
 						}
+
+
+					FreeLinkedList (observations_p);
 				}
 			else
 				{
@@ -105,6 +121,8 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 
 void FreeRow (Row *row_p)
 {
+	FreeLinkedList (row_p -> ro_treatment_factor_values_p);
+
 	FreeLinkedList (row_p -> ro_observations_p);
 
 	if ((row_p -> ro_material_mem == MF_DEEP_COPY) || (row_p -> ro_material_mem == MF_SHALLOW_COPY))
@@ -459,6 +477,15 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 																			row_p = NULL;
 																		}
 
+
+																	if (!GetTreatmentFactorValuesFromJSON (json_p, row_p, data_p))
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetTreatmentFactorValuesFromJSON failed");
+																			FreeRow (row_p);
+																			row_p = NULL;
+																		}
+
+
 																}
 
 														}		/* if ((replicate != 0) || (rep_control_flag)) */
@@ -582,6 +609,61 @@ bool AddObservationToRow (Row *row_p, Observation *observation_p)
 
 	return success_flag;
 }
+
+
+
+bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactorValue *tf_value_p)
+{
+	bool success_flag = false;
+	TreatmentFactorValueNode *node_p = NULL;
+
+	/*
+	 * If the treatment factor has the same treatment factor and date as an existing one,
+	 * then replace it. If not, then simply add it.
+	 */
+	node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
+	while (node_p)
+		{
+			TreatmentFactorValue *existing_tf_value_p = node_p -> tfvn_value_p;
+
+			if (AreTreatmentFactorValuesMatching (existing_tf_value_p, tf_value_p))
+				{
+					node_p -> on_observation_p = observation_p;
+					FreeObservation (existing_observation_p);
+					success_flag = true;
+					node_p = NULL;		/* force exit from loop */
+				}
+			else
+				{
+					node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
+				}
+		}
+
+	if (!success_flag)
+		{
+			node_p = AllocateObservationNode (observation_p);
+
+			if (node_p)
+				{
+					LinkedListAddTail (row_p -> ro_observations_p, & (node_p -> on_node));
+					success_flag = true;
+				}
+			else
+				{
+					char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+					char observation_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+					bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+					bson_oid_to_string (observation_p -> ob_id_p, observation_id_s);
+
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", observation_id_s, row_id_s);
+				}
+		}
+
+	return success_flag;
+}
+
+
 
 
 void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate)
@@ -733,6 +815,63 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 
 	return success_flag;
 }
+
+
+static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	const json_t *tf_values_json_p = json_object_get (row_json_p, RO_TREATMENTS_S);
+
+	if (tf_values_json_p)
+		{
+			size_t size = json_array_size (tf_values_json_p);
+			size_t i;
+
+			success_flag = true;
+
+			for (i = 0; i < size; ++ i)
+				{
+					const json_t *tf_value_json_p = json_array_get (tf_values_json_p, i);
+					TreatmentFactorValue *tf_value_p = GetTreatmentFactorValueFromJSON (tf_value_json_p, data_p);
+
+					if (tf_value_p)
+						{
+							if (!AddTreatmentFactorValueToRow (row_p, tf_value_p -> tfv_factor_p, tf_value_p -> tfv_label_s))
+								{
+									char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, tf_value_json_p, "Failed to add TreatmentFactorValue to for row \"%s\"", row_id_s);
+
+									FreeTreatmentFactorValue (tf_value_p);
+									success_flag = false;
+									i = size;		/* force exit from loop */
+								}
+
+						}		/* if (observation_p) */
+					else
+						{
+							char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+							bson_oid_to_string (row_p -> ro_id_p, row_id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTreatmentFactorValueFromJSON failed for row \"%s\"", row_id_s);
+
+
+							success_flag = false;
+							i = size;		/* force exit from loop */
+						}
+
+				}		/* for (i = 0; i < size; ++ i) */
+
+		}		/* if (phenotypes_json_p) */
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
 
 
 void SetRowGenotypeControl (Row *row_p, bool control_flag)

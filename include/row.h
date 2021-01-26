@@ -120,6 +120,9 @@ ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material");
 
 ROW_PREFIX const char *RO_OBSERVATIONS_S  ROW_VAL ("observations");
 
+ROW_PREFIX const char *RO_TREATMENTS_S  ROW_VAL ("treatments");
+
+
 ROW_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
 
 

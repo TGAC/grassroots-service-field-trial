@@ -2698,7 +2698,8 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
-TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p)
+
+TreatmentFactor *GetTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p)
 {
 	TreatmentFactor *tf_p = NULL;
 	TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
@@ -2721,6 +2722,13 @@ TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_
 
 		}		/* while (node_p) */
 
+	return tf_p;
+}
+
+
+TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p)
+{
+	TreatmentFactor *tf_p = GetTreatmentFactorForStudy (study_p, treatment_id_p, data_p);
 
 	if (!tf_p)
 		{
@@ -2732,7 +2740,7 @@ TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_
 
 					if (tf_p)
 						{
-							node_p = AllocateTreatmentFactorNode (tf_p);
+							TreatmentFactorNode *node_p = AllocateTreatmentFactorNode (tf_p);
 
 							if (node_p)
 								{
