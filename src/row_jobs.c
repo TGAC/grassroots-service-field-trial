@@ -394,12 +394,88 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 
 
+OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+	void *temp_p = NULL;
+	const char *key_s;
+	json_t *value_p;
+	size_t num_treatments = 0;
+	size_t num_added = 0;
+
+	json_array_foreach_safe (plot_json_p, temp_p, key_s, value_p)
+		{
+			/* Is it a treatment? */
+			Treatment *treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
 
 
-OperationStatus AddObservationValuesToRow (Row *row_p, const json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+			if (treatment_p)
+				{
+					/*
+					 * Does the Study have a TreatmentFactor for this
+					 * Treatment?
+					 */
+					TreatmentFactor *tf_p = GetTreatmentFactorForStudy (study_p, treatment_p -> tr_id_p, data_p);
+
+					if (tf_p)
+						{
+							if (json_is_string (value_p))
+								{
+									const char *name_s = json_string_value (value_p);
+									const char *value_s = GetTreatmentFactorValue (tf_p, name_s);
+
+									/* Is it a valid defined label? */
+									if (value_s)
+										{
+											if (AddTreatmentFactorValueToRow (row_p, tf_p, value_s))
+												{
+													++ num_added;
+												}
+										}
+								}
+
+
+							FreeTreatmentFactor (tf_p);
+						}
+					else
+						{
+							FreeTreatment (treatment_p);
+						}
+
+					/*
+					 * We know that it's a Treatment so remove it from any later processing
+					 * and increment the number that we've seen
+					 */
+					json_object_del (plot_json_p, key_s);
+					++ num_treatments;
+
+				}		/* if (treatment_p) */
+
+		}		/* json_array_foreach_safe (plot_json_p, temp_p, key_s, value_p) */
+
+	if (num_treatments > 0)
+		{
+			if (num_added == num_treatments)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_added > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+			else
+				{
+					status = OS_FAILED;
+				}
+		}
+
+	return status;
+}
+
+
+OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
-
 	bool loop_success_flag = true;
 	void *iterator_p = json_object_iter (observation_json_p);
 	size_t imported_obs = 0;

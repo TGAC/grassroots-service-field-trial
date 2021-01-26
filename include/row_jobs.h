@@ -54,7 +54,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByStudyIndex (const int32 by_study_inde
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllRowsContainingMaterial (Material *material_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValuesToRow (Row *row_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
