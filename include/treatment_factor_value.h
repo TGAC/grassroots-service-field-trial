@@ -58,7 +58,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactorValue (TreatmentFactorValu
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorValueNode *AllocateTreatmentFactorValueNode (TreatmentFactorValue *treatment_factor_value_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactorNode (ListItem *treatment_factor_value_node_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactorValueNode (ListItem *treatment_factor_value_node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorLabelValue (const TreatmentFactorValue *treatment_factor_value_p);
 

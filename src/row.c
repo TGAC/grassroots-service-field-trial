@@ -29,6 +29,7 @@
 #include "observation.h"
 #include "dfw_util.h"
 #include "plot_jobs.h"
+#include "treatment_factor_value.h"
 
 
 static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
@@ -44,6 +45,9 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 
 			if (observations_p)
 				{
+					LinkedList *tf_values_p = AllocateLinkedList (FreeTreatmentFactorValueNode);
+
+
 					Row *row_p = (Row *) AllocMemory (sizeof (Row));
 
 					if (row_p)

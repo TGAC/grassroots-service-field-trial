@@ -59,6 +59,8 @@ typedef struct Row
 
 	LinkedList *ro_observations_p;
 
+	LinkedList *ro_treatment_factor_values_p;
+
 	uint32 ro_replicate_index;
 
 	bool ro_replicate_control_flag;
