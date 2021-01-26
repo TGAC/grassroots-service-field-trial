@@ -68,7 +68,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const bson_oid_t *GetTreatmentIdForTreatmentFactor
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const Study *study_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 #ifdef _cplusplus

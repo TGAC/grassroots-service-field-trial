@@ -26,6 +26,8 @@
 #include "string_utils.h"
 
 
+static const char * const S_TFV_LABEL_S = "label";
+
 
 TreatmentFactorValue *AllocateTreatmentFactorValue (TreatmentFactor *treatment_factor_p, const char *label_s)
 {
@@ -134,8 +136,39 @@ TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_js
 }
 
 
-json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const FieldTrialServiceData *data_p)
+json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const Study *study_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
+	json_t *tfv_json_p = json_object ();
+
+	if (tfv_json_p)
+		{
+			if (format == VF_STORAGE)
+				{
+					tf_value_p -> tfv_factor_p
+				}
+			else
+				{
+
+				}
+
+
+
+		}		/* if (tfv_json_p) */
+
+	const char *treatment_url_s = GetTreatmentFactorName (tf_value_p -> tfv_factor_p);
+	const char *label_s = tf_value_p -> tfv_label_s
+
+
+
+
+	if (format == VF_STORAGE)
+		{
+			tf_value_p -> tfv_factor_p
+		}
+	else
+		{
+
+		}
 
 }
 

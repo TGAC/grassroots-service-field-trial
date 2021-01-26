@@ -93,6 +93,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorValue (TreatmentFact
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorName (const TreatmentFactor *treatment_factor_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorUrl (const TreatmentFactor *treatment_factor_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p);
 
 #ifdef _cplusplus

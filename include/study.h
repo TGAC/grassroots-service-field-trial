@@ -132,7 +132,7 @@ STUDY_PREFIX const char *ST_PLOT_ROWS_PER_BLOCK_S STUDY_VAL ("plot_block_rows");
 
 STUDY_PREFIX const char *ST_PLOT_COLS_PER_BLOCK_S STUDY_VAL ("plot_block_columns");
 
-STUDY_PREFIX const char *ST_TREATMENTS_S STUDY_VAL ("treatments");
+STUDY_PREFIX const char *ST_TREATMENTS_S STUDY_VAL ("treatment_factors");
 
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);

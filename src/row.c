@@ -819,6 +819,65 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 }
 
 
+
+static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const ViewFormat format)
+{
+	bool success_flag = false;
+
+	if (treatment_factors_p -> ll_size > 0)
+		{
+			json_t *treatment_factors_json_p = json_array ();
+
+			if (treatment_factors_json_p)
+				{
+					if (json_object_set_new (row_json_p, RO_TREATMENTS_S, treatment_factors_json_p) == 0)
+						{
+							TreatmentFactorValueNode *node_p = (TreatmentFactorValueNode *) (treatment_factors_p -> ll_head_p);
+
+							success_flag = true;
+
+							while (node_p && success_flag)
+								{
+									const TreatmentFactorValue *tfv_p = node_p -> tfvn_value_p;
+									json_t *treatment_factor_json_p = GetTreatmentFactorValueAsJSON (tfv_p, format);
+
+									if (treatment_factor_json_p)
+										{
+											if (json_array_append_new (treatment_factors_json_p, treatment_factor_json_p) == 0)
+												{
+													node_p = (TreatmentFactorValueNode *) (node_p -> tfvn_node.ln_next_p);
+												}
+											else
+												{
+													success_flag = false;
+													json_decref (treatment_factor_json_p);
+												}
+										}
+									else
+										{
+											success_flag = false;
+										}
+								}		/* while (node_p && success_flag) */
+
+						}		/* if (json_object_set_new (row_json_p, RO_PHENOTYPES_S, phenotypes_array_p) == 0) */
+					else
+						{
+							json_decref (treatment_factors_json_p);
+						}
+
+				}		/* if (phenotypes_array_p) */
+
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
 static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
