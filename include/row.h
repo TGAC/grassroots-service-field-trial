@@ -27,7 +27,7 @@
 #include "material.h"
 #include "plot.h"
 #include "observation.h"
-
+#include "treatment_factor_value.h"
 
 
 typedef struct Row
@@ -157,6 +157,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowGenotypeControl (const Row *row_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactorValue *tf_value_p);
 
 #ifdef __cplusplus
 }

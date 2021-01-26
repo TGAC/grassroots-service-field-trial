@@ -32,6 +32,7 @@
 #include "treatment.h"
 #include "treatment_factor.h"
 #include "treatment_jobs.h"
+#include "treatment_factor_value.h"
 
 #include "char_parameter.h"
 #include "json_parameter.h"
@@ -433,7 +434,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 									/* Is it a valid defined label? */
 									if (value_s)
 										{
-											if (AddTreatmentFactorValueToRow (row_p, tf_p, value_s))
+											if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, value_s))
 												{
 													++ num_added;
 												}
@@ -761,28 +762,14 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const Field
 }
 
 
-bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactor *tf_p, const char *value_s)
+bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, const char *value_s)
 {
 	bool success_flag = false;
 	TreatmentFactorValue *tf_value_p = AllocateTreatmentFactorValue (tf_p, value_s);
 
 	if (tf_value_p)
 		{
-			TreatmentFactorValueNode *node_p = AllocateTreatmentFactorValueNode (tf_value_p);
-
-			if (node_p)
-				{
-					LinkedListAddTail (row_p -> ro_treatment_factor_values_p, & (node_p -> tfvn_node));
-					success_flag = true;
-				}
-			else
-				{
-					const char * const tf_name_s = GetTreatmentFactorName (tf_p);
-
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateTreatmentFactorValueNode () failed for \"%s\", and \"%s\"", tf_name_s, value_s);
-
-					FreeTreatmentFactorValue (tf_value_p);
-				}
+			success_flag = AddTreatmentFactorValueToRow (row_p, tf_value_p);
 		}
 	else
 		{
@@ -793,4 +780,5 @@ bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactor *tf_p, const char
 
 	return success_flag;
 }
+
 

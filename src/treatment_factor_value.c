@@ -26,8 +26,6 @@
 #include "string_utils.h"
 
 
-static const bson_oid_t *GetTreatmentId (const TreatmentFactorValue *tfv_p);
-
 
 TreatmentFactorValue *AllocateTreatmentFactorValue (TreatmentFactor *treatment_factor_p, const char *label_s)
 {
@@ -93,11 +91,11 @@ const char *GetTreatmentFactorLabelValue (const TreatmentFactorValue *treatment_
 bool AreTreatmentFactorValuesMatching (const TreatmentFactorValue *tfv_0_p, const TreatmentFactorValue *tfv_1_p)
 {
 	bool match_flag = false;
-	bson_oid_t *id_0_p = GetTreatmentId (tfv_0_p);
+	const bson_oid_t *id_0_p = GetTreatmentIdForTreatmentFactorValue (tfv_0_p);
 
 	if (id_0_p)
 		{
-			bson_oid_t *id_1_p = GetTreatmentId (tfv_1_p);
+			const bson_oid_t *id_1_p = GetTreatmentIdForTreatmentFactorValue (tfv_1_p);
 
 			if (id_1_p)
 				{
@@ -112,7 +110,7 @@ bool AreTreatmentFactorValuesMatching (const TreatmentFactorValue *tfv_0_p, cons
 }
 
 
-static const bson_oid_t *GetTreatmentId (const TreatmentFactorValue *tfv_p)
+const bson_oid_t *GetTreatmentIdForTreatmentFactorValue (const TreatmentFactorValue *tfv_p)
 {
 	const TreatmentFactor *tf_p = tfv_p -> tfv_factor_p;
 
@@ -127,6 +125,18 @@ static const bson_oid_t *GetTreatmentId (const TreatmentFactorValue *tfv_p)
 		}
 
 	return NULL;
+}
+
+
+TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const FieldTrialServiceData *data_p)
+{
+
+}
+
+
+json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const FieldTrialServiceData *data_p)
+{
+
 }
 
 

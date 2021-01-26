@@ -64,6 +64,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorLabelValue (const Tr
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreTreatmentFactorValuesMatching (const TreatmentFactorValue *tfv_0_p, const TreatmentFactorValue *tfv_1_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const bson_oid_t *GetTreatmentIdForTreatmentFactorValue (const TreatmentFactorValue *tfv_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const FieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const FieldTrialServiceData *data_p);
+
 
 #ifdef _cplusplus
 }

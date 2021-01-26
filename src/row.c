@@ -628,35 +628,37 @@ bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactorValue *tf_value_p)
 
 			if (AreTreatmentFactorValuesMatching (existing_tf_value_p, tf_value_p))
 				{
-					node_p -> on_observation_p = observation_p;
-					FreeObservation (existing_observation_p);
+					node_p -> tfvn_value_p = tf_value_p;
+					FreeTreatmentFactorValue (existing_tf_value_p);
 					success_flag = true;
 					node_p = NULL;		/* force exit from loop */
 				}
 			else
 				{
-					node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
+					node_p = (TreatmentFactorValueNode *) (node_p -> tfvn_node.ln_next_p);
 				}
 		}
 
 	if (!success_flag)
 		{
-			node_p = AllocateObservationNode (observation_p);
+			node_p = AllocateTreatmentFactorValueNode (tf_value_p);
 
 			if (node_p)
 				{
-					LinkedListAddTail (row_p -> ro_observations_p, & (node_p -> on_node));
+					LinkedListAddTail (row_p -> ro_treatment_factor_values_p, & (node_p -> tfvn_node));
 					success_flag = true;
 				}
 			else
 				{
 					char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-					char observation_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+					char treatment_id_s [MONGO_OID_STRING_BUFFER_SIZE];
+					const bson_oid_t *treatment_id_p = GetTreatmentIdForTreatmentFactorValue (tf_value_p);
+
 
 					bson_oid_to_string (row_p -> ro_id_p, row_id_s);
-					bson_oid_to_string (observation_p -> ob_id_p, observation_id_s);
+					bson_oid_to_string (treatment_id_p, treatment_id_s);
 
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", observation_id_s, row_id_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", treatment_id_s, row_id_s);
 				}
 		}
 
@@ -836,7 +838,7 @@ static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row
 
 					if (tf_value_p)
 						{
-							if (!AddTreatmentFactorValueToRow (row_p, tf_value_p -> tfv_factor_p, tf_value_p -> tfv_label_s))
+							if (!AddTreatmentFactorValueToRow (row_p, tf_value_p))
 								{
 									char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
