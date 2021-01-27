@@ -376,6 +376,7 @@ static SchemaTerm *GetSchemaTerm (json_t *values_p, const char *term_s, const ch
 	char *decimal_place_s = NULL;
 	char *scale_class_s = NULL;
 
+
 	if (name_key_s)
 		{
 			++ num_to_match;

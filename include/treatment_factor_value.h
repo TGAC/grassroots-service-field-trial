@@ -46,6 +46,10 @@ typedef struct TreatmentFactorValueNode
 } TreatmentFactorValueNode;
 
 
+/* forward declarations */
+struct Study;
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -66,9 +70,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreTreatmentFactorValuesMatching (const Treat
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const bson_oid_t *GetTreatmentIdForTreatmentFactorValue (const TreatmentFactorValue *tfv_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const struct Study *study_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const Study *study_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const struct Study *study_p);
 
 
 #ifdef _cplusplus

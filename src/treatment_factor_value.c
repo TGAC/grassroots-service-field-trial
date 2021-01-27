@@ -25,6 +25,9 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 
+#include "study.h"
+#include "study_jobs.h"
+
 
 static const char * const S_TFV_LABEL_S = "label";
 
@@ -130,46 +133,54 @@ const bson_oid_t *GetTreatmentIdForTreatmentFactorValue (const TreatmentFactorVa
 }
 
 
-TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const FieldTrialServiceData *data_p)
+TreatmentFactorValue *GetTreatmentFactorValueFromJSON (const json_t *tf_value_json_p, const Study *study_p, const FieldTrialServiceData *data_p)
 {
+	TreatmentFactorValue *tfv_p = NULL;
+	const char *treatment_url_s = GetJSONString (tf_value_json_p, SCHEMA_TERM_URL_S);
 
+	if (treatment_url_s)
+		{
+			TreatmentFactor *factor_p = GetTreatmentFactorForStudyByUrl (study_p, treatment_url_s, data_p);
+
+			if (factor_p)
+				{
+					const char *label_s = GetJSONString (tf_value_json_p, S_TFV_LABEL_S);
+
+					if (label_s)
+						{
+							tfv_p = AllocateTreatmentFactorValue (factor_p, label_s);
+						}
+
+				}
+
+		}
+
+	return tfv_p;
 }
 
 
-json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const Study *study_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, const Study *study_p)
 {
 	json_t *tfv_json_p = json_object ();
 
 	if (tfv_json_p)
 		{
-			if (format == VF_STORAGE)
+			const char *treatment_url_s = GetTreatmentFactorName (tf_value_p -> tfv_factor_p);
+			const char *label_s = tf_value_p -> tfv_label_s;
+
+			if (SetJSONString (tfv_json_p, SCHEMA_TERM_URL_S, treatment_url_s))
 				{
-					tf_value_p -> tfv_factor_p
-				}
-			else
-				{
+					if (SetJSONString (tfv_json_p, S_TFV_LABEL_S, label_s))
+						{
+							return tfv_json_p;
+						}
 
 				}
 
-
-
+			json_decref (tfv_json_p);
 		}		/* if (tfv_json_p) */
 
-	const char *treatment_url_s = GetTreatmentFactorName (tf_value_p -> tfv_factor_p);
-	const char *label_s = tf_value_p -> tfv_label_s
-
-
-
-
-	if (format == VF_STORAGE)
-		{
-			tf_value_p -> tfv_factor_p
-		}
-	else
-		{
-
-		}
-
+	return NULL;
 }
 
 

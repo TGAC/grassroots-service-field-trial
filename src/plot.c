@@ -552,7 +552,7 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const F
 
 															if (rows_array_p)
 																{
-																	if (GetPlotRows (plot_p, rows_array_p, data_p))
+																	if (GetPlotRows (plot_p, rows_array_p, parent_study_p, data_p))
 																		{
 
 																		}
@@ -675,7 +675,7 @@ bool AddRowToPlot (Plot *plot_p, Row *row_p)
 }
 
 
-bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const FieldTrialServiceData *data_p)
+bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -691,7 +691,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const FieldTrialServiceDat
 
 			json_array_foreach (rows_array_p, i, row_json_p)
 				{
-					Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, true, data_p);
+					Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, study_p, true, data_p);
 
 					if (row_p)
 						{

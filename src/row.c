@@ -37,8 +37,9 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p);
 
 
-static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p);
+static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const Study *study_p, const FieldTrialServiceData *data_p);
 
+static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const Study *study_p, const ViewFormat format);
 
 
 Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
@@ -334,7 +335,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 }
 
 
-Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
 	Material *material_to_use_p = material_p;
@@ -478,7 +479,7 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 																		}
 
 
-																	if (!GetTreatmentFactorValuesFromJSON (json_p, row_p, data_p))
+																	if (!GetTreatmentFactorValuesFromJSON (json_p, row_p, study_p, data_p))
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetTreatmentFactorValuesFromJSON failed");
 																			FreeRow (row_p);
@@ -820,7 +821,7 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 
 
 
-static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const ViewFormat format)
+static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const Study *study_p, const ViewFormat format)
 {
 	bool success_flag = false;
 
@@ -839,7 +840,7 @@ static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment
 							while (node_p && success_flag)
 								{
 									const TreatmentFactorValue *tfv_p = node_p -> tfvn_value_p;
-									json_t *treatment_factor_json_p = GetTreatmentFactorValueAsJSON (tfv_p, format);
+									json_t *treatment_factor_json_p = GetTreatmentFactorValueAsJSON (tfv_p, study_p);
 
 									if (treatment_factor_json_p)
 										{
@@ -878,7 +879,7 @@ static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment
 
 
 
-static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p)
+static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	const json_t *tf_values_json_p = json_object_get (row_json_p, RO_TREATMENTS_S);
@@ -893,7 +894,7 @@ static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row
 			for (i = 0; i < size; ++ i)
 				{
 					const json_t *tf_value_json_p = json_array_get (tf_values_json_p, i);
-					TreatmentFactorValue *tf_value_p = GetTreatmentFactorValueFromJSON (tf_value_json_p, data_p);
+					TreatmentFactorValue *tf_value_p = GetTreatmentFactorValueFromJSON (tf_value_json_p, study_p, data_p);
 
 					if (tf_value_p)
 						{

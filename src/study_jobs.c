@@ -2698,6 +2698,34 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
+TreatmentFactor *GetTreatmentFactorForStudyByUrl (Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p)
+{
+	TreatmentFactor *treatment_factor_p = NULL;
+	TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+
+		while (node_p)
+			{
+				TreatmentFactor *tf_p = node_p -> tfn_p;
+				const char *url_s = GetTreatmentFactorUrl (treatment_factor_p);
+
+				if (strcmp (url_s, treatment_url_s) == 0)
+					{
+						treatment_factor_p = tf_p;
+
+						/* force exit from loop */
+						node_p = NULL;
+					}
+				else
+					{
+						node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+					}
+
+			}		/* while (node_p) */
+
+		return treatment_factor_p;
+	}
+
+
 
 TreatmentFactor *GetTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p)
 {
