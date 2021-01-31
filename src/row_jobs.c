@@ -434,7 +434,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 									/* Is it a valid defined label? */
 									if (value_s)
 										{
-											if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, value_s))
+											if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, name_s))
 												{
 													++ num_added;
 												}

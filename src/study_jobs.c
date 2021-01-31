@@ -2706,7 +2706,7 @@ TreatmentFactor *GetTreatmentFactorForStudyByUrl (Study *study_p, const char *tr
 		while (node_p)
 			{
 				TreatmentFactor *tf_p = node_p -> tfn_p;
-				const char *url_s = GetTreatmentFactorUrl (treatment_factor_p);
+				const char *url_s = GetTreatmentFactorUrl (tf_p);
 
 				if (strcmp (url_s, treatment_url_s) == 0)
 					{

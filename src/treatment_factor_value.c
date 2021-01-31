@@ -165,7 +165,7 @@ json_t *GetTreatmentFactorValueAsJSON (const TreatmentFactorValue *tf_value_p, c
 
 	if (tfv_json_p)
 		{
-			const char *treatment_url_s = GetTreatmentFactorName (tf_value_p -> tfv_factor_p);
+			const char *treatment_url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
 			const char *label_s = tf_value_p -> tfv_label_s;
 
 			if (SetJSONString (tfv_json_p, SCHEMA_TERM_URL_S, treatment_url_s))

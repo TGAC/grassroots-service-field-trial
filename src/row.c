@@ -277,7 +277,27 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 														{
 															if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
 																{
-																	return row_json_p;
+																	if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p,  row_p -> ro_study_p, format))
+																		{
+																			return row_json_p;
+																		}		/* if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p, format)) */
+																	else
+																		{
+																			char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+																			if (id_s)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row \"%s\"", id_s);
+																					FreeCopiedString (id_s);
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row");
+																				}
+
+																		}
+
+
 																}		/* if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format)) */
 															else
 																{
@@ -818,7 +838,6 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const
 
 	return success_flag;
 }
-
 
 
 static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const Study *study_p, const ViewFormat format)
