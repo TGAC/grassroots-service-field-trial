@@ -442,12 +442,10 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 								}
 
 
-							FreeTreatmentFactor (tf_p);
+							//FreeTreatmentFactor (tf_p);
 						}
-					else
-						{
-							FreeTreatment (treatment_p);
-						}
+
+					FreeTreatment (treatment_p);
 
 					/*
 					 * We know that it's a Treatment so remove it from any later processing

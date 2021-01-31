@@ -188,6 +188,8 @@ bool ClearCachedStudy (const char *id_s, const FieldTrialServiceData *data_p)
 							success_flag = false;
 						}
 				}
+
+			FreeCopiedString (filename_s);
 		}		/* if (filename_s) */
 
 	return success_flag;

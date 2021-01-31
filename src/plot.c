@@ -598,6 +598,17 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const F
 						}
 
 
+					if (width_p)
+						{
+							FreeMemory (width_p);
+						}
+
+
+					if (length_p)
+						{
+							FreeMemory (length_p);
+						}
+
 				}		/* if (GetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, plot_p -> pl_column_index)) */
 			else
 				{

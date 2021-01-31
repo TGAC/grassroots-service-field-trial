@@ -819,6 +819,18 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 		}
 
 
+	if (harvest_date_p)
+		{
+			FreeTime (harvest_date_p);
+		}
+
+
+	if (sowing_date_p)
+		{
+			FreeTime (sowing_date_p);
+		}
+
+
 	return plot_p;
 }
 
