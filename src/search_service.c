@@ -30,6 +30,7 @@
 #include "gene_bank_jobs.h"
 #include "program_jobs.h"
 #include "material_jobs.h"
+#include "treatment_jobs.h"
 #include "dfw_util.h"
 
 
@@ -936,20 +937,20 @@ static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uin
 
 							case DFTD_MEASURED_VARIABLE:
 								{
-									MeasuredVariable *treatment_p = GetMeasuredVariableByIdString (id_s, search_data_p -> sd_service_data_p);
+									MeasuredVariable *mv_p = GetMeasuredVariableByIdString (id_s, search_data_p -> sd_service_data_p);
 
-									if (treatment_p)
+									if (mv_p)
 										{
-											if (AddMeasuredVariableToServiceJob (search_data_p -> sd_job_p, treatment_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
+											if (AddMeasuredVariableToServiceJob (search_data_p -> sd_job_p, mv_p, search_data_p -> sd_format, search_data_p -> sd_service_data_p))
 												{
 													success_flag = true;
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add MeasuredVariable %s to ServiceJob", treatment_p -> mv_internal_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add MeasuredVariable %s to ServiceJob", mv_p -> mv_internal_name_s);
 												}
 
-											FreeMeasuredVariable (treatment_p);
+											FreeMeasuredVariable (mv_p);
 										}
 								}
 							break;
@@ -1000,6 +1001,27 @@ static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uin
 									}
 							}
 							break;
+
+						case DFTD_TREATMENT:
+							{
+								Treatment *treatment_p = GetTreatmentByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
+
+								if (treatment_p)
+									{
+										if (AddTreatmentToServiceJob (search_data_p -> sd_job_p, treatment_p, VF_CLIENT_FULL, search_data_p -> sd_service_data_p))
+											{
+												success_flag = true;
+											}
+										else
+											{
+												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Treatment %s to ServiceJob", treatment_p -> tr_ontology_term_p -> st_name_s);
+											}
+
+										FreeTreatment (treatment_p);
+									}
+							}
+							break;
+
 
 						default:
 							break;

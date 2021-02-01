@@ -57,6 +57,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentById (const bson_oid_t *id_
 DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentByURL (const char *term_url_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToServiceJob (ServiceJob *job_p, Treatment *treatment_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

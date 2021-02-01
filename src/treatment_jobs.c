@@ -88,6 +88,7 @@ static NamedParameterType TR_SYNONYMS = { "TR Parent", PT_LARGE_STRING };
 
 static void *GetTreatmentCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
+static bool AddTreatmentToServiceJobResult (ServiceJob *job_p, Treatment *treatment_p, json_t *treatment_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 /*
@@ -276,7 +277,7 @@ Treatment *GetTreatmentByURL (const char *term_url_s, const ViewFormat format, c
 bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatmemts", true, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatmemts", false, data_p, param_set_p);
 
 	if (group_p)
 		{
@@ -323,6 +324,26 @@ bool RunForSubmissionTreatmentParams (FieldTrialServiceData *data_p, ParameterSe
 
 
 
+bool AddTreatmentToServiceJob (ServiceJob *job_p, Treatment *treatment_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *treatment_json_p = GetTreatmentAsJSON (treatment_p);
+
+	if (treatment_json_p)
+		{
+			if (AddTreatmentToServiceJobResult (job_p, treatment_p, treatment_json_p, format, data_p))
+				{
+					success_flag = true;
+				}
+
+			json_decref (treatment_json_p);
+		}		/* if (treatment_json_p) */
+
+	return success_flag;
+}
+
+
+
 /*
  * STATIC DEFINITIONS
  */
@@ -333,3 +354,29 @@ static void *GetTreatmentCallback (const json_t *json_p, const ViewFormat format
 	return GetTreatmentFromJSON (json_p);
 }
 
+
+
+
+static bool AddTreatmentToServiceJobResult (ServiceJob *job_p, Treatment *treatment_p, json_t *treatment_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, treatment_p -> tr_ontology_term_p -> st_name_s, treatment_json_p);
+
+	if (dest_record_p)
+		{
+			AddImage (dest_record_p, DFTD_TREATMENT, data_p);
+
+			if (AddResultToServiceJob (job_p, dest_record_p))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					json_decref (dest_record_p);
+				}
+
+		}		/* if (dest_record_p) */
+
+	return success_flag;
+}
