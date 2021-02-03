@@ -210,7 +210,10 @@ json_t *GetTreatmentAsJSON (const Treatment *treatment_p)
 						{
 							if (AddCompoundIdToJSON (term_json_p, treatment_p -> tr_id_p))
 								{
-									return term_json_p;
+									if (AddDatatype (term_json_p, DFTD_TREATMENT))
+										{
+											return term_json_p;
+										}
 								}
 
 						}
