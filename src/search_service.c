@@ -481,7 +481,10 @@ static LinkedList *GetFacets (ParameterSet *params_p)
 										{
 											if (AddFacetParameterToList (S_FACET_PROGRAMME.npt_name_s, S_PROGRAMME_FACET_S, params_p, facets_p))
 												{
-													return facets_p;
+													if (AddFacetParameterToList (S_FACET_TREATMENT.npt_name_s, S_TREATMENT_FACET_S, params_p, facets_p))
+														{
+															return facets_p;
+														}
 												}
 										}
 								}
