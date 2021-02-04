@@ -2832,8 +2832,57 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 
 	if (group_p)
 		{
-			const char *active_tf_name_s = NULL;
-			Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL);
+			Parameter *param_p = NULL;
+			const char * const display_name_s = "Treatment name";
+			const char * const description_s = "The name of the treatment";
+			size_t num_treatments = 0;
+
+			if (study_p)
+				{
+					num_treatments = study_p -> st_treatments_p -> ll_size;
+				}
+
+			if (num_treatments > 1)
+				{
+					char **values_ss = (char **) AllocMemoryArray (num_treatments + 1, sizeof (char *));
+
+					if (values_ss)
+						{
+							char **value_ss = values_ss;
+							TreatmentFactorNode *node_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p));
+
+							while (node_p)
+								{
+									*value_ss = GetTreatmentFactorUrl (node_p -> tfn_p);
+
+									node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+									++ value_ss;
+								}
+
+							*value_ss = NULL;
+
+							param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_name_s, display_name_s, description_s, values_ss, PL_ALL);
+
+							FreeMemory (values_ss);
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to copy treatment factor name values for Study \"%s\"", study_p -> st_name_s);
+						}
+
+				}
+			else
+				{
+					const char *active_tf_url_s = NULL;
+
+					if (num_treatments == 1)
+						{
+							TreatmentFactor *tf_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p)) -> tfn_p;
+							active_tf_url_s = GetTreatmentFactorUrl (tf_p);
+						}
+
+					param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, display_name_s, description_s, active_tf_url_s, PL_ALL);
+				}
 
 			if (param_p)
 				{
