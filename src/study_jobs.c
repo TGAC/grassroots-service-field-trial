@@ -2832,10 +2832,12 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 
 	if (group_p)
 		{
-			Parameter *param_p = NULL;
-			const char * const display_name_s = "Treatment name";
-			const char * const description_s = "The name of the treatment";
+			Parameter *name_param_p = NULL;
+			Parameter *values_param_p = NULL;
+			const char * const tf_name_display_name_s = "Treatment name";
+			const char * const tf_name_description_s = "The name of the treatment";
 			size_t num_treatments = 0;
+			json_t *tf_json_p = NULL;
 
 			if (study_p)
 				{
@@ -2848,29 +2850,67 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 
 					if (values_ss)
 						{
-							char **value_ss = values_ss;
-							TreatmentFactorNode *node_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p));
+							json_t *factors_array_p = json_array ();
 
-							while (node_p)
+							if (factors_array_p)
 								{
-									*value_ss = GetTreatmentFactorUrl (node_p -> tfn_p);
+									bool success_flag = true;
+									char **value_ss = values_ss;
+									TreatmentFactorNode *node_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p));
 
-									node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
-									++ value_ss;
-								}
+									while (node_p && success_flag)
+										{
+											TreatmentFactor *tf_p = node_p -> tfn_p;
+											const char *url_s = GetTreatmentFactorUrl (tf_p);
+											json_t *factors_p = GetTreatmentFactorValuesAsJSON (tf_p);
 
-							*value_ss = NULL;
+											if (factors_p)
+												{
+													if (json_array_append_new (factors_array_p, factors_p) == 0)
+														{
+															*value_ss = url_s;
 
-							param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_name_s, display_name_s, description_s, values_ss, PL_ALL);
+															node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+															++ value_ss;
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, factors_p, "Failed to add treatment factor \"%s\" from study \"%s\" as JSON", url_s, study_p -> st_name_s);
+
+															json_decref (factors_p);
+
+															success_flag = false;
+														}
+												}		/* if (factors_p) */
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get treatment factor \"%s\" from study \"%s\" as JSON", url_s, study_p -> st_name_s);
+													success_flag = false;
+												}
+
+										}		/* while (node_p) */
+
+									if (success_flag)
+										{
+											*value_ss = NULL;
+
+											tf_json_p = factors_array_p;
+											name_param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_name_s, tf_name_display_name_s, tf_name_description_s, values_ss, PL_ALL);
+										}		/* if (success_flag) */
+
+								}		/* if (factors_array_p) */
+
 
 							FreeMemory (values_ss);
-						}
+						}		/* if (values_ss) */
 					else
 						{
 							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to copy treatment factor name values for Study \"%s\"", study_p -> st_name_s);
 						}
 
-				}
+
+
+				}		/* if (num_treatments > 1) */
 			else
 				{
 					const char *active_tf_url_s = NULL;
@@ -2878,22 +2918,27 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 					if (num_treatments == 1)
 						{
 							TreatmentFactor *tf_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p)) -> tfn_p;
+							tf_json_p = GetTreatmentFactorAsJSON (tf_p, VF_CLIENT_FULL);
+
 							active_tf_url_s = GetTreatmentFactorUrl (tf_p);
 						}
 
-					param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, display_name_s, description_s, active_tf_url_s, PL_ALL);
+					name_param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, tf_name_display_name_s, tf_name_description_s, active_tf_url_s, PL_ALL);
 				}
 
-			if (param_p)
+			if (name_param_p)
 				{
-					TreatmentFactor *active_tf_p = NULL;
+					group_p -> pg_repeatable_param_p = name_param_p;
 
-					group_p -> pg_repeatable_param_p = param_p;
-
-					if ((param_p = GetTreatmentFactorTableParameter (params_p, group_p, active_tf_p, data_p)) != NULL)
+					if ((name_param_p = GetTreatmentFactorTableParameter (params_p, group_p, tf_json_p, data_p)) != NULL)
 						{
 							return true;
 						}
+				}
+
+			if (tf_json_p)
+				{
+					json_decref (tf_json_p);
 				}
 		}
 

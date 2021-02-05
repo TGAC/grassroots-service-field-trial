@@ -368,7 +368,7 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 
 
 
-Parameter *GetTreatmentFactorTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, TreatmentFactor *active_tf_p, const FieldTrialServiceData *data_p)
+Parameter *GetTreatmentFactorTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, json_t *tf_json_p, const FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	bool success_flag = false;
@@ -376,55 +376,24 @@ Parameter *GetTreatmentFactorTableParameter (ParameterSet *param_set_p, Paramete
 
 	if (hints_p)
 		{
-			json_t *tf_json_p = NULL;
+			param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, TFJ_VALUES.npt_type, TFJ_VALUES.npt_name_s, "Treatment Factors to upload", "The data to upload", tf_json_p, PL_ALL);
 
-			if (active_tf_p)
+			if (param_p)
 				{
-					tf_json_p = GetTreatmentFactorValuesAsJSON (active_tf_p);
+					success_flag = false;
 
-					if (tf_json_p)
+					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
 							success_flag = true;
 						}
-					else
+
+					if (!success_flag)
 						{
-							/*
-							 * Are there default values for the study
-							 */
+							FreeParameter (param_p);
+							param_p = NULL;
 						}
-				}
-			else
-				{
-					success_flag = true;
-				}
 
-			if (success_flag)
-				{
-					param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, TFJ_VALUES.npt_type, TFJ_VALUES.npt_name_s, "Treatment Factors to upload", "The data to upload", tf_json_p, PL_ALL);
-
-					if (param_p)
-						{
-							success_flag = false;
-
-							if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
-								{
-									success_flag = true;
-								}
-
-							if (!success_flag)
-								{
-									FreeParameter (param_p);
-									param_p = NULL;
-								}
-
-						}		/* if (param_p) */
-
-				}		/* if (success_flag) */
-
-			if (tf_json_p)
-				{
-					json_decref (tf_json_p);
-				}
+				}		/* if (param_p) */
 
 			json_decref (hints_p);
 		}		/* if (hints_p) */
