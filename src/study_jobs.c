@@ -139,7 +139,11 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 
 static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p);
 
-static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const FieldTrialServiceData *data_p);
+
+static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, ServiceJob *job_p, const FieldTrialServiceData *data_p);
+
+
+static void ReportTreatmentFactorError (Study *study_p, const char *name_s, json_t *levels_p, ServiceJob *job_p);
 
 /*
  * API DEFINITIONS
@@ -1447,7 +1451,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																							if (study_p)
 																								{
 
-																									if (AddTreatmentFactorsToStudy (study_p, treatment_names_p, treatment_levels_p, num_treatment_levels, data_p))
+																									if (AddTreatmentFactorsToStudy (study_p, treatment_names_p, treatment_levels_p, num_treatment_levels, job_p, data_p))
 																										{
 																											status = SaveStudy (study_p, job_p, data_p);
 
@@ -2946,7 +2950,7 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 }
 
 
-static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, const FieldTrialServiceData *data_p)
+static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, ServiceJob *job_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
@@ -2959,8 +2963,7 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 
 			if (!AddTreatmentFactorToStudy (name_s, level_p, study_p, data_p))
 				{
-					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, level_p, "Failed to add treatment factor \"%s\" to study \"%s\"", name_s, study_p -> st_name_s);
-
+					ReportTreatmentFactorError (study_p, name_s, level_p, job_p);
 					success_flag = false;
 				}
 		}
@@ -2984,7 +2987,7 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, level_p, "Failed to add treatment factor \"%s\" to study \"%s\"", *value_ss, study_p -> st_name_s);
+									ReportTreatmentFactorError (study_p, *value_ss, level_p, job_p);
 									success_flag = false;
 								}
 						}
@@ -2994,6 +2997,9 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 	else
 		{
 			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Treatment Parameter \"%s\" is not a string or string array, its type is %lu, to study \"%s\"", treatment_names_p -> pa_type, treatment_names_p -> pa_name_s, study_p -> st_name_s);
+
+			AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, "Input value is not a string object or array");
+
 			success_flag = false;
 		}
 
@@ -3001,3 +3007,16 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 }
 
 
+static void ReportTreatmentFactorError (Study *study_p, const char *name_s, json_t *levels_p, ServiceJob *job_p)
+{
+	const char * const error_prefix_s = "Unknown Treatment name";
+	char *error_s = ConcatenateVarargsStrings (error_prefix_s, ": ", name_s, NULL);
+	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, levels_p, "Failed to add treatment factor \"%s\" to study \"%s\"", name_s, study_p -> st_name_s);
+
+	AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, error_s ? error_s : error_prefix_s);
+
+	if (error_s)
+		{
+			FreeCopiedString (error_s);
+		}
+}
