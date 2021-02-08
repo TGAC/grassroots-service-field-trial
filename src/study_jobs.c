@@ -1547,9 +1547,13 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 
 		}		/* if (num_treatment_levels == num_treatment_names) */
+	else
+		{
+			const char * const error_prefix_s = "Need equal number of treatment names and sets of factors";
+			PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "%s: " UINT32_FMT " names and " UINT32_FMT " levels", error_prefix_s, num_treatment_names, num_treatment_levels);
 
-
-
+			AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, error_prefix_s);
+		}
 
 
 	SetServiceJobStatus (job_p, status);
