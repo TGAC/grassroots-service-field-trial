@@ -26,7 +26,7 @@
 #include "memory_allocations.h"
 #include "streams.h"
 #include "jansson.h"
-
+#include "dfw_util.h"
 
 
 static char **GetStringsFromJSON (const json_t *treatment_json_p, const char *key_s);

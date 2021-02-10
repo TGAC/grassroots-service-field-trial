@@ -30,9 +30,6 @@
 #include "treatment_jobs.h"
 
 
-static const char * const S_LABEL_TITLE_S = "Label";
-static const char * const S_VALUE_TITLE_S = "Value";
-
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
@@ -42,6 +39,7 @@ static json_t *GetTableParameterHints (void);
 
 bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
+	bool success_flag = false;
 	Parameter *param_p;
 	const char *study_id_s = S_EMPTY_LIST_OPTION_S;
 	TreatmentFactor *active_tf_p = NULL;
@@ -85,10 +83,25 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, "Treatment name", "The name of the treatment", active_tf_name_s, PL_ALL)) != NULL)
 										{
+											json_t *tf_json_p = NULL;
+
+
+											if (active_tf_p)
+												{
+													tf_json_p = GetTreatmentFactorAsJSON (active_tf_p, VF_CLIENT_FULL);
+												}
+
+
 											if (GetTreatmentFactorTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
 												{
-													return true;
+													success_flag = true;
 												}
+
+											if (tf_json_p)
+												{
+													json_decref (tf_json_p);
+												}
+
 										}
 
 								}
@@ -97,7 +110,7 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 				}		/* if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, NULL, true)) */
 		}
 
-	return false;
+	return success_flag;
 }
 
 
@@ -163,11 +176,11 @@ bool AddTreatmentFactorToStudy (const char *treatment_url_s, const json_t *facto
 
 									if (json_object_size (factor_json_p) > 0)
 										{
-											const char *name_s = GetJSONString (factor_json_p, S_LABEL_TITLE_S);
+											const char *name_s = GetJSONString (factor_json_p, TFJ_LABEL_TITLE_S);
 
 												if (name_s)
 													{
-														const char *value_s = GetJSONString (factor_json_p, S_VALUE_TITLE_S);
+														const char *value_s = GetJSONString (factor_json_p, TFJ_VALUE_TITLE_S);
 
 														if (value_s)
 															{
@@ -184,14 +197,14 @@ bool AddTreatmentFactorToStudy (const char *treatment_url_s, const json_t *facto
 															}		/* if (value_s) */
 														else
 															{
-																PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_VALUE_TITLE_S);
+																PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", TFJ_VALUE_TITLE_S);
 																success_flag = false;
 															}
 
 													}		/* if (name_s) */
 												else
 													{
-														PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", S_LABEL_TITLE_S);
+														PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, factor_json_p, "Failed to get \"%s\"", TFJ_LABEL_TITLE_S);
 														success_flag = false;
 													}
 										}
@@ -409,9 +422,9 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_LABEL_TITLE_S, "The label to use for the Treatment Factor level", PT_STRING, false, hints_p))
+			if (AddColumnParameterHint (TFJ_LABEL_TITLE_S, "The label to use for the Treatment Factor level", PT_STRING, false, hints_p))
 				{
-					if (AddColumnParameterHint (S_VALUE_TITLE_S, "The value or description for the Treatment Factor level", PT_STRING, false, hints_p))
+					if (AddColumnParameterHint (TFJ_VALUE_TITLE_S, "The value or description for the Treatment Factor level", PT_STRING, false, hints_p))
 						{
 							return hints_p;
 						}

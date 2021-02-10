@@ -35,6 +35,9 @@
 struct Study;
 
 
+
+
+
 /**
  * A TreatmentFactor is a set of values for a
  * Treatment applied to plots within a Study.
@@ -97,7 +100,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorName (const Treatmen
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorUrl (const TreatmentFactor *treatment_factor_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p, const ViewFormat format);
 
 #ifdef _cplusplus
 }

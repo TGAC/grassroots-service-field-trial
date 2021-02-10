@@ -2870,7 +2870,7 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 										{
 											TreatmentFactor *tf_p = node_p -> tfn_p;
 											const char *url_s = GetTreatmentFactorUrl (tf_p);
-											json_t *factors_p = GetTreatmentFactorValuesAsJSON (tf_p);
+											json_t *factors_p = GetTreatmentFactorValuesAsJSON (tf_p, VF_CLIENT_FULL);
 
 											if (factors_p)
 												{

@@ -30,6 +30,7 @@
 #include "treatment_factor.h"
 #include "typedefs.h"
 #include "treatment_jobs.h"
+#include "treatment_factor_jobs.h"
 
 
 static const char *S_STUDY_ID_S = "study_id";
@@ -46,7 +47,7 @@ static const char *S_VALUES_VALUE_S = "value";
  */
 
 
-static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p);
+static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p, const ViewFormat format);
 
 
 
@@ -154,7 +155,7 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 
 	if (tf_json_p)
 		{
-			json_t *values_json_p = GetTreatmentFactorValuesAsJSON (treatment_factor_p);
+			json_t *values_json_p = GetTreatmentFactorValuesAsJSON (treatment_factor_p, format);
 
 			if (values_json_p)
 				{
@@ -305,7 +306,7 @@ const char *GetTreatmentFactorUrl (const TreatmentFactor *treatment_factor_p)
  * Static Definitions
  */
 
-json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p)
+json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p, const ViewFormat format)
 {
 	json_t *values_json_p = json_array ();
 
@@ -316,7 +317,7 @@ json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_
 
 			while (node_p && success_flag)
 				{
-					if (AddKeyValuePairAsJSON (node_p -> kvpn_pair_p, values_json_p))
+					if (AddKeyValuePairAsJSON (node_p -> kvpn_pair_p, values_json_p, format))
 						{
 							node_p = (KeyValuePairNode *) (node_p -> kvpn_node.ln_next_p);
 						}
@@ -338,15 +339,19 @@ json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_
 }
 
 
-static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p)
+static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p, const ViewFormat format)
 {
 	json_t *entry_p = json_object ();
 
 	if (entry_p)
 		{
-			if (SetJSONString (entry_p, S_VALUES_KEY_S, pair_p -> kvp_key_s))
+			const char *key_s = (format == VF_STORAGE) ? S_VALUES_KEY_S : TFJ_LABEL_TITLE_S;
+
+			if (SetJSONString (entry_p, key_s, pair_p -> kvp_key_s))
 				{
-					if (SetJSONString (entry_p, S_VALUES_VALUE_S, pair_p -> kvp_value_s))
+					key_s = (format == VF_STORAGE) ? S_VALUES_VALUE_S : TFJ_VALUE_TITLE_S;
+
+					if (SetJSONString (entry_p, key_s, pair_p -> kvp_value_s))
 						{
 							if (json_array_append_new (array_p, entry_p) == 0)
 								{
