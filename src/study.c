@@ -761,7 +761,17 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to clear potential cached Study \"%s\"", study_p -> st_name_s);
 								}
+						}
 
+					json_decref (study_json_p);
+				}		/* if (study_json_p) */
+
+			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
+				{
+					json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
+
+					if (study_json_p)
+						{
 							status = IndexData (job_p, study_json_p);
 
 							if (status != OS_SUCCEEDED)
@@ -770,10 +780,10 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to index Study \"%s\" as JSON to Lucene", study_p -> st_name_s);
 									AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
 								}
-						}
 
-					json_decref (study_json_p);
-				}		/* if (study_json_p) */
+							json_decref (study_json_p);
+						}
+				}
 
 		}		/* if (success_flag) */
 
