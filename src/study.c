@@ -750,6 +750,8 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 							if (id_s)
 								{
+									status = OS_SUCCEEDED;
+
 									if (data_p -> dftsd_study_cache_path_s)
 										{
 											ClearCachedStudy (id_s, data_p);
@@ -759,8 +761,11 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 								}
 							else
 								{
+									status = OS_PARTIALLY_SUCCEEDED;
+
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to clear potential cached Study \"%s\"", study_p -> st_name_s);
 								}
+
 						}
 
 					json_decref (study_json_p);
@@ -768,7 +773,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 				{
-					json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
+					study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
 
 					if (study_json_p)
 						{
@@ -782,6 +787,13 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 								}
 
 							json_decref (study_json_p);
+						}
+					else
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsJSON for \"%s\" failed", study_p -> st_name_s);
+							AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
 						}
 				}
 
