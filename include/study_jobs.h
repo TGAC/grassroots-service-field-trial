@@ -184,6 +184,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetTreatmentFactorForStudy
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetTreatmentFactorForStudyByUrl (Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudyIdsAsJSON (const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -273,7 +273,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveStudy (Study *study_p, Service
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyByIdString (const char *arst_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *arst_id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *st_id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *study_p);
 

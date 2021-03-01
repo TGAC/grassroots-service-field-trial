@@ -435,6 +435,8 @@ json_t *GetStudyIndexingData (Service *service_p)
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 	json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
 
+	GetAllStudyIdsAsJSON (data_p);
+
 	if (src_studies_p)
 		{
 			if (json_is_array (src_studies_p))
@@ -1646,6 +1648,62 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
 
 	return results_p;
 }
+
+
+json_t *GetAllStudyIdsAsJSON (const FieldTrialServiceData *data_p)
+{
+	json_t *results_p = NULL;
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
+		{
+			bson_t query;
+			const char *fields_ss [] = { MONGO_ID_S, NULL };
+
+			bson_init (&query);
+
+			if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, &query, fields_ss, NULL))
+				{
+					results_p = GetAllExistingMongoResultsAsJSON (data_p -> dftsd_mongo_p);
+
+					if (results_p)
+						{
+							size_t i;
+							json_t *id_p;
+							bson_oid_t oid;
+
+							json_array_foreach (results_p, i, id_p)
+								{
+									if (GetMongoIdFromJSON (id_p, &oid))
+										{
+											Study *study_p = GetStudyById (&oid, VF_CLIENT_MINIMAL, data_p);
+
+											if (study_p)
+												{
+													json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
+
+													if (study_json_p)
+														{
+
+															json_decref
+														}
+
+													FreeStudy (study_p);
+												}
+
+										}
+
+								}		/* json_array_foreach (results_p, i, id_p) */
+
+							json_decref (results_p);
+						}		/* if (results_p) */
+
+				}		/* if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, NULL, fields_ss, NULL)) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY])) */
+
+	return results_p;
+}
+
 
 
 json_t *GetStudyDistinctAccessionsAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
