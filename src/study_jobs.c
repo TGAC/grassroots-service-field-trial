@@ -435,7 +435,6 @@ json_t *GetStudyIndexingData (Service *service_p)
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 	json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
 
-	GetAllStudyIdsAsJSON (data_p);
 
 	if (src_studies_p)
 		{
@@ -455,6 +454,10 @@ json_t *GetStudyIndexingData (Service *service_p)
 									if (GetMongoIdFromJSON (src_study_p, &id))
 										{
 											Crop *crop_p = NULL;
+
+											/*
+											 * Add the phenotypes
+											 */
 											json_t *values_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
 
 											if (values_p)
@@ -466,6 +469,9 @@ json_t *GetStudyIndexingData (Service *service_p)
 														}
 												}
 
+											/*
+											 * Add the accessions
+											 */
 											values_p = GetStudyDistinctAccessionsAsJSON (&id, dfw_data_p);
 
 											if (values_p)
@@ -478,6 +484,9 @@ json_t *GetStudyIndexingData (Service *service_p)
 												}
 
 
+											/*
+											 * Add the parent field trial
+											 */
 											if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
 												{
 													FieldTrial *trial_p = GetFieldTrialById (&id, VF_STORAGE, data_p);
@@ -507,6 +516,9 @@ json_t *GetStudyIndexingData (Service *service_p)
 
 												}
 
+											/*
+											 * Add the location
+											 */
 											if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
 												{
 													Location *location_p = GetLocationById (&id, VF_STORAGE, data_p);
@@ -538,6 +550,9 @@ json_t *GetStudyIndexingData (Service *service_p)
 												}		/* */
 
 
+											/*
+											 * Add the current crop
+											 */
 											crop_p = GetStoredCropValue (src_study_p, ST_CURRENT_CROP_S, data_p);
 											if (crop_p)
 												{
@@ -545,6 +560,9 @@ json_t *GetStudyIndexingData (Service *service_p)
 													FreeCrop (crop_p);
 												}
 
+											/*
+											 * Add the previous crop
+											 */
 											crop_p = GetStoredCropValue (src_study_p, ST_PREVIOUS_CROP_S, data_p);
 											if (crop_p)
 												{
@@ -552,11 +570,48 @@ json_t *GetStudyIndexingData (Service *service_p)
 													FreeCrop (crop_p);
 												}
 
+											/*
+											 * Add the treatments
+											 */
+											values_p = json_object_get (src_study_p, ST_TREATMENTS_S);
+
+											if (values_p)
+												{
+													if (json_is array (values_p))
+														{
+															json_t *treatment_factor_p;
+															size_t j;
+
+															json_array_foreach (values_p, j, treatment_factor_p)
+																{
+																	if (GetNamedIdFromJSON (src_study_p, TFJ_TREATMENT_ID, &id))
+																		{
+																			Treatment *treatment_p = GetTreatmentById (&id, VF_STORAGE, data_p);
+
+																			if (treatment_p)
+																				{
+																					json_t *treatment_json_p = GetTreatmentAsJSON (treatment_p);
+
+																					if (treatment_json_p)
+																						{
+
+																						}
+
+
+																					FreeTreatment (treatment_p);
+																				}		/* if (treatment_p) */
+
+																		}		/* if (GetNamedIdFromJSON (src_study_p, TFJ_TREATMENT_ID, &id)) */
+
+																}		/* json_array_foreach (values_p, j, treatment_factor_p) */
+
+														}		/* if (json_is array (values_p)) */
+
+												}		/* if (values_p) */
 
 										}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
 
-								}
-
+								}		/* if (AddDatatype (src_study_p, DFTD_STUDY)) */
 
 						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
 

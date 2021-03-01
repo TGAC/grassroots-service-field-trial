@@ -21,25 +21,20 @@
  */
 
 
+
 #include "jansson.h"
 #include "json_util.h"
 #include "key_value_pair.h"
 #include "memory_allocations.h"
 #include "mongodb_tool.h"
 #include "study.h"
+
+#define ALLOCATE_TREATMENT_FACTOR_TAGS (1)
 #include "treatment_factor.h"
 #include "typedefs.h"
 #include "treatment_jobs.h"
 #include "treatment_factor_jobs.h"
 
-
-static const char *S_STUDY_ID_S = "study_id";
-static const char *S_STUDY_NAME_S = "study_name";
-static const char *S_TREATMENT_S = "treatment";
-static const char *S_TREATMENT_ID_S = "treatment_id";
-static const char *S_VALUES_S = "values";
-static const char *S_VALUES_KEY_S = "so:name";
-static const char *S_VALUES_VALUE_S = "value";
 
 
 /*
@@ -159,15 +154,15 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 
 			if (values_json_p)
 				{
-					if (json_object_set_new (tf_json_p, S_VALUES_S, values_json_p) == 0)
+					if (json_object_set_new (tf_json_p, TF_VALUES_S, values_json_p) == 0)
 						{
 							bool success_flag = false;
 
-							if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_study_p -> st_id_p, S_STUDY_ID_S))
+							if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_study_p -> st_id_p, TF_STUDY_ID_S))
 								{
 									if (format == VF_STORAGE)
 										{
-											if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_treatment_p -> tr_id_p, S_TREATMENT_ID_S))
+											if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_treatment_p -> tr_id_p, TF_TREATMENT_ID_S))
 												{
 													success_flag = true;
 												}
@@ -178,9 +173,9 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 
 											if (treatment_json_p)
 												{
-													if (json_object_set_new (tf_json_p, S_TREATMENT_S, treatment_json_p) == 0)
+													if (json_object_set_new (tf_json_p, TF_TREATMENT_S, treatment_json_p) == 0)
 														{
-															if (SetJSONString (tf_json_p, S_STUDY_NAME_S, treatment_factor_p -> tf_study_p -> st_name_s))
+															if (SetJSONString (tf_json_p, TF_STUDY_NAME_S, treatment_factor_p -> tf_study_p -> st_name_s))
 																{
 																	success_flag = true;
 																}
@@ -219,7 +214,7 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 
 	if (treatment_id_p)
 		{
-			if (GetNamedIdFromJSON (treatment_factor_json_p, S_TREATMENT_ID_S, treatment_id_p))
+			if (GetNamedIdFromJSON (treatment_factor_json_p, TF_TREATMENT_ID_S, treatment_id_p))
 				{
 
 					Treatment *treatment_p = GetTreatmentById (treatment_id_p, VF_STORAGE, data_p);
@@ -229,7 +224,7 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 					if (tf_p)
 						{
 							bool success_flag = false;
-							json_t *values_p = json_object_get (treatment_factor_json_p, S_VALUES_S);
+							json_t *values_p = json_object_get (treatment_factor_json_p, TF_VALUES_S);
 
 							if (values_p)
 								{
@@ -241,11 +236,11 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 											for (i = 0; i < num_values; ++ i)
 												{
 													const json_t *value_p = json_array_get (values_p, i);
-													const char *key_s = GetJSONString (value_p, S_VALUES_KEY_S);
+													const char *key_s = GetJSONString (value_p, TF_VALUES_KEY_S);
 
 													if (key_s)
 														{
-															const char *value_s = GetJSONString (value_p, S_VALUES_VALUE_S);
+															const char *value_s = GetJSONString (value_p, TF_VALUES_VALUE_S);
 
 															if (value_s)
 																{
@@ -281,7 +276,7 @@ TreatmentFactor *GetTreatmentFactorFromJSON (const json_t *treatment_factor_json
 
 						}		/* if (tf_p) */
 
-				}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, S_STUDY_ID_S, treatment_id_p)) */
+				}		/* if (GetNamedIdFromJSON (treatment_factor_json_p, TF_STUDY_ID_S, treatment_id_p)) */
 
 			FreeBSONOid (treatment_id_p);
 		}		/* if (treatment_id_p) */
@@ -345,11 +340,11 @@ static bool AddKeyValuePairAsJSON (const KeyValuePair *pair_p, json_t *array_p, 
 
 	if (entry_p)
 		{
-			const char *key_s = (format == VF_STORAGE) ? S_VALUES_KEY_S : TFJ_LABEL_TITLE_S;
+			const char *key_s = (format == VF_STORAGE) ? TF_VALUES_KEY_S : TFJ_LABEL_TITLE_S;
 
 			if (SetJSONString (entry_p, key_s, pair_p -> kvp_key_s))
 				{
-					key_s = (format == VF_STORAGE) ? S_VALUES_VALUE_S : TFJ_VALUE_TITLE_S;
+					key_s = (format == VF_STORAGE) ? TF_VALUES_VALUE_S : TFJ_VALUE_TITLE_S;
 
 					if (SetJSONString (entry_p, key_s, pair_p -> kvp_value_s))
 						{
