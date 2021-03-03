@@ -35,7 +35,7 @@
 
 static bool CreateInstrumentFromMeasuredVariableJSON (const json_t *phenotype_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p);
 
-static bool AddSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p);
+static bool AppendSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p);
 
 static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * const key_s);
 
@@ -129,18 +129,18 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 
 	if (phenotype_json_p)
 		{
-			if (AddSchemaTermToJSON (phenotype_json_p, MV_TRAIT_S, treatment_p -> mv_trait_term_p))
+			if (AppendSchemaTermToJSON (phenotype_json_p, MV_TRAIT_S, treatment_p -> mv_trait_term_p))
 				{
-					if (AddSchemaTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, treatment_p -> mv_measurement_term_p))
+					if (AppendSchemaTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, treatment_p -> mv_measurement_term_p))
 						{
-							if (AddSchemaTermToJSON (phenotype_json_p, MV_UNIT_S, treatment_p -> mv_unit_term_p))
+							if (AppendSchemaTermToJSON (phenotype_json_p, MV_UNIT_S, treatment_p -> mv_unit_term_p))
 								{
-									if ((! (treatment_p -> mv_variable_term_p)) || (AddSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, treatment_p -> mv_variable_term_p)))
+									if ((! (treatment_p -> mv_variable_term_p)) || (AppendSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, treatment_p -> mv_variable_term_p)))
 										{
 											/*
 											 * The form term is optional
 											 */
-											if ((! (treatment_p -> mv_form_term_p)) || (AddSchemaTermToJSON (phenotype_json_p, MV_FORM_S, treatment_p -> mv_form_term_p)))
+											if ((! (treatment_p -> mv_form_term_p)) || (AppendSchemaTermToJSON (phenotype_json_p, MV_FORM_S, treatment_p -> mv_form_term_p)))
 												{
 													bool success_flag = false;
 
@@ -501,7 +501,7 @@ MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, con
  */
 
 
-static bool AddSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p)
+static bool AppendSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p)
 {
 	bool success_flag = false;
 	json_t *term_json_p = GetSchemaTermAsJSON (term_p);
