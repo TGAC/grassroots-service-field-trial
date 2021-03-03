@@ -430,7 +430,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 }
 
 
-json_t *GetStudyIndexingData (Service *service_p)
+json_t *GetOldStudyIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 	json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
@@ -577,22 +577,20 @@ json_t *GetStudyIndexingData (Service *service_p)
 
 											if (values_p)
 												{
-													if (json_is array (values_p))
+													if (json_is_array (values_p))
 														{
 															json_t *treatment_factor_p;
 															size_t j;
 
 															json_array_foreach (values_p, j, treatment_factor_p)
 																{
-																	if (GetNamedIdFromJSON (src_study_p, TFJ_TREATMENT_ID, &id))
+																	if (GetNamedIdFromJSON (treatment_factor_p, TF_TREATMENT_S, &id))
 																		{
 																			Treatment *treatment_p = GetTreatmentById (&id, VF_STORAGE, data_p);
 
 																			if (treatment_p)
 																				{
-																					json_t *treatment_json_p = GetTreatmentAsJSON (treatment_p);
-
-																					if (treatment_json_p)
+																					if (AddTreatmentToJSON (treatment_p, treatment_factor_p))
 																						{
 
 																						}
@@ -1705,9 +1703,9 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
 }
 
 
-json_t *GetAllStudyIdsAsJSON (const FieldTrialServiceData *data_p)
+json_t *GetStudyIndexingData (Service *service_p)
 {
-	json_t *results_p = NULL;
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
@@ -1718,45 +1716,75 @@ json_t *GetAllStudyIdsAsJSON (const FieldTrialServiceData *data_p)
 
 			if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, &query, fields_ss, NULL))
 				{
-					results_p = GetAllExistingMongoResultsAsJSON (data_p -> dftsd_mongo_p);
+					json_t *id_results_p = GetAllExistingMongoResultsAsJSON (data_p -> dftsd_mongo_p);
 
-					if (results_p)
+					if (id_results_p)
 						{
-							size_t i;
-							json_t *id_p;
-							bson_oid_t oid;
+							json_t *studies_p = json_array ();
 
-							json_array_foreach (results_p, i, id_p)
+							if (studies_p)
 								{
-									if (GetMongoIdFromJSON (id_p, &oid))
+									size_t i;
+									bson_oid_t oid;
+									const size_t num_results = json_array_size (id_results_p);
+									size_t num_added = 0;
+
+									for (i = 0; i < num_results; ++ i)
 										{
-											Study *study_p = GetStudyById (&oid, VF_CLIENT_MINIMAL, data_p);
+											json_t *id_result_p = json_array_get (id_results_p, i);
 
-											if (study_p)
+											if (GetMongoIdFromJSON (id_result_p, &oid))
 												{
-													json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
+													Study *study_p = GetStudyById (&oid, VF_CLIENT_MINIMAL, data_p);
 
-													if (study_json_p)
+													if (study_p)
 														{
+															json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
 
-															json_decref
+															if (study_json_p)
+																{
+																	if (json_array_append_new (studies_p, study_json_p) == 0)
+																		{
+																			++ num_added;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add study to array for indexing");
+																			json_decref (study_json_p);
+																		}
+																}
+
+															FreeStudy (study_p);
+														}		/* if (study_p) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study \"%s\" as json for indexing", study_p -> st_name_s);
 														}
 
-													FreeStudy (study_p);
+												}		/* if (GetMongoIdFromJSON (id_result_p, &oid)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, id_result_p, "Failed to get study id for indexing");
 												}
 
+										}		/* json_array_foreach (results_p, i, id_p) */
+
+									if (num_added == num_results)
+										{
+											return studies_p;
 										}
 
-								}		/* json_array_foreach (results_p, i, id_p) */
+									json_decref (studies_p);
+								}		/* if (studies_p) */
 
-							json_decref (results_p);
-						}		/* if (results_p) */
+							json_decref (id_results_p);
+						}		/* if (id_results_p) */
 
 				}		/* if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, NULL, fields_ss, NULL)) */
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY])) */
 
-	return results_p;
+	return NULL;
 }
 
 

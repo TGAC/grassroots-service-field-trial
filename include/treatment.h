@@ -97,6 +97,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentNode (ListItem *treatment_node_p
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentAsJSON (const Treatment *treatmnent_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToJSON (const Treatment *treatment_p, json_t *root_p);
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentFromJSON (const json_t *treatmnent_json_p);
 
 #ifdef _cplusplus

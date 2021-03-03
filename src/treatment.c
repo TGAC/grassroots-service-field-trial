@@ -197,6 +197,34 @@ void FreeTreatment (Treatment *treatment_p)
 //}
 
 
+bool AddTreatmentToJSON (const Treatment *treatment_p, json_t *root_p)
+{
+	bool success_flag = false;
+
+	if (AddSchemaTermToJSON (treatment_p -> tr_ontology_term_p, root_p))
+		{
+			if ((! (treatment_p -> tr_parent_names_ss)) || (AddStringsToJSON (TR_PARENTS_S, treatment_p -> tr_parent_names_ss, root_p)))
+				{
+					if ((! (treatment_p -> tr_synonyms_ss)) || (AddStringsToJSON (TR_SYNONYMS_S, treatment_p -> tr_synonyms_ss, root_p)))
+						{
+							if (AddCompoundIdToJSON (root_p, treatment_p -> tr_id_p))
+								{
+									if (AddDatatype (root_p, DFTD_TREATMENT))
+										{
+											success_flag = true;
+										}
+								}
+
+						}
+
+				}
+
+		}		/* if (term_json_p) */
+
+	return success_flag;
+}
+
+
 
 json_t *GetTreatmentAsJSON (const Treatment *treatment_p)
 {
