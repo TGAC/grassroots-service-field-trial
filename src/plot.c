@@ -42,7 +42,8 @@ static bool SetValidPlotImage (const Plot *plot_p, json_t *plot_json_p);
 
 
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p, const uint32 row_index,
-										const uint32 column_index, const char *treatments_s, const char *comment_s, const char *image_s, const char *thumbnail_s, Study *parent_p)
+										const uint32 column_index, const char *treatments_s, const char *comment_s, const char *image_s, const char *thumbnail_s,
+										const uint32 *walking_order_p, const uint32 *sowing_order_p, Study *parent_p)
 {
 	char *copied_treatments_s = NULL;
 
@@ -76,42 +77,76 @@ Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const stru
 
 															if (CopyValidReal (length_p, &copied_length_p))
 																{
-																	LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
+																	uint32 *copied_sowing_order_p = NULL;
 
-																	if (rows_p)
+																	if (CopyValidUnsignedInteger (sowing_order_p, &copied_sowing_order_p))
 																		{
-																			Plot *plot_p = (Plot *) AllocMemory (sizeof (Plot));
+																			uint32 *copied_walking_order_p = NULL;
 
-																			if (plot_p)
+																			if (CopyValidUnsignedInteger (walking_order_p, &copied_walking_order_p))
 																				{
-																					plot_p -> pl_id_p = id_p;
-																					plot_p -> pl_sowing_date_p = copied_sowing_date_p;
-																					plot_p -> pl_harvest_date_p = copied_harvest_date_p;
-																					plot_p -> pl_width_p = copied_width_p;
-																					plot_p -> pl_length_p = copied_length_p;
-																					plot_p -> pl_row_index = row_index;
-																					plot_p -> pl_column_index = column_index;
+																					LinkedList *rows_p = AllocateLinkedList (FreeRowNode);
 
-																					plot_p -> pl_parent_p = parent_p;
-																					plot_p -> pl_rows_p = rows_p;
+																					if (rows_p)
+																						{
+																							Plot *plot_p = (Plot *) AllocMemory (sizeof (Plot));
 
-																					plot_p -> pl_comment_s = copied_comment_s;
+																							if (plot_p)
+																								{
+																									plot_p -> pl_id_p = id_p;
+																									plot_p -> pl_sowing_date_p = copied_sowing_date_p;
+																									plot_p -> pl_harvest_date_p = copied_harvest_date_p;
+																									plot_p -> pl_width_p = copied_width_p;
+																									plot_p -> pl_length_p = copied_length_p;
+																									plot_p -> pl_row_index = row_index;
+																									plot_p -> pl_column_index = column_index;
 
-																					plot_p -> pl_treatments_s = copied_treatments_s;
+																									plot_p -> pl_parent_p = parent_p;
+																									plot_p -> pl_rows_p = rows_p;
 
-																					plot_p -> pl_accession_s = NULL;
-																					plot_p -> pl_soil_type_s = NULL;
-																					plot_p -> pl_sowing_rate = 0.0f;
+																									plot_p -> pl_comment_s = copied_comment_s;
 
-																					plot_p -> pl_image_url_s = copied_image_s;
+																									plot_p -> pl_treatments_s = copied_treatments_s;
 
-																					plot_p -> pl_thumbnail_url_s = copied_thumbnail_s;
+																									plot_p -> pl_accession_s = NULL;
+																									plot_p -> pl_soil_type_s = NULL;
+																									plot_p -> pl_sowing_rate = 0.0f;
 
-																					return plot_p;
-																				}		/* if (plot_p) */
+																									plot_p -> pl_image_url_s = copied_image_s;
 
-																			FreeLinkedList (rows_p);
-																		}		/* if (rows_p) */
+																									plot_p -> pl_thumbnail_url_s = copied_thumbnail_s;
+
+																									plot_p -> pl_sowing_order_index_p = copied_sowing_order_p;
+																									plot_p -> pl_walking_order_index_p = copied_walking_order_p;
+
+																									return plot_p;
+																								}		/* if (plot_p) */
+
+																							FreeLinkedList (rows_p);
+																						}		/* if (rows_p) */
+
+
+																					if (copied_walking_order_p)
+																						{
+																							FreeMemory (copied_walking_order_p);
+																						}
+																				}		/* if (CopyValidUnsignedInteger (harvest_order_p, &copied_harvest_order_p)) */
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy walking order %lu\n", walking_order_p ? *walking_order_p : 0);
+																				}
+
+
+
+																			if (copied_sowing_order_p)
+																				{
+																					FreeMemory (copied_sowing_order_p);
+																				}
+																		}		/* if (CopyValidUnsignedInteger (sowing_order_p, &copied_sowing_order_p)) */
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy sowing order %lu\n", sowing_order_p ? *sowing_order_p : 0);
+																		}
 
 
 																	if (copied_length_p)
@@ -232,6 +267,16 @@ void FreePlot (Plot *plot_p)
 		}
 
 
+	if (plot_p -> pl_sowing_order_index_p)
+		{
+			FreeMemory (plot_p -> pl_sowing_order_index_p);
+		}
+
+	if (plot_p -> pl_walking_order_index_p)
+		{
+			FreeMemory (plot_p -> pl_walking_order_index_p);
+		}
+
 	FreeMemory (plot_p);
 }
 
@@ -307,136 +352,167 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 								{
 									if (SetNonTrivialDouble (plot_json_p, PL_LENGTH_S, plot_p -> pl_length_p))
 										{
-											if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s)))
+											if (SetNonTrivialUnsignedInt (plot_json_p, PL_SOWING_ORDER_S, plot_p -> pl_sowing_order_index_p))
 												{
-													if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s)))
+													if (SetNonTrivialUnsignedInt (plot_json_p, PL_WALKING_ORDER_S, plot_p -> pl_walking_order_index_p))
 														{
-															if ((IsStringEmpty (plot_p -> pl_image_url_s)) || (SetJSONString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s)))
+															if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s)))
 																{
-																	if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S))
+																	if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s)))
 																		{
-																			if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S))
+																			if ((IsStringEmpty (plot_p -> pl_image_url_s)) || (SetJSONString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s)))
 																				{
-																					if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
+																					if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S))
 																						{
-																							bool success_flag = false;
-
-																							switch (format)
+																							if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S))
 																								{
-																									case VF_CLIENT_MINIMAL:
+																									if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
 																										{
-																											success_flag = SetValidPlotImage (plot_p, plot_json_p);
-																										}
-																										break;
+																											bool success_flag = false;
 
-
-																									case VF_CLIENT_FULL:
-																										{
-																											if (SetValidPlotImage (plot_p, plot_json_p))
+																											switch (format)
 																												{
-																													if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
+																													case VF_CLIENT_MINIMAL:
 																														{
-																															success_flag = true;
+																															success_flag = SetValidPlotImage (plot_p, plot_json_p);
 																														}
-																												}
-																										}		/* case VF_CLIENT_FULL: */
-																										break;
+																														break;
 
-																									case VF_STORAGE:
-																										{
-																											if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
-																												{
-																													if (SetJSONString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s))
+
+																													case VF_CLIENT_FULL:
 																														{
-																															if (SetJSONString (plot_json_p, PL_THUMBNAIL_S, plot_p -> pl_thumbnail_url_s))
+																															if (SetValidPlotImage (plot_p, plot_json_p))
 																																{
 																																	if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
 																																		{
 																																			success_flag = true;
 																																		}
 																																}
-																														}
-																												}		/* if (AddiNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_FIELD_TRIAL_S)) */
-																											else
+																														}		/* case VF_CLIENT_FULL: */
+																														break;
+
+																													case VF_STORAGE:
+																														{
+																															if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
+																																{
+																																	if (SetJSONString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s))
+																																		{
+																																			if (SetJSONString (plot_json_p, PL_THUMBNAIL_S, plot_p -> pl_thumbnail_url_s))
+																																				{
+																																					if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
+																																						{
+																																							success_flag = true;
+																																						}
+																																				}
+																																		}
+																																}		/* if (AddiNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_FIELD_TRIAL_S)) */
+																															else
+																																{
+																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_STUDY_S);
+																																}
+																														}		/* case VF_STORAGE */
+																														break;
+
+																													default:
+																														break;
+
+																												}		/* switch (format) */
+
+																											if (success_flag)
 																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_STUDY_S);
+																													if (AddDatatype (plot_json_p, DFTD_PLOT))
+																														{
+																															return plot_json_p;
+																														}
 																												}
-																										}		/* case VF_STORAGE */
-																										break;
 
-																									default:
-																										break;
-
-																								}		/* switch (format) */
-
-																							if (success_flag)
-																								{
-																									if (AddDatatype (plot_json_p, DFTD_PLOT))
+																										}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
+																									else
 																										{
-																											return plot_json_p;
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id");
+																										}
+
+																								}		/* if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S)) */
+																							else
+																								{
+																									char *time_s = NULL;
+
+																									if (plot_p -> pl_harvest_date_p)
+																										{
+																											time_s = GetTimeAsString (plot_p -> pl_harvest_date_p, false);
+																										}
+
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_HARVEST_DATE_S, time_s ? time_s : "");
+
+																									if (time_s)
+																										{
+																											FreeCopiedString (time_s);
 																										}
 																								}
 
-																						}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
+																						}		/* if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S)) */
 																					else
 																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id");
+																							char *time_s = NULL;
+
+																							if (plot_p -> pl_sowing_date_p)
+																								{
+																									time_s = GetTimeAsString (plot_p -> pl_sowing_date_p, false);
+																								}
+
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_SOWING_DATE_S, time_s ? time_s : "");
+
+																							if (time_s)
+																								{
+																									FreeCopiedString (time_s);
+																								}
 																						}
 
-																				}		/* if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S)) */
+																				}		/* if ((IsStringEmpty (plot_p -> pl_link_s)) || (SetJSONString (plot_json_p, PL_URL_S, plot_p -> pl_link_s))) */
 																			else
 																				{
-																					char *time_s = NULL;
-
-																					if (plot_p -> pl_harvest_date_p)
-																						{
-																							time_s = GetTimeAsString (plot_p -> pl_harvest_date_p, false);
-																						}
-
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_HARVEST_DATE_S, time_s ? time_s : "");
-
-																					if (time_s)
-																						{
-																							FreeCopiedString (time_s);
-																						}
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_IMAGE_S, plot_p -> pl_image_url_s);
 																				}
 
-																		}		/* if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S)) */
+
+																		}		/* if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_treatments_s))) */
 																	else
 																		{
-																			char *time_s = NULL;
-
-																			if (plot_p -> pl_sowing_date_p)
-																				{
-																					time_s = GetTimeAsString (plot_p -> pl_sowing_date_p, false);
-																				}
-
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_SOWING_DATE_S, time_s ? time_s : "");
-
-																			if (time_s)
-																				{
-																					FreeCopiedString (time_s);
-																				}
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TREATMENT_S, plot_p -> pl_comment_s);
 																		}
 
-																}		/* if ((IsStringEmpty (plot_p -> pl_link_s)) || (SetJSONString (plot_json_p, PL_URL_S, plot_p -> pl_link_s))) */
+																}		/* if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s))) */
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_IMAGE_S, plot_p -> pl_image_url_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_COMMENT_S, plot_p -> pl_comment_s);
 																}
 
-
-														}		/* if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_treatments_s))) */
+														}		/* if (SetNonTrivialUnsignedInt (plot_json_p, PL_WALKING_ORDER_S, plot_p -> pl_walking_order_index_p)) */
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_TREATMENT_S, plot_p -> pl_comment_s);
+															if (plot_p -> pl_walking_order_index_p)
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT, PL_WALKING_ORDER_S, * (plot_p -> pl_walking_order_index_p));
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": null", PL_WALKING_ORDER_S);
+																}
 														}
 
-												}		/* if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s))) */
+												}		/* if (SetNonTrivialUnsignedInt (plot_json_p, PL_SOWING_ORDER_S, plot_p -> pl_sowing_order_index_p)) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_COMMENT_S, plot_p -> pl_comment_s);
+													if (plot_p -> pl_sowing_order_index_p)
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT, PL_SOWING_ORDER_S, * (plot_p -> pl_sowing_order_index_p));
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": null", PL_SOWING_ORDER_S);
+														}
 												}
+
 
 										}		/* if (SetJSONReal (plot_json_p, PL_LENGTH_S, plot_p -> pl_length)) */
 									else
@@ -502,11 +578,15 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const F
 					const char *thumbnail_s = GetJSONString (plot_json_p, PL_THUMBNAIL_S);
 					double64 *width_p = NULL;
 					double64 *length_p = NULL;
+					uint32 *sowing_order_p = NULL;
+					uint32 *walking_order_p = NULL;
 					struct tm *sowing_date_p = NULL;
 
 					GetValidRealFromJSON (plot_json_p, PL_WIDTH_S, &width_p);
 					GetValidRealFromJSON (plot_json_p, PL_LENGTH_S, &length_p);
 
+					GetValidUnsignedIntFromJSON (plot_json_p, PL_SOWING_ORDER_S, &sowing_order_p);
+					GetValidUnsignedIntFromJSON (plot_json_p, PL_WALKING_ORDER_S, &walking_order_p);
 
 
 					if (CreateValidDateFromJSON (plot_json_p, PL_SOWING_DATE_S, &sowing_date_p))
@@ -544,7 +624,8 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const F
 
 														}		/* if (!parent_area_p) */
 
-													plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatments_s, comment_s, image_s, thumbnail_s, parent_study_p);
+													plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatments_s, comment_s, image_s, thumbnail_s,
+																								 sowing_order_p, walking_order_p, parent_study_p);
 
 													if (plot_p)
 														{

@@ -76,6 +76,10 @@ PLOT_PREFIX const char *PL_THUMBNAIL_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_OR
 
 PLOT_PREFIX int32 PL_UNSET_ID PLOT_VAL (INT32_MAX);
 
+PLOT_PREFIX const char *PL_SOWING_ORDER_S PLOT_VAL ("sowing_order");
+
+PLOT_PREFIX const char *PL_WALKING_ORDER_S PLOT_VAL ("walking_order");
+
 
 typedef struct Plot
 {
@@ -96,6 +100,10 @@ typedef struct Plot
 	struct tm *pl_sowing_date_p;
 
 	double pl_sowing_rate;
+
+	uint32 *pl_sowing_order_index_p;
+
+	uint32 *pl_walking_order_index_p;
 
 	/*
 	 * Plots
@@ -157,7 +165,8 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p, const uint32 row_index,
-																									const uint32 column_index, const char *treatments_s, const char *comment_s, const char *image_s, const char *thumbnail_s, Study *parent_p);
+										const uint32 column_index, const char *treatments_s, const char *comment_s, const char *image_s, const char *thumbnail_s,
+										const uint32 *walking_order_p, const uint32 *sowing_order_p, Study *parent_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);

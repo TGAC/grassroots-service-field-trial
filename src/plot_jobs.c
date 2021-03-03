@@ -77,6 +77,9 @@ static const char * const S_COMMENT_TITLE_S = "Comment";
 static const char * const S_IMAGE_TITLE_S = "Image";
 static const char * const S_THUMBNAIL_TITLE_S = "Thumbnail";
 
+static const char * const S_SOWING_ORDER_TITLE_S = "Sowing order";
+static const char * const S_WALKING_ORDER_TITLE_S = "Walking order";
+
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
 static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_JSON_TABLE};
@@ -355,7 +358,13 @@ static json_t *GetTableParameterHints (void)
 																										{
 																											if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, "The link for a thumbnail image of this plot.", PT_STRING, false, hints_p))
 																												{
-																													return hints_p;
+																													if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, "The order that the plots were sown.", PT_UNSIGNED_INT, false, hints_p))
+																														{
+																															if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, "The order that the plots were walked.", PT_UNSIGNED_INT, false, hints_p))
+																																{
+																																	return hints_p;
+																																}
+																														}
 																												}
 																										}
 																								}
@@ -600,6 +609,10 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																											json_object_del (table_row_json_p, S_TREATMENT_TITLE_S);
 																											json_object_del (table_row_json_p, S_REPLICATE_TITLE_S);
 																											json_object_del (table_row_json_p, S_COMMENT_TITLE_S);
+																											json_object_del (table_row_json_p, S_IMAGE_TITLE_S);
+																											json_object_del (table_row_json_p, S_THUMBNAIL_TITLE_S);
+																											json_object_del (table_row_json_p, S_SOWING_ORDER_TITLE_S);
+																											json_object_del (table_row_json_p, S_WALKING_ORDER_TITLE_S);
 
 
 																											/*
@@ -765,10 +778,15 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 	struct tm *sowing_date_p = NULL;
 	struct tm *harvest_date_p = NULL;
 	const char *date_s = GetJSONString (table_row_json_p, S_SOWING_TITLE_S);
-
+	uint32 *sowing_order_p = NULL;
+	uint32 *walking_order_p = NULL;
 
 	GetValidRealFromJSON (table_row_json_p, S_WIDTH_TITLE_S, &width_p);
 	GetValidRealFromJSON (table_row_json_p, S_LENGTH_TITLE_S, &length_p);
+
+	GetValidUnsignedIntFromJSON (table_row_json_p, S_SOWING_ORDER_TITLE_S, &sowing_order_p);
+	GetValidUnsignedIntFromJSON (table_row_json_p, S_WALKING_ORDER_TITLE_S, &walking_order_p);
+
 
 	if (!IsStringEmpty (date_s))
 		{
@@ -791,7 +809,8 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 				}
 		}
 
-	plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatment_s, comment_s, image_s, thumbnail_s, study_p);
+	plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatment_s, comment_s,
+												 image_s, thumbnail_s, sowing_order_p, walking_order_p, study_p);
 
 	if (plot_p)
 		{

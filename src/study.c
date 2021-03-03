@@ -51,7 +51,7 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 
 static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
-static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
@@ -868,9 +868,9 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																																																		{
 																																																			if (json_object_set_new (study_json_p, ST_LOCATION_S, location_json_p) == 0)
 																																																				{
-																																																					if (AddValidCropToJSON (study_p -> st_current_crop_p, study_json_p, format, data_p))
+																																																					if (AddValidCropToJSON (study_p -> st_current_crop_p, study_json_p, ST_CURRENT_CROP_S, format, data_p))
 																																																						{
-																																																							if (AddValidCropToJSON (study_p -> st_previous_crop_p, study_json_p, format, data_p))
+																																																							if (AddValidCropToJSON (study_p -> st_previous_crop_p, study_json_p, ST_PREVIOUS_CROP_S, format, data_p))
 																																																								{
 																																																									if (AddParentFieldTrialToJSON (study_p, study_json_p, data_p))
 																																																										{
@@ -917,9 +917,9 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 
 																																																			if ((! (study_p -> st_location_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_location_p -> lo_id_p, ST_LOCATION_ID_S)))
 																																																				{
-																																																					if ((! (study_p -> st_current_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_current_crop_p -> cr_id_p, ST_CURRENT_CROP_S)))
+																																																					if (AddValidCropToJSON (study_p -> st_current_crop_p, study_json_p, ST_CURRENT_CROP_S, VF_STORAGE, data_p))
 																																																						{
-																																																							if ((! (study_p -> st_previous_crop_p)) || (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)))
+																																																							if (AddValidCropToJSON (study_p -> st_previous_crop_p, study_json_p, ST_PREVIOUS_CROP_S, VF_STORAGE, data_p))
 																																																								{
 																																																									add_item_flag = true;
 																																																								}		/* if (AddNamedCompoundIdToJSON (study_json_p, study_p -> st_previous_crop_p -> cr_id_p, ST_PREVIOUS_CROP_S)) */
@@ -1426,9 +1426,7 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p)
 
 
 
-
-
-static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+static bool AddValidCropToStorageJSON (Crop *crop_p, json_t *study_json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -1438,7 +1436,7 @@ static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFo
 
 			if (crop_json_p)
 				{
-					if (json_object_set_new (study_json_p, ST_CURRENT_CROP_S, crop_json_p) == 0)
+					if (json_object_set_new (study_json_p, key_s, crop_json_p) == 0)
 						{
 							success_flag = true;
 						}
@@ -1451,7 +1449,59 @@ static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const ViewFo
 		}
 	else
 		{
-			success_flag = true;
+			if (json_object_set_new (study_json_p, key_s, json_null ()) == 0)
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+
+static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (crop_p)
+		{
+			if (format == VF_STORAGE)
+				{
+					if (AddNamedCompoundIdToJSON (study_json_p, crop_p -> cr_id_p, key_s))
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add crop \"%s\" to study", crop_p -> cr_name_s);
+						}
+				}
+			else
+				{
+					json_t *crop_json_p = crop_json_p = GetCropAsJSON (crop_p, format, data_p);
+
+					if (crop_json_p)
+						{
+							if (json_object_set_new (study_json_p, key_s, crop_json_p) == 0)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									json_decref (crop_json_p);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, crop_json_p, "Failed to add crop to study");
+								}
+						}
+				}
+		}
+	else
+		{
+			if (json_object_set_new (study_json_p, key_s, json_null ()) == 0)
+				{
+					success_flag = true;
+				}
 		}
 
 	return success_flag;
