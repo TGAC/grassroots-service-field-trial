@@ -43,7 +43,7 @@ static bool SetValidPlotImage (const Plot *plot_p, json_t *plot_json_p);
 
 Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const struct tm *harvest_date_p, const double64 *width_p, const double64 *length_p, const uint32 row_index,
 										const uint32 column_index, const char *treatments_s, const char *comment_s, const char *image_s, const char *thumbnail_s,
-										const uint32 *walking_order_p, const uint32 *sowing_order_p, Study *parent_p)
+										const uint32 *sowing_order_p, const uint32 *walking_order_p, Study *parent_p)
 {
 	char *copied_treatments_s = NULL;
 
