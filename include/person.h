@@ -30,35 +30,12 @@
 #include "address.h"
 #include "typedefs.h"
 
-/*
- *    "description": "Example Person",
-        "emailAddress": "bob@bob.com",
-        "firstName": "Bob",
-        "lastName": "Robertson",
-        "mailingAddress": "123 Road Street, City, State, Country, 98765",
-        "middleName": "Danger",
-        "personDbId": "person1",
-        "phoneNumber": "+19876543210",
-        "userID": "bdr45"
- */
 
 typedef struct Person
 {
-	bson_oid_t *pe_id_p;
-
-	char *pe_first_name_s;
-
-	char *pe_middle_name_s;
-
-	char *pe_last_name_s;
+	char *pe_name_s;
 
 	char *pe_email_s;
-
-	char *pe_description_s;
-
-	char *pe_phone_s;
-
-	Address *pe_mailing_address_p;
 
 } Person;
 
