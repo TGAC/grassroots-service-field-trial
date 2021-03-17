@@ -143,7 +143,11 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_names_p, Parameter *treatment_levels_p, const size_t num_treatments, ServiceJob *job_p, const FieldTrialServiceData *data_p);
 
 
-static void ReportTreatmentFactorError (Study *study_p, const char *name_s, json_t *levels_p, ServiceJob *job_p);
+static void ReportTreatmentFactorError (Study *study_p, const char *name_s, const json_t *levels_p, ServiceJob *job_p);
+
+
+static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s);
+
 
 /*
  * API DEFINITIONS
@@ -1431,6 +1435,31 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 																					if ((strcmp (crop_s, S_UNKNOWN_CROP_OPTION_S) == 0) || (GetValidCrop (crop_s, &previous_crop_p, data_p)))
 																						{
+																							const char *curator_name_s = NULL;
+																							const char *curator_email_s = NULL;
+																							Person *curator_p = NULL;
+																							bool alloc_flag = true;
+
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_CURATOR_NAME.npt_name_s, &curator_name_s);
+																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_CURATOR_EMAIL.npt_name_s, &curator_email_s);
+
+
+																							if ((curator_name_s != NULL) || (curator_email_s != NULL))
+																								{
+																									curator_p = AllocatePerson (curator_name_s, curator_email_s);
+
+																									if (!curator_p)
+																										{
+																											alloc_flag = false;
+																										}
+																								}
+
+																							if (alloc_flag)
+																								{
+
+																								}
+
+
 																							Study *study_p = NULL;
 																							const char *soil_s = NULL;
 																							const char *aspect_s = NULL;
@@ -1457,6 +1486,12 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																							const uint32 *plots_columns_per_block_p = NULL;
 																							const double64 *plot_block_horizontal_gap_p = NULL;
 																							const double64 *plot_block_vertical_gap_p = NULL;
+
+																							const char *contact_name_s = NULL;
+																							const char *contact_email_s = NULL;
+
+																							Person *curator_p = NULL;
+																							Person *contact_p = NULL;
 
 
 																							GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
@@ -1493,6 +1528,9 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_HGAP.npt_name_s, &plot_block_horizontal_gap_p);
 																							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_VGAP.npt_name_s, &plot_block_vertical_gap_p);
 
+
+
+
 																							study_p = AllocateStudy (study_id_p, name_s, soil_s, data_link_s, aspect_s,
 																																			 slope_s, sowing_date_p, harvest_date_p, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																																			 min_ph_p, max_ph_p, notes_s, design_s,
@@ -1501,6 +1539,8 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																																			 weather_s, shape_p,
 																																			 plot_horizontal_gap_p, plot_vertical_gap_p, plots_rows_per_block_p, plots_columns_per_block_p,
 																																			 plot_block_horizontal_gap_p, plot_block_vertical_gap_p,
+																																			 curator_name_s, curator_email_s,
+																																			 contact_name_s, contact_email_s,
 																																			 data_p);
 
 																							if (study_p)
@@ -1605,7 +1645,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 	else
 		{
 			const char * const error_prefix_s = "Need equal number of treatment names and sets of factors";
-			PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "%s: " UINT32_FMT " names and " UINT32_FMT " levels", error_prefix_s, num_treatment_names, num_treatment_levels);
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "%s: " UINT32_FMT " names and " UINT32_FMT " levels", error_prefix_s, num_treatment_names, num_treatment_levels);
 
 			AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, error_prefix_s);
 		}
@@ -2847,7 +2887,7 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
-TreatmentFactor *GetTreatmentFactorForStudyByUrl (Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p)
+TreatmentFactor *GetTreatmentFactorForStudyByUrl (const Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p)
 {
 	TreatmentFactor *treatment_factor_p = NULL;
 	TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
@@ -3108,6 +3148,7 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 
 			if (!AddTreatmentFactorToStudy (name_s, level_p, study_p, data_p))
 				{
+
 					ReportTreatmentFactorError (study_p, name_s, level_p, job_p);
 					success_flag = false;
 				}
@@ -3152,7 +3193,7 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 }
 
 
-static void ReportTreatmentFactorError (Study *study_p, const char *name_s, json_t *levels_p, ServiceJob *job_p)
+static void ReportTreatmentFactorError (Study *study_p, const char *name_s, const json_t *levels_p, ServiceJob *job_p)
 {
 	const char * const error_prefix_s = "Unknown Treatment name";
 	char *error_s = ConcatenateVarargsStrings (error_prefix_s, ": ", name_s, NULL);
@@ -3164,4 +3205,31 @@ static void ReportTreatmentFactorError (Study *study_p, const char *name_s, json
 		{
 			FreeCopiedString (error_s);
 		}
+}
+
+
+static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s)
+{
+	const char *name_s = NULL;
+	const char *email_s = NULL;
+	bool success_flag = true;
+
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, name_param_s, &name_s);
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, email_param_s, &email_s);
+
+	if ((name_s != NULL) || (email_s != NULL))
+		{
+			Person *person_p = AllocatePerson (name_s, email_s);
+
+			if (person_p)
+				{
+					*person_pp = person_p;
+				}
+			else
+				{
+					success_flag = false;
+				}
+		}
+
+	return success_flag;
 }

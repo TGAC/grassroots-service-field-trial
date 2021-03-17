@@ -26,7 +26,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-#include "program.h"
+#include "programme.h"
 #include "string_parameter.h"
 
 
@@ -53,6 +53,8 @@ PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_URL PROGRAMME_JOB_STRUCT_VAL("
 PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_NAME PROGRAMME_JOB_STRUCT_VAL("PR Name", PT_STRING);
 PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_OBJECTIVE PROGRAMME_JOB_STRUCT_VAL("PR Objective", PT_LARGE_STRING);
 PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_PI_NAME PROGRAMME_JOB_STRUCT_VAL("PR PI Name", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_PI_EMAIL PROGRAMME_JOB_STRUCT_VAL("PR PI Email", PT_STRING);
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_LOGO PROGRAMME_JOB_STRUCT_VAL("PR Logo", PT_STRING);
 
 
 

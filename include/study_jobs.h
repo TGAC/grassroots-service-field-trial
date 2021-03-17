@@ -81,6 +81,12 @@ STUDY_JOB_PREFIX NamedParameterType STUDY_GROWING_CONDITIONS STUDY_JOB_STRUCT_VA
 STUDY_JOB_PREFIX NamedParameterType STUDY_PHENOTYPE_GATHERING_NOTES STUDY_JOB_STRUCT_VAL("ST Phenotype Gathering Notes", PT_LARGE_STRING);
 
 
+STUDY_JOB_PREFIX NamedParameterType STUDY_CURATOR_NAME STUDY_JOB_STRUCT_VAL("ST Curator name", PT_STRING);
+STUDY_JOB_PREFIX NamedParameterType STUDY_CURATOR_EMAIL STUDY_JOB_STRUCT_VAL("ST Curator email", PT_STRING);
+
+STUDY_JOB_PREFIX NamedParameterType STUDY_CONTACT_NAME STUDY_JOB_STRUCT_VAL("ST Contact name", PT_STRING);
+STUDY_JOB_PREFIX NamedParameterType STUDY_CONTACT_EMAIL STUDY_JOB_STRUCT_VAL("ST Contact email", PT_STRING);
+
 STUDY_JOB_PREFIX NamedParameterType STUDY_SEARCH_STUDIES STUDY_JOB_STRUCT_VAL("ST Search Studies", PT_BOOLEAN);
 STUDY_JOB_PREFIX NamedParameterType STUDY_SEARCH_ACTIVE_DATE STUDY_JOB_STRUCT_VAL("ST Active on date", PT_TIME);
 
@@ -181,7 +187,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetOrCreateTreatmentFactor
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetTreatmentFactorForStudyByUrl (Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetTreatmentFactorForStudyByUrl (const Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudyIdsAsJSON (const FieldTrialServiceData *data_p);

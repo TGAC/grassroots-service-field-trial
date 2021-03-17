@@ -21,7 +21,7 @@
  */
 
 #define ALLOCATE_PROGRAMME_JOB_CONSTANTS (1)
-#include "program_jobs.h"
+#include "programme_jobs.h"
 #include "crop_jobs.h"
 #include "dfw_util.h"
 
@@ -33,7 +33,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool SetUpDefaultsFromExistingProgramme (const Programme *program_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss);
+static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss);
 
 
 bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -47,13 +47,15 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 	char *name_s = NULL;
 	char *objective_s = NULL;
 	char *pi_name_s = NULL;
+	char *pi_email_s = NULL;
+	char *logo_s = NULL;
 	Crop *crop_p = NULL;
 	Programme *active_program_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, dfw_data_p);
 	bool defaults_flag = false;
 
 	if (active_program_p)
 		{
-			if (SetUpDefaultsFromExistingProgramme (active_program_p, &id_s,  &name_s, &abbreviation_s, &crop_p, &documentation_url_s, &objective_s, &pi_name_s))
+			if (SetUpDefaultsFromExistingProgramme (active_program_p, &id_s,  &name_s, &abbreviation_s, &crop_p, &documentation_url_s, &objective_s, &pi_name_s, &pi_email_s, &logo_s))
 				{
 					defaults_flag = true;
 				}
@@ -94,11 +96,29 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 																{
 																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_URL.npt_type, PROGRAMME_URL.npt_name_s, "Web address", "The web page documenting this Programme", documentation_url_s, PL_ALL)) != NULL)
 																		{
-																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_PI_NAME.npt_type, PROGRAMME_PI_NAME.npt_name_s, "Principal Investigator", "The Programme's lead", pi_name_s, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_PI_NAME.npt_type, PROGRAMME_PI_NAME.npt_name_s, "Principal Investigator Name", "The name of the Programme's lead", pi_name_s, PL_ALL)) != NULL)
 																				{
 																					param_p -> pa_required_flag = true;
 
-																					success_flag = true;
+																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_PI_EMAIL.npt_type, PROGRAMME_PI_EMAIL.npt_name_s, "Principal Investigator Email", "The email address of the Programme's lead", pi_email_s, PL_ALL)) != NULL)
+																						{
+																							param_p -> pa_required_flag = true;
+
+
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_LOGO.npt_type, PROGRAMME_LOGO.npt_name_s, "Logo", "The web address of the programme logo", logo_s, PL_ALL)) != NULL)
+																								{
+																									success_flag = true;
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_LOGO.npt_name_s);
+																								}
+
+																						}
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_EMAIL.npt_name_s);
+																						}
 																				}
 																			else
 																				{
@@ -302,9 +322,17 @@ bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_nam
 		{
 			*pt_p = PROGRAMME_PI_NAME.npt_type;
 		}
+	else if (strcmp (param_name_s, PROGRAMME_PI_EMAIL.npt_name_s) == 0)
+		{
+			*pt_p = PROGRAMME_PI_EMAIL.npt_type;
+		}
 	else if (strcmp (param_name_s, PROGRAMME_URL.npt_name_s) == 0)
 		{
 			*pt_p = PROGRAMME_URL.npt_type;
+		}
+	else if (strcmp (param_name_s, PROGRAMME_LOGO.npt_name_s) == 0)
+		{
+			*pt_p = PROGRAMME_LOGO.npt_type;
 		}
 	else
 		{
@@ -373,7 +401,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 	OperationStatus status = OS_FAILED;
 	const char *id_s = NULL;
 	const char *name_s = NULL;
-	bson_oid_t *program_id_p = NULL;
+	bson_oid_t *programme_id_p = NULL;
 
 	/*
 	 * Get the existing program id if specified
@@ -384,9 +412,9 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 		{
 			if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
 				{
-					program_id_p = GetBSONOidFromString (id_s);
+					programme_id_p = GetBSONOidFromString (id_s);
 
-					if (!program_id_p)
+					if (!programme_id_p)
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load Programme \"%s\" for editing", id_s);
 							return false;
@@ -397,43 +425,72 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_NAME.npt_name_s, &name_s))
 		{
-			const char *pi_s = NULL;
+			const char *pi_name_s = NULL;
 
-			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_PI_NAME.npt_name_s, &pi_s))
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_PI_NAME.npt_name_s, &pi_name_s))
 				{
-					Programme *program_p = NULL;
-					const char *abbreviation_s = NULL;
-					const char *crop_id_s = NULL;
-					const char *url_s = NULL;
-					const char *objective_s = NULL;
-					Crop *crop_p = NULL;
+					const char *pi_email_s = NULL;
 
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CROP.npt_name_s, &crop_id_s);
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_URL.npt_name_s, &url_s);
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_OBJECTIVE.npt_name_s, &objective_s);
-
-					crop_p = GetCropByIdString (crop_id_s, data_p);
-
-					program_p = AllocateProgramme (program_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, pi_s);
-
-					if (program_p)
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_PI_EMAIL.npt_name_s, &pi_email_s))
 						{
-							status = SaveProgramme (program_p, job_p, data_p);
+							Person *person_p = AllocatePerson (pi_name_s, pi_email_s);
 
-							if (status == OS_FAILED)
+							if (person_p)
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Programme named \"%s\"", name_s);
+									bool freed_person_flag = false;
+									Programme *programme_p = NULL;
+									const char *abbreviation_s = NULL;
+									const char *crop_id_s = NULL;
+									const char *url_s = NULL;
+									const char *objective_s = NULL;
+									const char *logo_s = NULL;
+									Crop *crop_p = NULL;
+
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CROP.npt_name_s, &crop_id_s);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_URL.npt_name_s, &url_s);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_OBJECTIVE.npt_name_s, &objective_s);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_LOGO.npt_name_s, &logo_s);
+
+									crop_p = GetCropByIdString (crop_id_s, data_p);
+
+									programme_p = AllocateProgramme (programme_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s);
+
+									if (programme_p)
+										{
+											status = SaveProgramme (programme_p, job_p, data_p);
+
+											if (status == OS_FAILED)
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Programme named \"%s\"", name_s);
+												}
+
+											FreeProgramme (programme_p);
+											freed_person_flag = true;
+										}
+									else
+										{
+											if (crop_p)
+												{
+													FreeCrop (crop_p);
+												}
+										}
+
+									if (!freed_person_flag)
+										{
+											FreePerson (person_p);
+										}
+
+								}		/* if (person_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Person for %s, %s in programme %s", pi_name_s, pi_email_s, name_s);
 								}
 
-							FreeProgramme (program_p);
 						}
 					else
 						{
-							if (crop_p)
-								{
-									FreeCrop (crop_p);
-								}
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Programme parameter %s", PROGRAMME_PI_EMAIL.npt_name_s);
 						}
 
 				}
@@ -475,25 +532,31 @@ bool AddProgrammeToServiceJob (ServiceJob *job_p, Programme *program_p, const Vi
 
 
 
-static bool SetUpDefaultsFromExistingProgramme (const Programme *program_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss)
+static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss)
 {
-	char *program_id_s = GetBSONOidAsString (program_p -> pr_id_p);
+	char *program_id_s = GetBSONOidAsString (programme_p -> pr_id_p);
 
 	if (program_id_s)
 		{
 			*id_ss = program_id_s;
-			*name_ss = program_p -> pr_name_s;
-			*abbreviation_ss = program_p -> pr_abbreviation_s;
-			*crop_pp = program_p -> pr_crop_p;
-			*documentation_url_ss = program_p -> pr_documentation_url_s;
-			*objective_ss = program_p -> pr_objective_s;
-			*pi_name_ss = program_p -> pr_pi_name_s;
+			*name_ss = programme_p -> pr_name_s;
+			*abbreviation_ss = programme_p -> pr_abbreviation_s;
+			*crop_pp = programme_p -> pr_crop_p;
+			*documentation_url_ss = programme_p -> pr_documentation_url_s;
+			*objective_ss = programme_p -> pr_objective_s;
+			*logo_ss = programme_p -> pr_logo_url_s;
+
+			if (programme_p -> pr_pi_p)
+				{
+					*pi_name_ss = programme_p -> pr_pi_p -> pe_name_s;
+					*pi_email_ss = programme_p -> pr_pi_p -> pe_email_s;
+				}
 
 			return true;
 		}		/* if (tprogrma_id_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy program id for \"%s\"", program_p -> pr_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy programme id for \"%s\"", programme_p -> pr_name_s);
 		}
 
 	return false;

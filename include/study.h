@@ -33,6 +33,7 @@
 #include "jansson.h"
 #include "key_value_pair.h"
 #include "crop.h"
+#include "person.h"
 
 #include "typedefs.h"
 #include "address.h"
@@ -64,6 +65,10 @@ STUDY_PREFIX const char *ST_LOCATION_ID_S STUDY_VAL ("address_id");
 
 STUDY_PREFIX const char *ST_LOCATION_S STUDY_VAL ("address");
 
+
+STUDY_PREFIX const char *ST_CONTACT_S STUDY_VAL ("contact");
+
+STUDY_PREFIX const char *ST_CURATOR_S STUDY_VAL ("curator");
 
 STUDY_PREFIX const char *ST_SOIL_S STUDY_VAL ("soil");
 
@@ -226,13 +231,9 @@ typedef struct Study
 
 	LinkedList *st_treatments_p;
 
-	char *st_curator_name_s;
+	Person *st_curator_p;
 
-	char *st_curator_email_s;
-
-	char *st_contact_name_s;
-
-	char *st_contact_email_s;
+	Person *st_contact_p;
 
 } Study;
 
@@ -262,9 +263,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 																										const char *weather_s, const json_t *shape_p, const double64 *plot_horizontal_gap_p, const double64 *plot_vertical_gap_p,
 																										const uint32 *plot_rows_per_block_p, const uint32 *plot_columns_per_block_p, const double64 *plot_block_horizontal_gap_p,
 																										const double64 *plot_block_vertical_gap_p,
-																										const char *curator_name_s, const char *curator_email_s,
-																										const char *contact_name_s, const char *contact_email_s,
+																										Person *curator_p, Person *contact_p,
 																										const FieldTrialServiceData *data_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 
