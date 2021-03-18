@@ -92,7 +92,8 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 												}
 
 
-											if (GetTreatmentFactorTableParameter (param_set_p, NULL, active_tf_p, ft_data_p))
+
+											if (GetTreatmentFactorTableParameter (param_set_p, NULL, tf_json_p, ft_data_p))
 												{
 													success_flag = true;
 												}
