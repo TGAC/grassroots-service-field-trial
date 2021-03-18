@@ -83,23 +83,31 @@ void FreePerson (Person *person_p)
 bool AddPersonToCompoundJSON (const Person *person_p, json_t *parent_json_p, const char * const key_s,  const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *person_json_p = GetPersonAsJSON (person_p, format, data_p);
 
-	if (person_json_p)
+	if (person_p)
 		{
-			if (json_object_set_new (parent_json_p, key_s, person_json_p) == 0)
+			json_t *person_json_p = GetPersonAsJSON (person_p, format, data_p);
+
+			if (person_json_p)
 				{
-					success_flag = true;
+					if (json_object_set_new (parent_json_p, key_s, person_json_p) == 0)
+						{
+							success_flag = true;
+						}
+					else
+						{
+							json_decref (parent_json_p);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, parent_json_p, "Failed to add person to json \"%s\" \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
+						}
 				}
 			else
 				{
-					json_decref (parent_json_p);
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, parent_json_p, "Failed to add person to json \"%s\" \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get person as json \"%s\" \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get person as json \"%s\" \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
+			success_flag = true;
 		}
 
 	return success_flag;
