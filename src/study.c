@@ -1760,9 +1760,9 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																																										{
 																																											if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																												{
-																																													if (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p))
+																																													if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
 																																														{
-																																															if (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p))
+																																															if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																																{
 																																																	success_flag = true;
 																																																}
