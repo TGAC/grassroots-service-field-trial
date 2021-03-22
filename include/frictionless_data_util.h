@@ -1,0 +1,76 @@
+/*
+ * frictionless_data_util.h
+ *
+ *  Created on: 22 Mar 2021
+ *      Author: billy
+ */
+
+#ifndef SERVICES_FIELD_TRIALS_INCLUDE_FRICTIONLESS_DATA_UTIL_H_
+#define SERVICES_FIELD_TRIALS_INCLUDE_FRICTIONLESS_DATA_UTIL_H_
+
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_FD_UTIL_TAGS
+	#define FD_UTIL_PREFIX DFW_FIELD_TRIAL_SERVICE_API
+	#define FD_UTIL_VAL(x)	= x
+#else
+	#define FD_UTIL_PREFIX extern
+	#define FD_UTIL_VAL(x)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
+/*
+ * Table fields
+ */
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_NAME FD_UTIL_VAL ("name");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_TITLE FD_UTIL_VAL ("title");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_TYPE FD_UTIL_VAL ("type");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_FORMAT FD_UTIL_VAL ("format");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_DESCRIPTION FD_UTIL_VAL ("description");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINTS FD_UTIL_VAL ("constraints");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_RDF_TYPE FD_UTIL_VAL ("rdfType");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_NULL_VALUE FD_UTIL_VAL ("missingValues");
+
+
+/*
+ * CSV Dialect
+ */
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_DELIMITER FD_UTIL_VAL ("delimiter");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_LINE_TERMINATOR FD_UTIL_VAL ("lineTerminator");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_QUOTE_CHAR FD_UTIL_VAL ("type");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_DOUBLE_QUOTE FD_UTIL_VAL ("format");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_ESCAPE_CHAR FD_UTIL_VAL ("escapeChar");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_NULL_VALUE FD_UTIL_VAL ("nullSequence");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_SKIP_INITIAL_SPACE FD_UTIL_VAL ("skipInitialSpace");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_HEADER_ROW FD_UTIL_VAL ("header");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_COMMENT_CHAR FD_UTIL_VAL ("commentChar");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_CASE_SENSITIVE_HEADER FD_UTIL_VAL ("caseSensitiveHeader");
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_VERSION FD_UTIL_VAL ("csvddfVersion");
+
+
+
+
+
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_FRICTIONLESS_DATA_UTIL_H_ */
