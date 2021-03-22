@@ -34,51 +34,51 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef ALLOCATE_PLOT_TAGS
-	#define PLOT_PREFIX DFW_FIELD_TRIAL_SERVICE_API
-	#define PLOT_VAL(x)	= x
+	#define FD_UTIL_PREFIX DFW_FIELD_TRIAL_SERVICE_API
+	#define FD_UTIL_VAL(x)	= x
 	#define PLOT_CONCAT_VAL(x,y)	= x y
 #else
-	#define PLOT_PREFIX extern
-	#define PLOT_VAL(x)
+	#define FD_UTIL_PREFIX extern
+	#define FD_UTIL_VAL(x)
 	#define PLOT_CONCAT_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
-PLOT_PREFIX const char *PL_ID_S PLOT_VAL ("id");
+FD_UTIL_PREFIX const char *PL_ID_S FD_UTIL_VAL ("id");
 
-PLOT_PREFIX const char *PL_PARENT_STUDY_S PLOT_VAL ("parent_study_id");
+FD_UTIL_PREFIX const char *PL_PARENT_STUDY_S FD_UTIL_VAL ("parent_study_id");
 
-PLOT_PREFIX const char *PL_SOWING_DATE_S PLOT_VAL ("sowing_date");
+FD_UTIL_PREFIX const char *PL_SOWING_DATE_S FD_UTIL_VAL ("sowing_date");
 
-PLOT_PREFIX const char *PL_HARVEST_DATE_S PLOT_VAL ("harvest_date");
+FD_UTIL_PREFIX const char *PL_HARVEST_DATE_S FD_UTIL_VAL ("harvest_date");
 
-PLOT_PREFIX const char *PL_WIDTH_S PLOT_VAL ("width");
+FD_UTIL_PREFIX const char *PL_WIDTH_S FD_UTIL_VAL ("width");
 
-PLOT_PREFIX const char *PL_LENGTH_S PLOT_VAL ("length");
+FD_UTIL_PREFIX const char *PL_LENGTH_S FD_UTIL_VAL ("length");
 
-PLOT_PREFIX const char *PL_TREATMENT_S PLOT_VAL ("treatment");
+FD_UTIL_PREFIX const char *PL_TREATMENT_S FD_UTIL_VAL ("treatment");
 
-PLOT_PREFIX const char *PL_ROW_INDEX_S PLOT_VAL ("row_index");
+FD_UTIL_PREFIX const char *PL_ROW_INDEX_S FD_UTIL_VAL ("row_index");
 
-PLOT_PREFIX const char *PL_COLUMN_INDEX_S PLOT_VAL ("column_index");
+FD_UTIL_PREFIX const char *PL_COLUMN_INDEX_S FD_UTIL_VAL ("column_index");
 
-PLOT_PREFIX const char *PL_ROWS_S PLOT_VAL ("rows");
+FD_UTIL_PREFIX const char *PL_ROWS_S FD_UTIL_VAL ("rows");
 
-PLOT_PREFIX const char *PL_RACK_INDICES_S PLOT_VAL ("rack_indices");
+FD_UTIL_PREFIX const char *PL_RACK_INDICES_S FD_UTIL_VAL ("rack_indices");
 
-PLOT_PREFIX const char *PL_COMMENT_S PLOT_VAL ("comment");
+FD_UTIL_PREFIX const char *PL_COMMENT_S FD_UTIL_VAL ("comment");
 
-PLOT_PREFIX const char *PL_IMAGE_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "image");
+FD_UTIL_PREFIX const char *PL_IMAGE_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "image");
 
-PLOT_PREFIX const char *PL_THUMBNAIL_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "thumbnail");
+FD_UTIL_PREFIX const char *PL_THUMBNAIL_S PLOT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "thumbnail");
 
-PLOT_PREFIX int32 PL_UNSET_ID PLOT_VAL (INT32_MAX);
+FD_UTIL_PREFIX int32 PL_UNSET_ID FD_UTIL_VAL (INT32_MAX);
 
-PLOT_PREFIX const char *PL_SOWING_ORDER_S PLOT_VAL ("sowing_order");
+FD_UTIL_PREFIX const char *PL_SOWING_ORDER_S FD_UTIL_VAL ("sowing_order");
 
-PLOT_PREFIX const char *PL_WALKING_ORDER_S PLOT_VAL ("walking_order");
+FD_UTIL_PREFIX const char *PL_WALKING_ORDER_S FD_UTIL_VAL ("walking_order");
 
 
 typedef struct Plot

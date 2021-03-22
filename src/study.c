@@ -238,6 +238,11 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, 
 
 																																																											study_p -> st_treatments_p = treatments_p;
 
+																																																											study_p -> st_contact_name_s = NULL;
+																																																											study_p -> st_contact_email_s = NULL;
+																																																											study_p -> st_curator_name_s = NULL;
+																																																											study_p -> st_curator_email_s = NULL;
+
 																																																											return study_p;
 																																																										}
 
@@ -618,6 +623,26 @@ void FreeStudy (Study *study_p)
 		}
 
 
+	if (study_p -> st_contact_name_s)
+		{
+			FreeCopiedString (study_p -> st_contact_name_s);
+		}
+
+	if (study_p -> st_contact_email_s)
+		{
+			FreeCopiedString (study_p -> st_contact_email_s);
+		}
+
+	if (study_p -> st_curator_name_s)
+		{
+			FreeCopiedString (study_p -> st_curator_name_s);
+		}
+
+	if (study_p -> st_curator_email_s)
+		{
+			FreeCopiedString (study_p -> st_curator_email_s);
+		}
+
 	FreeMemory (study_p);
 }
 
@@ -813,27 +838,27 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 		{
 			if (SetJSONString (study_json_p, ST_NAME_S, study_p -> st_name_s))
 				{
-					if (SetNonTrivialDouble (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph_p))
+					if (SetNonTrivialDouble (study_json_p, ST_MIN_PH_S, study_p -> st_min_ph_p, true))
 						{
-							if (SetNonTrivialDouble (study_json_p, ST_MAX_PH_S, study_p -> st_max_ph_p))
+							if (SetNonTrivialDouble (study_json_p, ST_MAX_PH_S, study_p -> st_max_ph_p, true))
 								{
-									if (SetNonTrivialString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s))
+									if (SetNonTrivialString (study_json_p, ST_DESCRIPTION_S, study_p -> st_description_s, true))
 										{
-											if (SetNonTrivialString (study_json_p, ST_GROWING_CONDITIONS_S, study_p -> st_growing_conditions_s))
+											if (SetNonTrivialString (study_json_p, ST_GROWING_CONDITIONS_S, study_p -> st_growing_conditions_s, true))
 												{
-													if (SetNonTrivialString (study_json_p, ST_DESIGN_S, study_p -> st_design_s))
+													if (SetNonTrivialString (study_json_p, ST_DESIGN_S, study_p -> st_design_s, true))
 														{
-															if (SetNonTrivialString (study_json_p, ST_GROWING_CONDITIONS_S, study_p -> st_growing_conditions_s))
+															if (SetNonTrivialString (study_json_p, ST_GROWING_CONDITIONS_S, study_p -> st_growing_conditions_s, true))
 																{
-																	if (SetNonTrivialString (study_json_p, ST_PHENOTYPE_GATHERING_NOTES_S, study_p -> st_phenotype_gathering_notes_s))
+																	if (SetNonTrivialString (study_json_p, ST_PHENOTYPE_GATHERING_NOTES_S, study_p -> st_phenotype_gathering_notes_s, true))
 																		{
-																			if (SetNonTrivialString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s))
+																			if (SetNonTrivialString (study_json_p, ST_DATA_LINK_S, study_p -> st_data_url_s, true))
 																				{
-																					if (SetNonTrivialString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s))
+																					if (SetNonTrivialString (study_json_p, ST_SOIL_S, study_p -> st_soil_type_s, true))
 																						{
-																							if (SetNonTrivialString (study_json_p, ST_SLOPE_S, study_p -> st_slope_s))
+																							if (SetNonTrivialString (study_json_p, ST_SLOPE_S, study_p -> st_slope_s, true))
 																								{
-																									if (SetNonTrivialString (study_json_p, ST_WEATHER_S, study_p -> st_weather_link_s))
+																									if (SetNonTrivialString (study_json_p, ST_WEATHER_S, study_p -> st_weather_link_s, true))
 																										{
 																											if (AddValidAspectToJSON (study_p, study_json_p))
 																												{
@@ -841,17 +866,17 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																														{
 																															if ((!study_p -> st_shape_p) || (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0))
 																																{
-																																	if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p))
+																																	if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
 																																		{
-																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p))
+																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
 																																				{
-																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p))
+																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
 																																						{
-																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p))
+																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
 																																								{
-																																									if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p))
+																																									if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
 																																										{
-																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p))
+																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
 																																												{
 																																													if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																														{
@@ -1691,15 +1716,15 @@ static bool AddGrandParentProgramToJSON (Study *study_p, json_t *study_json_p, c
 
 static bool AddDefaultPlotValuesToJSON (const Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
-	if (SetNonTrivialDouble (study_json_p, ST_PLOT_WIDTH_S, study_p -> st_default_plot_width_p))
+	if (SetNonTrivialDouble (study_json_p, ST_PLOT_WIDTH_S, study_p -> st_default_plot_width_p, true))
 		{
-			if (SetNonTrivialDouble (study_json_p, ST_PLOT_LENGTH_S, study_p -> st_default_plot_length_p))
+			if (SetNonTrivialDouble (study_json_p, ST_PLOT_LENGTH_S, study_p -> st_default_plot_length_p, true))
 				{
-					if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_PLOT_ROWS_S, study_p -> st_num_rows_p))
+					if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_PLOT_ROWS_S, study_p -> st_num_rows_p, true))
 						{
-							if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_PLOT_COLUMN_S, study_p -> st_num_columns_p))
+							if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_PLOT_COLUMN_S, study_p -> st_num_columns_p, true))
 								{
-									if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_REPLICATES_S, study_p -> st_num_replicates_p))
+									if (SetNonTrivialUnsignedInt (study_json_p, ST_NUMBER_OF_REPLICATES_S, study_p -> st_num_replicates_p, true))
 										{
 											return true;
 										}

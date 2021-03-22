@@ -53,6 +53,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, con
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const FieldTrialServiceData *data_p);
 
 
+/**
+ * Get the plots as a Frictionless Data Table
+ *
+ * @param study_p The Study to get the plots for.
+ * @param data_p The Field Trial Service Config
+ * @return The JSON for the plots or <code>NULL</code> upon error.
+ */
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsAsFDTable (Study *study_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

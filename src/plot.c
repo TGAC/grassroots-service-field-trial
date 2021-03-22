@@ -348,19 +348,19 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 				{
 					if (SetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, plot_p -> pl_column_index))
 						{
-							if (SetNonTrivialDouble (plot_json_p, PL_WIDTH_S, plot_p -> pl_width_p))
+							if (SetNonTrivialDouble (plot_json_p, PL_WIDTH_S, plot_p -> pl_width_p, true))
 								{
-									if (SetNonTrivialDouble (plot_json_p, PL_LENGTH_S, plot_p -> pl_length_p))
+									if (SetNonTrivialDouble (plot_json_p, PL_LENGTH_S, plot_p -> pl_length_p, true))
 										{
-											if (SetNonTrivialUnsignedInt (plot_json_p, PL_SOWING_ORDER_S, plot_p -> pl_sowing_order_index_p))
+											if (SetNonTrivialUnsignedInt (plot_json_p, PL_SOWING_ORDER_S, plot_p -> pl_sowing_order_index_p, true))
 												{
-													if (SetNonTrivialUnsignedInt (plot_json_p, PL_WALKING_ORDER_S, plot_p -> pl_walking_order_index_p))
+													if (SetNonTrivialUnsignedInt (plot_json_p, PL_WALKING_ORDER_S, plot_p -> pl_walking_order_index_p, true))
 														{
-															if ((IsStringEmpty (plot_p -> pl_comment_s)) || (SetJSONString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s)))
+															if (SetNonTrivialString (plot_json_p, PL_COMMENT_S, plot_p -> pl_comment_s, false))
 																{
-																	if ((IsStringEmpty (plot_p -> pl_treatments_s)) || (SetJSONString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s)))
+																	if (SetNonTrivialString (plot_json_p, PL_TREATMENT_S, plot_p -> pl_treatments_s, false))
 																		{
-																			if ((IsStringEmpty (plot_p -> pl_image_url_s)) || (SetJSONString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s)))
+																			if (SetNonTrivialString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s, false))
 																				{
 																					if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S))
 																						{
@@ -492,7 +492,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 														{
 															if (plot_p -> pl_walking_order_index_p)
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": " UINT32_FMT, PL_WALKING_ORDER_S, * (plot_p -> pl_walking_order_index_p));
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": "  UINT32_FMT "", PL_WALKING_ORDER_S, * (plot_p -> pl_walking_order_index_p));
 																}
 															else
 																{

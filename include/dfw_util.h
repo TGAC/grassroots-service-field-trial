@@ -82,11 +82,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool FindAndAddResultToServiceJob (const char *id_
 																																 const DFWFieldTrialData datatype, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p, const bool null_flag);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s, const bool null_flag);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p, const bool null_fla);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **ph_pp);
 

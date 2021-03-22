@@ -226,6 +226,12 @@ typedef struct Study
 
 	LinkedList *st_treatments_p;
 
+	char *st_contact_name_s;
+	char *st_contact_email_s;
+
+	char *st_curator_name_s;
+	char *st_curator_email_s;
+
 } Study;
 
 

@@ -687,13 +687,16 @@ LinkedList *SearchObjects (const FieldTrialServiceData *data_p, const DFWFieldTr
 }
 
 
-bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s)
+bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s, const bool null_flag)
 {
 	bool success_flag = false;
 
 	if (IsStringEmpty (value_s))
 		{
-			success_flag = SetJSONNull (value_p, key_s);
+			if (null_flag)
+				{
+					success_flag = SetJSONNull (value_p, key_s);
+				}
 		}
 	else
 		{
@@ -704,7 +707,7 @@ bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_
 }
 
 
-bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p)
+bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p, const bool null_flag)
 {
 	bool success_flag = false;
 
@@ -712,7 +715,7 @@ bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *val
 		{
 			success_flag = SetJSONReal (json_p, key_s, *value_p);
 		}
-	else
+	else if (null_flag)
 		{
 			success_flag = SetJSONNull (json_p, key_s);
 		}
@@ -721,7 +724,7 @@ bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *val
 }
 
 
-bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p)
+bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p, const bool null_flag)
 {
 	bool success_flag = false;
 
@@ -729,7 +732,7 @@ bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *
 		{
 			success_flag = SetJSONInteger (json_p, key_s, *value_p);
 		}
-	else
+	else if (null_flag)
 		{
 			success_flag = SetJSONNull (json_p, key_s);
 		}
@@ -737,6 +740,8 @@ bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *
 	return success_flag;
 
 }
+
+
 
 
 bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **answer_pp)

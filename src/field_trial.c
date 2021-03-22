@@ -241,9 +241,9 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 
 	if (trial_json_p)
 		{
-			if (SetNonTrivialString (trial_json_p, FT_NAME_S, trial_p -> ft_name_s))
+			if (SetNonTrivialString (trial_json_p, FT_NAME_S, trial_p -> ft_name_s, true))
 				{
-					if (SetNonTrivialString (trial_json_p, FT_TEAM_S, trial_p -> ft_team_s))
+					if (SetNonTrivialString (trial_json_p, FT_TEAM_S, trial_p -> ft_team_s, true))
 						{
 							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 								{

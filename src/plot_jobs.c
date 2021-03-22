@@ -887,6 +887,44 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study
 }
 
 
+/*
+ * https://frictionlessdata.io/data-package/#the-data-package-suite-of-specifications
+ * https://specs.frictionlessdata.io/table-schema/
+ * https://specs.frictionlessdata.io/csv-dialect/#specification
+ * */
+json_t *GetPlotsAsFDTable (Study *study_p, const FieldTrialServiceData *data_p)
+{
+	json_t *plots_table_p = json_object ();
+
+	if (plots_table_p)
+		{
+
+		}		/* if (plots_table_p) */
+
+	return plots_table_p;
+}
+
+/*
+ * https://specs.frictionlessdata.io/table-schema/
+ */
+bool AddPlotsTableSchema (json_t *table_p)
+{
+	bool success_flag = false;
+	json_t *fields_p = json_array ();
+
+	if (fields_p)
+		{
+
+		}		/* if (fields_p) */
+
+	return success_flag;
+}
+
+
+/*
+ * STATIC DEFINITIONS
+ */
+
 static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;

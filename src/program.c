@@ -160,9 +160,9 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 
 	if (programme_json_p)
 		{
-			if (SetNonTrivialString (programme_json_p, PR_NAME_S, programme_p -> pr_name_s))
+			if (SetNonTrivialString (programme_json_p, PR_NAME_S, programme_p -> pr_name_s, true))
 				{
-					if (SetNonTrivialString (programme_json_p, PR_PI_NAME_S, programme_p -> pr_pi_name_s))
+					if (SetNonTrivialString (programme_json_p, PR_PI_NAME_S, programme_p -> pr_pi_name_s, true))
 						{
 							if (AddDatatype (programme_json_p, DFTD_PROGRAM))
 								{
@@ -653,11 +653,11 @@ bool RemoveProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p)
 
 static bool AddFullDetailsToProgrammeJSON (const Programme *programme_p, json_t *programme_json_p)
 {
-	if (SetNonTrivialString (programme_json_p, PR_DOCUMENTATION_URL_S, programme_p -> pr_documentation_url_s))
+	if (SetNonTrivialString (programme_json_p, PR_DOCUMENTATION_URL_S, programme_p -> pr_documentation_url_s, true))
 		{
-			if (SetNonTrivialString (programme_json_p, PR_OBJECTIVE_S, programme_p -> pr_objective_s))
+			if (SetNonTrivialString (programme_json_p, PR_OBJECTIVE_S, programme_p -> pr_objective_s, true))
 				{
-					if (SetNonTrivialString (programme_json_p, PR_ABBREVIATION_S, programme_p -> pr_abbreviation_s))
+					if (SetNonTrivialString (programme_json_p, PR_ABBREVIATION_S, programme_p -> pr_abbreviation_s, true))
 						{
 							if (AddCompoundIdToJSON (programme_json_p, programme_p -> pr_id_p))
 								{
