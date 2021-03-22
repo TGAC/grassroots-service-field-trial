@@ -52,16 +52,22 @@ typedef struct Programme
 	char *pr_objective_s;
 
 	/**
-	 * The name of the program leader
+	 * The programme leader
 	 */
-	char *pr_pi_name_s;
+	Person *pr_pi_p;
 
 	/**
 	 * A LinkedList of FieldTrialNodes
 	 * for all of the FieldTrials in this
-	 * Program.
+	 * Programme.
 	 */
 	LinkedList *pr_trials_p;
+
+
+	/**
+	 * Web address of on optional logo
+	 */
+	char *pr_logo_url_s;
 
 } Programme;
 
@@ -75,7 +81,7 @@ typedef struct ProgrammeNode
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#ifdef ALLOCATE_PROGRAM_TAGS
+#ifdef ALLOCATE_PROGRAMME_TAGS
 	#define PROGRAMME_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
 	#define PROGRAMME_VAL(x)	= x
 	#define PROGRAMME_CONCAT_VAL(x,y)	= x y
@@ -99,12 +105,13 @@ PROGRAMME_PREFIX const char *PR_TRIALS_S PROGRAMME_VAL ("trials");
 
 PROGRAMME_PREFIX const char *PR_DOCUMENTATION_URL_S PROGRAMME_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "url");
 
-PROGRAMME_PREFIX const char *PR_PI_NAME_S PROGRAMME_VAL ("principal_investigator");
+PROGRAMME_PREFIX const char *PR_PI_S PROGRAMME_VAL ("principal_investigator");
 
 PROGRAMME_PREFIX const char *PR_CROP_S PROGRAMME_VAL ("crop");
 
 PROGRAMME_PREFIX const char *PR_ABBREVIATION_S PROGRAMME_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "alternateName");
 
+PROGRAMME_PREFIX const char *PR_LOGO_S PROGRAMME_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "image");
 
 
 #ifdef __cplusplus
@@ -113,7 +120,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, const char *pi_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgramme (Programme *programme_p);

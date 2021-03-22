@@ -79,11 +79,12 @@ SRCS 	= \
 	measured_variable.c \
 	measured_variable_jobs.c \
 	observation.c \
+	person.c \
 	phenotype_jobs.c \
 	plot.c \
 	plot_jobs.c \
-	program.c \
-	program_jobs.c \
+	programme.c \
+	programme_jobs.c \
 	row.c \
 	row_jobs.c \
 	row_processor.c \

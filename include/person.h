@@ -30,38 +30,64 @@
 #include "address.h"
 #include "typedefs.h"
 
-/*
- *    "description": "Example Person",
-        "emailAddress": "bob@bob.com",
-        "firstName": "Bob",
-        "lastName": "Robertson",
-        "mailingAddress": "123 Road Street, City, State, Country, 98765",
-        "middleName": "Danger",
-        "personDbId": "person1",
-        "phoneNumber": "+19876543210",
-        "userID": "bdr45"
- */
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef ALLOCATE_STUDY_TAGS
+	#define PERSON_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define PERSON_VAL(x)	= x
+	#define PERSON_CONCAT_VAL(x,y)	= x y
+#else
+	#define PERSON_PREFIX extern
+	#define PERSON_VAL(x)
+	#define PERSON_CONCAT_VAL(x,y)
+#endif
+
+#endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
+
 
 typedef struct Person
 {
-	bson_oid_t *pe_id_p;
-
-	char *pe_first_name_s;
-
-	char *pe_middle_name_s;
-
-	char *pe_last_name_s;
+	char *pe_name_s;
 
 	char *pe_email_s;
 
-	char *pe_description_s;
-
-	char *pe_phone_s;
-
-	Address *pe_mailing_address_p;
-
 } Person;
 
+
+PERSON_PREFIX const char *PE_NAME_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
+
+PERSON_PREFIX const char *PE_EMAIL_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "email");
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Person *AllocatePerson (const char *name_s, const char *email_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePerson (Person *person_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPersonAsJSON (const Person * const person_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Person *GetPersonFromJSON (const json_t *parent_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPersonToCompoundJSON (const Person *person_p, json_t *parent_json_p, const char * const key_s,  const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Person *GetPersonFromCompoundJSON (const json_t *json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* SERVICES_FIELD_TRIALS_INCLUDE_PERSON_H_ */
