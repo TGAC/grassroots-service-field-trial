@@ -1915,6 +1915,13 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 }
 
 
+json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *data_p)
+{
+	return NULL;
+}
+
+
+
 static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_s, bool (*add_value_fn) (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p), const FieldTrialServiceData *data_p)
 {
 	json_t *values_p = NULL;

@@ -70,7 +70,84 @@ FD_UTIL_PREFIX const char *FD_CSV_DIALECT_CASE_SENSITIVE_HEADER FD_UTIL_VAL ("ca
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_VERSION FD_UTIL_VAL ("csvddfVersion");
 
 
+/*
+ * Types
+ */
 
+/** The field contains strings, that is, sequences of characters. */
+FD_UTIL_PREFIX const char *FD_TYPE_STRING FD_UTIL_VAL ("string");
+
+/** Any valid string.*/
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("default");
+
+/** A valid email address. */
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("email");
+
+/** A valid URI. */
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("uri");
+
+/** A base64 encoded string representing binary data. */
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("binary");
+
+/** A string that is a uuid. */
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("uuid");
+
+
+
+/** The field contains numbers of any kind including decimals. */
+FD_UTIL_PREFIX const char *FD_TYPE_NUMBER FD_UTIL_VAL ("number");
+
+
+
+/**
+ * The field contains integers - that is whole numbers.
+ *
+ * Integer values are indicated in the standard way for any valid integer.
+ */
+FD_UTIL_PREFIX const char *FD_TYPE_INTEGER FD_UTIL_VAL ("integer");
+
+
+/** The field contains boolean (true/false) data. */
+FD_UTIL_PREFIX const char *FD_TYPE_BOOLEAN FD_UTIL_VAL ("boolean");
+
+
+/**
+ * A date without a time.
+ */
+FD_UTIL_PREFIX const char *FD_TYPE_DATE FD_UTIL_VAL ("date");
+
+
+/**
+ * A time without a date.
+ */
+FD_UTIL_PREFIX const char *FD_TYPE_TIME FD_UTIL_VAL ("time");
+
+
+/**
+ * A date with a time.
+ */
+FD_UTIL_PREFIX const char *FD_TYPE_DATETIME FD_UTIL_VAL ("datetime");
+
+
+/**
+ * The field contains a JSON object according to GeoJSON or TopoJSON spec.
+ */
+FD_UTIL_PREFIX const char *FD_TYPE_GEOJSON FD_UTIL_VAL ("geojson");
+
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* SERVICES_FIELD_TRIALS_INCLUDE_FRICTIONLESS_DATA_UTIL_H_ */

@@ -42,6 +42,7 @@
 #include "time_parameter.h"
 #include "unsigned_int_parameter.h"
 
+#include "frictionless_data_util.h"
 
 typedef enum
 {
@@ -62,10 +63,22 @@ typedef enum
 
 
 static const char * const S_SOWING_TITLE_S = "Sowing date";
+#define S_SOWING_DESCRIPTION_S "Sowing date of the plot"
+
+
 static const char * const S_HARVEST_TITLE_S = "Harvest date";
+#define S_HARVEST_DESCRIPTION_S "Harvest date of the plot"
+
 static const char * const S_WIDTH_TITLE_S = "Width";
+#define S_WIDTH_DESCRIPTION_S "This is the width, in metres, of each plot"
+
 static const char * const S_LENGTH_TITLE_S = "Length";
+#define S_LENGTH_DESCRIPTION_S "This is the length, in metres, of each plot"
+
 static const char * const S_INDEX_TITLE_S = "Plot ID";
+static const char * const S_INDEX_DESCRIPTION_S = "The ID of the rack. This is a number given to uniquely identify each rack in the Study similar to a primary key in a database."
+		" If GeoJSON and/or images are available, this will be used to identify which plot this information refers to.";
+
 static const char * const S_ROW_TITLE_S = "Row";
 static const char * const S_COLUMN_TITLE_S = "Column";
 static const char * const S_RACK_TITLE_S = "Rack";
@@ -315,6 +328,83 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
+json_t *GetStudyPlotHeaderAsFrictionlessData (void)
+{
+	json_t *fields_p = json_array ();
+
+	if (fields_p)
+		{
+			/*
+			 * static const char * const S_LENGTH_TITLE_S = "Length";
+			 * static const char * const S_ROW_TITLE_S = "Row";
+			 * static const char * const S_COLUMN_TITLE_S = "Column";
+			 * static const char * const S_RACK_TITLE_S = "Rack";
+			 * static const char * const S_ACCESSION_TITLE_S = "Accession";
+			 * static const char * const S_GENE_BANK_S = "Gene Bank";
+			 * static const char * const S_TREATMENT_TITLE_S = "Treatment";
+			 * static const char * const S_REPLICATE_TITLE_S = "Replicate";
+			 * static const char * const S_COMMENT_TITLE_S = "Comment";
+			 * static const char * const S_IMAGE_TITLE_S = "Image";
+			 * static const char * const S_THUMBNAIL_TITLE_S = "Thumbnail";
+			 * static const char * const S_SOWING_ORDER_TITLE_S = "Sowing order";
+			 * static const char * const S_WALKING_ORDER_TITLE_S = "Walking order";
+			 */
+			if (AddTableField (fields_p, S_INDEX_TITLE_S, S_INDEX_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL))
+				{
+					if (AddTableField (fields_p, S_SOWING_TITLE_S, S_SOWING_TITLE_S, FD_TYPE_DATE, NULL, S_SOWING_DESCRIPTION_S, NULL))
+						{
+							if (AddTableField (fields_p, S_HARVEST_TITLE_S, S_HARVEST_TITLE_S, FD_TYPE_DATE, NULL, S_HARVEST_DESCRIPTION_S, NULL))
+								{
+									if (AddTableField (fields_p, S_WIDTH_TITLE_S, S_WIDTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_WIDTH_DESCRIPTION_S, NULL))
+										{
+											if (AddTableField (fields_p, S_LENGTH_TITLE_S, S_LENGTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_LENGTH_DESCRIPTION_S, NULL))
+												{
+
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_LENGTH_TITLE_S);
+												}
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_WIDTH_TITLE_S);
+										}
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_HARVEST_TITLE_S);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_SOWING_TITLE_S);
+						}
+
+				}		/* if (AddTableField (fields_p, S_INDEX_TITLE_S, S_INDEX_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_INDEX_TITLE_S);
+				}
+
+			json_decref (fields_p);
+		}		/* if (fields_p) */
+
+	return NULL;
+}
+
+
+
+json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceData *data_p)
+{
+	json_t *plot_json_p = NULL;
+	//GetStudyAsJSON (study_p, format, processor_p, data_p);
+
+	return plot_json_p;
+}
+
+
+
 
 /*
  * static definitions
@@ -331,13 +421,13 @@ static json_t *GetTableParameterHints (void)
 
 	if (hints_p)
 		{
-			if (AddColumnParameterHint (S_SOWING_TITLE_S, "Sowing date of the plot. If left blank, then the *Sowing date* specified for the Study will be used.", PT_TIME, false, hints_p))
+			if (AddColumnParameterHint (S_SOWING_TITLE_S, S_SOWING_DESCRIPTION_S ". If left blank, then the *Sowing date* specified for the Study will be used.", PT_TIME, false, hints_p))
 				{
-					if (AddColumnParameterHint (S_HARVEST_TITLE_S, "Harvest date of the plot. If left blank, then the *Harvest date* specified for the Study will be used.", PT_TIME, false, hints_p))
+					if (AddColumnParameterHint (S_HARVEST_TITLE_S, "Harvest date of the plot. If this is blank, then the *Harvest date* specified for the Study will be used.", PT_TIME, false, hints_p))
 						{
-							if (AddColumnParameterHint (S_WIDTH_TITLE_S, "This is the width, in metres, of each plot. If left blank, then the *Plot width* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
+							if (AddColumnParameterHint (S_WIDTH_TITLE_S, S_WIDTH_DESCRIPTION_S ". If this is blank, then the *Plot width* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
 								{
-									if (AddColumnParameterHint (S_LENGTH_TITLE_S, "This is the length, in metres, of each plot. If left blank, then the *Plot height* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
+									if (AddColumnParameterHint (S_LENGTH_TITLE_S, S_LENGTH_DESCRIPTION_S ". If this is blank, then the *Plot height* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
 										{
 											if (AddColumnParameterHint (S_INDEX_TITLE_S, "The ID of the rack. This is a number given to uniquely identify each rack in the Study similar to a primary key in a database."
 													"If GeoJSON and/or images are available, this will be used to identify which plot this information refers to.", PT_UNSIGNED_INT, true, hints_p))

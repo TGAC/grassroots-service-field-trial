@@ -6,6 +6,8 @@
  */
 
 #include "typedefs.h"
+
+#define ALLOCATE_FD_UTIL_TAGS (1)
 #include "frictionless_data_util.h"
 #include "json_util.h"
 #include "streams.h"
@@ -15,7 +17,7 @@
  *
  * TODO add constraints
  * */
-static bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s)
+bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s)
 {
 	json_t *field_p = json_object ();
 
@@ -98,28 +100,28 @@ static json_t *GetCSVDialect (const char *delimter_s, const char *line_terminato
 									if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_RDF_TYPE, rdf_type_s, false))
 										{
 
-										}		/* if (SetNonTrivialString (field_p, FD_TABLE_FIELD_RDF_TYPE, rdf_type_s)) */
+										}		/* if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_RDF_TYPE, rdf_type_s)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_p, "Failed to add %s: %s", FD_TABLE_FIELD_RDF_TYPE, rdf_type_s ? rdf_type_s : "NULL");
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_TABLE_FIELD_RDF_TYPE, rdf_type_s ? rdf_type_s : "NULL");
 										}
 
-								}		/* if (SetNonTrivialString (field_p, FD_TABLE_FIELD_DESCRIPTION, description_s)) */
+								}		/* if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_DESCRIPTION, description_s)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_p, "Failed to add %s: %s", FD_TABLE_FIELD_TYPE, description_s ? description_s : "NULL");
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_TABLE_FIELD_TYPE, description_s ? description_s : "NULL");
 								}
 
-						}		/* if (SetNonTrivialString (field_p, FD_TABLE_FIELD_FORMAT, format_s)) */
+						}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_p, "Failed to add %s: %s", FD_TABLE_FIELD_FORMAT, format_s ? format_s : "NULL");
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s ? line_terminator_s : "NULL");
 						}
 
-				}		/* if (SetNonTrivialString (field_p, FD_TABLE_FIELD_TYPE, type_s)) */
+				}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s)) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, field_p, "Failed to add %s: %s", FD_TABLE_FIELD_TYPE, type_s ? type_s : "NULL");
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_CSV_DIALECT_DELIMITER, delimter_s ? delimter_s : "NULL");
 				}
 
 
