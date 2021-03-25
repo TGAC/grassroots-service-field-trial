@@ -79,19 +79,44 @@ static const char * const S_INDEX_TITLE_S = "Plot ID";
 static const char * const S_INDEX_DESCRIPTION_S = "The ID of the rack. This is a number given to uniquely identify each rack in the Study similar to a primary key in a database."
 		" If GeoJSON and/or images are available, this will be used to identify which plot this information refers to.";
 
+
 static const char * const S_ROW_TITLE_S = "Row";
+static const char * const S_ROW_DESCRIPTION_S = "Row number of the plot. The numbering starts at 1 at the left-hand edge of the plots.";
+
 static const char * const S_COLUMN_TITLE_S = "Column";
+static const char * const S_COLUMN_DESCRIPTION_S = "Column number of the plot. The numbering starts at 1 at the bottom-edge of the plots.";
+
+
+
 static const char * const S_RACK_TITLE_S = "Rack";
+static const char * const S_RACK_DESCRIPTION_S = "Within the plot, this is the number of the cassette that is filled for drilling.";
+
 static const char * const S_ACCESSION_TITLE_S = "Accession";
+static const char * const S_ACCESSION_DESCRIPTION_S = "This is the unique identifier from a particular seed/gene bank to identify the material.";
+
 static const char * const S_GENE_BANK_S = "Gene Bank";
+static const char * const S_GENE_BANK_DESCRIPTION_S = "";
+
 static const char * const S_TREATMENT_TITLE_S = "Treatment";
+static const char * const S_TREATMENT_DESCRIPTION_S = "";
+
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
+static const char * const S_REPLICATE_DECSRIPTION_S = "Rack";
+
 static const char * const S_COMMENT_TITLE_S = "Comment";
+static const char * const S_COMMENT_DESCRIPTION_S = "Any comments for the plot.";
+
 static const char * const S_IMAGE_TITLE_S = "Image";
+static const char * const S_IMAGE_DESCRIPTION_S = "The link for an full-sized image of this plot.";
+
 static const char * const S_THUMBNAIL_TITLE_S = "Thumbnail";
+static const char * const S_THUMBNAIL_DESCRIPTION_S = "The link for a thumbnail image of this plot.";
 
 static const char * const S_SOWING_ORDER_TITLE_S = "Sowing order";
+static const char * const S_SOWING_ORDER_DECSRIPTION_S = "The order that the plots were sown.";
+
 static const char * const S_WALKING_ORDER_TITLE_S = "Walking order";
+static const char * const S_WALKING_ORDER_DECSRIPTION_S = "The order that the plots were walked";
 
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
@@ -334,21 +359,6 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 
 	if (fields_p)
 		{
-			/*
-			 * static const char * const S_LENGTH_TITLE_S = "Length";
-			 * static const char * const S_ROW_TITLE_S = "Row";
-			 * static const char * const S_COLUMN_TITLE_S = "Column";
-			 * static const char * const S_RACK_TITLE_S = "Rack";
-			 * static const char * const S_ACCESSION_TITLE_S = "Accession";
-			 * static const char * const S_GENE_BANK_S = "Gene Bank";
-			 * static const char * const S_TREATMENT_TITLE_S = "Treatment";
-			 * static const char * const S_REPLICATE_TITLE_S = "Replicate";
-			 * static const char * const S_COMMENT_TITLE_S = "Comment";
-			 * static const char * const S_IMAGE_TITLE_S = "Image";
-			 * static const char * const S_THUMBNAIL_TITLE_S = "Thumbnail";
-			 * static const char * const S_SOWING_ORDER_TITLE_S = "Sowing order";
-			 * static const char * const S_WALKING_ORDER_TITLE_S = "Walking order";
-			 */
 			if (AddTableField (fields_p, S_INDEX_TITLE_S, S_INDEX_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL))
 				{
 					if (AddTableField (fields_p, S_SOWING_TITLE_S, S_SOWING_TITLE_S, FD_TYPE_DATE, NULL, S_SOWING_DESCRIPTION_S, NULL))
@@ -359,6 +369,43 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 										{
 											if (AddTableField (fields_p, S_LENGTH_TITLE_S, S_LENGTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_LENGTH_DESCRIPTION_S, NULL))
 												{
+													if (AddTableField (fields_p, S_ROW_TITLE_S, S_ROW_TITLE_S, FD_TYPE_INTEGER, NULL, S_ROW_DESCRIPTION_S, NULL))
+														{
+															if (AddTableField (fields_p, S_COLUMN_TITLE_S, S_COLUMN_TITLE_S, FD_TYPE_INTEGER, NULL, S_COLUMN_DESCRIPTION_S, NULL))
+																{
+																	if (AddTableField (fields_p, S_RACK_TITLE_S, S_RACK_TITLE_S, FD_TYPE_INTEGER, NULL, S_RACK_DESCRIPTION_S, NULL))
+																		{
+																			if (AddTableField (fields_p, S_ACCESSION_TITLE_S, S_ACCESSION_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
+																				{
+																					if (AddTableField (fields_p, S_REPLICATE_TITLE_S, S_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DECSRIPTION_S, NULL))
+																						{
+
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_REPLICATE_TITLE_S);
+																						}
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_ACCESSION_TITLE_S);
+																				}
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_RACK_TITLE_S);
+																		}
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_COLUMN_TITLE_S);
+																}
+
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_ROW_TITLE_S);
+														}
 
 												}
 											else
@@ -429,28 +476,27 @@ static json_t *GetTableParameterHints (void)
 								{
 									if (AddColumnParameterHint (S_LENGTH_TITLE_S, S_LENGTH_DESCRIPTION_S ". If this is blank, then the *Plot height* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
 										{
-											if (AddColumnParameterHint (S_INDEX_TITLE_S, "The ID of the rack. This is a number given to uniquely identify each rack in the Study similar to a primary key in a database."
-													"If GeoJSON and/or images are available, this will be used to identify which plot this information refers to.", PT_UNSIGNED_INT, true, hints_p))
+											if (AddColumnParameterHint (S_INDEX_TITLE_S, S_INDEX_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 												{
-													if (AddColumnParameterHint (S_ROW_TITLE_S, "Row number of the plot. The numbering starts at 1 at the left-hand edge of the plots.", PT_UNSIGNED_INT, true, hints_p))
+													if (AddColumnParameterHint (S_ROW_TITLE_S, S_ROW_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 														{
-															if (AddColumnParameterHint (S_COLUMN_TITLE_S, " Column number of the plot. The numbering starts at 1 at the bottom-edge of the plots.", PT_UNSIGNED_INT, true, hints_p))
+															if (AddColumnParameterHint (S_COLUMN_TITLE_S, S_COLUMN_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																{
-																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, "Which replicate is planted in this rack.", PT_UNSIGNED_INT, false, hints_p))
+																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, S_REPLICATE_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																		{
-																			if (AddColumnParameterHint (S_RACK_TITLE_S, "Within the plot, this is the number of the cassette that is filled for drilling.", PT_UNSIGNED_INT, true, hints_p))
+																			if (AddColumnParameterHint (S_RACK_TITLE_S, S_RACK_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, "This is the unique identifier from a particular seed/gene bank to identify the material.", PT_STRING, true, hints_p))
+																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, S_ACCESSION_DESCRIPTION_S, PT_STRING, true, hints_p))
 																						{
-																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, "Any comments for the plot.", PT_STRING, false, hints_p))
+																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, PT_STRING, false, hints_p))
 																								{
-																									if (AddColumnParameterHint (S_IMAGE_TITLE_S, "The link for an full-sized image of this plot.", PT_STRING, false, hints_p))
+																									if (AddColumnParameterHint (S_IMAGE_TITLE_S, S_IMAGE_DESCRIPTION_S, PT_STRING, false, hints_p))
 																										{
-																											if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, "The link for a thumbnail image of this plot.", PT_STRING, false, hints_p))
+																											if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, PT_STRING, false, hints_p))
 																												{
-																													if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, "The order that the plots were sown.", PT_UNSIGNED_INT, false, hints_p))
+																													if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																														{
-																															if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, "The order that the plots were walked.", PT_UNSIGNED_INT, false, hints_p))
+																															if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																																{
 																																	return hints_p;
 																																}
