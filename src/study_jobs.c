@@ -1915,8 +1915,74 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 }
 
 
+
+static const char * const FD_PROFILE_S = "profile";
+static const char * const FD_PROFILE_TABULAR_S = "tabular-data-package";
+static const char * const FD_NAME_S = "name";
+static const char * const FD_RESOURCES_S = "resources";
+
 json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *data_p)
 {
+	json_t *study_fd_p = json_object ();
+
+	if (study_fd_p)
+		{
+			if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_TABULAR_S))
+				{
+					if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s))
+						{
+							json_t *resources_p = json_array ();
+
+							if (resources_p)
+								{
+									if (json_object_set_new (study_fd_p, FD_RESOURCES_S, resources_p) == 0)
+										{
+											json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
+
+											if (plots_fd_p)
+												{
+													if (json_array_append_new (resources_p, plots_fd_p) == 0)
+														{
+															return study_fd_p;
+														}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
+															json_decref (plots_fd_p);
+														}
+												}		/* if (plots_fd_p) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
+												}
+
+										}		/* if (json_object_set_new (study_fd_p, FD_RESOURCES_S, resources_p) == 0)*/
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add reources array");
+											json_decref (resources_p);
+										}
+								}		/* if (resources_p) */
+
+
+						}		/* if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, study_p -> st_name_s);
+						}
+
+					json_decref (study_fd_p);
+
+				}		/* if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_TABULAR_S)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_TABULAR_S);
+				}
+
+			json_decref (study_fd_p);
+		}		/* if (study_fd_p) */
+
+
 	return NULL;
 }
 

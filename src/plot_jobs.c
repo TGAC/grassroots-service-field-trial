@@ -353,6 +353,63 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
+json_t *GetPlotsAsFDTabularPackage (Study *study_p, const FieldTrialServiceData *data_p)
+{
+	json_t *plots_p = json_object ();
+
+	if (plots_p)
+		{
+			json_t *schema_p = GetPlotsFrictionlessDataTableSchema ();
+
+			if (schema_p)
+				{
+					if (json_object_set_new (plots_p, "schema", schema_p) == 0)
+						{
+							json_t *dialect_p = GetPlotsCSVDialect ();
+
+							if (dialect_p)
+								{
+									if (json_object_set_new (plots_p, "dialect", dialect_p) == 0)
+										{
+
+										}		/* if (json_object_set_new (plots_p, "dialect", dialect_p) == 0) */
+									else
+										{
+											json_decref (dialect_p);
+										}
+
+								}		/* if (dialect_p) */
+
+						}		/* if (json_object_set_new (plots_p, "schema", schema_p) == 0) */
+					else
+						{
+							json_decref (schema_p);
+						}
+
+				}		/* if (schema_p) */
+
+			json_decref (plots_p);
+		}		/* if (plots_p) */
+
+	return NULL;
+}
+
+
+json_t *GetPlotsCSVDialect (void)
+{
+	json_t *dialect_p = json_object ();
+
+	if (dialect_p)
+		{
+
+			json_decref (dialect_p);
+		}		/* if (dialect_p) */
+
+	return NULL;
+}
+
+
+
 json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 {
 	json_t *fields_p = json_array ();
@@ -442,10 +499,44 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 
 
 
+json_t *GetPlotsFrictionlessDataTableSchema (void)
+{
+	json_t *schema_p = json_object ();
+
+	if (schema_p)
+		{
+			json_t *fields_p = GetStudyPlotHeaderAsFrictionlessData ();
+
+			if (fields_p)
+				{
+					if (json_object_set_new (schema_p, "fields", fields_p) == 0)
+						{
+							if (SetJSONString (schema_p, "title", "Plots"))
+								{
+									return schema_p;
+								}
+						}
+					else
+						{
+							json_decref (fields_p);
+						}
+
+				}
+
+			json_decref (schema_p);
+		}
+
+	return NULL;
+}
+
+
+
 json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceData *data_p)
 {
 	json_t *plot_json_p = NULL;
 	//GetStudyAsJSON (study_p, format, processor_p, data_p);
+
+
 
 	return plot_json_p;
 }
@@ -1028,18 +1119,6 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study
  * https://specs.frictionlessdata.io/table-schema/
  * https://specs.frictionlessdata.io/csv-dialect/#specification
  * */
-json_t *GetPlotsAsFDTable (Study *study_p, const FieldTrialServiceData *data_p)
-{
-	json_t *plots_table_p = json_object ();
-
-	if (plots_table_p)
-		{
-
-		}		/* if (plots_table_p) */
-
-	return plots_table_p;
-}
-
 /*
  * https://specs.frictionlessdata.io/table-schema/
  */
