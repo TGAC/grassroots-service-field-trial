@@ -1916,6 +1916,45 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 
 
 
+bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (data_p -> dftsd_fd_path_s)
+		{
+			json_t *study_fd_p = GetStudyAsFrictionlessData (study_p, data_p);
+
+			if (study_fd_p)
+				{
+					char *study_filename_s = ConcatenateStrings (study_p -> st_name_s, ".json");
+
+					if (study_filename_s)
+						{
+							char *full_study_filename_s = MakeFilename (data_p -> dftsd_fd_path_s, study_filename_s);
+
+							if (full_study_filename_s)
+								{
+									if (json_dump_file (study_fd_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+										{
+											success_flag = true;
+										}
+
+									FreeCopiedString (full_study_filename_s);
+								}		/* if (full_study_filename_s) */
+
+							FreeCopiedString (study_filename_s);
+						}		/* if (study_filename_s) */
+
+					json_decref (study_fd_p);
+				}		/* if (study_fd_p) */
+
+		}		/* if (data_p -> dftsd_fd_path_s) */
+
+
+	return success_flag;
+}
+
+
 static const char * const FD_PROFILE_S = "profile";
 static const char * const FD_PROFILE_TABULAR_S = "tabular-data-package";
 static const char * const FD_NAME_S = "name";

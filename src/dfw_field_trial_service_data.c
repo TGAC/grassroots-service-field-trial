@@ -123,6 +123,18 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 										}
 								}
 
+							data_p -> dftsd_fd_path_s = GetJSONString (service_config_p, "fd_path");
+
+							if (data_p -> dftsd_fd_path_s)
+								{
+									if (!EnsureDirectoryExists (data_p -> dftsd_fd_path_s))
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to create frictionless data packages directory \"%s\"", data_p -> dftsd_fd_path_s);
+											data_p -> dftsd_fd_path_s = NULL;
+										}
+								}
+
+
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAM) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;

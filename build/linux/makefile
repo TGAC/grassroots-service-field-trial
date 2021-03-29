@@ -66,6 +66,7 @@ SRCS 	= \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \
+	frictionless_data_util.c \
 	gene_bank.c \
 	gene_bank_jobs.c \
 	image_util.c \

@@ -8,9 +8,12 @@
 #ifndef SERVICES_FIELD_TRIALS_INCLUDE_FRICTIONLESS_DATA_UTIL_H_
 #define SERVICES_FIELD_TRIALS_INCLUDE_FRICTIONLESS_DATA_UTIL_H_
 
+#include "dfw_field_trial_service_library.h"
 
+#include "jansson.h"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 
 #ifdef ALLOCATE_FD_UTIL_TAGS
 	#define FD_UTIL_PREFIX DFW_FIELD_TRIAL_SERVICE_API
@@ -81,16 +84,16 @@ FD_UTIL_PREFIX const char *FD_TYPE_STRING FD_UTIL_VAL ("string");
 FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("default");
 
 /** A valid email address. */
-FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("email");
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_EMAIL FD_UTIL_VAL ("email");
 
 /** A valid URI. */
-FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("uri");
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_URI FD_UTIL_VAL ("uri");
 
 /** A base64 encoded string representing binary data. */
-FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("binary");
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_BINARY FD_UTIL_VAL ("binary");
 
 /** A string that is a uuid. */
-FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_DEFAULT FD_UTIL_VAL ("uuid");
+FD_UTIL_PREFIX const char *FD_TYPE_STRING_FORMAT_UUID FD_UTIL_VAL ("uuid");
 
 
 

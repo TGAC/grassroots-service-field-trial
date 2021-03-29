@@ -91,26 +91,10 @@ static json_t *GetCSVDialect (const char *delimter_s, const char *line_terminato
 
 	if (dialect_p)
 		{
-			if (SetJSONString (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s, false))
+			if (SetJSONStringOrNull (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s, false))
 				{
-					if (SetJSONString (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s, false))
+					if (SetJSONStringOrNull (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s, false))
 						{
-							if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_DESCRIPTION, description_s, false))
-								{
-									if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_RDF_TYPE, rdf_type_s, false))
-										{
-
-										}		/* if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_RDF_TYPE, rdf_type_s)) */
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_TABLE_FIELD_RDF_TYPE, rdf_type_s ? rdf_type_s : "NULL");
-										}
-
-								}		/* if (SetNonTrivialString (dialect_p, FD_TABLE_FIELD_DESCRIPTION, description_s)) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_TABLE_FIELD_TYPE, description_s ? description_s : "NULL");
-								}
 
 						}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s)) */
 					else

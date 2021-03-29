@@ -774,6 +774,15 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 											ClearCachedStudy (id_s, data_p);
 										}
 
+									if (data_p -> dftsd_fd_path_s)
+										{
+											if (!SaveStudyAsFrictionlessData (study_p, data_p))
+												{
+
+												}
+										}
+
+
 									FreeCopiedString (id_s);
 								}
 							else
