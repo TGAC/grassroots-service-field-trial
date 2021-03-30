@@ -160,6 +160,7 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 
 static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialServiceData *data_p);
 
+static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
 /*
  * API definitions
@@ -353,40 +354,58 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-json_t *GetPlotsAsFDTabularPackage (Study *study_p, const FieldTrialServiceData *data_p)
+json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *plots_p = json_object ();
 
 	if (plots_p)
 		{
-			json_t *schema_p = GetPlotsFrictionlessDataTableSchema ();
-
-			if (schema_p)
+			if (SetJSONString (plots_p, FD_PROFILE_S, FD_PROFILE_TABULAR_RESOURCE_S))
 				{
-					if (json_object_set_new (plots_p, "schema", schema_p) == 0)
-						{
-							json_t *dialect_p = GetPlotsCSVDialect ();
+					json_t *schema_p = GetPlotsFrictionlessDataTableSchema ();
 
-							if (dialect_p)
+					if (schema_p)
+						{
+							if (json_object_set_new (plots_p, FD_SCHEMA_S, schema_p) == 0)
 								{
-									if (json_object_set_new (plots_p, "dialect", dialect_p) == 0)
+									const char *null_sequence_s = "\N";
+									json_t *data_p = GetPlotsAsFrictionlessData (study_p, service_data_p, null_sequence_s);
+
+									if (data_p)
 										{
-											return plots_p;
-										}		/* if (json_object_set_new (plots_p, "dialect", dialect_p) == 0) */
-									else
-										{
-											json_decref (dialect_p);
+											if (json_object_set_new (plots_p, "data", data_p) == 0)
+												{
+													json_t *dialect_p = GetPlotsCSVDialect ();
+
+													if (dialect_p)
+														{
+															if (json_object_set_new (plots_p, FD_CSV_DIALECT, dialect_p) == 0)
+																{
+																	return plots_p;
+																}		/* if (json_object_set_new (plots_p, "dialect", dialect_p) == 0) */
+															else
+																{
+																	json_decref (dialect_p);
+																}
+
+														}		/* if (dialect_p) */
+												}
+											else
+												{
+													json_decref (data_p);
+												}
 										}
 
-								}		/* if (dialect_p) */
+								}		/* if (json_object_set_new (plots_p, "schema", schema_p) == 0) */
+							else
+								{
+									json_decref (schema_p);
+								}
 
-						}		/* if (json_object_set_new (plots_p, "schema", schema_p) == 0) */
-					else
-						{
-							json_decref (schema_p);
-						}
+						}		/* if (schema_p) */
 
-				}		/* if (schema_p) */
+				}		/* if (SetJSONString (plots_p, FD_PROFILE_S, FD_PROFILE_TABULAR_RESOURCE_S)) */
+
 
 			json_decref (plots_p);
 		}		/* if (plots_p) */
@@ -410,6 +429,86 @@ json_t *GetPlotsCSVDialect (void)
 	return NULL;
 }
 
+
+static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
+{
+	if (study_p -> st_plots_p)
+		{
+			json_t *plots_p = json_array ();
+
+			if (plots_p)
+				{
+					bool success_flag = true;
+					PlotNode *node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
+
+					while (node_p && success_flag)
+						{
+							json_t *plot_p = GetPlotAsFrictionlessData (node_p -> pn_plot_p, service_data_p, null_sequence_s);
+
+							if (plot_p)
+								{
+									if (json_array_append_new (plots_p, plot_p) == 0)
+										{
+											node_p = (PlotNode *) (node_p -> pn_node.ln_next_p);
+										}
+									else
+										{
+											success_flag = false;
+										}
+								}
+							else
+								{
+									success_flag = false;
+								}
+
+						}
+
+					if (success_flag)
+						{
+							return plots_p;
+						}
+
+					json_decref (plots_p);
+				}
+
+
+
+		}		/* if (study_p -> st_plots_p) */
+
+	return NULL;
+}
+
+
+
+
+
+json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
+{
+	json_t *plot_fd_p = json_object ();
+
+	if (plot_fd_p)
+		{
+			if (SetJSONInteger (plot_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index))
+				{
+					if (SetJSONInteger (plot_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))
+						{
+							if (SetFDTableReal (plot_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s))
+								{
+									if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
+										{
+											return plot_fd_p;
+										}		/* if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s)) */
+
+								}		/* if (SetFDTableReal (plot_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s)) */
+
+						}		/* if (SetJSONInteger (plot_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index)) */
+
+				}		/* if (SetJSONInteger (plot_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index)) */
+
+		}		/* if (plot_fd_p) */
+
+	return NULL;
+}
 
 
 json_t *GetStudyPlotHeaderAsFrictionlessData (void)
@@ -530,19 +629,6 @@ json_t *GetPlotsFrictionlessDataTableSchema (void)
 
 	return NULL;
 }
-
-
-
-json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceData *data_p)
-{
-	json_t *plot_json_p = NULL;
-	//GetStudyAsJSON (study_p, format, processor_p, data_p);
-
-
-
-	return plot_json_p;
-}
-
 
 
 

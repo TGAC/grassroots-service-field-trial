@@ -26,6 +26,22 @@
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
+FD_UTIL_PREFIX const char * const FD_PROFILE_S FD_UTIL_VAL ("profile");
+FD_UTIL_PREFIX const char * const FD_PROFILE_TABULAR_PACKAGE_S FD_UTIL_VAL ("tabular-data-package");
+FD_UTIL_PREFIX const char * const FD_PROFILE_TABULAR_RESOURCE_S FD_UTIL_VAL ("tabular-data-resource");
+FD_UTIL_PREFIX const char * const FD_PROFILE_DATA_S FD_UTIL_VAL ("data-package");
+FD_UTIL_PREFIX const char * const FD_NAME_S FD_UTIL_VAL ("name");
+FD_UTIL_PREFIX const char * const FD_ID_S FD_UTIL_VAL ("id");
+FD_UTIL_PREFIX const char * const FD_LICENSES_S FD_UTIL_VAL ("licenses");
+FD_UTIL_PREFIX const char * const FD_DESCRIPTION_S FD_UTIL_VAL ("description");
+FD_UTIL_PREFIX const char * const FD_URL_S FD_UTIL_VAL ("homepage");
+FD_UTIL_PREFIX const char * const FD_RESOURCES_S FD_UTIL_VAL ("resources");
+
+
+FD_UTIL_PREFIX const char * const FD_SCHEMA_S FD_UTIL_VAL ("schema");
+
+
+
 /*
  * Table fields
  */
@@ -49,6 +65,8 @@ FD_UTIL_PREFIX const char *FD_TABLE_FIELD_NULL_VALUE FD_UTIL_VAL ("missingValues
 /*
  * CSV Dialect
  */
+
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT FD_UTIL_VAL ("dialect");
 
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_DELIMITER FD_UTIL_VAL ("delimiter");
 
@@ -144,9 +162,13 @@ extern "C"
 {
 #endif
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s);
 
-bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFDTableReal (json_t *row_p, const char * const key_s, const double64 *value_p, const char * const null_sequence_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFDTableString (json_t *row_p, const char * const key_s, const char * const value_s, const char * const null_sequence_s);
 
 #ifdef __cplusplus
 }

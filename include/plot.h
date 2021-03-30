@@ -201,6 +201,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByStudyIndex (Plot *plot
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index);
 
 
+
+
 #ifdef __cplusplus
 }
 #endif

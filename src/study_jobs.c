@@ -35,6 +35,8 @@
 #include "dfw_util.h"
 #include "key_value_pair.h"
 #include "time_util.h"
+#include "frictionless_data_util.h"
+
 
 #include "plot.h"
 #include "row.h"
@@ -1972,19 +1974,24 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 
 	if (full_study_filename_s)
 		{
-			json_t *study_fd_p = GetStudyAsFrictionlessData (study_p, data_p);
 
-			if (study_fd_p)
+			if (GetStudyPlots (study_p, data_p))
 				{
-					if (json_dump_file (study_fd_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+
+					json_t *study_fd_p = GetStudyAsFrictionlessData (study_p, data_p);
+
+					if (study_fd_p)
 						{
-							success_flag = true;
-						}
+							if (json_dump_file (study_fd_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+								{
+									success_flag = true;
+								}
 
-					json_decref (study_fd_p);
-				}		/* if (study_fd_p) */
+							json_decref (study_fd_p);
+						}		/* if (study_fd_p) */
 
-			FreeCopiedString (full_study_filename_s);
+					FreeCopiedString (full_study_filename_s);
+				}
 		}		/* if (full_study_filename_s) */
 
 
@@ -1992,10 +1999,7 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 }
 
 
-static const char * const FD_PROFILE_S = "profile";
-static const char * const FD_PROFILE_TABULAR_S = "tabular-data-package";
-static const char * const FD_NAME_S = "name";
-static const char * const FD_RESOURCES_S = "resources";
+
 
 json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *data_p)
 {
@@ -2003,43 +2007,75 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 
 	if (study_fd_p)
 		{
-			if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_TABULAR_S))
+			if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_S))
 				{
 					if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s))
 						{
-							json_t *resources_p = json_array ();
-
-							if (resources_p)
+							if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false))
 								{
-									if (json_object_set_new (study_fd_p, FD_RESOURCES_S, resources_p) == 0)
-										{
-											json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
+									char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
-											if (plots_fd_p)
+									if (id_s)
+										{
+											if (SetJSONString (study_fd_p, FD_ID_S, id_s))
 												{
-													if (json_array_append_new (resources_p, plots_fd_p) == 0)
+													json_t *resources_p;
+
+													FreeCopiedString (id_s);
+
+													resources_p = json_array ();
+
+													if (resources_p)
 														{
-															return study_fd_p;
-														}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
-															json_decref (plots_fd_p);
-														}
-												}		/* if (plots_fd_p) */
+															if (json_object_set_new (study_fd_p, FD_RESOURCES_S, resources_p) == 0)
+																{
+																	json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
+
+																	if (plots_fd_p)
+																		{
+																			if (json_array_append_new (resources_p, plots_fd_p) == 0)
+																				{
+																					return study_fd_p;
+																				}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
+																					json_decref (plots_fd_p);
+																				}
+																		}		/* if (plots_fd_p) */
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
+																		}
+
+																}		/* if (json_object_set_new (study_fd_p, FD_RESOURCES_S, resources_p) == 0)*/
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add reources array");
+																	json_decref (resources_p);
+																}
+														}		/* if (resources_p) */
+
+
+												}		/* if (SetJSONString (study_fd_p, FD_ID_S, id_s)) */
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
+													FreeCopiedString (id_s);
 												}
 
-										}		/* if (json_object_set_new (study_fd_p, FD_RESOURCES_S, resources_p) == 0)*/
+
+										}		/* if (id_s) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add reources array");
-											json_decref (resources_p);
-										}
-								}		/* if (resources_p) */
 
+										}
+
+
+								}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, study_p -> st_description_s);
+								}
 
 						}		/* if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s)) */
 					else
@@ -2049,10 +2085,10 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 
 					json_decref (study_fd_p);
 
-				}		/* if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_TABULAR_S)) */
+				}		/* if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_S)) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_TABULAR_S);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_DATA_S);
 				}
 
 			json_decref (study_fd_p);

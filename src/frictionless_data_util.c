@@ -11,6 +11,7 @@
 #include "frictionless_data_util.h"
 #include "json_util.h"
 #include "streams.h"
+#include "dfw_util.h"
 
 /*
  * https://specs.frictionlessdata.io/table-schema/#descriptor
@@ -81,6 +82,42 @@ bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, c
 
 	return false;
 }
+
+
+bool SetFDTableReal (json_t *row_p, const char * const key_s, const double64 *value_p, const char * const null_sequence_s)
+{
+	bool success_flag = false;
+
+	if (value_p)
+		{
+			success_flag = SetJSONReal (row_p, key_s, *value_p);
+		}
+	else
+		{
+			success_flag = SetJSONString (row_p, key_s, null_sequence_s);
+		}
+
+	return success_flag;
+}
+
+
+bool SetFDTableString (json_t *row_p, const char * const key_s, const char * const value_s, const char * const null_sequence_s)
+{
+	bool success_flag = false;
+
+	if (value_s)
+		{
+			success_flag = SetJSONString (row_p, key_s,value_s);
+		}
+	else
+		{
+			success_flag = SetJSONString (row_p, key_s, null_sequence_s);
+		}
+
+	return success_flag;
+
+}
+
 
 /*
  * https://specs.frictionlessdata.io/csv-dialect/#usage
