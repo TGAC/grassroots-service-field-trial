@@ -101,7 +101,7 @@ static const char * const S_TREATMENT_TITLE_S = "Treatment";
 static const char * const S_TREATMENT_DESCRIPTION_S = "";
 
 static const char * const S_REPLICATE_TITLE_S = "Replicate";
-static const char * const S_REPLICATE_DECSRIPTION_S = "Rack";
+static const char * const S_REPLICATE_DESCRIPTION_S = "";
 
 static const char * const S_COMMENT_TITLE_S = "Comment";
 static const char * const S_COMMENT_DESCRIPTION_S = "Any comments for the plot.";
@@ -371,7 +371,7 @@ json_t *GetPlotsAsFDTabularPackage (Study *study_p, const FieldTrialServiceData 
 								{
 									if (json_object_set_new (plots_p, "dialect", dialect_p) == 0)
 										{
-
+											return plots_p;
 										}		/* if (json_object_set_new (plots_p, "dialect", dialect_p) == 0) */
 									else
 										{
@@ -401,6 +401,8 @@ json_t *GetPlotsCSVDialect (void)
 
 	if (dialect_p)
 		{
+
+			return dialect_p;
 
 			json_decref (dialect_p);
 		}		/* if (dialect_p) */
@@ -434,9 +436,9 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 																		{
 																			if (AddTableField (fields_p, S_ACCESSION_TITLE_S, S_ACCESSION_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
 																				{
-																					if (AddTableField (fields_p, S_REPLICATE_TITLE_S, S_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DECSRIPTION_S, NULL))
+																					if (AddTableField (fields_p, S_REPLICATE_TITLE_S, S_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
 																						{
-
+																							return fields_p;
 																						}
 																					else
 																						{
@@ -573,7 +575,7 @@ static json_t *GetTableParameterHints (void)
 														{
 															if (AddColumnParameterHint (S_COLUMN_TITLE_S, S_COLUMN_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																{
-																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, S_REPLICATE_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
+																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, S_REPLICATE_DESCRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																		{
 																			if (AddColumnParameterHint (S_RACK_TITLE_S, S_RACK_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																				{

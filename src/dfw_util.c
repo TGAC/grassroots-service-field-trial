@@ -697,6 +697,10 @@ bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_
 				{
 					success_flag = SetJSONNull (value_p, key_s);
 				}
+			else
+				{
+					success_flag = true;
+				}
 		}
 	else
 		{

@@ -27,6 +27,7 @@
 #include "location.h"
 #include "string_utils.h"
 #include "crop_jobs.h"
+#include "plot_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
 #include "treatment_jobs.h"
