@@ -68,6 +68,9 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, c
 
 static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
+static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
+
+
 /*
  * API FUNCTIONS
  */
@@ -863,6 +866,8 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																{
 																	if (AddGrandParentProgramToJSON (study_p, study_json_p, format, data_p))
 																		{
+																			AddFrictionlessDataLink (study_p, study_json_p, data_p);
+
 																			add_item_flag = true;
 																		}
 																	else
@@ -1878,4 +1883,23 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, c
 	return success_flag;
 }
 
+
+static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	char *fd_url_s = GetStudyFrictionlessDataURL (study_p, data_p);
+
+	if (fd_url_s)
+		{
+			if (SetJSONString (study_json_p, ST_FRICTIONLESS_DATA_LINK_S, fd_url_s))
+				{
+					success_flag = true;
+				}
+
+			FreeCopiedString (fd_url_s);
+		}
+
+	return success_flag;
+}
 

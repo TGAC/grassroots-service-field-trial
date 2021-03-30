@@ -144,10 +144,21 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	/**
 	 * @private
 	 *
-	 * The path to where to save the Frictionless Data Packages
+	 * The filesyustem path to where to save the Frictionless Data Packages
 	 * for the Studies.
 	 */
 	const char *dftsd_fd_path_s;
+
+
+
+	/**
+	 * @private
+	 *
+	 * The BASE URL to where the Frictionless Data Packages
+	 * for the Studies will be served from.
+	 */
+	const char *dftsd_fd_url_s;
+
 
 } FieldTrialServiceData;
 
