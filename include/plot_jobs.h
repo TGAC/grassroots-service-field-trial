@@ -63,14 +63,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotById (bson_oid_t *id_p, Study *study_
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyPlotHeaderAsFrictionlessData (void);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsFrictionlessDataTableSchema (void);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsCSVDialect (void);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
 
 #ifdef __cplusplus

@@ -44,6 +44,8 @@
 
 #include "frictionless_data_util.h"
 
+#include "treatment_factor.h"
+
 typedef enum
 {
 	PP_SOWING_DATE,
@@ -362,7 +364,7 @@ json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServic
 		{
 			if (SetJSONString (plots_p, FD_PROFILE_S, FD_PROFILE_TABULAR_RESOURCE_S))
 				{
-					json_t *schema_p = GetPlotsFrictionlessDataTableSchema ();
+					json_t *schema_p = GetPlotsFrictionlessDataTableSchema (study_p);
 
 					if (schema_p)
 						{
@@ -443,7 +445,7 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 
 					while (node_p && success_flag)
 						{
-							json_t *plot_p = GetPlotAsFrictionlessData (node_p -> pn_plot_p, service_data_p, null_sequence_s);
+							json_t *plot_p = GetPlotAsFrictionlessData (node_p -> pn_plot_p, study_p, service_data_p, null_sequence_s);
 
 							if (plot_p)
 								{
@@ -479,10 +481,7 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 }
 
 
-
-
-
-json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
+json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
 {
 	json_t *plot_fd_p = json_object ();
 
@@ -496,6 +495,65 @@ json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceDa
 								{
 									if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
 										{
+											/*
+											 * Add the treatment factors
+											 */
+											if (plot_p -> pl_rows_p)
+													{
+														uint32 num_added = 0;
+														bool b = true;
+
+														RowNode *row_node_p = (RowNode *) plot_p -> pl_rows_p -> ll_head_p;
+
+														while (row_node_p && b)
+															{
+																Row *row_p = row_node_p -> rn_row_p;
+
+																if (row_p -> ro_treatment_factor_values_p)
+																	{
+																		TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
+
+																		while (tfv_node_p && b)
+																			{
+																				TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
+
+																				const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
+
+																				if (url_s)
+																					{
+																						if (SetFDTableString (plot_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
+																							{
+																								++ num_added;
+																							}
+																						else
+																							{
+																								b = false;
+																							}
+																					}
+																				else
+																					{
+																						b = false;
+																					}
+
+																				if (b)
+																					{
+																						tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
+																					}
+																			}
+
+																	}		/* if (row_p -> ro_treatment_factor_values_p) */
+
+
+																if (b)
+																	{
+																		row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+																	}
+
+															}		/* while (row_node_p && b) */
+
+													}		/* if (study_p -> st_treatments_p) */
+
+
 											return plot_fd_p;
 										}		/* if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s)) */
 
@@ -511,7 +569,7 @@ json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const FieldTrialServiceDa
 }
 
 
-json_t *GetStudyPlotHeaderAsFrictionlessData (void)
+json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p)
 {
 	json_t *fields_p = json_array ();
 
@@ -537,7 +595,51 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 																				{
 																					if (AddTableField (fields_p, S_REPLICATE_TITLE_S, S_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
 																						{
-																							return fields_p;
+																							bool b = true;
+
+																							if (study_p -> st_treatments_p)
+																								{
+																									TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+
+																									while (node_p && b)
+																										{
+																											TreatmentFactor *tf_p = node_p -> tfn_p;
+																											const char *name_s = GetTreatmentFactorName (tf_p);
+
+																											if (name_s)
+																												{
+																													const char *url_s = GetTreatmentFactorUrl (tf_p);
+
+																													if (url_s)
+																														{
+																															const char *description_s = GetTreatmentFactorDescription (tf_p);
+
+																															if (AddTableField (fields_p, url_s ? url_s : name_s, name_s, FD_TYPE_STRING, NULL, description_s, NULL))
+																																{
+																																	node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+																																}
+																															else
+																																{
+																																	b = false;
+																																}
+																														}
+																												}
+																											else
+																												{
+																													b = false;
+																												}
+
+																										}
+																								}
+
+																							if (b)
+																								{
+																									return fields_p;
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add TreatmentFactors");
+																								}
 																						}
 																					else
 																						{
@@ -600,13 +702,13 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (void)
 
 
 
-json_t *GetPlotsFrictionlessDataTableSchema (void)
+json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p)
 {
 	json_t *schema_p = json_object ();
 
 	if (schema_p)
 		{
-			json_t *fields_p = GetStudyPlotHeaderAsFrictionlessData ();
+			json_t *fields_p = GetStudyPlotHeaderAsFrictionlessData (study_p);
 
 			if (fields_p)
 				{

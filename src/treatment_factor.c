@@ -297,6 +297,12 @@ const char *GetTreatmentFactorUrl (const TreatmentFactor *treatment_factor_p)
 }
 
 
+const char *GetTreatmentFactorDescription (const TreatmentFactor *treatment_factor_p)
+{
+	return treatment_factor_p -> tf_treatment_p -> tr_ontology_term_p -> st_description_s;
+}
+
+
 /*
  * Static Definitions
  */
