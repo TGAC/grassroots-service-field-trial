@@ -68,26 +68,67 @@ FD_UTIL_PREFIX const char *FD_TABLE_FIELD_NULL_VALUE FD_UTIL_VAL ("missingValues
 
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT FD_UTIL_VAL ("dialect");
 
+/*
+ *  specifies the character sequence which should separate fields (aka columns).
+ *  Default = ,. Example \t.
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_DELIMITER FD_UTIL_VAL ("delimiter");
 
+/*
+ * specifies the character sequence which should terminate rows. Default = \r\n
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_LINE_TERMINATOR FD_UTIL_VAL ("lineTerminator");
 
-FD_UTIL_PREFIX const char *FD_CSV_DIALECT_QUOTE_CHAR FD_UTIL_VAL ("type");
+/*
+ * specifies a one-character string to use as the quoting character. Default = "
+ */
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_QUOTE_CHAR FD_UTIL_VAL ("quoteChar");
 
-FD_UTIL_PREFIX const char *FD_CSV_DIALECT_DOUBLE_QUOTE FD_UTIL_VAL ("format");
+/*
+ * controls the handling of quotes inside fields. If true, two consecutive
+ * quotes should be interpreted as one. Default = true
+ */
+FD_UTIL_PREFIX const char *FD_CSV_DIALECT_DOUBLE_QUOTE FD_UTIL_VAL ("doubleQuote");
 
+/*
+ *  specifies a one-character string to use for escaping (for example, \),
+ *  mutually exclusive with quoteChar. Not set by default
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_ESCAPE_CHAR FD_UTIL_VAL ("escapeChar");
 
+/*
+ * specifies the null sequence (for example \N). Not set by default
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_NULL_VALUE FD_UTIL_VAL ("nullSequence");
 
+/*
+ * specifies how to interpret whitespace which immediately follows a delimiter;
+ * if false, it means that whitespace immediately after a delimiter should be treated
+ * as part of the following field. Default = true
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_SKIP_INITIAL_SPACE FD_UTIL_VAL ("skipInitialSpace");
 
+/*
+ *  indicates whether the file includes a header row. If true the first row in the
+ *  file is a header row, not data. Default = true
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_HEADER_ROW FD_UTIL_VAL ("header");
 
+/*
+ * indicates a one-character string to ignore any line whose row begins with this character
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_COMMENT_CHAR FD_UTIL_VAL ("commentChar");
 
+/*
+ * indicates that case in the header is meaningful. For example, columns CAT and Cat
+ * should not be equated. Default = false
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_CASE_SENSITIVE_HEADER FD_UTIL_VAL ("caseSensitiveHeader");
 
+/*
+ * a number, in n.n format, e.g., 1.2. If not present, consumers should assume latest
+ * schema version.
+ */
 FD_UTIL_PREFIX const char *FD_CSV_DIALECT_VERSION FD_UTIL_VAL ("csvddfVersion");
 
 
@@ -169,6 +210,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFDTableReal (json_t *row_p, const char * c
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFDTableString (json_t *row_p, const char * const key_s, const char * const value_s, const char * const null_sequence_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCSVDialect (const char *delimter_s, const char *line_terminator_s,  const char *comment_char_p, const char *escape_char_p,
+																										 const char *null_seqeunce_s, const bool has_header_row_flag, const bool case_sensitive_header_flag,
+																										 const bool double_quote_flag, const bool skip_initial_space_flag, const char *quote_p,
+																										 const uint32 major_version, const uint32 minor_version);
+
 
 #ifdef __cplusplus
 }

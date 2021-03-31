@@ -370,14 +370,14 @@ json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServic
 						{
 							if (json_object_set_new (plots_p, FD_SCHEMA_S, schema_p) == 0)
 								{
-									const char *null_sequence_s = "\N";
+									const char *null_sequence_s = "-";
 									json_t *data_p = GetPlotsAsFrictionlessData (study_p, service_data_p, null_sequence_s);
 
 									if (data_p)
 										{
 											if (json_object_set_new (plots_p, "data", data_p) == 0)
 												{
-													json_t *dialect_p = GetPlotsCSVDialect ();
+													json_t *dialect_p = GetPlotsCSVDialect (null_sequence_s);
 
 													if (dialect_p)
 														{
@@ -416,19 +416,12 @@ json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServic
 }
 
 
-json_t *GetPlotsCSVDialect (void)
+json_t *GetPlotsCSVDialect (const char *null_sequence_s)
 {
-	json_t *dialect_p = json_object ();
+	json_t *dialect_p = GetCSVDialect (NULL, NULL, NULL, NULL, null_sequence_s, false, false, true, true, NULL, 0, 1);
 
-	if (dialect_p)
-		{
 
-			return dialect_p;
-
-			json_decref (dialect_p);
-		}		/* if (dialect_p) */
-
-	return NULL;
+	return dialect_p;
 }
 
 

@@ -13,6 +13,8 @@
 #include "streams.h"
 #include "dfw_util.h"
 
+#include "math_utils.h"
+
 /*
  * https://specs.frictionlessdata.io/table-schema/#descriptor
  *
@@ -122,34 +124,146 @@ bool SetFDTableString (json_t *row_p, const char * const key_s, const char * con
 /*
  * https://specs.frictionlessdata.io/csv-dialect/#usage
  */
-static json_t *GetCSVDialect (const char *delimter_s, const char *line_terminator_s,  const char *comment_char_p, const char *escape_char_p, const char *null_seqeunce_s, const bool has_header_row_flag, const bool case_sensitive_header_flag)
+json_t *GetCSVDialect (const char *delimter_s, const char *line_terminator_s, const char *comment_char_p, const char *escape_char_p, const char *null_seqeunce_s,
+											 const bool has_header_row_flag, const bool case_sensitive_header_flag, const bool double_quote_flag, const bool skip_initial_space_flag,
+											 const char *quote_p, const uint32 major_version, const uint32 minor_version)
 {
-	json_t *dialect_p = json_object ();
+	json_t *dialect_p = NULL;
 
-	if (dialect_p)
+	if (! (quote_p && escape_char_p))
 		{
-			if (SetJSONStringOrNull (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s, false))
-				{
-					if (SetJSONStringOrNull (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s, false))
-						{
+			dialect_p = json_object ();
 
-						}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s)) */
-					else
+			if (dialect_p)
+				{
+					/*
+					 * Set up defaults
+					 */
+					char buffer_s [2];
+
+					if (!delimter_s)
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s ? line_terminator_s : "NULL");
+							delimter_s = ",";
 						}
 
-				}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s)) */
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_CSV_DIALECT_DELIMITER, delimter_s ? delimter_s : "NULL");
-				}
+					if (!line_terminator_s)
+						{
+							line_terminator_s = "\r\n";
+						}
 
 
-			json_decref (dialect_p);
-		}		/* if (dialect_p) */
+					* (buffer_s + 1) = '\0';
 
-	return NULL;
+
+					if (SetJSONString (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s))
+						{
+							if (SetJSONString (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s))
+								{
+									if (SetJSONBoolean (dialect_p, FD_CSV_DIALECT_HEADER_ROW, has_header_row_flag))
+										{
+											if (SetJSONBoolean (dialect_p, FD_CSV_DIALECT_CASE_SENSITIVE_HEADER, case_sensitive_header_flag))
+												{
+													if ((null_seqeunce_s == NULL) || (SetJSONString (dialect_p, FD_CSV_DIALECT_NULL_VALUE, null_seqeunce_s)))
+														{
+															if (SetJSONBoolean (dialect_p, FD_CSV_DIALECT_DOUBLE_QUOTE, double_quote_flag))
+																{
+																	if (SetJSONBoolean (dialect_p, FD_CSV_DIALECT_SKIP_INITIAL_SPACE, skip_initial_space_flag))
+																		{
+																			bool success_flag =true;
+
+																			if (quote_p)
+																				{
+																					*buffer_s = *quote_p;
+
+																					success_flag = SetJSONString (dialect_p, FD_CSV_DIALECT_QUOTE_CHAR, buffer_s);
+																				}
+																			else if (escape_char_p)
+																				{
+																					*buffer_s = *escape_char_p;
+
+																					success_flag = SetJSONString (dialect_p, FD_CSV_DIALECT_ESCAPE_CHAR, buffer_s);
+																				}
+
+																			if (success_flag)
+																				{
+																					if (comment_char_p)
+																						{
+																							*buffer_s = *comment_char_p;
+
+																							success_flag = SetJSONString (dialect_p, FD_CSV_DIALECT_COMMENT_CHAR, buffer_s);
+																						}
+
+																					if (success_flag)
+																						{
+																							if ((major_version > 0) || (minor_version > 0))
+																								{
+																									char *major_s;
+
+																									success_flag = false;
+
+																									major_s = ConvertUnsignedIntegerToString (major_version);
+
+																									if (major_s)
+																										{
+																											char *minor_s = ConvertUnsignedIntegerToString (minor_version);
+
+																											if (minor_s)
+																												{
+																													char *version_s = ConcatenateVarargsStrings (major_s, ".", minor_s, NULL);
+
+																													if (version_s)
+																														{
+																															success_flag = SetJSONString (dialect_p, FD_CSV_DIALECT_VERSION, version_s);
+
+																															FreeCopiedString (version_s);
+																														}
+
+																													FreeCopiedString (minor_s);
+																												}
+
+																											FreeCopiedString (major_s);
+																										}
+
+																								}
+																						}
+
+																					if (success_flag)
+																						{
+																							return dialect_p;
+																						}
+
+																				}
+																		}
+																}
+														}
+												}
+										}
+
+								}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_CSV_DIALECT_LINE_TERMINATOR, line_terminator_s ? line_terminator_s : "NULL");
+								}
+
+						}		/* if (SetNonTrivialString (dialect_p, FD_CSV_DIALECT_DELIMITER, delimter_s)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, dialect_p, "Failed to add %s: %s", FD_CSV_DIALECT_DELIMITER, delimter_s ? delimter_s : "NULL");
+						}
+
+
+					json_decref (dialect_p);
+					dialect_p = NULL;
+				}		/* if (dialect_p) */
+
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Only one of either quote (%c) or escape (%c) can be set at any time", *quote_p, *escape_char_p);
+		}
+
+
+	return dialect_p;
 }
 
 

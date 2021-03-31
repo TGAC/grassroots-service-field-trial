@@ -68,7 +68,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyPlotHeaderAsFrictionlessData (cons
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsCSVDialect (void);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotsCSVDialect (const char *null_sequence_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
