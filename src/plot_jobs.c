@@ -474,9 +474,85 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 }
 
 
+bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
+{
+	uint32 num_added = 0;
+	uint32 num_rows = 0;
+
+	if (plot_p -> pl_rows_p)
+		{
+			bool success_flag = true;
+			RowNode *row_node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
+			num_rows = plot_p -> pl_rows_p -> ll_size;
+
+			while (row_node_p && success_flag)
+				{
+					json_t *row_fd_p = json_object ();
+
+					if (row_fd_p)
+						{
+							success_flag = false;
+
+							if (SetJSONInteger (row_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index))
+								{
+									if (SetJSONInteger (row_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))
+										{
+											if (SetFDTableReal (row_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s))
+												{
+													if (SetFDTableReal (row_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
+														{
+															if (AddRowFrictionlessDataDetails (row_node_p -> rn_row_p, row_fd_p, service_data_p, null_sequence_s))
+																{
+																	++ num_added;
+
+																	row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p)
+																	success_flag = true;
+																}
+														}
+												}
+										}
+								}
+
+							if (!success_flag)
+								{
+									json_decref (row_fd_p);
+								}
+						}
+
+
+				}		/* while (row_node_p) */
+
+
+		}		/* if (plot_p -> pl_rows_p) */
+
+
+	return (num_added == num_rows);
+}
+
+
 json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
 {
 	json_t *plot_fd_p = json_object ();
+
+
+	if (plot_p -> pl_rows_p)
+		{
+			if (plot_fd_p)
+				{
+					if (SetJSONInteger (plot_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index))
+						{
+							if (SetJSONInteger (plot_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))
+								{
+									if (SetFDTableReal (plot_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s))
+										{
+											if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
+												{
+												}
+										}
+								}
+						}
+				}
+		}		/* if (plot_p -> pl_rows_p) */
 
 	if (plot_fd_p)
 		{

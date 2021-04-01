@@ -108,6 +108,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableByIdString (c
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, const char *method_url_s, const char *unit_url_s, const FieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetMeasuredVariableName (const MeasuredVariable *mv_p);
+
+
 #ifdef __cplusplus
 }
 #endif

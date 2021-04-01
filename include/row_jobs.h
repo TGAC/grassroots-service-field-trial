@@ -62,6 +62,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddTreatmentFactorValuesToRow (Row
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, const char *value_s);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsFrictionlessData (const Row *row_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+
 
 #ifdef __cplusplus
 }

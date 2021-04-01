@@ -496,6 +496,20 @@ MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, con
 
 
 
+const char *GetMeasuredVariableName (const MeasuredVariable *mv_p)
+{
+	const char *name_s = NULL;
+
+	if (mv_p -> mv_variable_term_p)
+		{
+			name_s = mv_p -> mv_variable_term_p -> st_name_s;
+		}
+
+	return name_s;
+}
+
+
+
 /*
  * static definitions
  */
