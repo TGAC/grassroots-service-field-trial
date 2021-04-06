@@ -205,6 +205,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetStudyFrictionlessDataFilename (const Stud
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetStudyFrictionlessDataURL (const Study *study_p, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctPhenotypesAsFrictionlessDataJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

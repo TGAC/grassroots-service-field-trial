@@ -196,146 +196,169 @@ bool GetSubmissionRowPhenotypeParameterTypeForNamedParameter (const char *param_
 bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
 {
 	bool success_flag = true;
-	/*
-	 * Add the treatment factors
-	 */
 
-	if (row_p -> ro_treatment_factor_values_p)
+
+	if (SetJSONInteger (row_fd_p, S_RACK_S, row_p -> ro_rack_index))
 		{
-			uint32 num_added = 0;
-			TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
-
-			while (tfv_node_p && success_flag)
+			if (row_p -> ro_replicate_control_flag)
 				{
-					TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
-
-					const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
-
-					if (url_s)
-						{
-							if (SetFDTableString (row_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
-								{
-									++ num_added;
-								}
-							else
-								{
-									success_flag = false;
-								}
-						}
-					else
-						{
-							success_flag = false;
-						}
-
-					if (success_flag)
-						{
-							tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
-						}
+					success_flag = SetJSONString (row_fd_p, PL_REPLICATE_TITLE_S, RO_REPLICATE_CONTROL_S);
+				}
+			else
+				{
+					success_flag = SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> ro_rack_index);
 				}
 
-		}		/* if (row_p -> ro_treatment_factor_values_p) */
-
-
-	if (success_flag)
-		{
-			if (row_p -> ro_observations_p)
+			if (success_flag)
 				{
-					uint32 num_added = 0;
-					ObservationNode *obs_node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
+					/*
+					 * Add the treatment factors
+					 */
 
-					while (obs_node_p && success_flag)
+					if (row_p -> ro_treatment_factor_values_p)
 						{
-							Observation *obs_p = obs_node_p -> on_observation_p;
-							const char *variable_s = GetMeasuredVariableName (obs_p -> ob_phenotype_p);
+							uint32 num_added = 0;
+							TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
 
-							if (variable_s)
+							while (tfv_node_p && success_flag)
 								{
-									char *key_s = NULL;
+									TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
 
-									if (obs_p -> ob_date_p)
+									const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
+
+									if (url_s)
 										{
-											char *time_s = GetTimeAsString (obs_p -> ob_date_p);
-
-											if (time_s)
+											if (SetFDTableString (row_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
 												{
-													key_s = ConcatenateVarargsStrings (variable_s, " ", time_s, NULL);
-
-													FreeCopiedString (time_s);
+													++ num_added;
+												}
+											else
+												{
+													success_flag = false;
 												}
 										}
 									else
 										{
-											key_s = (char *) variable_s;
+											success_flag = false;
 										}
 
-									if (key_s)
+									if (success_flag)
 										{
-											char *value_s = NULL;
-											bool alloc_value_flag = false;
+											tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
+										}
+								}
 
-											if (obs_p -> ob_corrected_value_s)
+						}		/* if (row_p -> ro_treatment_factor_values_p) */
+
+
+					if (success_flag)
+						{
+							if (row_p -> ro_observations_p)
+								{
+									uint32 num_added = 0;
+									ObservationNode *obs_node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
+
+									while (obs_node_p && success_flag)
+										{
+											Observation *obs_p = obs_node_p -> on_observation_p;
+											const char *variable_s = GetMeasuredVariableName (obs_p -> ob_phenotype_p);
+
+											if (variable_s)
 												{
-													if (obs_p -> ob_raw_value_s)
-														{
-															value_s = ConcatenateVarargsStrings (obs_p -> ob_corrected_value_s, " (", obs_p -> ob_raw_value_s, ")", NULL);
+													char *key_s = NULL;
 
-															if (value_s)
+													if (obs_p -> ob_date_p)
+														{
+															char *time_s = GetTimeAsString (obs_p -> ob_date_p, true);
+
+															if (time_s)
 																{
-																	alloc_value_flag = true;
+																	key_s = ConcatenateVarargsStrings (variable_s, " ", time_s, NULL);
+
+																	FreeCopiedString (time_s);
 																}
 														}
 													else
 														{
-															value_s = obs_p -> ob_corrected_value_s;
+															key_s = (char *) variable_s;
 														}
+
+													if (key_s)
+														{
+															char *value_s = NULL;
+															bool alloc_value_flag = false;
+
+															if (obs_p -> ob_corrected_value_s)
+																{
+																	if (obs_p -> ob_raw_value_s)
+																		{
+																			value_s = ConcatenateVarargsStrings (obs_p -> ob_corrected_value_s, " (", obs_p -> ob_raw_value_s, ")", NULL);
+
+																			if (value_s)
+																				{
+																					alloc_value_flag = true;
+																				}
+																		}
+																	else
+																		{
+																			value_s = obs_p -> ob_corrected_value_s;
+																		}
+																}
+															else
+																{
+																	if (obs_p -> ob_raw_value_s)
+																		{
+																			value_s = obs_p -> ob_raw_value_s;
+																		}
+																	else
+																		{
+																			value_s = (char *) null_sequence_s;
+																		}
+																}
+
+
+															if (value_s)
+																{
+																	if (SetJSONString (row_fd_p, key_s, value_s))
+																		{
+																			++ num_added;
+																		}
+
+																	if (alloc_value_flag)
+																		{
+																			FreeCopiedString (value_s);
+																		}
+																}
+
+															if (key_s != variable_s)
+																{
+																	FreeCopiedString (key_s);
+																}
+
+														}		/* if (key_s) */
+
 												}
 											else
 												{
-													if (obs_p -> ob_raw_value_s)
-														{
-															value_s = obs_p -> ob_raw_value_s;
-														}
-													else
-														{
-															value_s = (char *) null_sequence_s;
-														}
+													success_flag = false;
 												}
 
-
-											if (value_s)
+											if (success_flag)
 												{
-													if (SetJSONString (row_fd_p, key_s, value_s))
-														{
-															++ num_added;
-														}
-
-													if (alloc_value_flag)
-														{
-															FreeCopiedString (value_s);
-														}
+													obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
 												}
+										}
 
-											if (key_s != variable_s)
-												{
-													FreeCopiedString (key_s);
-												}
+								}		/* if (row_p -> ro_observations_p) */
 
-										}		/* if (key_s) */
 
-								}
-							else
-								{
-									success_flag = false;
-								}
 
-							if (success_flag)
-								{
-									obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
-								}
-						}
+						}		/* if (success_flag) */
 
-				}
-		}		/* if (success_flag) */
+				}		/* if (success_flag) */
+
+		}		/* if (SetJSONInteger (row_fd_p, RO_RACK_INDEX_S, row_p -> ro_rack_index)) */
+
 
 	return success_flag;
 }

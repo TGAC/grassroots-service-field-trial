@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-
+#define ALLOCATE_PLOT_JOB_CONSTANTS (1)
 #include "plot_jobs.h"
 
 #include "plot.h"
@@ -115,10 +115,10 @@ static const char * const S_THUMBNAIL_TITLE_S = "Thumbnail";
 static const char * const S_THUMBNAIL_DESCRIPTION_S = "The link for a thumbnail image of this plot.";
 
 static const char * const S_SOWING_ORDER_TITLE_S = "Sowing order";
-static const char * const S_SOWING_ORDER_DECSRIPTION_S = "The order that the plots were sown.";
+static const char * const S_SOWING_ORDER_DESCRIPTION_S = "The order that the plots were sown.";
 
 static const char * const S_WALKING_ORDER_TITLE_S = "Walking order";
-static const char * const S_WALKING_ORDER_DECSRIPTION_S = "The order that the plots were walked";
+static const char * const S_WALKING_ORDER_DESCRIPTION_S = "The order that the plots were walked";
 
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
@@ -364,7 +364,7 @@ json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServic
 		{
 			if (SetJSONString (plots_p, FD_PROFILE_S, FD_PROFILE_TABULAR_RESOURCE_S))
 				{
-					json_t *schema_p = GetPlotsFrictionlessDataTableSchema (study_p);
+					json_t *schema_p = GetPlotsFrictionlessDataTableSchema (study_p, service_data_p);
 
 					if (schema_p)
 						{
@@ -438,24 +438,14 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 
 					while (node_p && success_flag)
 						{
-							json_t *plot_p = GetPlotAsFrictionlessData (node_p -> pn_plot_p, study_p, service_data_p, null_sequence_s);
-
-							if (plot_p)
+							if (AddPlotAsFrictionlessData (node_p -> pn_plot_p, plots_p, study_p, service_data_p, null_sequence_s))
 								{
-									if (json_array_append_new (plots_p, plot_p) == 0)
-										{
-											node_p = (PlotNode *) (node_p -> pn_node.ln_next_p);
-										}
-									else
-										{
-											success_flag = false;
-										}
+									node_p = (PlotNode *) (node_p -> pn_node.ln_next_p);
 								}
 							else
 								{
 									success_flag = false;
 								}
-
 						}
 
 					if (success_flag)
@@ -503,10 +493,14 @@ bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const
 														{
 															if (AddRowFrictionlessDataDetails (row_node_p -> rn_row_p, row_fd_p, service_data_p, null_sequence_s))
 																{
-																	++ num_added;
+																	if (json_array_append_new (plots_array_p, row_fd_p) == 0)
+																		{
+																			++ num_added;
 
-																	row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p)
-																	success_flag = true;
+																			row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+																			success_flag = true;
+																		}
+
 																}
 														}
 												}
@@ -638,7 +632,21 @@ json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const Study * const study
 }
 
 
-json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p)
+/*
+																					if (AddColumnParameterHint (S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, PT_STRING, false, hints_p))
+																						{
+																							if (AddColumnParameterHint (S_IMAGE_TITLE_S, S_IMAGE_DESCRIPTION_S, PT_STRING, false, hints_p))
+																								{
+																									if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, PT_STRING, false, hints_p))
+																										{
+																											if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
+																												{
+																													if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
+																														{
+	*/
+
+
+json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *fields_p = json_array ();
 
@@ -662,57 +670,126 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p)
 																		{
 																			if (AddTableField (fields_p, S_ACCESSION_TITLE_S, S_ACCESSION_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
 																				{
-																					if (AddTableField (fields_p, S_REPLICATE_TITLE_S, S_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
+																					if (AddTableField (fields_p, PL_REPLICATE_TITLE_S, PL_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
 																						{
-																							bool b = true;
-
-																							if (study_p -> st_treatments_p)
+																							if (AddTableField (fields_p, S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_COMMENT_DESCRIPTION_S, NULL))
 																								{
-																									TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
-
-																									while (node_p && b)
+																									if (AddTableField (fields_p, S_IMAGE_TITLE_S, S_IMAGE_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_IMAGE_DESCRIPTION_S, NULL))
 																										{
-																											TreatmentFactor *tf_p = node_p -> tfn_p;
-																											const char *name_s = GetTreatmentFactorName (tf_p);
-
-																											if (name_s)
+																											if (AddTableField (fields_p, S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_THUMBNAIL_DESCRIPTION_S, NULL))
 																												{
-																													const char *url_s = GetTreatmentFactorUrl (tf_p);
-
-																													if (url_s)
+																													if (AddTableField (fields_p, S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_SOWING_ORDER_DESCRIPTION_S, NULL))
 																														{
-																															const char *description_s = GetTreatmentFactorDescription (tf_p);
-
-																															if (AddTableField (fields_p, url_s ? url_s : name_s, name_s, FD_TYPE_STRING, NULL, description_s, NULL))
+																															if (AddTableField (fields_p, S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_WALKING_ORDER_DESCRIPTION_S, NULL))
 																																{
-																																	node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+																																	bool b = true;
+
+																																	if (study_p -> st_treatments_p)
+																																		{
+																																			TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+
+																																			while (node_p && b)
+																																				{
+																																					TreatmentFactor *tf_p = node_p -> tfn_p;
+																																					const char *name_s = GetTreatmentFactorName (tf_p);
+
+																																					if (name_s)
+																																						{
+																																							const char *url_s = GetTreatmentFactorUrl (tf_p);
+
+																																							if (url_s)
+																																								{
+																																									const char *description_s = GetTreatmentFactorDescription (tf_p);
+
+																																									if (AddTableField (fields_p, url_s ? url_s : name_s, name_s, FD_TYPE_STRING, NULL, description_s, NULL))
+																																										{
+																																											node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+																																										}
+																																									else
+																																										{
+																																											b = false;
+																																										}
+																																								}
+																																						}
+																																					else
+																																						{
+																																							b = false;
+																																						}
+
+																																				}
+																																		}
+
+																																	if (b)
+																																		{
+																																			bool added_flag = true;
+																																			json_t *study_phenotypes_p = GetStudyDistinctPhenotypesAsFrictionlessDataJSON (study_p -> st_id_p, service_data_p);
+
+																																			if (study_phenotypes_p)
+																																				{
+																																					size_t i;
+																																					const size_t num_phenotypes = json_array_size (study_phenotypes_p);
+
+																																					for (i = 0; i < num_phenotypes; ++ i)
+																																						{
+																																							json_t *phenotype_p = json_array_get (study_phenotypes_p, i);
+
+																																							if (json_array_append (fields_p, phenotype_p) != 0)
+																																								{
+																																									added_flag = false;
+
+																																									/* force exit from loop */
+																																									i = num_phenotypes;
+																																								}
+																																						}
+
+																																					json_array_clear (study_phenotypes_p);
+																																					json_decref (study_phenotypes_p);
+																																				}		/* if (study_phenotypes_p) */
+
+																																			if (added_flag)
+																																				{
+																																					return fields_p;
+																																				}
+																																			else
+																																				{
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Phenotypes");
+																																				}
+
+																																		}
+																																	else
+																																		{
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add TreatmentFactors");
+																																		}
+
 																																}
 																															else
 																																{
-																																	b = false;
+																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_WALKING_ORDER_TITLE_S);
 																																}
+																														}
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_SOWING_ORDER_TITLE_S);
 																														}
 																												}
 																											else
 																												{
-																													b = false;
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_THUMBNAIL_TITLE_S);
 																												}
-
 																										}
-																								}
-
-																							if (b)
-																								{
-																									return fields_p;
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_IMAGE_TITLE_S);
+																										}
 																								}
 																							else
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add TreatmentFactors");
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_COMMENT_TITLE_S);
 																								}
 																						}
 																					else
 																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_REPLICATE_TITLE_S);
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_REPLICATE_TITLE_S);
 																						}
 																				}
 																			else
@@ -771,13 +848,13 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p)
 
 
 
-json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p)
+json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *schema_p = json_object ();
 
 	if (schema_p)
 		{
-			json_t *fields_p = GetStudyPlotHeaderAsFrictionlessData (study_p);
+			json_t *fields_p = GetStudyPlotHeaderAsFrictionlessData (study_p, service_data_p);
 
 			if (fields_p)
 				{
@@ -812,7 +889,7 @@ static json_t *GetTableParameterHints (void)
 {
 	/*
 	headers_s = ConcatenateVarargsStrings (S_SOWING_TITLE_S, delim_s, S_HARVEST_TITLE_S, delim_s, S_WIDTH_TITLE_S, delim_s, S_LENGTH_TITLE_S, delim_s, S_ROW_TITLE_S, delim_s, S_COLUMN_TITLE_S, delim_s,
-																				 S_REPLICATE_TITLE_S, delim_s, S_RACK_TITLE_S, delim_s, S_MATERIAL_TITLE_S, delim_s, S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
+																				 PL_REPLICATE_TITLE_S, delim_s, S_RACK_TITLE_S, delim_s, S_MATERIAL_TITLE_S, delim_s, S_TRIAL_DESIGN_TITLE_S, delim_s, S_GROWING_CONDITION_TITLE_S, delim_s, S_TREATMENT_TITLE_S, delim_s, NULL);
 	 */
 	json_t *hints_p = json_array ();
 
@@ -832,7 +909,7 @@ static json_t *GetTableParameterHints (void)
 														{
 															if (AddColumnParameterHint (S_COLUMN_TITLE_S, S_COLUMN_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																{
-																	if (AddColumnParameterHint (S_REPLICATE_TITLE_S, S_REPLICATE_DESCRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
+																	if (AddColumnParameterHint (PL_REPLICATE_TITLE_S, S_REPLICATE_DESCRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																		{
 																			if (AddColumnParameterHint (S_RACK_TITLE_S, S_RACK_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																				{
@@ -844,9 +921,9 @@ static json_t *GetTableParameterHints (void)
 																										{
 																											if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, PT_STRING, false, hints_p))
 																												{
-																													if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
+																													if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DESCRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																														{
-																															if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
+																															if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DESCRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
 																																{
 																																	return hints_p;
 																																}
@@ -1043,7 +1120,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																					if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &rack_studywise_index))
 																						{
 																							int32 replicate = 1;
-																							const char *rep_s = GetJSONString (table_row_json_p, S_REPLICATE_TITLE_S);
+																							const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
 																							bool control_rep_flag = false;
 
 																							if (!IsStringEmpty (rep_s))
@@ -1093,7 +1170,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																											json_object_del (table_row_json_p, S_ACCESSION_TITLE_S);
 																											json_object_del (table_row_json_p, S_GENE_BANK_S);
 																											json_object_del (table_row_json_p, S_TREATMENT_TITLE_S);
-																											json_object_del (table_row_json_p, S_REPLICATE_TITLE_S);
+																											json_object_del (table_row_json_p, PL_REPLICATE_TITLE_S);
 																											json_object_del (table_row_json_p, S_COMMENT_TITLE_S);
 																											json_object_del (table_row_json_p, S_IMAGE_TITLE_S);
 																											json_object_del (table_row_json_p, S_THUMBNAIL_TITLE_S);
@@ -1677,7 +1754,7 @@ static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *s
 																		{
 																			if ((row_p -> ro_rack_index == 0) || (SetJSONInteger (table_row_p, S_RACK_TITLE_S, row_p -> ro_rack_index)))
 																				{
-																					if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, S_REPLICATE_TITLE_S, row_p -> ro_replicate_index)))
+																					if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index)))
 																						{
 																							if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, S_INDEX_TITLE_S, row_p -> ro_by_study_index)))
 																								{
@@ -1715,7 +1792,7 @@ static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *s
 
 																								}		/* if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, S_INDEX_TITLE_S, row_p -> ro_by_study_index))) */
 
-																						}		/* if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, S_REPLICATE_TITLE_S, row_p -> ro_rephttps://www.theguardian.com/ukhttps://www.theguardian.com/uklicate_index))) */
+																						}		/* if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, PL_REPLICATE_TITLE_S, row_p -> ro_rephttps://www.theguardian.com/ukhttps://www.theguardian.com/uklicate_index))) */
 
 																				}		/* if ((row_p -> ro_rack_index == 0) || (SetJSONInteger (table_row_p, S_RACK_TITLE_S, row_p -> ro_rack_index))) */
 

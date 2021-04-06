@@ -152,6 +152,9 @@ static void ReportTreatmentFactorError (Study *study_p, const char *name_s, cons
 static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s);
 
 
+static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p);
+
+
 /*
  * API DEFINITIONS
  */
@@ -1912,10 +1915,104 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
 		}
 
+	return phenotypes_p;
+}
 
+
+json_t *GetStudyDistinctPhenotypesAsFrictionlessDataJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
+{
+	json_t *phenotypes_p = NULL;
+	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
+
+	if (key_s)
+		{
+			phenotypes_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddPhenotypeAsFrictionlessData, data_p);
+
+			FreeCopiedString (key_s);
+		}		/* if (key_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
+		}
 
 	return phenotypes_p;
 }
+
+
+
+static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bson_oid_t *phenotype_id_p = GetBSONOidFromString (oid_s);
+
+	if (phenotype_id_p)
+		{
+			MeasuredVariable *variable_p = GetMeasuredVariableById (phenotype_id_p, data_p);
+
+			if (variable_p)
+				{
+					const char *url_s = NULL;
+
+					if (variable_p -> mv_variable_term_p)
+						{
+							url_s = variable_p -> mv_variable_term_p -> st_url_s;
+
+							if (url_s)
+								{
+									if (variable_p -> mv_trait_term_p)
+										{
+											const char *title_s = variable_p -> mv_trait_term_p -> st_name_s;
+
+											if (title_s)
+												{
+													const char *description_s = variable_p -> mv_trait_term_p -> st_description_s;
+													json_t *phenotype_fd_p = json_object ();
+
+													if (phenotype_fd_p)
+														{
+															if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_NAME, url_s))
+																{
+																	if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_TITLE, title_s))
+																		{
+																			if ((!description_s) || (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_DESCRIPTION, description_s)))
+																				{
+																					if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_TYPE, "string"))
+																						{
+																							if (json_array_append_new (values_p, phenotype_fd_p) == 0)
+																								{
+																									success_flag = true;
+																								}
+																						}
+
+																				}		/* if ((!description_s) || (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_DESCRIPTION, description_s))) */
+
+																		}		/* if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_TITLE, title_s)) */
+
+																}		/* if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_NAME, url_s)) */
+
+															if (!success_flag)
+																{
+																	json_decref (phenotype_fd_p);
+																}
+
+														}		/* if (phenotype_fd_p) */
+
+												}		/* if (title_s) */
+
+										}		/* if (variable_p -> mv_trait_term_p) */
+
+								}		/* if (url_s) */
+
+						}		/* if (variable_p -> mv_variable_term_p */
+
+					FreeMeasuredVariable (variable_p);
+				}		/* if (variable_p) */
+
+			FreeBSONOid (phenotype_id_p);
+		}		/* if (phenotype_id_p) */
+
+	return success_flag;
+}		/* if (oid_s) */
 
 
 
