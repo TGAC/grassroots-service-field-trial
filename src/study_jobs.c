@@ -1951,13 +1951,13 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 			if (variable_p)
 				{
-					const char *url_s = NULL;
+					const char *name_s = NULL;
 
 					if (variable_p -> mv_variable_term_p)
 						{
-							url_s = variable_p -> mv_variable_term_p -> st_url_s;
+							name_s = variable_p -> mv_variable_term_p -> st_name_s;
 
-							if (url_s)
+							if (name_s)
 								{
 									if (variable_p -> mv_trait_term_p)
 										{
@@ -1970,7 +1970,7 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 													if (phenotype_fd_p)
 														{
-															if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_NAME, url_s))
+															if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_NAME, name_s))
 																{
 																	if (SetJSONString (phenotype_fd_p, FD_TABLE_FIELD_TITLE, title_s))
 																		{
@@ -2001,7 +2001,7 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 										}		/* if (variable_p -> mv_trait_term_p) */
 
-								}		/* if (url_s) */
+								}		/* if (name_s) */
 
 						}		/* if (variable_p -> mv_variable_term_p */
 

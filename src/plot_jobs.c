@@ -375,7 +375,7 @@ json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServic
 
 									if (data_p)
 										{
-											if (json_object_set_new (plots_p, "data", data_p) == 0)
+											if (json_object_set_new (plots_p, FD_DATA_S, data_p) == 0)
 												{
 													json_t *dialect_p = GetPlotsCSVDialect (null_sequence_s);
 
@@ -858,7 +858,7 @@ json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p, const FieldTr
 
 			if (fields_p)
 				{
-					if (json_object_set_new (schema_p, "fields", fields_p) == 0)
+					if (json_object_set_new (schema_p, FD_TABLE_FIELDS_S, fields_p) == 0)
 						{
 							if (SetJSONString (schema_p, "title", "Plots"))
 								{

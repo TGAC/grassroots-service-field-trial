@@ -40,6 +40,9 @@ FD_UTIL_PREFIX const char * const FD_RESOURCES_S FD_UTIL_VAL ("resources");
 
 FD_UTIL_PREFIX const char * const FD_SCHEMA_S FD_UTIL_VAL ("schema");
 
+FD_UTIL_PREFIX const char * const FD_TABLE_FIELDS_S FD_UTIL_VAL ("fields");
+
+FD_UTIL_PREFIX const char * const FD_DATA_S FD_UTIL_VAL ("data");
 
 
 /*
