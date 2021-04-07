@@ -49,7 +49,9 @@
  */
 PLOT_JOB_PREFIX const char *PL_REPLICATE_TITLE_S PLOT_JOB_VAL("Replicate");
 
+PLOT_JOB_PREFIX const char *PL_INDEX_TABLE_TITLE_S PLOT_JOB_VAL("Plot ID");
 
+PLOT_JOB_PREFIX const char *PL_ACCESSION_TABLE_TITLE_S PLOT_JOB_VAL ("Accession");
 
 #ifdef __cplusplus
 extern "C"

@@ -384,13 +384,13 @@ bool CopyValidUnsignedInteger (const uint32 *src_p, uint32 **dest_pp)
 
 
 
-bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s)
+bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s, const bool add_time_flag)
 {
 	bool success_flag = false;
 
 	if (time_p)
 		{
-			char *time_s = GetTimeAsString (time_p, false);
+			char *time_s = GetTimeAsString (time_p, add_time_flag);
 
 			if (time_s)
 				{

@@ -362,9 +362,9 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 																		{
 																			if (SetNonTrivialString (plot_json_p, PL_IMAGE_S, plot_p -> pl_image_url_s, false))
 																				{
-																					if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S))
+																					if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, plot_json_p, PL_SOWING_DATE_S, false))
 																						{
-																							if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S))
+																							if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S, false))
 																								{
 																									if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
 																										{

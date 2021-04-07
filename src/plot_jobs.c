@@ -77,7 +77,6 @@ static const char * const S_WIDTH_TITLE_S = "Width";
 static const char * const S_LENGTH_TITLE_S = "Length";
 #define S_LENGTH_DESCRIPTION_S "This is the length, in metres, of each plot"
 
-static const char * const S_INDEX_TITLE_S = "Plot ID";
 static const char * const S_INDEX_DESCRIPTION_S = "The ID of the rack. This is a number given to uniquely identify each rack in the Study similar to a primary key in a database."
 		" If GeoJSON and/or images are available, this will be used to identify which plot this information refers to.";
 
@@ -93,7 +92,6 @@ static const char * const S_COLUMN_DESCRIPTION_S = "Column number of the plot. T
 static const char * const S_RACK_TITLE_S = "Rack";
 static const char * const S_RACK_DESCRIPTION_S = "Within the plot, this is the number of the cassette that is filled for drilling.";
 
-static const char * const S_ACCESSION_TITLE_S = "Accession";
 static const char * const S_ACCESSION_DESCRIPTION_S = "This is the unique identifier from a particular seed/gene bank to identify the material.";
 
 static const char * const S_GENE_BANK_S = "Gene Bank";
@@ -163,6 +161,7 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+
 
 /*
  * API definitions
@@ -464,6 +463,7 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 }
 
 
+
 bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
 {
 	uint32 num_added = 0;
@@ -491,14 +491,22 @@ bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const
 												{
 													if (SetFDTableReal (row_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
 														{
-															if (AddRowFrictionlessDataDetails (row_node_p -> rn_row_p, row_fd_p, service_data_p, null_sequence_s))
+															if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, row_fd_p, S_SOWING_TITLE_S, false))
 																{
-																	if (json_array_append_new (plots_array_p, row_fd_p) == 0)
+																	if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, row_fd_p, S_HARVEST_TITLE_S, false))
 																		{
-																			++ num_added;
+																			if (AddRowFrictionlessDataDetails (row_node_p -> rn_row_p, row_fd_p, service_data_p, null_sequence_s))
+																				{
+																					if (json_array_append_new (plots_array_p, row_fd_p) == 0)
+																						{
+																							++ num_added;
 
-																			row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
-																			success_flag = true;
+																							row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+																							success_flag = true;
+																						}
+
+																				}
+
 																		}
 
 																}
@@ -524,126 +532,6 @@ bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const
 }
 
 
-json_t *GetPlotAsFrictionlessData (const Plot *plot_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
-{
-	json_t *plot_fd_p = json_object ();
-
-
-	if (plot_p -> pl_rows_p)
-		{
-			if (plot_fd_p)
-				{
-					if (SetJSONInteger (plot_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index))
-						{
-							if (SetJSONInteger (plot_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))
-								{
-									if (SetFDTableReal (plot_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s))
-										{
-											if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
-												{
-												}
-										}
-								}
-						}
-				}
-		}		/* if (plot_p -> pl_rows_p) */
-
-	if (plot_fd_p)
-		{
-			if (SetJSONInteger (plot_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index))
-				{
-					if (SetJSONInteger (plot_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index))
-						{
-							if (SetFDTableReal (plot_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s))
-								{
-									if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s))
-										{
-											/*
-											 * Add the treatment factors
-											 */
-											if (plot_p -> pl_rows_p)
-													{
-														uint32 num_added = 0;
-														bool b = true;
-
-														RowNode *row_node_p = (RowNode *) plot_p -> pl_rows_p -> ll_head_p;
-
-														while (row_node_p && b)
-															{
-																Row *row_p = row_node_p -> rn_row_p;
-
-																if (row_p -> ro_treatment_factor_values_p)
-																	{
-																		TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
-
-																		while (tfv_node_p && b)
-																			{
-																				TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
-
-																				const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
-
-																				if (url_s)
-																					{
-																						if (SetFDTableString (plot_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
-																							{
-																								++ num_added;
-																							}
-																						else
-																							{
-																								b = false;
-																							}
-																					}
-																				else
-																					{
-																						b = false;
-																					}
-
-																				if (b)
-																					{
-																						tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
-																					}
-																			}
-
-																	}		/* if (row_p -> ro_treatment_factor_values_p) */
-
-
-																if (b)
-																	{
-																		row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
-																	}
-
-															}		/* while (row_node_p && b) */
-
-													}		/* if (study_p -> st_treatments_p) */
-
-
-											return plot_fd_p;
-										}		/* if (SetFDTableReal (plot_fd_p, S_WIDTH_TITLE_S, plot_p -> pl_width_p, null_sequence_s)) */
-
-								}		/* if (SetFDTableReal (plot_fd_p, S_LENGTH_TITLE_S, plot_p -> pl_length_p, null_sequence_s)) */
-
-						}		/* if (SetJSONInteger (plot_fd_p, S_COLUMN_TITLE_S, plot_p -> pl_column_index)) */
-
-				}		/* if (SetJSONInteger (plot_fd_p, S_ROW_TITLE_S, plot_p -> pl_row_index)) */
-
-		}		/* if (plot_fd_p) */
-
-	return NULL;
-}
-
-
-/*
-																					if (AddColumnParameterHint (S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, PT_STRING, false, hints_p))
-																						{
-																							if (AddColumnParameterHint (S_IMAGE_TITLE_S, S_IMAGE_DESCRIPTION_S, PT_STRING, false, hints_p))
-																								{
-																									if (AddColumnParameterHint (S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, PT_STRING, false, hints_p))
-																										{
-																											if (AddColumnParameterHint (S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
-																												{
-																													if (AddColumnParameterHint (S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DECSRIPTION_S, PT_UNSIGNED_INT, false, hints_p))
-																														{
-	*/
 
 
 json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p)
@@ -652,7 +540,7 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 
 	if (fields_p)
 		{
-			if (AddTableField (fields_p, S_INDEX_TITLE_S, S_INDEX_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL))
+			if (AddTableField (fields_p, PL_INDEX_TABLE_TITLE_S, PL_INDEX_TABLE_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL))
 				{
 					if (AddTableField (fields_p, S_SOWING_TITLE_S, S_SOWING_TITLE_S, FD_TYPE_DATE, NULL, S_SOWING_DESCRIPTION_S, NULL))
 						{
@@ -668,7 +556,7 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 																{
 																	if (AddTableField (fields_p, S_RACK_TITLE_S, S_RACK_TITLE_S, FD_TYPE_INTEGER, NULL, S_RACK_DESCRIPTION_S, NULL))
 																		{
-																			if (AddTableField (fields_p, S_ACCESSION_TITLE_S, S_ACCESSION_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
+																			if (AddTableField (fields_p, PL_ACCESSION_TABLE_TITLE_S, PL_ACCESSION_TABLE_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
 																				{
 																					if (AddTableField (fields_p, PL_REPLICATE_TITLE_S, PL_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
 																						{
@@ -794,7 +682,7 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 																				}
 																			else
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_ACCESSION_TITLE_S);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_ACCESSION_TABLE_TITLE_S);
 																				}
 																		}
 																	else
@@ -837,7 +725,7 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 				}		/* if (AddTableField (fields_p, S_INDEX_TITLE_S, S_INDEX_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL)) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_INDEX_TITLE_S);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_INDEX_TABLE_TITLE_S);
 				}
 
 			json_decref (fields_p);
@@ -903,7 +791,7 @@ static json_t *GetTableParameterHints (void)
 								{
 									if (AddColumnParameterHint (S_LENGTH_TITLE_S, S_LENGTH_DESCRIPTION_S ". If this is blank, then the *Plot height* specified for the Study will be used.", PT_UNSIGNED_REAL, false, hints_p))
 										{
-											if (AddColumnParameterHint (S_INDEX_TITLE_S, S_INDEX_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
+											if (AddColumnParameterHint (PL_INDEX_TABLE_TITLE_S, S_INDEX_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 												{
 													if (AddColumnParameterHint (S_ROW_TITLE_S, S_ROW_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 														{
@@ -913,7 +801,7 @@ static json_t *GetTableParameterHints (void)
 																		{
 																			if (AddColumnParameterHint (S_RACK_TITLE_S, S_RACK_DESCRIPTION_S, PT_UNSIGNED_INT, true, hints_p))
 																				{
-																					if (AddColumnParameterHint (S_ACCESSION_TITLE_S, S_ACCESSION_DESCRIPTION_S, PT_STRING, true, hints_p))
+																					if (AddColumnParameterHint (PL_ACCESSION_TABLE_TITLE_S, S_ACCESSION_DESCRIPTION_S, PT_STRING, true, hints_p))
 																						{
 																							if (AddColumnParameterHint (S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, PT_STRING, false, hints_p))
 																								{
@@ -1072,7 +960,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 
 							if (gene_bank_p)
 								{
-									const char *accession_s = GetJSONString (table_row_json_p, S_ACCESSION_TITLE_S);
+									const char *accession_s = GetJSONString (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
 
 									if (!IsStringEmpty (accession_s))
 										{
@@ -1117,7 +1005,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																				{
 																					int32 rack_studywise_index = -1;
 
-																					if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &rack_studywise_index))
+																					if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
 																						{
 																							int32 replicate = 1;
 																							const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
@@ -1163,11 +1051,11 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																											json_object_del (table_row_json_p, S_HARVEST_TITLE_S);
 																											json_object_del (table_row_json_p, S_WIDTH_TITLE_S);
 																											json_object_del (table_row_json_p, S_LENGTH_TITLE_S);
-																											json_object_del (table_row_json_p, S_INDEX_TITLE_S);
+																											json_object_del (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
 																											json_object_del (table_row_json_p, S_ROW_TITLE_S);
 																											json_object_del (table_row_json_p, S_COLUMN_TITLE_S);
 																											json_object_del (table_row_json_p, S_RACK_TITLE_S);
-																											json_object_del (table_row_json_p, S_ACCESSION_TITLE_S);
+																											json_object_del (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
 																											json_object_del (table_row_json_p, S_GENE_BANK_S);
 																											json_object_del (table_row_json_p, S_TREATMENT_TITLE_S);
 																											json_object_del (table_row_json_p, PL_REPLICATE_TITLE_S);
@@ -1230,8 +1118,8 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																						}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
 																					else
 																						{
-																							AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, S_INDEX_TITLE_S);
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_INDEX_TITLE_S);
+																							AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, PL_INDEX_TABLE_TITLE_S);
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
 																						}
 
 																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
@@ -1268,8 +1156,8 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 										}		/* if (accession_s) */
 									else
 										{
-											AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, S_ACCESSION_TITLE_S);
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ACCESSION_TITLE_S);
+											AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, PL_ACCESSION_TABLE_TITLE_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_ACCESSION_TABLE_TITLE_S);
 										}
 
 									FreeGeneBank (gene_bank_p);
@@ -1748,21 +1636,21 @@ static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *s
 												{
 													if ((plot_p -> pl_treatments_s == NULL) || (SetJSONString (table_row_p, S_TREATMENT_TITLE_S, plot_p -> pl_treatments_s)))
 														{
-															if ((plot_p -> pl_sowing_date_p == NULL) || (AddValidDateToJSON (plot_p -> pl_sowing_date_p, table_row_p, S_SOWING_TITLE_S)))
+															if (AddValidDateToJSON (plot_p -> pl_sowing_date_p, table_row_p, S_SOWING_TITLE_S, false))
 																{
-																	if ((plot_p -> pl_harvest_date_p == NULL) || (AddValidDateToJSON (plot_p -> pl_harvest_date_p, table_row_p, S_HARVEST_TITLE_S)))
+																	if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, table_row_p, S_HARVEST_TITLE_S, false))
 																		{
 																			if ((row_p -> ro_rack_index == 0) || (SetJSONInteger (table_row_p, S_RACK_TITLE_S, row_p -> ro_rack_index)))
 																				{
 																					if ((row_p -> ro_replicate_index == 0) || (SetJSONInteger (table_row_p, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index)))
 																						{
-																							if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, S_INDEX_TITLE_S, row_p -> ro_by_study_index)))
+																							if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index)))
 																								{
 																									bool success_flag = false;
 
 																									if (row_p -> ro_material_p)
 																										{
-																											if ((row_p -> ro_material_p -> ma_accession_s == NULL) || (SetJSONString (table_row_p, S_ACCESSION_TITLE_S, row_p -> ro_material_p -> ma_accession_s)))
+																											if ((row_p -> ro_material_p -> ma_accession_s == NULL) || (SetJSONString (table_row_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s)))
 																												{
 
 																												}
