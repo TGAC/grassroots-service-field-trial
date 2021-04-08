@@ -66,6 +66,26 @@ FD_UTIL_PREFIX const char *FD_TABLE_FIELD_NULL_VALUE FD_UTIL_VAL ("missingValues
 
 
 /*
+ * Constraints
+ */
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_REQUIRED FD_UTIL_VAL ("required");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_UNIQUE FD_UTIL_VAL ("unique");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_MIN_LENGTH FD_UTIL_VAL ("minLength");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_MAX_LENGTH FD_UTIL_VAL ("maxLength");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_MIN FD_UTIL_VAL ("minimum");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_MAX FD_UTIL_VAL ("maximum");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_PATTERN FD_UTIL_VAL ("pattern");
+
+FD_UTIL_PREFIX const char *FD_TABLE_FIELD_CONSTRAINT_ENUM FD_UTIL_VAL ("enum");
+
+/*
  * CSV Dialect
  */
 
@@ -206,7 +226,12 @@ extern "C"
 {
 #endif
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const int *min_value_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddNumberField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const double *min_value_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFDTableReal (json_t *row_p, const char * const key_s, const double64 *value_p, const char * const null_sequence_s);
@@ -219,6 +244,24 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCSVDialect (const char *delimter_s, con
 																										 const char *null_seqeunce_s, const bool has_header_row_flag, const bool case_sensitive_header_flag,
 																										 const bool double_quote_flag, const bool skip_initial_space_flag, const char *quote_p,
 																										 const uint32 major_version, const uint32 minor_version);
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldRequired (json_t *field_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldUnique (json_t *field_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldMinimumInteger (json_t *field_p, const json_int_t value);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldMinimumNumber (json_t *field_p, const double value);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldMaximumInteger (json_t *field_p, const json_int_t value);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldMaximumNumber (json_t *field_p, const double value);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldPattern (json_t *field_p, const char * const pattern_s);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldEnum (json_t *field_p, json_t *enum_p);
 
 
 #ifdef __cplusplus

@@ -533,194 +533,213 @@ bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const
 
 
 
-
 json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *fields_p = json_array ();
 
 	if (fields_p)
 		{
-			if (AddTableField (fields_p, PL_INDEX_TABLE_TITLE_S, PL_INDEX_TABLE_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL))
+			int min_int = 1;
+
+			json_t *field_p = AddIntegerField (fields_p, PL_INDEX_TABLE_TITLE_S, PL_INDEX_TABLE_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL, &min_int);
+
+			if (field_p)
 				{
-					if (AddTableField (fields_p, S_SOWING_TITLE_S, S_SOWING_TITLE_S, FD_TYPE_DATE, NULL, S_SOWING_DESCRIPTION_S, NULL))
+					/*
+					 * The Plot Id starts from 1, is unique and is required
+					 */
+					if ((SetTableFieldUnique (field_p)) && (SetTableFieldRequired (field_p)))
 						{
-							if (AddTableField (fields_p, S_HARVEST_TITLE_S, S_HARVEST_TITLE_S, FD_TYPE_DATE, NULL, S_HARVEST_DESCRIPTION_S, NULL))
+							if (AddTableField (fields_p, S_SOWING_TITLE_S, S_SOWING_TITLE_S, FD_TYPE_DATE, NULL, S_SOWING_DESCRIPTION_S, NULL))
 								{
-									if (AddTableField (fields_p, S_WIDTH_TITLE_S, S_WIDTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_WIDTH_DESCRIPTION_S, NULL))
+									if (AddTableField (fields_p, S_HARVEST_TITLE_S, S_HARVEST_TITLE_S, FD_TYPE_DATE, NULL, S_HARVEST_DESCRIPTION_S, NULL))
 										{
-											if (AddTableField (fields_p, S_LENGTH_TITLE_S, S_LENGTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_LENGTH_DESCRIPTION_S, NULL))
+											double min_num = 0.0f;
+
+											if (AddNumberField (fields_p, S_WIDTH_TITLE_S, S_WIDTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_WIDTH_DESCRIPTION_S, NULL, &min_num))
 												{
-													if (AddTableField (fields_p, S_ROW_TITLE_S, S_ROW_TITLE_S, FD_TYPE_INTEGER, NULL, S_ROW_DESCRIPTION_S, NULL))
+													if (AddNumberField (fields_p, S_LENGTH_TITLE_S, S_LENGTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_LENGTH_DESCRIPTION_S, NULL, &min_num))
 														{
-															if (AddTableField (fields_p, S_COLUMN_TITLE_S, S_COLUMN_TITLE_S, FD_TYPE_INTEGER, NULL, S_COLUMN_DESCRIPTION_S, NULL))
+															if (AddIntegerField (fields_p, S_ROW_TITLE_S, S_ROW_TITLE_S, FD_TYPE_INTEGER, NULL, S_ROW_DESCRIPTION_S, NULL, &min_int))
 																{
-																	if (AddTableField (fields_p, S_RACK_TITLE_S, S_RACK_TITLE_S, FD_TYPE_INTEGER, NULL, S_RACK_DESCRIPTION_S, NULL))
+																	if (AddIntegerField (fields_p, S_COLUMN_TITLE_S, S_COLUMN_TITLE_S, FD_TYPE_INTEGER, NULL, S_COLUMN_DESCRIPTION_S, NULL, &min_int))
 																		{
-																			if (AddTableField (fields_p, PL_ACCESSION_TABLE_TITLE_S, PL_ACCESSION_TABLE_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
+																			if (AddIntegerField (fields_p, S_RACK_TITLE_S, S_RACK_TITLE_S, FD_TYPE_INTEGER, NULL, S_RACK_DESCRIPTION_S, NULL, &min_int))
 																				{
-																					if (AddTableField (fields_p, PL_REPLICATE_TITLE_S, PL_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
+																					if (AddTableField (fields_p, PL_ACCESSION_TABLE_TITLE_S, PL_ACCESSION_TABLE_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
 																						{
-																							if (AddTableField (fields_p, S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_COMMENT_DESCRIPTION_S, NULL))
+																							if (AddTableField (fields_p, PL_REPLICATE_TITLE_S, PL_REPLICATE_TITLE_S, FD_TYPE_INTEGER, NULL, S_REPLICATE_DESCRIPTION_S, NULL))
 																								{
-																									if (AddTableField (fields_p, S_IMAGE_TITLE_S, S_IMAGE_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_IMAGE_DESCRIPTION_S, NULL))
+																									if (AddTableField (fields_p, S_COMMENT_TITLE_S, S_COMMENT_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_COMMENT_DESCRIPTION_S, NULL))
 																										{
-																											if (AddTableField (fields_p, S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_THUMBNAIL_DESCRIPTION_S, NULL))
+																											if (AddTableField (fields_p, S_IMAGE_TITLE_S, S_IMAGE_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_IMAGE_DESCRIPTION_S, FD_TYPE_STRING_FORMAT_URI))
 																												{
-																													if (AddTableField (fields_p, S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_SOWING_ORDER_DESCRIPTION_S, NULL))
+																													if (AddTableField (fields_p, S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_THUMBNAIL_DESCRIPTION_S, FD_TYPE_STRING_FORMAT_URI))
 																														{
-																															if (AddTableField (fields_p, S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_WALKING_ORDER_DESCRIPTION_S, NULL))
+																															if (AddIntegerField (fields_p, S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_SOWING_ORDER_DESCRIPTION_S, NULL, &min_int))
 																																{
-																																	bool b = true;
-
-																																	if (study_p -> st_treatments_p)
+																																	if (AddIntegerField (fields_p, S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_WALKING_ORDER_DESCRIPTION_S, NULL, &min_int))
 																																		{
-																																			TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+																																			bool b = true;
 
-																																			while (node_p && b)
+																																			if (study_p -> st_treatments_p)
 																																				{
-																																					TreatmentFactor *tf_p = node_p -> tfn_p;
-																																					const char *name_s = GetTreatmentFactorName (tf_p);
+																																					TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
 
-																																					if (name_s)
+																																					while (node_p && b)
 																																						{
-																																							const char *url_s = GetTreatmentFactorUrl (tf_p);
+																																							TreatmentFactor *tf_p = node_p -> tfn_p;
+																																							const char *name_s = GetTreatmentFactorName (tf_p);
 
-																																							if (url_s)
+																																							if (name_s)
 																																								{
-																																									const char *description_s = GetTreatmentFactorDescription (tf_p);
+																																									const char *url_s = GetTreatmentFactorUrl (tf_p);
 
-																																									if (AddTableField (fields_p, url_s ? url_s : name_s, name_s, FD_TYPE_STRING, NULL, description_s, NULL))
+																																									if (url_s)
 																																										{
-																																											node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
-																																										}
-																																									else
-																																										{
-																																											b = false;
+																																											const char *description_s = GetTreatmentFactorDescription (tf_p);
+
+																																											if (AddTableField (fields_p, url_s ? url_s : name_s, name_s, FD_TYPE_STRING, NULL, description_s, NULL))
+																																												{
+																																													node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+																																												}
+																																											else
+																																												{
+																																													b = false;
+																																												}
 																																										}
 																																								}
+																																							else
+																																								{
+																																									b = false;
+																																								}
+
+																																						}
+																																				}
+
+																																			if (b)
+																																				{
+																																					bool added_flag = true;
+																																					json_t *study_phenotypes_p = GetStudyDistinctPhenotypesAsFrictionlessDataJSON (study_p -> st_id_p, service_data_p);
+
+																																					if (study_phenotypes_p)
+																																						{
+																																							size_t i;
+																																							const size_t num_phenotypes = json_array_size (study_phenotypes_p);
+
+																																							for (i = 0; i < num_phenotypes; ++ i)
+																																								{
+																																									json_t *phenotype_p = json_array_get (study_phenotypes_p, i);
+
+																																									if (json_array_append (fields_p, phenotype_p) != 0)
+																																										{
+																																											added_flag = false;
+
+																																											/* force exit from loop */
+																																											i = num_phenotypes;
+																																										}
+																																								}
+
+																																							json_array_clear (study_phenotypes_p);
+																																							json_decref (study_phenotypes_p);
+																																						}		/* if (study_phenotypes_p) */
+
+																																					if (added_flag)
+																																						{
+																																							return fields_p;
 																																						}
 																																					else
 																																						{
-																																							b = false;
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Phenotypes");
 																																						}
 
-																																				}
-																																		}
-
-																																	if (b)
-																																		{
-																																			bool added_flag = true;
-																																			json_t *study_phenotypes_p = GetStudyDistinctPhenotypesAsFrictionlessDataJSON (study_p -> st_id_p, service_data_p);
-
-																																			if (study_phenotypes_p)
-																																				{
-																																					size_t i;
-																																					const size_t num_phenotypes = json_array_size (study_phenotypes_p);
-
-																																					for (i = 0; i < num_phenotypes; ++ i)
-																																						{
-																																							json_t *phenotype_p = json_array_get (study_phenotypes_p, i);
-
-																																							if (json_array_append (fields_p, phenotype_p) != 0)
-																																								{
-																																									added_flag = false;
-
-																																									/* force exit from loop */
-																																									i = num_phenotypes;
-																																								}
-																																						}
-
-																																					json_array_clear (study_phenotypes_p);
-																																					json_decref (study_phenotypes_p);
-																																				}		/* if (study_phenotypes_p) */
-
-																																			if (added_flag)
-																																				{
-																																					return fields_p;
 																																				}
 																																			else
 																																				{
-																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Phenotypes");
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add TreatmentFactors");
 																																				}
 
 																																		}
 																																	else
 																																		{
-																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add TreatmentFactors");
+																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_WALKING_ORDER_TITLE_S);
 																																		}
-
 																																}
 																															else
 																																{
-																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_WALKING_ORDER_TITLE_S);
+																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_SOWING_ORDER_TITLE_S);
 																																}
 																														}
 																													else
 																														{
-																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_SOWING_ORDER_TITLE_S);
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_THUMBNAIL_TITLE_S);
 																														}
 																												}
 																											else
 																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_THUMBNAIL_TITLE_S);
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_IMAGE_TITLE_S);
 																												}
 																										}
 																									else
 																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_IMAGE_TITLE_S);
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_COMMENT_TITLE_S);
 																										}
 																								}
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_COMMENT_TITLE_S);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_REPLICATE_TITLE_S);
 																								}
 																						}
 																					else
 																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_REPLICATE_TITLE_S);
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_ACCESSION_TABLE_TITLE_S);
 																						}
 																				}
 																			else
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", PL_ACCESSION_TABLE_TITLE_S);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_RACK_TITLE_S);
 																				}
-																		}
+
+
+																		}		/* if (field_p) */
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_RACK_TITLE_S);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_COLUMN_TITLE_S);
 																		}
+
 																}
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_COLUMN_TITLE_S);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_ROW_TITLE_S);
 																}
+
 
 														}
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_ROW_TITLE_S);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_LENGTH_TITLE_S);
 														}
+
+
 
 												}
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_LENGTH_TITLE_S);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_WIDTH_TITLE_S);
 												}
 										}
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_WIDTH_TITLE_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_HARVEST_TITLE_S);
 										}
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_HARVEST_TITLE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_SOWING_TITLE_S);
 								}
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", S_SOWING_TITLE_S);
-						}
+
+						}		/* if ((SetTableFieldMinimumInteger (field_p, 1)) && (SetTableFieldUnique (field_p)) && (SetTableFieldRequired (field_p))) */
+
 
 				}		/* if (AddTableField (fields_p, S_INDEX_TITLE_S, S_INDEX_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL)) */
 			else

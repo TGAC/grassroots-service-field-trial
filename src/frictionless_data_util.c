@@ -15,12 +15,16 @@
 
 #include "math_utils.h"
 
+
+static json_t *GetOrCreateConstraints (json_t *field_p);
+
+
 /*
  * https://specs.frictionlessdata.io/table-schema/#descriptor
  *
  * TODO add constraints
  * */
-bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s)
+json_t *AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s)
 {
 	json_t *field_p = json_object ();
 
@@ -40,7 +44,7 @@ bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, c
 														{
 															if (json_array_append_new (fields_p, field_p) == 0)
 																{
-																	return true;
+																	return field_p;
 																}
 															else
 																{
@@ -82,7 +86,220 @@ bool AddTableField (json_t *fields_p, const char *name_s, const char *title_s, c
 			json_decref (field_p);
 		}		/* if (field_p) */
 
-	return false;
+	return NULL;
+}
+
+
+json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const int *min_value_p)
+{
+	json_t *field_p = AddTableField (fields_p, name_s, title_s, FD_TYPE_INTEGER, format_s, description_s, rdf_type_s);
+
+	if (field_p)
+		{
+			if ((min_value_p == NULL) || (SetTableFieldMinimumInteger (field_p, *min_value_p)))
+				{
+					return field_p;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to set %s constraints", name_s);
+				}
+		}
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", name_s);
+		}
+
+	return NULL;
+}
+
+
+json_t *AddNumberField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const double *min_value_p)
+{
+	json_t *field_p = AddTableField (fields_p, name_s, title_s, FD_TYPE_INTEGER, format_s, description_s, rdf_type_s);
+
+	if (field_p)
+		{
+			if ((min_value_p == NULL) || (SetTableFieldMinimumNumber (field_p, *min_value_p)))
+				{
+					return field_p;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to set %s constraints", name_s);
+				}
+		}
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, fields_p, "Failed to add %s field", name_s);
+		}
+
+	return NULL;
+}
+
+
+
+
+bool SetTableFieldRequired (json_t *field_p)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONBoolean (constraints_p, FD_TABLE_FIELD_CONSTRAINT_REQUIRED, true))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+bool SetTableFieldUnique (json_t *field_p)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONBoolean (constraints_p, FD_TABLE_FIELD_CONSTRAINT_UNIQUE, true))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+bool SetTableFieldMinimumInteger (json_t *field_p, const json_int_t value)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONInteger (constraints_p, FD_TABLE_FIELD_CONSTRAINT_MIN, value))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool SetTableFieldMinimumNumber (json_t *field_p, const double value)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONReal (constraints_p, FD_TABLE_FIELD_CONSTRAINT_MIN, value))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool SetTableFieldMaximumInteger (json_t *field_p, const json_int_t value)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONInteger (constraints_p, FD_TABLE_FIELD_CONSTRAINT_MAX, value))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool SetTableFieldMaximumNumber (json_t *field_p, const double value)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONReal (constraints_p, FD_TABLE_FIELD_CONSTRAINT_MAX, value))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool SetTableFieldPattern (json_t *field_p, const char * const pattern_s)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (SetJSONString (constraints_p, FD_TABLE_FIELD_CONSTRAINT_PATTERN, pattern_s))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool SetTableFieldEnum (json_t *field_p, json_t *enum_p)
+{
+	bool success_flag = false;
+	json_t *constraints_p = GetOrCreateConstraints (field_p);
+
+	if (constraints_p)
+		{
+			if (json_object_set_new (constraints_p, FD_TABLE_FIELD_CONSTRAINT_ENUM, enum_p) == 0)
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+
+
+static json_t *GetOrCreateConstraints (json_t *field_p)
+{
+	json_t *constraints_p = json_object_get (field_p, FD_TABLE_FIELD_CONSTRAINTS);
+
+	if (!constraints_p)
+		{
+			constraints_p = json_object ();
+
+			if (constraints_p)
+				{
+					if (json_object_set_new (field_p, FD_TABLE_FIELD_CONSTRAINTS, constraints_p) != 0)
+						{
+							json_decref (constraints_p);
+							constraints_p = NULL;
+						}
+				}
+		}
+
+	return constraints_p;
 }
 
 
