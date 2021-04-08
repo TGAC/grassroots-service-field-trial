@@ -98,6 +98,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetImageObject (const char *image_url_s, c
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *params_json_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFrictionlessDataURL (const char *const name_s, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

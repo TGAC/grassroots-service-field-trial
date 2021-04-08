@@ -88,6 +88,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeFromResource (Resource *res
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeIndexingData (Service *service_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeAsFrictionlessData (const Programme *programme_p, const FieldTrialServiceData *data_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeAsFrictionlessDataPackage (const Programme *programme_p, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveProgrammeAsFrictionlessData (const Programme *programme_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

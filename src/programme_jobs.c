@@ -25,6 +25,7 @@
 #include "crop_jobs.h"
 #include "dfw_util.h"
 
+#include "frictionless_data_util.h"
 
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
@@ -393,6 +394,204 @@ json_t *GetProgrammeIndexingData (Service *service_p)
 }
 
 
+bool SaveProgrammeAsFrictionlessData (const Programme *programme_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	char *full_filename_s = GetFrictionlessDataFilename (programme_p -> pr_name_s, data_p);
+
+	if (full_filename_s)
+		{
+			json_t *programme_fd_p = GetProgrammeAsFrictionlessDataPackage (programme_p, data_p);
+
+			if (programme_fd_p)
+				{
+					if (json_dump_file (programme_fd_p, full_filename_s, JSON_INDENT (2)) == 0)
+						{
+							success_flag = true;
+						}
+
+					json_decref (programme_fd_p);
+				}		/* if (programme_fd_p) */
+
+			FreeCopiedString (full_filename_s);
+		}		/* if (full_filename_s) */
+
+
+	return success_flag;
+
+}
+
+
+
+json_t *GetProgrammeAsFrictionlessDataPackage (const Programme *programme_p, const FieldTrialServiceData *data_p)
+{
+	json_t *package_p = json_object ();
+
+	if (package_p)
+		{
+			if (SetJSONString (package_p, FD_PROFILE_S, FD_PROFILE_DATA_S))
+				{
+					if (SetJSONString (package_p, FD_NAME_S, programme_p -> pr_name_s))
+						{
+							json_t *resources_p = json_array ();
+
+							if (resources_p)
+								{
+									if (json_object_set_new (package_p, FD_RESOURCES_S, resources_p) == 0)
+										{
+											json_t *programme_fd_p = GetProgrammeAsFrictionlessData (programme_p, data_p);
+
+											if (programme_fd_p)
+												{
+													if (json_array_append_new (resources_p, programme_fd_p) == 0)
+														{
+															return package_p;
+														}
+
+												}
+
+										}		/* if (json_object_set_new (package_p, FD_RESOURCES_S, resources_p) == 0) */
+									else
+										{
+											json_decref (resources_p);
+										}
+								}
+						}
+
+				}		/* if (SetJSONString (package_p, FD_PROFILE_S, FD_PROFILE_DATA_S)) */
+
+			json_decref (package_p);
+		}
+
+
+	return NULL;
+}
+
+
+
+json_t *GetProgrammeAsFrictionlessData (const Programme *programme_p, const FieldTrialServiceData *data_p)
+{
+	json_t *programme_fd_p = json_object ();
+
+	if (programme_fd_p)
+		{
+			bool success_flag = true;
+
+			const char * const FD_SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trial-programme-package.json";
+
+			if (SetJSONString (programme_fd_p, FD_PROFILE_S, FD_SCHEMA_URL_S))
+				{
+					char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
+
+					if (id_s)
+						{
+							if (SetJSONString (programme_fd_p, FD_ID_S, id_s))
+								{
+									if (SetJSONString (programme_fd_p, FD_NAME_S, programme_p -> pr_name_s))
+										{
+											const char * const FD_ABBREVIATION_S = "abbreviation";
+
+											if (SetNonTrivialString (programme_fd_p, FD_ABBREVIATION_S, programme_p -> pr_abbreviation_s, false))
+												{
+
+													if (programme_p -> pr_crop_p)
+														{
+														}		/* if (programme_p -> pr_crop_p) */
+
+													if (success_flag)
+														{
+															const char * const URL_S = "url";
+
+															if (SetNonTrivialString (programme_fd_p, URL_S, programme_p -> pr_documentation_url_s, false))
+																{
+
+																	if (programme_p -> pr_pi_p)
+																		{
+																			const char * const FD_PI_NAME_S = "pi_name";
+
+																			if (SetNonTrivialString (programme_fd_p, FD_PI_NAME_S, programme_p -> pr_pi_p -> pe_name_s, false))
+																				{
+																					const char * const FD_PI_EMAIL_S = "pi_email";
+
+																					if (SetNonTrivialString (programme_fd_p, FD_PI_EMAIL_S, programme_p -> pr_pi_p -> pe_email_s, false))
+																						{
+
+																						}		/* if (SetNonTrivialString (programme_fd_p, FD_PI_EMAIL_S, programme_p -> pr_pi_p -> pe_email_s, false)) */
+																					else
+																						{
+																							success_flag = false;
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", FD_PI_EMAIL_S, programme_p -> pr_pi_p -> pe_email_s);
+																						}
+
+																				}		/* if (SetNonTrivialString (programme_fd_p, FD_PI_NAME_S, programme_p -> pr_pi_p -> pe_name_s, false)) */
+																			else
+																				{
+																					success_flag = false;
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", FD_PI_NAME_S, programme_p -> pr_pi_p -> pe_name_s);
+																				}
+
+																		}		/* if (programme_p -> pr_pi_p) */
+
+																	if (success_flag)
+																		{
+																			const char * const FD_LOGO_S = "logo";
+
+																			if (SetNonTrivialString (programme_fd_p, FD_LOGO_S, programme_p -> pr_logo_url_s, false))
+																				{
+
+																				}		/* if (SetNonTrivialString (programme_fd_p, FD_LOGO_S, programme_p -> pr_logo_url_s, false)) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", FD_LOGO_S, programme_p -> pr_logo_url_s);
+																				}
+
+																		}		/* if (success_flag) */
+
+																}		/* if (SetNonTrivialString (programme_fd_p, URL_S, programme_p -> pr_documentation_url_s, false)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", URL_S, programme_p -> pr_documentation_url_s);
+																}
+
+														}		/* if (success_flag) */
+
+												}		/* if (SetNonTrivialString (study_fd_p, FD_ABBREVIATION_S, study_p -> st_description_s, false)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", FD_ABBREVIATION_S, programme_p -> pr_abbreviation_s);
+												}
+
+										}		/* if (SetJSONString (programme_fd_p, FD_NAME_S, programme_p -> pr_name_s)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, programme_p -> pr_name_s);
+										}
+
+								}		/* if (SetJSONString (programme_fd_p, FD_ID_S, id_s)) */
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+
+						}
+
+				}		/* if (SetJSONString (programme_fd_p, FD_PROFILE_S, FD_SCHEMA_URL_S)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_SCHEMA_URL_S);
+				}
+
+			if (!success_flag)
+				{
+					json_decref (programme_fd_p);
+					programme_fd_p = NULL;
+				}
+
+		}		/* if (programme_fd_p) */
+
+	return programme_fd_p;
+}
 
 
 

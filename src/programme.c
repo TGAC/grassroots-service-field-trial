@@ -28,6 +28,7 @@
 #include "dfw_util.h"
 #include "indexing.h"
 
+#include "programme_jobs.h"
 
 static LinkedList *GetMatchingProgrammes (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss);
 
@@ -624,6 +625,8 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 				{
 					if (SaveMongoData (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAM], selector_p))
 						{
+							OperationStatus s;
+
 							status = IndexData (job_p, programme_json_p);
 
 							if (status != OS_SUCCEEDED)
@@ -632,6 +635,15 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to index Program \"%s\" as JSON to Lucene", programme_p -> pr_name_s);
 									AddGeneralErrorMessageToServiceJob (job_p, "Program saved but failed to index for searching");
 								}
+
+							if (data_p -> dftsd_fd_path_s)
+								{
+									if (!SaveProgrammeAsFrictionlessData (programme_p, data_p))
+										{
+
+										}
+								}
+
 						}
 
 					json_decref (programme_json_p);

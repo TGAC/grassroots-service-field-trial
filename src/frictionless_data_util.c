@@ -121,6 +121,11 @@ bool SetFDTableString (json_t *row_p, const char * const key_s, const char * con
 }
 
 
+
+
+
+
+
 /*
  * https://specs.frictionlessdata.io/csv-dialect/#usage
  */

@@ -2017,57 +2017,11 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 
 
-char *GetStudyFrictionlessDataURL (const Study *study_p, const FieldTrialServiceData *data_p)
-{
-	char *url_s = NULL;
-
-	/*
-	 * Do we have a frictionless data directory configured?
-	 */
-	if (data_p -> dftsd_fd_url_s)
-		{
-			url_s = ConcatenateVarargsStrings (data_p -> dftsd_fd_url_s, study_p -> st_name_s, ".json", NULL);
-		}
-
-	return url_s;
-}
-
-
-
-char *GetStudyFrictionlessDataFilename (const Study *study_p, const FieldTrialServiceData *data_p)
-{
-	char *full_study_filename_s = NULL;
-
-	/*
-	 * Do we have a frictionless data directory configured?
-	 */
-	if (data_p -> dftsd_fd_path_s)
-		{
-			char *study_filename_s = ConcatenateStrings (study_p -> st_name_s, ".json");
-
-			if (study_filename_s)
-				{
-					full_study_filename_s = MakeFilename (data_p -> dftsd_fd_path_s, study_filename_s);
-
-					if (!full_study_filename_s)
-						{
-
-						}
-
-					FreeCopiedString (study_filename_s);
-				}
-
-		}
-
-	return full_study_filename_s;
-}
-
 
 bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-
-	char *full_study_filename_s = GetStudyFrictionlessDataFilename (study_p, data_p);
+	char *full_study_filename_s = GetFrictionlessDataFilename (study_p -> st_name_s, data_p);
 
 	if (full_study_filename_s)
 		{
@@ -2086,9 +2040,9 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 
 							json_decref (study_fd_p);
 						}		/* if (study_fd_p) */
-
-					FreeCopiedString (full_study_filename_s);
 				}
+
+			FreeCopiedString (full_study_filename_s);
 		}		/* if (full_study_filename_s) */
 
 
@@ -2104,6 +2058,8 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 
 	if (study_fd_p)
 		{
+			bool success_flag = false;
+
 			if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_S))
 				{
 					if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s))
@@ -2116,11 +2072,7 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 										{
 											if (SetJSONString (study_fd_p, FD_ID_S, id_s))
 												{
-													json_t *resources_p;
-
-													FreeCopiedString (id_s);
-
-													resources_p = json_array ();
+													json_t *resources_p = json_array ();
 
 													if (resources_p)
 														{
@@ -2132,7 +2084,7 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 																		{
 																			if (json_array_append_new (resources_p, plots_fd_p) == 0)
 																				{
-																					return study_fd_p;
+																					success_flag = true;
 																				}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
 																			else
 																				{
@@ -2151,22 +2103,18 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add reources array");
 																	json_decref (resources_p);
 																}
+
 														}		/* if (resources_p) */
 
 
 												}		/* if (SetJSONString (study_fd_p, FD_ID_S, id_s)) */
-											else
-												{
-													FreeCopiedString (id_s);
-												}
 
-
+											FreeCopiedString (id_s);
 										}		/* if (id_s) */
 									else
 										{
 
 										}
-
 
 								}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
 							else
@@ -2180,19 +2128,22 @@ json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServic
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, study_p -> st_name_s);
 						}
 
-					json_decref (study_fd_p);
-
 				}		/* if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_S)) */
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_DATA_S);
 				}
 
-			json_decref (study_fd_p);
+			if (!success_flag)
+				{
+					json_decref (study_fd_p);
+					study_fd_p = NULL;
+				}
+
 		}		/* if (study_fd_p) */
 
 
-	return NULL;
+	return study_fd_p;
 }
 
 

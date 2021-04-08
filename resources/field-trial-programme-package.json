@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "Field Trial Plots Data Package",
-  "description": "Field Trial Plots Data Package is a specification for detailing the plots within a field trial study.",
+  "title": "Field Trial Programme Data Package",
+  "description": "Field Trial Programme Data Package is a specification for detailing the plots within a field trial programme.",
   "type": "object",
   "required": [
     "profile",
@@ -23,7 +23,7 @@
       ]
     },
     "id": {
-      "propertyOrder": 10,
+      "propertyOrder": 20,
       "title": "Id",
       "description": "The unique identifier of the Programme.",
       "type": "string",
@@ -34,7 +34,7 @@
       ]
     },
     "name": {
-      "propertyOrder": 20,
+      "propertyOrder": 30,
       "title": "Name",
       "description": "The name of the Programme.",
       "type": "string",
@@ -45,7 +45,7 @@
       ]
     },
     "abbreviation": {
-      "propertyOrder": 30,
+      "propertyOrder": 40,
       "title": "Abbreviation",
       "description": "The abbreviation for the Programme.",
       "context": "This is a short acronym or abbreviation for this Programme",
@@ -55,7 +55,7 @@
       ]
     },
     "crop": {
-      "propertyOrder": 40,
+      "propertyOrder": 50,
       "title": "Crop",
       "description": "The crop for the Programme.",
       "type": "string",
@@ -64,7 +64,7 @@
       ]
     },
     "url": {
-      "propertyOrder": 50,
+      "propertyOrder": 60,
       "title": "Web address",
       "description": "The web page documenting this Programme.",
       "type": "string",
@@ -74,7 +74,7 @@
       ]
     },
     "pi_name": {
-      "propertyOrder": 60,
+      "propertyOrder": 70,
       "title": "Principal Investigator Name",
       "description": "The name of the Programme's lead investigator.",
       "type": "string",
@@ -83,7 +83,7 @@
       ]
     },
     "pi_email": {
-      "propertyOrder": 70,
+      "propertyOrder": 80,
       "title": "Principal Investigator Email",
       "description": "The email address of the Programme's lead investigator.",
       "context": "The datetime must conform to the string formats for datetime as described in [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6)",
@@ -94,7 +94,7 @@
       ]
     },
     "logo": {
-      "propertyOrder": 80,
+      "propertyOrder": 90,
       "title": "Image",
       "description": "The web address of this Programme's logo.",
       "type": "string",

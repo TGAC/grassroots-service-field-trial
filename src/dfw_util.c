@@ -196,6 +196,52 @@ bool ClearCachedStudy (const char *id_s, const FieldTrialServiceData *data_p)
 }
 
 
+
+
+char *GetFrictionlessDataURL (const char *const name_s, const FieldTrialServiceData *data_p)
+{
+	char *url_s = NULL;
+
+	/*
+	 * Do we have a frictionless data directory configured?
+	 */
+	if (data_p -> dftsd_fd_url_s)
+		{
+			url_s = ConcatenateVarargsStrings (data_p -> dftsd_fd_url_s, name_s, ".json", NULL);
+		}
+
+	return url_s;
+}
+
+
+char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialServiceData *data_p)
+{
+	char *full_study_filename_s = NULL;
+
+	/*
+	 * Do we have a frictionless data directory configured?
+	 */
+	if (data_p -> dftsd_fd_path_s)
+		{
+			char *study_filename_s = ConcatenateStrings (name_s, ".json");
+
+			if (study_filename_s)
+				{
+					full_study_filename_s = MakeFilename (data_p -> dftsd_fd_path_s, study_filename_s);
+
+					if (!full_study_filename_s)
+						{
+
+						}
+
+					FreeCopiedString (study_filename_s);
+				}
+
+		}
+
+	return full_study_filename_s;
+}
+
 void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
