@@ -90,7 +90,7 @@ json_t *AddTableField (json_t *fields_p, const char *name_s, const char *title_s
 }
 
 
-json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const int *min_value_p)
+json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title_s, const char *format_s, const char *description_s, const char *rdf_type_s, const int *min_value_p)
 {
 	json_t *field_p = AddTableField (fields_p, name_s, title_s, FD_TYPE_INTEGER, format_s, description_s, rdf_type_s);
 
@@ -114,9 +114,9 @@ json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title
 }
 
 
-json_t *AddNumberField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const double *min_value_p)
+json_t *AddNumberField (json_t *fields_p, const char *name_s, const char *title_s, const char *format_s, const char *description_s, const char *rdf_type_s, const double *min_value_p)
 {
-	json_t *field_p = AddTableField (fields_p, name_s, title_s, FD_TYPE_INTEGER, format_s, description_s, rdf_type_s);
+	json_t *field_p = AddTableField (fields_p, name_s, title_s, FD_TYPE_NUMBER, format_s, description_s, rdf_type_s);
 
 	if (field_p)
 		{

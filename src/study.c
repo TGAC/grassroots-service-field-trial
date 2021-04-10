@@ -1888,7 +1888,7 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 {
 	bool success_flag = false;
 
-	char *fd_url_s = GetStudyFrictionlessDataURL (study_p, data_p);
+	char *fd_url_s = GetFrictionlessDataURL (study_p -> st_name_s, data_p);
 
 	if (fd_url_s)
 		{

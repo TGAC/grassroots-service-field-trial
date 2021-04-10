@@ -439,7 +439,7 @@ json_t *GetProgrammeAsFrictionlessDataPackage (const Programme *programme_p, con
 								{
 									if (json_object_set_new (package_p, FD_RESOURCES_S, resources_p) == 0)
 										{
-											json_t *programme_fd_p = GetProgrammeAsFrictionlessData (programme_p, data_p);
+											json_t *programme_fd_p = GetProgrammeAsFrictionlessDataResource (programme_p, data_p);
 
 											if (programme_fd_p)
 												{
@@ -469,7 +469,7 @@ json_t *GetProgrammeAsFrictionlessDataPackage (const Programme *programme_p, con
 
 
 
-json_t *GetProgrammeAsFrictionlessData (const Programme *programme_p, const FieldTrialServiceData *data_p)
+json_t *GetProgrammeAsFrictionlessDataResource (const Programme *programme_p, const FieldTrialServiceData *data_p)
 {
 	json_t *programme_fd_p = json_object ();
 
@@ -477,7 +477,7 @@ json_t *GetProgrammeAsFrictionlessData (const Programme *programme_p, const Fiel
 		{
 			bool success_flag = true;
 
-			const char * const FD_SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trial-programme-package.json";
+			const char * const FD_SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trials/programme-resource.json";
 
 			if (SetJSONString (programme_fd_p, FD_PROFILE_S, FD_SCHEMA_URL_S))
 				{

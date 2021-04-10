@@ -30,6 +30,8 @@
 #include "programme_jobs.h"
 #include "boolean_parameter.h"
 
+#include "frictionless_data_util.h"
+
 /*
  * Field Trial parameters
  */
@@ -667,6 +669,92 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 
 
 	return success_flag;
+}
+
+
+json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, const FieldTrialServiceData *data_p)
+{
+	json_t *trial_fd_p = json_object ();
+
+	if (trial_fd_p)
+		{
+			bool success_flag = false;
+
+			const char * const FD_SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trials/trial-resource.json";
+
+			if (SetJSONString (trial_fd_p, FD_PROFILE_S, FD_SCHEMA_URL_S))
+				{
+					char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+
+					if (id_s)
+						{
+							if (SetJSONString (trial_fd_p, FD_ID_S, id_s))
+								{
+									if (SetJSONString (trial_fd_p, FD_NAME_S, trial_p -> ft_name_s))
+										{
+											const char * const TEAM_S = "team";
+
+											if (SetNonTrivialString (trial_fd_p, TEAM_S, trial_p -> ft_team_s, false))
+												{
+													if (trial_p -> ft_parent_p)
+														{
+															const char * const PROGRAMME_S = "programme";
+
+															if (SetNonTrivialString (trial_fd_p, PROGRAMME_S, trial_p -> ft_parent_p -> pr_name_s, false))
+																{
+																	success_flag = true;
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to set \"%s\": \"%s\"", PROGRAMME_S, trial_p -> ft_parent_p -> pr_name_s);
+																}
+														}
+													else
+														{
+															success_flag = true;
+														}
+
+												}		/* if (SetNonTrivialString (trial_fd_p, TEAM_S, trial_p -> ft_team_s, false)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to set \"%s\": \"%s\"", TEAM_S, trial_p -> ft_team_s);
+												}
+
+										}		/* if (SetJSONString (trial_fd_p, FD_NAME_S, trial_p -> ft_name_s)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, trial_p -> ft_name_s);
+										}
+
+								}		/* if (SetJSONString (trial_fd_p, FD_ID_S, id_s)) */
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to get id as string for \"%s\"", trial_p -> ft_name_s);
+						}
+
+				}		/* if (SetJSONString (trial_fd_p, FD_PROFILE_S, FD_SCHEMA_URL_S)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_SCHEMA_URL_S);
+				}
+
+			if (!success_flag)
+				{
+					json_decref (trial_fd_p);
+					trial_fd_p = NULL;
+				}
+
+		}		/* if (trial_fd_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create Frictionless Data JSON for \"%s\"", trial_p -> ft_name_s);
+		}
+
+	return trial_fd_p;
+
 }
 
 

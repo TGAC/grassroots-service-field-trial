@@ -2051,8 +2051,56 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 
 
 
+json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTrialServiceData *data_p)
+{
 
-json_t *GetStudyAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *data_p)
+	/*
+	 * id
+	 * Name
+	 * Trial
+	 * Location
+	 * Curator Name
+	 * Curator Email
+	 * Contact name
+	 * contact email
+	 * sowing date
+	 * harvest date
+	 * description
+	 * design
+	 * growing conditions
+	 * phenotype gathering notes
+	 * weather
+	 * crop
+	 * previous crop
+	 * pH min
+	 * pH max
+	 * soil
+	 * Link
+	 * Plots GPS
+	 * Aspect
+	 * Slope
+	 * Horiiz plot gap
+	 * vert plot gap
+	 * plot rows per block
+	 * plot cols per block
+	 * horiz plot block gap
+	 * vert plot block gap
+	 * num plot rows
+	 * num plot cols
+	 * num replicates
+	 * default plot width
+	 * default plot length
+	 * treatment factors
+	 */
+
+
+}
+
+
+
+
+
+json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTrialServiceData *data_p)
 {
 	json_t *study_fd_p = json_object ();
 

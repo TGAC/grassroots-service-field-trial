@@ -229,9 +229,10 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddTableField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const int *min_value_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddIntegerField (json_t *fields_p, const char *name_s, const char *title_s, const char *format_s, const char *description_s, const char *rdf_type_s, const int *min_value_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddNumberField (json_t *fields_p, const char *name_s, const char *title_s, const char *type_s, const char *format_s, const char *description_s, const char *rdf_type_s, const double *min_value_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *AddNumberField (json_t *fields_p, const char *name_s, const char *title_s, const char *format_s, const char *description_s, const char *rdf_type_s, const double *min_value_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFDTableReal (json_t *row_p, const char * const key_s, const double64 *value_p, const char * const null_sequence_s);
