@@ -2079,7 +2079,7 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 	 * Plots GPS
 	 * Aspect
 	 * Slope
-	 * Horiiz plot gap
+	 * Horiz plot gap
 	 * vert plot gap
 	 * plot rows per block
 	 * plot cols per block
