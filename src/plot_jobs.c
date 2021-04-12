@@ -541,7 +541,7 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 		{
 			int min_int = 1;
 
-			json_t *field_p = AddIntegerField (fields_p, PL_INDEX_TABLE_TITLE_S, PL_INDEX_TABLE_TITLE_S, FD_TYPE_INTEGER, NULL, S_INDEX_DESCRIPTION_S, NULL, &min_int);
+			json_t *field_p = AddIntegerField (fields_p, PL_INDEX_TABLE_TITLE_S, PL_INDEX_TABLE_TITLE_S, NULL, S_INDEX_DESCRIPTION_S, NULL, &min_int);
 
 			if (field_p)
 				{
@@ -556,15 +556,15 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 										{
 											double min_num = 0.0f;
 
-											if (AddNumberField (fields_p, S_WIDTH_TITLE_S, S_WIDTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_WIDTH_DESCRIPTION_S, NULL, &min_num))
+											if (AddNumberField (fields_p, S_WIDTH_TITLE_S, S_WIDTH_TITLE_S, NULL, S_WIDTH_DESCRIPTION_S, NULL, &min_num))
 												{
-													if (AddNumberField (fields_p, S_LENGTH_TITLE_S, S_LENGTH_TITLE_S, FD_TYPE_NUMBER, NULL, S_LENGTH_DESCRIPTION_S, NULL, &min_num))
+													if (AddNumberField (fields_p, S_LENGTH_TITLE_S, S_LENGTH_TITLE_S, NULL, S_LENGTH_DESCRIPTION_S, NULL, &min_num))
 														{
-															if (AddIntegerField (fields_p, S_ROW_TITLE_S, S_ROW_TITLE_S, FD_TYPE_INTEGER, NULL, S_ROW_DESCRIPTION_S, NULL, &min_int))
+															if (AddIntegerField (fields_p, S_ROW_TITLE_S, S_ROW_TITLE_S, NULL, S_ROW_DESCRIPTION_S, NULL, &min_int))
 																{
-																	if (AddIntegerField (fields_p, S_COLUMN_TITLE_S, S_COLUMN_TITLE_S, FD_TYPE_INTEGER, NULL, S_COLUMN_DESCRIPTION_S, NULL, &min_int))
+																	if (AddIntegerField (fields_p, S_COLUMN_TITLE_S, S_COLUMN_TITLE_S, NULL, S_COLUMN_DESCRIPTION_S, NULL, &min_int))
 																		{
-																			if (AddIntegerField (fields_p, S_RACK_TITLE_S, S_RACK_TITLE_S, FD_TYPE_INTEGER, NULL, S_RACK_DESCRIPTION_S, NULL, &min_int))
+																			if (AddIntegerField (fields_p, S_RACK_TITLE_S, S_RACK_TITLE_S, NULL, S_RACK_DESCRIPTION_S, NULL, &min_int))
 																				{
 																					if (AddTableField (fields_p, PL_ACCESSION_TABLE_TITLE_S, PL_ACCESSION_TABLE_TITLE_S, FD_TYPE_STRING, NULL, S_ACCESSION_DESCRIPTION_S, NULL))
 																						{
@@ -576,9 +576,9 @@ json_t *GetStudyPlotHeaderAsFrictionlessData (const Study *study_p, const FieldT
 																												{
 																													if (AddTableField (fields_p, S_THUMBNAIL_TITLE_S, S_THUMBNAIL_DESCRIPTION_S, FD_TYPE_STRING, NULL, S_THUMBNAIL_DESCRIPTION_S, FD_TYPE_STRING_FORMAT_URI))
 																														{
-																															if (AddIntegerField (fields_p, S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_SOWING_ORDER_DESCRIPTION_S, NULL, &min_int))
+																															if (AddIntegerField (fields_p, S_SOWING_ORDER_TITLE_S, S_SOWING_ORDER_DESCRIPTION_S, NULL, S_SOWING_ORDER_DESCRIPTION_S, NULL, &min_int))
 																																{
-																																	if (AddIntegerField (fields_p, S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DESCRIPTION_S, FD_TYPE_INTEGER, NULL, S_WALKING_ORDER_DESCRIPTION_S, NULL, &min_int))
+																																	if (AddIntegerField (fields_p, S_WALKING_ORDER_TITLE_S, S_WALKING_ORDER_DESCRIPTION_S, NULL, S_WALKING_ORDER_DESCRIPTION_S, NULL, &min_int))
 																																		{
 																																			bool b = true;
 

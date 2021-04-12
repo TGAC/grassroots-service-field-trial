@@ -11,7 +11,7 @@
 #include "dfw_field_trial_service_library.h"
 
 #include "jansson.h"
-#include  "bson/bson.h"
+#include "bson.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS

@@ -2266,7 +2266,7 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 		{
 			bool success_flag = false;
 
-			const char * const SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trials/programme-resource.json";
+			const char * const SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trials/study-resource.json";
 
 			if (SetJSONString (study_fd_p, FD_PROFILE_S, SCHEMA_URL_S))
 				{
