@@ -96,6 +96,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialJSONForId (const char *id_s, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

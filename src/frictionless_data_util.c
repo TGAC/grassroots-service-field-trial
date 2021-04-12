@@ -279,6 +279,92 @@ bool SetTableFieldEnum (json_t *field_p, json_t *enum_p)
 
 
 
+json_t *GetDataPackage (const char *name_s, const char *description_s, const bson_oid_t *id_p)
+{
+	json_t *data_package_p = json_object ();
+
+	if (data_package_p)
+		{
+			bool success_flag = false;
+
+			if (SetJSONString (data_package_p, FD_NAME_S, name_s))
+				{
+					char *id_s = GetBSONOidAsString (id_p);
+
+					if (id_s)
+						{
+							if (SetJSONString (data_package_p, FD_ID_S, id_s))
+								{
+									if (SetJSONString (data_package_p, FD_DESCRIPTION_S, description_s))
+										{
+											if (SetJSONString (data_package_p, FD_PROFILE_S, FD_PROFILE_DATA_PACKAGE_S))
+												{
+													json_t *resources_p = json_array ();
+
+													if (resources_p)
+														{
+															if (json_object_set_new (data_package_p, FD_RESOURCES_S, resources_p) == 0)
+																{
+																	success_flag = true;
+																}		/* if (json_object_set_new (data_package_p, FD_RESOURCES_S, resources_p) == 0) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "Failed to add resources array");
+																}
+
+														}		/* if (resources_p) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "Failed to allocate resources array");
+														}
+
+												}		/*  if (SetJSONString (data_package_p, FD_PROFILE_S, FD_PROFILE_DATA_PACKAGE_S)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_DATA_PACKAGE_S);
+												}
+
+
+										}		/* if (SetJSONString (data_package_p, FD_DESCRIPTION_S, description_s)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, description_s);
+										}
+
+								}		/*  if (SetJSONString (data_package_p, FD_ID_S, id_s)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "Failed to set \"%s\": \"%s\"", FD_ID_S, id_s);
+								}
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy id to string for \"%s\"", name_s);
+						}
+
+				}		/* if (SetJSONString (data_package_p, FD_NAME_S, name_s)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, name_s);
+				}
+
+			if (!success_flag)
+				{
+					json_decref (data_package_p);
+					data_package_p = NULL;
+				}
+
+		}		/* if (data_package_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate JSON for \"%s\"", name_s);
+		}
+
+	return data_package_p;
+}
+
 
 
 static json_t *GetOrCreateConstraints (json_t *field_p)

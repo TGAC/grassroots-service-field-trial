@@ -11,6 +11,8 @@
 #include "dfw_field_trial_service_library.h"
 
 #include "jansson.h"
+#include  "bson/bson.h"
+
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
@@ -27,9 +29,9 @@
 
 
 FD_UTIL_PREFIX const char * const FD_PROFILE_S FD_UTIL_VAL ("profile");
+FD_UTIL_PREFIX const char * const FD_PROFILE_DATA_PACKAGE_S FD_UTIL_VAL ("data-package");
 FD_UTIL_PREFIX const char * const FD_PROFILE_TABULAR_PACKAGE_S FD_UTIL_VAL ("tabular-data-package");
 FD_UTIL_PREFIX const char * const FD_PROFILE_TABULAR_RESOURCE_S FD_UTIL_VAL ("tabular-data-resource");
-FD_UTIL_PREFIX const char * const FD_PROFILE_DATA_S FD_UTIL_VAL ("data-package");
 FD_UTIL_PREFIX const char * const FD_NAME_S FD_UTIL_VAL ("name");
 FD_UTIL_PREFIX const char * const FD_ID_S FD_UTIL_VAL ("id");
 FD_UTIL_PREFIX const char * const FD_LICENSES_S FD_UTIL_VAL ("licenses");
@@ -263,6 +265,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldMaximumNumber (json_t *field_p, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldPattern (json_t *field_p, const char * const pattern_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetTableFieldEnum (json_t *field_p, json_t *enum_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetDataPackage (const char *name_s, const char *description_s, const bson_oid_t *id_p);
 
 
 #ifdef __cplusplus

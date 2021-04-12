@@ -30,6 +30,7 @@
 #include "plot_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
+#include "programme_jobs.h"
 #include "treatment_jobs.h"
 #include "treatment_factor_jobs.h"
 #include "dfw_util.h"
@@ -2025,26 +2026,71 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 
 	if (full_study_filename_s)
 		{
+			json_t *data_package_p = GetDataPackage (study_p -> st_name_s, study_p -> st_description_s, study_p -> st_id_p);
 
-			if (GetStudyPlots (study_p, data_p))
+			if (data_package_p)
 				{
+					FieldTrial *trial_p = study_p -> st_parent_p;
+					json_t *trial_fd_p = GetFieldTrialAsFrictionlessDataResource (trial_p, data_p);
 
-					json_t *study_fd_p = GetStudyAsFrictionlessData (study_p, data_p);
-
-					if (study_fd_p)
+					if (trial_fd_p)
 						{
-							if (json_dump_file (study_fd_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+							/*
+							 * GetDataPackage () creates the resources array so we know it exists
+							 */
+							json_t *resources_p = json_object_get (data_package_p, FD_RESOURCES_S);
+
+							if (json_array_append_new (resources_p, trial_fd_p) == 0)
 								{
-									success_flag = true;
+									json_t *programme_fd_p = GetProgrammeAsFrictionlessDataResource (trial_p -> ft_parent_p, data_p);
+
+									if (programme_fd_p)
+										{
+											if (json_array_append_new (resources_p, programme_fd_p) == 0)
+												{
+													if (GetStudyPlots (study_p, data_p))
+														{
+															json_t *study_fd_p = GetStudyAsFrictionlessDataResource (study_p, data_p);
+
+															if (study_fd_p)
+																{
+																	if (json_array_append_new (resources_p, study_fd_p) == 0)
+																		{
+																			if (json_dump_file (data_package_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+																				{
+																					success_flag = true;
+																				}
+																		}		/* if (json_array_append_new (resources_p, study_fd_p) == 0) */
+																	else
+																		{
+																			json_decref (study_fd_p);
+																		}
+
+																}		/* if (study_fd_p) */
+
+														}		/* if (GetStudyPlots (study_p, data_p)) */
+
+												}		/* if (json_array_append_new (resources_p, programme_fd_p) == 0) */
+											else
+												{
+													json_decref (programme_fd_p);
+												}
+
+										}
+
+								}
+							else
+								{
+									json_decref (trial_fd_p);
 								}
 
-							json_decref (study_fd_p);
-						}		/* if (study_fd_p) */
-				}
+						}		/* if (trial_fd_p) */
+
+					json_decref (data_package_p);
+				}		/* if (data_package_p) */
 
 			FreeCopiedString (full_study_filename_s);
 		}		/* if (full_study_filename_s) */
-
 
 	return success_flag;
 }
@@ -2093,7 +2139,54 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 	 * treatment factors
 	 */
 
+	json_t *study_fd_p = json_object ();
 
+	if (study_fd_p)
+		{
+			bool success_flag = false;
+
+			if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s))
+				{
+					if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false))
+						{
+							char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+
+							if (id_s)
+								{
+									if (SetJSONString (study_fd_p, FD_ID_S, id_s))
+										{
+											success_flag = true;
+
+										}		/* if (SetJSONString (study_fd_p, FD_ID_S, id_s)) */
+
+									FreeCopiedString (id_s);
+								}		/* if (id_s) */
+							else
+								{
+
+								}
+
+						}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, study_p -> st_description_s);
+						}
+
+				}		/* if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, study_p -> st_name_s);
+				}
+
+
+			if (!success_flag)
+				{
+					json_decref (study_fd_p);
+					study_fd_p = NULL;
+				}
+		}		/* if (study_fd_p) */
+
+	return study_fd_p;
 }
 
 
@@ -2108,7 +2201,7 @@ json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTria
 		{
 			bool success_flag = false;
 
-			if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_S))
+			if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_PACKAGE_S))
 				{
 					if (SetJSONString (study_fd_p, FD_NAME_S, study_p -> st_name_s))
 						{
@@ -2179,7 +2272,7 @@ json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTria
 				}		/* if (SetJSONString (study_fd_p, FD_PROFILE_S, FD_PROFILE_DATA_S)) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_DATA_S);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, FD_PROFILE_DATA_PACKAGE_S);
 				}
 
 			if (!success_flag)
@@ -3365,7 +3458,7 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 
 			if (num_treatments > 1)
 				{
-					char **values_ss = (char **) AllocMemoryArray (num_treatments + 1, sizeof (char *));
+					const char **values_ss = (const char **) AllocMemoryArray (num_treatments + 1, sizeof (const char *));
 
 					if (values_ss)
 						{
@@ -3374,7 +3467,7 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 							if (factors_array_p)
 								{
 									bool success_flag = true;
-									char **value_ss = values_ss;
+									const char **value_ss = values_ss;
 									TreatmentFactorNode *node_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p));
 
 									while (node_p && success_flag)

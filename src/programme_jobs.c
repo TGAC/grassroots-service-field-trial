@@ -429,7 +429,7 @@ json_t *GetProgrammeAsFrictionlessDataPackage (const Programme *programme_p, con
 
 	if (package_p)
 		{
-			if (SetJSONString (package_p, FD_PROFILE_S, FD_PROFILE_DATA_S))
+			if (SetJSONString (package_p, FD_PROFILE_S, FD_PROFILE_DATA_PACKAGE_S))
 				{
 					if (SetJSONString (package_p, FD_NAME_S, programme_p -> pr_name_s))
 						{
