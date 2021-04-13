@@ -32,6 +32,7 @@ FD_UTIL_PREFIX const char * const FD_PROFILE_S FD_UTIL_VAL ("profile");
 FD_UTIL_PREFIX const char * const FD_PROFILE_DATA_PACKAGE_S FD_UTIL_VAL ("data-package");
 FD_UTIL_PREFIX const char * const FD_PROFILE_TABULAR_PACKAGE_S FD_UTIL_VAL ("tabular-data-package");
 FD_UTIL_PREFIX const char * const FD_PROFILE_TABULAR_RESOURCE_S FD_UTIL_VAL ("tabular-data-resource");
+FD_UTIL_PREFIX const char * const FD_PROFILE_PROPERTY_ORDER_S FD_UTIL_VAL ("propertyOrder");
 FD_UTIL_PREFIX const char * const FD_NAME_S FD_UTIL_VAL ("name");
 FD_UTIL_PREFIX const char * const FD_ID_S FD_UTIL_VAL ("id");
 FD_UTIL_PREFIX const char * const FD_LICENSES_S FD_UTIL_VAL ("licenses");
