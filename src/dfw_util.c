@@ -733,65 +733,6 @@ LinkedList *SearchObjects (const FieldTrialServiceData *data_p, const DFWFieldTr
 }
 
 
-bool SetNonTrivialString (json_t *value_p, const char *key_s, const char *value_s, const bool null_flag)
-{
-	bool success_flag = false;
-
-	if (IsStringEmpty (value_s))
-		{
-			if (null_flag)
-				{
-					success_flag = SetJSONNull (value_p, key_s);
-				}
-			else
-				{
-					success_flag = true;
-				}
-		}
-	else
-		{
-			success_flag = SetJSONString (value_p, key_s, value_s);
-		}
-
-	return success_flag;
-}
-
-
-bool SetNonTrivialDouble (json_t *json_p, const char *key_s, const double64 *value_p, const bool null_flag)
-{
-	bool success_flag = false;
-
-	if (value_p)
-		{
-			success_flag = SetJSONReal (json_p, key_s, *value_p);
-		}
-	else if (null_flag)
-		{
-			success_flag = SetJSONNull (json_p, key_s);
-		}
-
-	return success_flag;
-}
-
-
-bool SetNonTrivialUnsignedInt (json_t *json_p, const char *key_s, const uint32 *value_p, const bool null_flag)
-{
-	bool success_flag = false;
-
-	if (value_p)
-		{
-			success_flag = SetJSONInteger (json_p, key_s, *value_p);
-		}
-	else if (null_flag)
-		{
-			success_flag = SetJSONNull (json_p, key_s);
-		}
-
-	return success_flag;
-
-}
-
-
 
 
 bool GetValidRealFromJSON (const json_t *study_json_p, const char *key_s, double64 **answer_pp)
