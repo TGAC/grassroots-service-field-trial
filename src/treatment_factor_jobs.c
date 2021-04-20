@@ -30,11 +30,18 @@
 #include "treatment_jobs.h"
 
 
+#include "frictionless_data_util.h"
+
+
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
 
 static json_t *GetTableParameterHints (void);
+
+static bool AddStringArraysToJSON (json_t *treatment_factor_json_p, const char *key_s, char **values_ss);
+
+
 
 
 bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -417,6 +424,103 @@ Parameter *GetTreatmentFactorTableParameter (ParameterSet *param_set_p, Paramete
 }
 
 
+
+json_t *GetTreatmentFactorAsFrictionlessData (const TreatmentFactor *treatment_factor_p)
+{
+	json_t *treatment_fd_p = json_object ();
+
+	if (treatment_fd_p)
+		{
+			bool success_flag = false;
+
+			const char * const SCHEMA_URL_S = "https://grassroots.tools/frictionless-data/schemas/field-trials/treatment-resource.json";
+
+			if (SetJSONString (treatment_fd_p, FD_PROFILE_S, SCHEMA_URL_S))
+				{
+					char *id_s = GetBSONOidAsString (treatment_factor_p -> tf_treatment_p -> tr_id_p);
+
+					if (id_s)
+						{
+							if (SetJSONString (treatment_fd_p, FD_ID_S, id_s))
+								{
+									const char *value_s = GetTreatmentFactorName (treatment_factor_p);
+
+									if (SetJSONString (treatment_fd_p, FD_NAME_S, value_s))
+										{
+											const char *KEY_S = "url";
+											value_s = GetTreatmentFactorUrl (treatment_factor_p);
+
+											if (SetJSONString (treatment_fd_p, KEY_S, value_s))
+												{
+													value_s = GetTreatmentFactorDescription (treatment_factor_p);
+
+													if (SetJSONString (treatment_fd_p, FD_DESCRIPTION_S, value_s))
+														{
+															KEY_S = "synonyms";
+
+															if (AddStringArraysToJSON (treatment_fd_p, KEY_S, treatment_factor_p -> tf_treatment_p -> tr_synonyms_ss))
+																{
+																	KEY_S = "parents";
+
+																	if (AddStringArraysToJSON (treatment_fd_p, KEY_S, treatment_factor_p -> tf_treatment_p -> tr_parent_names_ss))
+																		{
+																			success_flag = true;
+
+																		}
+
+																}
+
+
+														}		/* if (SetJSONString (treatment_fd_p, FD_DESCRIPTION_S, value_s)) */
+													else
+														{
+
+														}
+
+												}		/* if (SetJSONString (treatment_fd_p, KEY_S, value_s)) */
+											else
+												{
+
+												}
+
+
+										}		/* if (SetJSONString (treatment_fd_p, FD_NAME_S, study_p -> st_name_s)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, treatment_fd_p, "Failed to set \"%s\": \"%s\"", FD_NAME_S, value_s);
+										}
+
+
+
+								}		/* if (SetJSONString (treatment_fd_p, FD_ID_S, id_s)) */
+
+							FreeCopiedString (id_s);
+						}		/* if (id_s) */
+					else
+						{
+
+						}
+
+				}		/* if (SetJSONString (treatment_fd_p, FD_PROFILE_S, SCHEMA_URL_S)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, treatment_fd_p, "Failed to set \"%s\": \"%s\"", FD_PROFILE_S, SCHEMA_URL_S);
+				}
+
+
+			if (!success_flag)
+				{
+					json_decref (treatment_fd_p);
+					treatment_fd_p = NULL;
+				}
+		}		/* if (treatment_fd_p) */
+
+	return treatment_fd_p;
+
+}
+
+
+
 static json_t *GetTableParameterHints (void)
 {
 	json_t *hints_p = json_array ();
@@ -438,4 +542,54 @@ static json_t *GetTableParameterHints (void)
 }
 
 
+static bool AddStringArraysToJSON (json_t *treatment_factor_json_p, const char *key_s, char **values_ss)
+{
+	bool success_flag = false;
 
+	if (values_ss && (*values_ss))
+		{
+			json_t *array_p = json_array ();
+
+			if (array_p)
+				{
+					success_flag = true;
+
+					while ((*values_ss) && success_flag)
+						{
+							json_t *str_p = json_string (*values_ss);
+
+							if (str_p)
+								{
+									if (json_array_append_new (array_p, str_p) == 0)
+										{
+											++ values_ss;
+										}
+									else
+										{
+											success_flag = false;
+										}
+								}
+							else
+								{
+									success_flag = false;
+								}
+
+						}		/* while ((*values_ss) && success_flag) */
+
+					if (success_flag)
+						{
+							if (json_object_set_new (treatment_factor_json_p, key_s, array_p) != 0)
+								{
+									success_flag = false;
+								}
+						}
+
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}

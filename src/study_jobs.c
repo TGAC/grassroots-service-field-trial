@@ -163,6 +163,8 @@ static bool AddCropAsFrictionlessData (const Crop * const crop_p, json_t *json_p
 
 static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *json_p, const char * const key_s);
 
+static bool AddTreatmentFactorsAsFrictionlessData (json_t *json_p, LinkedList *treatments_p, const char * const key_s);
+
 
 /*
  * API DEFINITIONS
@@ -2034,96 +2036,103 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 
 	if (full_study_filename_s)
 		{
-			json_t *data_package_p = GetDataPackage (study_p -> st_name_s, study_p -> st_description_s, study_p -> st_id_p);
+			char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
-			if (data_package_p)
+			if (id_s)
 				{
-					FieldTrial *trial_p = study_p -> st_parent_p;
-					json_t *trial_fd_p = GetFieldTrialAsFrictionlessDataResource (trial_p, data_p);
+					json_t *data_package_p = GetDataPackage (study_p -> st_name_s, study_p -> st_description_s, id_s);
 
-					if (trial_fd_p)
-						{
-							/*
-							 * GetDataPackage () creates the resources array so we know it exists
-							 */
-							json_t *resources_p = json_object_get (data_package_p, FD_RESOURCES_S);
+						if (data_package_p)
+							{
+								FieldTrial *trial_p = study_p -> st_parent_p;
+								json_t *trial_fd_p = GetFieldTrialAsFrictionlessDataResource (trial_p, data_p);
 
-							if (json_array_append_new (resources_p, trial_fd_p) == 0)
-								{
-									json_t *programme_fd_p = GetProgrammeAsFrictionlessDataResource (trial_p -> ft_parent_p, data_p);
+								if (trial_fd_p)
+									{
+										/*
+										 * GetDataPackage () creates the resources array so we know it exists
+										 */
+										json_t *resources_p = json_object_get (data_package_p, FD_RESOURCES_S);
 
-									if (programme_fd_p)
-										{
-											if (json_array_append_new (resources_p, programme_fd_p) == 0)
-												{
-													if (GetStudyPlots (study_p, data_p))
-														{
-															json_t *study_fd_p = GetStudyAsFrictionlessDataResource (study_p, data_p);
+										if (json_array_append_new (resources_p, trial_fd_p) == 0)
+											{
+												json_t *programme_fd_p = GetProgrammeAsFrictionlessDataResource (trial_p -> ft_parent_p, data_p);
 
-															if (study_fd_p)
-																{
-																	if (json_array_append_new (resources_p, study_fd_p) == 0)
-																		{
-																			if (study_p -> st_plots_p -> ll_size > 0)
-																				{
-																					json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
+												if (programme_fd_p)
+													{
+														if (json_array_append_new (resources_p, programme_fd_p) == 0)
+															{
+																if (GetStudyPlots (study_p, data_p))
+																	{
+																		json_t *study_fd_p = GetStudyAsFrictionlessDataResource (study_p, data_p);
 
-																					if (plots_fd_p)
-																						{
-																							if (json_array_append_new (resources_p, plots_fd_p) == 0)
-																								{
-																									success_flag = true;
-																								}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
-																							else
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
-																									json_decref (plots_fd_p);
-																								}
-																						}		/* if (plots_fd_p) */
-																					else
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
-																						}
+																		if (study_fd_p)
+																			{
+																				if (json_array_append_new (resources_p, study_fd_p) == 0)
+																					{
+																						if (study_p -> st_plots_p -> ll_size > 0)
+																							{
+																								json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
 
-																				}		/* if (study_p -> st_plots_p -> ll_size > 0) */
-																			else
-																				{
-																					success_flag = true;
-																				}
+																								if (plots_fd_p)
+																									{
+																										if (json_array_append_new (resources_p, plots_fd_p) == 0)
+																											{
+																												success_flag = true;
+																											}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
+																										else
+																											{
+																												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
+																												json_decref (plots_fd_p);
+																											}
+																									}		/* if (plots_fd_p) */
+																								else
+																									{
+																										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
+																									}
+
+																							}		/* if (study_p -> st_plots_p -> ll_size > 0) */
+																						else
+																							{
+																								success_flag = true;
+																							}
 
 
-																			if (json_dump_file (data_package_p, full_study_filename_s, JSON_INDENT (2)) == 0)
-																				{
-																					success_flag = true;
-																				}
-																		}		/* if (json_array_append_new (resources_p, study_fd_p) == 0) */
-																	else
-																		{
-																			json_decref (study_fd_p);
-																		}
+																						if (json_dump_file (data_package_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+																							{
+																								success_flag = true;
+																							}
+																					}		/* if (json_array_append_new (resources_p, study_fd_p) == 0) */
+																				else
+																					{
+																						json_decref (study_fd_p);
+																					}
 
-																}		/* if (study_fd_p) */
+																			}		/* if (study_fd_p) */
 
-														}		/* if (GetStudyPlots (study_p, data_p)) */
+																	}		/* if (GetStudyPlots (study_p, data_p)) */
 
-												}		/* if (json_array_append_new (resources_p, programme_fd_p) == 0) */
-											else
-												{
-													json_decref (programme_fd_p);
-												}
+															}		/* if (json_array_append_new (resources_p, programme_fd_p) == 0) */
+														else
+															{
+																json_decref (programme_fd_p);
+															}
 
-										}
+													}
 
-								}
-							else
-								{
-									json_decref (trial_fd_p);
-								}
+											}
+										else
+											{
+												json_decref (trial_fd_p);
+											}
 
-						}		/* if (trial_fd_p) */
+									}		/* if (trial_fd_p) */
 
-					json_decref (data_package_p);
-				}		/* if (data_package_p) */
+								json_decref (data_package_p);
+							}		/* if (data_package_p) */
+
+					FreeCopiedString (id_s);
+				}		/* if (id_s) */
 
 			FreeCopiedString (full_study_filename_s);
 		}		/* if (full_study_filename_s) */
@@ -2208,6 +2217,64 @@ static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *jso
 						}
 				}
 		}		/* if (crop_p) */
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
+static bool AddTreatmentFactorsAsFrictionlessData (json_t *json_p, LinkedList *treatments_p, const char * const key_s)
+{
+	bool success_flag = false;
+
+	if (treatments_p)
+		{
+			json_t *treatments_fd_p = json_array ();
+
+			if (treatments_fd_p)
+				{
+					if (json_object_set_new (json_p, key_s, treatments_fd_p) == 0)
+						{
+							TreatmentFactorNode *node_p = (TreatmentFactorNode *) (treatments_p -> ll_head_p);
+
+							success_flag = true;
+
+							while (node_p && success_flag)
+								{
+									TreatmentFactor *tf_p = node_p -> tfn_p;
+									json_t *tf_fd_p = GetTreatmentFactorAsFrictionlessData (tf_p);
+
+									if (tf_fd_p)
+										{
+											if (json_array_append_new (treatments_fd_p, tf_fd_p) == 0)
+												{
+													node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+												}
+											else
+												{
+													success_flag = false;
+												}
+										}
+									else
+										{
+											success_flag = false;
+										}
+
+								}		/* while (node_p) */
+
+						}
+					else
+						{
+							json_decref (treatments_fd_p);
+						}
+				}
+
+
+		}
 	else
 		{
 			success_flag = true;
@@ -2352,7 +2419,12 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 
 																																																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
 																																																						{
-																																																							success_flag = true;
+																																																							if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
+																																																								{
+																																																									success_flag = true;
+
+																																																								}
+
 																																																						}
 																																																				}
 

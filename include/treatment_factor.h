@@ -134,6 +134,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetTreatmentFactorDescription (const T
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorValuesAsJSON (const TreatmentFactor *treatment_factor_p, const ViewFormat format);
 
+
+
+
+
 #ifdef _cplusplus
 }
 #endif

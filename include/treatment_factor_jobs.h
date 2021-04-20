@@ -88,6 +88,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsTreatmentFactorParameter (const char * cons
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorToStudy (const char *treatment_url_s, const json_t *factors_json_p, struct Study *study_p, const FieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentFactorAsFrictionlessData (const TreatmentFactor *treatment_factor_p);
+
+
 #ifdef __cplusplus
 }
 #endif
