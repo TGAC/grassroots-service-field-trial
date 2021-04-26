@@ -34,9 +34,14 @@ typedef struct Location
 {
 	bson_oid_t *lo_id_p;
 
-	// struct ExperimentalArea *lo_parent_area_p;
-
 	uint32 lo_order;
+
+	const char *lo_soil_s;
+
+	const double64 *lo_min_ph_p;
+
+	const double64 *lo_max_ph_p;
+
 
 	Address *lo_address_p;
 } Location;
@@ -75,10 +80,15 @@ LOCATION_PREFIX const char *LO_ADDRESS_S LOCATION_VAL ("address");
 
 LOCATION_PREFIX const char *LO_ORDER_S LOCATION_VAL ("order");
 
-LOCATION_PREFIX const char *LO_PARENT_EXPERIMENTAL_AREA_S LOCATION_VAL ("parent_experimental_area_id");
-
 LOCATION_PREFIX const char *LO_NAME_S LOCATION_VAL ("name");
 
+
+LOCATION_PREFIX const char *LO_SOIL_S LOCATION_VAL ("soil");
+
+
+LOCATION_PREFIX const char *LO_MIN_PH_S LOCATION_VAL ("min_ph");
+
+LOCATION_PREFIX const char *LO_MAX_PH_S LOCATION_VAL ("max_ph");
 
 #ifdef __cplusplus
 extern "C"
@@ -86,7 +96,8 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, bson_oid_t *id_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, const char *soil_s, const double64 *min_ph_p, const double64 *max_ph_p, bson_oid_t *id_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocation (Location *location_p);

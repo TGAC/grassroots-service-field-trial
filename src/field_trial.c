@@ -656,7 +656,7 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 				{
 					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 						{
-							bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_SOWING_DATE_S, BCON_INT32 (1), "}");
+							bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_HARVEST_YEAR_S, BCON_INT32 (1), "}");
 
 							if (opts_p)
 								{

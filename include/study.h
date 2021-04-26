@@ -70,15 +70,10 @@ STUDY_PREFIX const char *ST_CONTACT_S STUDY_VAL ("contact");
 
 STUDY_PREFIX const char *ST_CURATOR_S STUDY_VAL ("curator");
 
-STUDY_PREFIX const char *ST_SOIL_S STUDY_VAL ("soil");
 
 STUDY_PREFIX const char *ST_ASPECT_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_NCI_THESAUSUS_ONTOLOGY_S, "C42677");
 
 STUDY_PREFIX const char *ST_SLOPE_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_ENVIRONMENT_ONTOLOGY_S, "00002000");
-
-STUDY_PREFIX const char *ST_SOWING_DATE_S STUDY_VAL ("sowing_date");
-
-STUDY_PREFIX const char *ST_HARVEST_DATE_S STUDY_VAL ("harvest_date");
 
 
 STUDY_PREFIX const char *ST_PARENT_FIELD_TRIAL_S STUDY_VAL ("parent_field_trial");
@@ -92,10 +87,6 @@ STUDY_PREFIX const char *ST_DATA_LINK_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_
 
 STUDY_PREFIX const char *ST_FRICTIONLESS_DATA_LINK_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "contentUrl");
 
-
-STUDY_PREFIX const char *ST_MIN_PH_S STUDY_VAL ("min_ph");
-
-STUDY_PREFIX const char *ST_MAX_PH_S STUDY_VAL ("max_ph");
 
 STUDY_PREFIX const char *ST_CURRENT_CROP_S STUDY_VAL ("current_crop");
 
@@ -143,6 +134,9 @@ STUDY_PREFIX const char *ST_PLOT_COLS_PER_BLOCK_S STUDY_VAL ("plot_block_columns
 STUDY_PREFIX const char *ST_TREATMENTS_S STUDY_VAL ("treatment_factors");
 
 
+STUDY_PREFIX const char *ST_HARVEST_YEAR_S STUDY_VAL ("harvest_year");
+
+
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
 
@@ -164,15 +158,9 @@ typedef struct Study
 
 	struct Location *st_location_p;
 
-	char *st_soil_type_s;
-
 	char *st_name_s;
 
 	char *st_data_url_s;
-
-	struct tm *st_sowing_date_p;
-
-	struct tm *st_harvest_date_p;
 
 	char *st_aspect_s;
 
@@ -188,10 +176,6 @@ typedef struct Study
 	Crop *st_current_crop_p;
 
 	Crop *st_previous_crop_p;
-
-	double *st_min_ph_p;
-
-	double *st_max_ph_p;
 
 	char *st_description_s;
 
@@ -260,9 +244,9 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *soil_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
-																										const struct tm *sowing_date_p, const struct tm *harvest_date_p, struct Location *location_p, FieldTrial *parent_field_trial_p,
-																										MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const double64 *min_ph_p, const double64 *max_ph_p, const char *description_s,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
+																										struct Location *location_p, FieldTrial *parent_field_trial_p,
+																										MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const char *description_s,
 																										const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
 																										const uint32 *num_rows_p, const uint32 *num_cols_p, const uint32 *num_replicates_p, const double64 *plot_width_p, const double64 *plot_length_p,
 																										const char *weather_s, const json_t *shape_p, const double64 *plot_horizontal_gap_p, const double64 *plot_vertical_gap_p,

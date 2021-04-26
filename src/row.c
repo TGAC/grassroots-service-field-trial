@@ -439,11 +439,11 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 						{
 							if (GetMongoIdFromJSON (json_p, id_p))
 								{
-									int rack_index = -1;
+									json_int_t rack_index = -1;
 
 									if (GetJSONInteger (json_p, RO_RACK_INDEX_S, &rack_index))
 										{
-											int study_index = -1;
+											json_int_t study_index = -1;
 
 											if (GetJSONInteger (json_p, RO_STUDY_INDEX_S, &study_index))
 												{

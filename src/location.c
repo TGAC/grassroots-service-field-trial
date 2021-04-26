@@ -33,18 +33,56 @@ static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *
 
 
 
-Location *AllocateLocation (Address *address_p, const uint32 order, bson_oid_t *id_p)
+Location *AllocateLocation (Address *address_p, const uint32 order, const char *soil_s, const double64 *min_ph_p, const double64 *max_ph_p, bson_oid_t *id_p)
 {
-	Location *location_p = (Location *) AllocMemory (sizeof (Location));
+	char *copied_soil_s = NULL;
 
-	if (location_p)
+	if (CloneValidString (soil_s, &copied_soil_s))
 		{
-			location_p -> lo_address_p = address_p;
-			location_p -> lo_order = order;
-			location_p -> lo_id_p = id_p;
-		}		/* if (location_p) */
+			double64 *copied_min_ph_p = NULL;
 
-	return location_p;
+			if (CopyValidReal (min_ph_p, &copied_min_ph_p))
+				{
+					double64 *copied_max_ph_p = NULL;
+
+					if (CopyValidReal (max_ph_p, &copied_max_ph_p))
+						{
+							Location *location_p = (Location *) AllocMemory (sizeof (Location));
+
+							if (location_p)
+								{
+									location_p -> lo_address_p = address_p;
+									location_p -> lo_order = order;
+									location_p -> lo_id_p = id_p;
+
+									location_p -> lo_soil_s = copied_soil_s;
+									location_p -> lo_min_ph_p = copied_min_ph_p;
+									location_p -> lo_max_ph_p = copied_max_ph_p;
+
+									return location_p;
+								}		/* if (location_p) */
+
+							if (copied_max_ph_p)
+								{
+									FreeMemory (copied_max_ph_p);
+								}
+						}		/* if (CopyValidReal (max_ph_p, &copied_max_ph_p)) */
+
+					if (copied_min_ph_p)
+						{
+							FreeMemory (copied_min_ph_p);
+						}
+
+				}		/* if (CopyValidReal (min_ph_p, &copied_min_ph_p)) */
+
+			if (copied_soil_s)
+				{
+					FreeCopiedString (copied_soil_s);
+				}
+
+		}		/* if (CloneValidString (soil_s, &copied_soil_s)) */
+
+	return NULL;
 }
 
 
@@ -58,6 +96,21 @@ void FreeLocation (Location *location_p)
 	if (location_p -> lo_id_p)
 		{
 			FreeBSONOid (location_p -> lo_id_p);
+		}
+
+	if (location_p -> lo_soil_s)
+		{
+			FreeCopiedString (location_p -> lo_soil_s);
+		}
+
+	if (location_p -> lo_min_ph_p)
+		{
+			FreeCopiedString (location_p -> lo_min_ph_p);
+		}
+
+	if (location_p -> lo_max_ph_p)
+		{
+			FreeCopiedString (location_p -> lo_max_ph_p);
 		}
 
 	FreeMemory (location_p);
@@ -111,10 +164,22 @@ json_t *GetLocationAsJSON (Location *location_p)
 										{
 											if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0)
 												{
-													if (AddDatatype (location_json_p, DFTD_LOCATION))
+
+													if (SetNonTrivialDouble (location_json_p, LO_MIN_PH_S, location_p -> lo_min_ph_p, true))
 														{
-															return location_json_p;
+															if (SetNonTrivialDouble (location_json_p, LO_MAX_PH_S, location_p -> lo_max_ph_p, true))
+																{
+																	if (SetNonTrivialString (location_json_p, LO_SOIL_S, location_p -> lo_soil_s, true))
+																		{
+																			if (AddDatatype (location_json_p, DFTD_LOCATION))
+																				{
+																					return location_json_p;
+																				}
+																		}
+																}
 														}
+
+
 
 												}		/* if (json_object_set_new (location_json_p, LO_ADDRESS_S, address_json_p) == 0) */
 											else
@@ -157,7 +222,15 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const FieldTrialSe
 
 									if (address_p)
 										{
-											Location *location_p = AllocateLocation (address_p, order, id_p);
+											Location *location_p = NULL;
+											double64 *min_ph_p = NULL;
+											double64 *max_ph_p = NULL;
+											const char *soil_s = GetJSONString (location_json_p, LO_SOIL_S);
+
+											GetValidRealFromJSON (location_json_p, LO_MIN_PH_S, &min_ph_p);
+											GetValidRealFromJSON (location_json_p, LO_MAX_PH_S, &max_ph_p);
+
+											location_p = AllocateLocation (address_p, order, soil_s, min_ph_p, max_ph_p, id_p);
 
 											if (location_p)
 												{
