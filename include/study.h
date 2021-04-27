@@ -136,6 +136,9 @@ STUDY_PREFIX const char *ST_TREATMENTS_S STUDY_VAL ("treatment_factors");
 
 STUDY_PREFIX const char *ST_HARVEST_YEAR_S STUDY_VAL ("harvest_year");
 
+STUDY_PREFIX const char *ST_SOWING_YEAR_S STUDY_VAL ("sowing_year");
+
+
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
@@ -222,6 +225,8 @@ typedef struct Study
 
 	Person *st_contact_p;
 
+	uint32 *st_predicted_sowing_year_p;
+
 	uint32 *st_predicted_harvest_year_p;
 
 } Study;
@@ -252,7 +257,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 																										const char *weather_s, const json_t *shape_p, const double64 *plot_horizontal_gap_p, const double64 *plot_vertical_gap_p,
 																										const uint32 *plot_rows_per_block_p, const uint32 *plot_columns_per_block_p, const double64 *plot_block_horizontal_gap_p,
 																										const double64 *plot_block_vertical_gap_p,
-																										Person *curator_p, Person *contact_p, const uint32 *harvest_year_p,
+																										Person *curator_p, Person *contact_p,
+																										const uint32 *sowing_year_p, const uint32 *harvest_year_p,
 																										const FieldTrialServiceData *data_p);
 
 

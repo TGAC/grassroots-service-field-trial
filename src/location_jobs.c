@@ -64,6 +64,10 @@ static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_
  */
 static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
+static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s);
+
+static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *json_p, const char * const key_s);
+
 
 
 bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -166,7 +170,26 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																												{
 																													if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", altitude_p, PL_ALL)) != NULL)
 																														{
-																															success_flag = true;
+
+																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
+																																	{
+																																		if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																			{
+																																				success_flag = true;
+
+																																			}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
+																																		else
+																																			{
+																																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MAX_PH.npt_name_s);
+																																			}
+																																	}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
+																																else
+																																	{
+																																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MIN_PH.npt_name_s);
+																																	}
+
+
+
 																														}
 																													else
 																														{
@@ -638,7 +661,11 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTria
 					if (success_flag)
 						{
 							const uint32 order = 0;
-							Location *location_p = AllocateLocation (address_p, order, id_p);
+							const char *soil_s = NULL;
+							double *ph_min_p = NULL;
+							double *ph_max_p = NULL;
+
+							Location *location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, id_p);
 
 							if (location_p)
 								{
@@ -956,5 +983,55 @@ Location *GetLocationFromResource (Resource *resource_p, const NamedParameterTyp
 
 	return location_p;
 }
+
+
+static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s)
+{
+	Parameter *param_p = EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, param_type_p -> npt_type, param_type_p -> npt_name_s, display_name_s, description_s, NULL, PL_ALL);
+
+	if (param_p)
+		{
+			const double min_ph = 0.0f;
+			const double max_ph = 14.0f;
+
+			if (SetDoubleParameterBounds ((DoubleParameter *) param_p, &min_ph, &max_ph))
+				{
+					return param_p;
+				}
+		}
+	else
+		{
+		}
+
+	return NULL;
+}
+
+
+static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *json_p, const char * const key_s)
+{
+	bool success_flag = false;
+
+	if (ph_p)
+		{
+			if ((*ph_p >= 0.0) && (*ph_p <= 14.0))
+				{
+					if (SetNonTrivialDouble (json_p, key_s, ph_p, false))
+						{
+							success_flag = true;
+						}		/* if (SetNonTrivialString (json_p, email_key_s, person_p -> pe_email_s, false)) */
+					else
+						{
+
+						}
+				}
+		}		/* if (crop_p) */
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
 
 

@@ -1734,52 +1734,36 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data for Study", false, data_p, params_p);
-	struct tm *sowing_date_p = NULL;
-	struct tm *harvest_date_p = NULL;
 	uint32 *num_replicates_p = NULL;
 	double64 *width_p = NULL;
 	double64 *length_p = NULL;
 
 	if (study_p)
 		{
-			sowing_date_p = study_p -> st_sowing_date_p;
-			harvest_date_p = study_p -> st_harvest_date_p;
 			num_replicates_p = study_p -> st_num_replicates_p;
 			width_p = study_p -> st_default_plot_width_p;
 			length_p = study_p -> st_default_plot_length_p;
 		}
 
-	if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Default sowing date", "The sowing year for the Study", sowing_date_p, PL_ALL)) != NULL)
-		{
-			param_p -> pa_read_only_flag = true;
+		if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Default number of replicates", "The number of replicates", num_replicates_p, PL_ALL))
+			{
+				param_p -> pa_read_only_flag = true;
 
-			if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Default harvest date", "The harvest date for the Study", harvest_date_p, PL_ALL)) != NULL)
-				{
-					param_p -> pa_read_only_flag = true;
+				if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Default plot width", "The default width, in metres, of each plot", width_p, PL_ALL))
+					{
+						param_p -> pa_read_only_flag = true;
 
-					if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Default number of replicates", "The number of replicates", num_replicates_p, PL_ALL))
-						{
-							param_p -> pa_read_only_flag = true;
+						if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Default plot length", "The default length, in metres, of each plot", length_p, PL_ALL))
+							{
+								param_p -> pa_read_only_flag = true;
 
-							if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Default plot width", "The default width, in metres, of each plot", width_p, PL_ALL))
-								{
-									param_p -> pa_read_only_flag = true;
+								success_flag = true;
+							}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
 
-									if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Default plot length", "The default length, in metres, of each plot", length_p, PL_ALL))
-										{
-											param_p -> pa_read_only_flag = true;
+					}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
 
-											success_flag = true;
-										}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
+			}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Number of replicates", "The number of replicates", NULL, PL_ALL)) */
 
-								}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Plot width", "The default width, in metres, of each plot", NULL, PL_ALL)) */
-
-						}		/* if (EasyCreateAndAddUnsignedIntParameterToParameterSet (service_data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Number of replicates", "The number of replicates", NULL, PL_ALL)) */
-
-
-				}
-
-		}
 
 	return success_flag;
 }
