@@ -20,6 +20,7 @@
  *      Author: billy
  */
 
+
 #define ALLOCATE_STUDY_TAGS (1)
 #include "study.h"
 #include "memory_allocations.h"
@@ -69,6 +70,8 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, c
 static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
+
+static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint32 *year_p, const char *deprecated_key_s);
 
 
 /*
@@ -230,6 +233,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 																																																							study_p -> st_curator_p = curator_p;
 																																																							study_p -> st_contact_p = contact_p;
 
+																																																							study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
 																																																							study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
 
 																																																							return study_p;
@@ -1033,6 +1037,8 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																	double64 *plot_block_vertical_gap_p = NULL;
 																	uint32 *sowing_year_p = NULL;
 																	uint32 *harvest_year_p = NULL;
+																	uint32 sow = 0;
+																	uint32 har = 0;
 
 																	const char *weather_s = GetJSONString (json_p, ST_WEATHER_S);
 																	const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
@@ -1073,8 +1079,16 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																	GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_H_GAP_S, &plot_block_horizontal_gap_p);
 																	GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_V_GAP_S, &plot_block_vertical_gap_p);
 
-																	GetValidUnsignedIntFromJSON (json_p, ST_SOWING_YEAR_S, &sowing_year_p);
-																	GetValidUnsignedIntFromJSON (json_p, ST_HARVEST_YEAR_S, &harvest_year_p);
+
+																	if (SetDateFromStudyJSON (json_p, ST_SOWING_YEAR_S, &sow, "sowing_date"))
+																		{
+																			sowing_year_p = &sow;
+																		}
+
+																	if (SetDateFromStudyJSON (json_p, ST_HARVEST_YEAR_S, &har, "harvest_date"))
+																		{
+																			harvest_year_p = &har;
+																		}
 
 
 																	study_p = AllocateStudy (id_p, name_s, data_url_s, aspect_s, slope_s, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
@@ -1771,3 +1785,55 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 	return success_flag;
 }
 
+
+static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint32 *year_p, const char *deprecated_key_s)
+{
+	bool success_flag = false;
+
+	if (GetJSONUnsignedInteger (json_p, key_s, year_p))
+		{
+			success_flag = true;
+		}
+	else
+		{
+			/*
+			 * Have we got it in the old date format?
+			 */
+			const json_t *deprecated_date_p = json_object_get (json_p, deprecated_key_s);
+
+			if (deprecated_date_p)
+				{
+					if (json_is_string (deprecated_date_p))
+						{
+							const char *date_s = json_string_value (deprecated_date_p);
+
+							if (date_s)
+								{
+									struct tm *time_p = GetTimeFromString (date_s);
+
+									if (time_p)
+										{
+											*year_p = 1900 + (time_p -> tm_year);
+
+											success_flag = true;
+											FreeTime (time_p);
+										}
+								}
+
+						}
+					else if (json_is_integer (deprecated_date_p))
+						{
+							time_t t = (time_t) json_integer_value (deprecated_date_p);
+							struct tm *time_p = gmtime (&t);
+
+							if (time_p)
+								{
+									*year_p = 1900 + (time_p -> tm_year);
+									success_flag = true;
+								}
+						}
+				}		/* if (deprecated_date_p) */
+		}
+
+	return success_flag;
+}

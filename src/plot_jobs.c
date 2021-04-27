@@ -1745,15 +1745,15 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 			length_p = study_p -> st_default_plot_length_p;
 		}
 
-		if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Default number of replicates", "The number of replicates", num_replicates_p, PL_ALL))
+		if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Default number of replicates", "The number of replicates", num_replicates_p, PL_ALL)) != NULL)
 			{
 				param_p -> pa_read_only_flag = true;
 
-				if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Default plot width", "The default width, in metres, of each plot", width_p, PL_ALL))
+				if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_WIDTH.npt_type, STUDY_PLOT_WIDTH.npt_name_s, "Default plot width", "The default width, in metres, of each plot", width_p, PL_ALL)) != NULL)
 					{
 						param_p -> pa_read_only_flag = true;
 
-						if (EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Default plot length", "The default length, in metres, of each plot", length_p, PL_ALL))
+						if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, params_p, group_p, STUDY_PLOT_LENGTH.npt_type, STUDY_PLOT_LENGTH.npt_name_s, "Default plot length", "The default length, in metres, of each plot", length_p, PL_ALL)) != NULL)
 							{
 								param_p -> pa_read_only_flag = true;
 
