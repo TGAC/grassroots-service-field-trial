@@ -129,7 +129,7 @@ static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_p
 
 static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length);
 
-static OperationStatus GenerateAllFrictionlessDataStudies (FieldTrialServiceData *data_p, ServiceJob *job_p);
+static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 /*
@@ -1365,7 +1365,7 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service * UNUSED_PARAM (
 
 
 
-static OperationStatus GenerateAllFrictionlessDataStudies (FieldTrialServiceData *data_p, ServiceJob *job_p)
+static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 
@@ -1392,7 +1392,7 @@ static OperationStatus GenerateAllFrictionlessDataStudies (FieldTrialServiceData
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveStudyAsFrictionlessData () failed for \"%s\"", study_p -> st_name_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveStudyAsFrictionlessData () failed for \"%s\"", study_p -> st_name_s);
 										}
 
 									FreeStudy (study_p);

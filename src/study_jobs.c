@@ -2076,40 +2076,77 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 																							{
 																								success_flag = true;
 																							}
+																						else
+																							{
+																								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "json_dump_file () failed for study fd \"%s\" to file \%s\"", study_p -> st_name_s, full_study_filename_s);
+																							}
+
+
 																					}		/* if (json_array_append_new (resources_p, study_fd_p) == 0) */
 																				else
 																					{
 																						json_decref (study_fd_p);
+																						PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study fd to \"%s\"", study_p -> st_name_s);
 																					}
 
 																			}		/* if (study_fd_p) */
+																		else
+																			{
+																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsFrictionlessDataResource () failed for \"%s\"", study_p -> st_name_s);
+																			}
 
 																	}		/* if (GetStudyPlots (study_p, data_p)) */
+																else
+																	{
+																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyPlots () failed for \"%s\"", study_p -> st_name_s);
+																	}
 
 															}		/* if (json_array_append_new (resources_p, programme_fd_p) == 0) */
 														else
 															{
 																json_decref (programme_fd_p);
+																PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme fd to \"%s\"", study_p -> st_name_s);
 															}
 
+													}
+												else
+													{
+														PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get programme fd for \"%s\"", study_p -> st_name_s);
 													}
 
 											}
 										else
 											{
 												json_decref (trial_fd_p);
+												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial fd to \"%s\"", study_p -> st_name_s);
 											}
 
 									}		/* if (trial_fd_p) */
+								else
+									{
+										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get trial fd for \"%s\"", study_p -> st_name_s);
+									}
 
 								json_decref (data_package_p);
 							}		/* if (data_package_p) */
+						else
+							{
+								PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create data package for \"%s\"", study_p -> st_name_s);
+							}
 
 					FreeCopiedString (id_s);
 				}		/* if (id_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id as string for \"%s\"", study_p -> st_name_s);
+				}
 
 			FreeCopiedString (full_study_filename_s);
 		}		/* if (full_study_filename_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get full study filename for \"%s\"", study_p -> st_name_s);
+		}
 
 	return success_flag;
 }
