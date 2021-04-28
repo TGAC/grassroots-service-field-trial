@@ -81,6 +81,7 @@ static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured 
 static NamedParameterType S_REINDEX_PROGRAMS = { "SS Reindex programs", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_BOOLEAN };
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
+static NamedParameterType S_GENERATE_FD_PACAKGES = { "SS Gnerate FD Packages", PT_BOOLEAN };
 
 
 /*
@@ -128,6 +129,7 @@ static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_p
 
 static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length);
 
+static OperationStatus GenerateAllFrictionlessDataStudies (FieldTrialServiceData *data_p, ServiceJob *job_p);
 
 
 /*
@@ -1012,6 +1014,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 			if (param_set_p)
 				{
+					bool run_fd_packages_flag = false;
 					const char *id_s = NULL;
 
 					if (!RunReindexing (param_set_p, job_p, data_p))
@@ -1022,6 +1025,13 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 					if (!RunCaching (param_set_p, job_p, data_p))
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunCaching failed");
+						}
+
+
+					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACAKGES.npt_name_s, &run_fd_packages_flag);
+					if (run_fd_packages_flag)
+						{
+							OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
 						}
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &id_s))
@@ -1089,6 +1099,10 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_REMOVE_STUDY_PLOTS.npt_type;
 		}
+	else if (strcmp (param_name_s, S_GENERATE_FD_PACAKGES.npt_name_s) == 0)
+		{
+			*pt_p = S_GENERATE_FD_PACAKGES.npt_type;
+		}
 	else
 		{
 			success_flag = false;
@@ -1135,9 +1149,13 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																						{
 																							ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
 
-																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACAKGES.npt_name_s, "Generate all Frictionless Data Packages", "Generate FD pacakges for all Studies", &b, PL_ALL)) != NULL)
 																								{
-																									return params_p;
+																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
+																										{
+
+																											return params_p;
+																										}
 																								}
 																						}
 																				}
@@ -1344,3 +1362,72 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service * UNUSED_PARAM (
 {
 	FreeParameterSet (params_p);
 }
+
+
+
+static OperationStatus GenerateAllFrictionlessDataStudies (FieldTrialServiceData *data_p, ServiceJob *job_p)
+{
+	OperationStatus status = OS_IDLE;
+
+	if (data_p -> dftsd_fd_path_s)
+		{
+			json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+
+			if (all_studies_p)
+				{
+					json_t *study_json_p;
+					size_t i;
+					size_t num_saved = 0;
+					const size_t num_studies = json_array_size (all_studies_p);
+
+					json_array_foreach (all_studies_p, i, study_json_p)
+						{
+							Study *study_p = GetStudyFromJSON (study_json_p, VF_CLIENT_FULL, data_p);
+
+							if (study_p)
+								{
+									if (SaveStudyAsFrictionlessData (study_p, data_p))
+										{
+											++ num_saved;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveStudyAsFrictionlessData () failed for \"%s\"", study_p -> st_name_s);
+										}
+
+									FreeStudy (study_p);
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
+								}
+						}
+
+					if (num_saved == num_studies)
+						{
+							status = OS_SUCCEEDED;
+						}
+					else if (num_saved > 0)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+						}
+					else
+						{
+							status = OS_FAILED;
+						}
+
+					json_decref (all_studies_p);
+				}		/* if (all_studies_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetAllStudiesAsJSON () failed");
+					status = OS_FAILED;
+				}
+
+		}		/* if (data_p -> dftsd_fd_path_s) */
+
+	return status;
+}
+
+
+

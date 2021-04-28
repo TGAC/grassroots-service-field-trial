@@ -227,9 +227,9 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 										{
 											if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_parent_p : NULL, false))
 												{
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_type, STUDY_SOWING_YEAR.npt_name_s, "Sowing year", "The year that the Study was started", active_study_p ? active_study_p -> st_predicted_sowing_year_p : NULL, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Sowing year", "The year that the Study was started", active_study_p ? active_study_p -> st_predicted_sowing_year_p : NULL, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_type, STUDY_HARVEST_YEAR.npt_name_s, "Harvest year", "The year that the Study was finished", active_study_p ? active_study_p -> st_predicted_harvest_year_p : NULL, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Harvest year", "The year that the Study was finished", active_study_p ? active_study_p -> st_predicted_harvest_year_p : NULL, PL_ALL)) != NULL)
 																{
 																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL)) != NULL)
 																		{
@@ -2254,9 +2254,6 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 	 * weather
 	 * crop
 	 * previous crop
-	 * pH min
-	 * pH max
-	 * soil
 	 * Link
 	 * Plots GPS
 	 * Aspect
@@ -2353,7 +2350,14 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																																												{
 																																													if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
 																																														{
-																																															success_flag = true;
+																																															if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
+																																																{
+																																																	if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
+																																																		{
+																																																			success_flag = true;
+																																																		}
+
+																																																}
 
 																																														}
 
