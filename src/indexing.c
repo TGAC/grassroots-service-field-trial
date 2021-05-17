@@ -1014,7 +1014,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 			if (param_set_p)
 				{
-					bool run_fd_packages_flag = false;
+					bool *run_fd_packages_flag_p = NULL;
 					const char *id_s = NULL;
 
 					if (!RunReindexing (param_set_p, job_p, data_p))
@@ -1028,8 +1028,9 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						}
 
 
-					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACAKGES.npt_name_s, &run_fd_packages_flag);
-					if (run_fd_packages_flag)
+					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACAKGES.npt_name_s, &run_fd_packages_flag_p);
+
+					if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
 						{
 							OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
 						}

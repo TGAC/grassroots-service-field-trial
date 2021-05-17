@@ -175,10 +175,10 @@ sanitiser: all
 
 
 importer: all
-	$(CC) $(DIR_SRC)/importer.c -o $(DIR_BUILD)/$(BUILD)/importer -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -pg -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME)  $(APP_LDFLAGS)
+	$(CC) $(DIR_SRC)/importer.c -o $(DIR_BUILD)/$(BUILD)/importer -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME)  $(APP_LDFLAGS)
 	
 plot_row_merger: all
-	$(CC) $(DIR_SRC)/merge_plot_row_collections.c -o $(DIR_BUILD)/$(BUILD)/merge_plot_row_collections -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -pg -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME) $(PLOT_ROW_APP_LDFLAGS)
+	$(CC) $(DIR_SRC)/merge_plot_row_collections.c -o $(DIR_BUILD)/$(BUILD)/merge_plot_row_collections -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME) $(PLOT_ROW_APP_LDFLAGS)
 	
 
 

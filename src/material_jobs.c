@@ -366,7 +366,7 @@ OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJo
 
 																	if (id_s)
 																		{
-																			int count = 0;
+																			json_int_t count = 0;
 
 																			GetJSONInteger (studies_cache_p, id_s, &count);
 
@@ -683,7 +683,7 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
 																								{
 																									uint32 tgw;
 
-																									if (GetJSONInteger (table_row_json_p, S_TGW_TITLE_S, (int *) &tgw))
+																									if (GetJSONUnsignedInteger (table_row_json_p, S_TGW_TITLE_S, tgw))
 																										{
 																											const char *treatment_s = GetJSONString (table_row_json_p, S_SEED_TREATMENT_TITLE_S);
 

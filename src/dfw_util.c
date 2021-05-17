@@ -510,7 +510,7 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 		}		/* if (time_s) */
 	else
 		{
-			int i;
+			json_int_t i;
 
 			if (GetJSONInteger (json_p, key_s, &i))
 				{

@@ -105,12 +105,12 @@ void FreeLocation (Location *location_p)
 
 	if (location_p -> lo_min_ph_p)
 		{
-			FreeCopiedString (location_p -> lo_min_ph_p);
+			FreeMemory (location_p -> lo_min_ph_p);
 		}
 
 	if (location_p -> lo_max_ph_p)
 		{
-			FreeCopiedString (location_p -> lo_max_ph_p);
+			FreeMemory (location_p -> lo_max_ph_p);
 		}
 
 	FreeMemory (location_p);
@@ -206,7 +206,7 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const FieldTrialSe
 {
 	uint32 order;
 
-	if (GetJSONInteger (location_json_p, LO_ORDER_S, (int *) &order))
+	if (GetJSONUnsignedInteger (location_json_p, LO_ORDER_S, &order))
 		{
 			bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 

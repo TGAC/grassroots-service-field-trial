@@ -242,7 +242,7 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
 			for (i = 0; i < num_rows; ++ i)
 				{
 					const json_t *phenotype_json_p = json_array_get (phenotypes_json_p, i);
-					int32 row_index = 0;
+					json_int_t row_index = 0;
 
 					imported_row_flag = false;
 

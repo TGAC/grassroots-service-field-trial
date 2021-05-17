@@ -36,7 +36,7 @@ typedef struct Location
 
 	uint32 lo_order;
 
-	const char *lo_soil_s;
+	char *lo_soil_s;
 
 	const double64 *lo_min_ph_p;
 

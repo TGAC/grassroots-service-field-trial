@@ -564,11 +564,11 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
-	int32 row;
+	json_int_t row;
 
 	if (GetJSONInteger (plot_json_p, PL_ROW_INDEX_S, &row))
 		{
-			int32 column;
+			json_int_t column;
 
 			if (GetJSONInteger (plot_json_p, PL_COLUMN_INDEX_S, &column))
 				{
