@@ -1014,7 +1014,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 			if (param_set_p)
 				{
-					bool *run_fd_packages_flag_p = NULL;
+					const bool *run_fd_packages_flag_p = NULL;
 					const char *id_s = NULL;
 
 					if (!RunReindexing (param_set_p, job_p, data_p))

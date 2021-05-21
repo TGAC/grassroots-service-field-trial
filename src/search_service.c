@@ -103,7 +103,7 @@ static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service *service_
 static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *facets_p, const uint32 page_number, const uint32 page_size, ServiceJob *job_p, const ViewFormat fmt, FieldTrialServiceData *data_p);
 
 
-static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uint32 index, void *data_p);
+static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, const uint32 index, void *data_p);
 
 
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p);
@@ -897,7 +897,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *face
 }
 
 
-static bool AddFieldTrialResultsFromLuceneResults (json_t *document_p, const uint32 index, void *data_p)
+static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, const uint32 index, void *data_p)
 {
 	bool success_flag = false;
 	SearchData *search_data_p = (SearchData *) data_p;
