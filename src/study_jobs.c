@@ -2016,123 +2016,132 @@ bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *d
 				{
 					json_t *data_package_p = GetDataPackage (study_p -> st_name_s, study_p -> st_description_s, id_s);
 
-						if (data_package_p)
-							{
-								FieldTrial *trial_p = study_p -> st_parent_p;
-								json_t *trial_fd_p = GetFieldTrialAsFrictionlessDataResource (trial_p, data_p);
+					if (data_package_p)
+						{
+							FieldTrial *trial_p = study_p -> st_parent_p;
+							json_t *trial_fd_p = GetFieldTrialAsFrictionlessDataResource (trial_p, data_p);
 
-								if (trial_fd_p)
-									{
-										/*
-										 * GetDataPackage () creates the resources array so we know it exists
-										 */
-										json_t *resources_p = json_object_get (data_package_p, FD_RESOURCES_S);
+							if (trial_fd_p)
+								{
+									/*
+									 * GetDataPackage () creates the resources array so we know it exists
+									 */
+									json_t *resources_p = json_object_get (data_package_p, FD_RESOURCES_S);
 
-										if (json_array_append_new (resources_p, trial_fd_p) == 0)
-											{
-												json_t *programme_fd_p = GetProgrammeAsFrictionlessDataResource (trial_p -> ft_parent_p, data_p);
+									if (json_array_append_new (resources_p, trial_fd_p) == 0)
+										{
+											Programme *programme_p = trial_p -> ft_parent_p;
 
-												if (programme_fd_p)
-													{
-														if (json_array_append_new (resources_p, programme_fd_p) == 0)
-															{
-																if (GetStudyPlots (study_p, data_p))
-																	{
-																		json_t *study_fd_p = GetStudyAsFrictionlessDataResource (study_p, data_p);
+											if (programme_p)
+												{
+													json_t *programme_fd_p = GetProgrammeAsFrictionlessDataResource (programme_p, data_p);
 
-																		if (study_fd_p)
-																			{
-																				if (json_array_append_new (resources_p, study_fd_p) == 0)
-																					{
-																						if (study_p -> st_plots_p -> ll_size > 0)
-																							{
-																								json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
+													if (programme_fd_p)
+														{
+															if (json_array_append_new (resources_p, programme_fd_p) == 0)
+																{
+																	if (GetStudyPlots (study_p, data_p))
+																		{
+																			json_t *study_fd_p = GetStudyAsFrictionlessDataResource (study_p, data_p);
 
-																								if (plots_fd_p)
-																									{
-																										if (json_array_append_new (resources_p, plots_fd_p) == 0)
-																											{
-																												success_flag = true;
-																											}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
-																										else
-																											{
-																												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
-																												json_decref (plots_fd_p);
-																											}
-																									}		/* if (plots_fd_p) */
-																								else
-																									{
-																										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
-																									}
+																			if (study_fd_p)
+																				{
+																					if (json_array_append_new (resources_p, study_fd_p) == 0)
+																						{
+																							if (study_p -> st_plots_p -> ll_size > 0)
+																								{
+																									json_t *plots_fd_p = GetPlotsAsFDTabularPackage (study_p, data_p);
 
-																							}		/* if (study_p -> st_plots_p -> ll_size > 0) */
-																						else
-																							{
-																								success_flag = true;
-																							}
+																									if (plots_fd_p)
+																										{
+																											if (json_array_append_new (resources_p, plots_fd_p) == 0)
+																												{
+																													success_flag = true;
+																												}		/* if (json_array_append_new (resources_p, plots_fd_p) == 0) */
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_fd_p, "Failed to add plots to resources array");
+																													json_decref (plots_fd_p);
+																												}
+																										}		/* if (plots_fd_p) */
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots as fd for %s", study_p -> st_name_s);
+																										}
 
-
-																						if (json_dump_file (data_package_p, full_study_filename_s, JSON_INDENT (2)) == 0)
-																							{
-																								success_flag = true;
-																							}
-																						else
-																							{
-																								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "json_dump_file () failed for study fd \"%s\" to file \%s\"", study_p -> st_name_s, full_study_filename_s);
-																							}
+																								}		/* if (study_p -> st_plots_p -> ll_size > 0) */
+																							else
+																								{
+																									success_flag = true;
+																								}
 
 
-																					}		/* if (json_array_append_new (resources_p, study_fd_p) == 0) */
-																				else
-																					{
-																						json_decref (study_fd_p);
-																						PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study fd to \"%s\"", study_p -> st_name_s);
-																					}
+																							if (json_dump_file (data_package_p, full_study_filename_s, JSON_INDENT (2)) == 0)
+																								{
+																									success_flag = true;
+																								}
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "json_dump_file () failed for study fd \"%s\" to file \%s\"", study_p -> st_name_s, full_study_filename_s);
+																								}
 
-																			}		/* if (study_fd_p) */
-																		else
-																			{
-																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsFrictionlessDataResource () failed for \"%s\"", study_p -> st_name_s);
-																			}
 
-																	}		/* if (GetStudyPlots (study_p, data_p)) */
-																else
-																	{
-																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyPlots () failed for \"%s\"", study_p -> st_name_s);
-																	}
+																						}		/* if (json_array_append_new (resources_p, study_fd_p) == 0) */
+																					else
+																						{
+																							json_decref (study_fd_p);
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study fd to \"%s\"", study_p -> st_name_s);
+																						}
 
-															}		/* if (json_array_append_new (resources_p, programme_fd_p) == 0) */
-														else
-															{
-																json_decref (programme_fd_p);
-																PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme fd to \"%s\"", study_p -> st_name_s);
-															}
+																				}		/* if (study_fd_p) */
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsFrictionlessDataResource () failed for \"%s\"", study_p -> st_name_s);
+																				}
 
-													}
-												else
-													{
-														PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get programme fd for \"%s\"", study_p -> st_name_s);
-													}
+																		}		/* if (GetStudyPlots (study_p, data_p)) */
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyPlots () failed for \"%s\"", study_p -> st_name_s);
+																		}
 
-											}
-										else
-											{
-												json_decref (trial_fd_p);
-												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial fd to \"%s\"", study_p -> st_name_s);
-											}
+																}		/* if (json_array_append_new (resources_p, programme_fd_p) == 0) */
+															else
+																{
+																	json_decref (programme_fd_p);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme fd to \"%s\"", study_p -> st_name_s);
+																}
 
-									}		/* if (trial_fd_p) */
-								else
-									{
-										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get trial fd for \"%s\"", study_p -> st_name_s);
-									}
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get programme fd for \"%s\"", study_p -> st_name_s);
+														}
+												}		/* if (programme_p) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Trial %s has no parent programme for \"%s\"", trial_p -> ft_name_s);
+												}
 
-								json_decref (data_package_p);
-							}		/* if (data_package_p) */
-						else
-							{
-								PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create data package for \"%s\"", study_p -> st_name_s);
-							}
+										}
+									else
+										{
+											json_decref (trial_fd_p);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial fd to \"%s\"", study_p -> st_name_s);
+										}
+
+								}		/* if (trial_fd_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get trial fd for \"%s\"", study_p -> st_name_s);
+								}
+
+							json_decref (data_package_p);
+						}		/* if (data_package_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create data package for \"%s\"", study_p -> st_name_s);
+						}
 
 					FreeCopiedString (id_s);
 				}		/* if (id_s) */

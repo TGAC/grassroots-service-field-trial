@@ -767,7 +767,21 @@ json_t *GetPlotsFrictionlessDataTableSchema (const Study *study_p, const FieldTr
 				{
 					if (json_object_set_new (schema_p, FD_TABLE_FIELDS_S, fields_p) == 0)
 						{
-							if (SetJSONString (schema_p, "title", "Plots"))
+							bool added_flag = false;
+							char *title_s = ConcatenateVarargsStrings (study_p -> st_name_s, " - Plots", NULL);
+
+							if (title_s)
+								{
+									added_flag = SetJSONString (schema_p, "title", title_s);
+
+									FreeCopiedString (title_s);
+								}
+							else
+								{
+									added_flag = SetJSONString (schema_p, "title", "Plots");
+								}
+
+							if (added_flag)
 								{
 									return schema_p;
 								}
