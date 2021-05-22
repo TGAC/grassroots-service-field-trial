@@ -38,9 +38,9 @@ typedef struct Location
 
 	char *lo_soil_s;
 
-	const double64 *lo_min_ph_p;
+	double64 *lo_min_ph_p;
 
-	const double64 *lo_max_ph_p;
+	double64 *lo_max_ph_p;
 
 
 	Address *lo_address_p;

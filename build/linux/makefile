@@ -112,7 +112,7 @@ SRCS 	= \
 	treatment_factor_jobs.c \
 	treatment_factor_value.c \
 		
-CPPFLAGS += -DDFW_FIELD_TRIAL_SERVICE_EXPORTS 
+CPPFLAGS += -DDFW_FIELD_TRIAL_LIBRARY_EXPORTS
 
 
 LIB_LDFLAGS = 	\
