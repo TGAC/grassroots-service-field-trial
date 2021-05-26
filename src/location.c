@@ -33,7 +33,7 @@ static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *
 
 
 
-Location *AllocateLocation (Address *address_p, const uint32 order, const char *soil_s, const double64 *min_ph_p, const double64 *max_ph_p, bson_oid_t *id_p)
+Location *AllocateLocation (Address *address_p, const uint32 order, const char *soil_s, const double64 *min_ph_p, const double64 *max_ph_p, const LocationType loc_type, bson_oid_t *id_p)
 {
 	char *copied_soil_s = NULL;
 
@@ -58,6 +58,8 @@ Location *AllocateLocation (Address *address_p, const uint32 order, const char *
 									location_p -> lo_soil_s = copied_soil_s;
 									location_p -> lo_min_ph_p = copied_min_ph_p;
 									location_p -> lo_max_ph_p = copied_max_ph_p;
+
+									location_p -> lo_type = loc_type;
 
 									return location_p;
 								}		/* if (location_p) */
@@ -171,9 +173,36 @@ json_t *GetLocationAsJSON (Location *location_p)
 																{
 																	if (SetNonTrivialString (location_json_p, LO_SOIL_S, location_p -> lo_soil_s, true))
 																		{
-																			if (AddDatatype (location_json_p, DFTD_LOCATION))
+																			bool set_type_flag = false;
+
+																			switch (location_p -> lo_type)
 																				{
-																					return location_json_p;
+																					case LT_UNKNOWN:
+																						set_type_flag = true;
+																						break;
+
+																					case LT_FARM:
+																						set_type_flag = SetJSONString (location_json_p, LO_TYPE_S, LT_FARM_S);
+																						break;
+
+																					case LT_SITE:
+																						set_type_flag = SetJSONString (location_json_p, LO_TYPE_S, LT_SITE_S);
+																						break;
+
+																					default:
+																						break;
+																				}		/* switch (location_p -> lo_type) */
+
+																			if (set_type_flag)
+																				{
+																					if (AddDatatype (location_json_p, DFTD_LOCATION))
+																						{
+																							return location_json_p;
+																						}
+																				}
+																			else
+																				{
+																					PrintJSONErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to add location type %d", location_p -> lo_type);
 																				}
 																		}
 																}
@@ -225,12 +254,28 @@ Location *GetLocationFromJSON (const json_t *location_json_p, const FieldTrialSe
 											Location *location_p = NULL;
 											double64 *min_ph_p = NULL;
 											double64 *max_ph_p = NULL;
+											LocationType loc_type = LT_UNKNOWN;
 											const char *soil_s = GetJSONString (location_json_p, LO_SOIL_S);
+											const char *loc_type_s = GetJSONString (location_json_p, LO_TYPE_S);
 
 											GetValidRealFromJSON (location_json_p, LO_MIN_PH_S, &min_ph_p);
 											GetValidRealFromJSON (location_json_p, LO_MAX_PH_S, &max_ph_p);
 
-											location_p = AllocateLocation (address_p, order, soil_s, min_ph_p, max_ph_p, id_p);
+
+											if (loc_type_s)
+												{
+													if (strcmp (loc_type_s, LT_FARM_S) == 0)
+														{
+															loc_type = LT_FARM;
+														}
+													else if (strcmp (loc_type_s, LT_SITE_S) == 0)
+														{
+															loc_type = LT_SITE;
+														}
+												}
+
+
+											location_p = AllocateLocation (address_p, order, soil_s, min_ph_p, max_ph_p, loc_type, id_p);
 
 											if (location_p)
 												{

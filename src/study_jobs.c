@@ -830,14 +830,6 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		{
 			*pt_p = STUDY_PREVIOUS_CROP.npt_type;
 		}
-	else if (strcmp (param_name_s, STUDY_MIN_PH.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_MIN_PH.npt_type;
-		}
-	else if (strcmp (param_name_s, STUDY_MAX_PH.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_MAX_PH.npt_type;
-		}
 	else if (strcmp (param_name_s, STUDY_DESCRIPTION.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_DESCRIPTION.npt_type;
@@ -1512,8 +1504,6 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											const char *design_s = NULL;
 																											const char *growing_conditions_s = NULL;
 																											const char *phenotype_notes_s = NULL;
-																											const double64 *min_ph_p = NULL;
-																											const double64 *max_ph_p = NULL;
 																											const uint32 *num_rows_p = NULL;
 																											const uint32 *num_cols_p = NULL;
 																											const uint32 *num_replicates_p = NULL;
@@ -1532,7 +1522,6 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											const uint32 *harvest_year_p = NULL;
 
 
-																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SOIL.npt_name_s, &soil_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_s);
@@ -1544,9 +1533,6 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_SOWING_YEAR.npt_name_s, &sowing_year_p);
 																											GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_HARVEST_YEAR.npt_name_s, &harvest_year_p);
 
-
-																											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MIN_PH.npt_name_s, &min_ph_p);
-																											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_MAX_PH.npt_name_s, &max_ph_p);
 
 																											GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_ROWS.npt_name_s, &num_rows_p);
 																											GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_NUM_PLOT_COLS.npt_name_s, &num_cols_p);

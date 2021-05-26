@@ -171,21 +171,21 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																													if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", altitude_p, PL_ALL)) != NULL)
 																														{
 
-																															if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
+																															if (AddPhParameter (data_p, param_set_p, group_p, &LOCATION_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
 																																	{
-																																		if (AddPhParameter (data_p, param_set_p, group_p, &STUDY_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
+																																		if (AddPhParameter (data_p, param_set_p, group_p, &LOCATION_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
 																																			{
 																																				success_flag = true;
 
 																																			}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
 																																		else
 																																			{
-																																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MAX_PH.npt_name_s);
+																																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_MAX_PH.npt_name_s);
 																																			}
 																																	}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
 																																else
 																																	{
-																																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_MIN_PH.npt_name_s);
+																																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_MIN_PH.npt_name_s);
 																																	}
 
 
@@ -321,6 +321,18 @@ bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name
 	else if (strcmp (param_name_s, LOCATION_ALTITUDE.npt_name_s) == 0)
 		{
 			*pt_p = LOCATION_ALTITUDE.npt_type;
+		}
+	else if (strcmp (param_name_s, LOCATION_MIN_PH.npt_name_s) == 0)
+		{
+			*pt_p = LOCATION_MIN_PH.npt_type;
+		}
+	else if (strcmp (param_name_s, LOCATION_MAX_PH.npt_name_s) == 0)
+		{
+			*pt_p = LOCATION_MAX_PH.npt_type;
+		}
+	else if (strcmp (param_name_s, LOCATION_SOIL.npt_name_s) == 0)
+		{
+			*pt_p = LOCATION_SOIL.npt_type;
 		}
 	else if (strcmp (param_name_s, S_ADD_LOCATION.npt_name_s) == 0)
 		{
@@ -664,8 +676,14 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTria
 							const char *soil_s = NULL;
 							double *ph_min_p = NULL;
 							double *ph_max_p = NULL;
+							Location *location_p = NULL;
 
-							Location *location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, id_p);
+
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_SOIL.npt_name_s, &soil_s);
+							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MIN_PH.npt_name_s, &ph_min_p);
+							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MAX_PH.npt_name_s, &ph_max_p);
+
+							location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, id_p);
 
 							if (location_p)
 								{

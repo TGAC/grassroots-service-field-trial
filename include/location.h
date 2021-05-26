@@ -30,6 +30,15 @@
 
 struct Study;
 
+typedef enum
+{
+	LT_UNKNOWN,
+	LT_FARM,
+	LT_SITE,
+	LT_NUM_TYPES
+} LocationType;
+
+
 typedef struct Location
 {
 	bson_oid_t *lo_id_p;
@@ -42,6 +51,7 @@ typedef struct Location
 
 	double64 *lo_max_ph_p;
 
+	LocationType lo_type;
 
 	Address *lo_address_p;
 } Location;
@@ -90,6 +100,16 @@ LOCATION_PREFIX const char *LO_MIN_PH_S LOCATION_VAL ("min_ph");
 
 LOCATION_PREFIX const char *LO_MAX_PH_S LOCATION_VAL ("max_ph");
 
+LOCATION_PREFIX const char *LO_TYPE_S LOCATION_VAL ("type");
+
+LOCATION_PREFIX const char *LT_FARM_S LOCATION_VAL ("farm");
+
+LOCATION_PREFIX const char *LT_SITE_S LOCATION_VAL ("site");
+
+
+
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -97,7 +117,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, const char *soil_s, const double64 *min_ph_p, const double64 *max_ph_p, bson_oid_t *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, const uint32 order, const char *soil_s, const double64 *min_ph_p, const double64 *max_ph_p, const LocationType loc_type, bson_oid_t *id_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocation (Location *location_p);
