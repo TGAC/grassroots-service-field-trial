@@ -39,6 +39,9 @@ typedef enum
 } LocationType;
 
 
+
+
+
 typedef struct Location
 {
 	bson_oid_t *lo_id_p;
@@ -153,6 +156,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetLocationsByName (FieldTrialServiceD
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetLocationTypeAsString (const LocationType loc_type);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetLocationTypeFromString (const char *loc_type_s, LocationType *loc_type_p);
 
 #ifdef __cplusplus
 }

@@ -27,9 +27,23 @@
 #include "dfw_util.h"
 #include "indexing.h"
 
+
+static const char *S_LOCATION_TYPES_SS =
+{
+	"Unknown",
+	"Farm",
+	"Site",
+	NULL
+};
+
+
+
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 static bool AddLocationResultToList (const json_t *location_json_p, LinkedList *locations_p, const FieldTrialServiceData *service_data_p);
+
+
+
 
 
 
@@ -450,4 +464,51 @@ static void *GetLocationFromJSONCallback (const json_t *location_json_p, const V
 {
 	return GetLocationFromJSON (location_json_p, data_p);
 }
+
+
+
+const char *GetLocationTypeAsString (const LocationType loc_type)
+{
+	const char *loc_s = NULL;
+
+	switch (loc_type)
+		{
+			case LT_FARM:
+				loc_s = LT_FARM_S;
+				break;
+
+			case LT_SITE:
+				loc_s = LT_SITE_S;
+				break;
+
+			default:
+				break;
+		}
+
+	return loc_s;
+}
+
+
+bool GetLocationTypeFromString (const char *loc_type_s, LocationType *loc_type_p)
+{
+	bool success_flag = false;
+
+	if (loc_type_s)
+		{
+			if (strcmp (loc_type_s, LT_FARM_S) == 0)
+				{
+					*loc_type_p = LT_FARM;
+					success_flag = true;
+				}
+			else if (strcmp (loc_type_s, LT_SITE_S) == 0)
+				{
+					*loc_type_p = LT_SITE;
+					success_flag = true;
+				}
+
+		}		/* if (loc_type_s) */
+
+	return success_flag;
+}
+
 

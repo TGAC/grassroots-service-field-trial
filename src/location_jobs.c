@@ -1052,4 +1052,66 @@ static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *jso
 }
 
 
+static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s, FieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
+{
+	Parameter *param_p = NULL;
+	const char *def_s = NULL;
+
+	/*
+	 * Is the given aspect on our list?
+	 */
+	if (active_loc_type_s)
+		{
+			if (strcmp (active_loc_type_s, LT_FARM_S) == 0)
+				{
+					def_s = LT_FARM_S;
+				}
+			else if (strcmp (active_loc_type_s, LT_SITE_S) == 0)
+				{
+					def_s = LT_SITE_S;
+				}
+		}
+
+	if (def_s != aspect_s)
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown aspect \"%s\"", aspect_s);
+		}
+
+	param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, STUDY_ASPECT.npt_type, STUDY_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", def_s, PL_ALL);
+
+	if (param_p)
+		{
+			uint32 i = S_NUM_DIRECTIONS;
+			const KeyValuePair *direction_p = S_DIRECTIONS_P;
+			bool success_flag = true;
+
+			/*
+			 * Set up the direction options
+			 */
+			while (success_flag & (i > 0))
+				{
+					if (CreateAndAddStringParameterOption ((StringParameter *) param_p, direction_p -> kvp_value_s, direction_p -> kvp_key_s))
+						{
+							-- i;
+							++ direction_p;
+						}
+					else
+						{
+							success_flag = false;
+						}
+				}
+
+			if (success_flag)
+				{
+					return param_p;
+				}
+
+			FreeParameter (param_p);
+		}		/* if (param_p) */
+
+	return NULL;
+}
+
+
+
 
