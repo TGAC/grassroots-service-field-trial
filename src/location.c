@@ -28,15 +28,6 @@
 #include "indexing.h"
 
 
-static const char *S_LOCATION_TYPES_SS =
-{
-	"Unknown",
-	"Farm",
-	"Site",
-	NULL
-};
-
-
 
 static void *GetLocationFromJSONCallback (const json_t *location_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
@@ -216,7 +207,7 @@ json_t *GetLocationAsJSON (Location *location_p)
 																				}
 																			else
 																				{
-																					PrintJSONErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to add location type %d", location_p -> lo_type);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to add location type %d", location_p -> lo_type);
 																				}
 																		}
 																}

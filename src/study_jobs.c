@@ -798,10 +798,6 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		{
 			*pt_p = STUDY_NAME.npt_type;
 		}
-	else if (strcmp (param_name_s, STUDY_SOIL.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_SOIL.npt_type;
-		}
 	else if (strcmp (param_name_s, STUDY_LINK.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_LINK.npt_type;

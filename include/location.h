@@ -109,6 +109,7 @@ LOCATION_PREFIX const char *LT_FARM_S LOCATION_VAL ("farm");
 
 LOCATION_PREFIX const char *LT_SITE_S LOCATION_VAL ("site");
 
+LOCATION_PREFIX const char *LT_UNKNOWN_S LOCATION_VAL ("unknown");
 
 
 

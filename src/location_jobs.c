@@ -64,9 +64,12 @@ static NamedParameterType S_GET_ALL_LOCATIONS_PAGE_NUMBER = { "Page number", PT_
  */
 static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
-static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s);
+static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s, const double64 *value_p);
 
 static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *json_p, const char * const key_s);
+
+static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s, FieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p);
+
 
 
 
@@ -88,6 +91,10 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 	const double64 *latitude_p = NULL;
 	const double64 *longitude_p = NULL;
 	const double64 *altitude_p = NULL;
+	const char *soil_s;
+	const double64 *ph_min_p = NULL;
+	const double64 *ph_max_p = NULL;
+
 	const bool *use_coords_p = &def_use_coords_flag;
 	Location *active_location_p = GetLocationFromResource (resource_p, LOCATION_ID, dfw_data_p);
 	bool defaults_flag = false;
@@ -116,6 +123,10 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 						}
 
 					altitude_p = address_p -> ad_elevation_p;
+
+					soil_s = active_location_p -> lo_soil_s;
+					ph_min_p = active_location_p -> lo_min_ph_p;
+					ph_max_p = active_location_p -> lo_max_ph_p;
 
 					defaults_flag = true;
 				}
@@ -170,25 +181,46 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 																												{
 																													if ((param_p = EasyCreateAndAddDoubleParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ALTITUDE.npt_type, LOCATION_ALTITUDE.npt_name_s, "Altitude", "The altitude of the location", altitude_p, PL_ALL)) != NULL)
 																														{
+																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_SOIL.npt_type, LOCATION_SOIL.npt_name_s, "Soil", "The type of soil at this location", soil_s, PL_ALL)) != NULL)
+																																{
+																																	const char *type_s = LT_UNKNOWN_S;
 
-																															if (AddPhParameter (data_p, param_set_p, group_p, &LOCATION_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range"))
-																																	{
-																																		if (AddPhParameter (data_p, param_set_p, group_p, &LOCATION_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range"))
-																																			{
-																																				success_flag = true;
+																																	if (active_location_p)
+																																		{
+																																			type_s = GetLocationTypeAsString (active_location_p -> lo_type);
+																																		}
 
-																																			}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
-																																		else
-																																			{
-																																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_MAX_PH.npt_name_s);
-																																			}
-																																	}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
-																																else
-																																	{
-																																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_MIN_PH.npt_name_s);
-																																	}
+																																	if (GetAndAddLocationTypeParameter (type_s, dfw_data_p, param_set_p, group_p))
+																																		{
+																																			if (AddPhParameter (data_p, param_set_p, group_p, &LOCATION_MIN_PH, "pH Minimum", "The lower bound of the soil's pH range", ph_min_p))
+																																				{
+																																					if (AddPhParameter (data_p, param_set_p, group_p, &LOCATION_MAX_PH, "pH Maximum", "The upper bound of the soil's pH range", ph_max_p))
+																																						{
+																																							success_flag = true;
+
+																																						}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MAX, "pH Maximum", "The upper bound of the soil's pH range")) */
+																																					else
+																																						{
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_MAX_PH.npt_name_s);
+																																						}
+																																				}		/* if (AddPhParameter (data_p, param_set_p, group_p, &PH_MIN, "pH Minimum", "The lower bound of the soil's pH range")) */
+																																			else
+																																				{
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_MIN_PH.npt_name_s);
+																																				}
 
 
+																																		}		/* if (GetAndAddLocationTypeParameter (type_s, data_p, param_set_p, group_p */
+																																	else
+																																		{
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add location type parameter");
+																																		}
+
+																																}
+																															else
+																																{
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", LOCATION_SOIL.npt_name_s);
+																																}
 
 																														}
 																													else
@@ -333,6 +365,10 @@ bool GetSubmissionLocationParameterTypeForNamedParameter (const char *param_name
 	else if (strcmp (param_name_s, LOCATION_SOIL.npt_name_s) == 0)
 		{
 			*pt_p = LOCATION_SOIL.npt_type;
+		}
+	else if (strcmp (param_name_s, LOCATION_TYPE.npt_name_s) == 0)
+		{
+			*pt_p = LOCATION_TYPE.npt_type;
 		}
 	else if (strcmp (param_name_s, S_ADD_LOCATION.npt_name_s) == 0)
 		{
@@ -674,16 +710,21 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTria
 						{
 							const uint32 order = 0;
 							const char *soil_s = NULL;
-							double *ph_min_p = NULL;
-							double *ph_max_p = NULL;
+							const double64 *ph_min_p = NULL;
+							const double64 *ph_max_p = NULL;
 							Location *location_p = NULL;
-
+							const char *type_s = NULL;
+							LocationType loc_type = LT_UNKNOWN;
 
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_SOIL.npt_name_s, &soil_s);
 							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MIN_PH.npt_name_s, &ph_min_p);
 							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MAX_PH.npt_name_s, &ph_max_p);
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_TYPE.npt_name_s, &type_s);
 
-							location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, id_p);
+							GetLocationTypeFromString (type_s, &loc_type);
+
+
+							location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, loc_type, id_p);
 
 							if (location_p)
 								{
@@ -1003,9 +1044,9 @@ Location *GetLocationFromResource (Resource *resource_p, const NamedParameterTyp
 }
 
 
-static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s)
+static Parameter *AddPhParameter (const ServiceData *service_data_p, ParameterSet *params_p, ParameterGroup *group_p, const NamedParameterType *param_type_p, const char * const display_name_s, const char * const description_s, const double64 *value_p)
 {
-	Parameter *param_p = EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, param_type_p -> npt_type, param_type_p -> npt_name_s, display_name_s, description_s, NULL, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddDoubleParameterToParameterSet (service_data_p, params_p, group_p, param_type_p -> npt_type, param_type_p -> npt_name_s, display_name_s, description_s, value_p, PL_ALL);
 
 	if (param_p)
 		{
@@ -1055,7 +1096,7 @@ static bool AddPHValueAsFrictionlessData (const double * const ph_p, json_t *jso
 static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s, FieldTrialServiceData *data_p, ParameterSet *param_set_p, ParameterGroup *group_p)
 {
 	Parameter *param_p = NULL;
-	const char *def_s = NULL;
+	const char *def_s = LT_UNKNOWN_S;
 
 	/*
 	 * Is the given aspect on our list?
@@ -1070,40 +1111,39 @@ static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s,
 				{
 					def_s = LT_SITE_S;
 				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown location type \"%s\"", active_loc_type_s);
+				}
 		}
 
-	if (def_s != aspect_s)
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown aspect \"%s\"", aspect_s);
-		}
 
-	param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, STUDY_ASPECT.npt_type, STUDY_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", def_s, PL_ALL);
+	param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, LOCATION_TYPE.npt_type, LOCATION_TYPE.npt_name_s, "Type", "The type e.g. farm, site, etc. of this location", def_s, PL_ALL);
 
 	if (param_p)
 		{
-			uint32 i = S_NUM_DIRECTIONS;
-			const KeyValuePair *direction_p = S_DIRECTIONS_P;
-			bool success_flag = true;
-
-			/*
-			 * Set up the direction options
-			 */
-			while (success_flag & (i > 0))
+			if (CreateAndAddStringParameterOption ((StringParameter *) param_p, LT_UNKNOWN_S, LT_UNKNOWN_S))
 				{
-					if (CreateAndAddStringParameterOption ((StringParameter *) param_p, direction_p -> kvp_value_s, direction_p -> kvp_key_s))
+					if (CreateAndAddStringParameterOption ((StringParameter *) param_p, LT_FARM_S, LT_FARM_S))
 						{
-							-- i;
-							++ direction_p;
+							if (CreateAndAddStringParameterOption ((StringParameter *) param_p, LT_SITE_S, LT_SITE_S))
+								{
+									return param_p;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add site option for location type");
+								}
 						}
 					else
 						{
-							success_flag = false;
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add farm option for location type");
 						}
-				}
 
-			if (success_flag)
+				}
+			else
 				{
-					return param_p;
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add unknown option for location type");
 				}
 
 			FreeParameter (param_p);
