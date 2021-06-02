@@ -243,9 +243,9 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 									/*
 									 * If the parameter's value isn't on the list, reset it
 									 */
-									if (!value_set_flag)
+									if ((param_value_s != NULL) && (value_set_flag == false))
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing programs", param_value_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing programmes", param_value_s);
 										}
 
 								}		/* if (num_results > 0) */

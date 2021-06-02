@@ -91,7 +91,7 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 	const double64 *latitude_p = NULL;
 	const double64 *longitude_p = NULL;
 	const double64 *altitude_p = NULL;
-	const char *soil_s;
+	const char *soil_s = NULL;
 	const double64 *ph_min_p = NULL;
 	const double64 *ph_max_p = NULL;
 
@@ -833,9 +833,9 @@ bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringPar
 									/*
 									 * If the parameter's value isn't on the list, reset it
 									 */
-									if (!value_set_flag)
+									if ((param_value_s != NULL) && (value_set_flag == false))
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing studies", param_value_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing locations", param_value_s);
 										}
 
 								}		/* if (num_results > 0) */
@@ -1103,7 +1103,11 @@ static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s,
 	 */
 	if (active_loc_type_s)
 		{
-			if (strcmp (active_loc_type_s, LT_FARM_S) == 0)
+			if (strcmp (active_loc_type_s, LT_UNKNOWN_S) == 0)
+				{
+					def_s = LT_UNKNOWN_S;
+				}
+			else if (strcmp (active_loc_type_s, LT_FARM_S) == 0)
 				{
 					def_s = LT_FARM_S;
 				}
