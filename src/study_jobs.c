@@ -2871,7 +2871,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 									/*
 									 * If the parameter's value isn't on the list, reset it
 									 */
-									if ((param_value_s != NULL) && (value_set_flag == false))
+									if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing studies", param_value_s);
 										}
