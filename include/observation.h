@@ -46,7 +46,9 @@ typedef struct Observation
 
 	char *ob_corrected_value_s;
 
-	struct tm *ob_date_p;
+	struct tm *ob_start_date_p;
+
+	struct tm *ob_end_date_p;
 
 	MeasuredVariable *ob_phenotype_p;
 
@@ -89,7 +91,9 @@ OBSERVATION_PREFIX const char *OB_PHENOTYPE_S OBSERVATION_VAL ("phenotype");
 
 OBSERVATION_PREFIX const char *OB_PHENOTYPE_ID_S OBSERVATION_VAL ("phenotype_id");
 
-OBSERVATION_PREFIX const char *OB_DATE_S OBSERVATION_VAL ("date");
+OBSERVATION_PREFIX const char *OB_START_DATE_S OBSERVATION_VAL ("date");
+
+OBSERVATION_PREFIX const char *OB_END_DATE_S OBSERVATION_VAL ("end_date");
 
 OBSERVATION_PREFIX const char *OB_RAW_VALUE_S OBSERVATION_VAL ("raw_value");
 
@@ -113,7 +117,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *date_p, MeasuredVariable *phenotype_p, const char *value_s, const char *corrected_value_s,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, const char *value_s, const char *corrected_value_s,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature);
 
 

@@ -64,6 +64,8 @@ static json_t *GetTableParameterHints (void);
 
 static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *plot_index_p);
 
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm ***start_date_pp, struct tm **end_date_pp, const FieldTrialServiceData *data_p);
+
 /*
  * API Definitions
  */
@@ -661,7 +663,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 
 
 
-OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+OperationStatus OldAddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -834,6 +836,148 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 }
 
 
+
+
+OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+
+	bool loop_success_flag = true;
+	void *iterator_p = json_object_iter (observation_json_p);
+	size_t imported_obs = 0;
+	size_t total_obs = 0;
+	LinkedList *processed_keys_p = AllocateStringLinkedList ();
+
+	if (processed_keys_p)
+		{
+			while (iterator_p && loop_success_flag)
+				{
+					const char *key_s = json_object_iter_key (iterator_p);
+					json_t *value_p = json_object_iter_value (iterator_p);
+
+					/*
+					 * ignore our column names
+					 */
+					if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
+						{
+							MeasuredVariable *measured_variable_p = NULL;
+							struct tm *start_date_p = NULL;
+							struct tm *end_date_p = NULL;
+
+							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p))
+								{
+									Observation *observation_p = NULL;
+									bool added_phenotype_flag = false;
+									const char *raw_value_s = json_string_value (value_p);
+
+									if (!IsStringEmpty (raw_value_s))
+										{
+											const char *growth_stage_s = NULL;
+											const char *method_s = NULL;
+											ObservationNature nature = ON_ROW;
+											Instrument *instrument_p = NULL;
+											bson_oid_t *observation_id_p = GetNewBSONOid ();
+
+											++ total_obs;
+
+
+											if (observation_id_p)
+												{
+													observation_p = AllocateObservation (observation_id_p, observation_date_p, measured_variable_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
+
+													if (observation_p)
+														{
+															if (AddObservationToRow (row_p, observation_p))
+																{
+																	++ imported_obs;
+																	added_phenotype_flag = true;
+																	loop_success_flag = true;
+																}
+															else
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+																	FreeObservation (observation_p);
+																}
+
+														}		/* if (observation_p) */
+													else
+														{
+															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+															bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
+
+															FreeBSONOid (observation_id_p);
+														}
+
+												}		/* if (observation_id_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
+												}
+
+											if (observation_date_p)
+												{
+													FreeTime (observation_date_p);
+												}
+										}		/* if ((!IsStringEmpty (raw_value_s)) */
+									else
+										{
+											PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value for \"%s\", skipping", key_s);
+										}
+
+
+									if (start_date_p)
+										{
+											FreeTime (start_date_p);
+											start_date_p = NULL;
+										}
+
+									if (end_date_p)
+										{
+											FreeTime (end_date_p);
+											end_date_p = NULL;
+										}
+
+									if (measured_variable_p)
+										{
+											FreeMeasuredVariable (measured_variable_p);
+											measured_variable_p = NULL;
+										}
+
+
+								}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
+
+
+						}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
+
+					iterator_p = json_object_iter_next (observation_json_p, iterator_p);
+				}		/* while (iterator_p && loop_success_flag) */
+
+
+			FreeLinkedList (processed_keys_p);
+		}		/* if (processed_keys_p) */
+
+
+	if (imported_obs == total_obs)
+		{
+			status = OS_SUCCEEDED;
+		}
+	else if (imported_obs > 0)
+		{
+			status = OS_PARTIALLY_SUCCEEDED;
+		}
+
+	return status;
+}
+
+
+
 Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
@@ -961,4 +1105,155 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 	return success_flag;
 }
 
+
+
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm ***start_date_pp, struct tm **end_date_pp, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s);
+
+	if (tokens_p)
+		{
+			MeasuredVariable *measured_variable_p = NULL;
+			struct tm *start_date_p = NULL;
+			struct tm *end_date_p = NULL;
+
+			switch (tokens_p -> ll_size)
+				{
+					/*
+					 * <phenotype>
+					 *
+					 * For example
+					 *
+					 * PH_M_cm: Plant height measured on an unspecified date
+					 *
+					 */
+					case 1:
+						{
+							StringListNode *node_p = (StringListNode *) (tokens_p -> ll_head_p);
+							measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, data_p);
+
+							if (measured_variable_p)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Measured Variable for \"%s\"", node_p -> sln_string_s);
+								}
+						}
+						break;
+
+					/*
+					 * <phenotype> <start date/time>
+					 *
+					 * For example
+					 *
+					 * PH_M_cm 2020-12-01T09:30:00: Plant height measured on 01 Dec 2020 at 9:30 am.
+					 *
+					 */
+					case 2:
+						{
+							StringListNode *node_p = (StringListNode *) (tokens_p -> ll_head_p);
+							measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, data_p);
+
+							if (measured_variable_p)
+								{
+									const char *date_s = NULL;
+
+									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+
+									date_s = node_p -> sln_string_s;
+									start_date_p = GetTimeFromString (date_s);
+
+									if (start_date_p)
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTimeFromString failed for \"%s\"", date_s);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Measured Variable for \"%s\"", node_p -> sln_string_s);
+								}
+
+						}
+						break;
+
+						/*
+						 * <phenotype> <start date/time> <end date/time>
+						 *
+						 * For example
+						 *
+						 * PH_M_cm 2020-12-01 2020-12-03: Plant height measured on 01 Dec 2020 to 03 Dec 2020.
+						 *
+						 */
+					case 3:
+						{
+							StringListNode *node_p = (StringListNode *) (tokens_p -> ll_head_p);
+							measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, data_p);
+
+							if (measured_variable_p)
+								{
+									const char *date_s = NULL;
+
+									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+
+									date_s = node_p -> sln_string_s;
+									start_date_p = GetTimeFromString (date_s);
+
+									if (start_date_p)
+										{
+											node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+											date_s = node_p -> sln_string_s;
+											end_date_p = GetTimeFromString (date_s);
+
+											if (end_date_p)
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTimeFromString failed for end date \"%s\"", date_s);
+												}
+
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTimeFromString failed for start date \"%s\"", date_s);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Measured Variable for \"%s\"", node_p -> sln_string_s);
+								}
+
+						}
+						break;
+
+					default:
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Too many tokens (" UINT32_FMT ") for phenotype \"%s\"\n", key_s);
+						}
+						break;
+				}
+
+
+			if (success_flag)
+				{
+					*measured_variable_pp = measured_variable_p;
+					*start_date_pp = start_date_p;
+					*end_date_pp = end_date_p;
+				}
+
+			FreeLinkedList (tokens_p);
+		}		/* if (tokens_p) */
+
+
+	return success_flag;
+}
 
