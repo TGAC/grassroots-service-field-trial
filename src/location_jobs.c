@@ -1070,12 +1070,13 @@ static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s,
 				{
 					def_s = LT_SITE_S;
 				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown location type \"%s\"", active_loc_type_s);
+				}
+
 		}
 
-	if (def_s != aspect_s)
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown aspect \"%s\"", aspect_s);
-		}
 
 	param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, STUDY_ASPECT.npt_type, STUDY_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", def_s, PL_ALL);
 
