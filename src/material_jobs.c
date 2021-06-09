@@ -683,7 +683,7 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
 																								{
 																									uint32 tgw;
 
-																									if (GetJSONUnsignedInteger (table_row_json_p, S_TGW_TITLE_S, tgw))
+																									if (GetJSONUnsignedInteger (table_row_json_p, S_TGW_TITLE_S, &tgw))
 																										{
 																											const char *treatment_s = GetJSONString (table_row_json_p, S_SEED_TREATMENT_TITLE_S);
 
