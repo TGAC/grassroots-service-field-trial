@@ -21,7 +21,6 @@
  */
 
 #include <string.h>
-#include <bits/types/struct_tm.h>
 #include <bson.h>
 #include <dfw_field_trial_service_data.h>
 #include <instrument.h>
