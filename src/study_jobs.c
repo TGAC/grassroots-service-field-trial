@@ -958,6 +958,7 @@ Parameters
 
 
 
+
 bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	bool success_flag = true;
@@ -981,6 +982,10 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 	else if (strcmp (param_name_s, STUDY_HARVEST_YEAR.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_HARVEST_YEAR.npt_type;
+		}
+	else if (strcmp (param_name_s, STUDY_SOWING_YEAR.npt_name_s) == 0)
+		{
+			*pt_p = STUDY_SOWING_YEAR.npt_type;
 		}
 	else if (strcmp (param_name_s, S_SEARCH_TRIAL_ID_S.npt_name_s) == 0)
 		{
