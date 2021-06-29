@@ -21,7 +21,7 @@
  */
 
 #include <string.h>
-#include <bits/types/struct_tm.h>
+
 #include <bson/bson.h>
 #include <dfw_field_trial_service_data.h>
 #include <instrument.h>
@@ -62,6 +62,7 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, const char *raw_value_s, const char *corrected_value_s,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature)
 {
+
 	if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s)))
 		{
 			struct tm *copied_start_date_p = NULL;
@@ -154,14 +155,12 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 
 						}		/* if (CopyValidDate (end_date_p, &copied_end_date_p)) */
 
-
 					if (copied_start_date_p)
 						{
 							FreeTime (copied_start_date_p);
 						}		/* if (copied_start_date_p) */
 
 				}		/* if (CopyValidDate (start_date_p, &copied_start_date_p)) */
-
 
 		}		/* if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s))) */
 	else

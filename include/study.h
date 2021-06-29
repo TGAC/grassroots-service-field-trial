@@ -118,6 +118,8 @@ STUDY_PREFIX const char *ST_WEATHER_S STUDY_VAL ("weather");
 
 STUDY_PREFIX const char *ST_SHAPE_S STUDY_VAL ("shape_data");
 
+STUDY_PREFIX const char *ST_HAS_SHAPE_S STUDY_VAL ("has_shape_data");
+
 
 STUDY_PREFIX const char *ST_PLOT_H_GAP_S STUDY_VAL ("plot_horizontal_gap");
 

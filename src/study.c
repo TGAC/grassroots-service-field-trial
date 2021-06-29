@@ -793,8 +793,6 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 		{
 			if (AddCommonStudyJSONValues (study_p, study_json_p, format, data_p))
 				{
-
-
 					bool add_item_flag = false;
 
 					/*
@@ -899,7 +897,10 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 												{
 													if (AddPlotsToJSON (study_p, study_json_p, format, processor_p, data_p))
 														{
-															success_flag = true;
+															if ((! (study_p -> st_shape_p)) || (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0))
+																{
+																	success_flag = true;
+																}		/* if ((!study_p -> st_shape_p) || (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0)) */
 														}
 												}
 										}
@@ -911,7 +912,12 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 												{
 													if (SetJSONInteger (study_json_p, ST_NUMBER_OF_PLOTS_S, num_plots))
 														{
-															success_flag = true;
+															const bool has_shape_data_flag = (study_p -> st_shape_p) ? true : false;
+
+															if (SetJSONBoolean (study_json_p, ST_HAS_SHAPE_S, has_shape_data_flag))
+																{
+																	success_flag = true;
+																}
 														}
 												}
 											else
@@ -1635,60 +1641,53 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																				{
 																					if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
 																						{
-																							if ((!study_p -> st_shape_p) || (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0))
+																							if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
 																								{
-																									if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+																									if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
 																										{
-																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+																											if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
 																												{
-																													if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+																													if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
 																														{
-																															if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+																															if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
 																																{
-																																	if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+																																	if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
 																																		{
-																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+																																			if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																				{
-																																					if (AddTreatmentsToJSON (study_p, study_json_p, format))
+																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
 																																						{
-																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
+																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
 																																								{
-																																									if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
+																																									if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
 																																										{
-																																											if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
+																																											if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																												{
-																																													if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
-																																														{
-																																															success_flag = true;
-																																														}
-
+																																													success_flag = true;
 																																												}
 
 																																										}
 
 																																								}
 
+																																						}
 
 
-																																						}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
-
-																																				}
+																																				}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
 
 																																		}
 
-
 																																}
+
 
 																														}
 
-
 																												}
+
 
 																										}
 
-
-																								}		/* if ((!study_p -> st_shape_p) || (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0)) */
-
+																								}
 
 																						}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
 																					else
