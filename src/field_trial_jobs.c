@@ -63,7 +63,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	char *id_s = NULL;
-	char *program_id_s = NULL;
+	char *programme_id_s = NULL;
 	const char *name_s = NULL;
 	const char *team_s = NULL;
 	FieldTrial *active_trial_p = GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, dfw_data_p);
@@ -71,14 +71,14 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	if (active_trial_p)
 		{
-			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &program_id_s, &name_s, &team_s))
+			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s))
 				{
 					defaults_flag = true;
 				}
 		}
 	else
 		{
-			if (SetUpDefaults (&id_s, &program_id_s, &name_s, &team_s))
+			if (SetUpDefaults (&id_s, &programme_id_s, &name_s, &team_s))
 				{
 					defaults_flag = true;
 				}
@@ -104,16 +104,16 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 								{
 									param_p -> pa_required_flag = true;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part of", program_id_s, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Program", "The Program that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
 										{
-											Programme *program_p = NULL;
+											Programme *programme_p = NULL;
 
-											if (program_id_s)
+											if (programme_id_s && (strcmp (programme_id_s, S_EMPTY_LIST_OPTION_S) != 0))
 												{
-													program_p = GetProgrammeByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+													programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
 												}
 
-											if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, program_p, false))
+											if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, programme_p, false))
 												{
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 														{
@@ -125,9 +125,9 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 														}
 												}
 
-											if (program_p)
+											if (programme_p)
 												{
-													FreeProgramme (program_p);
+													FreeProgramme (programme_p);
 												}
 										}
 
@@ -627,7 +627,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 									/*
 									 * If the parameter's value isn't on the list, reset it
 									 */
-									if (!value_set_flag)
+									if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
 										}

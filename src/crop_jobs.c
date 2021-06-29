@@ -333,42 +333,52 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTrialServiceData *data_p)
 {
 	Crop *crop_p = NULL;
-	bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+	const json_t *child_p = json_object_get (json_p, key_s);
 
-	if (crop_id_p)
+	/*
+	 * Is there a stored value?
+	 */
+	if ((child_p != NULL) && (! (json_is_null (child_p))))
 		{
-			if (GetNamedIdFromJSON (json_p, key_s, crop_id_p))
+			bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+
+			if (crop_id_p)
 				{
-					char *id_s = GetBSONOidAsString (crop_id_p);
-
-					if (id_s)
+					if (GetNamedIdFromJSON (json_p, key_s, crop_id_p))
 						{
-							crop_p = GetCropByIdString (id_s, data_p);
+							char *id_s = GetBSONOidAsString (crop_id_p);
 
-							if (!crop_p)
+							if (id_s)
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
+									crop_p = GetCropByIdString (id_s, data_p);
+
+									if (!crop_p)
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
+										}
+
+									FreeCopiedString (id_s);
+								}		/* if (id_s) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetBSONOidAsString for \"%s\"", key_s);
 								}
 
-							FreeCopiedString (id_s);
-						}		/* if (id_s) */
+						}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetBSONOidAsString for \"%s\"", key_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed for \"%s\"", key_s);
 						}
 
-				}		/* if (GetNamedIdFromJSON (json_p, key_s, crop_id_p)) */
+					FreeBSONOid (crop_id_p);
+				}		/* if (crop_id_p) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed for \"%s\"", key_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
 				}
 
-			FreeBSONOid (crop_id_p);
-		}		/* if (crop_id_p) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed");
-		}
+		}		/* if (json_object_get (json_p, key_s)) */
+
 
 	return crop_p;
 }

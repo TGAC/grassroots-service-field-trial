@@ -798,10 +798,6 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		{
 			*pt_p = STUDY_NAME.npt_type;
 		}
-	else if (strcmp (param_name_s, STUDY_SOIL.npt_name_s) == 0)
-		{
-			*pt_p = STUDY_SOIL.npt_type;
-		}
 	else if (strcmp (param_name_s, STUDY_LINK.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_LINK.npt_type;
@@ -2875,7 +2871,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 									/*
 									 * If the parameter's value isn't on the list, reset it
 									 */
-									if (!value_set_flag)
+									if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing studies", param_value_s);
 										}
@@ -3279,12 +3275,14 @@ static Parameter *GetAndAddAspectParameter (const char *aspect_s, FieldTrialServ
 							++ direction_p;
 						}
 				}
+
+			if (def_s != aspect_s)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown aspect \"%s\"", aspect_s);
+				}
+
 		}
 
-	if (def_s != aspect_s)
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown aspect \"%s\"", aspect_s);
-		}
 
 	param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, STUDY_ASPECT.npt_type, STUDY_ASPECT.npt_name_s, "Aspect", "The direction that the study area was oriented to", def_s, PL_ALL);
 
