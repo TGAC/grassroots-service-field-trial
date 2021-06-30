@@ -1140,10 +1140,6 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 		{
 			StringListNode *node_p = (StringListNode *) (tokens_p -> ll_head_p);
 			MeasuredVariable *measured_variable_p = NULL;
-			struct tm *start_date_p = NULL;
-			struct tm *end_date_p = NULL;
-			const char * const CORRECTED_S = "corrected";
-
 			measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, data_p);
 
 			if (measured_variable_p)
