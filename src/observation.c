@@ -22,16 +22,17 @@
 
 #include <string.h>
 
-#include <bson/bson.h>
-#include <dfw_field_trial_service_data.h>
-#include <instrument.h>
-#include <jansson.h>
-#include <json_util.h>
-#include <linked_list.h>
-#include <measured_variable.h>
-#include <mongodb_tool.h>
-#include <streams.h>
-#include <typedefs.h>
+#include <bson.h>
+
+#include "dfw_field_trial_service_data.h"
+#include "instrument.h"
+#include "jansson.h"
+#include "json_util.h"
+#include "linked_list.h"
+#include "measured_variable.h"
+#include "mongodb_tool.h"
+#include "streams.h"
+#include "typedefs.h"
 
 #define ALLOCATE_OBSERVATION_TAGS (1)
 #include "observation.h"
