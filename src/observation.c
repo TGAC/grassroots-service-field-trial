@@ -453,7 +453,7 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, const Fie
 													const char *corrected_value_s = GetJSONString (observation_json_p, OB_CORRECTED_VALUE_S);
 
 													/*
-													 * do we have a valid measuremnet
+													 * do we have a valid measurement?
 													 */
 													if (! ((IsStringEmpty (raw_value_s)) && (IsStringEmpty (corrected_value_s))))
 														{

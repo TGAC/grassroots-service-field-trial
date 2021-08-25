@@ -66,7 +66,7 @@ static json_t *GetTableParameterHints (void);
 
 static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *plot_index_p);
 
-static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, const FieldTrialServiceData *data_p);
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, ServiceJob *job_p, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -534,7 +534,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 									if (row_p)
 										{
-											OperationStatus import_row_status = AddObservationValuesToRow (row_p, observation_json_p, study_p, data_p);
+											OperationStatus import_row_status = AddObservationValuesToRow (row_p, observation_json_p, study_p, job_p, data_p);
 
 											if ((import_row_status == OS_PARTIALLY_SUCCEEDED) || (import_row_status == OS_SUCCEEDED))
 												{
@@ -854,7 +854,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 
 
 
-OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -881,7 +881,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 							struct tm *end_date_p = NULL;
 							bool corrected_value_flag = false;
 
-							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, data_p))
+							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, job_p, row_index, data_p))
 								{
 									Observation *observation_p = NULL;
 									bool added_phenotype_flag = false;
@@ -1130,7 +1130,7 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 
 
 
-static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, const FieldTrialServiceData *data_p)
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s, " ", true);
@@ -1153,6 +1153,9 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 					*corrected_value_flag_p = false;
 					node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 
+					success_flag = true;
+
+
 					while (node_p && loop_flag && success_flag)
 						{
 							const char *value_s = node_p -> sln_string_s;
@@ -1173,6 +1176,7 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 												}
 											else
 												{
+													AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Failed to create start date from given value", row_index, value_s);
 													success_flag = false;
 												}
 
@@ -1183,12 +1187,13 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 
 											if (!end_date_p)
 												{
+													AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Failed to create end date from given value", row_index, value_s);
 													success_flag = false;
 												}
 										}
 								}
 
-							if (start_date_p && end_date_p && corrected_value_flag_p)
+							if (start_date_p && end_date_p && (*corrected_value_flag_p))
 								{
 									loop_flag = false;
 								}
@@ -1224,6 +1229,8 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 				}		/* if (measured_variable_p) */
 			else
 				{
+					AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Failed to find Measured Variable", row_index, node_p -> sln_string_s);
+
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Measured Variable for \"%s\"", node_p -> sln_string_s);
 				}
 
