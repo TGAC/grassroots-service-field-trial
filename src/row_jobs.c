@@ -66,7 +66,8 @@ static json_t *GetTableParameterHints (void);
 
 static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *plot_index_p);
 
-static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, ServiceJob *job_p, const FieldTrialServiceData *data_p);
+
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
 
 
 /*
@@ -534,7 +535,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 
 									if (row_p)
 										{
-											OperationStatus import_row_status = AddObservationValuesToRow (row_p, observation_json_p, study_p, job_p, data_p);
+											OperationStatus import_row_status = AddObservationValuesToRow (row_p, observation_json_p, study_p, job_p, i, data_p);
 
 											if ((import_row_status == OS_PARTIALLY_SUCCEEDED) || (import_row_status == OS_SUCCEEDED))
 												{
@@ -885,6 +886,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 								{
 									Observation *observation_p = NULL;
 									bool added_phenotype_flag = false;
+									bool free_measured_variable_flag = false;
 									const char *value_s = json_string_value (value_p);
 
 									if (!IsStringEmpty (value_s))
@@ -940,6 +942,8 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
 
 															FreeBSONOid (observation_id_p);
+
+															free_measured_variable_flag = true;
 														}
 
 												}		/* if (observation_id_p) */
@@ -967,12 +971,16 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 											end_date_p = NULL;
 										}
 
-									if (measured_variable_p)
+									/*
+									 * If the Observation failed to be allocated then, we need to free the
+									 * Measured Variable as FreeObservation () would normally take care of
+									 * that when the
+									 */
+									if (free_measured_variable_flag && measured_variable_p)
 										{
 											FreeMeasuredVariable (measured_variable_p);
 											measured_variable_p = NULL;
 										}
-
 
 								}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
 
@@ -1176,7 +1184,20 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 												}
 											else
 												{
-													AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Failed to create start date from given value", row_index, value_s);
+													char *error_s = ConcatenateVarargsStrings ("Failed to create start date from \"", value_s, "\" in column \"", key_s, "\"", NULL);
+
+													if (error_s)
+														{
+															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
+															FreeCopiedString (error_s);
+														}
+													else
+														{
+															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create start date from column");
+														}
+
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create start date from \"%s\" in column \"%s\"", value_s, key_s);
+
 													success_flag = false;
 												}
 
@@ -1187,8 +1208,19 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 
 											if (!end_date_p)
 												{
-													AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Failed to create end date from given value", row_index, value_s);
-													success_flag = false;
+													char *error_s = ConcatenateVarargsStrings ("Failed to create end date from \"", value_s, "\" in column \"", key_s, "\"", NULL);
+
+													if (error_s)
+														{
+															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
+															FreeCopiedString (error_s);
+														}
+													else
+														{
+															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create end date from column");
+														}
+
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create end date from \"%s\" in column \"%s\"", value_s, key_s);
 												}
 										}
 								}
@@ -1229,7 +1261,7 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 				}		/* if (measured_variable_p) */
 			else
 				{
-					AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Failed to find Measured Variable", row_index, node_p -> sln_string_s);
+					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to find Measured Variable", row_index, node_p -> sln_string_s);
 
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Measured Variable for \"%s\"", node_p -> sln_string_s);
 				}

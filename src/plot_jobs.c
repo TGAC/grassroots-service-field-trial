@@ -120,7 +120,6 @@ static const char * const S_WALKING_ORDER_DESCRIPTION_S = "The order that the pl
 
 
 static NamedParameterType S_PLOT_TABLE_COLUMN_DELIMITER = { "PL Data delimiter", PT_CHAR };
-static NamedParameterType S_PLOT_TABLE = { "PL Upload", PT_JSON_TABLE};
 
 static NamedParameterType S_AMEND = { "PL Amend", PT_BOOLEAN};
 
@@ -255,7 +254,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 				{
 					json_t *plots_table_p = NULL;
 
-					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
+					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, PL_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
 						{
 							job_done_flag = true;
 
@@ -305,7 +304,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 						}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", S_PLOT_TABLE.npt_name_s);
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", PL_PLOT_TABLE.npt_name_s);
 						}
 
 					FreeStudy (study_p);
@@ -338,9 +337,9 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 		{
 			*pt_p = S_PLOT_TABLE_COLUMN_DELIMITER.npt_type;
 		}
-	else if (strcmp (param_name_s, S_PLOT_TABLE.npt_name_s) == 0)
+	else if (strcmp (param_name_s, PL_PLOT_TABLE.npt_name_s) == 0)
 		{
-			*pt_p = S_PLOT_TABLE.npt_type;
+			*pt_p = PL_PLOT_TABLE.npt_type;
 		}
 	else if (strcmp (param_name_s, S_AMEND.npt_name_s) == 0)
 		{
@@ -905,7 +904,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 			if (success_flag)
 				{
-					param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PLOT_TABLE.npt_type, S_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", plots_json_p, PL_ALL);
+					param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, PL_PLOT_TABLE.npt_type, PL_PLOT_TABLE.npt_name_s, "Plot data to upload", "The data to upload", plots_json_p, PL_ALL);
 
 					if (param_p)
 						{
@@ -1106,7 +1105,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																												{
 																													OperationStatus tr_status = AddTreatmentFactorValuesToRow (row_p, table_row_json_p, study_p, data_p);
 
-																													OperationStatus obs_status = AddObservationValuesToRow (row_p, table_row_json_p, study_p, data_p);
+																													OperationStatus obs_status = AddObservationValuesToRow (row_p, table_row_json_p, study_p, job_p, i, data_p);
 
 																													if (obs_status != OS_SUCCEEDED)
 																														{
@@ -1151,14 +1150,14 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																						}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
 																					else
 																						{
-																							AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, PL_INDEX_TABLE_TITLE_S);
+																							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", i, PL_INDEX_TABLE_TITLE_S);
 																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
 																						}
 
 																				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
 																			else
 																				{
-																					AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, S_RACK_TITLE_S);
+																					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", i, S_RACK_TITLE_S);
 																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
 																				}
 
@@ -1168,14 +1167,14 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
 															else
 																{
-																	AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, S_COLUMN_TITLE_S);
+																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", i, S_COLUMN_TITLE_S);
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_COLUMN_TITLE_S);
 																}
 
 														}		/* if (GetJSONStringAsInteger (row_p, S_ROW_TITLE_S, &row)) */
 													else
 														{
-															AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, S_ROW_TITLE_S);
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", i, S_ROW_TITLE_S);
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_ROW_TITLE_S);
 														}
 
@@ -1189,7 +1188,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 										}		/* if (accession_s) */
 									else
 										{
-											AddTabularParameterErrorMessageToServiceJob (job_p, S_PLOT_TABLE.npt_name_s, S_PLOT_TABLE.npt_type, "Value not set", i, PL_ACCESSION_TABLE_TITLE_S);
+											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", i, PL_ACCESSION_TABLE_TITLE_S);
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_ACCESSION_TABLE_TITLE_S);
 										}
 

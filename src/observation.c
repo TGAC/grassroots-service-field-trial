@@ -261,9 +261,9 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 	if (observation_json_p)
 		{
-			if (AddValidDateToJSON (observation_p -> ob_start_date_p, observation_json_p, OB_START_DATE_S, false))
+			if (AddValidDateToJSON (observation_p -> ob_start_date_p, observation_json_p, OB_START_DATE_S, true))
 				{
-					if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, false))
+					if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, true))
 						{
 							if ((IsStringEmpty (observation_p -> ob_raw_value_s)) || (SetJSONString (observation_json_p, OB_RAW_VALUE_S, observation_p -> ob_raw_value_s)))
 								{

@@ -37,9 +37,11 @@
 #ifdef ALLOCATE_PLOT_JOB_CONSTANTS
 	#define PLOT_JOB_PREFIX DFW_FIELD_TRIAL_SERVICE_API
 	#define PLOT_JOB_VAL(x)	= x
+	#define PLOT_VARIABLE_JOB_STRUCT_VAL(x,y)	= { x, y }
 #else
 	#define PLOT_JOB_PREFIX extern
 	#define PLOT_JOB_VAL(x)
+	#define PLOT_VARIABLE_JOB_STRUCT_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
@@ -52,6 +54,9 @@ PLOT_JOB_PREFIX const char *PL_REPLICATE_TITLE_S PLOT_JOB_VAL("Replicate");
 PLOT_JOB_PREFIX const char *PL_INDEX_TABLE_TITLE_S PLOT_JOB_VAL("Plot ID");
 
 PLOT_JOB_PREFIX const char *PL_ACCESSION_TABLE_TITLE_S PLOT_JOB_VAL ("Accession");
+
+PLOT_JOB_PREFIX NamedParameterType PL_PLOT_TABLE PLOT_VARIABLE_JOB_STRUCT_VAL ("PL Upload", PT_JSON_TABLE);
+
 
 #ifdef __cplusplus
 extern "C"
