@@ -54,6 +54,8 @@ static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_
 
 static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p);
 
+static bool CompareObservationDates (const struct tm * const time_0_p, const struct tm * const time_1_p);
+
 
 /*
  * API definitions
@@ -579,16 +581,24 @@ bool AreObservationsMatching (const Observation *observation_0_p, const Observat
 
 	if (bson_oid_equal (observation_0_p -> ob_phenotype_p -> mv_id_p, observation_1_p -> ob_phenotype_p -> mv_id_p))
 		{
-			if ((observation_0_p -> ob_start_date_p) && (observation_0_p -> ob_start_date_p))
+			if (CompareObservationDates (observation_0_p -> ob_start_date_p, observation_1_p -> ob_start_date_p))
 				{
-					if (CompareDates (observation_0_p -> ob_start_date_p, observation_1_p -> ob_start_date_p, true))
+					if (CompareObservationDates (observation_0_p -> ob_end_date_p, observation_1_p -> ob_end_date_p))
 						{
-							if ((observation_0_p -> ob_end_date_p) && (observation_0_p -> ob_end_date_p))
+							if (observation_0_p -> ob_corrected_value_s)
 								{
-									if (CompareDates (observation_0_p -> ob_end_date_p, observation_1_p -> ob_end_date_p, true))
+									if (observation_1_p -> ob_corrected_value_s)
 										{
-											match_flag = true;
+											if (strcmp (observation_0_p -> ob_corrected_value_s, observation_1_p -> ob_corrected_value_s) == 0)
+												{
+													match_flag = true;
+												}
 										}
+
+								}
+							else if (! (observation_1_p -> ob_corrected_value_s))
+								{
+									match_flag = true;
 								}
 						}
 				}
@@ -602,6 +612,29 @@ bool AreObservationsMatching (const Observation *observation_0_p, const Observat
 /*
  * static definitions
  */
+
+static bool CompareObservationDates (const struct tm * const time_0_p, const struct tm * const time_1_p)
+{
+	bool match_flag = false;
+
+	if (time_0_p)
+		{
+			if (time_1_p)
+				{
+					if (CompareDates (time_0_p, time_1_p, true))
+						{
+							match_flag = true;
+						}
+				}
+		}
+	else
+		{
+			match_flag = true;
+		}
+
+	return match_flag;
+}
+
 
 static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p)
 {
