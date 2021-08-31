@@ -1008,6 +1008,27 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 }
 
 
+Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const char * const raw_value_s, const char * const corrected_value_s)
+{
+	ObservationNode *node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
+
+	while (node_p)
+		{
+			Observation *existing_observation_p = node_p -> on_observation_p;
+
+			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p))
+				{
+					return existing_observation_p;
+				}
+			else
+				{
+					node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
+				}
+		}
+
+	return NULL;
+}
+
 
 Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const FieldTrialServiceData *data_p)
 {

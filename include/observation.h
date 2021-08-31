@@ -139,6 +139,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationValue (Observation *observation
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p);
+
 #ifdef __cplusplus
 }
 #endif

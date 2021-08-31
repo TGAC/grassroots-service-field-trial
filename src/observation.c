@@ -577,35 +577,28 @@ bool SetObservationValue (Observation *observation_p, const char *value_s)
 
 bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p)
 {
+	return AreObservationsMatchingByParts (observation_0_p, observation_1_p -> ob_phenotype_p, observation_1_p -> ob_start_date_p, observation_1_p -> ob_end_date_p);
+}
+
+
+bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p)
+{
 	bool match_flag = false;
 
-	if (bson_oid_equal (observation_0_p -> ob_phenotype_p -> mv_id_p, observation_1_p -> ob_phenotype_p -> mv_id_p))
+	if (bson_oid_equal (variable_p -> mv_id_p, variable_p -> mv_id_p))
 		{
-			if (CompareObservationDates (observation_0_p -> ob_start_date_p, observation_1_p -> ob_start_date_p))
+			if (CompareObservationDates (observation_p -> ob_start_date_p, start_date_p))
 				{
-					if (CompareObservationDates (observation_0_p -> ob_end_date_p, observation_1_p -> ob_end_date_p))
+					if (CompareObservationDates (observation_p -> ob_end_date_p, end_date_p))
 						{
-							if (observation_0_p -> ob_corrected_value_s)
-								{
-									if (observation_1_p -> ob_corrected_value_s)
-										{
-											if (strcmp (observation_0_p -> ob_corrected_value_s, observation_1_p -> ob_corrected_value_s) == 0)
-												{
-													match_flag = true;
-												}
-										}
-
-								}
-							else if (! (observation_1_p -> ob_corrected_value_s))
-								{
-									match_flag = true;
-								}
+							match_flag = true;
 						}
 				}
 		}
 
 	return match_flag;
 }
+
 
 
 
