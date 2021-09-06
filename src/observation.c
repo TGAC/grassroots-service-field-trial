@@ -541,24 +541,13 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 }
 
 
-bool SetObservationValue (Observation *observation_p, const char *value_s)
+bool SetObservationRawValue (Observation *observation_p, const char *value_s)
 {
-	bool success_flag = false;
+	bool success_flag = true;
 
 	if (value_s)
 		{
-			char *copied_value_s = EasyCopyToNewString (value_s);
-
-			if (copied_value_s)
-				{
-					if (observation_p -> ob_raw_value_s)
-						{
-							FreeCopiedString (observation_p -> ob_raw_value_s);
-						}
-
-					observation_p -> ob_raw_value_s = copied_value_s;
-					success_flag = true;
-				}
+			success_flag = ReplaceStringValue (& (observation_p -> ob_raw_value_s), value_s);
 		}
 	else
 		{
@@ -567,12 +556,32 @@ bool SetObservationValue (Observation *observation_p, const char *value_s)
 					FreeCopiedString (observation_p -> ob_raw_value_s);
 					observation_p -> ob_raw_value_s = NULL;
 				}
-
-			success_flag = true;
 		}
 
 	return success_flag;
 }
+
+
+bool SetObservationCorrectedValue (Observation *observation_p, const char *value_s)
+{
+	bool success_flag = true;
+
+	if (value_s)
+		{
+			success_flag = ReplaceStringValue (& (observation_p -> ob_corrected_value_s), value_s);
+		}
+	else
+		{
+			if (observation_p -> ob_corrected_value_s)
+				{
+					FreeCopiedString (observation_p -> ob_corrected_value_s);
+					observation_p -> ob_corrected_value_s = NULL;
+				}
+		}
+
+	return success_flag;
+}
+
 
 
 bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p)
@@ -614,7 +623,7 @@ static bool CompareObservationDates (const struct tm * const time_0_p, const str
 		{
 			if (time_1_p)
 				{
-					if (CompareDates (time_0_p, time_1_p, true))
+					if (CompareDates (time_0_p, time_1_p, true) == 0)
 						{
 							match_flag = true;
 						}
@@ -622,7 +631,10 @@ static bool CompareObservationDates (const struct tm * const time_0_p, const str
 		}
 	else
 		{
-			match_flag = true;
+			if (!time_1_p)
+				{
+					match_flag = true;
+				}
 		}
 
 	return match_flag;

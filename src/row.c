@@ -593,16 +593,19 @@ bool AddObservationToRow (Row *row_p, Observation *observation_p)
 	 * then replace it. If not, then simply add it.
 	 */
 	node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
-	while (node_p)
+	while (node_p && (!success_flag))
 		{
 			Observation *existing_observation_p = node_p -> on_observation_p;
 
-			if (AreObservationsMatching (existing_observation_p, observation_p))
+			if (observation_p == existing_observation_p)
+				{
+					success_flag = true;
+				}
+			else if (AreObservationsMatching (existing_observation_p, observation_p))
 				{
 					node_p -> on_observation_p = observation_p;
 					FreeObservation (existing_observation_p);
 					success_flag = true;
-					node_p = NULL;		/* force exit from loop */
 				}
 			else
 				{

@@ -141,6 +141,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *o
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationRawValue (Observation *observation_p, const char *value_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValue (Observation *observation_p, const char *value_s);
+
 #ifdef __cplusplus
 }
 #endif

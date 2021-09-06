@@ -895,9 +895,9 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 											const char *method_s = NULL;
 											ObservationNature nature = ON_ROW;
 											Instrument *instrument_p = NULL;
-											bson_oid_t *observation_id_p = GetNewBSONOid ();
 											const char *raw_value_s = NULL;
 											const char *corrected_value_s = NULL;
+
 
 											if (corrected_value_flag)
 												{
@@ -908,49 +908,91 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 													raw_value_s = value_s;
 												}
 
-											++ total_obs;
+											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p);
 
-											if (observation_id_p)
+											if (observation_p)
 												{
-													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
-
-													if (observation_p)
+													if (corrected_value_flag)
 														{
-															if (AddObservationToRow (row_p, observation_p))
+															if (!SetObservationCorrectedValue (observation_p, value_s))
 																{
-																	++ imported_obs;
-																	added_phenotype_flag = true;
-																	loop_success_flag = true;
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+																	FreeObservation (observation_p);
 																}
+														}
+													else
+														{
+															SetObservationRawValue (observation_p, value_s);
+
+															if (!SetObservationRawValue (observation_p, value_s))
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+																	FreeObservation (observation_p);
+																}
+
+														}
+
+													free_measured_variable_flag = true;
+
+													++ imported_obs;
+
+												}
+											else
+												{
+													bson_oid_t *observation_id_p = GetNewBSONOid ();
+
+													if (observation_id_p)
+														{
+															observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
+
+															if (observation_p)
+																{
+																	if (AddObservationToRow (row_p, observation_p))
+																		{
+																			added_phenotype_flag = true;
+																			loop_success_flag = true;
+																		}
+																	else
+																		{
+																			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																			bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+																			FreeObservation (observation_p);
+																		}
+
+																}		/* if (observation_p) */
 															else
 																{
 																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 																	bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
-																	FreeObservation (observation_p);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
+
+
+																	free_measured_variable_flag = true;
 																}
 
-														}		/* if (observation_p) */
+														}
 													else
 														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
-
-															FreeBSONOid (observation_id_p);
-
-															free_measured_variable_flag = true;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
 														}
-
-												}		/* if (observation_id_p) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
 												}
+
+											++ total_obs;
+
+
 
 										}		/* if ((!IsStringEmpty (raw_value_s)) */
 									else
@@ -1008,7 +1050,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 }
 
 
-Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const char * const raw_value_s, const char * const corrected_value_s)
+Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p)
 {
 	ObservationNode *node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
 
