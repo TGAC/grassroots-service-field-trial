@@ -623,7 +623,7 @@ static bool CompareObservationDates (const struct tm * const time_0_p, const str
 		{
 			if (time_1_p)
 				{
-					if (CompareDates (time_0_p, time_1_p, true) == 0)
+					if (CompareDates (time_0_p, time_1_p, false) == 0)
 						{
 							match_flag = true;
 						}
