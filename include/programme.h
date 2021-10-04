@@ -36,23 +36,43 @@
 #include "person.h"
 
 
-
+/**
+ * The datatype representing a Programme of Field Trials and Studies.
+ *
+ * @defgroup programme
+ * @ingroup field_trials_service
+ */
 typedef struct Programme
 {
 	bson_oid_t *pr_id_p;
 
+	/**
+	 * The abbreviation for this Programme.
+	 */
 	char *pr_abbreviation_s;
 
+	/**
+	 * The Crop that this Programme is researching.
+	 */
 	Crop *pr_crop_p;
 
+	/**
+	 * The web address for any documentaion about this Programme.
+	 */
 	char *pr_documentation_url_s;
 
+	/**
+	 * The name of this Programme.
+	 */
 	char *pr_name_s;
 
+	/**
+	 * The objective of this Programme.
+	 */
 	char *pr_objective_s;
 
 	/**
-	 * The programme leader
+	 * The Person leading the Programme.
 	 */
 	Person *pr_pi_p;
 
@@ -125,7 +145,12 @@ extern "C"
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s);
 
-
+/**
+ * Free a given Programme.
+ *
+ * @param programme_p The Programme to free.
+ * @ingroup programme
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgramme (Programme *programme_p);
 
 
@@ -156,6 +181,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeByIdString (const char *pro
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
+
+/**
+ * Remove a FieldTrial from a given Programme.
+ *
+ * @param programme_p The Programme to remove the FieldTrial from.
+ * @param trial_p The FieldTrial to remove.
+ * @return <code>true</code> if the FieldTrial was removed from the Programme,
+ * code>false</code> if the FieldTrial was not on the list of Trials belonging
+ * to the given Programme.
+ * @ingroup programme
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p);
 
 

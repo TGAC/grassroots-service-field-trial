@@ -67,7 +67,16 @@ static json_t *GetTableParameterHints (void);
 static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *plot_index_p);
 
 
-static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
+/**
+ * Extract the Observation metadata from the column heading
+ */
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
+
+
+/**
+ * Report any errors from GetObservationMetadata ()
+ */
+static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s);
 
 
 /*
@@ -881,8 +890,9 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 							struct tm *start_date_p = NULL;
 							struct tm *end_date_p = NULL;
 							bool corrected_value_flag = false;
+							uint32 observation_index = OB_DEFAULT_INDEX;
 
-							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, job_p, row_index, data_p))
+							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, data_p))
 								{
 									Observation *observation_p = NULL;
 									bool added_phenotype_flag = false;
@@ -898,7 +908,6 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 											const char *raw_value_s = NULL;
 											const char *corrected_value_s = NULL;
 
-
 											if (corrected_value_flag)
 												{
 													corrected_value_s = value_s;
@@ -908,7 +917,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 													raw_value_s = value_s;
 												}
 
-											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p);
+											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
 
 											if (observation_p)
 												{
@@ -944,14 +953,14 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 
 													++ imported_obs;
 
-												}
+												}		/* if (observation_p) */
 											else
 												{
 													bson_oid_t *observation_id_p = GetNewBSONOid ();
 
 													if (observation_id_p)
 														{
-															observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature);
+															observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index);
 
 															if (observation_p)
 																{
@@ -1050,7 +1059,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 }
 
 
-Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p)
+Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index)
 {
 	ObservationNode *node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
 
@@ -1058,7 +1067,7 @@ Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *v
 		{
 			Observation *existing_observation_p = node_p -> on_observation_p;
 
-			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p))
+			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p, index))
 				{
 					return existing_observation_p;
 				}
@@ -1201,7 +1210,7 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 
 
 
-static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s, " ", true);
@@ -1218,6 +1227,9 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 					struct tm *start_date_p = NULL;
 					struct tm *end_date_p = NULL;
 					const char * const CORRECTED_KEY_S = "corrected";
+					const char * const INDEX_PREFIX_KEY_S = "sample_";
+					const size_t INDEX_PREFIX_KEY_LENGTH = strlen (INDEX_PREFIX_KEY_S);
+					uint32 index = OB_DEFAULT_INDEX;
 					bool start_date_flag = true;
 					bool loop_flag = true;
 
@@ -1235,6 +1247,30 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 								{
 									*corrected_value_flag_p = true;
 								}
+							else if (strncmp (value_s, INDEX_PREFIX_KEY_S, INDEX_PREFIX_KEY_LENGTH) == 0)
+								{
+									const char *temp_s = value_s;
+									int32 answer;
+
+									if (GetValidInteger (&temp_s, &answer))
+										{
+											if (answer >= 1)
+												{
+													index = (uint32) answer;
+												}
+											else
+												{
+													ReportObservationMetadataError (job_p, "Invalid sample index from", key_s, value_s);
+													success_flag = false;
+												}
+										}
+									else
+										{
+											ReportObservationMetadataError (job_p, "Failed to create sample index from", key_s, value_s);
+											success_flag = false;
+
+										}
+								}
 							else
 								{
 									if (start_date_flag)
@@ -1247,20 +1283,7 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 												}
 											else
 												{
-													char *error_s = ConcatenateVarargsStrings ("Failed to create start date from \"", value_s, "\" in column \"", key_s, "\"", NULL);
-
-													if (error_s)
-														{
-															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
-															FreeCopiedString (error_s);
-														}
-													else
-														{
-															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create start date from column");
-														}
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create start date from \"%s\" in column \"%s\"", value_s, key_s);
-
+													ReportObservationMetadataError (job_p, "Failed to create start date from", key_s, value_s);
 													success_flag = false;
 												}
 
@@ -1271,19 +1294,8 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 
 											if (!end_date_p)
 												{
-													char *error_s = ConcatenateVarargsStrings ("Failed to create end date from \"", value_s, "\" in column \"", key_s, "\"", NULL);
-
-													if (error_s)
-														{
-															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
-															FreeCopiedString (error_s);
-														}
-													else
-														{
-															AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create end date from column");
-														}
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create end date from \"%s\" in column \"%s\"", value_s, key_s);
+													ReportObservationMetadataError (job_p, "Failed to create end date from", key_s, value_s);
+													success_flag = false;
 												}
 										}
 								}
@@ -1299,12 +1311,12 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 						}		/* while (node_p) */
 
 
-
 					if (success_flag)
 						{
 							*measured_variable_pp = measured_variable_p;
 							*start_date_pp = start_date_p;
 							*end_date_pp = end_date_p;
+							*ob_index_p = index;
 						}
 					else
 						{
@@ -1337,3 +1349,21 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 	return success_flag;
 }
 
+
+
+static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s)
+{
+	char *error_s = ConcatenateVarargsStrings (prefix_s, " \"", value_s, "\" in column \"", key_s, "\"", NULL);
+
+	if (error_s)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
+			FreeCopiedString (error_s);
+		}
+	else
+		{
+			AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, prefix_s);
+		}
+
+	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "%s \"%s\" in column \"%s\"", prefix_s, value_s, key_s);
+}

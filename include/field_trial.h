@@ -20,6 +20,13 @@
  *      Author: billy
  */
 
+/**
+ * @file
+ * @defgroup field_trials_service The Field Trials Service Module
+ * @brief
+ */
+
+
 #ifndef SERVICES_FIELD_TRIALS_INCLUDE_FIELD_TRIAL_H_
 #define SERVICES_FIELD_TRIALS_INCLUDE_FIELD_TRIAL_H_
 
@@ -34,11 +41,19 @@
 struct Study;
 struct Programme;
 
-
+/**
+ * A datatype that represents a Field Trial that can contain one or more Studies.
+ *
+ * @ingroup field_trials_service
+ */
 typedef struct FieldTrial
 {
 	bson_oid_t *ft_id_p;
 
+
+	/**
+	 * The Programme that this Field Trial is a part of.
+	 */
 	struct Programme *ft_parent_p;
 
 	MEM_FLAG ft_parent_program_mem;
@@ -49,6 +64,9 @@ typedef struct FieldTrial
 	 */
 	char *ft_name_s;
 
+	/**
+	 * The team or organisation running this FieldTrial.
+	 */
 	char *ft_team_s;
 
 	/**
@@ -61,10 +79,21 @@ typedef struct FieldTrial
 } FieldTrial;
 
 
+/**
+ * A datatype for storing a Field Trial on a list.
+ *
+ * @ingroup field_trials_service
+ */
 typedef struct FieldTrialNode
 {
+	/**
+	 * The base node
+	 */
 	ListItem ftn_node;
 
+	/**
+	 * The FieldTrial.
+	 */
 	FieldTrial *ftn_field_trial_p;
 
 } FieldTrialNode;
@@ -109,6 +138,12 @@ extern "C"
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, struct Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p);
 
+/**
+ * Free a given FieldTrial.
+ *
+ * @param trial_p The FieldTrial to free.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrial (FieldTrial *trial_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialNode *AllocateFieldTrialNode (FieldTrial *trial_p);
@@ -151,9 +186,26 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByName (const char * con
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
+/**
+ * Remove a Study from a given FieldTrial.
+ *
+ * @param trial_p The FieldTrial to remove the Study from.
+ * @param study_p The Study to remove.
+ * @return <code>true</code> if the Study was removed from the FieldTrial,
+ * code>false</code> if the Study was not on the list of Studies belonging
+ * to the given FieldTrial.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveFieldTrialStudy (FieldTrial *trial_p, struct Study *study_p);
 
 
+/**
+ * Get the number of Studies in a given FieldTrial.
+ *
+ * @param trial_p The FieldTrial to get the number of Studies for.
+ * @return The number of Studies.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL uint32 GetNumberOfFieldTrialStudies (const FieldTrial *trial_p);
 
 

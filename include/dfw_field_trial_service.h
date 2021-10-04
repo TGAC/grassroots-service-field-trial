@@ -29,7 +29,7 @@ extern "C"
  * @return The ServicesArray containing the DFW Field Trial Service. or
  * <code>NULL</code> upon error.
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_SERVICE_API ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p);
 
@@ -39,7 +39,7 @@ DFW_FIELD_TRIAL_SERVICE_API ServicesArray *GetServices (UserDetails *user_p, Gra
  *
  * @param services_p The ServicesArray to free.
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_SERVICE_API void ReleaseServices (ServicesArray *services_p);
 

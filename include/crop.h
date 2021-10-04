@@ -28,7 +28,9 @@
 
 #include "jansson.h"
 
-
+/**
+ * @ingroup field_trials_service
+ */
 typedef struct Crop
 {
 	bson_oid_t *cr_id_p;

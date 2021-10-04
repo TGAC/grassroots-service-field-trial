@@ -62,6 +62,8 @@ typedef enum
  * know whether we need to e.g. expand fields
  * to full objects from their ids, or omit
  * certain fields entirely
+ *
+ * @ingroup field_trials_service
  */
 typedef enum
 {
@@ -96,6 +98,7 @@ typedef enum
  * The configuration data used by the DFW Field Trial Service.
  *
  * @extends ServiceData
+ * @ingroup field_trials_service
  */
 typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 {
@@ -182,7 +185,7 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 /**
  * The key for specifying the object containing the fields data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PROGRAM_S DFW_FIELD_TRIAL_VAL ("Programs");
 
@@ -190,14 +193,14 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PROGRAM_S DFW_FIELD_TRIAL_VAL ("Programs"
 /**
  * The key for specifying the object containing the fields data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_TRIALS_S DFW_FIELD_TRIAL_VAL ("FieldTrials");
 
 /**
  * The key for specifying the object containing the experimental area data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_STUDIES_S DFW_FIELD_TRIAL_VAL ("Studies");
 
@@ -205,7 +208,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_STUDIES_S DFW_FIELD_TRIAL_VAL ("Studies")
 /**
  * The key for specifying the object containing the location data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("Locations");
 
@@ -213,7 +216,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("Location
 /**
  * The key for specifying the object containing the plot data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("Plots");
 
@@ -221,7 +224,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("Plots");
 /**
  * The key for specifying the object containing the drilling data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("Drillings");
 
@@ -230,7 +233,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("Drilling
 /**
  * The key for specifying the object containing the materials data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_MATERIAL_S DFW_FIELD_TRIAL_VAL ("Materials");
 
@@ -238,7 +241,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_MATERIAL_S DFW_FIELD_TRIAL_VAL ("Material
 /**
  * The key for specifying the object containing the  phenotype data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("Phenotypes");
 
@@ -246,7 +249,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("Phenoty
 /**
  * The key for specifying the object containing the observation data
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("Observations");
 
@@ -254,7 +257,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("Obser
 /**
  * The key for specifying the object containing the instruments
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_S DFW_FIELD_TRIAL_VAL ("Instruments");
 
@@ -262,7 +265,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_S DFW_FIELD_TRIAL_VAL ("Instru
 /**
  * The key for specifying the object containing the Gene Banks
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBanks");
 
@@ -271,7 +274,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBan
 /**
  * The key for specifying the object containing the rows within the plots.
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 //DFW_FIELD_TRIAL_PREFIX const char *DFT_ROW_S DFW_FIELD_TRIAL_VAL ("Rows");
 
@@ -279,7 +282,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBan
 /**
  * The key for specifying the object containing the crops.
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
 
@@ -287,7 +290,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
 /**
  * The key for specifying the object containing the treatments.
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_S DFW_FIELD_TRIAL_VAL ("Treatments");
 
@@ -297,7 +300,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_S DFW_FIELD_TRIAL_VAL ("Treatme
  * The key for specifying whether a particular object in a JSON tree is
  * selected, e.g. matched a search.
  *
- * @ingroup dfw_field_trial_service
+ * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected");
 

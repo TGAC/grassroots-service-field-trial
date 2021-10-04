@@ -70,6 +70,8 @@ TREATMENT_FACTOR_PREFIX const char *TF_VALUES_VALUE_S TREATMENT_FACTOR_VAL ("val
 /**
  * A TreatmentFactor is a set of values for a
  * Treatment applied to plots within a Study.
+ *
+ * @ingroup field_trials_service
  */
 typedef struct TreatmentFactor
 {

@@ -38,27 +38,65 @@ typedef enum ObservationNature
 } ObservationNature;
 
 
+
+/**
+ * A datatype for storing a phneotypic observation within
+ * an experiment.
+ *
+ * @ingroup field_trials_service
+ */
 typedef struct Observation
 {
 	bson_oid_t *ob_id_p;
 
+	/**
+	 * The raw phenotypic value for this Observation.
+	 */
 	char *ob_raw_value_s;
 
+	/**
+	 * The corrected phenotypic value for this Observation.
+	 */
 	char *ob_corrected_value_s;
 
+	/**
+	 * The date and time when the measuring for this Observation was started.
+	 * This can be <code>NULL</code> meaning that a date isn't applicable.
+	 */
 	struct tm *ob_start_date_p;
 
+	/**
+	 * The date and time when the measuring for this Observation was started.
+	 * This can be <code>NULL</code> meaning that a date isn't applicable.
+	 */
 	struct tm *ob_end_date_p;
 
+	/**
+	 * The MeasuredVariable that this Observation is measuring.
+	 */
 	MeasuredVariable *ob_phenotype_p;
 
 	Instrument *ob_instrument_p;
 
+	/**
+	 *
+	 */
 	char *ob_growth_stage_s;
 
 	char *ob_method_s;
 
 	ObservationNature ob_type;
+
+	/**
+	 * For some phenotype data multiple data points are taken from the same plot e.g.
+	 * yield data from two separate strips within a plot. So having the ability to
+	 * store the same phenotypic term but with more than one data point is needed.
+	 *
+	 * By default this value is set to OB_DEFAULT_INDEX which means that this is
+	 * the first, and most often, the only data point for a given non-timed
+	 * phenotypic observation.
+	 */
+	uint32 ob_index;
 
 } Observation;
 
@@ -109,6 +147,10 @@ OBSERVATION_PREFIX const char *OB_METHOD_S OBSERVATION_VAL ("method");
 
 OBSERVATION_PREFIX const char *OB_NATURE_S OBSERVATION_VAL ("nature");
 
+OBSERVATION_PREFIX const char *OB_INDEX_S OBSERVATION_VAL ("index");
+
+
+OBSERVATION_PREFIX const uint32 OB_DEFAULT_INDEX OBSERVATION_VAL (1);
 
 
 #ifdef __cplusplus
@@ -118,13 +160,35 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, const char *value_s, const char *corrected_value_s,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature);
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
 
+/**
+ * Free an Observation
+ *
+ * @param observation_p The Observation to free.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservation (Observation *observation_p);
 
+
+/**
+ * Allocate an ObservationNode for a given Observation.
+ *
+ * @param observation_p The Observation that will be stored upon the newly-allocated ObservationNode.
+ * @return The newly-allocated ObservationNode or <code>NULL</code> upon error.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL ObservationNode *AllocateObservationNode (Observation *observation_p);
 
+
+/**
+ * Free an ObservationNode
+ *
+ * @param node_p The ObservationNode to free. This will also call FreeObservation() on the
+ * ObservationNode's Observation too.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservationNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat format);
@@ -133,18 +197,50 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *GetObservationFromJSON (const json_t 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationValue (Observation *observation_p, const char *value_s);
 
-
+/**
+ * Test whether two Observations are the same in terms of phenotypes, dates and observation indexes
+ *
+ * @param observation_0_p The first Observation.
+ * @param observation_1_p The second Observation.
+ * @return <code>true</code> if the Observations match, <code>false</code> otherwise.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index);
 
 
+/**
+ * Set the raw value for a given Observation.
+ *
+ * The value is deep-copied to the Observation so the value passed in can be freed without causing any
+ * memory corruption.
+ *
+ * @param observation_p The Observation that will have its raw value updated.
+ * @param value_s The new raw value to store, this can be <code>NULL</code> which will clear the
+ * Observation's existing raw value if it has been previously set.
+ * @return <code>true</code> if the Observation's raw value was updated successfully, <code>false</code>
+ * if there errors.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationRawValue (Observation *observation_p, const char *value_s);
 
 
+/**
+ * Set the corrected value for a given Observation.
+ *
+ * The value is deep-copied to the Observation so the value passed in can be freed without causing any
+ * memory corruption.
+ *
+ * @param observation_p The Observation that will have its corrected value updated.
+ * @param value_s The new corrected value to store, this can be <code>NULL</code> which will clear the
+ * Observation's existing corrected value if it has been previously set.
+ * @return <code>true</code> if the Observation's corrected value was updated successfully, <code>false</code>
+ * if there errors.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValue (Observation *observation_p, const char *value_s);
 
 #ifdef __cplusplus
