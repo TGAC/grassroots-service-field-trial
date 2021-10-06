@@ -1047,11 +1047,17 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 																	uint32 har = 0;
 
 																	const char *weather_s = GetJSONString (json_p, ST_WEATHER_S);
-																	const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
 
 																	Person *curator_p = GetPersonFromCompoundJSON (json_p, ST_CURATOR_S, format, data_p);
 																	Person *contact_p = GetPersonFromCompoundJSON (json_p, ST_CONTACT_S, format, data_p);
 
+																	const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
+
+																	/* use NULL rather than json's the_null */
+																	if (shape_p == json_null ())
+																		{
+																			shape_p = NULL;
+																		}
 
 																	if (aspect_s)
 																		{
