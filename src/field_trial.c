@@ -391,6 +391,7 @@ bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, cons
 
 FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
+	FieldTrial *trial_p = NULL;
 	const char *name_s = GetJSONString (json_p, FT_NAME_S);
 
 	if (name_s)
@@ -433,12 +434,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 
 									if (success_flag)
 										{
-											FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, program_p, MF_SHALLOW_COPY, id_p);
-
-											if (trial_p)
-												{
-													return trial_p;
-												}
+											trial_p = AllocateFieldTrial (name_s, team_s, program_p, MF_SHALLOW_COPY, id_p);
 										}
 
 
@@ -447,12 +443,16 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 
 						}
 
-					FreeBSONOid (id_p);
+					if (!trial_p)
+						{
+							FreeBSONOid (id_p);
+						}
+
 				}		/* if (id_p) */
 
 		}
 
-	return NULL;
+	return trial_p;
 }
 
 
@@ -632,6 +632,11 @@ bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p, MEM_FLAG mf)
 
 	if (node_p)
 		{
+			if (study_p -> st_parent_p)
+				{
+
+				}
+
 			study_p -> st_parent_p = trial_p;
 			study_p -> st_parent_field_trial_mem = mf;
 
@@ -677,7 +682,7 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 
 															json_array_foreach (results_p, i, study_json_p)
 																{
-																	Study *study_p = GetStudyFromJSON (study_json_p, format, data_p);
+																	Study *study_p = GetStudyWithParentTrialFromJSON (study_json_p, trial_p, format, data_p);
 
 																	if (study_p)
 																		{

@@ -73,6 +73,8 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 
 static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint32 *year_p, const char *deprecated_key_s);
 
+static void DetachStudyFromParent (Study *study_p);
+
 
 /*
  * API FUNCTIONS
@@ -427,6 +429,11 @@ void FreeStudy (Study *study_p)
 			FreeCopiedString (study_p -> st_name_s);
 		}
 
+	if (study_p -> st_description_s)
+		{
+			FreeCopiedString (study_p -> st_description_s);
+		}
+
 	if (study_p -> st_data_url_s)
 		{
 			FreeCopiedString (study_p -> st_data_url_s);
@@ -509,15 +516,7 @@ void FreeStudy (Study *study_p)
 
 	if (study_p -> st_parent_p)
 		{
-			if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
-				{
-					RemoveFieldTrialStudy (study_p -> st_parent_p, study_p);
-
-					if (GetNumberOfFieldTrialStudies (study_p -> st_parent_p) == 0)
-						{
-							FreeFieldTrial (study_p -> st_parent_p);
-						}
-				}
+			DetachStudyFromParent (study_p);
 		}
 
 	if (study_p -> st_weather_link_s)
@@ -589,6 +588,21 @@ void FreeStudy (Study *study_p)
 
 
 	FreeMemory (study_p);
+}
+
+
+static void DetachStudyFromParent (Study *study_p)
+{
+	if ((study_p -> st_parent_field_trial_mem == MF_DEEP_COPY) || (study_p -> st_parent_field_trial_mem == MF_SHALLOW_COPY))
+		{
+			RemoveFieldTrialStudy (study_p -> st_parent_p, study_p);
+
+			if (GetNumberOfFieldTrialStudies (study_p -> st_parent_p) == 0)
+				{
+					FreeFieldTrial (study_p -> st_parent_p);
+				}
+		}
+
 }
 
 
@@ -951,279 +965,270 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 }
 
 
-Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent_trial_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	const char *name_s = GetJSONString (json_p, ST_NAME_S);
 	Study *study_p = NULL;
 
 	if (name_s)
 		{
-			bson_oid_t *parent_field_trial_id_p = GetNewUnitialisedBSONOid ();
+			bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
 
-			if (parent_field_trial_id_p)
+			if (location_id_p)
 				{
-					if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p))
+					if (GetNamedIdFromJSON (json_p, ST_LOCATION_ID_S, location_id_p))
 						{
-							bson_oid_t *location_id_p = GetNewUnitialisedBSONOid ();
+							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-							if (location_id_p)
+							if (id_p)
 								{
-									if (GetNamedIdFromJSON (json_p, ST_LOCATION_ID_S, location_id_p))
+									if (GetMongoIdFromJSON (json_p, id_p))
 										{
-											bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+											Location *location_p = NULL;
+											bool success_flag = true;
 
-											if (id_p)
+											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 												{
-													if (GetMongoIdFromJSON (json_p, id_p))
+													if (! (location_p = GetLocationById (location_id_p, format, data_p)))
 														{
-															FieldTrial *trial_p = NULL;
-															Location *location_p = NULL;
-															bool success_flag = true;
+															char *id_s = GetBSONOidAsString (location_id_p);
 
-															if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+															if (id_s)
 																{
-																	if (! (location_p = GetLocationById (location_id_p, format, data_p)))
-																		{
-																			char *id_s = GetBSONOidAsString (location_id_p);
-
-																			if (id_s)
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed for %s", id_s);
-																					FreeCopiedString (id_s);
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed");
-																				}
-
-																			success_flag = false;
-																		}
-																	else if (! (trial_p = GetFieldTrialById (parent_field_trial_id_p, format, data_p)))
-																		{
-																			char *id_s = GetBSONOidAsString (parent_field_trial_id_p);
-
-																			if (id_s)
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed for %s", id_s);
-																					FreeCopiedString (id_s);
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed");
-																				}
-
-
-																			success_flag = false;
-																		}
-
-																}		/* if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL)) */
-
-															if (success_flag)
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed for %s", id_s);
+																	FreeCopiedString (id_s);
+																}
+															else
 																{
-																	const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
-																	const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
-																	const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
-																	const char *description_s = GetJSONString (json_p, ST_DESCRIPTION_S);
-																	const char *design_s = GetJSONString (json_p, ST_DESIGN_S);
-																	const char *growing_conditions_s = GetJSONString (json_p, ST_GROWING_CONDITIONS_S);
-																	const char *phenotype_gathering_notes_s = GetJSONString (json_p, ST_PHENOTYPE_GATHERING_NOTES_S);
-																	Crop *current_crop_p = GetStoredCropValue (json_p, ST_CURRENT_CROP_S, data_p);
-																	Crop *previous_crop_p = GetStoredCropValue (json_p, ST_PREVIOUS_CROP_S, data_p);
-																	const KeyValuePair *aspect_p = NULL;
-																	double64 *plot_width_p = NULL;
-																	double64 *plot_length_p = NULL;
-																	uint32 *num_plot_rows_p = NULL;
-																	uint32 *num_plot_columns_p = NULL;
-																	uint32 *num_replicates_p = NULL;
-																	double64 *plot_horizontal_gap_p = NULL;
-																	double64 *plot_vertical_gap_p = NULL;
-																	uint32 *plot_rows_per_block_p = NULL;
-																	uint32 *plots_columns_per_block_p = NULL;
-																	double64 *plot_block_horizontal_gap_p = NULL;
-																	double64 *plot_block_vertical_gap_p = NULL;
-																	uint32 *sowing_year_p = NULL;
-																	uint32 *harvest_year_p = NULL;
-																	uint32 sow = 0;
-																	uint32 har = 0;
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed");
+																}
 
-																	const char *weather_s = GetJSONString (json_p, ST_WEATHER_S);
-
-																	Person *curator_p = GetPersonFromCompoundJSON (json_p, ST_CURATOR_S, format, data_p);
-																	Person *contact_p = GetPersonFromCompoundJSON (json_p, ST_CONTACT_S, format, data_p);
-
-																	const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
-
-																	/* use NULL rather than json's the_null */
-																	if (shape_p == json_null ())
-																		{
-																			shape_p = NULL;
-																		}
-
-																	if (aspect_s)
-																		{
-																			aspect_p = GetAspect (aspect_s);
-
-																			if (aspect_p)
-																				{
-																					aspect_s = aspect_p -> kvp_value_s;
-																				}
-																			else
-																				{
-																					aspect_s = NULL;
-																				}
-																		}
-
-
-																	GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_PLOT_ROWS_S, &num_plot_rows_p);
-																	GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_PLOT_COLUMN_S, &num_plot_columns_p);
-																	GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_REPLICATES_S, &num_replicates_p);
-
-																	GetValidRealFromJSON (json_p, ST_PLOT_WIDTH_S, &plot_width_p);
-																	GetValidRealFromJSON (json_p, ST_PLOT_LENGTH_S, &plot_length_p);
-
-
-																	GetValidRealFromJSON (json_p, ST_PLOT_H_GAP_S, &plot_horizontal_gap_p);
-																	GetValidRealFromJSON (json_p, ST_PLOT_V_GAP_S, &plot_vertical_gap_p);
-
-																	GetValidUnsignedIntFromJSON (json_p, ST_PLOT_ROWS_PER_BLOCK_S, &plot_rows_per_block_p);
-																	GetValidUnsignedIntFromJSON (json_p, ST_PLOT_COLS_PER_BLOCK_S, &plots_columns_per_block_p);
-
-																	GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_H_GAP_S, &plot_block_horizontal_gap_p);
-																	GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_V_GAP_S, &plot_block_vertical_gap_p);
-
-
-																	if (SetDateFromStudyJSON (json_p, ST_SOWING_YEAR_S, &sow, "sowing_date"))
-																		{
-																			sowing_year_p = &sow;
-																		}
-
-																	if (SetDateFromStudyJSON (json_p, ST_HARVEST_YEAR_S, &har, "harvest_date"))
-																		{
-																			harvest_year_p = &har;
-																		}
-
-
-																	study_p = AllocateStudy (id_p, name_s, data_url_s, aspect_s, slope_s, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
-																													 description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s,
-																													 num_plot_rows_p, num_plot_columns_p, num_replicates_p, plot_width_p, plot_length_p,
-																													 weather_s, shape_p, plot_horizontal_gap_p, plot_vertical_gap_p, plot_rows_per_block_p, plots_columns_per_block_p, plot_block_horizontal_gap_p,
-																													 plot_block_vertical_gap_p,
-																													 curator_p, contact_p,
-																													 sowing_year_p, harvest_year_p,
-																													 data_p);
-
-																	if (study_p)
-																		{
-																			if (AddTreatmentsFromJSON (study_p, json_p, data_p))
-																				{
-																					return study_p;
-																				}
-																		}
-
-
-																	if (num_plot_rows_p)
-																		{
-																			FreeMemory (num_plot_rows_p);
-																		}
-
-
-																	if (num_plot_columns_p)
-																		{
-																			FreeMemory (num_plot_columns_p);
-																		}
-
-
-																	if (num_replicates_p)
-																		{
-																			FreeMemory (num_replicates_p);
-																		}
-
-																	if (plot_width_p)
-																		{
-																			FreeMemory (plot_width_p);
-																		}
-
-
-																	if (plot_length_p)
-																		{
-																			FreeMemory (plot_length_p);
-																		}
-
-
-																	/*
-																	 * If the Study wasn't allocated, free any allocated
-																	 * resources.
-																	 */
-																	if (!study_p)
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "AllocateStudy failed");
-
-																			if (current_crop_p)
-																				{
-																					FreeCrop (current_crop_p);
-																				}
-
-																			if (previous_crop_p)
-																				{
-																					FreeCrop (previous_crop_p);
-																				}
-
-																			if (contact_p)
-																				{
-																					FreePerson (contact_p);
-																				}
-
-																			if (curator_p)
-																				{
-																					FreePerson (curator_p);
-																				}
-
-																		}		/* if (!study_p) */
-
-																}		/* if (success_flag) */
-
-														}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetMongoIdFromJSON failed to get %s", ST_LOCATION_S);
+															success_flag = false;
 														}
 
+												}		/* if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL)) */
+
+											if (success_flag)
+												{
+													const char *data_url_s = GetJSONString (json_p, ST_DATA_LINK_S);
+													const char *slope_s = GetJSONString (json_p, ST_SLOPE_S);
+													const char *aspect_s = GetJSONString (json_p, ST_ASPECT_S);
+													const char *description_s = GetJSONString (json_p, ST_DESCRIPTION_S);
+													const char *design_s = GetJSONString (json_p, ST_DESIGN_S);
+													const char *growing_conditions_s = GetJSONString (json_p, ST_GROWING_CONDITIONS_S);
+													const char *phenotype_gathering_notes_s = GetJSONString (json_p, ST_PHENOTYPE_GATHERING_NOTES_S);
+													Crop *current_crop_p = GetStoredCropValue (json_p, ST_CURRENT_CROP_S, data_p);
+													Crop *previous_crop_p = GetStoredCropValue (json_p, ST_PREVIOUS_CROP_S, data_p);
+													const KeyValuePair *aspect_p = NULL;
+													double64 *plot_width_p = NULL;
+													double64 *plot_length_p = NULL;
+													uint32 *num_plot_rows_p = NULL;
+													uint32 *num_plot_columns_p = NULL;
+													uint32 *num_replicates_p = NULL;
+													double64 *plot_horizontal_gap_p = NULL;
+													double64 *plot_vertical_gap_p = NULL;
+													uint32 *plot_rows_per_block_p = NULL;
+													uint32 *plots_columns_per_block_p = NULL;
+													double64 *plot_block_horizontal_gap_p = NULL;
+													double64 *plot_block_vertical_gap_p = NULL;
+													uint32 *sowing_year_p = NULL;
+													uint32 *harvest_year_p = NULL;
+													uint32 sow = 0;
+													uint32 har = 0;
+
+													const char *weather_s = GetJSONString (json_p, ST_WEATHER_S);
+
+													Person *curator_p = GetPersonFromCompoundJSON (json_p, ST_CURATOR_S, format, data_p);
+													Person *contact_p = GetPersonFromCompoundJSON (json_p, ST_CONTACT_S, format, data_p);
+
+													const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
+
+													/* use NULL rather than json's the_null */
+													if (shape_p == json_null ())
+														{
+															shape_p = NULL;
+														}
+
+													if (aspect_s)
+														{
+															aspect_p = GetAspect (aspect_s);
+
+															if (aspect_p)
+																{
+																	aspect_s = aspect_p -> kvp_value_s;
+																}
+															else
+																{
+																	aspect_s = NULL;
+																}
+														}
+
+
+													GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_PLOT_ROWS_S, &num_plot_rows_p);
+													GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_PLOT_COLUMN_S, &num_plot_columns_p);
+													GetValidUnsignedIntFromJSON (json_p, ST_NUMBER_OF_REPLICATES_S, &num_replicates_p);
+
+													GetValidRealFromJSON (json_p, ST_PLOT_WIDTH_S, &plot_width_p);
+													GetValidRealFromJSON (json_p, ST_PLOT_LENGTH_S, &plot_length_p);
+
+													GetValidRealFromJSON (json_p, ST_PLOT_H_GAP_S, &plot_horizontal_gap_p);
+													GetValidRealFromJSON (json_p, ST_PLOT_V_GAP_S, &plot_vertical_gap_p);
+
+													GetValidUnsignedIntFromJSON (json_p, ST_PLOT_ROWS_PER_BLOCK_S, &plot_rows_per_block_p);
+													GetValidUnsignedIntFromJSON (json_p, ST_PLOT_COLS_PER_BLOCK_S, &plots_columns_per_block_p);
+
+													GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_H_GAP_S, &plot_block_horizontal_gap_p);
+													GetValidRealFromJSON (json_p, ST_PLOT_BLOCK_V_GAP_S, &plot_block_vertical_gap_p);
+
+
+													if (SetDateFromStudyJSON (json_p, ST_SOWING_YEAR_S, &sow, "sowing_date"))
+														{
+															sowing_year_p = &sow;
+														}
+
+													if (SetDateFromStudyJSON (json_p, ST_HARVEST_YEAR_S, &har, "harvest_date"))
+														{
+															harvest_year_p = &har;
+														}
+
+
+													study_p = AllocateStudy (id_p, name_s, data_url_s, aspect_s, slope_s, location_p, parent_trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
+																									 description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s,
+																									 num_plot_rows_p, num_plot_columns_p, num_replicates_p, plot_width_p, plot_length_p,
+																									 weather_s, shape_p, plot_horizontal_gap_p, plot_vertical_gap_p, plot_rows_per_block_p, plots_columns_per_block_p, plot_block_horizontal_gap_p,
+																									 plot_block_vertical_gap_p,
+																									 curator_p, contact_p,
+																									 sowing_year_p, harvest_year_p,
+																									 data_p);
+
+													if (study_p)
+														{
+															if (!AddTreatmentsFromJSON (study_p, json_p, data_p))
+																{
+																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddTreatmentsFromJSON failed");
+																}
+														}
+
+
+													if (num_plot_rows_p)
+														{
+															FreeMemory (num_plot_rows_p);
+														}
+
+													if (num_plot_columns_p)
+														{
+															FreeMemory (num_plot_columns_p);
+														}
+
+													if (num_replicates_p)
+														{
+															FreeMemory (num_replicates_p);
+														}
+
+													if (plot_width_p)
+														{
+															FreeMemory (plot_width_p);
+														}
+
+													if (plot_length_p)
+														{
+															FreeMemory (plot_length_p);
+														}
+
+													if (plot_horizontal_gap_p)
+														{
+															FreeMemory (plot_horizontal_gap_p);
+														}
+
+													if (plot_vertical_gap_p)
+														{
+															FreeMemory (plot_vertical_gap_p);
+														}
+
+													if (plot_rows_per_block_p)
+														{
+															FreeMemory (plot_rows_per_block_p);
+														}
+
+													if (plots_columns_per_block_p)
+														{
+															FreeMemory (plots_columns_per_block_p);
+														}
+
+													if (plot_block_horizontal_gap_p)
+														{
+															FreeMemory (plot_block_horizontal_gap_p);
+														}
+
+													if (plot_block_vertical_gap_p)
+														{
+															FreeMemory (plot_block_vertical_gap_p);
+														}
+
+													/*
+													 * If the Study wasn't allocated, free any allocated
+													 * resources.
+													 */
 													if (!study_p)
 														{
-															FreeBSONOid (id_p);
-														}
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "AllocateStudy failed");
 
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for the study id for %s", name_s);
-												}
+															if (current_crop_p)
+																{
+																	FreeCrop (current_crop_p);
+																}
 
-										}		/* if (GetNamedIdFromJSON (json_p, ST_LOCATION_S, address_id_p)) */
+															if (previous_crop_p)
+																{
+																	FreeCrop (previous_crop_p);
+																}
+
+															if (contact_p)
+																{
+																	FreePerson (contact_p);
+																}
+
+															if (curator_p)
+																{
+																	FreePerson (curator_p);
+																}
+
+														}		/* if (!study_p) */
+
+												}		/* if (success_flag) */
+
+										}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed to get %s", ST_LOCATION_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetMongoIdFromJSON failed to get %s", ST_LOCATION_S);
 										}
 
-									FreeBSONOid (location_id_p);
-								}		/* if (location_id_p) */
+									if (!study_p)
+										{
+											FreeBSONOid (id_p);
+										}
+
+								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for location for %s", name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for the study id for %s", name_s);
 								}
 
-						}		/* if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p)) */
+						}		/* if (GetNamedIdFromJSON (json_p, ST_LOCATION_S, address_id_p)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed to get %s", ST_PARENT_FIELD_TRIAL_S);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed to get %s", ST_LOCATION_S);
 						}
 
-					FreeBSONOid (parent_field_trial_id_p);
-				}		/* if (parent_field_trial_id_p) */
+
+					FreeBSONOid (location_id_p);
+
+				}		/* if (location_id_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for parent field trial for %s", name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewUnitialisedBSONOid failed for location for %s", name_s);
 				}
+
 
 		}		/* if (name_s) */
 	else
@@ -1232,6 +1237,62 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 		}
 
 	return study_p;
+
+}
+
+
+Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	bson_oid_t *parent_field_trial_id_p = GetNewUnitialisedBSONOid ();
+
+	if (parent_field_trial_id_p)
+		{
+			if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p))
+				{
+					FieldTrial *trial_p = GetFieldTrialById (parent_field_trial_id_p, format, data_p);
+
+					if (trial_p)
+						{
+							Study *study_p = GetStudyWithParentTrialFromJSON (json_p, trial_p, format, data_p);
+
+							if (study_p)
+								{
+									return study_p;
+								}
+
+
+							FreeFieldTrial (trial_p);
+						}
+					else
+						{
+							char *id_s = GetBSONOidAsString (parent_field_trial_id_p);
+
+							if (id_s)
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed for %s", id_s);
+									FreeCopiedString (id_s);
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed");
+								}
+
+						}
+
+				}		/* if (GetNamedIdFromJSON (json_p, ST_PARENT_FIELD_TRIAL_S, parent_field_trial_id_p)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNamedIdFromJSON failed to get %s", ST_PARENT_FIELD_TRIAL_S);
+				}
+
+			FreeBSONOid (parent_field_trial_id_p);
+		}		/* if (parent_field_trial_id_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNewUnitialisedBSONOid failed for parent field trial");
+		}
+
+	return NULL;
 }
 
 

@@ -275,8 +275,8 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									const char *documentation_url_s = GetJSONString (json_p, PR_DOCUMENTATION_URL_S);
 									const char *abbreviation_s = GetJSONString (json_p, PR_ABBREVIATION_S);
 									const char *logo_s = GetJSONString (json_p, PR_LOGO_S);
-									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
 									Crop *crop_p = NULL;
+									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
 
 									if (crop_id_p)
 										{
@@ -284,6 +284,8 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 												{
 													crop_p = GetCropById (crop_id_p, data_p);
 												}
+
+											FreeBSONOid (crop_id_p);
 										}
 
 									programme_p = AllocateProgramme (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s);
