@@ -454,6 +454,7 @@ Crop *GetCropById (const bson_oid_t *id_p, const FieldTrialServiceData *data_p)
 	if (id_s)
 		{
 			crop_p = GetCropByIdString (id_s, data_p);
+			FreeCopiedString (id_s);
 		}
 	else
 		{

@@ -1243,6 +1243,7 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 
 Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
+	Study *study_p = NULL;
 	bson_oid_t *parent_field_trial_id_p = GetNewUnitialisedBSONOid ();
 
 	if (parent_field_trial_id_p)
@@ -1251,17 +1252,15 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 				{
 					FieldTrial *trial_p = GetFieldTrialById (parent_field_trial_id_p, format, data_p);
 
+
 					if (trial_p)
 						{
 							Study *study_p = GetStudyWithParentTrialFromJSON (json_p, trial_p, format, data_p);
 
-							if (study_p)
+							if (!study_p)
 								{
-									return study_p;
+									FreeFieldTrial (trial_p);
 								}
-
-
-							FreeFieldTrial (trial_p);
 						}
 					else
 						{
@@ -1286,6 +1285,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 				}
 
 			FreeBSONOid (parent_field_trial_id_p);
+
 		}		/* if (parent_field_trial_id_p) */
 	else
 		{
