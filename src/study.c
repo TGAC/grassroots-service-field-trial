@@ -1292,7 +1292,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetNewUnitialisedBSONOid failed for parent field trial");
 		}
 
-	return NULL;
+	return study_p;
 }
 
 

@@ -1825,7 +1825,18 @@ json_t *GetStudyIndexingData (Service *service_p)
 														}		/* if (study_p) */
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get study \"%s\" as json for indexing", study_p -> st_name_s);
+															char *id_s = GetBSONOidAsString (&oid);
+
+															if (id_s)
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyById () failed for %s", id_s);
+																	FreeCopiedString (id_s);
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyById () failed");
+																}
+
 														}
 
 												}		/* if (GetMongoIdFromJSON (id_result_p, &oid)) */
