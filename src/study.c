@@ -54,7 +54,7 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
 static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
+static int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
 static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
 
@@ -920,7 +920,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 										}
 									else if (format == VF_CLIENT_MINIMAL)
 										{
-											int32 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+											json_int_t num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
 
 											if (num_plots >= 0)
 												{
@@ -1255,7 +1255,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 
 					if (trial_p)
 						{
-							Study *study_p = GetStudyWithParentTrialFromJSON (json_p, trial_p, format, data_p);
+							study_p = GetStudyWithParentTrialFromJSON (json_p, trial_p, format, data_p);
 
 							if (!study_p)
 								{
@@ -1487,9 +1487,9 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 
 
 
-static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p)
+static int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p)
 {
-	int32 res = -1;
+	int64 res = -1;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
@@ -1500,17 +1500,18 @@ static int32 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServ
 			 */
 			if (query_p)
 				{
-					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-					if (results_p)
-						{
-							if (json_is_array (results_p))
-								{
-									res = json_array_size (results_p);
-								}		/* if (json_is_array (results_p)) */
-
-							json_decref (results_p);
-						}		/* if (results_p) */
+					res = GetNumberOfMongoResults (data_p -> dftsd_mongo_p, query_p, NULL);
+//					json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+//
+//					if (results_p)
+//						{
+//							if (json_is_array (results_p))
+//								{
+//									res = json_array_size (results_p);
+//								}		/* if (json_is_array (results_p)) */
+//
+//							json_decref (results_p);
+//						}		/* if (results_p) */
 
 					bson_destroy (query_p);
 				}		/* if (query_p) */
