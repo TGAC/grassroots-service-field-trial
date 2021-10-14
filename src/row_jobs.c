@@ -1247,9 +1247,9 @@ static bool GetObservationMetadata (const char *key_s, MeasuredVariable **measur
 								{
 									*corrected_value_flag_p = true;
 								}
-							else if (strncmp (value_s, INDEX_PREFIX_KEY_S, INDEX_PREFIX_KEY_LENGTH) == 0)
+							else if (Strnicmp (value_s, INDEX_PREFIX_KEY_S, INDEX_PREFIX_KEY_LENGTH) == 0)
 								{
-									const char *temp_s = value_s;
+									const char *temp_s = value_s + INDEX_PREFIX_KEY_LENGTH;
 									int32 answer;
 
 									if (GetValidInteger (&temp_s, &answer))
