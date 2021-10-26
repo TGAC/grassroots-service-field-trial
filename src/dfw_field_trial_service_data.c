@@ -77,6 +77,8 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 			data_p -> dftsd_facet_key_s = NULL;
 			data_p -> dftsd_study_cache_path_s = NULL;
 
+			data_p -> dftsd_observations_cache_p = NULL;
+
 			memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
 
 			return data_p;
@@ -86,11 +88,44 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 }
 
 
+bool EnableObservationsCache (FieldTrialServiceData *data_p)
+{
+	bool success_flag = true;
+
+	if (! (data_p -> dftsd_observations_cache_p))
+		{
+			data_p -> dftsd_observations_cache_p = json_object ();
+
+			if (! (data_p -> dftsd_observations_cache_p))
+				{
+					success_flag = false;
+				}
+		}
+
+	return success_flag;
+}
+
+
+void ClearObservationsCache (FieldTrialServiceData *data_p)
+{
+	if (data_p -> dftsd_observations_cache_p)
+		{
+			json_clear (data_p -> dftsd_observations_cache_p);
+		}
+}
+
+
+
 void FreeFieldTrialServiceData (FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_mongo_p)
 		{
 			FreeMongoTool (data_p -> dftsd_mongo_p);
+		}
+
+	if (data_p -> dftsd_observations_cache_p)
+		{
+			json_decref (data_p -> dftsd_observations_cache_p);
 		}
 
 	FreeMemory (data_p);

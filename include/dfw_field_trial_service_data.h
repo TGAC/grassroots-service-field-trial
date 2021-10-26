@@ -147,7 +147,7 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	/**
 	 * @private
 	 *
-	 * The filesyustem path to where to save the Frictionless Data Packages
+	 * The filesystem path to where to save the Frictionless Data Packages
 	 * for the Studies.
 	 */
 	const char *dftsd_fd_path_s;
@@ -162,6 +162,8 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_fd_url_s;
 
+
+	json_t *dftsd_observations_cache_p;
 
 } FieldTrialServiceData;
 
@@ -332,6 +334,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const cha
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char *data_type_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool EnableObservationsCache (FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservationsCache (FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

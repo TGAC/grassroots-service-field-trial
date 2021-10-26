@@ -62,7 +62,7 @@ static bool CompareObservationDates (const struct tm * const time_0_p, const str
  */
 
 
-Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, const char *raw_value_s, const char *corrected_value_s,
+Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char *raw_value_s, const char *corrected_value_s,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
 {
 
@@ -98,6 +98,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 																{
 																	observation_p -> ob_id_p = id_p;
 																	observation_p -> ob_phenotype_p = phenotype_p;
+																	observation_p -> ob_phenotype_mem = phenotype_mem;
 																	observation_p -> ob_raw_value_s = copied_raw_value_s;
 																	observation_p -> ob_start_date_p = copied_start_date_p;
 																	observation_p -> ob_end_date_p = copied_end_date_p;
@@ -193,7 +194,10 @@ void FreeObservation (Observation *observation_p)
 
 	if (observation_p -> ob_phenotype_p)
 		{
-			FreeMeasuredVariable (observation_p -> ob_phenotype_p);
+			if ((observation_p -> ob_phenotype_mem == MF_DEEP_COPY) || (observation_p -> ob_phenotype_mem == MF_SHALLOW_COPY))
+				{
+					FreeMeasuredVariable (observation_p -> ob_phenotype_p);
+				}
 		}
 
 	if (observation_p -> ob_growth_stage_s)
@@ -770,34 +774,58 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 		}
 	else
 		{
-			bson_oid_t *phenotype_id_p = GetNewUnitialisedBSONOid ();
+			const char *oid_s = GetNamedIdAsStringFromJSON (observation_json_p, MONGO_OID_KEY_S);
 
-			if (phenotype_id_p)
+			if (oid_s)
 				{
-					if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p))
+					if (data_p -> dftsd_observations_cache_p)
 						{
-							phenotype_p = GetMeasuredVariableById (phenotype_id_p, data_p);
+							json_t *phenotype_json_p = json_object_get (data_p -> dftsd_observations_cache_p, oid_s);
 
-							if (!phenotype_p)
+							if (phenotype_json_p)
 								{
-									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-									bson_oid_to_string (phenotype_id_p, id_s);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get phenotype from id \"%s\"", id_s);
+									phenotype_p = GetMeasuredVariableFromJSON (phenotype_json_p, data_p);
 								}
-
-						}		/* if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p)) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get id from \"%s\"", OB_PHENOTYPE_ID_S);
 						}
 
-					FreeBSONOid (phenotype_id_p);
-				}		/* if (phenotype_id_p) */
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate MeasuredVariable's BSONOid");
+					if (!phenotype_p)
+						{
+							bson_oid_t *phenotype_id_p = GetNewUnitialisedBSONOid ();
+
+							if (phenotype_id_p)
+								{
+									if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p))
+										{
+											phenotype_p = GetMeasuredVariableById (phenotype_id_p, data_p);
+
+											if (phenotype_p)
+												{
+													if (data_p -> dftsd_observations_cache_p)
+														{
+
+														}
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get phenotype from id \"%s\"", oid_s);
+												}
+
+										}		/* if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get id from \"%s\"", OB_PHENOTYPE_ID_S);
+										}
+
+									FreeBSONOid (phenotype_id_p);
+								}		/* if (phenotype_id_p) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate MeasuredVariable's BSONOid");
+								}
+
+						}
 				}
+
 		}
 
 	return phenotype_p;
