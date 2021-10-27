@@ -485,7 +485,7 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 														{
 															GetObservationNatureFromJSON (&nature, observation_json_p);
 
-															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &index);
+															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, MF_SHALLOW_COPY, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &index);
 
 															if (!observation_p)
 																{

@@ -235,7 +235,7 @@ LinkedList *GetFieldTrialsByName (const char * const trial_s, const FieldTrialSe
 
 
 
-json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = json_object ();
 
@@ -311,7 +311,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, const
 
 
 
-bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 

@@ -2001,7 +2001,7 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 
 
-bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *data_p)
+bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	char *full_study_filename_s = GetFrictionlessDataFilename (study_p -> st_name_s, data_p);

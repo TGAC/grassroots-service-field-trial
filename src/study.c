@@ -641,7 +641,7 @@ bool AddStudyPlotsJSONDirectly (Study *study_p, json_t *study_json_p,  const Fie
 }
 
 
-bool GetStudyPlots (Study *study_p, const FieldTrialServiceData *data_p)
+bool GetStudyPlots (Study *study_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -799,7 +799,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 
 
-json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
+json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *processor_p, FieldTrialServiceData *data_p)
 {
 	json_t *study_json_p = json_object ();
 

@@ -34,7 +34,7 @@
 
 static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
 
-static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p);
+static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, FieldTrialServiceData *data_p);
 
 
 static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const Study *study_p, const FieldTrialServiceData *data_p);
@@ -355,7 +355,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 }
 
 
-Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
 	Material *material_to_use_p = material_p;
@@ -790,7 +790,7 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 
 
 
-static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, const FieldTrialServiceData *data_p)
+static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	const json_t *observations_json_p = json_object_get (row_json_p, RO_OBSERVATIONS_S);

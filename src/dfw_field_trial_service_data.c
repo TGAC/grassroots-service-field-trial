@@ -149,6 +149,8 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 				{
 					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
 						{
+							bool enable_measured_variable_cache_flag = false;
+
 							success_flag = true;
 
 							data_p -> dftsd_study_cache_path_s = GetJSONString (service_config_p, "cache_path");
@@ -175,7 +177,6 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							data_p -> dftsd_fd_url_s = GetJSONString (service_config_p, "fd_url");
 
-
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAM) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;
@@ -190,6 +191,19 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							// * ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
+
+							GetJSONBoolean (service_config_p, "use_mv_cache", &enable_measured_variable_cache_flag);
+
+							if (enable_measured_variable_cache_flag)
+								{
+									data_p -> dftsd_observations_cache_p = json_object ();
+
+									if (! (data_p -> dftsd_observations_cache_p))
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to enable measured variable cache");
+										}
+								}
+
 						}
 					else
 						{
@@ -290,18 +304,26 @@ MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, cons
 bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, MeasuredVariable *mv_p)
 {
 	bool success_flag = false;
-	json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, VF_CLIENT_FULL);
 
-	if (mv_json_p)
+	if (data_p -> dftsd_observations_cache_p)
 		{
-			if (json_object_set_new (data_p -> dftsd_observations_cache_p, id_s, mv_json_p) == 0)
+			json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, VF_CLIENT_FULL);
+
+			if (mv_json_p)
 				{
-					success_flag = true;
+					if (json_object_set_new (data_p -> dftsd_observations_cache_p, id_s, mv_json_p) == 0)
+						{
+							success_flag = true;
+						}
+					else
+						{
+							json_decref (mv_json_p);
+						}
 				}
-			else
-				{
-					json_decref (mv_json_p);
-				}
+		}
+	else
+		{
+			success_flag = true;
 		}
 
 	return success_flag;

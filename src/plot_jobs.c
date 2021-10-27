@@ -141,11 +141,11 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 static json_t *GetTableParameterHints (void);
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const FieldTrialServiceData *data_p);
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p);
 
 static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p);
 
-static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const FieldTrialServiceData *service_data_p);
+static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, FieldTrialServiceData *service_data_p);
 
 static bool AddPlotRowsToTable (const Plot *plot_p, json_t *plots_table_p, const FieldTrialServiceData *service_data_p);
 
@@ -1416,7 +1416,7 @@ static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialService
 }
 
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const FieldTrialServiceData *data_p)
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
@@ -1456,7 +1456,7 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const FieldTrialSer
 }
 
 
-static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, const FieldTrialServiceData *service_data_p)
+static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, FieldTrialServiceData *service_data_p)
 {
 	json_t *plots_table_p = NULL;
 

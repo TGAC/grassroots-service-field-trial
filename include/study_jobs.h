@@ -191,7 +191,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudyIdsAsJSON (const FieldTrialServ
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveStudyAsFrictionlessData (Study *study_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p);
 
 
 

@@ -34,7 +34,7 @@
 
 static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
-static Plot *SearchForPlot (bson_t *query_p, const FieldTrialServiceData *data_p);
+static Plot *SearchForPlot (bson_t *query_p, FieldTrialServiceData *data_p);
 
 static bool SetValidPlotImage (const Plot *plot_p, json_t *plot_json_p);
 
@@ -561,7 +561,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const FieldTrialServiceData *data_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	json_int_t row;
@@ -767,7 +767,7 @@ bool AddRowToPlot (Plot *plot_p, Row *row_p)
 }
 
 
-bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, const FieldTrialServiceData *data_p)
+bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -842,7 +842,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, cons
 //}
 
 
-static Plot *SearchForPlot (bson_t *query_p, const FieldTrialServiceData *data_p)
+static Plot *SearchForPlot (bson_t *query_p, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
