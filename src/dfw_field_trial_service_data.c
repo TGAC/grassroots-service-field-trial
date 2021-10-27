@@ -23,6 +23,10 @@
 #define ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS (1)
 #include "dfw_field_trial_service_data.h"
 
+#include "measured_variable.h"
+
+#include "jansson.h"
+
 #include "streams.h"
 #include "string_utils.h"
 
@@ -110,7 +114,7 @@ void ClearObservationsCache (FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_observations_cache_p)
 		{
-			json_clear (data_p -> dftsd_observations_cache_p);
+			json_object_clear (data_p -> dftsd_observations_cache_p);
 		}
 }
 
@@ -266,4 +270,47 @@ const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char
 
 	return image_s;
 }
+
+
+MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, const char *mv_id_s)
+{
+	MeasuredVariable *mv_p = NULL;
+	const json_t *mv_json_p = json_object_get (data_p -> dftsd_observations_cache_p, mv_id_s);
+
+	if (mv_json_p)
+		{
+			mv_p = GetMeasuredVariableFromJSON (mv_json_p, data_p);
+		}
+
+	return mv_p;
+}
+
+
+
+bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, MeasuredVariable *mv_p)
+{
+	bool success_flag = false;
+	json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, VF_CLIENT_FULL);
+
+	if (mv_json_p)
+		{
+			if (json_object_set_new (data_p -> dftsd_observations_cache_p, id_s, mv_json_p) == 0)
+				{
+					success_flag = true;
+				}
+			else
+				{
+					json_decref (mv_json_p);
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool HasMeasuredVariableCache (FieldTrialServiceData *data_p)
+{
+	return (data_p -> dftsd_observations_cache_p != NULL);
+}
+
 

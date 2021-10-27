@@ -52,7 +52,7 @@ static bool GetObservationNatureFromJSON (ObservationNature *phenotype_nature_p,
 
 static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p);
 
-static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p);
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p,  FieldTrialServiceData *data_p);
 
 static bool CompareObservationDates (const struct tm * const time_0_p, const struct tm * const time_1_p);
 
@@ -444,7 +444,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 }
 
 
-Observation *GetObservationFromJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p)
+Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTrialServiceData *data_p)
 {
 	Observation *observation_p = NULL;
 	struct tm *start_date_p = NULL;
@@ -758,7 +758,7 @@ static bool GetObservationNatureFromJSON (ObservationNature *nature_p, const jso
 
 
 
-static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, const FieldTrialServiceData *data_p)
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
 	const json_t *val_p = json_object_get (observation_json_p, OB_PHENOTYPE_S);
@@ -780,12 +780,7 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 				{
 					if (data_p -> dftsd_observations_cache_p)
 						{
-							json_t *phenotype_json_p = json_object_get (data_p -> dftsd_observations_cache_p, oid_s);
-
-							if (phenotype_json_p)
-								{
-									phenotype_p = GetMeasuredVariableFromJSON (phenotype_json_p, data_p);
-								}
+							phenotype_p = GetCachedMeasuredVariable (data_p, oid_s);
 						}
 
 					if (!phenotype_p)
@@ -802,6 +797,10 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 												{
 													if (data_p -> dftsd_observations_cache_p)
 														{
+															if (!AddMeasuredVariableToCache (data_p, oid_s, phenotype_p))
+																{
+
+																}
 
 														}
 												}

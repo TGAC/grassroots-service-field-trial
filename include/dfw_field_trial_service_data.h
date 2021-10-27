@@ -35,6 +35,7 @@
 #include "mongodb_tool.h"
 #include "sqlite_tool.h"
 
+
 typedef enum
 {
 	DFTD_PROGRAM,
@@ -309,6 +310,11 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected
 /** The prefix to use for Field Trial Service aliases. */
 #define DFT_GROUP_ALIAS_PREFIX_S "field_trial"
 
+/*
+ * forward declaration
+ */
+struct MeasuredVafriable;
+
 
 #ifdef __cplusplus
 extern "C"
@@ -341,6 +347,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool EnableObservationsCache (FieldTrialServiceDat
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservationsCache (FieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, const char *mv_id_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, struct MeasuredVariable *mv_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasMeasuredVariableCache (FieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }
