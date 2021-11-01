@@ -491,21 +491,29 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 																			SetRowGenotypeControl (row_p, true);
 																		}
 
-																	if (!GetObservationsFromJSON (json_p, row_p, data_p))
+																	if (GetObservationsFromJSON (json_p, row_p, data_p))
+																		{
+																			if (!GetTreatmentFactorValuesFromJSON (json_p, row_p, study_p, data_p))
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetTreatmentFactorValuesFromJSON failed");
+																					FreeRow (row_p);
+																					row_p = NULL;
+
+																					/* id_p and material_to_use_p have been freed by FreeRow () */
+																					material_to_use_p = NULL;
+																					id_p = NULL;
+																				}
+																		}
+																	else
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetObservationsFromJSON failed");
 																			FreeRow (row_p);
 																			row_p = NULL;
+
+																			/* id_p has been freed by FreeRow () */
+																			material_to_use_p = NULL;
+																			id_p = NULL;
 																		}
-
-
-																	if (!GetTreatmentFactorValuesFromJSON (json_p, row_p, study_p, data_p))
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetTreatmentFactorValuesFromJSON failed");
-																			FreeRow (row_p);
-																			row_p = NULL;
-																		}
-
 
 																}
 
@@ -795,6 +803,9 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, Field
 	bool success_flag = false;
 	const json_t *observations_json_p = json_object_get (row_json_p, RO_OBSERVATIONS_S);
 
+	/*
+	 * Are there any observations?
+	 */
 	if (observations_json_p)
 		{
 			size_t size = json_array_size (observations_json_p);
@@ -827,8 +838,7 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, Field
 							char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 							bson_oid_to_string (row_p -> ro_id_p, row_id_s);
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetObservationFromJSON failed for row \"%s\"", row_id_s);
-
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "GetObservationFromJSON failed for row \"%s\"", row_id_s);
 
 							success_flag = false;
 							i = size;		/* force exit from loop */
@@ -836,7 +846,7 @@ static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, Field
 
 				}		/* for (i = 0; i < size; ++ i) */
 
-		}		/* if (phenotypes_json_p) */
+		}		/* if (observations_json_p) */
 	else
 		{
 			success_flag = true;
