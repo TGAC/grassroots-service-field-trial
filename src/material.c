@@ -162,13 +162,30 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 	if (material_json_p)
 		{
-			if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p))
+			bool success_flag = true;
+
+			if (format == VF_STORAGE)
+				{
+					if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p))
+						{
+						}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
+					else
+						{
+							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+							bson_oid_to_string (material_p -> ma_id_p, id_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MONGO_ID_S, id_s);
+							success_flag = false;
+						}
+				}
+
+			if (success_flag)
 				{
 					if (SetJSONString (material_json_p, MA_ACCESSION_S, material_p -> ma_accession_s))
 						{
 							if (AddDatatype (material_json_p, DFTD_MATERIAL))
 								{
-									bool success_flag = false;
+									success_flag = false;
 
 									if (material_p -> ma_gene_bank_id_p)
 										{
@@ -178,7 +195,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 													if (gene_bank_p)
 														{
-															json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, material_p -> ma_accession_s);
+															json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, format, material_p -> ma_accession_s);
 
 															if (gene_bank_json_p)
 																{
@@ -236,13 +253,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add \"%s\": \"%s\"", MA_ACCESSION_S, material_p -> ma_accession_s);
 							}
 
-				}		/* if (AddCompoundIdToJSON (material_json_p, material_p -> ma_id_p)) */
-			else
-				{
-					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-					bson_oid_to_string (material_p -> ma_id_p, id_s);
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add compound id for \"%s\": \"%s\"", MONGO_ID_S, id_s);
 				}
 
 			json_decref (material_json_p);

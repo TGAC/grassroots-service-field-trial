@@ -253,7 +253,7 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 									if (gene_bank_p)
 										{
-											json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, material_p -> ma_accession_s);
+											json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, format, material_p -> ma_accession_s);
 
 											if (gene_bank_json_p)
 												{

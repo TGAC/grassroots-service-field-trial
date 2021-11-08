@@ -290,8 +290,6 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 														{
 															if (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))
 																{
-																	if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
-																		{
 																			bool done_objects_flag = false;
 
 																			if (format == VF_CLIENT_FULL)
@@ -339,19 +337,30 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 																				}		/* iif (format == VF_CLIENT_FULL) */
 																			else if (format == VF_STORAGE)
 																				{
-																					if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
+																					if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
 																						{
-																							if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
+																							if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
 																								{
-																									if (AddObservationNatureToJSON (observation_p -> ob_type, observation_json_p))
+																									if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
 																										{
-																											done_objects_flag = true;
-																										}
-																									else
-																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_type);
+																											if (AddObservationNatureToJSON (observation_p -> ob_type, observation_json_p))
+																												{
+																													done_objects_flag = true;
+																												}
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_type);
+																												}
 																										}
 																								}
+
+																						}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
+																					else
+																						{
+																							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																							bson_oid_to_string (observation_p -> ob_id_p, id_s);
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
 																						}
 																				}
 
@@ -364,14 +373,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 																				}
 
-																		}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
-																	else
-																		{
-																			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-																			bson_oid_to_string (observation_p -> ob_id_p, id_s);
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
-																		}
 																}		/* if ((observation_p -> ob_index == 1) || (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))) */
 															else
 																{
@@ -761,6 +763,8 @@ static bool GetObservationNatureFromJSON (ObservationNature *nature_p, const jso
 static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
+
+	/* Try getting the embedded phenotype */
 	const json_t *val_p = json_object_get (observation_json_p, OB_PHENOTYPE_S);
 
 	if (val_p)
@@ -774,23 +778,28 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 		}
 	else
 		{
-			const char *oid_s = GetNamedIdAsStringFromJSON (observation_json_p, MONGO_OID_KEY_S);
+			/* There was not an embedded phenotype, so check for a phenotype id */
+			val_p = json_object_get (observation_json_p, OB_PHENOTYPE_ID_S);
 
-			if (oid_s)
+			if (val_p)
 				{
-					if (data_p -> dftsd_observations_cache_p)
-						{
-							phenotype_p = GetCachedMeasuredVariable (data_p, oid_s);
-						}
+					const char *oid_s = GetJSONString (val_p, MONGO_OID_KEY_S);
 
-					if (!phenotype_p)
+					if (oid_s)
 						{
-							bson_oid_t *phenotype_id_p = GetNewUnitialisedBSONOid ();
-
-							if (phenotype_id_p)
+							if (data_p -> dftsd_observations_cache_p)
 								{
-									if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p))
+									phenotype_p = GetCachedMeasuredVariable (data_p, oid_s);
+								}
+
+							if (!phenotype_p)
+								{
+									bson_oid_t *phenotype_id_p = GetNewUnitialisedBSONOid ();
+
+									if (phenotype_id_p)
 										{
+											bson_oid_init_from_string (phenotype_id_p, oid_s);
+
 											phenotype_p = GetMeasuredVariableById (phenotype_id_p, data_p);
 
 											if (phenotype_p)
@@ -801,7 +810,6 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 																{
 
 																}
-
 														}
 												}
 											else
@@ -809,20 +817,25 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get phenotype from id \"%s\"", oid_s);
 												}
 
-										}		/* if (GetNamedIdFromJSON (observation_json_p, OB_PHENOTYPE_ID_S, phenotype_id_p)) */
+											FreeBSONOid (phenotype_id_p);
+										}		/* if (phenotype_id_p) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get id from \"%s\"", OB_PHENOTYPE_ID_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate MeasuredVariable's BSONOid");
 										}
 
-									FreeBSONOid (phenotype_id_p);
-								}		/* if (phenotype_id_p) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate MeasuredVariable's BSONOid");
-								}
+								}		/* if (!phenotype_p) */
 
+						}		/* if (oid_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, val_p, "GetNamedIdAsStringFromJSON () failed for key \"%s\"", MONGO_OID_KEY_S);
 						}
+
+				}		/* if (val_p) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to find any phenotype data from json");
 				}
 
 		}

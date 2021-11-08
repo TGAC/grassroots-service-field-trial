@@ -93,7 +93,7 @@ bool CacheStudy (const char *id_s, const json_t *study_json_p, const FieldTrialS
 
 			if (filename_s)
 				{
-					int res = json_dump_file (study_json_p, filename_s, 0);
+					int res = json_dump_file (study_json_p, filename_s, JSON_INDENT (2));
 
 					if (res != 0)
 						{

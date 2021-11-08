@@ -3117,13 +3117,14 @@ void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, Ser
 	char *study_name_s = NULL;
 	json_t *study_json_p = GetStudyJSONForId (id_s, format, processor_p, &study_name_s, data_p);
 
+	/*
 	bson_oid_t *study_id_p = GetBSONOidFromString (id_s);
 
 	if (study_id_p)
 		{
 			GetStudyDistinctPhenotypesAsJSON (study_id_p, data_p);
 		}
-
+	 */
 
 	if (study_json_p)
 		{

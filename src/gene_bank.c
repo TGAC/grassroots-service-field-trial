@@ -107,7 +107,7 @@ void FreeGeneBank (GeneBank *germplasm_p)
 }
 
 
-json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p, const char * const api_query_s)
+json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p, const ViewFormat format, const char * const api_query_s)
 {
 	json_t *res_p = json_object ();
 
@@ -141,7 +141,7 @@ json_t *GetGeneBankAsJSON (const GeneBank *gene_bank_p, const char * const api_q
 
 							if (success_flag)
 								{
-									if (AddCompoundIdToJSON (res_p, gene_bank_p -> gb_id_p))
+									if ((format != VF_STORAGE) || (AddCompoundIdToJSON (res_p, gene_bank_p -> gb_id_p)))
 										{
 											if (AddDatatype (res_p, DFTD_GENE_BANK))
 												{
@@ -251,7 +251,7 @@ bool SaveGeneBank (GeneBank *gene_bank_p, FieldTrialServiceData *data_p)
 
 	if (PrepareSaveData (& (gene_bank_p -> gb_id_p), &selector_p))
 		{
-			json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, NULL);
+			json_t *gene_bank_json_p = GetGeneBankAsJSON (gene_bank_p, VF_STORAGE, NULL);
 
 			if (gene_bank_json_p)
 				{

@@ -366,32 +366,32 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 																						{
 																							if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S, false))
 																								{
-																									if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
+																									bool success_flag = false;
+
+																									switch (format)
 																										{
-																											bool success_flag = false;
-
-																											switch (format)
+																											case VF_CLIENT_MINIMAL:
 																												{
-																													case VF_CLIENT_MINIMAL:
-																														{
-																															success_flag = SetValidPlotImage (plot_p, plot_json_p);
-																														}
-																														break;
+																													success_flag = SetValidPlotImage (plot_p, plot_json_p);
+																												}
+																												break;
 
 
-																													case VF_CLIENT_FULL:
+																											case VF_CLIENT_FULL:
+																												{
+																													if (SetValidPlotImage (plot_p, plot_json_p))
 																														{
-																															if (SetValidPlotImage (plot_p, plot_json_p))
+																															if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
 																																{
-																																	if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
-																																		{
-																																			success_flag = true;
-																																		}
+																																	success_flag = true;
 																																}
-																														}		/* case VF_CLIENT_FULL: */
-																														break;
+																														}
+																												}		/* case VF_CLIENT_FULL: */
+																												break;
 
-																													case VF_STORAGE:
+																											case VF_STORAGE:
+																												{
+																													if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
 																														{
 																															if (AddNamedCompoundIdToJSON (plot_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
 																																{
@@ -410,27 +410,31 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 																																{
 																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id for \"%s\"", PL_PARENT_STUDY_S);
 																																}
-																														}		/* case VF_STORAGE */
-																														break;
 
-																													default:
-																														break;
-
-																												}		/* switch (format) */
-
-																											if (success_flag)
-																												{
-																													if (AddDatatype (plot_json_p, DFTD_PLOT))
+																														}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
+																													else
 																														{
-																															return plot_json_p;
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id");
 																														}
-																												}
 
-																										}		/* if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p)) */
-																									else
+
+																												}		/* case VF_STORAGE */
+																												break;
+
+																											default:
+																												break;
+
+																										}		/* switch (format) */
+
+																									if (success_flag)
 																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add id");
+																											if (AddDatatype (plot_json_p, DFTD_PLOT))
+																												{
+																													return plot_json_p;
+																												}
 																										}
+
+
 
 																								}		/* if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, plot_json_p, PL_HARVEST_DATE_S)) */
 																							else
@@ -782,23 +786,23 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 			json_t *row_json_p;
 
 			json_array_foreach (rows_array_p, i, row_json_p)
-				{
-					Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, study_p, true, data_p);
+			{
+				Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, study_p, true, data_p);
 
-					if (row_p)
-						{
-							if (AddRowToPlot (plot_p, row_p))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									FreeRow (row_p);
-								}
+				if (row_p)
+					{
+						if (AddRowToPlot (plot_p, row_p))
+							{
+								success_flag = true;
+							}
+						else
+							{
+								FreeRow (row_p);
+							}
 
-						}		/* if (row_p) */
+					}		/* if (row_p) */
 
-				}		/* json_array_foreach (results_p, i, entry_p) */
+			}		/* json_array_foreach (results_p, i, entry_p) */
 
 		}		/* if (num_results > 0) */
 	else

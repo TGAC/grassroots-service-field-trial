@@ -146,10 +146,15 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 
 													if (format == VF_STORAGE)
 														{
-															if ((IsStringEmpty (treatment_p -> mv_internal_name_s)) || (SetJSONString (phenotype_json_p, MV_INTERNAL_NAME_S, treatment_p -> mv_internal_name_s)))
+															if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> mv_id_p))
 																{
-																	success_flag = true;
-																}		/* if ((IsStringEmpty (treatment_p -> mv_internal_name_s)) || SetJSONString (phenotype_json_p, MV_INTERNAL_NAME_S, treatment_p -> mv_internal_name_s)) */
+
+																	if ((IsStringEmpty (treatment_p -> mv_internal_name_s)) || (SetJSONString (phenotype_json_p, MV_INTERNAL_NAME_S, treatment_p -> mv_internal_name_s)))
+																		{
+																			success_flag = true;
+																		}		/* if ((IsStringEmpty (treatment_p -> mv_internal_name_s)) || SetJSONString (phenotype_json_p, MV_INTERNAL_NAME_S, treatment_p -> mv_internal_name_s)) */
+
+																}		/* if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> mv_id_p)) */
 														}
 													else
 														{
@@ -158,15 +163,13 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 
 													if (success_flag)
 														{
-															if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> mv_id_p))
-																{
-																	if (AddDatatype (phenotype_json_p, DFTD_MEASURED_VARIABLE))
-																		{
-																			return phenotype_json_p;
-																		}
 
+															if (AddDatatype (phenotype_json_p, DFTD_MEASURED_VARIABLE))
+																{
 																	return phenotype_json_p;
-																}		/* if (AddCompoundIdToJSON (phenotype_json_p, treatment_p -> mv_id_p)) */
+																}
+
+															return phenotype_json_p;
 
 														}		/* if (success_flag) */
 
@@ -378,7 +381,6 @@ static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, co
 MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, const char *method_url_s, const char *unit_url_s, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *treatment_p = NULL;
-	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
@@ -434,7 +436,6 @@ MeasuredVariable *GetMeasuredVariableBySchemaURLs (const char *trait_url_s, cons
 MeasuredVariable *GetMeasuredVariableByIdString (const char *id_s, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *treatment_p = NULL;
-	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
 	if (bson_oid_is_valid (id_s, strlen (id_s)))
 		{
