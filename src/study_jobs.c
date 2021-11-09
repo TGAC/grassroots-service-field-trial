@@ -2931,7 +2931,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 }
 
 
-json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, const ViewFormat format)
+json_t *GetAllStudiesAsJSONInViewFormat (FieldTrialServiceData *data_p, const ViewFormat format)
 {
 	json_t *raw_results_p = GetAllStudiesAsJSON (data_p);
 	json_t *formatted_results_p = NULL;

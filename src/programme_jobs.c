@@ -159,12 +159,12 @@ json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opt
 {
 	json_t *results_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAM]))
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME]))
 		{
 			bson_t *query_p = NULL;
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
-		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME])) */
 
 	return results_p;
 }
@@ -353,16 +353,14 @@ json_t *GetProgrammeIndexingData (Service *service_p)
 		{
 			if (json_is_array (src_programs_p))
 				{
-					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 					size_t i;
 					json_t *src_program_p;
-					size_t num_added = 0;
 
 					json_array_foreach (src_programs_p, i, src_program_p)
 						{
 							bson_oid_t id;
 
-							if (AddDatatype (src_program_p, DFTD_PROGRAM))
+							if (AddDatatype (src_program_p, DFTD_PROGRAMME))
 								{
 									if (GetMongoIdFromJSON (src_program_p, &id))
 										{
@@ -772,7 +770,7 @@ static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *progra
 
 	if (dest_record_p)
 		{
-			AddImage (dest_record_p, DFTD_PROGRAM, data_p);
+			AddImage (dest_record_p, DFTD_PROGRAMME, data_p);
 
 			if (AddResultToServiceJob (job_p, dest_record_p))
 				{

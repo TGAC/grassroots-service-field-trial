@@ -985,7 +985,7 @@ static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, con
 								}
 							break;
 
-						case DFTD_PROGRAM:
+						case DFTD_PROGRAMME:
 							{
 								Programme *program_p = GetProgrammeByIdString (id_s, search_data_p -> sd_format, search_data_p -> sd_service_data_p);
 
@@ -997,7 +997,7 @@ static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, con
 											}
 										else
 											{
-												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Program %s to ServiceJob", program_p -> pr_name_s);
+												PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add Programme %s to ServiceJob", program_p -> pr_name_s);
 											}
 
 										FreeProgramme (program_p);

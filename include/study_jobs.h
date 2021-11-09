@@ -152,7 +152,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetStudyAsString (const Study *study_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL const KeyValuePair *GetAspect (const char *aspect_value_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSONInViewFormat (const FieldTrialServiceData *data_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSONInViewFormat (FieldTrialServiceData *data_p, const ViewFormat format);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, FieldTrialServiceData *dfw_data_p);

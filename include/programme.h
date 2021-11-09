@@ -166,7 +166,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeAsJSON (Programme *programme_p
 DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialsToProgrammeJSON (Programme *programme_p, json_t *program_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialsToProgrammeJSON (Programme *programme_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetUniqueProgrammeBySearchString (const char *programme_s, const ViewFormat format, const FieldTrialServiceData *data_p);
