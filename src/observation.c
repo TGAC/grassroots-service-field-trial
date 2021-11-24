@@ -808,7 +808,7 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 														{
 															if (!AddMeasuredVariableToCache (data_p, oid_s, phenotype_p))
 																{
-
+																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddMeasuredVariableToCache () failed to cache MeasuredVariable for \"%s\"", oid_s);
 																}
 														}
 												}

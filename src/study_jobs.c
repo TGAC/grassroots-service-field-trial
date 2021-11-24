@@ -3610,6 +3610,67 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
+OperationStatus DeleteStudyById (const char *id_s, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
+		{
+			bool saved_study_flag = false;
+			Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p)
+
+			if (study_p)
+				{
+					json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_FULL, NULL, data_p);
+
+					if (study_json_p)
+						{
+							/*
+							 * Back up study
+							 */
+
+							if (saved_study_flag)
+								{
+									bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
+									if (id_p)
+										{
+											bson_t *query_p = bson_new ();
+
+											if (query_p)
+												{
+													if (BSON_APPEND_OID (query_p, ST_ID_S, id_p))
+														{
+															if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
+																{
+																	status = RemovePlotsForStudyById (id_s, data_p);
+																}
+														}
+
+													bson_free (query_p);
+												}
+
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
+
+								}
+
+
+							json_decref (study_json_p);
+						}
+
+					FreeStudy (study_p);
+				}
+
+
+		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
+
+	return status;
+
+}
+
+
 TreatmentFactor *GetTreatmentFactorForStudyByUrl (const Study *study_p, const char *treatment_url_s, const FieldTrialServiceData *data_p)
 {
 	TreatmentFactor *treatment_factor_p = NULL;
