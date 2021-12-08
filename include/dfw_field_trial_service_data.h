@@ -148,12 +148,19 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	/**
 	 * @private
 	 *
+	 * The filesystem path to where to save the Studies will be backed up to
+	 * fwhen they are deleted
+	 */
+	const char *dftsd_backup_path_s;
+
+
+	/**
+	 * @private
+	 *
 	 * The filesystem path to where to save the Frictionless Data Packages
 	 * for the Studies.
 	 */
 	const char *dftsd_fd_path_s;
-
-
 
 	/**
 	 * @private

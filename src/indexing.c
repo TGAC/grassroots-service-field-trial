@@ -80,8 +80,6 @@ static NamedParameterType S_REINDEX_LOCATIONS = { "SS Reindex locations", PT_BOO
 static NamedParameterType S_REINDEX_MEASURED_VARIABLES = { "SS Reindex measured variables", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_PROGRAMS = { "SS Reindex programs", PT_BOOLEAN };
 static NamedParameterType S_REINDEX_TREATMENTS = { "SS Reindex treatments", PT_BOOLEAN };
-static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
-static NamedParameterType S_GENERATE_FD_PACAKGES = { "SS Gnerate FD Packages", PT_BOOLEAN };
 
 
 /*
@@ -90,6 +88,13 @@ static NamedParameterType S_GENERATE_FD_PACAKGES = { "SS Gnerate FD Packages", P
 static NamedParameterType S_CACHE_CLEAR = { "SS clear study cache", PT_LARGE_STRING };
 static NamedParameterType S_CACHE_LIST = { "SS list study cache", PT_BOOLEAN };
 
+
+/*
+ * study management parameters
+ */
+static NamedParameterType S_REMOVE_STUDIES = { "SS Delete studies", PT_LARGE_STRING };
+static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
+static NamedParameterType S_GENERATE_FD_PACAKGES = { "SS Gnerate FD Packages", PT_BOOLEAN };
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
@@ -1104,6 +1109,10 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_GENERATE_FD_PACAKGES.npt_type;
 		}
+	else if (strcmp (param_name_s, S_REMOVE_STUDIES.npt_name_s) == 0)
+		{
+			*pt_p = S_REMOVE_STUDIES.npt_type;	
+		}			
 	else
 		{
 			success_flag = false;
@@ -1154,9 +1163,12 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																								{
 																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
 																										{
-
-																											return params_p;
-																										}
+																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+																												{
+	
+																													return params_p;
+																												}
+																										}		
 																								}
 																						}
 																				}
