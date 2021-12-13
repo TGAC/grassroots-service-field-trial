@@ -92,6 +92,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 											const double64 *plot_block_vertical_gap_p,
 											Person *curator_p, Person *contact_p,
 											const uint32 *sowing_year_p, const uint32 *harvest_year_p,
+											const char *plan_changes_s, const char *physical_samples_collected_s, const char *data_not_included_s,
 											const FieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
@@ -134,215 +135,260 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 
 																					if (CloneValidString (weather_s, &copied_weather_s))
 																						{
-																							double64 *copied_plot_width_p = NULL;
+																							char *copied_plan_changes_s = NULL;
 
-																							if (CopyValidReal (plot_width_p, &copied_plot_width_p))
+																							if (CloneValidString (plan_changes_s, &copied_plan_changes_s))
 																								{
-																									double64 *copied_plot_length_p = NULL;
+																									char *copied_physical_samples_collected_s = NULL;
 
-																									if (CopyValidReal (plot_length_p, &copied_plot_length_p))
+																									if (CloneValidString (physical_samples_collected_s, &copied_physical_samples_collected_s))
 																										{
-																											uint32 *copied_num_rows_p = NULL;
+																											char *copied_data_not_included_s = NULL;
 
-																											if (CopyValidUnsignedInteger (num_rows_p, &copied_num_rows_p))
+																											if (CloneValidString (data_not_included_s, &copied_data_not_included_s))
 																												{
-																													uint32 *copied_num_cols_p = NULL;
+																													double64 *copied_plot_width_p = NULL;
 
-																													if (CopyValidUnsignedInteger (num_cols_p, &copied_num_cols_p))
+																													if (CopyValidReal (plot_width_p, &copied_plot_width_p))
 																														{
-																															uint32 *copied_num_replicates_p = NULL;
+																															double64 *copied_plot_length_p = NULL;
 
-																															if (CopyValidUnsignedInteger (num_replicates_p, &copied_num_replicates_p))
+																															if (CopyValidReal (plot_length_p, &copied_plot_length_p))
 																																{
-																																	json_t *copied_shape_p = NULL;
+																																	uint32 *copied_num_rows_p = NULL;
 
-																																	if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p)))
+																																	if (CopyValidUnsignedInteger (num_rows_p, &copied_num_rows_p))
 																																		{
-																																			double64 *copied_plot_hgap_p = NULL;
+																																			uint32 *copied_num_cols_p = NULL;
 
-																																			if (CopyValidReal (plot_horizontal_gap_p, &copied_plot_hgap_p))
+																																			if (CopyValidUnsignedInteger (num_cols_p, &copied_num_cols_p))
 																																				{
-																																					double64 *copied_plot_vgap_p = NULL;
+																																					uint32 *copied_num_replicates_p = NULL;
 
-																																					if (CopyValidReal (plot_vertical_gap_p, &copied_plot_vgap_p))
+																																					if (CopyValidUnsignedInteger (num_replicates_p, &copied_num_replicates_p))
 																																						{
-																																							uint32 *copied_plot_rows_per_block_p = NULL;
+																																							json_t *copied_shape_p = NULL;
 
-																																							if (CopyValidUnsignedInteger (plot_rows_per_block_p, &copied_plot_rows_per_block_p))
+																																							if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p)))
 																																								{
-																																									uint32 *copied_plot_columns_per_block_p = NULL;
+																																									double64 *copied_plot_hgap_p = NULL;
 
-																																									if (CopyValidUnsignedInteger (plot_columns_per_block_p, &copied_plot_columns_per_block_p))
+																																									if (CopyValidReal (plot_horizontal_gap_p, &copied_plot_hgap_p))
 																																										{
-																																											double64 *copied_plot_block_horizontal_gap_p = NULL;
+																																											double64 *copied_plot_vgap_p = NULL;
 
-																																											if (CopyValidReal (plot_block_horizontal_gap_p, &copied_plot_block_horizontal_gap_p))
+																																											if (CopyValidReal (plot_vertical_gap_p, &copied_plot_vgap_p))
 																																												{
-																																													double64 *copied_plot_block_vertical_gap_p = NULL;
+																																													uint32 *copied_plot_rows_per_block_p = NULL;
 
-																																													if (CopyValidReal (plot_block_vertical_gap_p, &copied_plot_block_vertical_gap_p))
+																																													if (CopyValidUnsignedInteger (plot_rows_per_block_p, &copied_plot_rows_per_block_p))
 																																														{
-																																															LinkedList *treatments_p = AllocateLinkedList (FreeTreatmentFactorNode);
+																																															uint32 *copied_plot_columns_per_block_p = NULL;
 
-																																															if (treatments_p)
+																																															if (CopyValidUnsignedInteger (plot_columns_per_block_p, &copied_plot_columns_per_block_p))
 																																																{
-																																																	uint32 *copied_sowing_year_p = NULL;
+																																																	double64 *copied_plot_block_horizontal_gap_p = NULL;
 
-																																																	if (CopyValidUnsignedInteger (sowing_year_p, &copied_sowing_year_p))
+																																																	if (CopyValidReal (plot_block_horizontal_gap_p, &copied_plot_block_horizontal_gap_p))
 																																																		{
-																																																			uint32 *copied_harvest_year_p = NULL;
+																																																			double64 *copied_plot_block_vertical_gap_p = NULL;
 
-																																																			if (CopyValidUnsignedInteger (harvest_year_p, &copied_harvest_year_p))
+																																																			if (CopyValidReal (plot_block_vertical_gap_p, &copied_plot_block_vertical_gap_p))
 																																																				{
-																																																					Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																																																					LinkedList *treatments_p = AllocateLinkedList (FreeTreatmentFactorNode);
 
-																																																					if (study_p)
+																																																					if (treatments_p)
 																																																						{
-																																																							study_p -> st_id_p = id_p;
-																																																							study_p -> st_name_s = copied_name_s;
-																																																							study_p -> st_data_url_s = copied_url_s;
-																																																							study_p -> st_aspect_s = copied_aspect_s;
-																																																							study_p -> st_slope_s = copied_slope_s;
-																																																							study_p -> st_parent_p = parent_field_trial_p;
-																																																							study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
-																																																							study_p -> st_location_p = location_p;
-																																																							study_p -> st_plots_p = plots_p;
-																																																							study_p -> st_current_crop_p = current_crop_p;
-																																																							study_p -> st_previous_crop_p = previous_crop_p;
-																																																							study_p -> st_description_s = copied_description_s;
-																																																							study_p -> st_growing_conditions_s = copied_growing_conditions_s;
-																																																							study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
-																																																							study_p -> st_design_s = copied_design_s;
+																																																							uint32 *copied_sowing_year_p = NULL;
 
-																																																							study_p -> st_default_plot_width_p = copied_plot_width_p;
-																																																							study_p -> st_default_plot_length_p = copied_plot_length_p;
-																																																							study_p -> st_num_rows_p = copied_num_rows_p;
-																																																							study_p -> st_num_columns_p = copied_num_cols_p;
-																																																							study_p -> st_num_replicates_p = copied_num_replicates_p;
+																																																							if (CopyValidUnsignedInteger (sowing_year_p, &copied_sowing_year_p))
+																																																								{
+																																																									uint32 *copied_harvest_year_p = NULL;
 
-																																																							study_p -> st_weather_link_s = copied_weather_s;
-																																																							study_p -> st_shape_p = copied_shape_p;
+																																																									if (CopyValidUnsignedInteger (harvest_year_p, &copied_harvest_year_p))
+																																																										{
+																																																											Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-																																																							study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
-																																																							study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
-																																																							study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
-																																																							study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
-																																																							study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
-																																																							study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
+																																																											if (study_p)
+																																																												{
+																																																													study_p -> st_id_p = id_p;
+																																																													study_p -> st_name_s = copied_name_s;
+																																																													study_p -> st_data_url_s = copied_url_s;
+																																																													study_p -> st_aspect_s = copied_aspect_s;
+																																																													study_p -> st_slope_s = copied_slope_s;
+																																																													study_p -> st_parent_p = parent_field_trial_p;
+																																																													study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
+																																																													study_p -> st_location_p = location_p;
+																																																													study_p -> st_plots_p = plots_p;
+																																																													study_p -> st_current_crop_p = current_crop_p;
+																																																													study_p -> st_previous_crop_p = previous_crop_p;
+																																																													study_p -> st_description_s = copied_description_s;
+																																																													study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																																																													study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																																																													study_p -> st_design_s = copied_design_s;
 
-																																																							study_p -> st_treatments_p = treatments_p;
+																																																													study_p -> st_default_plot_width_p = copied_plot_width_p;
+																																																													study_p -> st_default_plot_length_p = copied_plot_length_p;
+																																																													study_p -> st_num_rows_p = copied_num_rows_p;
+																																																													study_p -> st_num_columns_p = copied_num_cols_p;
+																																																													study_p -> st_num_replicates_p = copied_num_replicates_p;
 
-																																																							study_p -> st_curator_p = curator_p;
-																																																							study_p -> st_contact_p = contact_p;
+																																																													study_p -> st_weather_link_s = copied_weather_s;
+																																																													study_p -> st_shape_p = copied_shape_p;
 
-																																																							study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
-																																																							study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
+																																																													study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
+																																																													study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
+																																																													study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
+																																																													study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
+																																																													study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
+																																																													study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
 
-																																																							return study_p;
+																																																													study_p -> st_treatments_p = treatments_p;
+
+																																																													study_p -> st_curator_p = curator_p;
+																																																													study_p -> st_contact_p = contact_p;
+
+																																																													study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
+																																																													study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
+
+
+																																																													study_p -> st_plan_changes_s = copied_plan_changes_s;
+																																																													study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
+																																																													study_p -> st_data_not_included_s= copied_data_not_included_s;
+
+																																																													return study_p;
+																																																												}
+
+																																																											if (copied_harvest_year_p)
+																																																												{
+																																																													FreeMemory (copied_harvest_year_p);
+																																																												}
+
+																																																										}
+
+																																																									if (copied_sowing_year_p)
+																																																										{
+																																																											FreeMemory (copied_sowing_year_p);
+																																																										}
+
+																																																								}
+
+																																																							FreeLinkedList (treatments_p);
+																																																						}		/* if (treatments_p) */
+
+
+																																																					if (copied_plot_block_vertical_gap_p)
+																																																						{
+																																																							FreeMemory (copied_plot_block_vertical_gap_p);
 																																																						}
 
-																																																					if (copied_harvest_year_p)
-																																																						{
-																																																							FreeMemory (copied_harvest_year_p);
-																																																						}
+																																																				}		/* if (CopyValidReal (plot_block_vertical_gap_p, &copied_plot_block_vertical_gap_p)) */
 
-																																																				}
-
-																																																			if (copied_sowing_year_p)
+																																																			if (copied_plot_block_horizontal_gap_p)
 																																																				{
-																																																					FreeMemory (copied_sowing_year_p);
+																																																					FreeMemory (copied_plot_block_horizontal_gap_p);
 																																																				}
 
+																																																		}		/* if (CopyValidReal (plot_block_horizontal_gap_p, &plot_block_horizontal_gap_p)) */
+
+																																																	if (copied_plot_columns_per_block_p)
+																																																		{
+																																																			FreeMemory (copied_plot_columns_per_block_p);
 																																																		}
 
-																																																	FreeLinkedList (treatments_p);
-																																																}		/* if (treatments_p) */
+																																																}		/* if (CopyValidUnsignedInteger (plots_per_vertical_block_p, &copied_plot_columns_per_block_p)) */
 
-
-																																															if (copied_plot_block_vertical_gap_p)
+																																															if (copied_plot_rows_per_block_p)
 																																																{
-																																																	FreeMemory (copied_plot_block_vertical_gap_p);
+																																																	FreeMemory (copied_plot_rows_per_block_p);
 																																																}
 
-																																														}		/* if (CopyValidReal (plot_block_vertical_gap_p, &copied_plot_block_vertical_gap_p)) */
+																																														}		/* if (CopyValidUnsignedInteger (plots_per_horizontal_block_p, &copied_plot_rows_per_block_p)) */
 
-																																													if (copied_plot_block_horizontal_gap_p)
+
+																																													if (copied_plot_vgap_p)
 																																														{
-																																															FreeMemory (copied_plot_block_horizontal_gap_p);
+																																															FreeMemory (copied_plot_vgap_p);
 																																														}
 
-																																												}		/* if (CopyValidReal (plot_block_horizontal_gap_p, &plot_block_horizontal_gap_p)) */
+																																												}		/* if (CopyValidReal (plot_vertical_gap_p, &copied_plot_vgap_p)) */
 
-																																											if (copied_plot_columns_per_block_p)
+																																											if (copied_plot_hgap_p)
 																																												{
-																																													FreeMemory (copied_plot_columns_per_block_p);
+																																													FreeMemory (copied_plot_hgap_p);
 																																												}
 
-																																										}		/* if (CopyValidUnsignedInteger (plots_per_vertical_block_p, &copied_plot_columns_per_block_p)) */
+																																										}		/* if (CopyValidReal (plot_horizontal_gap_p, &copied_plot_hgap_p)) */
 
-																																									if (copied_plot_rows_per_block_p)
+
+																																									if (copied_shape_p)
 																																										{
-																																											FreeMemory (copied_plot_rows_per_block_p);
+																																											json_decref (copied_shape_p);
 																																										}
+																																								}		/* if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p))) */
 
-																																								}		/* if (CopyValidUnsignedInteger (plots_per_horizontal_block_p, &copied_plot_rows_per_block_p)) */
-
-
-																																							if (copied_plot_vgap_p)
+																																							if (copied_num_replicates_p)
 																																								{
-																																									FreeMemory (copied_plot_vgap_p);
+																																									FreeMemory (copied_num_replicates_p);
 																																								}
 
-																																						}		/* if (CopyValidReal (plot_vertical_gap_p, &copied_plot_vgap_p)) */
+																																						}		/* if (CopyValidUnsignedInteger (num_cols_p, &copied_num_replicates_p)) */
 
-																																					if (copied_plot_hgap_p)
+
+																																					if (copied_num_cols_p)
 																																						{
-																																							FreeMemory (copied_plot_hgap_p);
+																																							FreeMemory (copied_num_cols_p);
 																																						}
-
-																																				}		/* if (CopyValidReal (plot_horizontal_gap_p, &copied_plot_hgap_p)) */
-
-
-																																			if (copied_shape_p)
-																																				{
-																																					json_decref (copied_shape_p);
 																																				}
-																																		}		/* if ((shape_p == NULL) || (copied_shape_p = json_deep_copy (shape_p))) */
 
-																																	if (copied_num_replicates_p)
-																																		{
-																																			FreeMemory (copied_num_replicates_p);
+																																			if (copied_num_rows_p)
+																																				{
+																																					FreeMemory (copied_num_rows_p);
+																																				}
+
 																																		}
 
-																																}		/* if (CopyValidUnsignedInteger (num_cols_p, &copied_num_replicates_p)) */
+																																	if (copied_plot_length_p)
+																																		{
+																																			FreeMemory (copied_plot_length_p);
+																																		}
+
+																																}
 
 
-																															if (copied_num_cols_p)
+																															if (copied_plot_width_p)
 																																{
-																																	FreeMemory (copied_num_cols_p);
+																																	FreeMemory (copied_plot_width_p);
 																																}
 																														}
 
-																													if (copied_num_rows_p)
+
+
+																													if (copied_data_not_included_s)
 																														{
-																															FreeMemory (copied_num_rows_p);
+																															FreeCopiedString (copied_data_not_included_s);
 																														}
 
-																												}
+																												}		/* if (CloneValidString (data_not_included_s, &copied_data_not_included_s)) */
 
-																											if (copied_plot_length_p)
+																											if (copied_physical_samples_collected_s)
 																												{
-																													FreeMemory (copied_plot_length_p);
+																													FreeCopiedString (copied_physical_samples_collected_s);
 																												}
 
-																										}
+																										}		/* if (CloneValidString (physical_samples_collected_s, &copied_physical_samples_collected_s)) */
 
-
-																									if (copied_plot_width_p)
+																									if (copied_plan_changes_s)
 																										{
-																											FreeMemory (copied_plot_width_p);
+																											FreeCopiedString (copied_plan_changes_s);
 																										}
-																								}
+
+																								}		/* if (CloneValidString (plan_changes_s, &copied_plan_changes_s)) */
+
+
+
+
+
 
 																							if (copied_weather_s)
 																								{
@@ -486,6 +532,21 @@ void FreeStudy (Study *study_p)
 			FreeCopiedString (study_p -> st_growing_conditions_s);
 		}
 
+
+	if (study_p -> st_physical_samples_collected_s)
+		{
+			FreeCopiedString (study_p -> st_physical_samples_collected_s);
+		}
+
+	if (study_p -> st_data_not_included_s)
+		{
+			FreeCopiedString (study_p -> st_data_not_included_s);
+		}
+
+	if (study_p -> st_plan_changes_s)
+		{
+			FreeCopiedString (study_p -> st_plan_changes_s);
+		}
 
 	if (study_p -> st_default_plot_width_p)
 		{
@@ -1056,6 +1117,9 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 													const char *design_s = GetJSONString (json_p, ST_DESIGN_S);
 													const char *growing_conditions_s = GetJSONString (json_p, ST_GROWING_CONDITIONS_S);
 													const char *phenotype_gathering_notes_s = GetJSONString (json_p, ST_PHENOTYPE_GATHERING_NOTES_S);
+													const char *plan_changes_s = GetJSONString (json_p, ST_PLAN_CHANGES_S);
+													const char *data_not_included_s = GetJSONString (json_p, ST_DATA_NOT_INCLUDED_S);
+													const char *physical_samples_collected_s = GetJSONString (json_p, ST_PHYSICAL_SAMPLES_COLLECTED_S);
 													Crop *current_crop_p = GetStoredCropValue (json_p, ST_CURRENT_CROP_S, data_p);
 													Crop *previous_crop_p = GetStoredCropValue (json_p, ST_PREVIOUS_CROP_S, data_p);
 													const KeyValuePair *aspect_p = NULL;
@@ -1138,6 +1202,7 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 																									 plot_block_vertical_gap_p,
 																									 curator_p, contact_p,
 																									 sowing_year_p, harvest_year_p,
+																									 plan_changes_s, physical_samples_collected_s, data_not_included_s,
 																									 data_p);
 
 													if (study_p)
@@ -1744,65 +1809,79 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																{
 																	if (SetNonTrivialString (study_json_p, ST_WEATHER_S, study_p -> st_weather_link_s, true))
 																		{
-																			if (AddValidAspectToJSON (study_p, study_json_p))
+																			if (SetNonTrivialString (study_json_p, ST_PLAN_CHANGES_S, study_p -> st_plan_changes_s, true))
 																				{
-																					if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
+																					if (SetNonTrivialString (study_json_p, ST_DATA_NOT_INCLUDED_S, study_p -> st_data_not_included_s, true))
 																						{
-																							if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+																							if (SetNonTrivialString (study_json_p, ST_PHYSICAL_SAMPLES_COLLECTED_S, study_p -> st_physical_samples_collected_s, true))
 																								{
-																									if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+																									if (AddValidAspectToJSON (study_p, study_json_p))
 																										{
-																											if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+																											if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
 																												{
-																													if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+																													if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
 																														{
-																															if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+																															if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
 																																{
-																																	if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+																																	if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
 																																		{
-																																			if (AddTreatmentsToJSON (study_p, study_json_p, format))
+																																			if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
 																																				{
-																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
+																																					if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
 																																						{
-																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
+																																							if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
 																																								{
-																																									if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
+																																									if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																										{
-																																											if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
+																																											if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
 																																												{
-																																													success_flag = true;
+																																													if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
+																																														{
+																																															if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
+																																																{
+																																																	if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
+																																																		{
+																																																			success_flag = true;
+																																																		}
+
+																																																}
+
+																																														}
+
 																																												}
 
-																																										}
+
+																																										}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
 
 																																								}
 
 																																						}
 
 
-																																				}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
+																																				}
 
 																																		}
 
-																																}
 
+																																}
 
 																														}
 
+																												}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
+																											else
+																												{
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
 																												}
 
+																										}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
 
-																										}
 
-																								}
+																								}		/* if (SetNonTrivialString (study_json_p, ST_PHYSICAL_SAMPLES_COLLECTED_S, study_p -> st_physical_samples_collected_s, true)) */
 
-																						}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
-																						}
+																						}		/* if (SetNonTrivialString (study_json_p, ST_DATA_NOT_INCLUDED_S, study_p -> st_data_not_included_s, true)) */
 
-																				}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
+																				}		/* if (SetNonTrivialString (study_json_p, ST_PLAN_CHANGES_S, study_p -> st_plan_changes_s, true)) */
+
 
 																		}		/* if (SetNonTrivialString (study_json_p, ST_WEATHER_S, study_p -> st_weather_link_s)) */
 

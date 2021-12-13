@@ -83,7 +83,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *study_submission_service_p = GetStudySubmissionService (grassroots_p);
 	Service *location_submission_service_p = GetLocationSubmissionService (grassroots_p);
 	Service *gene_bank_submission_service_p = GetGeneBankSubmissionService (grassroots_p);
-	Service *material_submission_service_p = GetMaterialSubmissionService (grassroots_p);
+	Service *material_submission_service_p = NULL; // GetMaterialSubmissionService (grassroots_p);
 	Service *measured_variables_submission_service_p = GetMeasuredVariablesSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);

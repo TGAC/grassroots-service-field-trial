@@ -141,6 +141,13 @@ STUDY_PREFIX const char *ST_HARVEST_YEAR_S STUDY_VAL ("harvest_year");
 STUDY_PREFIX const char *ST_SOWING_YEAR_S STUDY_VAL ("sowing_year");
 
 
+STUDY_PREFIX const char *ST_PLAN_CHANGES_S STUDY_VAL ("plan_changes");
+
+STUDY_PREFIX const char *ST_PHYSICAL_SAMPLES_COLLECTED_S STUDY_VAL ("physical_smaples_collected");
+
+STUDY_PREFIX const char *ST_DATA_NOT_INCLUDED_S STUDY_VAL ("data_not_included");
+
+
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
@@ -185,6 +192,12 @@ typedef struct Study
 	char *st_description_s;
 
 	char *st_design_s;
+
+	char *st_plan_changes_s;
+
+	char *st_physical_samples_collected_s;
+
+	char *st_data_not_included_s;
 
 	char *st_growing_conditions_s;
 
@@ -251,6 +264,8 @@ extern "C"
 #endif
 
 
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
 																										struct Location *location_p, FieldTrial *parent_field_trial_p,
 																										MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const char *description_s,
@@ -261,6 +276,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 																										const double64 *plot_block_vertical_gap_p,
 																										Person *curator_p, Person *contact_p,
 																										const uint32 *sowing_year_p, const uint32 *harvest_year_p,
+																										const char *plan_changes_s, const char *physical_samples_collected_s, const char *data_not_included_s,
 																										const FieldTrialServiceData *data_p);
 
 
