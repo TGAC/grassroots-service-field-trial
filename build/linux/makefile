@@ -23,6 +23,16 @@ export DIR_LIBEXIF_LIB := $(DIR_LIBEXIF)/lib
 # END LIBEXIF CONFIGURATION
 
 
+# BEGIN HARU CONFIGURATION
+ifneq ($(LIBHARU_HOME),)
+DIR_LIBHARU := $(LIBHARU_HOME)
+else
+DIR_LIBHARU := /usr/local
+endif
+export DIR_LIBHARU_INC := $(DIR_LIBHARU)/include
+export DIR_LIBHARU_LIB := $(DIR_LIBHARU)/lib
+# END LIBHARU CONFIGURATION
+
 
 VPATH := $(DIR_SRC)
 
@@ -56,7 +66,8 @@ INCLUDES = \
 	-I$(DIR_BSON_INC) \
 	-I$(DIR_SQLITE_INC) \
 	-I$(DIR_GRASSROOTS_LUCENE_INC) \
-	-I$(DIR_LIBEXIF_INC)
+	-I$(DIR_LIBEXIF_INC) \
+	-I$(DIR_LIBHARU_INC)
 	
 SRCS 	= \
 	crop.c \
@@ -70,6 +81,7 @@ SRCS 	= \
 	field_trial_mongodb.c \
 	gene_bank.c \
 	gene_bank_jobs.c \
+	handbook_generator.c \
 	image_util.c \
 	indexing.c \
 	instrument.c \
@@ -133,6 +145,7 @@ LIB_LDFLAGS = 	\
 	-L$(DIR_MONGODB_LIB) -lmongoc-1.0 \
 	-L$(DIR_BSON_LIB) -lbson-1.0 \
 	-L$(DIR_LIBEXIF_LIB) -lexif \
+	-L$(DIR_LIBHARU_LIB) -lhpdf -lhpdf_table \
 	
 LDFLAGS += $(LIB_LDFLAGS)
 

@@ -862,6 +862,13 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 //}
 
 
+OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+
+	return status;
+}
+
 
 
 OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)

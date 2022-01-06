@@ -93,8 +93,9 @@ static NamedParameterType S_CACHE_LIST = { "SS list study cache", PT_BOOLEAN };
  * study management parameters
  */
 static NamedParameterType S_REMOVE_STUDIES = { "SS Delete studies", PT_LARGE_STRING };
+static NamedParameterType S_GENERATE_FD_PACKAGES = { "SS Generate FD Packages", PT_BOOLEAN};
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
-static NamedParameterType S_GENERATE_FD_PACAKGES = { "SS Gnerate FD Packages", PT_BOOLEAN };
+static NamedParameterType S_GENERATE_HANDBOOK = { "SS Generate Handbook", PT_STRING };
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
@@ -1033,12 +1034,31 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						}
 
 
-					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACAKGES.npt_name_s, &run_fd_packages_flag_p);
+					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &run_fd_packages_flag_p);
 
 					if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
 						{
 							OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
 						}
+
+
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_HANDBOOK.npt_name_s, &id_s))
+						{
+							Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
+
+							if (study_p)
+								{
+									OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
+
+									FreeStudy (study_p);
+								}
+						}
+
+					if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
+						{
+							OperationStatus fd_status = GenerateStudyAsPDF (job_p, data_p);
+						}
+
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &id_s))
 						{
@@ -1105,14 +1125,18 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p,
 		{
 			*pt_p = S_REMOVE_STUDY_PLOTS.npt_type;
 		}
-	else if (strcmp (param_name_s, S_GENERATE_FD_PACAKGES.npt_name_s) == 0)
+	else if (strcmp (param_name_s, S_GENERATE_FD_PACKAGES.npt_name_s) == 0)
 		{
-			*pt_p = S_GENERATE_FD_PACAKGES.npt_type;
+			*pt_p = S_GENERATE_FD_PACKAGES.npt_type;
 		}
 	else if (strcmp (param_name_s, S_REMOVE_STUDIES.npt_name_s) == 0)
 		{
 			*pt_p = S_REMOVE_STUDIES.npt_type;	
 		}			
+	else if (strcmp (param_name_s, S_GENERATE_HANDBOOK.npt_name_s) == 0)
+		{
+			*pt_p = S_GENERATE_HANDBOOK.npt_type;
+		}
 	else
 		{
 			success_flag = false;
@@ -1159,14 +1183,16 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																						{
 																							ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
 
-																							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACAKGES.npt_name_s, "Generate all Frictionless Data Packages", "Generate FD pacakges for all Studies", &b, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACKAGES.npt_name_s, "Generate all Frictionless Data Packages", "Generate FD pacakges for all Studies", &b, PL_ALL)) != NULL)
 																								{
 																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
 																										{
 																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
 																												{
-	
-																													return params_p;
+																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_GENERATE_HANDBOOK.npt_type, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate Handbook", NULL, PL_ALL)) != NULL)
+																														{
+																															return params_p;
+																														}
 																												}
 																										}		
 																								}

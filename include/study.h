@@ -193,10 +193,19 @@ typedef struct Study
 
 	char *st_design_s;
 
+	/**
+	 * Changes to the Study field experiment plan.
+	 */
 	char *st_plan_changes_s;
 
+	/**
+	 * Details about plant, soil or other samples collected.
+	 */
 	char *st_physical_samples_collected_s;
 
+	/**
+	 * Data collected but not currently stored within Grassroots.
+	 */
 	char *st_data_not_included_s;
 
 	char *st_growing_conditions_s;
