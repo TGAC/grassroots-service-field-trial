@@ -23,6 +23,9 @@
 
 #include <stdio.h>
 
+#include "string_utils.h"
+#include "byte_buffer.h"
+
 #include "programme.h"
 #include "handbook_generator.h"
 
@@ -30,6 +33,7 @@ static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const 
 static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
 static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s);
 static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, const uint32 * const value_p);
+static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s);
 
 
 
@@ -57,7 +61,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 									const Programme *programme_p = trial_p ? trial_p -> ft_parent_p : NULL;
 
 									/* start the doc and use a sans serif font */
-									fputs ("\\documentclass[a4paper,12pt]{report}\n", study_tex_f);
+									fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
 
 									fputs ("\\usepackage{tabularx}\n", study_tex_f);
 									fputs ("\\usepackage{hyperref}\n", study_tex_f);
@@ -67,8 +71,12 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 									fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
 
+
+									fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
+
 									fputs ("\\begin{document}\n\\sffamily\n", study_tex_f);
 
+									fputs ("\\maketitle\n", study_tex_f);
 
 									if (programme_p)
 										{
@@ -205,3 +213,33 @@ static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s
   return success_flag;
 }
 
+
+/*
+ *
+
+    & % $ # _ { } ~ ^ \
+
+ */
+
+static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s)
+{
+	const char * const chars_to_escape_p = "&%%$#_{}~^\\";
+	bool loop_flag = (*input_s != '\0');
+	bool success_flag = true;
+
+	while (loop_flag && success_flag)
+		{
+			if (strchr (chars_to_escape_p, *input_s))
+				{
+					if (AppendToByteBuffer (buffer_p, input_s, 1))
+						{
+							++ input_s;
+
+							loop_flag = (*input_s != '\0');
+						}
+				}
+		}
+
+
+	return success_flag;
+}
