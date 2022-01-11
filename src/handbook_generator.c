@@ -30,12 +30,21 @@
 #include "handbook_generator.h"
 #include "treatment_factor.h"
 
-static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p);
+typedef enum
+{
+	CS_NORMAL,
+	CS_FIRST_WORD_ONLY,
+	CS_ALL_WORDS,
+	CS_NUM_MODES
+} CapitalizeState;
+
+
+static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const char * const value_s, const CapitalizeState capitalize, ByteBuffer *buffer_p);
 static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
 static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s);
 static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, const uint32 * const value_p);
 static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p);
-static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s);
+static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, const CapitalizeState capitalize);
 
 static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p);
 
@@ -143,8 +152,8 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-	InsertLatexTabularRow (study_tex_f, "Name", study_p -> st_name_s, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Description", study_p -> st_description_s, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Name", study_p -> st_name_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Description", study_p -> st_description_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 	InsertLatexTabularRowAsUint (study_tex_f, "Sowing Year", study_p -> st_predicted_sowing_year_p);
 	InsertLatexTabularRowAsUint (study_tex_f, "Harvest Year", study_p -> st_predicted_harvest_year_p);
@@ -153,52 +162,82 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 	if (study_p -> st_current_crop_p)
 		{
-			InsertLatexTabularRow (study_tex_f, "Current Crop", study_p -> st_current_crop_p -> cr_name_s, buffer_p);
+			InsertLatexTabularRow (study_tex_f, "Current Crop", study_p -> st_current_crop_p -> cr_name_s, CS_ALL_WORDS, buffer_p);
 		}
 
 	if (study_p -> st_current_crop_p)
 		{
-			InsertLatexTabularRow (study_tex_f, "Previous Crop", study_p -> st_previous_crop_p -> cr_name_s, buffer_p);
+			InsertLatexTabularRow (study_tex_f, "Previous Crop", study_p -> st_previous_crop_p -> cr_name_s, CS_ALL_WORDS, buffer_p);
 		}
 
 
-	InsertLatexTabularRow (study_tex_f, "Design", study_p -> st_design_s, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Growing Conditions", study_p -> st_growing_conditions_s, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Design", study_p -> st_design_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Growing Conditions", study_p -> st_growing_conditions_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 	InsertPersonAsLatexTabularRow (study_tex_f, "Contact", study_p -> st_contact_p);
 	InsertPersonAsLatexTabularRow (study_tex_f, "Curator", study_p -> st_curator_p);
 
-	InsertLatexTabularRow (study_tex_f, "Phenotype Gathering Notes", study_p -> st_phenotype_gathering_notes_s, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Physical Samples Collected", study_p -> st_physical_samples_collected_s, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Phenotype Gathering Notes", study_p -> st_phenotype_gathering_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Physical Samples Collected", study_p -> st_physical_samples_collected_s, CS_FIRST_WORD_ONLY, buffer_p);
 
-	InsertLatexTabularRow (study_tex_f, "Changes to Plan", study_p -> st_plan_changes_s, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Data not stored in Grassroots", study_p -> st_data_not_included_s, buffer_p);
-
-
-	InsertLatexTabularRow (study_tex_f, "Weather", study_p -> st_weather_link_s, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Changes to Plan", study_p -> st_plan_changes_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Data not stored in Grassroots", study_p -> st_data_not_included_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 
-	while (tf_node_p)
-		{
-			TreatmentFactor *tf_p = tf_node_p -> tfn_p;
-
-			InsertLatexTabularRow (study_tex_f, "Name", *GetTreatmentFactorName (tf_p), buffer_p);
-
-			KeyValuePairNode *kvp_node_p = (KeyValuePairNode *) (tf_p -> tf_values_p -> ll_head_p);
-
-			while (kvp_node_p)
-				{
-					KeyValuePair *pair_p = kvp_node_p -> kvpn_pair_p;
-
-					InsertLatexTabularRow (study_tex_f, pair_p -> kvp_key_s, pair_p -> kvp_value_s, buffer_p);
-					kvp_node_p = (KeyValuePairNode *) (kvp_node_p -> kvpn_node.ln_next_p);
-				}
-
-			tf_node_p = (TreatmentFactorNode *) (tf_node_p -> tfn_node.ln_next_p);
-		}		/* while (tf_node_p) */
-
+	InsertLatexTabularRow (study_tex_f, "Weather", study_p -> st_weather_link_s, CS_FIRST_WORD_ONLY, buffer_p);
 
   fputs ("\\end{tabularx}\n", study_tex_f);
+	/*
+	 * Do we have any treatment factors?
+	 */
+	if (study_p -> st_treatments_p -> ll_size > 0)
+		{
+			ByteBuffer *names_buffer_p = AllocateByteBuffer (256);
+
+			if (names_buffer_p)
+				{
+					fputs ("\\subsection* {Treatment Factors}\n", study_tex_f);
+
+					while (tf_node_p)
+						{
+							TreatmentFactor *tf_p = tf_node_p -> tfn_p;
+							const char *tf_name_s = GetTreatmentFactorName (tf_p);
+
+							//InsertLatexTabularRow (study_tex_f, "Name", tf_name_s, buffer_p);
+
+							if (EscapeLatexCharacters (names_buffer_p, tf_name_s, CS_ALL_WORDS))
+								{
+									tf_name_s = GetByteBufferData (names_buffer_p);
+									fprintf (study_tex_f, "\\subsubsection* {%s}\n", tf_name_s);
+
+								  ResetByteBuffer (names_buffer_p);
+
+									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+
+									KeyValuePairNode *kvp_node_p = (KeyValuePairNode *) (tf_p -> tf_values_p -> ll_head_p);
+
+									while (kvp_node_p)
+										{
+											KeyValuePair *pair_p = kvp_node_p -> kvpn_pair_p;
+
+											InsertLatexTabularRow (study_tex_f, pair_p -> kvp_key_s, pair_p -> kvp_value_s, CS_FIRST_WORD_ONLY, buffer_p);
+											kvp_node_p = (KeyValuePairNode *) (kvp_node_p -> kvpn_node.ln_next_p);
+										}
+
+								  fputs ("\\end{tabularx}\n", study_tex_f);
+
+								}
+
+							tf_node_p = (TreatmentFactorNode *) (tf_node_p -> tfn_node.ln_next_p);
+						}		/* while (tf_node_p) */
+
+					FreeByteBuffer (names_buffer_p);
+				}		/* if (names_buffer_p) */
+
+		}
+
+
+
 
   return success_flag;
 }
@@ -212,8 +251,8 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-	InsertLatexTabularRow (study_tex_f, "Name", programme_p -> pr_name_s, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Objective", programme_p -> pr_objective_s, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Name", programme_p -> pr_name_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Objective", programme_p -> pr_objective_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 	InsertPersonAsLatexTabularRow (study_tex_f, "Principal Investigator", programme_p -> pr_pi_p);
 
@@ -221,7 +260,7 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 
 	if (programme_p -> pr_crop_p)
 		{
-			InsertLatexTabularRow (study_tex_f, "Crop", programme_p -> pr_crop_p -> cr_name_s, buffer_p);
+			InsertLatexTabularRow (study_tex_f, "Crop", programme_p -> pr_crop_p -> cr_name_s, CS_ALL_WORDS, buffer_p);
 		}
 
   fputs ("\\end{tabularx}\n", study_tex_f);
@@ -238,8 +277,8 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-  InsertLatexTabularRow (study_tex_f, "Name", trial_p -> ft_name_s, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Team", trial_p -> ft_team_s, buffer_p);
+  InsertLatexTabularRow (study_tex_f, "Name", trial_p -> ft_name_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Team", trial_p -> ft_team_s, CS_FIRST_WORD_ONLY, buffer_p);
 
   fputs ("\\end{tabularx}\n", study_tex_f);
 
@@ -262,7 +301,7 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 			if (address_s)
 				{
-			    InsertLatexTabularRow (study_tex_f, "Address", address_s, buffer_p);
+			    InsertLatexTabularRow (study_tex_f, "Address", address_s, CS_NORMAL, buffer_p);
 
 			    FreeCopiedString (address_s);
 				}
@@ -275,7 +314,7 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 				}
 		}
 
-	InsertLatexTabularRow (study_tex_f, "Soil", location_p -> lo_soil_s, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Soil", location_p -> lo_soil_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 	InsertLatexTabularRowAsDouble (study_tex_f, "Minimum pH", location_p -> lo_min_ph_p);
 	InsertLatexTabularRowAsDouble (study_tex_f, "Maximum pH", location_p -> lo_max_ph_p);
@@ -314,13 +353,13 @@ static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s
 }
 
 
-static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p)
+static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const char * const value_s, const CapitalizeState capitalize, ByteBuffer *buffer_p)
 {
 	bool success_flag = true;
 
   if (value_s)
   	{
-  		if (EscapeLatexCharacters (buffer_p, value_s))
+  		if (EscapeLatexCharacters (buffer_p, value_s, capitalize))
   			{
   				success_flag = (fprintf (out_f, "\\textbf{%s}: & %s \\\\\n", key_s, GetByteBufferData (buffer_p)) > 0);
   			}
@@ -374,11 +413,13 @@ static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s
 
  */
 
-static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s)
+static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, const CapitalizeState capitalize)
 {
 	const char * const chars_to_escape_p = "&%%$#_{}~^\\";
 	bool loop_flag = (*input_s != '\0');
 	bool success_flag = true;
+	bool first_char_flag = true;
+	bool space_flag = false;
 
 	while (loop_flag && success_flag)
 		{
@@ -395,7 +436,45 @@ static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s)
 
 			if (success_flag)
 				{
-					if (AppendToByteBuffer (buffer_p, input_s, 1))
+					char c = *input_s;
+
+					switch (capitalize)
+						{
+							case CS_FIRST_WORD_ONLY:
+								{
+									if (first_char_flag)
+										{
+											c = toupper (c);
+											first_char_flag = false;
+										}
+								}
+								break;
+
+							case CS_ALL_WORDS:
+								{
+									if (isspace (*input_s))
+										{
+											space_flag = true;
+										}
+									else if (first_char_flag)
+										{
+											c = toupper (c);
+											first_char_flag = false;
+										}
+									else if (space_flag)
+										{
+											c = toupper (c);
+											space_flag = false;
+										}
+								}
+								break;
+
+							case CS_NORMAL:
+							default:
+								break;
+						}
+
+					if (AppendToByteBuffer (buffer_p, &c, 1))
 						{
 							++ input_s;
 
