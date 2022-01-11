@@ -196,9 +196,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							if (enable_measured_variable_cache_flag)
 								{
-									data_p -> dftsd_observations_cache_p = json_object ();
-
-									if (! (data_p -> dftsd_observations_cache_p))
+									if (!EnableObservationsCache (data_p))
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to enable measured variable cache");
 										}
