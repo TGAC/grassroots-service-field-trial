@@ -1048,15 +1048,13 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 							if (study_p)
 								{
-									OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
+									if (GetStudyPlots (study_p, data_p))
+										{
+											OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
 
-									FreeStudy (study_p);
+											FreeStudy (study_p);
+										}
 								}
-						}
-
-					if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
-						{
-							OperationStatus fd_status = GenerateStudyAsPDF (job_p, data_p);
 						}
 
 

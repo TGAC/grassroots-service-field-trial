@@ -183,6 +183,8 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							data_p -> dftsd_fd_url_s = GetJSONString (service_config_p, "fd_url");
 
+							data_p -> dftsd_view_study_url_s = GetJSONString (service_config_p, "view_study_url");
+
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;

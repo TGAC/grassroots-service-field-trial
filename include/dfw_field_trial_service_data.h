@@ -165,11 +165,19 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	/**
 	 * @private
 	 *
-	 * The BASE URL to where the Frictionless Data Packages
+	 * The base url to where the Frictionless Data Packages
 	 * for the Studies will be served from.
 	 */
 	const char *dftsd_fd_url_s;
 
+
+	/**
+	 * @private
+	 *
+	 * The base url for where each study can be viewed on the
+	 * front end.
+	 */
+	const char *dftsd_view_study_url_s;
 
 	json_t *dftsd_observations_cache_p;
 

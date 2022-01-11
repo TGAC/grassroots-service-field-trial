@@ -102,6 +102,11 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 											fputs ("\\maketitle\n", study_tex_f);
 
+											if (data_p -> dftsd_view_study_url_s)
+												{
+													fprintf (study_tex_f, "To view this study online, go to \\url{%s%s}\n", data_p -> dftsd_view_study_url_s, id_s);
+												}
+
 											if (programme_p)
 												{
 													PrintProgramme (study_tex_f, programme_p, buffer_p, data_p);
@@ -180,8 +185,11 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRow (study_tex_f, "Phenotype Gathering Notes", study_p -> st_phenotype_gathering_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Physical Samples Collected", study_p -> st_physical_samples_collected_s, CS_FIRST_WORD_ONLY, buffer_p);
 
-	InsertLatexTabularRow (study_tex_f, "Changes to Plan", study_p -> st_plan_changes_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Changes to Plan", study_p -> st_aspect_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Data not stored in Grassroots", study_p -> st_data_not_included_s, CS_FIRST_WORD_ONLY, buffer_p);
+
+	InsertLatexTabularRow (study_tex_f, "Aspect", study_p -> st_design_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Sloper", study_p -> st_slope_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 
 	InsertLatexTabularRow (study_tex_f, "Weather", study_p -> st_weather_link_s, CS_FIRST_WORD_ONLY, buffer_p);
@@ -237,7 +245,32 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 		}
 
 
+	/* Plots */
+	fputs ("\\subsection* {Layout}\n", study_tex_f);
 
+	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Plots", & (study_p -> st_plots_p -> ll_size));
+
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Rows", study_p -> st_num_rows_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Columns", study_p -> st_num_columns_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Replicates", study_p -> st_num_replicates_p);
+
+	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Width", study_p -> st_default_plot_width_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Length", study_p -> st_default_plot_length_p);
+
+	InsertLatexTabularRowAsUint (study_tex_f, "Plot Rows Per Block", study_p -> st_plots_rows_per_block_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Plot Columns Per Block", study_p -> st_plots_columns_per_block_p);
+
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Horizontal Gap", study_p -> st_plot_horizontal_gap_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Vertical Gap", study_p -> st_plot_vertical_gap_p);
+
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Horizontal Gap", study_p -> st_plot_block_horizontal_gap_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Vertical Gap", study_p -> st_plot_block_vertical_gap_p);
+
+
+
+  fputs ("\\end{tabularx}\n", study_tex_f);
 
   return success_flag;
 }
@@ -252,6 +285,7 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
 	InsertLatexTabularRow (study_tex_f, "Name", programme_p -> pr_name_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Abbreviation", programme_p -> pr_abbreviation_s, CS_NORMAL, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Objective", programme_p -> pr_objective_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 	InsertPersonAsLatexTabularRow (study_tex_f, "Principal Investigator", programme_p -> pr_pi_p);
