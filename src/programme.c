@@ -209,7 +209,7 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 																				}
 																			else
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add crop \"%s\"", programme_p -> pr_crop_p -> cr_name_s);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to add crop \"%s\"", programme_p -> pr_crop_p -> cr_name_s);
 																				}
 																		}		/* if (programme_p -> pr_crop_id_p) */
 																	else

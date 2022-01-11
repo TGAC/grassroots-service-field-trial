@@ -99,6 +99,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFrictionlessDataFilename (const char * co
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFrictionlessDataURL (const char *const name_s, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetBackupFilename (const char *id_s, const FieldTrialServiceData *data_p);
+
+
+
+
 #ifdef __cplusplus
 }
 #endif

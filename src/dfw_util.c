@@ -37,6 +37,8 @@
 
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p);
 
+static char *GetIdBasedFilename (const char *id_s, const char *prefix_s);
+
 
 
 bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
@@ -904,21 +906,21 @@ const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *par
 }
 
 
-static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
+static char *GetIdBasedFilename (const char *id_s, const char *prefix_s)
 {
 	char *filename_s = NULL;
 
-	if (data_p -> dftsd_study_cache_path_s)
+	if (prefix_s)
 		{
 			char *local_filename_s = ConcatenateStrings (id_s, ".json");
 
 			if (local_filename_s)
 				{
-					filename_s = MakeFilename (data_p -> dftsd_study_cache_path_s, local_filename_s);
+					filename_s = MakeFilename (prefix_s, local_filename_s);
 
 					if (!filename_s)
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get main cache filename for \"%s\" and \"%s\"", data_p -> dftsd_study_cache_path_s, local_filename_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get main cache filename for \"%s\" and \"%s\"", prefix_s, local_filename_s);
 						}		/* if (filename_s) */
 
 					FreeCopiedString (local_filename_s);
@@ -932,3 +934,16 @@ static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *da
 
 	return filename_s;
 }
+
+
+static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
+{
+	return GetIdBasedFilename (id_s, data_p -> dftsd_study_cache_path_s);
+}
+
+
+char *GetBackupFilename (const char *id_s, const FieldTrialServiceData *data_p)
+{
+	return GetIdBasedFilename (id_s, data_p -> dftsd_backup_path_s);
+}
+

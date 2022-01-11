@@ -61,6 +61,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValuesToRow (Row *ro
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, const FieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, const char *value_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsFrictionlessData (const Row *row_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);

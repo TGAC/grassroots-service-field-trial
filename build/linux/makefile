@@ -24,6 +24,7 @@ export DIR_LIBEXIF_LIB := $(DIR_LIBEXIF)/lib
 
 
 
+
 VPATH := $(DIR_SRC)
 
 BUILD		:= debug
@@ -56,7 +57,7 @@ INCLUDES = \
 	-I$(DIR_BSON_INC) \
 	-I$(DIR_SQLITE_INC) \
 	-I$(DIR_GRASSROOTS_LUCENE_INC) \
-	-I$(DIR_LIBEXIF_INC)
+	-I$(DIR_LIBEXIF_INC) \
 	
 SRCS 	= \
 	crop.c \
@@ -70,6 +71,7 @@ SRCS 	= \
 	field_trial_mongodb.c \
 	gene_bank.c \
 	gene_bank_jobs.c \
+	handbook_generator.c \
 	image_util.c \
 	indexing.c \
 	instrument.c \
