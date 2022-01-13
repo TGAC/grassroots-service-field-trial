@@ -137,6 +137,7 @@ static bool AddAccession (const char *oid_s, json_t *values_p, const FieldTrialS
 
 static bool AddPhenotype (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p);
 
+static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_s, bool (*add_value_fn) (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p), const FieldTrialServiceData *data_p);
 
@@ -1935,7 +1936,7 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 
 	if (key_s)
 		{
-			phenotypes_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddPhenotype, data_p);
+			phenotypes_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddFullPhenotype /*  AddPhenotype */, data_p);
 
 			FreeCopiedString (key_s);
 		}		/* if (key_s) */
@@ -2823,6 +2824,40 @@ static bool AddPhenotype (const char *oid_s, json_t *values_p, const FieldTrialS
 								}
 						}
 
+					FreeMeasuredVariable (variable_p);
+				}		/* if (variable_p) */
+
+			FreeBSONOid (phenotype_id_p);
+		}		/* if (phenotype_id_p) */
+
+	return success_flag;
+}		/* if (oid_s) */
+
+
+static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bson_oid_t *phenotype_id_p = GetBSONOidFromString (oid_s);
+
+	if (phenotype_id_p)
+		{
+			MeasuredVariable *variable_p = GetMeasuredVariableById (phenotype_id_p, data_p);
+
+			if (variable_p)
+				{
+					json_t * mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL);
+
+					if (mv_json_p)
+						{
+							if (json_array_append_new (values_p, mv_json_p) == 0)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									json_decref (mv_json_p);
+								}
+						}
 					FreeMeasuredVariable (variable_p);
 				}		/* if (variable_p) */
 

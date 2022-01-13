@@ -29,6 +29,9 @@
 #include "programme.h"
 #include "handbook_generator.h"
 #include "treatment_factor.h"
+#include "study_jobs.h"
+#include "measured_variable.h"
+
 
 typedef enum
 {
@@ -41,7 +44,7 @@ typedef enum
 
 static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const char * const value_s, const CapitalizeState capitalize, ByteBuffer *buffer_p);
 static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
-static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s);
+static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p);
 static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, const uint32 * const value_p);
 static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p);
 static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, const CapitalizeState capitalize);
@@ -53,6 +56,9 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p);
 
 static bool PrintLocation (FILE *study_tex_f, const Location * const location_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p);
+
+static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, const char *key_s, const char *printed_key_s, CapitalizeState capitalize, ByteBuffer *buffer_p);
+
 
 
 OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData *data_p)
@@ -91,6 +97,8 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 											fputs ("\\usepackage{hyperref}\n", study_tex_f);
 											fputs ("\\usepackage[margin=0.6in]{geometry}\n", study_tex_f);
 
+											fputs ("\\usepackage{sectsty}\n", study_tex_f);
+
 											fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
 
 											fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
@@ -98,7 +106,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 											fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
 
-											fputs ("\\begin{document}\n\\sffamily\n", study_tex_f);
+											fputs ("\\begin{document}\n\\sffamily\n\\allsectionsfont{\\sffamily}\n", study_tex_f);
 
 											fputs ("\\maketitle\n", study_tex_f);
 
@@ -118,12 +126,15 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 													PrintTrial (study_tex_f, trial_p, buffer_p, data_p);
 												}		/* if (trial_p) */
 
-											if (location_p)
-												{
-													PrintLocation (study_tex_f, location_p, buffer_p, data_p);
-												}
 
 											PrintStudy (study_tex_f, study_p, buffer_p, data_p);
+
+
+											if (location_p)
+												{
+													PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p);
+												}
+
 
 											fputs ("\\end{document}\n", study_tex_f);
 
@@ -163,18 +174,17 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRowAsUint (study_tex_f, "Sowing Year", study_p -> st_predicted_sowing_year_p);
 	InsertLatexTabularRowAsUint (study_tex_f, "Harvest Year", study_p -> st_predicted_harvest_year_p);
 
-	InsertLatexTabularRowAsHyperlink (study_tex_f, "Web Address", study_p -> st_data_url_s);
+	InsertLatexTabularRowAsHyperlink (study_tex_f, "Web Address", study_p -> st_data_url_s, buffer_p);
 
 	if (study_p -> st_current_crop_p)
 		{
 			InsertLatexTabularRow (study_tex_f, "Current Crop", study_p -> st_current_crop_p -> cr_name_s, CS_ALL_WORDS, buffer_p);
 		}
 
-	if (study_p -> st_current_crop_p)
+	if (study_p -> st_previous_crop_p)
 		{
 			InsertLatexTabularRow (study_tex_f, "Previous Crop", study_p -> st_previous_crop_p -> cr_name_s, CS_ALL_WORDS, buffer_p);
 		}
-
 
 	InsertLatexTabularRow (study_tex_f, "Design", study_p -> st_design_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Growing Conditions", study_p -> st_growing_conditions_s, CS_FIRST_WORD_ONLY, buffer_p);
@@ -188,13 +198,41 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRow (study_tex_f, "Changes to Plan", study_p -> st_aspect_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Data not stored in Grassroots", study_p -> st_data_not_included_s, CS_FIRST_WORD_ONLY, buffer_p);
 
-	InsertLatexTabularRow (study_tex_f, "Aspect", study_p -> st_design_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Aspect", study_p -> st_aspect_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Sloper", study_p -> st_slope_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 
-	InsertLatexTabularRow (study_tex_f, "Weather", study_p -> st_weather_link_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRowAsHyperlink (study_tex_f, "Weather", study_p -> st_weather_link_s, buffer_p);
 
   fputs ("\\end{tabularx}\n", study_tex_f);
+
+	/* Plots */
+	fputs ("\\subsection* {Layout}\n", study_tex_f);
+
+	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Plots", & (study_p -> st_plots_p -> ll_size));
+
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Rows", study_p -> st_num_rows_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Columns", study_p -> st_num_columns_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Number of Replicates", study_p -> st_num_replicates_p);
+
+	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Width", study_p -> st_default_plot_width_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Length", study_p -> st_default_plot_length_p);
+
+	InsertLatexTabularRowAsUint (study_tex_f, "Plot Rows Per Block", study_p -> st_plots_rows_per_block_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Plot Columns Per Block", study_p -> st_plots_columns_per_block_p);
+
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Horizontal Gap", study_p -> st_plot_horizontal_gap_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Vertical Gap", study_p -> st_plot_vertical_gap_p);
+
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Horizontal Gap", study_p -> st_plot_block_horizontal_gap_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Vertical Gap", study_p -> st_plot_block_vertical_gap_p);
+
+
+  fputs ("\\end{tabularx}\n", study_tex_f);
+
+
 	/*
 	 * Do we have any treatment factors?
 	 */
@@ -245,34 +283,114 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 		}
 
 
-	/* Plots */
-	fputs ("\\subsection* {Layout}\n", study_tex_f);
+	json_t *phenotypes_p = GetStudyDistinctPhenotypesAsJSON (study_p -> st_id_p, data_p);
+	if (phenotypes_p)
+		{
+			ByteBuffer *phenotypes_buffer_p = AllocateByteBuffer (256);
 
-	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+			if (phenotypes_buffer_p)
+				{
+					/*
+					 {
+					    "trait": {
+					      "so:sameAs": "CO_321:0000005",
+					      "so:name": "Aboveground biomass at maturity",
+					      "so:description": "All above-ground biomass at maturity.",
+					      "abbreviation": "BM"
+					    },
+					    "measurement": {
+					      "so:sameAs": "CO_321:0001027",
+					      "so:name": "BM Computation",
+					      "so:description": "Cut all aboveground biomass in a predetermined area (A). Avoid border effects by sampling away from edges of plot. Biomass as other yield components can be calculated or measured individually (Bell and Fischer, 1994; Reynolds et al., 2001; Pask et al., 2012), decide which method suit better for your objectives."
+					    },
+					    "unit": {
+					      "so:sameAs": "CO_321:0000432",
+					      "so:name": "t/ha"
+					    },
+					    "variable": {
+					      "so:sameAs": "CO_321:0001036",
+					      "so:name": "BM_Calc_tha"
+					    },
+					    "@type": "Grassroots:MeasuredVariable",
+					    "type_description": "Measured Variable"
+					  },
+					*/
+					const size_t num_phenotypes = json_array_size (phenotypes_p);
+					size_t i;
 
-	InsertLatexTabularRowAsUint (study_tex_f, "Number of Plots", & (study_p -> st_plots_p -> ll_size));
+					fputs ("\\subsection* {Measured Variables}\n", study_tex_f);
 
-	InsertLatexTabularRowAsUint (study_tex_f, "Number of Rows", study_p -> st_num_rows_p);
-	InsertLatexTabularRowAsUint (study_tex_f, "Number of Columns", study_p -> st_num_columns_p);
-	InsertLatexTabularRowAsUint (study_tex_f, "Number of Replicates", study_p -> st_num_replicates_p);
+					for (i = 0; i < num_phenotypes; ++ i)
+						{
+							json_t *phentotype_p = json_array_get (phenotypes_p, i);
+							json_t *variable_p = json_object_get (phentotype_p, MV_VARIABLE_S);
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Width", study_p -> st_default_plot_width_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Length", study_p -> st_default_plot_length_p);
+							if (variable_p)
+								{
+									const char *name_s = GetJSONString (variable_p, SCHEMA_TERM_NAME_S);
+									json_t *term_p;
 
-	InsertLatexTabularRowAsUint (study_tex_f, "Plot Rows Per Block", study_p -> st_plots_rows_per_block_p);
-	InsertLatexTabularRowAsUint (study_tex_f, "Plot Columns Per Block", study_p -> st_plots_columns_per_block_p);
+									if (EscapeLatexCharacters (phenotypes_buffer_p, name_s, CS_NORMAL))
+										{
+											fprintf (study_tex_f, "\\subsubsection* {%s}\n", GetByteBufferData (phenotypes_buffer_p));
+											ResetByteBuffer(phenotypes_buffer_p);
+										}
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Horizontal Gap", study_p -> st_plot_horizontal_gap_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Vertical Gap", study_p -> st_plot_vertical_gap_p);
+									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Horizontal Gap", study_p -> st_plot_block_horizontal_gap_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Vertical Gap", study_p -> st_plot_block_vertical_gap_p);
+									term_p = json_object_get (phentotype_p, MV_TRAIT_S);
+
+									if (term_p)
+										{
+											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_NAME_S, "Trait Name", CS_NORMAL, buffer_p);
+											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_DESCRIPTION_S, "Trait Description", CS_FIRST_WORD_ONLY, buffer_p);
+											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_ABBREVIATION_S, "Trait Abbreviation", CS_NORMAL, buffer_p);
+										}
+
+									term_p = json_object_get (phentotype_p, MV_MEASUREMENT_S);
+
+									if (term_p)
+										{
+											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_NAME_S, "Measurement Name", CS_NORMAL, buffer_p);
+											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_DESCRIPTION_S, "Measurement Description", CS_FIRST_WORD_ONLY, buffer_p);
+										}
+
+									term_p = json_object_get (phentotype_p, MV_UNIT_S);
+
+									if (term_p)
+										{
+											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_NAME_S, "Unit Name", CS_NORMAL, buffer_p);
+										}
+
+									fputs ("\\end{tabularx}\n", study_tex_f);
+
+								}
+
+						}
 
 
+					FreeByteBuffer (phenotypes_buffer_p);
+				}
 
-  fputs ("\\end{tabularx}\n", study_tex_f);
+			json_decref (phenotypes_p);
+		}
+
 
   return success_flag;
+}
+
+
+static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, const char *key_s, const char *printed_key_s, CapitalizeState capitalize, ByteBuffer *buffer_p)
+{
+	bool success_flag = true;
+	const char *value_s = GetJSONString (parent_p, key_s);
+
+	if (value_s)
+		{
+			InsertLatexTabularRow (study_tex_f, printed_key_s, value_s, capitalize, buffer_p);
+		}
+
+	return success_flag;
 }
 
 
@@ -290,7 +408,7 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 
 	InsertPersonAsLatexTabularRow (study_tex_f, "Principal Investigator", programme_p -> pr_pi_p);
 
-	InsertLatexTabularRowAsHyperlink (study_tex_f, "Web Address", programme_p -> pr_documentation_url_s);
+	InsertLatexTabularRowAsHyperlink (study_tex_f, "Web Address", programme_p -> pr_documentation_url_s, buffer_p);
 
 	if (programme_p -> pr_crop_p)
 		{
@@ -305,20 +423,26 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 
 static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p)
 {
-	bool success_flag = true;
+	if (fputs ("\\section* {Field Trial}\n", study_tex_f) > 0)
+		{
+			if (fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f) > 0)
+				{
+					if (InsertLatexTabularRow (study_tex_f, "Name", trial_p -> ft_name_s, CS_FIRST_WORD_ONLY, buffer_p))
+						{
+							if (InsertLatexTabularRow (study_tex_f, "Team", trial_p -> ft_team_s, CS_FIRST_WORD_ONLY, buffer_p))
+								{
+									if (fputs ("\\end{tabularx}\n", study_tex_f) > 0)
+										{
+											return true;
+										}
+								}
+						}
+				}
+		}
 
-	fputs ("\\section* {Field Trial}\n", study_tex_f);
-
-	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
-
-  InsertLatexTabularRow (study_tex_f, "Name", trial_p -> ft_name_s, CS_FIRST_WORD_ONLY, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Team", trial_p -> ft_team_s, CS_FIRST_WORD_ONLY, buffer_p);
-
-  fputs ("\\end{tabularx}\n", study_tex_f);
-
-
-  return success_flag;
+  return false;
 }
+
 
 static bool PrintLocation (FILE *study_tex_f, const Location * const location_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p)
 {
@@ -409,13 +533,22 @@ static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const 
 }
 
 
-static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s)
+static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p)
 {
 	bool success_flag = true;
 
   if (value_s)
   	{
-			success_flag = (fprintf (out_f, "\\textbf{%s}: & \\url{%s} \\\\\n", key_s, value_s) > 0);
+  		if (EscapeLatexCharacters (buffer_p, value_s, CS_NORMAL))
+  			{
+  				success_flag = (fprintf (out_f, "\\textbf{%s}: & \\url{%s} \\\\\n", key_s, value_s) > 0);
+  			}
+  		else
+  			{
+  				success_flag = false;
+  			}
+
+  		ResetByteBuffer (buffer_p);
   	}
 
   return success_flag;

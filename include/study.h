@@ -143,7 +143,7 @@ STUDY_PREFIX const char *ST_SOWING_YEAR_S STUDY_VAL ("sowing_year");
 
 STUDY_PREFIX const char *ST_PLAN_CHANGES_S STUDY_VAL ("plan_changes");
 
-STUDY_PREFIX const char *ST_PHYSICAL_SAMPLES_COLLECTED_S STUDY_VAL ("physical_smaples_collected");
+STUDY_PREFIX const char *ST_PHYSICAL_SAMPLES_COLLECTED_S STUDY_VAL ("physical_samples_collected");
 
 STUDY_PREFIX const char *ST_DATA_NOT_INCLUDED_S STUDY_VAL ("data_not_included");
 
