@@ -1406,7 +1406,7 @@ static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, Fi
 {
 	OperationStatus status = OS_IDLE;
 
-	if (data_p -> dftsd_fd_path_s)
+	if (data_p -> dftsd_assets_path_s)
 		{
 			json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
 

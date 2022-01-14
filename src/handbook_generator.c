@@ -64,95 +64,140 @@ static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, cons
 OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
-	char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
-	if (id_s)
+	if (data_p -> dftsd_assets_path_s)
 		{
-			char *study_filename_s = ConcatenateStrings (id_s, ".tex");
+			char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
-			if (study_filename_s)
+			if (id_s)
 				{
-					const char *output_dir_s = "/home/billy/Desktop";
-					char *full_filename_s = MakeFilename (output_dir_s, study_filename_s);
+					char *study_filename_s = ConcatenateStrings (id_s, ".tex");
 
-					if (full_filename_s)
+					if (study_filename_s)
 						{
-							FILE *study_tex_f = fopen (full_filename_s, "w");
+							char *full_filename_s = MakeFilename (data_p -> dftsd_assets_path_s, study_filename_s);
 
-							if (study_tex_f)
+							if (full_filename_s)
 								{
-									ByteBuffer *buffer_p = AllocateByteBuffer (4096);
+									FILE *study_tex_f = fopen (full_filename_s, "w");
 
-									if (buffer_p)
+									if (study_tex_f)
 										{
+											ByteBuffer *buffer_p = AllocateByteBuffer (4096);
 
-											const FieldTrial *trial_p = study_p -> st_parent_p;
-											const Programme *programme_p = trial_p ? trial_p -> ft_parent_p : NULL;
-											const Location *location_p = study_p -> st_location_p;
-
-											/* start the doc and use a sans serif font */
-											fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
-
-											fputs ("\\usepackage{tabularx}\n", study_tex_f);
-											fputs ("\\usepackage{hyperref}\n", study_tex_f);
-											fputs ("\\usepackage[margin=0.6in]{geometry}\n", study_tex_f);
-
-											fputs ("\\usepackage{sectsty}\n", study_tex_f);
-
-											fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
-
-											fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
-
-
-											fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
-
-											fputs ("\\begin{document}\n\\sffamily\n\\allsectionsfont{\\sffamily}\n", study_tex_f);
-
-											fputs ("\\maketitle\n", study_tex_f);
-
-											if (data_p -> dftsd_view_study_url_s)
+											if (buffer_p)
 												{
-													fprintf (study_tex_f, "To view this study online, go to \\url{%s%s}\n", data_p -> dftsd_view_study_url_s, id_s);
+													const FieldTrial *trial_p = study_p -> st_parent_p;
+													const Programme *programme_p = trial_p ? trial_p -> ft_parent_p : NULL;
+													const Location *location_p = study_p -> st_location_p;
+
+													/* start the doc and use a sans serif font */
+													fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
+
+													fputs ("\\usepackage{tabularx}\n", study_tex_f);
+													fputs ("\\usepackage{hyperref}\n", study_tex_f);
+													fputs ("\\usepackage[margin=0.6in]{geometry}\n", study_tex_f);
+
+													fputs ("\\usepackage{sectsty}\n", study_tex_f);
+
+													fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
+
+													fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
+
+
+													fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
+
+													fputs ("\\begin{document}\n\\sffamily\n\\allsectionsfont{\\sffamily}\n", study_tex_f);
+
+													fputs ("\\maketitle\n", study_tex_f);
+
+													if (data_p -> dftsd_view_study_url_s)
+														{
+															fprintf (study_tex_f, "To view this study online, go to \\url{%s%s}\n", data_p -> dftsd_view_study_url_s, id_s);
+														}
+
+													if (programme_p)
+														{
+															if (!PrintProgramme (study_tex_f, programme_p, buffer_p, data_p))
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme to \"%s\"", full_filename_s);
+																}
+														}		/* if (programme_p) */
+
+
+													if (trial_p)
+														{
+															if (!PrintTrial (study_tex_f, trial_p, buffer_p, data_p))
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial to \"%s\"", full_filename_s);
+																}
+
+														}		/* if (trial_p) */
+
+
+													if (!PrintStudy (study_tex_f, study_p, buffer_p, data_p))
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study to \"%s\"", full_filename_s);
+														}
+
+
+													if (location_p)
+														{
+															if (!PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p))
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add location to \"%s\"", full_filename_s);
+																}
+														}
+
+													fputs ("\\end{document}\n", study_tex_f);
+
+													FreeByteBuffer (buffer_p);
+												}		/* if (buffer_p); */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate byte buffer \"%s\"", full_filename_s);
 												}
 
-											if (programme_p)
-												{
-													PrintProgramme (study_tex_f, programme_p, buffer_p, data_p);
-												}		/* if (programme_p) */
+											fclose (study_tex_f);
+
+											/* Run pdflatex */
+											/*
+												 pdflatex -interaction=nonstopmode -output-directory=/home/billy/Applications/apache/htdocs/grassroots/frictionless/ ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
+												 latexmk -c -cd ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
+											 */
+
+										}		/* if (study_tex_f) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get open file \"%s\"", full_filename_s);
+										}
+
+								}		/* if (full_filename_s) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get full filename for \"%s\" & \"%s\"", data_p -> dftsd_assets_path_s, study_filename_s);
+								}
 
 
-											if (trial_p)
-												{
-													PrintTrial (study_tex_f, trial_p, buffer_p, data_p);
-												}		/* if (trial_p) */
+							FreeCopiedString (study_filename_s);
+						}		/* if (study_filename_s) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get latex filename for \"%s\"", id_s);
+						}
 
+					FreeCopiedString (id_s);
+				}		/* if (id_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get ID as string for \"%s\"", study_p -> st_name_s);
+				}
 
-											PrintStudy (study_tex_f, study_p, buffer_p, data_p);
-
-
-											if (location_p)
-												{
-													PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p);
-												}
-
-
-											fputs ("\\end{document}\n", study_tex_f);
-
-											FreeByteBuffer (buffer_p);
-										}		/* if (buffer_p); */
-
-
-									fclose (study_tex_f);
-								}		/* if (study_tex_f) */
-
-						}		/* if (full_filename_s) */
-
-
-					FreeCopiedString (study_filename_s);
-				}		/* if (study_filename_s) */
-
-			FreeCopiedString (id_s);
-		}		/* if (id_s) */
+		}		/** if (data_p -> dftsd_assets_path_s) */
+	else
+		{
+			PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No path specified for field trials assets so cannot generate handbook");
+		}
 
 
 	return status;

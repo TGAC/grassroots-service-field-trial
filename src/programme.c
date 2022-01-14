@@ -644,7 +644,7 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 									AddGeneralErrorMessageToServiceJob (job_p, "Programme saved but failed to index for searching");
 								}
 
-							if (data_p -> dftsd_fd_path_s)
+							if (data_p -> dftsd_assets_path_s)
 								{
 									if (!SaveProgrammeAsFrictionlessData (programme_p, data_p))
 										{

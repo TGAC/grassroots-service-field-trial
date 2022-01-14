@@ -223,13 +223,13 @@ char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialSe
 	/*
 	 * Do we have a frictionless data directory configured?
 	 */
-	if (data_p -> dftsd_fd_path_s)
+	if (data_p -> dftsd_assets_path_s)
 		{
 			char *study_filename_s = ConcatenateStrings (name_s, ".json");
 
 			if (study_filename_s)
 				{
-					full_study_filename_s = MakeFilename (data_p -> dftsd_fd_path_s, study_filename_s);
+					full_study_filename_s = MakeFilename (data_p -> dftsd_assets_path_s, study_filename_s);
 
 					if (!full_study_filename_s)
 						{
