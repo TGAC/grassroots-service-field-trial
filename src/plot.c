@@ -379,12 +379,18 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 
 																											case VF_CLIENT_FULL:
 																												{
-																													if (SetValidPlotImage (plot_p, plot_json_p))
+																													/*
+																													 * The django fontend uses the plot id so we need to send it
+																													 */
+																													if (AddCompoundIdToJSON (plot_json_p, plot_p -> pl_id_p))
 																														{
-																															if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
-																																{
-																																	success_flag = true;
-																																}
+																															if (SetValidPlotImage (plot_p, plot_json_p))
+																															{
+																																if (AddRowsToJSON (plot_p, plot_json_p, format, processor_p, data_p))
+																																	{
+																																		success_flag = true;
+																																	}
+																															}
 																														}
 																												}		/* case VF_CLIENT_FULL: */
 																												break;
