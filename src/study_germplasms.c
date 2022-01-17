@@ -516,7 +516,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 
 													GetJSONBoolean (json_p, MA_IN_GRU_S, &in_gru_flag);
 													GetJSONBoolean (json_p, MA_CLEANED_NAME_S, &cleaned_flag);
-													GetJSONInteger (json_p, MA_TGW_S, (int *) &tgw);
+													GetJSONUnsignedInteger (json_p, MA_TGW_S, (int *) &tgw);
 
 													material_p = AllocateMaterial (id_p, accession_s, species_s, type_s, selection_reason_s, generation_s, seed_supplier_s, seed_source_s, germplasm_origin_s, seed_treatment_s, in_gru_flag, cleaned_flag, tgw, study_p, gene_bank_id_p, data_p);
 
@@ -655,7 +655,7 @@ static bool AddMaterialsFromJSON (ServiceJob *job_p, const json_t *materials_jso
 																								{
 																									uint32 tgw;
 
-																									if (GetJSONInteger (table_row_json_p, S_TGW_TITLE_S, (int *) &tgw))
+																									if (GetJSONUnsignedInteger (table_row_json_p, S_TGW_TITLE_S, (int *) &tgw))
 																										{
 																											const char *treatment_s = GetJSONString (table_row_json_p, S_SEED_TREATMENT_TITLE_S);
 

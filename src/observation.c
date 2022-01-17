@@ -478,7 +478,9 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 													const char *corrected_value_s = GetJSONString (observation_json_p, OB_CORRECTED_VALUE_S);
 													uint32 index = OB_DEFAULT_INDEX;
 
-													GetJSONInteger (observation_json_p, OB_INDEX_S, (json_int_t *) &index);
+
+
+													GetJSONUnsignedInteger (observation_json_p, OB_INDEX_S,  &index);
 
 													/*
 													 * do we have a valid measurement?

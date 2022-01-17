@@ -864,7 +864,7 @@ static bool CallFieldTrialWebservice (const json_t *req_p, CurlTool *curl_p, siz
 													}
 												else
 													{
-														int i;
+														json_int_t i;
 														/* Get the job status */
 
 														if (GetJSONInteger (result_p, SERVICE_STATUS_VALUE_S, &i))
