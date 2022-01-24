@@ -90,6 +90,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 													const FieldTrial *trial_p = study_p -> st_parent_p;
 													const Programme *programme_p = trial_p ? trial_p -> ft_parent_p : NULL;
 													const Location *location_p = study_p -> st_location_p;
+													const char *download_path_s = "./";
 
 													/* start the doc and use a sans serif font */
 													fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
@@ -100,9 +101,37 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 													fputs ("\\usepackage{sectsty}\n", study_tex_f);
 
-													fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
 
+													fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
 													fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
+
+													fputs ("\\usepackage{float}\n", study_tex_f);
+													fputs ("\\usepackage{graphicx}\n", study_tex_f);
+													fprintf (study_tex_f, "\\graphicspath{ {%s} }\n", study_tex_f, download_path_s);
+
+
+													if (programme_p)
+														{
+															if (programme_p -> pr_logo_url_s)
+																{
+																	char *image_s = NULL; // DownloadToFile (programme_p -> pr_logo_url_s, download_path_s);
+
+																	if (image_s)
+																		{
+																			fputs ("\\usepackage{titling}\n", study_tex_f);
+
+																			fputs ("\pretitle{%\n\\begin{center}\n\\LARGE\n}\n", study_tex_f);
+
+																			fprintf (study_tex_f, "\posttitle{%\n\\begin{figure}[H]\n\\centering\n\\includegraphics[scale=1.0]{%s}\n\\end{figure}\n\\end{center}\n}\n", image_s);
+																		}
+																}
+
+														}		/* if (programme_p) */
+
+
+
+
+
 
 
 													fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
@@ -446,6 +475,12 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 	fputs ("\\section* {Programme}\n", study_tex_f);
 
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+
+
+	if (programme_p -> pr_logo_url_s)
+		{
+
+		}
 
 	InsertLatexTabularRow (study_tex_f, "Name", programme_p -> pr_name_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Abbreviation", programme_p -> pr_abbreviation_s, CS_NORMAL, buffer_p);
