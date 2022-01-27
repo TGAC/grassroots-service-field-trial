@@ -44,40 +44,52 @@ typedef enum
 /*
 	Crop Ontology Scale Class types
 
-	Code:
-	This scale class is exceptionally used to express complex traits. Code is a nominal
-	scale that combines the expressions of the different traits composing the complex
-	trait. For exemple a severity trait might be expressed by a 2 digit and 2 character
-	code. The first 2 digits are the percentage of the plant covered by a fungus and the 2
-	characters refer to the delay in development, e.g. “75VD” means “75% of the plant is
-	infected and the plant is very delayed”.
+1. Date
+The date class is for events expressed in a time format, e.g. “yyyymmdd hh:mm:ss –
+UTC” or “dd-mm-yy”. A good practice recommended by the Breeding API (BrAPI) is to
+use the Date and timestamp fields coded in the ISO 8601 standard, extended format.
+Check
+https://github.com/plantbreeding/API/blob/master/Specification/GeneralInfo/Date_Time
+_Encoding.md)
 
-	Duration:
-	The date class is for time elapsed between two events expressed in a time format, e.g.
-	“days”, “hours”, “months”
+2. Duration
+The duration class is for time elapsed between two events expressed in a time format,
+e.g. “days”, “hours”, “months”.
 
-	Nominal:
-	Categorical scale that can take one of a limited and fixed number of categories. There
-	is no intrinsic ordering to the categories.
+3. Nominal
+Categorical scale that can take one of a limited number of categories. There is no
+intrinsic ordering to the categories e.g. r=“red”, g=“green”, p=“purple”.
 
-	Numerical:
-	Numerical scales express the trait with real numbers. The numerical scale defines the
-	unit e.g. centimeter, ton per hectar, branches.
+4. Numerical
+Numerical scales express the trait with real numbers. The numerical scale defines the
+unit e.g. centimetre, ton per hectare, number of branches.
 
-	Ordinal:
-	Ordinal scales are scales composed of ordered categories.
-	Text A free text is used to express the trait.
+5. Ordinal
+Ordinal scales are composed of ordered and fixed number of categories e.g. 1=low,
+2=moderate, 3=high
 
-	Date:
-	The date class is for events expressed in a time format, e.g. “yyyymmdd hh:mm:ss –
-	UTC” or “dd/mm/yy”
- */
+6. Text
+A free text is used to express the scale value. Also known as Character variable
+(varchar)
+e.g. “Preferred when slightly undercooked”.
+
+7. Code
+This scale class is exceptionally used to express complex traits. Code is a nominal
+scale that combines the expressions of the different traits composing the complex trait.
+For example, a disease related code might be expressed by a 2-digit code for intensity
+and 2-character code for severity. The first 2 digits are the proportion of plants affected
+by a fungus and the 2 characters refer to the severity, e.g. “75HD” means “75% of the
+plants are infected and plants are highly damaged”. It is recommended to create
+variables for every component of the code.
+*/
 
 typedef struct COScaleClass
 {
 	const char *cosc_name_s;
 	ParameterType cosc_type;
 } COScaleClass;
+
+
 
 
 

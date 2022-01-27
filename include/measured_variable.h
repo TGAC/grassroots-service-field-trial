@@ -32,7 +32,7 @@
 #include "jansson.h"
 #include "schema_term.h"
 #include "schema_keys.h"
-
+#include "crop_ontology_tool.h"
 
 
 typedef struct MeasuredVariable
@@ -50,6 +50,8 @@ typedef struct MeasuredVariable
 	SchemaTerm *mv_form_term_p;
 
 	char *mv_internal_name_s;
+
+	COScaleClass *mv_scale_class_p;
 
 } MeasuredVariable;
 

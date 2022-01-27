@@ -185,6 +185,12 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							data_p -> dftsd_view_study_url_s = GetJSONString (service_config_p, "view_study_url");
 
+							data_p -> dftsd_latex_commmand_s = GetJSONString (service_config_p, "pdflatex_path");
+							if (! (data_p -> dftsd_latex_commmand_s))
+								{
+									data_p -> dftsd_latex_commmand_s = "pdflatex";
+								}
+
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_STUDY) = DFT_STUDIES_S;

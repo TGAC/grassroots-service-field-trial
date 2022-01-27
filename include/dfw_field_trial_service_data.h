@@ -179,6 +179,14 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_view_study_url_s;
 
+
+	/**
+	 * @private
+	 *
+	 * The command for running pdflatex.
+	 */
+	const char *dftsd_latex_commmand_s;
+
 	json_t *dftsd_observations_cache_p;
 
 } FieldTrialServiceData;

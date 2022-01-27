@@ -93,7 +93,7 @@ static NamedParameterType S_CACHE_LIST = { "SS list study cache", PT_BOOLEAN };
  * study management parameters
  */
 static NamedParameterType S_REMOVE_STUDIES = { "SS Delete studies", PT_LARGE_STRING };
-static NamedParameterType S_GENERATE_FD_PACKAGES = { "SS Generate FD Packages", PT_BOOLEAN};
+static NamedParameterType S_GENERATE_FD_PACKAGES = { "SS Generate FD Packages", PT_LARGE_STRING};
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
 static NamedParameterType S_GENERATE_HANDBOOK = { "SS Generate Handbook", PT_STRING };
 
@@ -131,7 +131,7 @@ static bool CloseFieldTrialIndexingService (Service *service_p);
 
 static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p);
 
-static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_path_flag);
+static LinkedList *GetFieldTrialFiles (const char * const path_s, const char * const local_pattern_s, const bool full_path_flag);
 
 static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length);
 
@@ -396,7 +396,6 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 
 	if (data_p -> dftsd_study_cache_path_s)
 		{
-
 			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CACHE_LIST.npt_name_s, &index_flag_p))
 				{
 					if ((index_flag_p != NULL) && (*index_flag_p == true))
@@ -419,7 +418,7 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 
 									if (strcmp (entries_s, "*") == 0)
 										{
-											entries_p = GetAllCacheFiles (data_p -> dftsd_study_cache_path_s, false);
+											entries_p = GetFieldTrialFiles (data_p -> dftsd_study_cache_path_s, "*.json", false);
 										}
 									else
 										{
@@ -537,11 +536,12 @@ static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s,
 	return filename_s;
 }
 
+
 static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_study_cache_path_s)
 		{
-			LinkedList *filenames_p = GetAllCacheFiles (data_p -> dftsd_study_cache_path_s, true);
+			LinkedList *filenames_p = GetFieldTrialFiles (data_p -> dftsd_study_cache_path_s, "*.json", true);
 
 			if (filenames_p)
 				{
@@ -746,10 +746,19 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 }
 
 
-static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_path_flag)
+static LinkedList *GetFieldTrialFiles (const char * const path_s, const char * const local_pattern_s, const bool full_path_flag)
 {
 	LinkedList *files_p = NULL;
-	char *pattern_s = ConcatenateStrings (cache_path_s, "*.json");
+	char *pattern_s = NULL;
+
+	if (local_pattern_s)
+		{
+			pattern_s = ConcatenateStrings (path_s, local_pattern_s);
+		}
+	else
+		{
+			pattern_s = (char *) path_s;
+		}
 
 	if (pattern_s)
 		{
@@ -758,11 +767,14 @@ static LinkedList *GetAllCacheFiles (const char *cache_path_s, const bool full_p
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMatchingFiles failed for pattern: \"%s\"", pattern_s);
 				}
 
-			FreeCopiedString (pattern_s);
+			if (pattern_s != path_s)
+				{
+					FreeCopiedString (pattern_s);
+				}
 		}		/* if (pattern_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concat strings for cache file pattern: \"%s\"", cache_path_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concat strings for  path \"%s\" and file pattern: \"%s\"", path_s, local_pattern_s);
 		}
 
 	return files_p;
@@ -1034,11 +1046,12 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						}
 
 
-					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &run_fd_packages_flag_p);
-
-					if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &id_s))
 						{
-							OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
+							if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
+								{
+									OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
+								}
 						}
 
 
@@ -1181,16 +1194,13 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																						{
 																							ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
 
-																							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACKAGES.npt_name_s, "Generate all Frictionless Data Packages", "Generate FD pacakges for all Studies", &b, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACKAGES.npt_type, S_GENERATE_FD_PACKAGES.npt_name_s, "Generate Frictionless Data Packages", "Generate FD pacakges for given Study Ids. Use * to generate them all", NULL, PL_ALL)) != NULL)
 																								{
 																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
 																										{
-																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_CACHE_CLEAR.npt_type, S_CACHE_CLEAR.npt_name_s, "Clear Study cache", "Clear any cached Studies with the given Ids. Use * to clear all of them.", NULL, PL_ALL)) != NULL)
+																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_GENERATE_HANDBOOK.npt_type, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate Handbook", NULL, PL_ALL)) != NULL)
 																												{
-																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_GENERATE_HANDBOOK.npt_type, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate Handbook", NULL, PL_ALL)) != NULL)
-																														{
-																															return params_p;
-																														}
+																													return params_p;
 																												}
 																										}		
 																								}

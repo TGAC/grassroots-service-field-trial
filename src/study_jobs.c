@@ -255,7 +255,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 																																				{
 																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", active_study_p ? active_study_p -> st_weather_link_s : NULL, PL_ALL)) != NULL)
 																																						{
-																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PLAN_CHANGES.npt_type, STUDY_PLAN_CHANGES.npt_name_s, "Field Plan changes", "Changes to the Study field experiment plan.", active_study_p ? active_study_p -> st_plan_changes_s : NULL, PL_ALL)) != NULL)
+																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PLAN_CHANGES.npt_type, STUDY_PLAN_CHANGES.npt_name_s, "Field plan changes", "Changes to the Study field experiment plan.", active_study_p ? active_study_p -> st_plan_changes_s : NULL, PL_ALL)) != NULL)
 																																								{
 																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DATA_NOT_INCLUDED.npt_type, STUDY_DATA_NOT_INCLUDED.npt_name_s, "Data not included", "Data collected but not currently stored within the Grassroots Field Trial system", active_study_p ? active_study_p -> st_data_not_included_s : NULL, PL_ALL)) != NULL)
 																																										{
