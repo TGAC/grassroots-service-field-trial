@@ -871,12 +871,12 @@ OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *stu
 
 
 
-OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
 	bool loop_success_flag = true;
-	void *iterator_p = json_object_iter (observation_json_p);
+	void *iterator_p = json_object_iter (observations_json_p);
 	size_t imported_obs = 0;
 	size_t total_obs = 0;
 	LinkedList *processed_keys_p = AllocateStringLinkedList ();
@@ -887,6 +887,8 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 				{
 					const char *key_s = json_object_iter_key (iterator_p);
 					json_t *value_p = json_object_iter_value (iterator_p);
+					bool observation_key_flag = false;
+
 
 					/*
 					 * ignore our column names
@@ -936,7 +938,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 
 																	bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 																	FreeObservation (observation_p);
 																}
 														}
@@ -950,7 +952,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 
 																	bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 																	FreeObservation (observation_p);
 																}
 
@@ -982,7 +984,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 
 																			bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
 																			FreeObservation (observation_p);
 																		}
 
@@ -993,7 +995,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 
 																	bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
 
 
 																	free_measured_variable_flag = true;
@@ -1002,7 +1004,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 														}
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate observation id");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "Failed to allocate observation id");
 														}
 												}
 
@@ -1013,7 +1015,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 										}		/* if ((!IsStringEmpty (raw_value_s)) */
 									else
 										{
-											PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observation_json_p, "No measured value for \"%s\", skipping", key_s);
+											PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observations_json_p, "No measured value for \"%s\", skipping", key_s);
 										}
 
 
@@ -1040,14 +1042,38 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_
 											measured_variable_p = NULL;
 										}
 
+									if (!AddStringToStringLinkedList (processed_keys_p, key_s, MF_DEEP_COPY))
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddStringToStringLinkedList () failed for \"%s\"", key_s);
+										}
+
+
 								}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
 
 
 						}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
 
-					iterator_p = json_object_iter_next (observation_json_p, iterator_p);
+
+					iterator_p = json_object_iter_next (observations_json_p, iterator_p);
 				}		/* while (iterator_p && loop_success_flag) */
 
+
+			/*
+			 * Remove all of the processed observation keys from the JSON
+			 */
+			if (processed_keys_p -> ll_size > 0)
+				{
+					StringListNode *node_p = (StringListNode *) (processed_keys_p -> ll_head_p);
+
+					while (node_p)
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Removing observation \"%s\" from the json", node_p -> sln_string_s);
+
+							json_object_del (observations_json_p, node_p -> sln_string_s);
+
+							node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+						}
+				}
 
 			FreeLinkedList (processed_keys_p);
 		}		/* if (processed_keys_p) */

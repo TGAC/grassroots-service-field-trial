@@ -1103,9 +1103,9 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 																											 */
 																											if (json_object_size (table_row_json_p) > 0)
 																												{
+																													OperationStatus obs_status = AddObservationValuesToRow (row_p, table_row_json_p, study_p, job_p, i, data_p);
 																													OperationStatus tr_status = AddTreatmentFactorValuesToRow (row_p, table_row_json_p, study_p, data_p);
 
-																													OperationStatus obs_status = AddObservationValuesToRow (row_p, table_row_json_p, study_p, job_p, i, data_p);
 
 																													if (obs_status != OS_SUCCEEDED)
 																														{
