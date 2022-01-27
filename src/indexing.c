@@ -64,6 +64,8 @@
 #include "typedefs.h"
 #include "user_details.h"
 #include "dfw_field_trial_service_data.h"
+#include "handbook_generator.h"
+
 
 /*
  * Static declarations

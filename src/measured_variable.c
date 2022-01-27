@@ -511,6 +511,58 @@ const char *GetMeasuredVariableName (const MeasuredVariable *mv_p)
 
 
 
+
+MeasuredVariableNode *AllocateMeasuredVariableNode (MeasuredVariable *variable_p, MEM_FLAG mv_mem)
+{
+	char *id_s = GetBSONOidAsString (variable_p -> mv_id_p);
+
+	if (id_s)
+		{
+			MeasuredVariableNode *mv_node_p = (MeasuredVariableNode *) AllocMemory (sizeof (MeasuredVariableNode));
+
+			if (mv_node_p)
+				{
+					InitListItem (& (mv_node_p -> mvn_node));
+
+					mv_node_p -> mvn_measured_variable_p = variable_p;
+					mv_node_p -> mvn_measured_variable_mem = mv_mem;
+					mv_node_p -> mvn_id_s = id_s;
+
+					return mv_node_p;
+				}
+
+			FreeCopiedString (id_s);
+		}
+	else
+		{
+			const char *name_s = GetMeasuredVariableName (variable_p);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetBSONOidAsString () failed for MeasuredVariable \"%s\"", name_s ? name_s : "");
+		}
+
+	return NULL;
+}
+
+void FreeMeasuredVariableNode (ListItem *node_p)
+{
+	MeasuredVariableNode *mv_node_p = (MeasuredVariableNode *) node_p;
+
+	if (mv_node_p -> mvn_id_s)
+		{
+			FreeCopiedString (mv_node_p -> mvn_id_s);
+		}
+
+	if (mv_node_p -> mvn_measured_variable_p)
+		{
+			if ((mv_node_p -> mvn_measured_variable_mem == MF_DEEP_COPY) || (mv_node_p -> mvn_measured_variable_mem == MF_SHALLOW_COPY))
+				{
+					FreeMeasuredVariable (mv_node_p -> mvn_measured_variable_p);
+				}
+		}
+
+	FreeMemory (mv_node_p);
+}
+
+
 /*
  * static definitions
  */

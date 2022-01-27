@@ -104,7 +104,7 @@ bool EnableObservationsCache (FieldTrialServiceData *data_p)
 
 	if (! (data_p -> dftsd_observations_cache_p))
 		{
-			data_p -> dftsd_observations_cache_p = json_object ();
+			data_p -> dftsd_observations_cache_p = AllocateLinkedList (FreeMeasuredVariableNode);
 
 			if (! (data_p -> dftsd_observations_cache_p))
 				{
@@ -120,7 +120,7 @@ void ClearObservationsCache (FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_observations_cache_p)
 		{
-			json_object_clear (data_p -> dftsd_observations_cache_p);
+			ClearLinkedList (data_p -> dftsd_observations_cache_p);
 		}
 }
 
@@ -135,7 +135,7 @@ void FreeFieldTrialServiceData (FieldTrialServiceData *data_p)
 
 	if (data_p -> dftsd_observations_cache_p)
 		{
-			json_decref (data_p -> dftsd_observations_cache_p);
+			FreeLinkedList (data_p -> dftsd_observations_cache_p);
 		}
 
 	FreeMemory (data_p);
@@ -294,37 +294,44 @@ const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char
 
 MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, const char *mv_id_s)
 {
-	MeasuredVariable *mv_p = NULL;
-	const json_t *mv_json_p = json_object_get (data_p -> dftsd_observations_cache_p, mv_id_s);
-
-	if (mv_json_p)
+	if (data_p -> dftsd_observations_cache_p)
 		{
-			mv_p = GetMeasuredVariableFromJSON (mv_json_p, data_p);
+			MeasuredVariableNode *node_p = (MeasuredVariableNode *) (data_p -> dftsd_observations_cache_p -> ll_head_p);
+
+			while (node_p)
+				{
+					if (strcmp (node_p -> mvn_id_s, mv_id_s) == 0)
+						{
+							return (node_p -> mvn_measured_variable_p);
+						}
+					else
+						{
+							node_p = (MeasuredVariableNode *) (node_p -> mvn_node.ln_next_p);
+						}
+				}
 		}
 
-	return mv_p;
+	return NULL;
 }
 
 
 
-bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, MeasuredVariable *mv_p)
+bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, MeasuredVariable *mv_p, MEM_FLAG mf)
 {
 	bool success_flag = false;
 
 	if (data_p -> dftsd_observations_cache_p)
 		{
-			json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, VF_CLIENT_FULL);
+			MeasuredVariableNode *node_p = AllocateMeasuredVariableNode (mv_p, mf);
 
-			if (mv_json_p)
+			if (node_p)
 				{
-					if (json_object_set_new (data_p -> dftsd_observations_cache_p, id_s, mv_json_p) == 0)
-						{
-							success_flag = true;
-						}
-					else
-						{
-							json_decref (mv_json_p);
-						}
+					LinkedListAddTail (data_p -> dftsd_observations_cache_p, & (node_p -> mvn_node));
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to add \"%s\" to observations cache", id_s);
 				}
 		}
 	else

@@ -107,7 +107,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 													fputs ("\\usepackage{float}\n", study_tex_f);
 													fputs ("\\usepackage{graphicx}\n", study_tex_f);
-													fprintf (study_tex_f, "\\graphicspath{ {%s} }\n", study_tex_f, download_path_s);
+													fprintf (study_tex_f, "\\graphicspath{ {%s} }\n", download_path_s);
 
 
 													if (programme_p)
@@ -120,9 +120,11 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 																		{
 																			fputs ("\\usepackage{titling}\n", study_tex_f);
 
-																			fputs ("\pretitle{%\n\\begin{center}\n\\LARGE\n}\n", study_tex_f);
+																			fputs ("\\pretitle{%\n\\begin{center}\n\\LARGE\n}\n", study_tex_f);
 
-																			fprintf (study_tex_f, "\posttitle{%\n\\begin{figure}[H]\n\\centering\n\\includegraphics[scale=1.0]{%s}\n\\end{figure}\n\\end{center}\n}\n", image_s);
+																			fputs ("\\posttitle{\%\n\\begin{figure}[H]\n\\centering\n", study_tex_f);
+																			fprintf (study_tex_f, "\\includegraphics[scale=1.0]{%s}\n", image_s);
+																			fputs ("\\end{figure}\n\\end{center}\n}\n", study_tex_f);
 																		}
 																}
 

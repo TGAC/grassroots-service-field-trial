@@ -52,7 +52,7 @@ static bool GetObservationNatureFromJSON (ObservationNature *phenotype_nature_p,
 
 static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_p, Instrument **instrument_pp, const FieldTrialServiceData *data_p);
 
-static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p,  FieldTrialServiceData *data_p);
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, MEM_FLAG *phenotype_mem_p, FieldTrialServiceData *data_p);
 
 static bool CompareObservationDates (const struct tm * const time_0_p, const struct tm * const time_1_p);
 
@@ -467,7 +467,8 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 
 									if (CreateInstrumentFromObservationJSON (observation_json_p, &instrument_p, data_p))
 										{
-											MeasuredVariable *phenotype_p = CreateMeasuredVariableFromObservationJSON (observation_json_p, data_p);
+											MEM_FLAG phenotype_mem = MF_SHALLOW_COPY;
+											MeasuredVariable *phenotype_p = CreateMeasuredVariableFromObservationJSON (observation_json_p, &phenotype_mem, data_p);
 
 											if (phenotype_p)
 												{
@@ -489,7 +490,7 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 														{
 															GetObservationNatureFromJSON (&nature, observation_json_p);
 
-															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, MF_SHALLOW_COPY, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &index);
+															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &index);
 
 															if (!observation_p)
 																{
@@ -762,7 +763,7 @@ static bool GetObservationNatureFromJSON (ObservationNature *nature_p, const jso
 
 
 
-static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, FieldTrialServiceData *data_p)
+static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, MEM_FLAG *phenotype_mem_p, FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
 
@@ -773,7 +774,11 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 		{
 			phenotype_p = GetMeasuredVariableFromJSON (val_p, data_p);
 
-			if (!phenotype_p)
+			if (phenotype_p)
+				{
+					*phenotype_mem_p = MF_SHADOW_USE;
+				}
+			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get phenotype from json");
 				}
@@ -789,7 +794,9 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 
 					if (oid_s)
 						{
-							if (data_p -> dftsd_observations_cache_p)
+							const bool has_cache_flag = HasMeasuredVariableCache (data_p);
+
+							if (has_cache_flag)
 								{
 									phenotype_p = GetCachedMeasuredVariable (data_p, oid_s);
 								}
@@ -806,9 +813,9 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 
 											if (phenotype_p)
 												{
-													if (data_p -> dftsd_observations_cache_p)
+													if (has_cache_flag)
 														{
-															if (!AddMeasuredVariableToCache (data_p, oid_s, phenotype_p))
+															if (!AddMeasuredVariableToCache (data_p, oid_s, phenotype_p, MF_SHALLOW_COPY))
 																{
 																	PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddMeasuredVariableToCache () failed to cache MeasuredVariable for \"%s\"", oid_s);
 																}

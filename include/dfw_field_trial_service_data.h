@@ -35,7 +35,6 @@
 #include "mongodb_tool.h"
 #include "sqlite_tool.h"
 
-
 typedef enum
 {
 	DFTD_PROGRAMME,
@@ -179,7 +178,7 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_view_study_url_s;
 
-	json_t *dftsd_observations_cache_p;
+	LinkedList *dftsd_observations_cache_p;
 
 } FieldTrialServiceData;
 
@@ -198,6 +197,7 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
 
 
 /**
@@ -366,7 +366,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservationsCache (FieldTrialServiceData
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, const char *mv_id_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, struct MeasuredVariable *mv_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, struct MeasuredVariable *mv_p, MEM_FLAG mf);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasMeasuredVariableCache (FieldTrialServiceData *data_p);

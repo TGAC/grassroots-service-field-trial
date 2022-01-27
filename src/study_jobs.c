@@ -271,7 +271,6 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Reso
 																																																				{
 																																																					if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_previous_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S))
 																																																						{
-
 																																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", active_study_p ? active_study_p -> st_data_url_s : NULL, PL_ALL)) != NULL)
 																																																								{
 																																																									if (AddDefaultPlotsParameters (data_p, params_p, active_study_p))
@@ -1563,6 +1562,8 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											const uint32 *sowing_year_p = NULL;
 																											const uint32 *harvest_year_p = NULL;
 
+																											const char *photo_s = NULL;
+																											const char *image_collection_notes_s = NULL;
 
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
@@ -1600,6 +1601,8 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_BLOCK_VGAP.npt_name_s, &plot_block_vertical_gap_p);
 																											GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, STUDY_PLOT_COLS_PER_BLOCK.npt_name_s, &plots_columns_per_block_p);
 
+																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_PHOTO.npt_name_s, &photo_s);
+																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_IMAGE_NOTES.npt_name_s, &image_collection_notes_s);
 
 
 
@@ -1614,6 +1617,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																																							 curator_p, contact_p,
 																																							 sowing_year_p, harvest_year_p,
 																																							 plan_changes_s, samples_collected_s, data_not_included_s,
+																																							 photo_s, image_collection_notes_s,
 																																							 data_p);
 
 																											if (study_p)

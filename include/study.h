@@ -147,7 +147,9 @@ STUDY_PREFIX const char *ST_PHYSICAL_SAMPLES_COLLECTED_S STUDY_VAL ("physical_sa
 
 STUDY_PREFIX const char *ST_DATA_NOT_INCLUDED_S STUDY_VAL ("data_not_included");
 
+STUDY_PREFIX const char *ST_PHOTO_URL_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "image");
 
+STUDY_PREFIX const char *ST_IMAGE_COLLECTION_NOTE_S STUDY_VAL ("image_collection_notes");
 
 STUDY_PREFIX int32 ST_UNSET_PH STUDY_VAL (-1);
 
@@ -253,6 +255,10 @@ typedef struct Study
 
 	uint32 *st_predicted_harvest_year_p;
 
+	char *st_photo_url_s;
+
+	char *st_image_collection_notes_s;
+
 } Study;
 
 
@@ -286,6 +292,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 																										Person *curator_p, Person *contact_p,
 																										const uint32 *sowing_year_p, const uint32 *harvest_year_p,
 																										const char *plan_changes_s, const char *physical_samples_collected_s, const char *data_not_included_s,
+																										const char *photo_url_s, const char *image_collection_notes_s,
 																										const FieldTrialServiceData *data_p);
 
 
