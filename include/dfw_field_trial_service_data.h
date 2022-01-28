@@ -35,7 +35,6 @@
 #include "mongodb_tool.h"
 #include "sqlite_tool.h"
 
-
 typedef enum
 {
 	DFTD_PROGRAMME,
@@ -179,7 +178,6 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_view_study_url_s;
 
-
 	/**
 	 * @private
 	 *
@@ -187,7 +185,9 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_latex_commmand_s;
 
-	json_t *dftsd_observations_cache_p;
+
+	LinkedList *dftsd_measured_variables_cache_p;
+
 
 } FieldTrialServiceData;
 
@@ -206,6 +206,7 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
+
 
 
 /**
@@ -365,16 +366,19 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const cha
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char *data_type_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool EnableObservationsCache (FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool EnableMeasuredVariablesCache (FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservationsCache (FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearMeasuredVariablesCache (FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL struct MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, const char *mv_id_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct MeasuredVariable *GetCachedMeasuredVariableById (FieldTrialServiceData *data_p, const char *mv_id_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, struct MeasuredVariable *mv_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct MeasuredVariable *GetCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, struct MeasuredVariable *mv_p, MEM_FLAG mf);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasMeasuredVariableCache (FieldTrialServiceData *data_p);

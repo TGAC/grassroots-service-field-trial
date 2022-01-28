@@ -59,6 +59,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllRowsContainingMaterial (Material
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const char *value_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);

@@ -247,83 +247,113 @@ json_t *GetAllTraitsAsJSON (const FieldTrialServiceData *data_p)
 
 
 
-MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const FieldTrialServiceData *data_p)
+MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLAG *mv_mem_p, FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
 
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
+	if (HasMeasuredVariableCache (data_p))
 		{
-			char *key_s = ConcatenateVarargsStrings (MV_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
+			phenotype_p = GetCachedMeasuredVariableByName (data_p, name_s);
 
-			if (key_s)
+			if (phenotype_p)
 				{
-					bson_t *query_p = BCON_NEW (key_s, BCON_UTF8 (name_s));
+					*mv_mem_p = MF_SHADOW_USE;
+				}
+		}
 
-					if (query_p)
+	if (!phenotype_p)
+		{
+			if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
+				{
+					char *key_s = ConcatenateVarargsStrings (MV_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
+
+					if (key_s)
 						{
-							json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+							bson_t *query_p = BCON_NEW (key_s, BCON_UTF8 (name_s));
 
-							if (results_p)
+							if (query_p)
 								{
-									if (json_is_array (results_p))
+									json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
+
+									if (results_p)
 										{
-											const size_t num_results = json_array_size (results_p);
-
-											if (num_results > 1)
+											if (json_is_array (results_p))
 												{
-													PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, results_p, "Multiple matching treatments " SIZET_FMT ", using the first", num_results);
-												}
+													const size_t num_results = json_array_size (results_p);
 
-											if (num_results != 0)
-												{
-													size_t i = 0;
-													json_t *entry_p = json_array_get (results_p, i);
-
-													phenotype_p = GetMeasuredVariableFromJSON (entry_p, data_p);
-
-													if (!phenotype_p)
+													if (num_results > 1)
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GetMeasuredVariableFromJSON failed for \"%s\": \"%s\"", key_s, name_s);
+															PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, results_p, "Multiple matching treatments " SIZET_FMT ", using the first", num_results);
 														}
 
-												}		/* if (num_results != 0) */
+													if (num_results != 0)
+														{
+															size_t i = 0;
+															json_t *entry_p = json_array_get (results_p, i);
+
+															phenotype_p = GetMeasuredVariableFromJSON (entry_p, data_p);
+
+															if (phenotype_p)
+																{
+																	MEM_FLAG mf = MF_SHALLOW_COPY;
+
+																	if (HasMeasuredVariableCache (data_p))
+																		{
+																			if (AddMeasuredVariableToCache (data_p, phenotype_p, MF_SHALLOW_COPY))
+																				{
+																					mf = MF_SHADOW_USE;
+																				}
+																		}
+
+																	*mv_mem_p = mf;
+																}
+
+															if (!phenotype_p)
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "GetMeasuredVariableFromJSON failed for \"%s\": \"%s\"", key_s, name_s);
+																}
+
+														}		/* if (num_results != 0) */
+													else
+														{
+															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "No treatments found for \"%s\": \"%s\"", key_s, name_s);
+														}
+
+												}		/* if (json_is_array (results_p)) */
 											else
 												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "No treatments found for \"%s\": \"%s\"", key_s, name_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array for \"%s\": \"%s\"", key_s, name_s);
 												}
 
-										}		/* if (json_is_array (results_p)) */
+											json_decref (results_p);
+										}		/* if (results_p) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array for \"%s\": \"%s\"", key_s, name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "NULL results for \"%s\": \"%s\"", key_s, name_s);
 										}
 
-									json_decref (results_p);
-								}		/* if (results_p) */
+									bson_destroy (query_p);
+								}		/* if (query_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "NULL results for \"%s\": \"%s\"", key_s, name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for \"%s\": \"%s\"", key_s, name_s);
 								}
 
-							bson_destroy (query_p);
-						}		/* if (query_p) */
+							FreeCopiedString (key_s);
+						}		/* if (key_s) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for \"%s\": \"%s\"", key_s, name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate strings for variable name key");
 						}
 
-					FreeCopiedString (key_s);
-				}		/* if (key_s) */
+				}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate strings for variable name key");
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]);
 				}
 
-		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]);
-		}
+		}		/* if (!phenotype_p) */
+
 
 	return phenotype_p;
 }

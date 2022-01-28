@@ -56,6 +56,18 @@ typedef struct MeasuredVariable
 } MeasuredVariable;
 
 
+typedef struct MeasuredVariableNode
+{
+	ListItem mvn_node;
+
+	MeasuredVariable *mvn_measured_variable_p;
+
+	MEM_FLAG mvn_measured_variable_mem;
+
+	char *mvn_id_s;
+
+} MeasuredVariableNode;
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef ALLOCATE_MEASURED_VARIABLE_TAGS
@@ -112,6 +124,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableBySchemaURLs 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetMeasuredVariableName (const MeasuredVariable *mv_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariableNode *AllocateMeasuredVariableNode (MeasuredVariable *variable_p, MEM_FLAG mv_mem);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariableNode (ListItem *node_p);
 
 #ifdef __cplusplus
 }

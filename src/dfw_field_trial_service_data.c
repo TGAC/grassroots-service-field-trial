@@ -82,7 +82,7 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 			data_p -> dftsd_study_cache_path_s = NULL;
 			data_p -> dftsd_backup_path_s = NULL;
 
-			data_p -> dftsd_observations_cache_p = NULL;
+			data_p -> dftsd_measured_variables_cache_p = NULL;
 
 			data_p -> dftsd_assets_path_s = NULL;
 
@@ -98,15 +98,15 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 }
 
 
-bool EnableObservationsCache (FieldTrialServiceData *data_p)
+bool EnableMeasuredVariablesCache (FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
-	if (! (data_p -> dftsd_observations_cache_p))
+	if (! (data_p -> dftsd_measured_variables_cache_p))
 		{
-			data_p -> dftsd_observations_cache_p = json_object ();
+			data_p -> dftsd_measured_variables_cache_p = AllocateLinkedList (FreeMeasuredVariableNode);
 
-			if (! (data_p -> dftsd_observations_cache_p))
+			if (! (data_p -> dftsd_measured_variables_cache_p))
 				{
 					success_flag = false;
 				}
@@ -116,11 +116,11 @@ bool EnableObservationsCache (FieldTrialServiceData *data_p)
 }
 
 
-void ClearObservationsCache (FieldTrialServiceData *data_p)
+void ClearMeasuredVariablesCache (FieldTrialServiceData *data_p)
 {
-	if (data_p -> dftsd_observations_cache_p)
+	if (data_p -> dftsd_measured_variables_cache_p)
 		{
-			json_object_clear (data_p -> dftsd_observations_cache_p);
+			ClearLinkedList (data_p -> dftsd_measured_variables_cache_p);
 		}
 }
 
@@ -133,9 +133,9 @@ void FreeFieldTrialServiceData (FieldTrialServiceData *data_p)
 			FreeMongoTool (data_p -> dftsd_mongo_p);
 		}
 
-	if (data_p -> dftsd_observations_cache_p)
+	if (data_p -> dftsd_measured_variables_cache_p)
 		{
-			json_decref (data_p -> dftsd_observations_cache_p);
+			FreeLinkedList (data_p -> dftsd_measured_variables_cache_p);
 		}
 
 	FreeMemory (data_p);
@@ -210,7 +210,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							if (enable_measured_variable_cache_flag)
 								{
-									if (!EnableObservationsCache (data_p))
+									if (!EnableMeasuredVariablesCache (data_p))
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to enable measured variable cache");
 										}
@@ -298,39 +298,71 @@ const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char
 }
 
 
-MeasuredVariable *GetCachedMeasuredVariable (FieldTrialServiceData *data_p, const char *mv_id_s)
+MeasuredVariable *GetCachedMeasuredVariableById (FieldTrialServiceData *data_p, const char *mv_id_s)
 {
-	MeasuredVariable *mv_p = NULL;
-	const json_t *mv_json_p = json_object_get (data_p -> dftsd_observations_cache_p, mv_id_s);
-
-	if (mv_json_p)
+	if (data_p -> dftsd_measured_variables_cache_p)
 		{
-			mv_p = GetMeasuredVariableFromJSON (mv_json_p, data_p);
-		}
+			MeasuredVariableNode *node_p = (MeasuredVariableNode *) (data_p -> dftsd_measured_variables_cache_p -> ll_head_p);
 
-	return mv_p;
-}
-
-
-
-bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s, MeasuredVariable *mv_p)
-{
-	bool success_flag = false;
-
-	if (data_p -> dftsd_observations_cache_p)
-		{
-			json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, VF_CLIENT_FULL);
-
-			if (mv_json_p)
+			while (node_p)
 				{
-					if (json_object_set_new (data_p -> dftsd_observations_cache_p, id_s, mv_json_p) == 0)
+					if (strcmp (node_p -> mvn_id_s, mv_id_s) == 0)
 						{
-							success_flag = true;
+							return (node_p -> mvn_measured_variable_p);
 						}
 					else
 						{
-							json_decref (mv_json_p);
+							node_p = (MeasuredVariableNode *) (node_p -> mvn_node.ln_next_p);
 						}
+				}
+		}
+
+	return NULL;
+}
+
+
+MeasuredVariable *GetCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s)
+{
+	if (data_p -> dftsd_measured_variables_cache_p)
+		{
+			MeasuredVariableNode *node_p = (MeasuredVariableNode *) (data_p -> dftsd_measured_variables_cache_p -> ll_head_p);
+
+			while (node_p)
+				{
+					const char *mv_name_s = GetMeasuredVariableName (node_p -> mvn_measured_variable_p);
+
+					if (strcmp (mv_name_s, name_s) == 0)
+						{
+							return (node_p -> mvn_measured_variable_p);
+						}
+					else
+						{
+							node_p = (MeasuredVariableNode *) (node_p -> mvn_node.ln_next_p);
+						}
+				}
+		}
+
+	return NULL;
+}
+
+
+bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, MeasuredVariable *mv_p, MEM_FLAG mf)
+{
+	bool success_flag = false;
+
+	if (data_p -> dftsd_measured_variables_cache_p)
+		{
+			MeasuredVariableNode *node_p = AllocateMeasuredVariableNode (mv_p, mf);
+
+			if (node_p)
+				{
+					LinkedListAddTail (data_p -> dftsd_measured_variables_cache_p, & (node_p -> mvn_node));
+					success_flag = true;
+				}
+			else
+				{
+					const char *name_s = GetMeasuredVariableName (mv_p);
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to add \"%s\" to observations cache", name_s);
 				}
 		}
 	else
@@ -344,7 +376,7 @@ bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, const char *id_s
 
 bool HasMeasuredVariableCache (FieldTrialServiceData *data_p)
 {
-	return (data_p -> dftsd_observations_cache_p != NULL);
+	return (data_p -> dftsd_measured_variables_cache_p != NULL);
 }
 
 

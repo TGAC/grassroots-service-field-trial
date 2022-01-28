@@ -129,6 +129,13 @@ ROW_PREFIX const char *RO_TREATMENTS_S  ROW_VAL ("treatments");
 ROW_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
 
 
+
+ROW_PREFIX const char *RO_IMPORT_RACK_S ROW_VAL ("Rack");
+
+
+ROW_PREFIX const char *RO_PLOT_INDEX_S ROW_VAL ("Plot index");
+
+
 #ifdef __cplusplus
 extern "C"
 {

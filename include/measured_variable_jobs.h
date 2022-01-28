@@ -68,7 +68,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMeasuredVariableParams (Field
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMeasuredVariableParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLAG *mv_mem_p, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
