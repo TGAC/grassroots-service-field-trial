@@ -302,6 +302,40 @@ Treatment *GetTreatmentFromJSON (const json_t *treatment_json_p)
 }
 
 
+TreatmentNode *AllocateTreatmentNode (Treatment *treatment_p, MEM_FLAG treatment_mem)
+{
+	TreatmentNode *node_p = NULL;
+
+	if ((treatment_mem == MF_SHALLOW_COPY) || (treatment_mem == MF_SHADOW_USE))
+		{
+			node_p = (TreatmentNode *) 	AllocMemory (sizeof (TreatmentNode));
+
+			if (node_p)
+				{
+					InitListItem (& (node_p -> tn_node));
+
+					node_p -> tn_treatment_mem = treatment_mem;
+					node_p -> tn_treatment_p = treatment_p;
+					node_p -> tn_treatment_url_s = treatment_p -> tr_ontology_term_p -> st_url_s;
+				}
+		}
+
+	return node_p;
+}
+
+
+void FreeTreatmentNode (ListItem *node_p)
+{
+	TreatmentNode *treatment_node_p = (TreatmentNode *) node_p;
+
+	if ((treatment_node_p -> tn_treatment_mem == MF_SHALLOW_COPY) || (treatment_node_p -> tn_treatment_mem == MF_DEEP_COPY))
+		{
+			FreeTreatment (treatment_node_p -> tn_treatment_p);
+		}
+
+	FreeMemory (treatment_node_p);
+}
+
 
 
 static bool AddStringsToJSON (const char *key_s, char **values_ss, json_t *json_p)

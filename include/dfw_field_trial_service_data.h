@@ -189,6 +189,8 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	LinkedList *dftsd_measured_variables_cache_p;
 
 
+	LinkedList *dftsd_treatments_cache_p;
+
 } FieldTrialServiceData;
 
 
@@ -334,11 +336,12 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected
 /** The prefix to use for Field Trial Service aliases. */
 #define DFT_GROUP_ALIAS_PREFIX_S "field_trial"
 
-/*
- * forward declaration
- */
-struct MeasuredVafriable;
 
+/*
+ * forward declarations
+ */
+struct MeasuredVariable;
+struct Treatment;
 
 #ifdef __cplusplus
 extern "C"
@@ -382,6 +385,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialService
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasMeasuredVariableCache (FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct Treatment *GetCachedTreatmentByURL (FieldTrialServiceData *data_p, const char *url_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToCache (FieldTrialServiceData *data_p, struct Treatment *treatment_p, MEM_FLAG mf);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasTreatmentCache (FieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }

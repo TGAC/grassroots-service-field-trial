@@ -49,7 +49,21 @@ struct Treatment
 };
 
 
+typedef struct TreatmentNode
+{
+	ListItem tn_node;
 
+	Treatment *tn_treatment_p;
+
+	MEM_FLAG tn_treatment_mem;
+
+	/*
+	 * Purely a cached pointer of tn_treatment_p -> tr_ontology_term_p -> st_url_s
+	 * to speed up access
+	 */
+	const char *tn_treatment_url_s;
+
+} TreatmentNode;
 
 
 
@@ -100,6 +114,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTreatmentAsJSON (const Treatment *treat
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToJSON (const Treatment *treatment_p, json_t *root_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *GetTreatmentFromJSON (const json_t *treatmnent_json_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentNode *AllocateTreatmentNode (Treatment *treatment_p, MEM_FLAG treatment_mem);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentNode (ListItem *treatment_node_p);
 
 #ifdef _cplusplus
 }

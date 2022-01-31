@@ -24,6 +24,7 @@
 #include "dfw_field_trial_service_data.h"
 
 #include "measured_variable.h"
+#include "treatment.h"
 
 #include "jansson.h"
 
@@ -379,4 +380,61 @@ bool HasMeasuredVariableCache (FieldTrialServiceData *data_p)
 	return (data_p -> dftsd_measured_variables_cache_p != NULL);
 }
 
+
+
+
+Treatment *GetCachedTreatmentByURL (FieldTrialServiceData *data_p, const char *url_s)
+{
+	if (data_p -> dftsd_treatments_cache_p)
+		{
+			TreatmentNode *node_p = (TreatmentNode *) (data_p -> dftsd_treatments_cache_p -> ll_head_p);
+
+			while (node_p)
+				{
+					if (strcmp (node_p -> tn_treatment_url_s, url_s) == 0)
+						{
+							return (node_p -> tn_treatment_p);
+						}
+					else
+						{
+							node_p = (TreatmentNode *) (node_p -> tn_node.ln_next_p);
+						}
+				}
+		}
+
+	return NULL;
+}
+
+
+bool AddTreatmentToCache (FieldTrialServiceData *data_p, Treatment *treatment_p, MEM_FLAG mf)
+{
+	bool success_flag = false;
+
+	if (data_p -> dftsd_treatments_cache_p)
+		{
+			TreatmentNode *node_p = AllocateTreatmentNode (treatment_p, mf);
+
+			if (node_p)
+				{
+					LinkedListAddTail (data_p -> dftsd_treatments_cache_p, & (node_p -> tn_node));
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to add \"%s\" to observations cache", treatment_p -> tr_ontology_term_p -> st_url_s);
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+bool HasTreatmentCache (FieldTrialServiceData *data_p)
+{
+	return (data_p -> dftsd_treatments_cache_p != NULL);
+}
 

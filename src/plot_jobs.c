@@ -135,9 +135,9 @@ static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
 
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *study_p,  const FieldTrialServiceData *data_p);
+static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *study_p,  FieldTrialServiceData *data_p);
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p);
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, FieldTrialServiceData *data_p);
 
 static json_t *GetTableParameterHints (void);
 
@@ -160,6 +160,8 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialServiceData *data_p);
 
 static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+
+static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
 
 /*
@@ -871,7 +873,7 @@ static json_t *GetTableParameterHints (void)
 
 
 
-static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, const FieldTrialServiceData *data_p)
+static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
 	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
@@ -1112,28 +1114,30 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																											/*
 																											 * Is it an observation?
 																											 */
-																											if (IsMeasuredVariableName (key_s))
-																												{
-																													status = AddObservationValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
+																											status = AddObservationValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 
-																												}
-																											else if (IsTreatmentFactorName (key_s))
+																											if (status == OS_IDLE)
 																												{
-
-																												}
-																											else
-																												{
-																													/*
-																													 * unknown column
-																													 */
-																													if (!SetJSONNull (unknown_cols_p, key_s))
+																													if (IsTreatmentFactorName (key_s))
 																														{
-																															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, unknown_cols_p, "Failed to add unknown column \"%s\"", key_s);
+
+																														}
+																													else
+																														{
+																															/*
+																															 * unknown column
+																															 */
+																															if (!SetJSONNull (unknown_cols_p, key_s))
+																																{
+																																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, unknown_cols_p, "Failed to add unknown column \"%s\"", key_s);
+																																}
+
+																															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name", row_index, key_s);
+
 																														}
 
-																													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name", row_index, key_s);
+																												}		/* if (status == OS_IDLE) */
 
-																												}
 																										}		/* if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0)) */
 
 																								}		/* while (iterator_p && loop_success_flag) */
@@ -1246,7 +1250,7 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 }
 
 
-static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *study_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag	= true;
@@ -1276,7 +1280,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 									 */
 									if (json_object_size (table_row_json_p) > 0)
 										{
-											bool added_flag = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, data_p);
+											bool added_flag = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i, data_p);
 
 											if (added_flag)
 												{
@@ -1426,7 +1430,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 }
 
 
-Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const FieldTrialServiceData *data_p)
+Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 

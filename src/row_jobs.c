@@ -59,7 +59,7 @@ static NamedParameterType S_STUDIES_LIST = { "RO Study", PT_STRING };
 
 static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p);
+static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, FieldTrialServiceData *data_p);
 
 
 static json_t *GetTableParameterHints (void);
@@ -70,7 +70,7 @@ static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *plot_ind
 /**
  * Extract the Observation metadata from the column heading
  */
-static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p);
+static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *measured_variable_mem_p,  FieldTrialServiceData *data_p);
 
 
 /**
@@ -513,7 +513,7 @@ static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *rack_stu
 }
 
 
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -611,7 +611,7 @@ static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *obser
 }
 
 
-OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	void *temp_p = NULL;
@@ -862,7 +862,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 //}
 
 
-OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -871,7 +871,7 @@ OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *stu
 
 
 
-OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -896,12 +896,13 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 					if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
 						{
 							MeasuredVariable *measured_variable_p = NULL;
+							MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
 							struct tm *start_date_p = NULL;
 							struct tm *end_date_p = NULL;
 							bool corrected_value_flag = false;
 							uint32 observation_index = OB_DEFAULT_INDEX;
 
-							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, data_p))
+							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
 								{
 									Observation *observation_p = NULL;
 									bool added_phenotype_flag = false;
@@ -1092,12 +1093,9 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 }
 
 
-OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const char *value_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const char *value_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
-	OperationStatus status = OS_FAILED;
-
-	bool loop_success_flag = true;
-
+	OperationStatus status = OS_IDLE;
 
 	/*
 	 * ignore our column names
@@ -1105,12 +1103,13 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 	if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
 		{
 			MeasuredVariable *measured_variable_p = NULL;
+			MEM_FLAG mv_mem = MF_ALREADY_FREED;
 			struct tm *start_date_p = NULL;
 			struct tm *end_date_p = NULL;
 			bool corrected_value_flag = false;
 			uint32 observation_index = OB_DEFAULT_INDEX;
 
-			status = GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, data_p);
+			status = GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &mv_mem, data_p);
 
 			if (status == OS_SUCCEEDED)
 				{
@@ -1127,6 +1126,9 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 							const char *raw_value_s = NULL;
 							const char *corrected_value_s = NULL;
 
+							/* reset status */
+							status = OS_FAILED;
+
 							if (corrected_value_flag)
 								{
 									corrected_value_s = value_s;
@@ -1142,7 +1144,11 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 								{
 									if (corrected_value_flag)
 										{
-											if (!SetObservationCorrectedValue (observation_p, value_s))
+											if (SetObservationCorrectedValue (observation_p, value_s))
+												{
+													status = OS_SUCCEEDED;
+												}
+											else
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
@@ -1154,7 +1160,11 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 										}
 									else
 										{
-											if (!SetObservationRawValue (observation_p, value_s))
+											if (SetObservationRawValue (observation_p, value_s))
+												{
+													status = OS_SUCCEEDED;
+												}
+											else
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
@@ -1181,7 +1191,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 													if (AddObservationToRow (row_p, observation_p))
 														{
 															added_phenotype_flag = true;
-															loop_success_flag = true;
+															status = OS_SUCCEEDED;
 														}
 													else
 														{
@@ -1238,8 +1248,11 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 					 */
 					if (free_measured_variable_flag && measured_variable_p)
 						{
-							FreeMeasuredVariable (measured_variable_p);
-							measured_variable_p = NULL;
+							if ((mv_mem == MF_SHALLOW_COPY) || (mv_mem == MF_DEEP_COPY))
+								{
+									FreeMeasuredVariable (measured_variable_p);
+									measured_variable_p = NULL;
+								}
 						}
 
 				}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
@@ -1249,6 +1262,49 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 	return status;
 }
+
+
+
+OperationStatus AddSingleTreatmentFactorValueToRow (Row *row_p, const char *key_s, const char *name_s, Study *study_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+	void *temp_p = NULL;
+	json_t *value_p;
+	Treatment *treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
+
+
+	if (treatment_p)
+		{
+			/*
+			 * Does the Study have a TreatmentFactor for this
+			 * Treatment?
+			 */
+			TreatmentFactor *tf_p = GetTreatmentFactorForStudy (study_p, treatment_p -> tr_id_p, data_p);
+
+			if (tf_p)
+				{
+					const char *value_s = GetTreatmentFactorValue (tf_p, name_s);
+
+					/* Is it a valid defined label? */
+					if (value_s)
+						{
+							if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, name_s))
+								{
+									status = OS_SUCCEEDED;
+								}
+						}
+
+					//FreeTreatmentFactor (tf_p);
+				}
+
+			FreeTreatment (treatment_p);
+
+		}		/* if (treatment_p) */
+
+
+	return status;
+}
+
 
 
 Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index)
@@ -1273,7 +1329,7 @@ Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *v
 }
 
 
-Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const FieldTrialServiceData *data_p)
+Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
 	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_INDEX_S, NULL);
@@ -1402,7 +1458,7 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 
 
 
-static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, const FieldTrialServiceData *data_p)
+static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s, " ", true);
@@ -1412,7 +1468,7 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 		{
 			StringListNode *node_p = (StringListNode *) (tokens_p -> ll_head_p);
 			MeasuredVariable *measured_variable_p = NULL;
-			measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, data_p);
+			measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, mf_p, data_p);
 
 			if (measured_variable_p)
 				{
