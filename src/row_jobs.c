@@ -1265,13 +1265,38 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 
 
-OperationStatus AddSingleTreatmentFactorValueToRow (Row *row_p, const char *key_s, const char *name_s, Study *study_p, FieldTrialServiceData *data_p)
+OperationStatus AddSingleTreatmentFactorValueToRow  (Row *row_p, const char *key_s, const char *name_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	void *temp_p = NULL;
 	json_t *value_p;
-	Treatment *treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
+	Treatment *treatment_p = NULL;
+	bool cached_treatment_flag = false;
 
+	if (data_p -> dftsd_treatments_cache_p)
+		{
+			treatment_p = GetCachedTreatmentByURL (data_p, name_s);
+		}
+
+	if (!treatment_p)
+		{
+			treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
+
+			if (treatment_p)
+				{
+					if (data_p -> dftsd_treatments_cache_p)
+						{
+							if (AddTreatmentToCache (data_p, treatment_p, MF_SHALLOW_COPY))
+								{
+									cached_treatment_flag = true;
+								}
+							else
+								{
+
+								}
+						}
+				}
+		}
 
 	if (treatment_p)
 		{
@@ -1297,7 +1322,10 @@ OperationStatus AddSingleTreatmentFactorValueToRow (Row *row_p, const char *key_
 					//FreeTreatmentFactor (tf_p);
 				}
 
-			FreeTreatment (treatment_p);
+			if (!cached_treatment_flag)
+				{
+					FreeTreatment (treatment_p);
+				}
 
 		}		/* if (treatment_p) */
 

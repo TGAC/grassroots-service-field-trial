@@ -1095,7 +1095,7 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																								{
 																									bool observation_key_flag = false;
 
-
+																									key_s = json_object_iter_key (iterator_p);
 
 																									/*
 																									 * ignore our column names
@@ -1118,12 +1118,12 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 
 																											if (status == OS_IDLE)
 																												{
-																													if (IsTreatmentFactorName (key_s))
-																														{
+																													status = AddSingleTreatmentFactorValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 
-																														}
-																													else
+																													if (status == OS_IDLE)
 																														{
+																															char *error_s = ConcatenateVarargsStrings ("Unknown column name \"", key_s, "\"", NULL);
+
 																															/*
 																															 * unknown column
 																															 */
@@ -1132,13 +1132,22 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, unknown_cols_p, "Failed to add unknown column \"%s\"", key_s);
 																																}
 
-																															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name", row_index, key_s);
-
+																															if (error_s)
+																																{
+																																	AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
+																																	FreeCopiedString (error_s);
+																																}
+																															else
+																																{
+																																	AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name");
+																																}
 																														}
 
 																												}		/* if (status == OS_IDLE) */
 
 																										}		/* if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0)) */
+
+																									iterator_p = json_object_iter_next (table_row_json_p, iterator_p);
 
 																								}		/* while (iterator_p && loop_success_flag) */
 //
