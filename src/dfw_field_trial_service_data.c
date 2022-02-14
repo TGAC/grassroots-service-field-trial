@@ -85,6 +85,12 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 
 			data_p -> dftsd_measured_variables_cache_p = NULL;
 
+			data_p -> dftsd_view_study_url_s = NULL;
+
+			data_p -> dftsd_latex_commmand_s = NULL;
+
+			data_p -> dftsd_treatments_cache_p = NULL;
+
 			data_p -> dftsd_assets_path_s = NULL;
 
 			data_p -> dftsd_fd_url_s = NULL;
@@ -127,6 +133,34 @@ void ClearMeasuredVariablesCache (FieldTrialServiceData *data_p)
 
 
 
+bool EnableTreatmentsCache (FieldTrialServiceData *data_p)
+{
+	bool success_flag = true;
+
+	if (! (data_p -> dftsd_treatments_cache_p))
+		{
+			data_p -> dftsd_treatments_cache_p = AllocateLinkedList (FreeTreatmentNode);
+
+			if (! (data_p -> dftsd_treatments_cache_p))
+				{
+					success_flag = false;
+				}
+		}
+
+	return success_flag;
+}
+
+
+void ClearTreatmentsCache (FieldTrialServiceData *data_p)
+{
+	if (data_p -> dftsd_treatments_cache_p)
+		{
+			ClearLinkedList (data_p -> dftsd_treatments_cache_p);
+		}
+}
+
+
+
 void FreeFieldTrialServiceData (FieldTrialServiceData *data_p)
 {
 	if (data_p -> dftsd_mongo_p)
@@ -138,6 +172,12 @@ void FreeFieldTrialServiceData (FieldTrialServiceData *data_p)
 		{
 			FreeLinkedList (data_p -> dftsd_measured_variables_cache_p);
 		}
+
+	if (data_p -> dftsd_treatments_cache_p)
+		{
+			FreeLinkedList (data_p -> dftsd_treatments_cache_p);
+		}
+
 
 	FreeMemory (data_p);
 }
@@ -156,7 +196,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 				{
 					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
 						{
-							bool enable_measured_variable_cache_flag = false;
+							bool enable_db_cache_flag = false;
 
 							success_flag = true;
 
@@ -207,15 +247,26 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
 
-							GetJSONBoolean (service_config_p, "use_mv_cache", &enable_measured_variable_cache_flag);
+							GetJSONBoolean (service_config_p, "use_mv_cache", &enable_db_cache_flag);
 
-							if (enable_measured_variable_cache_flag)
+							if (enable_db_cache_flag)
 								{
 									if (!EnableMeasuredVariablesCache (data_p))
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to enable measured variable cache");
 										}
 								}
+
+							GetJSONBoolean (service_config_p, "use_treatments_cache", &enable_db_cache_flag);
+
+							if (enable_db_cache_flag)
+								{
+									if (!EnableTreatmentsCache (data_p))
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to enable treatmnets cache");
+										}
+								}
+
 
 						}
 					else

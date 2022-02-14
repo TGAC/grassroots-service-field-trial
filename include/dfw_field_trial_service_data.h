@@ -387,6 +387,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialService
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasMeasuredVariableCache (FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool EnableTreatmentsCache (FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearTreatmentsCache (FieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct Treatment *GetCachedTreatmentByURL (FieldTrialServiceData *data_p, const char *url_s);
 
 
