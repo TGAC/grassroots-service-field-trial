@@ -1184,7 +1184,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 									if (observation_id_p)
 										{
-											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index);
+											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index);
 
 											if (observation_p)
 												{
