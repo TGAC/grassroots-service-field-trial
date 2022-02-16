@@ -1027,10 +1027,9 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 	if (service_p -> se_jobs_p)
 		{
 			ServiceJob *job_p = GetServiceJobFromServiceJobSet (service_p -> se_jobs_p, 0);
-
+			OperationStatus status = OS_FAILED_TO_START;
 			LogParameterSet (param_set_p, job_p);
 
-			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
 			if (param_set_p)
 				{
@@ -1050,9 +1049,15 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &id_s))
 						{
-							if (run_fd_packages_flag_p && (*run_fd_packages_flag_p))
+							if (strcmp (id_s, "*") == 0)
 								{
 									OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
+
+									SetServiceJobStatus (job_p, fd_status);
+								}
+							else
+								{
+									/* reindex the given studies by their ids */
 								}
 						}
 
@@ -1084,6 +1089,8 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						}		/* if (id_s) */
 
 				}
+
+			SetServiceJobStatus (job_p, status);
 		}
 
 	return service_p -> se_jobs_p;

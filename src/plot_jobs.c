@@ -161,7 +161,7 @@ static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialService
 
 static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
-static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
+static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
 
 /*
@@ -946,11 +946,11 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p)
+static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	const char *gene_bank_s = GetJSONString (table_row_json_p, S_GENE_BANK_S);
 	GeneBank *gene_bank_p = NULL;
-	bool imported_row_flag = false;
+	OperationStatus add_status = OS_FAILED;
 
 	if (!IsStringEmpty (gene_bank_s))
 		{
@@ -1051,6 +1051,8 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																				{
 																					const char *key_s;
 																					json_t *value_p;
+																					size_t num_columns;
+																					size_t imported_columns = 0;
 
 																					/*
 																					 * Remove any of the normal plot keys
@@ -1084,7 +1086,7 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																					/*
 																					 * If there are any columns left, try to add them as observations
 																					 */
-																					if (json_object_size (table_row_json_p) > 0)
+																					if ((num_columns = json_object_size (table_row_json_p)) > 0)
 																						{
 																							OperationStatus status = OS_FAILED;
 
@@ -1116,11 +1118,19 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																											 */
 																											status = AddObservationValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 
-																											if (status == OS_IDLE)
+																											if (status == OS_SUCCEEDED)
+																												{
+																													++ imported_columns;
+																												}
+																											else if (status == OS_IDLE)
 																												{
 																													status = AddSingleTreatmentFactorValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 
-																													if (status == OS_IDLE)
+																													if (status == OS_SUCCEEDED)
+																														{
+																															++ imported_columns;
+																														}
+																													else if (status == OS_IDLE)
 																														{
 																															char *error_s = ConcatenateVarargsStrings ("Unknown column name \"", key_s, "\"", NULL);
 
@@ -1141,6 +1151,7 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																																{
 																																	AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name");
 																																}
+
 																														}
 
 																												}		/* if (status == OS_IDLE) */
@@ -1173,7 +1184,15 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																						{
 																							if (SavePlot (plot_p, data_p))
 																								{
-																									imported_row_flag = true;
+																									if (num_columns == imported_columns)
+																										{
+																											add_status = OS_SUCCEEDED;
+																										}
+																									else if (imported_columns > 0)
+																										{
+																											add_status = OS_PARTIALLY_SUCCEEDED;
+																										}
+
 																								}
 																							else
 																								{
@@ -1185,6 +1204,8 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 																						{
 																							FreeRow (row_p);
 																						}
+
+
 
 																				}
 																			else
@@ -1250,12 +1271,12 @@ static bool AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study 
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
 		}
 
-	if (!imported_row_flag)
+	if (!add_status == OS_FAILED)
 		{
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plot data");
 		}
 
-	return imported_row_flag;
+	return add_status;
 }
 
 
@@ -1269,7 +1290,8 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 			const size_t num_rows = json_array_size (plots_json_p);
 			size_t i;
 			size_t num_empty_rows = 0;
-			size_t num_imported = 0;
+			size_t num_fully_imported = 0;
+			size_t num_partially_imported = 0;
 			bool imported_row_flag;
 			char *study_id_s = NULL;
 			GeneBank *gru_gene_bank_p = GetGeneBankByName ("Germplasm Resources Unit", data_p);
@@ -1289,15 +1311,21 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 									 */
 									if (json_object_size (table_row_json_p) > 0)
 										{
-											bool added_flag = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i, data_p);
+											OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i, data_p);
 
-											if (added_flag)
+											switch (add_status)
 												{
-													++ num_imported;
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plots row");
+													case OS_SUCCEEDED:
+														++ num_fully_imported;
+														break;
+
+													case OS_PARTIALLY_SUCCEEDED:
+														++ num_partially_imported;
+														break;
+
+													default:
+														PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plots row");
+														break;
 												}
 										}
 									else
@@ -1314,11 +1342,11 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 				}		/* if (gru_gene_bank_p) */
 
 
-			if (num_imported + num_empty_rows == num_rows)
+			if (num_fully_imported + num_empty_rows == num_rows)
 				{
 					status = OS_SUCCEEDED;
 				}
-			else if (num_imported > 0)
+			else if (num_fully_imported + num_partially_imported > 0)
 				{
 					status = OS_PARTIALLY_SUCCEEDED;
 				}
