@@ -384,7 +384,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct MeasuredVariable *GetCachedMeasuredVariable
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, struct MeasuredVariable *mv_p, MEM_FLAG mf);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s)
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasMeasuredVariableCache (FieldTrialServiceData *data_p);

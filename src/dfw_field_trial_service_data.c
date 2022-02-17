@@ -391,16 +391,18 @@ MeasuredVariable *GetCachedMeasuredVariableByName (FieldTrialServiceData *data_p
 
 bool RemoveCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s)
 {
+	bool removed_flag = false;
 	MeasuredVariableNode *node_p = GetCachedMeasuredVariableNodeByName (data_p, name_s);
 
 	if (node_p)
 		{
-			LinkedListRemove (data_p -> dftsd_measured_variables_cache_p, node_p);
+			LinkedListRemove (data_p -> dftsd_measured_variables_cache_p, & (node_p -> mvn_node));
 
 			FreeMeasuredVariableNode (& (node_p -> mvn_node));
+			removed_flag = true;
 		}
 
-	return NULL;
+	return removed_flag;
 }
 
 
