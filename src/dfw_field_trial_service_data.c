@@ -70,6 +70,9 @@ static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 };
 
 
+static MeasuredVariableNode *GetCachedMeasuredVariableNodeByName (FieldTrialServiceData *data_p, const char *name_s);
+
+
 
 FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 {
@@ -375,6 +378,35 @@ MeasuredVariable *GetCachedMeasuredVariableById (FieldTrialServiceData *data_p, 
 
 MeasuredVariable *GetCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s)
 {
+	MeasuredVariableNode *node_p = GetCachedMeasuredVariableNodeByName (data_p, name_s);
+
+	if (node_p)
+		{
+			return (node_p -> mvn_measured_variable_p);
+		}
+
+	return NULL;
+}
+
+
+bool RemoveCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const char *name_s)
+{
+	MeasuredVariableNode *node_p = GetCachedMeasuredVariableNodeByName (data_p, name_s);
+
+	if (node_p)
+		{
+			LinkedListRemove (data_p -> dftsd_measured_variables_cache_p, node_p);
+
+			FreeMeasuredVariableNode (& (node_p -> mvn_node));
+		}
+
+	return NULL;
+}
+
+
+
+static MeasuredVariableNode *GetCachedMeasuredVariableNodeByName (FieldTrialServiceData *data_p, const char *name_s)
+{
 	if (data_p -> dftsd_measured_variables_cache_p)
 		{
 			MeasuredVariableNode *node_p = (MeasuredVariableNode *) (data_p -> dftsd_measured_variables_cache_p -> ll_head_p);
@@ -385,7 +417,7 @@ MeasuredVariable *GetCachedMeasuredVariableByName (FieldTrialServiceData *data_p
 
 					if (strcmp (mv_name_s, name_s) == 0)
 						{
-							return (node_p -> mvn_measured_variable_p);
+							return node_p;
 						}
 					else
 						{
@@ -396,6 +428,7 @@ MeasuredVariable *GetCachedMeasuredVariableByName (FieldTrialServiceData *data_p
 
 	return NULL;
 }
+
 
 
 bool AddMeasuredVariableToCache (FieldTrialServiceData *data_p, MeasuredVariable *mv_p, MEM_FLAG mf)
