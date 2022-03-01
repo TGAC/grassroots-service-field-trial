@@ -91,7 +91,7 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_CROP.npt_type, PROGRAMME_CROP.npt_name_s, "Crop", "The crop for the Programme", NULL, PL_ALL)) != NULL)
 												{
-													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, crop_p, S_EMPTY_LIST_OPTION_S))
+													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, crop_p, S_EMPTY_LIST_OPTION_S, active_program_p ? false : true))
 														{
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_OBJECTIVE.npt_type, PROGRAMME_OBJECTIVE.npt_name_s, "Objective", "The Programme's objective", objective_s, PL_ALL)) != NULL)
 																{

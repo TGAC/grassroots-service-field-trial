@@ -234,7 +234,7 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Crop *active_crop_p, const char *empty_option_s)
+bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Crop *active_crop_p, const char *empty_option_s, const bool new_study_flag)
 {
 	bool success_flag = false;
 
@@ -255,14 +255,20 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 									size_t i;
 									const json_t *service_config_p = data_p -> dftsd_base_data.sd_config_p;
 									const char *default_crop_s = NULL;
+									bool default_is_set_flag = false;
 
 									if (active_crop_p)
 										{
 											default_crop_s = active_crop_p -> cr_name_s;
 										}
-									else
+									else if (new_study_flag)
 										{
 											default_crop_s = GetJSONString (service_config_p, "default_crop");
+										}
+
+									if ((!default_crop_s) && empty_option_s)
+										{
+											default_crop_s = empty_option_s;
 										}
 
 									/*
@@ -271,6 +277,13 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 									if (empty_option_s)
 										{
 											success_flag = CreateAndAddStringParameterOption (param_p, empty_option_s, empty_option_s);
+
+											if (!default_crop_s)
+												{
+													success_flag = SetDefaultCropValue (param_p, empty_option_s);
+
+													default_is_set_flag = true;
+												}
 										}
 
 									for (i = 0; i < num_results; ++ i)
@@ -284,16 +297,21 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 
 													if (id_s)
 														{
-															if (default_crop_s)
+															if (!default_is_set_flag)
 																{
-																	if (strcmp (crop_p -> cr_name_s, default_crop_s) == 0)
+																	if (default_crop_s)
+																		{
+																			if (strcmp (crop_p -> cr_name_s, default_crop_s) == 0)
+																				{
+																					success_flag = SetDefaultCropValue (param_p, id_s);
+																					default_is_set_flag = true;
+																				}
+																		}
+																	else if (i == 0)
 																		{
 																			success_flag = SetDefaultCropValue (param_p, id_s);
+																			default_is_set_flag = true;
 																		}
-																}
-															else if (i == 0)
-																{
-																	success_flag = SetDefaultCropValue (param_p, id_s);
 																}
 
 															success_flag = CreateAndAddStringParameterOption (param_p, id_s, crop_p -> cr_name_s);
