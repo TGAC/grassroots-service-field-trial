@@ -110,6 +110,9 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 
 static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const char *key_stem_s, MongoTool *tool_p, bson_t *opts_p);
 
+static const char *GetScaleDatatype (const json_t *document_p);
+
+static bool SetUnitDatatypes (const bson_t *document_p, void *data_p);
 
 
 static const COScaleClass s_scale_classes_p [] =
@@ -715,6 +718,101 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 		}
 
 	return class_p;
+}
+
+
+/*
+ * Iterate over each variable in db
+ *
+ * get https://cropontology.org/brapi/v1/variables/CO_321:0001199
+ *
+ * get result.scale.dataType
+ *
+ *
+ */
+
+
+static bool DoIt (const char *variable_url_s, CurlTool *curl_p)
+{
+	bool success_flag = false;
+	const char * const CO_API_URL_S = "https://cropontology.org/brapi/v1/variables/";
+	char *url_s = ConcatenateStrings (CO_API_URL_S, variable_url_s);
+
+	if (url_s)
+		{
+			if (SetUriForCurlTool (curl_p, url_s))
+				{
+					CURLcode res = RunCurlTool (curl_p);
+
+					if (res == CURLE_OK)
+						{
+							const char *data_s = GetCurlToolData (curl_p);
+
+							if (data_s)
+								{
+									json_error_t err;
+									json_t *res_p = json_loads (data_s, 0, &err);
+
+									if (res_p)
+										{
+											const char *dt_s = GetScaleDatatype (res_p);
+
+											if (dt_s)
+												{
+
+												}		/* if (dt_s) */
+
+											json_decref (res_p);
+										}		/* if (res_p) */
+									else
+										{
+
+										}
+
+								}		/* if (data_s) */
+							else
+								{
+
+								}
+
+						}		/* if (res == CURLE_OK) */
+					else
+						{
+
+						}
+				}		/* if (SetUriForCurlTool (curl_p, url_s)) */
+			else
+				{
+
+				}
+
+			FreeCopiedString (url_s);
+		}		/* if (url_s) */
+	else
+		{
+
+		}
+
+	return success_flag;
+}
+
+
+static const char *GetScaleDatatype (const json_t *document_p)
+{
+	const char *dt_s = NULL;
+	json_t *result_p = json_object_get (document_p, "result");
+
+	if (result_p)
+		{
+			json_t *scale_p = json_object_get (result_p, "scale");
+
+			if (scale_p)
+				{
+					dt_s = GetJSONString (scale_p, "dataType");
+				}
+		}
+
+	return dt_s;
 }
 
 

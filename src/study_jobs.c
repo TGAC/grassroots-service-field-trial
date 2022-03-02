@@ -818,6 +818,7 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 {
 	bool success_flag = true;
 
+
 	if (strcmp (param_name_s, STUDY_ID.npt_name_s) == 0)
 		{
 			*pt_p = STUDY_ID.npt_type;

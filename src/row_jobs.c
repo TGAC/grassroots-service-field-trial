@@ -1311,7 +1311,12 @@ OperationStatus AddSingleTreatmentFactorValueToRow  (Row *row_p, const char *key
 					const char *value_s = GetTreatmentFactorValue (tf_p, name_s);
 
 					/* Is it a valid defined label? */
-					if (value_s)
+					if (IsStringEmpty (value_s))
+						{
+							/* nothing to do */
+							status = OS_SUCCEEDED;
+						}
+					else
 						{
 							if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, name_s))
 								{

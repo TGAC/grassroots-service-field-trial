@@ -238,7 +238,7 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 	const bool *clear_flag_p = NULL;
 	bool update_flag = false;
 
-	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REINDEX_TRIALS.npt_name_s, &clear_flag_p))
+	if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CLEAR_DATA.npt_name_s, &clear_flag_p))
 		{
 			if (clear_flag_p)
 				{
@@ -1027,33 +1027,27 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 	if (service_p -> se_jobs_p)
 		{
 			ServiceJob *job_p = GetServiceJobFromServiceJobSet (service_p -> se_jobs_p, 0);
-			OperationStatus status = OS_FAILED_TO_START;
-			LogParameterSet (param_set_p, job_p);
 
+			SetServiceJobStatus (job_p, OS_IDLE);
+
+			LogParameterSet (param_set_p, job_p);
 
 			if (param_set_p)
 				{
-					const bool *run_fd_packages_flag_p = NULL;
 					const char *id_s = NULL;
 
-					if (!RunReindexing (param_set_p, job_p, data_p))
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunReindexing failed");
-						}
+					RunReindexing (param_set_p, job_p, data_p);
 
-					if (!RunCaching (param_set_p, job_p, data_p))
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunCaching failed");
-						}
+					RunCaching (param_set_p, job_p, data_p);
 
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &id_s))
 						{
+							OperationStatus fd_status = OS_FAILED_TO_START;
+
 							if (strcmp (id_s, "*") == 0)
 								{
-									OperationStatus fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
-
-									SetServiceJobStatus (job_p, fd_status);
+									fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
 								}
 							else
 								{
@@ -1063,12 +1057,12 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 									if (ids_p)
 										{
-											OperationStatus fd_status = OS_IDLE;
 											StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
 
 											while (node_p)
 												{
-													Study *study_p = GetStudyByIdString (node_p -> sln_string_s, VF_CLIENT_FULL, data_p);
+													const char *study_id_s = node_p -> sln_string_s;
+													Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL, data_p);
 
 													if (study_p)
 														{
@@ -1078,7 +1072,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 																}
 															else
 																{
-																	char *error_s = ConcatenateVarargsStrings ("Could not generate fd package for study with id \"", id_s, "\"", NULL);
+																	char *error_s = ConcatenateVarargsStrings ("Could not generate fd package for study with id \"", study_id_s, "\"", NULL);
 
 																	if (error_s)
 																		{
@@ -1100,7 +1094,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 														}
 													else
 														{
-															char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", id_s, "\"", NULL);
+															char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", study_id_s, "\"", NULL);
 
 															if (error_s)
 																{
@@ -1135,6 +1129,8 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 										}
 
 								}
+
+							MergeServiceJobStatus (job_p, fd_status);
 						}
 
 
@@ -1148,6 +1144,8 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 										{
 											OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
 
+											MergeServiceJobStatus (job_p, handbook_status);
+
 											FreeStudy (study_p);
 										}
 								}
@@ -1158,15 +1156,11 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						{
 							OperationStatus plot_status = RemovePlotsForStudyById (id_s, data_p);
 
-							if (plot_status != OS_SUCCEEDED)
-								{
-
-								}
+							MergeServiceJobStatus (job_p, plot_status);
 						}		/* if (id_s) */
 
 				}
 
-			SetServiceJobStatus (job_p, status);
 		}
 
 	return service_p -> se_jobs_p;
