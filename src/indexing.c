@@ -1058,6 +1058,82 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 							else
 								{
 									/* reindex the given studies by their ids */
+									LinkedList *ids_p = ParseStringToStringLinkedList (id_s, " ", true);
+									uint32 num_done = 0;
+
+									if (ids_p)
+										{
+											OperationStatus fd_status = OS_IDLE;
+											StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
+
+											while (node_p)
+												{
+													Study *study_p = GetStudyByIdString (node_p -> sln_string_s, VF_CLIENT_FULL, data_p);
+
+													if (study_p)
+														{
+															if (SaveStudyAsFrictionlessData (study_p, data_p))
+																{
+																	++ num_done;
+																}
+															else
+																{
+																	char *error_s = ConcatenateVarargsStrings ("Could not generate fd package for study with id \"", id_s, "\"", NULL);
+
+																	if (error_s)
+																		{
+																			AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, error_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
+																			FreeCopiedString (error_s);
+																		}
+																	else
+																		{
+																			const char * const default_error_s = "Could not generate fd package study by id";
+
+																			AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, default_error_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
+																		}
+
+																}
+
+															FreeStudy (study_p);
+														}
+													else
+														{
+															char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", id_s, "\"", NULL);
+
+															if (error_s)
+																{
+																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, error_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
+																	FreeCopiedString (error_s);
+																}
+															else
+																{
+																	const char * const default_error_s = "Could not find study by id";
+
+																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, default_error_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
+																}
+
+
+														}
+
+													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+												}
+
+											if (num_done == ids_p -> ll_size)
+												{
+													fd_status = OS_SUCCEEDED;
+												}
+											else if (num_done > 0)
+												{
+													fd_status = OS_PARTIALLY_SUCCEEDED;
+												}
+
+											FreeLinkedList (ids_p);
+										}
+
 								}
 						}
 
@@ -1418,7 +1494,6 @@ static void ReleaseFieldTrialIndexingServiceParameters (Service * UNUSED_PARAM (
 {
 	FreeParameterSet (params_p);
 }
-
 
 
 static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, FieldTrialServiceData *data_p)
