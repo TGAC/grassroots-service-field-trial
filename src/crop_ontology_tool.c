@@ -100,6 +100,14 @@
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
 
+static const COScaleClass S_SCALE_DURATION = { "Duration", PT_TIME };
+static const COScaleClass S_SCALE_NOMINAL = { "Nominal", PT_STRING };
+static const COScaleClass S_SCALE_NUMERICAL = { "Numerical", PT_SIGNED_REAL };
+static const COScaleClass S_SCALE_CODE = { "Code", PT_STRING };
+static const COScaleClass S_SCALE_ORDINAL = { "Ordinal", PT_STRING };
+static const COScaleClass S_SCALE_TEXT = { "Text", PT_STRING };
+static const COScaleClass S_SCALE_DATE = { "Date", PT_TIME };
+
 
 static char *GetTermEnglishValue (const json_t *entry_p);
 
@@ -110,21 +118,9 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 
 static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const char *key_stem_s, MongoTool *tool_p, bson_t *opts_p);
 
-static const char *GetScaleDatatype (const json_t *document_p);
+static const COScaleClass *GetScaleDatatype (const json_t *document_p);
 
 static bool SetUnitDatatypes (const bson_t *document_p, void *data_p);
-
-
-static const COScaleClass s_scale_classes_p [] =
-{
-	{ "Code", PT_STRING },
-	{ "Duration", PT_TIME },
-	{ "Nominal", PT_STRING },
-	{ "Numerical", PT_SIGNED_REAL },
-	{ "Ordinal", PT_STRING },
-	{ "Text", PT_STRING },
-	{ "Date", PT_TIME },
-};
 
 
 
@@ -732,9 +728,9 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
  */
 
 
-static bool DoIt (const char *variable_url_s, CurlTool *curl_p)
+static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p)
 {
-	bool success_flag = false;
+	const COScaleClass *class_p = NULL;
 	const char * const CO_API_URL_S = "https://cropontology.org/brapi/v1/variables/";
 	char *url_s = ConcatenateStrings (CO_API_URL_S, variable_url_s);
 
@@ -755,12 +751,12 @@ static bool DoIt (const char *variable_url_s, CurlTool *curl_p)
 
 									if (res_p)
 										{
-											const char *dt_s = GetScaleDatatype (res_p);
+											class_p = GetScaleDatatype (res_p);
 
-											if (dt_s)
+											if (!class_p)
 												{
 
-												}		/* if (dt_s) */
+												}		/* if (!class_p) */
 
 											json_decref (res_p);
 										}		/* if (res_p) */
@@ -793,13 +789,12 @@ static bool DoIt (const char *variable_url_s, CurlTool *curl_p)
 
 		}
 
-	return success_flag;
+	return class_p;
 }
 
 
-static const char *GetScaleDatatype (const json_t *document_p)
+static const COScaleClass *GetScaleDatatype (const json_t *document_p)
 {
-	const char *dt_s = NULL;
 	json_t *result_p = json_object_get (document_p, "result");
 
 	if (result_p)
@@ -808,11 +803,41 @@ static const char *GetScaleDatatype (const json_t *document_p)
 
 			if (scale_p)
 				{
-					dt_s = GetJSONString (scale_p, "dataType");
+					const char *dt_s = GetJSONString (scale_p, "dataType");
+
+					if (dt_s)
+						{
+							const COScaleClass SCALES_P [] =
+							{
+								S_SCALE_DURATION,
+								S_SCALE_NOMINAL,
+								S_SCALE_NUMERICAL,
+								S_SCALE_CODE,
+								S_SCALE_ORDINAL,
+								S_SCALE_TEXT,
+								S_SCALE_DATE,
+								NULL
+							};
+
+							const COScaleClass *class_p = SCALES_P;
+
+							while (class_p)
+								{
+									if (strcmp (dt_s, class_p -> cosc_name_s) == 0)
+										{
+											return class_p;
+										}
+									else
+										{
+											++ class_p;
+										}
+								}
+						}
+
 				}
 		}
 
-	return dt_s;
+	return NULL;
 }
 
 
