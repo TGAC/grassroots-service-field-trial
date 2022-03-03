@@ -816,7 +816,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 			bson_oid_to_string (plot_p -> pl_id_p, id_s);
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No rows found for plot with id \"%s\"");
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No rows found for plot with id \"%s\"", id_s);
 		}
 
 
