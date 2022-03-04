@@ -86,6 +86,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool DoesMeasuredVariableExist (MeasuredVariable *
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMeasuredVariableIndexingData (Service *service_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
+
+
 #ifdef __cplusplus
 }
 #endif

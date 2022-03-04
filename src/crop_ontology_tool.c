@@ -122,6 +122,7 @@ static const COScaleClass *GetScaleDatatype (const json_t *document_p);
 
 static bool SetUnitDatatypes (const bson_t *document_p, void *data_p);
 
+static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p);
 
 
 
@@ -715,6 +716,92 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 
 	return class_p;
 }
+
+static const char * const S_SCALE_CLASS_NAME_S = "class_name";
+static const char * const S_SCALE_CLASS_TYPE_S = "class_type";
+
+
+json_t *GetScaleClassAsJSON (const COScaleClass *class_p)
+{
+	json_t *sc_json_p = json_object ();
+
+	if (sc_json_p)
+		{
+			if (SetJSONString (sc_json_p, S_SCALE_CLASS_NAME_S, class_p -> cosc_name_s))
+				{
+					const char *type_s = GetGrassrootsTypeAsString (class_p -> cosc_type);
+
+					if (SetJSONString (sc_json_p, S_SCALE_CLASS_TYPE_S, type_s))
+						{
+							return sc_json_p;
+						}
+				}
+
+			json_decref (sc_json_p);
+		}
+
+	return NULL;
+}
+
+
+typedef struct
+{
+	FieldTrialServiceData *cotd_service_data_p;
+	CurlTool *cotd_curl_p;
+	json_t *cotd_query_p;
+	char *cotd_query_key_s;
+} COToolData;
+
+
+static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
+{
+	json_t *mv_json_p = ConvertBSONToJSON (document_p);
+
+	if (mv_json_p)
+		{
+			COToolData *tool_data_p = (COToolData *) data_p;
+			MeasuredVariable *var_p = GetMeasuredVariableFromJSON (mv_json_p, tool_data_p -> cotd_service_data_p);
+
+			if (var_p)
+				{
+					const char *var_name_s = GetMeasuredVariableName (var_p);
+
+					if (var_name_s)
+						{
+							/* All crop ontology variables begin with CO: */
+							if (DoesStringStartWith (var_name_s, "CO:"))
+								{
+									const COScaleClass *scale_class_p = GetScaleClass (var_name_s, tool_data_p -> cotd_curl_p);
+
+									if (scale_class_p)
+										{
+											/* update the variable in the db */
+											json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
+
+											if (scale_class_json_p);
+												{
+													if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_name_s))
+														{
+															if (!UpdateMongoDocumentByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
+																{
+
+																}
+														}
+
+													json_decref (scale_class_json_p);
+												}
+										}
+								}
+
+						}
+
+					FreeMeasuredVariable (var_p);
+				}
+
+			json_decref (mv_json_p);
+		}
+}
+
 
 
 /*

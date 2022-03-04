@@ -184,8 +184,6 @@ bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 }
 
 
-
-
 json_t *GetAllTraitsAsJSON (const FieldTrialServiceData *data_p)
 {
 	json_t *traits_p = NULL;
