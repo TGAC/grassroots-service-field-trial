@@ -744,6 +744,9 @@ json_t *GetScaleClassAsJSON (const COScaleClass *class_p)
 }
 
 
+
+
+
 typedef struct
 {
 	FieldTrialServiceData *cotd_service_data_p;
@@ -751,6 +754,34 @@ typedef struct
 	json_t *cotd_query_p;
 	char *cotd_query_key_s;
 } COToolData;
+
+
+OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p)
+{
+	CurlTool *curl_tool_p = AllocateCurlTool (CM_MEMORY);
+
+	if (curl_tool_p)
+		{
+			json_t *query_p = json_object ();
+
+			if (query_p)
+				{
+					COToolData tool_data;
+
+					tool_data.cotd_service_data_p = data_p;
+					tool_data.cotd_query_p = query_p;
+					tool_data.cotd_curl_p = curl_tool_p;
+					tool_data.cotd_query_key_s = "variable.so:sameAs";
+
+					ProcessMongoResults (data_p -> dftsd_mongo_p, NULL, NULL, UpdateScaleTerms, &tool_data);
+
+					json_decref (query_p);
+				}
+
+			FreeCurlTool (curl_tool_p);
+		}
+
+}
 
 
 static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
@@ -764,14 +795,14 @@ static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
 
 			if (var_p)
 				{
-					const char *var_name_s = GetMeasuredVariableName (var_p);
+					const char *var_url_s = GetMeasuredVariableURL (var_p);
 
-					if (var_name_s)
+					if (var_url_s)
 						{
 							/* All crop ontology variables begin with CO: */
-							if (DoesStringStartWith (var_name_s, "CO:"))
+							if (DoesStringStartWith (var_url_s, "CO:"))
 								{
-									const COScaleClass *scale_class_p = GetScaleClass (var_name_s, tool_data_p -> cotd_curl_p);
+									const COScaleClass *scale_class_p = GetScaleClass (var_url_s, tool_data_p -> cotd_curl_p);
 
 									if (scale_class_p)
 										{
@@ -780,7 +811,7 @@ static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
 
 											if (scale_class_json_p);
 												{
-													if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_name_s))
+													if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_url_s))
 														{
 															if (!UpdateMongoDocumentByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
 																{

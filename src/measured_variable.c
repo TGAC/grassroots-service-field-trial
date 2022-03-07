@@ -510,6 +510,21 @@ const char *GetMeasuredVariableName (const MeasuredVariable *mv_p)
 }
 
 
+const char *GetMeasuredVariableURL (const MeasuredVariable *mv_p)
+{
+	const char *name_s = NULL;
+
+	if (mv_p -> mv_variable_term_p)
+		{
+			name_s = mv_p -> mv_variable_term_p -> st_url_s;
+		}
+
+	return name_s;
+}
+
+
+
+
 
 
 MeasuredVariableNode *AllocateMeasuredVariableNode (MeasuredVariable *variable_p, MEM_FLAG mv_mem)

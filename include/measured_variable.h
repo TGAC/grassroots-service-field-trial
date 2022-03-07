@@ -124,6 +124,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableBySchemaURLs 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetMeasuredVariableName (const MeasuredVariable *mv_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetMeasuredVariableURL (const MeasuredVariable *mv_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariableNode *AllocateMeasuredVariableNode (MeasuredVariable *variable_p, MEM_FLAG mv_mem);
 
