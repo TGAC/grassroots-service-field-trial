@@ -65,6 +65,7 @@
 #include "user_details.h"
 #include "dfw_field_trial_service_data.h"
 #include "handbook_generator.h"
+#include "crop_ontology_tool.h"
 
 
 /*
@@ -98,6 +99,7 @@ static NamedParameterType S_REMOVE_STUDIES = { "SS Delete studies", PT_LARGE_STR
 static NamedParameterType S_GENERATE_FD_PACKAGES = { "SS Generate FD Packages", PT_LARGE_STRING};
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
 static NamedParameterType S_GENERATE_HANDBOOK = { "SS Generate Handbook", PT_STRING };
+static NamedParameterType S_UPDATE_SCALE_TERMS = { "SS Update Scale Classes", PT_BOOLEAN };
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
@@ -352,6 +354,26 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 							if ((index_flag_p != NULL) && (*index_flag_p == true))
 								{
 									if (ReindexTreatments (job_p, lucene_p, update_flag, data_p))
+										{
+											++ num_succeeded;
+										}
+
+									++ num_attempted;
+
+									update_flag = true;
+									done_flag = true;
+								}
+						}
+
+
+
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_UPDATE_SCALE_TERMS.npt_name_s, &index_flag_p))
+						{
+							if ((index_flag_p != NULL) && (*index_flag_p == true))
+								{
+									OperationStatus s = StoreAllScaleUnits (data_p);
+
+									if (s == OS_SUCCEEDED)
 										{
 											++ num_succeeded;
 										}
@@ -1167,72 +1189,29 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 }
 
 
-static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
+static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PARAM (service_p), const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	const NamedParameterType params [] =
+		{
+			S_CLEAR_DATA,
+			S_REINDEX_ALL_DATA,
+			S_REINDEX_TRIALS,
+			S_REINDEX_STUDIES,
+			S_REINDEX_LOCATIONS,
+			S_REINDEX_MEASURED_VARIABLES,
+			S_REINDEX_PROGRAMS,
+			S_REINDEX_TREATMENTS,
+			S_CACHE_CLEAR,
+			S_CACHE_LIST,
+			S_REMOVE_STUDY_PLOTS,
+			S_GENERATE_FD_PACKAGES,
+			S_REMOVE_STUDIES,
+			S_GENERATE_HANDBOOK,
+			S_UPDATE_SCALE_TERMS,
+			NULL
+		};
 
-	if (strcmp (param_name_s, S_CLEAR_DATA.npt_name_s) == 0)
-		{
-			*pt_p = S_CLEAR_DATA.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_ALL_DATA.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_ALL_DATA.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_TRIALS.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_TRIALS.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_STUDIES.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_STUDIES.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_LOCATIONS.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_LOCATIONS.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_MEASURED_VARIABLES.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_MEASURED_VARIABLES.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_PROGRAMS.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_PROGRAMS.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REINDEX_TREATMENTS.npt_name_s) == 0)
-		{
-			*pt_p = S_REINDEX_TREATMENTS.npt_type;
-		}
-	else if (strcmp (param_name_s, S_CACHE_CLEAR.npt_name_s) == 0)
-		{
-			*pt_p = S_CACHE_CLEAR.npt_type;
-		}
-	else if (strcmp (param_name_s, S_CACHE_LIST.npt_name_s) == 0)
-		{
-			*pt_p = S_CACHE_LIST.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REMOVE_STUDY_PLOTS.npt_name_s) == 0)
-		{
-			*pt_p = S_REMOVE_STUDY_PLOTS.npt_type;
-		}
-	else if (strcmp (param_name_s, S_GENERATE_FD_PACKAGES.npt_name_s) == 0)
-		{
-			*pt_p = S_GENERATE_FD_PACKAGES.npt_type;
-		}
-	else if (strcmp (param_name_s, S_REMOVE_STUDIES.npt_name_s) == 0)
-		{
-			*pt_p = S_REMOVE_STUDIES.npt_type;	
-		}			
-	else if (strcmp (param_name_s, S_GENERATE_HANDBOOK.npt_name_s) == 0)
-		{
-			*pt_p = S_GENERATE_HANDBOOK.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
-
-	return success_flag;
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 
@@ -1279,7 +1258,10 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																										{
 																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_GENERATE_HANDBOOK.npt_type, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate Handbook", NULL, PL_ALL)) != NULL)
 																												{
-																													return params_p;
+																													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_UPDATE_SCALE_TERMS.npt_name_s, "Update Scale classes", "Update Scale classes", &b, PL_ALL)) != NULL)
+																														{
+																															return params_p;
+																														}
 																												}
 																										}		
 																								}

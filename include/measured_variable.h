@@ -51,8 +51,6 @@ typedef struct MeasuredVariable
 
 	char *mv_internal_name_s;
 
-	COScaleClass *mv_scale_class_p;
-
 } MeasuredVariable;
 
 

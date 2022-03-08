@@ -30,7 +30,8 @@
 #include "mongodb_tool.h"
 #include "parameter.h"
 
-
+#include "operation.h"
+#include "dfw_field_trial_service_data.h"
 
 typedef enum
 {

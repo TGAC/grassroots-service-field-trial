@@ -97,6 +97,16 @@
  * static declarations
  */
 
+typedef struct
+{
+	FieldTrialServiceData *cotd_service_data_p;
+	CurlTool *cotd_curl_p;
+	json_t *cotd_query_p;
+	char *cotd_query_key_s;
+} COToolData;
+
+
+
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
 
@@ -107,6 +117,12 @@ static const COScaleClass S_SCALE_CODE = { "Code", PT_STRING };
 static const COScaleClass S_SCALE_ORDINAL = { "Ordinal", PT_STRING };
 static const COScaleClass S_SCALE_TEXT = { "Text", PT_STRING };
 static const COScaleClass S_SCALE_DATE = { "Date", PT_TIME };
+
+
+static const char * const S_SCALE_CLASS_NAME_S = "unit.class_name";
+static const char * const S_SCALE_CLASS_TYPE_S = "unit.class_type";
+
+
 
 
 static char *GetTermEnglishValue (const json_t *entry_p);
@@ -120,10 +136,9 @@ static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const 
 
 static const COScaleClass *GetScaleDatatype (const json_t *document_p);
 
-static bool SetUnitDatatypes (const bson_t *document_p, void *data_p);
-
 static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p);
 
+static bool UpdateScaleTerms (const bson_t *document_p, void *data_p);
 
 
 /*
@@ -717,8 +732,7 @@ COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
 	return class_p;
 }
 
-static const char * const S_SCALE_CLASS_NAME_S = "class_name";
-static const char * const S_SCALE_CLASS_TYPE_S = "class_type";
+
 
 
 json_t *GetScaleClassAsJSON (const COScaleClass *class_p)
@@ -744,20 +758,9 @@ json_t *GetScaleClassAsJSON (const COScaleClass *class_p)
 }
 
 
-
-
-
-typedef struct
-{
-	FieldTrialServiceData *cotd_service_data_p;
-	CurlTool *cotd_curl_p;
-	json_t *cotd_query_p;
-	char *cotd_query_key_s;
-} COToolData;
-
-
 OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	CurlTool *curl_tool_p = AllocateCurlTool (CM_MEMORY);
 
 	if (curl_tool_p)
@@ -773,7 +776,10 @@ OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p)
 					tool_data.cotd_curl_p = curl_tool_p;
 					tool_data.cotd_query_key_s = "variable.so:sameAs";
 
-					ProcessMongoResults (data_p -> dftsd_mongo_p, NULL, NULL, UpdateScaleTerms, &tool_data);
+					if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
+						{
+							status = ProcessMongoResults (data_p -> dftsd_mongo_p, NULL, NULL, UpdateScaleTerms, &tool_data);
+						}
 
 					json_decref (query_p);
 				}
@@ -781,11 +787,13 @@ OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p)
 			FreeCurlTool (curl_tool_p);
 		}
 
+	return status;
 }
 
 
-static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
+static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
 {
+	bool success_flag = false;
 	json_t *mv_json_p = ConvertBSONToJSON (document_p);
 
 	if (mv_json_p)
@@ -800,7 +808,7 @@ static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
 					if (var_url_s)
 						{
 							/* All crop ontology variables begin with CO: */
-							if (DoesStringStartWith (var_url_s, "CO:"))
+							if (DoesStringStartWith (var_url_s, "CO_"))
 								{
 									const COScaleClass *scale_class_p = GetScaleClass (var_url_s, tool_data_p -> cotd_curl_p);
 
@@ -809,13 +817,13 @@ static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
 											/* update the variable in the db */
 											json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
 
-											if (scale_class_json_p);
+											if (scale_class_json_p)
 												{
 													if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_url_s))
 														{
-															if (!UpdateMongoDocumentByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
+															if (UpdateMongoDocumentByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
 																{
-
+																	success_flag = true;
 																}
 														}
 
@@ -831,6 +839,8 @@ static void UpdateScaleTerms (const bson_t *document_p, void *data_p)
 
 			json_decref (mv_json_p);
 		}
+
+	return success_flag;
 }
 
 
@@ -856,7 +866,11 @@ static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *
 		{
 			if (SetUriForCurlTool (curl_p, url_s))
 				{
-					CURLcode res = RunCurlTool (curl_p);
+					CURLcode res;
+
+					ClearCurlToolData (curl_p);
+
+					res = RunCurlTool (curl_p);
 
 					if (res == CURLE_OK)
 						{
@@ -925,29 +939,29 @@ static const COScaleClass *GetScaleDatatype (const json_t *document_p)
 
 					if (dt_s)
 						{
-							const COScaleClass SCALES_P [] =
+							const COScaleClass *SCALES_PP [] =
 							{
-								S_SCALE_DURATION,
-								S_SCALE_NOMINAL,
-								S_SCALE_NUMERICAL,
-								S_SCALE_CODE,
-								S_SCALE_ORDINAL,
-								S_SCALE_TEXT,
-								S_SCALE_DATE,
+								&S_SCALE_DURATION,
+								&S_SCALE_NOMINAL,
+								&S_SCALE_NUMERICAL,
+								&S_SCALE_CODE,
+								&S_SCALE_ORDINAL,
+								&S_SCALE_TEXT,
+								&S_SCALE_DATE,
 								NULL
 							};
 
-							const COScaleClass *class_p = SCALES_P;
+							const COScaleClass **class_pp = SCALES_PP;
 
-							while (class_p)
+							while (*class_pp)
 								{
-									if (strcmp (dt_s, class_p -> cosc_name_s) == 0)
+									if (strcmp (dt_s, (*class_pp) -> cosc_name_s) == 0)
 										{
-											return class_p;
+											return *class_pp;
 										}
 									else
 										{
-											++ class_p;
+											++ class_pp;
 										}
 								}
 						}
