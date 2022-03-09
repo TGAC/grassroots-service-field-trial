@@ -110,15 +110,6 @@ typedef struct
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
 
-static const COScaleClass S_SCALE_DURATION = { "Duration", PT_TIME };
-static const COScaleClass S_SCALE_NOMINAL = { "Nominal", PT_STRING };
-static const COScaleClass S_SCALE_NUMERICAL = { "Numerical", PT_SIGNED_REAL };
-static const COScaleClass S_SCALE_CODE = { "Code", PT_STRING };
-static const COScaleClass S_SCALE_ORDINAL = { "Ordinal", PT_STRING };
-static const COScaleClass S_SCALE_TEXT = { "Text", PT_STRING };
-static const COScaleClass S_SCALE_DATE = { "Date", PT_TIME };
-
-
 static const char * const S_SCALE_CLASS_NAME_S = "unit.class_name";
 static const char * const S_SCALE_CLASS_TYPE_S = "unit.class_type";
 
@@ -821,7 +812,7 @@ static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
 												{
 													if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_url_s))
 														{
-															if (UpdateMongoDocumentByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
+															if (UpdateMongoDocumentsByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p, false))
 																{
 																	success_flag = true;
 																}
@@ -842,6 +833,9 @@ static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
 
 	return success_flag;
 }
+
+
+
 
 
 
@@ -939,31 +933,7 @@ static const COScaleClass *GetScaleDatatype (const json_t *document_p)
 
 					if (dt_s)
 						{
-							const COScaleClass *SCALES_PP [] =
-							{
-								&S_SCALE_DURATION,
-								&S_SCALE_NOMINAL,
-								&S_SCALE_NUMERICAL,
-								&S_SCALE_CODE,
-								&S_SCALE_ORDINAL,
-								&S_SCALE_TEXT,
-								&S_SCALE_DATE,
-								NULL
-							};
-
-							const COScaleClass **class_pp = SCALES_PP;
-
-							while (*class_pp)
-								{
-									if (strcmp (dt_s, (*class_pp) -> cosc_name_s) == 0)
-										{
-											return *class_pp;
-										}
-									else
-										{
-											++ class_pp;
-										}
-								}
+							return GetScaleClassByName (dt_s);
 						}
 
 				}
@@ -972,4 +942,36 @@ static const COScaleClass *GetScaleDatatype (const json_t *document_p)
 	return NULL;
 }
 
+
+
+const COScaleClass *GetScaleClassByName (const char * const name_s)
+{
+	const COScaleClass *SCALES_PP [] =
+	{
+		&SCALE_DURATION,
+		&SCALE_NOMINAL,
+		&SCALE_NUMERICAL,
+		&SCALE_CODE,
+		&SCALE_ORDINAL,
+		&SCALE_TEXT,
+		&SCALE_DATE,
+		NULL
+	};
+
+	const COScaleClass **class_pp = SCALES_PP;
+
+	while (*class_pp)
+		{
+			if (strcmp (name_s, (*class_pp) -> cosc_name_s) == 0)
+				{
+					return *class_pp;
+				}
+			else
+				{
+					++ class_pp;
+				}
+		}
+
+	return NULL;
+}
 

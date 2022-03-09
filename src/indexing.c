@@ -68,6 +68,14 @@
 #include "crop_ontology_tool.h"
 
 
+typedef struct
+{
+	FieldTrialServiceData *cotd_service_data_p;
+	json_t *cotd_query_p;
+	char *cotd_query_key_s;
+} RResTermUpdateData;
+
+
 /*
  * Static declarations
  */
@@ -100,6 +108,8 @@ static NamedParameterType S_GENERATE_FD_PACKAGES = { "SS Generate FD Packages", 
 static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_STRING };
 static NamedParameterType S_GENERATE_HANDBOOK = { "SS Generate Handbook", PT_STRING };
 static NamedParameterType S_UPDATE_SCALE_TERMS = { "SS Update Scale Classes", PT_BOOLEAN };
+
+static NamedParameterType S_ROTHAMSTED_TERMS = ("SS Roth Upload", PT_JSON_TABLE);
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
@@ -364,28 +374,6 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 									done_flag = true;
 								}
 						}
-
-
-
-					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_UPDATE_SCALE_TERMS.npt_name_s, &index_flag_p))
-						{
-							if ((index_flag_p != NULL) && (*index_flag_p == true))
-								{
-									OperationStatus s = StoreAllScaleUnits (data_p);
-
-									if (s == OS_SUCCEEDED)
-										{
-											++ num_succeeded;
-										}
-
-									++ num_attempted;
-
-									update_flag = true;
-									done_flag = true;
-								}
-						}
-
-
 
 					FreeLuceneTool (lucene_p);
 				}		/* if (lucene_p) */
@@ -1057,6 +1045,9 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 			if (param_set_p)
 				{
 					const char *id_s = NULL;
+					bool run_flag = false;
+					bool *run_flag_p = &run_flag;
+					json_t *terms_p = NULL;
 
 					RunReindexing (param_set_p, job_p, data_p);
 
@@ -1181,12 +1172,113 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 							MergeServiceJobStatus (job_p, plot_status);
 						}		/* if (id_s) */
 
+
+
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_UPDATE_SCALE_TERMS.npt_name_s, &run_flag_p))
+						{
+							if ((run_flag_p != NULL) && (*run_flag_p == true))
+								{
+									OperationStatus s = StoreAllScaleUnits (data_p);
+
+									MergeServiceJobStatus (job_p, s);
+								}
+						}
+
+					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_ROTHAMSTED_TERMS.npt_name_s, (const json_t **) &terms_p))
+						{
+							if (terms_p)
+								{
+									const size_t num_rows = json_array_size (terms_p);
+
+
+									if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
+										{
+											bson_t *query_p = bson_new ();
+
+											if (query_p)
+												{
+													size_t i;
+													json_t *row_p;
+
+													json_array_for_each (terms_p, i, row_p)
+														{
+															const char *unit_id_s = GetJSONString (row_p, "unit-id");
+
+															if (unit_id_s)
+																{
+																	const char *scale_class_s = GetJSONString (row_p, "scale class");
+
+																	if (scale_class_s)
+																		{
+																			const COScaleClass *class_p = GetScaleClassByName (scale_class_s);
+
+																			if (class_p)
+																				{
+																					if (BSON_APPEND_UTF8 (query_p, "unit.so:sameAs", unit_id_s))
+																						{
+
+																						}
+																				}
+																		}
+																}
+														}
+
+													bson_destroy (query_p);
+												}
+
+										}
+
+								}
+						}
+
 				}
 
 		}
 
 	return service_p -> se_jobs_p;
 }
+
+
+static bool UpdateRResScaleTerms (const bson_t *document_p, void *data_p)
+{
+	bool success_flag = false;
+	json_t *mv_json_p = ConvertBSONToJSON (document_p);
+
+	if (mv_json_p)
+		{
+			COToolData *tool_data_p = (COToolData *) data_p;
+
+			if (scale_class_p)
+				{
+					/* update the variable in the db */
+					json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
+
+					if (scale_class_json_p)
+						{
+							if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_url_s))
+								{
+									if (UpdateMongoDocumentsByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
+										{
+											success_flag = true;
+										}
+								}
+
+							json_decref (scale_class_json_p);
+						}
+				}
+		}
+
+						}
+
+					FreeMeasuredVariable (var_p);
+				}
+
+			json_decref (mv_json_p);
+		}
+
+	return success_flag;
+}
+
 
 
 static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PARAM (service_p), const char *param_name_s, ParameterType *pt_p)
@@ -1208,6 +1300,7 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 			S_REMOVE_STUDIES,
 			S_GENERATE_HANDBOOK,
 			S_UPDATE_SCALE_TERMS,
+			S_ROTHAMSTED_TERMS,
 			NULL
 		};
 
@@ -1258,9 +1351,12 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																										{
 																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, caching_group_p, S_GENERATE_HANDBOOK.npt_type, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate Handbook", NULL, PL_ALL)) != NULL)
 																												{
-																													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, indexing_group_p, S_UPDATE_SCALE_TERMS.npt_name_s, "Update Scale classes", "Update Scale classes", &b, PL_ALL)) != NULL)
+																													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, manager_group_p, S_UPDATE_SCALE_TERMS.npt_name_s, "Update Scale classes", "Update Scale classes", &b, PL_ALL)) != NULL)
 																														{
-																															return params_p;
+																															if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, manager_group_p, S_ROTHAMSTED_TERMS.npt_type, S_ROTHAMSTED_TERMS.npt_name_s, "Update RRes Scale terms", "Update RRes Scale terms", NULL, PL_ALL)) != NULL)
+																																{
+																																	return params_p;
+																																}
 																														}
 																												}
 																										}		

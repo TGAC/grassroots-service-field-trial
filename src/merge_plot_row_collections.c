@@ -108,7 +108,7 @@ int main (void)
 
 																															if (SetMongoToolCollection (mongo_p, DFT_PLOT_S))
 																																{
-																																	if (UpdateMongoDocument (mongo_p, plot_id_p, update_p))
+																																	if (UpdateMongoDocuments (mongo_p, plot_id_p, update_p, false))
 																																		{
 																																			success_flag = true;
 																																		}
