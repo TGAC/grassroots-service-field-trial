@@ -35,6 +35,7 @@
 #include "audit.h"
 
 #include "boolean_parameter.h"
+#include "json_parameter.h"
 #include "string_utils.h"
 #include "math_utils.h"
 #include "time_util.h"
@@ -66,14 +67,6 @@
 #include "dfw_field_trial_service_data.h"
 #include "handbook_generator.h"
 #include "crop_ontology_tool.h"
-
-
-typedef struct
-{
-	FieldTrialServiceData *cotd_service_data_p;
-	json_t *cotd_query_p;
-	char *cotd_query_key_s;
-} RResTermUpdateData;
 
 
 /*
@@ -109,7 +102,7 @@ static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SS Remove Study Plots", PT_S
 static NamedParameterType S_GENERATE_HANDBOOK = { "SS Generate Handbook", PT_STRING };
 static NamedParameterType S_UPDATE_SCALE_TERMS = { "SS Update Scale Classes", PT_BOOLEAN };
 
-static NamedParameterType S_ROTHAMSTED_TERMS = ("SS Roth Upload", PT_JSON_TABLE);
+static NamedParameterType S_ROTHAMSTED_TERMS = { "SS Roth Upload", PT_JSON_TABLE };
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
@@ -151,6 +144,8 @@ static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s,
 
 static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, FieldTrialServiceData *data_p);
 
+
+static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -1190,42 +1185,11 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 								{
 									const size_t num_rows = json_array_size (terms_p);
 
-
-									if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
+									if (num_rows > 0)
 										{
-											bson_t *query_p = bson_new ();
+											OperationStatus s = StoreAllRResScaleUnits (terms_p, data_p);
 
-											if (query_p)
-												{
-													size_t i;
-													json_t *row_p;
-
-													json_array_for_each (terms_p, i, row_p)
-														{
-															const char *unit_id_s = GetJSONString (row_p, "unit-id");
-
-															if (unit_id_s)
-																{
-																	const char *scale_class_s = GetJSONString (row_p, "scale class");
-
-																	if (scale_class_s)
-																		{
-																			const COScaleClass *class_p = GetScaleClassByName (scale_class_s);
-
-																			if (class_p)
-																				{
-																					if (BSON_APPEND_UTF8 (query_p, "unit.so:sameAs", unit_id_s))
-																						{
-
-																						}
-																				}
-																		}
-																}
-														}
-
-													bson_destroy (query_p);
-												}
-
+											MergeServiceJobStatus (job_p, s);
 										}
 
 								}
@@ -1239,46 +1203,110 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 }
 
 
-static bool UpdateRResScaleTerms (const bson_t *document_p, void *data_p)
+static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-	json_t *mv_json_p = ConvertBSONToJSON (document_p);
+	OperationStatus status = OS_FAILED;
 
-	if (mv_json_p)
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 		{
-			COToolData *tool_data_p = (COToolData *) data_p;
+			bson_t *query_p = bson_new ();
 
-			if (scale_class_p)
+			if (query_p)
 				{
-					/* update the variable in the db */
-					json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
+					size_t i;
+					json_t *row_p;
+					size_t num_succeeded = 0;
+					const size_t num_terms = json_array_size (terms_p);
 
-					if (scale_class_json_p)
+					json_array_foreach (terms_p, i, row_p)
 						{
-							if (SetJSONString (tool_data_p -> cotd_query_p, tool_data_p -> cotd_query_key_s, var_url_s))
+							const char *unit_id_s = GetJSONString (row_p, "unit-id");
+
+							if (unit_id_s)
 								{
-									if (UpdateMongoDocumentsByJSON (tool_data_p -> cotd_service_data_p -> dftsd_mongo_p, tool_data_p -> cotd_query_p, scale_class_json_p))
+									const char *scale_class_s = GetJSONString (row_p, "scale class");
+
+									if (scale_class_s)
 										{
-											success_flag = true;
+											const COScaleClass *scale_class_p = GetScaleClassByName (scale_class_s);
+
+											if (scale_class_p)
+												{
+													json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
+
+													if (scale_class_json_p)
+														{
+															const char * const key_s = "unit.so:sameAs";
+
+															if (BSON_APPEND_UTF8 (query_p, key_s, unit_id_s))
+																{
+																	if (UpdateMongoDocumentsByBSON (data_p -> dftsd_mongo_p, query_p, scale_class_json_p, true))
+																		{
+																			++ num_succeeded;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_class_json_p, "UpdateMongoDocumentsByBSON () failed for query \"%s\: \"%s\"", key_s, unit_id_s);
+																		}
+
+																	bson_init (query_p);
+																}		/* if (BSON_APPEND_UTF8 (query_p, "unit.so:sameAs", unit_id_s)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_class_json_p, "BSON_APPEND_UTF8 () failed for query \"%s\: \"%s\"", key_s, unit_id_s);
+																}
+
+															json_decref (scale_class_json_p);
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetScaleClassAsJSON () failed for \"%s\"", scale_class_p -> cosc_name_s);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetScaleClassByName () failed for \"%s\"", scale_class_s);
+												}
+
+										}		/* if (scale_class_s) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_p, "No scale class specified");
 										}
+
+								}		/* if (unit_id_s) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_p, "No unit id specified");
 								}
 
-							json_decref (scale_class_json_p);
+						}		/* json_array_foreach (terms_p, i, row_p) */
+
+
+					if (num_succeeded == num_terms)
+						{
+							status = OS_SUCCEEDED;
 						}
+					else if (num_succeeded > 0)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set allocate query");
 				}
 		}
-
-						}
-
-					FreeMeasuredVariable (var_p);
-				}
-
-			json_decref (mv_json_p);
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set Mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]);
 		}
 
-	return success_flag;
+
+	return status;
 }
-
 
 
 static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PARAM (service_p), const char *param_name_s, ParameterType *pt_p)
@@ -1306,8 +1334,6 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
-
-
 
 
 static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
@@ -1355,6 +1381,8 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																														{
 																															if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, manager_group_p, S_ROTHAMSTED_TERMS.npt_type, S_ROTHAMSTED_TERMS.npt_name_s, "Update RRes Scale terms", "Update RRes Scale terms", NULL, PL_ALL)) != NULL)
 																																{
+																																	AddParameterKeyStringValuePair (param_p, PA_TABLE_ADD_COLUMNS_FLAG_S, "true");
+
 																																	return params_p;
 																																}
 																														}

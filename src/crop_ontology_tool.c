@@ -83,6 +83,7 @@
 
 #include <string.h>
 
+#define ALLOCATE_CROP_ONTOLOGY_CONSTANTS (1)
 #include "crop_ontology_tool.h"
 #include "measured_variable.h"
 #include "curl_tools.h"
@@ -96,15 +97,6 @@
 /*
  * static declarations
  */
-
-typedef struct
-{
-	FieldTrialServiceData *cotd_service_data_p;
-	CurlTool *cotd_curl_p;
-	json_t *cotd_query_p;
-	char *cotd_query_key_s;
-} COToolData;
-
 
 
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
