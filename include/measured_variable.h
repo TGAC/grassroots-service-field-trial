@@ -35,6 +35,19 @@
 #include "crop_ontology_tool.h"
 
 
+
+/* forward declaration */
+struct COScaleClass;
+
+
+typedef struct UnitTerm
+{
+	SchemaTerm ut_base_term;
+
+	const struct COScaleClass *ut_scale_class_p;
+};
+
+
 typedef struct MeasuredVariable
 {
 	bson_oid_t *mv_id_p;
@@ -127,6 +140,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetMeasuredVariableURL (const Measured
 DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariableNode *AllocateMeasuredVariableNode (MeasuredVariable *variable_p, MEM_FLAG mv_mem);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariableNode (ListItem *node_p);
+
 
 #ifdef __cplusplus
 }

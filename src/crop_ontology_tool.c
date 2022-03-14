@@ -94,6 +94,18 @@
 #include "json_util.h"
 #include "nominal_scale_class.h"
 
+
+typedef struct
+{
+	FieldTrialServiceData *cotd_service_data_p;
+	CurlTool *cotd_curl_p;
+	json_t *cotd_query_p;
+	char *cotd_query_key_s;
+} COToolData;
+
+
+
+
 /*
  * static declarations
  */

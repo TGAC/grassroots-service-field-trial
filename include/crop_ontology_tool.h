@@ -94,62 +94,6 @@ typedef struct COScaleClass
 
 
 
-
-
-typedef struct COTerm
-{
-	TermType cot_type;
-
-	char *cot_name_s;
-
-	char *cot_url_s;
-
-} COTerm;
-
-typedef struct COTraitTerm
-{
-	COTerm cott_term;
-
-	char *cott_description_s;
-
-	char *cott_abbreviation_s;
-
-} COTraitTerm;
-
-
-typedef struct COMethodTerm
-{
-	COTerm comt_term;
-
-	char *comt_description_s;
-
-} COMethodTerm;
-
-
-typedef struct COUnitTerm
-{
-	COTerm cout_term;
-
-	COScaleClass *cout_class_p;
-
-
-} COUnitTerm;
-
-
-
-typedef struct
-{
-	FieldTrialServiceData *cotd_service_data_p;
-	CurlTool *cotd_curl_p;
-	json_t *cotd_query_p;
-	char *cotd_query_key_s;
-} COToolData;
-
-
-
-
-
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef ALLOCATE_CROP_ONTOLOGY_CONSTANTS

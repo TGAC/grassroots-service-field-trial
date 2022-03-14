@@ -792,23 +792,23 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 			json_t *row_json_p;
 
 			json_array_foreach (rows_array_p, i, row_json_p)
-			{
-				Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, study_p, true, data_p);
+				{
+					Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, study_p, true, data_p);
 
-				if (row_p)
-					{
-						if (AddRowToPlot (plot_p, row_p))
-							{
-								success_flag = true;
-							}
-						else
-							{
-								FreeRow (row_p);
-							}
+					if (row_p)
+						{
+							if (AddRowToPlot (plot_p, row_p))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									FreeRow (row_p);
+								}
 
-					}		/* if (row_p) */
+						}		/* if (row_p) */
 
-			}		/* json_array_foreach (results_p, i, entry_p) */
+				}		/* json_array_foreach (results_p, i, entry_p) */
 
 		}		/* if (num_results > 0) */
 	else

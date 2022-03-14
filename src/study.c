@@ -765,25 +765,25 @@ bool GetStudyPlots (Study *study_p, FieldTrialServiceData *data_p)
 													json_t *plot_json_p;
 
 													json_array_foreach (results_p, i, plot_json_p)
-													{
-														Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
+														{
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
 
-														if (plot_p)
-															{
-																PlotNode *node_p = AllocatePlotNode (plot_p);
+															if (plot_p)
+																{
+																	PlotNode *node_p = AllocatePlotNode (plot_p);
 
-																if (node_p)
-																	{
-																		LinkedListAddTail (study_p -> st_plots_p, & (node_p -> pn_node));
-																	}
-																else
-																	{
-																		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add plot to experimental area's list");
-																		FreePlot (plot_p);
-																	}
-															}
+																	if (node_p)
+																		{
+																			LinkedListAddTail (study_p -> st_plots_p, & (node_p -> pn_node));
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add plot to experimental area's list");
+																			FreePlot (plot_p);
+																		}
+																}
 
-													}		/* json_array_foreach (results_p, i, entry_p) */
+														}		/* json_array_foreach (results_p, i, entry_p) */
 
 												}		/* if (num_results > 0) */
 
