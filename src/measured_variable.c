@@ -42,6 +42,74 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, const char *child_key_s, const char *child_value_s);
 
 
+static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p);
+
+static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p, const ViewFormat format);
+
+static const char * const S_UNIT_SCALE_S = "scale";
+
+
+static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p, const ViewFormat format)
+{
+	json_t *term_p = json_object ();
+
+	if (term_p)
+		{
+			if (AddSchemaTermToJSON (term_p, & (unit_p -> ut_base_term)))
+				{
+					bool success_flag = false;
+
+					if (unit_p -> ut_scale_class_p)
+						{
+							json_t *class_p = GetScaleClassAsJSON (unit_p -> ut_scale_class_p);
+
+							if (class_p)
+								{
+									if (json_object_set_new (term_p, S_UNIT_SCALE_S, class_p) == 0)
+										{
+											success_flag = true;
+										}
+									else
+										{
+											json_decref (class_p);
+										}
+								}
+						}
+					else
+						{
+							success_flag = true;
+						}
+
+					if (success_flag)
+						{
+							return term_p;
+						}
+				}
+
+			json_decref (term_p);
+		}
+
+	return NULL;
+}
+
+
+static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p)
+{
+	UnitTerm *unit_p = (UnitTerm *) AllocMemory (sizeof (UnitTerm));
+
+	if (unit_p)
+		{
+			if (SetSchemaTermValues (& (unit_p -> ut_base_term), const char *url_s, const char *name_s, const char *description_s))
+				{
+
+				}
+
+		}
+
+}
+
+
+
 /*
  * API definitions
  */

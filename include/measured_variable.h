@@ -45,7 +45,7 @@ typedef struct UnitTerm
 	SchemaTerm ut_base_term;
 
 	const struct COScaleClass *ut_scale_class_p;
-};
+} UnitTerm;
 
 
 typedef struct MeasuredVariable
@@ -58,7 +58,7 @@ typedef struct MeasuredVariable
 
 	SchemaTerm *mv_measurement_term_p;
 
-	SchemaTerm *mv_unit_term_p;
+	UnitTerm *mv_unit_term_p;
 
 	SchemaTerm *mv_form_term_p;
 
@@ -141,6 +141,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariableNode *AllocateMeasuredVariableNode
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariableNode (ListItem *node_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL struct COScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p);
 
 #ifdef __cplusplus
 }
