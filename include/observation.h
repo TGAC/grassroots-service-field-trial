@@ -45,19 +45,9 @@ typedef enum ObservationNature
  *
  * @ingroup field_trials_service
  */
-typedef struct Observation
+typedef struct BaseObservation
 {
 	bson_oid_t *ob_id_p;
-
-	/**
-	 * The raw phenotypic value for this Observation.
-	 */
-	char *ob_raw_value_s;
-
-	/**
-	 * The corrected phenotypic value for this Observation.
-	 */
-	char *ob_corrected_value_s;
 
 	/**
 	 * The date and time when the measuring for this Observation was started.
@@ -101,7 +91,57 @@ typedef struct Observation
 	 */
 	uint32 ob_index;
 
-} Observation;
+	ParameterType ob_datatype;
+
+} BaseObservation;
+
+
+/**
+ * A datatype for storing a phneotypic observation within
+ * an experiment.
+ *
+ * @ingroup field_trials_service
+ */
+typedef struct NumericObservation
+{
+	BaseObservation no_base_observation;
+
+	/**
+	 * The raw phenotypic value for this Observation.
+	 */
+	double64 *no_raw_value_p;
+
+	/**
+	 * The corrected phenotypic value for this Observation.
+	 */
+	double64 *no_corrected_value_p;
+
+
+} NumericObservation;
+
+
+/**
+ * A datatype for storing a phneotypic observation within
+ * an experiment.
+ *
+ * @ingroup field_trials_service
+ */
+typedef struct TextObservation
+{
+	BaseObservation to_base_observation;
+
+	/**
+	 * The raw phenotypic value for this Observation.
+	 */
+	char *to_raw_value_s;
+
+	/**
+	 * The corrected phenotypic value for this Observation.
+	 */
+	char *to_corrected_value_s;
+
+
+} TextObservation;
 
 
 typedef struct ObservationNode
