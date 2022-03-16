@@ -27,7 +27,7 @@
 
 typedef struct NominalCOScaleClass
 {
-	COScaleClass cons_base;
+	ScaleClass cons_base;
 
 	size_t cons_num_categories;
 	char **cons_categories_ss;

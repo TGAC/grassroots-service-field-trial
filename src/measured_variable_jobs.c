@@ -458,7 +458,7 @@ char *GetMeasuredVariableAsString (const MeasuredVariable *treatment_p)
 						{
 							if (treatment_p -> mv_unit_term_p)
 								{
-									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> mv_unit_term_p -> st_name_s, NULL);
+									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> mv_unit_term_p -> ut_base_term.st_name_s, NULL);
 								}
 						}
 
@@ -930,7 +930,7 @@ bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const FieldTrialS
 
 	if ((treatment_p -> mv_trait_term_p) && (treatment_p -> mv_measurement_term_p) && (treatment_p -> mv_unit_term_p))
 		{
-			MeasuredVariable *saved_treatment_p = GetMeasuredVariableBySchemaURLs (treatment_p -> mv_trait_term_p -> st_url_s, treatment_p -> mv_measurement_term_p -> st_url_s, treatment_p -> mv_unit_term_p -> st_url_s, data_p);
+			MeasuredVariable *saved_treatment_p = GetMeasuredVariableBySchemaURLs (treatment_p -> mv_trait_term_p -> st_url_s, treatment_p -> mv_measurement_term_p -> st_url_s, treatment_p -> mv_unit_term_p -> ut_base_term.st_url_s, data_p);
 
 			if (saved_treatment_p)
 				{

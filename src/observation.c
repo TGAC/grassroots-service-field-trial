@@ -42,6 +42,8 @@
 #include "string_utils.h"
 #include "dfw_util.h"
 
+#include "numeric_observation.h"
+
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
 
@@ -62,130 +64,160 @@ static bool CompareObservationDates (const struct tm * const time_0_p, const str
  */
 
 
-Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char *raw_value_s, const char *corrected_value_s,
+
+
+bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
 {
+	struct tm *copied_start_date_p = NULL;
 
-	if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s)))
+	if (CopyValidDate (start_date_p, &copied_start_date_p))
 		{
-			struct tm *copied_start_date_p = NULL;
+			struct tm *copied_end_date_p = NULL;
 
-			if (CopyValidDate (start_date_p, &copied_start_date_p))
+			if (CopyValidDate (end_date_p, &copied_end_date_p))
 				{
-					struct tm *copied_end_date_p = NULL;
+					char *copied_growth_stage_s = NULL;
 
-					if (CopyValidDate (end_date_p, &copied_end_date_p))
+					if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
 						{
-							char *copied_raw_value_s = NULL;
+							char *copied_method_s = NULL;
 
-							if ((IsStringEmpty (raw_value_s)) || ((copied_raw_value_s = EasyCopyToNewString (raw_value_s)) != NULL))
+							if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
 								{
-									char *copied_corrected_value_s = NULL;
+									observation_p -> ob_id_p = id_p;
+									observation_p -> ob_phenotype_p = phenotype_p;
+									observation_p -> ob_phenotype_mem = phenotype_mem;
+									observation_p -> ob_start_date_p = copied_start_date_p;
+									observation_p -> ob_end_date_p = copied_end_date_p;
+									observation_p -> ob_instrument_p = instrument_p;
+									observation_p -> ob_growth_stage_s = copied_growth_stage_s;
+									observation_p -> ob_method_s = copied_method_s;
+									observation_p -> ob_nature = nature;
 
-									if ((IsStringEmpty (corrected_value_s)) || ((copied_corrected_value_s = EasyCopyToNewString (corrected_value_s)) != NULL))
+									if (index_p)
 										{
-											char *copied_growth_stage_s = NULL;
-
-											if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
-												{
-													char *copied_method_s = NULL;
-
-													if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
-														{
-															Observation *observation_p = (Observation *) AllocMemory (sizeof (Observation));
-
-															if (observation_p)
-																{
-																	observation_p -> ob_id_p = id_p;
-																	observation_p -> ob_phenotype_p = phenotype_p;
-																	observation_p -> ob_phenotype_mem = phenotype_mem;
-																	observation_p -> ob_raw_value_s = copied_raw_value_s;
-																	observation_p -> ob_start_date_p = copied_start_date_p;
-																	observation_p -> ob_end_date_p = copied_end_date_p;
-																	observation_p -> ob_instrument_p = instrument_p;
-																	observation_p -> ob_growth_stage_s = copied_growth_stage_s;
-																	observation_p -> ob_corrected_value_s = copied_corrected_value_s;
-																	observation_p -> ob_method_s = copied_method_s;
-																	observation_p -> ob_type = nature;
-
-																	if (index_p)
-																		{
-																			observation_p -> ob_index = *index_p;
-																		}
-																	else
-																		{
-																			observation_p -> ob_index = OB_DEFAULT_INDEX;
-																		}
-
-																	return observation_p;
-																}		/* if (observation_p) */
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation");
-																}
-
-															if (copied_method_s)
-																{
-																	FreeCopiedString (copied_method_s);
-																}
-
-														}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
-														}
-
-													if (copied_growth_stage_s)
-														{
-															FreeCopiedString (copied_growth_stage_s);
-														}
-
-												}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
-												}
-
-											FreeCopiedString (copied_corrected_value_s);
-										}		/* if ((IsStringEmpty (corrected_value_s)) || ((copied_corrected_value_s = EasyCopyToNewString (corrected_value_s)) != NULL)) */
+											observation_p -> ob_index = *index_p;
+										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy corrected value \"%s\"", corrected_value_s);
+											observation_p -> ob_index = OB_DEFAULT_INDEX;
 										}
 
-									FreeCopiedString (copied_raw_value_s);
-								}		/* if ((IsStringEmpty (raw_value_s)) || ((copied_raw_value_s = EasyCopyToNewString (raw_value_s)) != NULL)) */
+									return true;
+
+								}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy raw value \"%s\"", raw_value_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
 								}
 
-
-							if (copied_end_date_p)
+							if (copied_growth_stage_s)
 								{
-									FreeTime (copied_end_date_p);
-								}		/* if (copied_end_date_p) */
+									FreeCopiedString (copied_growth_stage_s);
+								}
 
-						}		/* if (CopyValidDate (end_date_p, &copied_end_date_p)) */
-
-					if (copied_start_date_p)
+						}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
+					else
 						{
-							FreeTime (copied_start_date_p);
-						}		/* if (copied_start_date_p) */
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
+						}
 
-				}		/* if (CopyValidDate (start_date_p, &copied_start_date_p)) */
+					if (copied_end_date_p)
+						{
+							FreeTime (copied_end_date_p);
+						}		/* if (copied_end_date_p) */
 
-		}		/* if ((!IsStringEmpty (raw_value_s)) || (!IsStringEmpty (corrected_value_s))) */
+				}		/* if (CopyValidDate (end_date_p, &copied_end_date_p)) */
+
+			if (copied_start_date_p)
+				{
+					FreeTime (copied_start_date_p);
+				}		/* if (copied_start_date_p) */
+
+		}		/* if (CopyValidDate (start_date_p, &copied_start_date_p)) */
+
+	return false;
+}
+
+
+Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
+{
+	Observation *observation_p = NULL;
+	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
+
+	if (class_p)
+		{
+			switch (class_p -> sc_type)
+				{
+					case PT_SIGNED_REAL:
+						{
+							double64 *raw_p = NULL;
+							double64 *corrected_p = NULL;
+							double64 raw_value = 0.0;
+							double64 corrected_value = 0.0;
+
+							if (raw_value_p)
+								{
+									if (json_is_number (raw_value_p))
+										{
+											raw_value = json_real_value (raw_value_p);
+											raw_p = &raw_value;
+										}
+								}
+
+							if (corrected_value_p)
+								{
+									if (json_is_number (corrected_value_p))
+										{
+											corrected_value = json_real_value (corrected_value_p);
+											corrected_p = &corrected_value;
+										}
+								}
+
+							if (raw_p || corrected_p)
+								{
+									NumericObservation *numeric_obs_p = AllocateNumericObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p);
+
+									if (numeric_obs_p)
+										{
+											observation_p = & (numeric_obs_p -> no_base_observation);
+										}
+								}
+						}
+						break;
+
+					default:
+						break;
+				}
+
+		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No valid measurements for Observation");
+
+		}
+
+	observation_p = (Observation *) AllocMemory (sizeof (Observation));
+
+	if (observation_p)
+		{
+			if (InitObservation (observation_p, id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p))
+				{
+					return observation_p;
+				}
+
+			FreeMemory (observation_p);
 		}
 
 	return NULL;
 }
 
 
-void FreeObservation (Observation *observation_p)
+
+
+
+void ClearObservation (Observation *observation_p)
 {
 	if (observation_p -> ob_id_p)
 		{
@@ -205,15 +237,6 @@ void FreeObservation (Observation *observation_p)
 			FreeCopiedString (observation_p -> ob_growth_stage_s);
 		}
 
-	if (observation_p -> ob_raw_value_s)
-		{
-			FreeCopiedString (observation_p -> ob_raw_value_s);
-		}
-
-	if (observation_p -> ob_corrected_value_s)
-		{
-			FreeCopiedString (observation_p -> ob_corrected_value_s);
-		}
 
 	if (observation_p -> ob_start_date_p)
 		{
@@ -231,6 +254,13 @@ void FreeObservation (Observation *observation_p)
 			FreeCopiedString (observation_p -> ob_method_s);
 		}
 
+}
+
+
+
+void FreeObservation (Observation *observation_p)
+{
+	ClearObservation (observation_p);
 
 	/*
 	 * Still need to deallocate the instrument
@@ -290,88 +320,88 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 														{
 															if (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))
 																{
-																			bool done_objects_flag = false;
+																	bool done_objects_flag = false;
 
-																			if (format == VF_CLIENT_FULL)
+																	if (format == VF_CLIENT_FULL)
+																		{
+																			bool done_instrument_flag = false;
+
+																			if (observation_p -> ob_instrument_p)
 																				{
-																					bool done_instrument_flag = false;
+																					json_t *instrument_json_p = GetInstrumentAsJSON (observation_p -> ob_instrument_p);
 
-																					if (observation_p -> ob_instrument_p)
+																					if (instrument_json_p)
 																						{
-																							json_t *instrument_json_p = GetInstrumentAsJSON (observation_p -> ob_instrument_p);
-
-																							if (instrument_json_p)
+																							if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0)
 																								{
-																									if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0)
-																										{
-																											done_instrument_flag = true;
-																										}		/* if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0) */
-																									else
-																										{
-																											json_decref (instrument_json_p);
-																										}
+																									done_instrument_flag = true;
+																								}		/* if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0) */
+																							else
+																								{
+																									json_decref (instrument_json_p);
 																								}
 																						}
-																					else
-																						{
-																							done_instrument_flag = true;
-																						}
+																				}
+																			else
+																				{
+																					done_instrument_flag = true;
+																				}
 
-																					if (done_instrument_flag)
-																						{
-																							json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
+																			if (done_instrument_flag)
+																				{
+																					json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
 
-																							if (phenotype_json_p)
+																					if (phenotype_json_p)
+																						{
+																							if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
 																								{
-																									if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
+																									done_objects_flag = true;
+																								}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
+																							else
+																								{
+																									json_decref (phenotype_json_p);
+																								}
+																						}
+																				}
+
+																		}		/* iif (format == VF_CLIENT_FULL) */
+																	else if (format == VF_STORAGE)
+																		{
+																			if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
+																				{
+																					if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
+																						{
+																							if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
+																								{
+																									if (AddObservationNatureToJSON (observation_p -> ob_nature, observation_json_p))
 																										{
 																											done_objects_flag = true;
-																										}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
+																										}
 																									else
 																										{
-																											json_decref (phenotype_json_p);
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_nature);
 																										}
 																								}
 																						}
 
-																				}		/* iif (format == VF_CLIENT_FULL) */
-																			else if (format == VF_STORAGE)
+																				}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
+																			else
 																				{
-																					if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
-																						{
-																							if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
-																								{
-																									if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
-																										{
-																											if (AddObservationNatureToJSON (observation_p -> ob_type, observation_json_p))
-																												{
-																													done_objects_flag = true;
-																												}
-																											else
-																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_type);
-																												}
-																										}
-																								}
+																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-																						}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
-																					else
-																						{
-																							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+																					bson_oid_to_string (observation_p -> ob_id_p, id_s);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
+																				}
+																		}
 
-																							bson_oid_to_string (observation_p -> ob_id_p, id_s);
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
-																						}
+																	if (done_objects_flag)
+																		{
+																			if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
+																				{
+																					return observation_json_p;
 																				}
 
-																			if (done_objects_flag)
-																				{
-																					if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
-																						{
-																							return observation_json_p;
-																						}
-
-																				}
+																		}
 
 
 																}		/* if ((observation_p -> ob_index == 1) || (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))) */
@@ -475,22 +505,26 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 													ObservationNature nature = ON_ROW;
 													const char *growth_stage_s = GetJSONString (observation_json_p, OB_GROWTH_STAGE_S);
 													const char *method_s = GetJSONString (observation_json_p, OB_METHOD_S);
-													const char *raw_value_s = GetJSONString (observation_json_p, OB_RAW_VALUE_S);
-													const char *corrected_value_s = GetJSONString (observation_json_p, OB_CORRECTED_VALUE_S);
+													//const char *raw_value_s = GetJSONString (observation_json_p, OB_RAW_VALUE_S);
+													//const char *corrected_value_s = GetJSONString (observation_json_p, OB_CORRECTED_VALUE_S);
 													uint32 index = OB_DEFAULT_INDEX;
 
 
+													const json_t *raw_value_p = json_object_get (observation_json_p, OB_RAW_VALUE_S);
+													const json_t *corrected_value_p = json_object_get (observation_json_p, OB_CORRECTED_VALUE_S);
 
 													GetJSONUnsignedInteger (observation_json_p, OB_INDEX_S,  &index);
 
 													/*
 													 * do we have a valid measurement?
 													 */
-													if (! ((IsStringEmpty (raw_value_s)) && (IsStringEmpty (corrected_value_s))))
+													if (raw_value_p || corrected_value_p)
 														{
 															GetObservationNatureFromJSON (&nature, observation_json_p);
 
-															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &index);
+
+
+															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index);
 
 															if (!observation_p)
 																{

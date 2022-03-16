@@ -129,9 +129,9 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 
 static SchemaTerm *FindCachedCropOnotologySchemaTerm (const char *term_s, const char *key_stem_s, MongoTool *tool_p, bson_t *opts_p);
 
-static const COScaleClass *GetScaleDatatype (const json_t *document_p);
+static const ScaleClass *GetScaleDatatype (const json_t *document_p);
 
-static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p);
+static const ScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p);
 
 static bool UpdateScaleTerms (const bson_t *document_p, void *data_p);
 
@@ -690,55 +690,18 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 
 */
 
-COScaleClass *GetScaleClassForUnit (json_t *unit_json_p)
-{
-	COScaleClass *class_p = NULL;
-	const size_t num_entries = json_array_size (unit_json_p);
-	size_t i = 0;
-
-	while (i < num_entries)
-		{
-			json_t *entry_p = json_array_get (unit_json_p, i);
-			const char *key_s = GetJSONString (entry_p, "key");
-
-			if (key_s)
-				{
-					if (strcmp (key_s, "Scale class") == 0)
-						{
-							char *scale_class_s = GetTermEnglishValue (entry_p);
-
-							if (scale_class_s)
-								{
-									if (strcmp (scale_class_s, "Nominal") == 0)
-										{
-											NominalCOScaleClass *nominal_p = AllocateNominalCOScaleClass (entry_p);
-										}
-									else if (strcmp (scale_class_s, "Nominal") == 0)
-										{
-
-										}
-
-									FreeCopiedString (scale_class_s);
-								}
-						}
-				}
-		}
-
-	return class_p;
-}
 
 
 
-
-json_t *GetScaleClassAsJSON (const COScaleClass *class_p)
+json_t *GetScaleClassAsJSON (const ScaleClass *class_p)
 {
 	json_t *sc_json_p = json_object ();
 
 	if (sc_json_p)
 		{
-			if (SetJSONString (sc_json_p, S_SCALE_CLASS_NAME_S, class_p -> cosc_name_s))
+			if (SetJSONString (sc_json_p, S_SCALE_CLASS_NAME_S, class_p -> sc_name_s))
 				{
-					const char *type_s = GetGrassrootsTypeAsString (class_p -> cosc_type);
+					const char *type_s = GetGrassrootsTypeAsString (class_p -> sc_type);
 
 					if (SetJSONString (sc_json_p, S_SCALE_CLASS_TYPE_S, type_s))
 						{
@@ -805,7 +768,7 @@ static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
 							/* All crop ontology variables begin with CO: */
 							if (DoesStringStartWith (var_url_s, "CO_"))
 								{
-									const COScaleClass *scale_class_p = GetScaleClass (var_url_s, tool_data_p -> cotd_curl_p);
+									const ScaleClass *scale_class_p = GetScaleClass (var_url_s, tool_data_p -> cotd_curl_p);
 
 									if (scale_class_p)
 										{
@@ -854,9 +817,9 @@ static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
  */
 
 
-static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p)
+static const ScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *curl_p)
 {
-	const COScaleClass *class_p = NULL;
+	const ScaleClass *class_p = NULL;
 	const char * const CO_API_URL_S = "https://cropontology.org/brapi/v1/variables/";
 	char *url_s = ConcatenateStrings (CO_API_URL_S, variable_url_s);
 
@@ -923,7 +886,7 @@ static const COScaleClass *GetScaleClass (const char *variable_url_s, CurlTool *
 }
 
 
-static const COScaleClass *GetScaleDatatype (const json_t *document_p)
+static const ScaleClass *GetScaleDatatype (const json_t *document_p)
 {
 	json_t *result_p = json_object_get (document_p, "result");
 
@@ -948,9 +911,9 @@ static const COScaleClass *GetScaleDatatype (const json_t *document_p)
 
 
 
-const COScaleClass *GetScaleClassByName (const char * const name_s)
+const ScaleClass *GetScaleClassByName (const char * const name_s)
 {
-	const COScaleClass *SCALES_PP [] =
+	const ScaleClass *SCALES_PP [] =
 	{
 		&SCALE_DURATION,
 		&SCALE_NOMINAL,
@@ -962,11 +925,11 @@ const COScaleClass *GetScaleClassByName (const char * const name_s)
 		NULL
 	};
 
-	const COScaleClass **class_pp = SCALES_PP;
+	const ScaleClass **class_pp = SCALES_PP;
 
 	while (*class_pp)
 		{
-			if (strcmp (name_s, (*class_pp) -> cosc_name_s) == 0)
+			if (strcmp (name_s, (*class_pp) -> sc_name_s) == 0)
 				{
 					return *class_pp;
 				}

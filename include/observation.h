@@ -29,6 +29,13 @@
 
 
 
+typedef enum ObservationType
+{
+	OT_NUMERIC,
+	OT_STRING,
+	OT_NUM_TYPES
+} ObservationType;
+
 typedef enum ObservationNature
 {
 	ON_UNSET = -1,
@@ -45,7 +52,7 @@ typedef enum ObservationNature
  *
  * @ingroup field_trials_service
  */
-typedef struct BaseObservation
+typedef struct Observation
 {
 	bson_oid_t *ob_id_p;
 
@@ -78,7 +85,7 @@ typedef struct BaseObservation
 
 	char *ob_method_s;
 
-	ObservationNature ob_type;
+	ObservationNature ob_nature;
 
 	/**
 	 * For some phenotype data multiple data points are taken from the same plot e.g.
@@ -91,33 +98,10 @@ typedef struct BaseObservation
 	 */
 	uint32 ob_index;
 
-	ParameterType ob_datatype;
 
-} BaseObservation;
+	ObservationType ob_type;
 
-
-/**
- * A datatype for storing a phneotypic observation within
- * an experiment.
- *
- * @ingroup field_trials_service
- */
-typedef struct NumericObservation
-{
-	BaseObservation no_base_observation;
-
-	/**
-	 * The raw phenotypic value for this Observation.
-	 */
-	double64 *no_raw_value_p;
-
-	/**
-	 * The corrected phenotypic value for this Observation.
-	 */
-	double64 *no_corrected_value_p;
-
-
-} NumericObservation;
+} Observation;
 
 
 /**
@@ -126,9 +110,16 @@ typedef struct NumericObservation
  *
  * @ingroup field_trials_service
  */
-typedef struct TextObservation
+
+/**
+ * A datatype for storing a phneotypic observation within
+ * an experiment.
+ *
+ * @ingroup field_trials_service
+ */
+typedef struct StringObservation
 {
-	BaseObservation to_base_observation;
+	Observation to_base_observation;
 
 	/**
 	 * The raw phenotypic value for this Observation.
@@ -203,8 +194,13 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char *raw_value_s, const char *corrected_value_s,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
 /**
  * Free an Observation
@@ -213,6 +209,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p
  * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservation (Observation *observation_p);
+
+
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservation (Observation *observation_p);
 
 
 /**

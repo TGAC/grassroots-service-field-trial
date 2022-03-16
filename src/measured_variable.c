@@ -93,6 +93,7 @@ static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p, const ViewFormat forma
 }
 
 
+/*
 static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p)
 {
 	UnitTerm *unit_p = (UnitTerm *) AllocMemory (sizeof (UnitTerm));
@@ -107,7 +108,7 @@ static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const Fiel
 		}
 
 }
-
+*/
 
 
 /*
@@ -256,7 +257,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 								}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_UNIT_S, treatment_p -> mv_unit_term_p)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", treatment_p -> mv_unit_term_p -> st_url_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", treatment_p -> mv_unit_term_p -> ut_base_term.st_url_s);
 								}
 
 						}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, treatment_p -> mv_measurement_term_p)) */
@@ -643,6 +644,19 @@ void FreeMeasuredVariableNode (ListItem *node_p)
 		}
 
 	FreeMemory (mv_node_p);
+}
+
+
+struct ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p)
+{
+	ScaleClass *class_p = NULL;
+
+	if (variable_p -> mv_unit_term_p)
+		{
+			class_p = variable_p -> mv_unit_term_p -> ut_scale_class_p;
+		}
+
+	return class_p;
 }
 
 

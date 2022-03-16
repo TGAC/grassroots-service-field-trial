@@ -82,6 +82,7 @@ SRCS 	= \
 	material_jobs.c \
 	measured_variable.c \
 	measured_variable_jobs.c \
+	numeric_observation.c \
 	observation.c \
 	person.c \
 	phenotype_jobs.c \

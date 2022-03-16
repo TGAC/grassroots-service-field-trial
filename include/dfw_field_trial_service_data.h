@@ -94,6 +94,55 @@ typedef enum
 
 
 
+/*
+	Crop Ontology Scale Class types
+
+1. Date
+The date class is for events expressed in a time format, e.g. “yyyymmdd hh:mm:ss –
+UTC” or “dd-mm-yy”. A good practice recommended by the Breeding API (BrAPI) is to
+use the Date and timestamp fields coded in the ISO 8601 standard, extended format.
+Check
+https://github.com/plantbreeding/API/blob/master/Specification/GeneralInfo/Date_Time
+_Encoding.md)
+
+2. Duration
+The duration class is for time elapsed between two events expressed in a time format,
+e.g. “days”, “hours”, “months”.
+
+3. Nominal
+Categorical scale that can take one of a limited number of categories. There is no
+intrinsic ordering to the categories e.g. r=“red”, g=“green”, p=“purple”.
+
+4. Numerical
+Numerical scales express the trait with real numbers. The numerical scale defines the
+unit e.g. centimetre, ton per hectare, number of branches.
+
+5. Ordinal
+Ordinal scales are composed of ordered and fixed number of categories e.g. 1=low,
+2=moderate, 3=high
+
+6. Text
+A free text is used to express the scale value. Also known as Character variable
+(varchar)
+e.g. “Preferred when slightly undercooked”.
+
+7. Code
+This scale class is exceptionally used to express complex traits. Code is a nominal
+scale that combines the expressions of the different traits composing the complex trait.
+For example, a disease related code might be expressed by a 2-digit code for intensity
+and 2-character code for severity. The first 2 digits are the proportion of plants affected
+by a fungus and the 2 characters refer to the severity, e.g. “75HD” means “75% of the
+plants are infected and plants are highly damaged”. It is recommended to create
+variables for every component of the code.
+*/
+
+typedef struct ScaleClass
+{
+	const char *sc_name_s;
+	ParameterType sc_type;
+} ScaleClass;
+
+
 /**
  * The configuration data used by the DFW Field Trial Service.
  *
@@ -200,11 +249,14 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 #ifdef ALLOCATE_DFW_FIELD_TRIAL_SERVICE_TAGS
 	#define DFW_FIELD_TRIAL_PREFIX DFW_FIELD_TRIAL_SERVICE_API
 	#define DFW_FIELD_TRIAL_VAL(x)	= x
+	#define DFW_FIELD_TRIAL_STRUCT_VAL(x,y)	= { x, y }
 	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
 #else
 	#define DFW_FIELD_TRIAL_PREFIX extern
 	#define DFW_FIELD_TRIAL_VAL(x)
+	#define DFW_FIELD_TRIAL_STRUCT_VAL(x,y)
 	#define DFW_FIELD_TRIAL_CONCAT_VAL(x,y) = x y
+
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
@@ -335,6 +387,16 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected
 
 /** The prefix to use for Field Trial Service aliases. */
 #define DFT_GROUP_ALIAS_PREFIX_S "field_trial"
+
+
+
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_DURATION DFW_FIELD_TRIAL_STRUCT_VAL("Duration", PT_TIME);
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_NOMINAL DFW_FIELD_TRIAL_STRUCT_VAL ("Nominal", PT_STRING);
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_NUMERICAL DFW_FIELD_TRIAL_STRUCT_VAL ("Numerical", PT_SIGNED_REAL);
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_CODE DFW_FIELD_TRIAL_STRUCT_VAL ("Code", PT_STRING);
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_ORDINAL DFW_FIELD_TRIAL_STRUCT_VAL ("Ordinal", PT_STRING);
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_TEXT DFW_FIELD_TRIAL_STRUCT_VAL ("Text", PT_STRING);
+DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_DATE DFW_FIELD_TRIAL_STRUCT_VAL ("Date", PT_TIME);
 
 
 /*

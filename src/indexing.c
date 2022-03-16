@@ -68,6 +68,12 @@
 #include "handbook_generator.h"
 #include "crop_ontology_tool.h"
 
+#include <bson/bson.h>
+#include "mongodb_tool.h"
+#include "stdbool.h"
+#include "study.h"
+#include "jansson.h"
+
 
 /*
  * Static declarations
@@ -1228,7 +1234,7 @@ static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServic
 
 									if (scale_class_s)
 										{
-											const COScaleClass *scale_class_p = GetScaleClassByName (scale_class_s);
+											const ScaleClass *scale_class_p = GetScaleClassByName (scale_class_s);
 
 											if (scale_class_p)
 												{
@@ -1246,21 +1252,21 @@ static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServic
 																		}
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_class_json_p, "UpdateMongoDocumentsByBSON () failed for query \"%s\: \"%s\"", key_s, unit_id_s);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_class_json_p, "UpdateMongoDocumentsByBSON () failed for query \"%s\": \"%s\"", key_s, unit_id_s);
 																		}
 
 																	bson_init (query_p);
 																}		/* if (BSON_APPEND_UTF8 (query_p, "unit.so:sameAs", unit_id_s)) */
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_class_json_p, "BSON_APPEND_UTF8 () failed for query \"%s\: \"%s\"", key_s, unit_id_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_class_json_p, "BSON_APPEND_UTF8 () failed for query \"%s\": \"%s\"", key_s, unit_id_s);
 																}
 
 															json_decref (scale_class_json_p);
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetScaleClassAsJSON () failed for \"%s\"", scale_class_p -> cosc_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetScaleClassAsJSON () failed for \"%s\"", scale_class_p -> sc_name_s);
 														}
 												}
 											else
