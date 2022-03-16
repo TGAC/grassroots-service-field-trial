@@ -67,7 +67,7 @@ static bool CompareObservationDates (const struct tm * const time_0_p, const str
 
 
 bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type)
 {
 	struct tm *copied_start_date_p = NULL;
 
@@ -94,6 +94,7 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 									observation_p -> ob_growth_stage_s = copied_growth_stage_s;
 									observation_p -> ob_method_s = copied_method_s;
 									observation_p -> ob_nature = nature;
+									observation_p -> ob_type = obs_type;
 
 									if (index_p)
 										{
@@ -142,7 +143,7 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 
 
 Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type)
 {
 	Observation *observation_p = NULL;
 	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
@@ -521,8 +522,6 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 													if (raw_value_p || corrected_value_p)
 														{
 															GetObservationNatureFromJSON (&nature, observation_json_p);
-
-
 
 															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index);
 
