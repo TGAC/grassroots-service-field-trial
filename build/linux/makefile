@@ -94,6 +94,7 @@ SRCS 	= \
 	row_jobs.c \
 	row_processor.c \
 	search_service.c \
+	string_observation.c \
 	study.c \
 	study_jobs.c \
 	submission_service.c \

@@ -7,11 +7,11 @@
 
 
 #include "numeric_observation.h"
-
+#include "dfw_util.h"
 
 
 NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type)
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
 {
 	double64 *copied_raw_value_p = NULL;
 
@@ -25,7 +25,7 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 
 					if (observation_p)
 						{
-							if (InitObservation (observation_p, id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, obs_type))
+							if (InitObservation (& (observation_p -> no_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_NUMERIC))
 								{
 									observation_p -> no_raw_value_p = copied_raw_value_p;
 									observation_p -> no_corrected_value_p = copied_corrected_value_p;

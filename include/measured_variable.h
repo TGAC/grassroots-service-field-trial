@@ -117,7 +117,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, UnitTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariable (MeasuredVariable *treatment_p);
 
@@ -141,7 +141,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariableNode *AllocateMeasuredVariableNode
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariableNode (ListItem *node_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL struct ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL const struct ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p);
 
 #ifdef __cplusplus
 }

@@ -37,6 +37,8 @@ static bool CreateInstrumentFromMeasuredVariableJSON (const json_t *phenotype_js
 
 static bool AppendSchemaTermToJSON (json_t *doc_p, const char * const key_s, const SchemaTerm *term_p);
 
+static bool AppendUnitTermToJSON (json_t *doc_p, const char * const key_s, const UnitTerm *term_p);
+
 static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * const key_s);
 
 static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, const char *child_key_s, const char *child_value_s);
@@ -44,18 +46,18 @@ static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, co
 
 static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p);
 
-static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p, const ViewFormat format);
+static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p);
 
 static const char * const S_UNIT_SCALE_S = "scale";
 
 
-static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p, const ViewFormat format)
+static json_t *GetUnitTermAsJSON (const UnitTerm *unit_p)
 {
 	json_t *term_p = json_object ();
 
 	if (term_p)
 		{
-			if (AddSchemaTermToJSON (term_p, & (unit_p -> ut_base_term)))
+			if (AddSchemaTermToJSON (& (unit_p -> ut_base_term), term_p))
 				{
 					bool success_flag = false;
 
@@ -114,7 +116,7 @@ static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const Fiel
 /*
  * API definitions
  */
-MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s)
+MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, UnitTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s)
 {
 	char *copied_internal_name_s = NULL;
 
@@ -166,7 +168,7 @@ void FreeMeasuredVariable (MeasuredVariable *treatment_p)
 
 	if (treatment_p -> mv_unit_term_p)
 		{
-			FreeSchemaTerm (treatment_p -> mv_unit_term_p);
+			FreeUnitTerm (treatment_p -> mv_unit_term_p);
 		}
 
 	if (treatment_p -> mv_variable_term_p)
@@ -202,7 +204,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const Vi
 				{
 					if (AppendSchemaTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, treatment_p -> mv_measurement_term_p))
 						{
-							if (AppendSchemaTermToJSON (phenotype_json_p, MV_UNIT_S, treatment_p -> mv_unit_term_p))
+							if (AppendUnitTermToJSON (phenotype_json_p, MV_UNIT_S, treatment_p -> mv_unit_term_p))
 								{
 									if ((! (treatment_p -> mv_variable_term_p)) || (AppendSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, treatment_p -> mv_variable_term_p)))
 										{
@@ -647,9 +649,9 @@ void FreeMeasuredVariableNode (ListItem *node_p)
 }
 
 
-struct ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p)
+const struct ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p)
 {
-	ScaleClass *class_p = NULL;
+	const ScaleClass *class_p = NULL;
 
 	if (variable_p -> mv_unit_term_p)
 		{
@@ -691,6 +693,32 @@ static bool AppendSchemaTermToJSON (json_t *doc_p, const char * const key_s, con
 	return success_flag;
 }
 
+
+static bool AppendUnitTermToJSON (json_t *doc_p, const char * const key_s, const UnitTerm *term_p)
+{
+	bool success_flag = false;
+	json_t *term_json_p = GetUnitTermAsJSON (term_p);
+
+	if (term_json_p)
+		{
+			if (json_object_set_new (doc_p, key_s, term_json_p) == 0)
+				{
+					success_flag = true;
+				}		/* if (json_object_set_new (doc_p, key_s, term_json_p) == 0) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, doc_p, "Failed to add SchemaTerm to JSON document");
+					json_decref (term_json_p);
+				}
+
+		}		/* if (term_json_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get SchemaTerm as JSON for \"%s\"", term_p -> ut_base_term.st_url_s);
+		}
+
+	return success_flag;
+}
 
 static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * const key_s)
 {

@@ -193,9 +193,8 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char *raw_value_s, const char *corrected_value_s,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_s, const json_t *corrected_value_s,
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type);
-
 
 
 
@@ -211,9 +210,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool InitObservation (Observation *observation_p, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservation (Observation *observation_p);
 
 
-
-
-
+/**
+ * Clear the data stored within an Observation
+ *
+ * @param observation_p The Observation to clear.
+ * @ingroup field_trials_service
+ */
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservation (Observation *observation_p);
 
 
@@ -257,36 +259,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *o
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index);
 
 
-/**
- * Set the raw value for a given Observation.
- *
- * The value is deep-copied to the Observation so the value passed in can be freed without causing any
- * memory corruption.
- *
- * @param observation_p The Observation that will have its raw value updated.
- * @param value_s The new raw value to store, this can be <code>NULL</code> which will clear the
- * Observation's existing raw value if it has been previously set.
- * @return <code>true</code> if the Observation's raw value was updated successfully, <code>false</code>
- * if there errors.
- * @ingroup field_trials_service
- */
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationRawValue (Observation *observation_p, const char *value_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetObservationTypeAsString (const ObservationType obs_type);
 
 
-/**
- * Set the corrected value for a given Observation.
- *
- * The value is deep-copied to the Observation so the value passed in can be freed without causing any
- * memory corruption.
- *
- * @param observation_p The Observation that will have its corrected value updated.
- * @param value_s The new corrected value to store, this can be <code>NULL</code> which will clear the
- * Observation's existing corrected value if it has been previously set.
- * @return <code>true</code> if the Observation's corrected value was updated successfully, <code>false</code>
- * if there errors.
- * @ingroup field_trials_service
- */
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValue (Observation *observation_p, const char *value_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool DetermineObservationTypeFromString (const char * const obs_type_s, ObservationType *obs_type_p)
+;
 
 #ifdef __cplusplus
 }

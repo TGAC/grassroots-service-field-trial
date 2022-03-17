@@ -47,6 +47,9 @@
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
 
+static const char *S_OBSERVATION_TYPES_SS [OT_NUM_TYPES] = { "xsd:double", "xsd:string" };
+
+
 
 static bool AddObservationNatureToJSON (const ObservationNature phenotype_nature, json_t *doc_p);
 
@@ -57,6 +60,9 @@ static bool CreateInstrumentFromObservationJSON (const json_t *observation_json_
 static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, MEM_FLAG *phenotype_mem_p, FieldTrialServiceData *data_p);
 
 static bool CompareObservationDates (const struct tm * const time_0_p, const struct tm * const time_1_p);
+
+
+
 
 
 /*
@@ -199,6 +205,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 
 		}
 
+/*
 	observation_p = (Observation *) AllocMemory (sizeof (Observation));
 
 	if (observation_p)
@@ -210,6 +217,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 
 			FreeMemory (observation_p);
 		}
+*/
 
 	return NULL;
 }
@@ -311,129 +319,113 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 				{
 					if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, true))
 						{
-							if ((IsStringEmpty (observation_p -> ob_raw_value_s)) || (SetJSONString (observation_json_p, OB_RAW_VALUE_S, observation_p -> ob_raw_value_s)))
+							if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || (SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)))
 								{
-									if ((IsStringEmpty (observation_p -> ob_corrected_value_s)) || (SetJSONString (observation_json_p, OB_CORRECTED_VALUE_S, observation_p -> ob_corrected_value_s)))
+									if ((IsStringEmpty (observation_p -> ob_method_s)) || (SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)))
 										{
-											if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || (SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)))
+											if (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))
 												{
-													if ((IsStringEmpty (observation_p -> ob_method_s)) || (SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)))
+													bool done_objects_flag = false;
+
+													if (format == VF_CLIENT_FULL)
 														{
-															if (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))
+															bool done_instrument_flag = false;
+
+															if (observation_p -> ob_instrument_p)
 																{
-																	bool done_objects_flag = false;
+																	json_t *instrument_json_p = GetInstrumentAsJSON (observation_p -> ob_instrument_p);
 
-																	if (format == VF_CLIENT_FULL)
+																	if (instrument_json_p)
 																		{
-																			bool done_instrument_flag = false;
-
-																			if (observation_p -> ob_instrument_p)
-																				{
-																					json_t *instrument_json_p = GetInstrumentAsJSON (observation_p -> ob_instrument_p);
-
-																					if (instrument_json_p)
-																						{
-																							if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0)
-																								{
-																									done_instrument_flag = true;
-																								}		/* if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0) */
-																							else
-																								{
-																									json_decref (instrument_json_p);
-																								}
-																						}
-																				}
-																			else
+																			if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0)
 																				{
 																					done_instrument_flag = true;
-																				}
-
-																			if (done_instrument_flag)
-																				{
-																					json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
-
-																					if (phenotype_json_p)
-																						{
-																							if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
-																								{
-																									done_objects_flag = true;
-																								}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
-																							else
-																								{
-																									json_decref (phenotype_json_p);
-																								}
-																						}
-																				}
-
-																		}		/* iif (format == VF_CLIENT_FULL) */
-																	else if (format == VF_STORAGE)
-																		{
-																			if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
-																				{
-																					if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
-																						{
-																							if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
-																								{
-																									if (AddObservationNatureToJSON (observation_p -> ob_nature, observation_json_p))
-																										{
-																											done_objects_flag = true;
-																										}
-																									else
-																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_nature);
-																										}
-																								}
-																						}
-
-																				}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
+																				}		/* if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0) */
 																			else
 																				{
-																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																					bson_oid_to_string (observation_p -> ob_id_p, id_s);
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
+																					json_decref (instrument_json_p);
 																				}
 																		}
-
-																	if (done_objects_flag)
-																		{
-																			if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
-																				{
-																					return observation_json_p;
-																				}
-
-																		}
-
-
-																}		/* if ((observation_p -> ob_index == 1) || (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))) */
+																}
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": " UINT32_FMT " to JSON", OB_INDEX_S, observation_p -> ob_index);
+																	done_instrument_flag = true;
 																}
 
+															if (done_instrument_flag)
+																{
+																	json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
 
-														}		/* if ((IsStringEmpty (observation_p -> ob_method_s)) || SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)) */
-													else
+																	if (phenotype_json_p)
+																		{
+																			if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
+																				{
+																					done_objects_flag = true;
+																				}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
+																			else
+																				{
+																					json_decref (phenotype_json_p);
+																				}
+																		}
+																}
+
+														}		/* iif (format == VF_CLIENT_FULL) */
+													else if (format == VF_STORAGE)
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_METHOD_S, observation_p -> ob_method_s);
+															if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
+																{
+																	if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
+																		{
+																			if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
+																				{
+																					if (AddObservationNatureToJSON (observation_p -> ob_nature, observation_json_p))
+																						{
+																							done_objects_flag = true;
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_nature);
+																						}
+																				}
+																		}
+
+																}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
+															else
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (observation_p -> ob_id_p, id_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
+																}
 														}
 
-												}		/* if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)) */
+													if (done_objects_flag)
+														{
+															if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
+																{
+																	return observation_json_p;
+																}
+
+														}
+
+
+												}		/* if ((observation_p -> ob_index == 1) || (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": " UINT32_FMT " to JSON", OB_INDEX_S, observation_p -> ob_index);
 												}
 
-										}		/* if ((IsStringEmpty (observation_p -> ob_corrected_value_s)) || (SetJSONString (observation_json_p, OB_CORRECTED_VALUE_S, observation_p -> ob_corrected_value_s))) */
+
+										}		/* if ((IsStringEmpty (observation_p -> ob_method_s)) || SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%d\" to JSON", OB_CORRECTED_VALUE_S, observation_p -> ob_corrected_value_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_METHOD_S, observation_p -> ob_method_s);
 										}
 
-								}		/* if (SetJSONString (observation_json_p, OB_VALUE_S, observation_p -> ob_measured_value_s)) */
+								}		/* if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": \"%s\" to JSON", OB_RAW_VALUE_S, observation_p -> ob_raw_value_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s);
 								}
 
 						}		/* if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, false)) */
@@ -475,6 +467,8 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 	return NULL;
 }
+
+
 
 
 Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTrialServiceData *data_p)
@@ -601,49 +595,6 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 
 	return success_flag;
 }
-
-
-bool SetObservationRawValue (Observation *observation_p, const char *value_s)
-{
-	bool success_flag = true;
-
-	if (value_s)
-		{
-			success_flag = ReplaceStringValue (& (observation_p -> ob_raw_value_s), value_s);
-		}
-	else
-		{
-			if (observation_p -> ob_raw_value_s)
-				{
-					FreeCopiedString (observation_p -> ob_raw_value_s);
-					observation_p -> ob_raw_value_s = NULL;
-				}
-		}
-
-	return success_flag;
-}
-
-
-bool SetObservationCorrectedValue (Observation *observation_p, const char *value_s)
-{
-	bool success_flag = true;
-
-	if (value_s)
-		{
-			success_flag = ReplaceStringValue (& (observation_p -> ob_corrected_value_s), value_s);
-		}
-	else
-		{
-			if (observation_p -> ob_corrected_value_s)
-				{
-					FreeCopiedString (observation_p -> ob_corrected_value_s);
-					observation_p -> ob_corrected_value_s = NULL;
-				}
-		}
-
-	return success_flag;
-}
-
 
 
 bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p)
@@ -883,5 +834,37 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 		}
 
 	return phenotype_p;
+}
+
+
+
+const char *GetObservationTypeAsString (const ObservationType obs_type)
+{
+	const char *obs_type_s = NULL;
+
+	if (obs_type < OT_NUM_TYPES)
+		{
+			obs_type_s = * (S_OBSERVATION_TYPES_SS + obs_type);
+		}
+
+	return obs_type_s;
+}
+
+
+bool DetermineObservationTypeFromString (const char * const obs_type_s, ObservationType *obs_type_p)
+{
+	ObservationType i;
+	const char **type_ss = S_OBSERVATION_TYPES_SS;
+
+	for (i = 0; i < OT_NUM_TYPES; ++ i, ++ type_ss)
+		{
+			if (strcmp (obs_type_s, *type_ss) == 0)
+				{
+					*obs_type_p = i;
+					return true;
+				}
+		}
+
+	return false;
 }
 

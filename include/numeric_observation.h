@@ -38,7 +38,7 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type);
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeNumericObservation (NumericObservation *observation_p);
