@@ -212,7 +212,6 @@ bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const Fi
 {
 	bool success_flag = true;
 
-
 	if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index))
 		{
 			if (SetJSONInteger (row_fd_p, S_RACK_S, row_p -> ro_rack_index))

@@ -61,6 +61,8 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 
 static bool CompareObservationDates (const struct tm * const time_0_p, const struct tm * const time_1_p);
 
+static bool GetObservationTypeFromJSON (ObservationType *type_p, const json_t *doc_p);
+
 
 
 
@@ -515,9 +517,14 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 													 */
 													if (raw_value_p || corrected_value_p)
 														{
+															ObservationType obs_type = OT_NUM_TYPES;
+
 															GetObservationNatureFromJSON (&nature, observation_json_p);
 
-															observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index);
+															if (GetObservationTypeFromJSON (&obs_type, observation_json_p))
+																{
+																	observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index, obs_type);
+																}
 
 															if (!observation_p)
 																{
@@ -745,6 +752,32 @@ static bool GetObservationNatureFromJSON (ObservationNature *nature_p, const jso
 	return success_flag;
 }
 
+
+static bool GetObservationTypeFromJSON (ObservationType *type_p, const json_t *doc_p)
+{
+	const char *value_s = GetJSONString (doc_p, OB_TYPE_S);
+
+	if (value_s)
+		{
+			ObservationType i = 0;
+
+			while (i < OT_NUM_TYPES)
+				{
+					if (strcmp (value_s, * (S_OBSERVATION_TYPES_SS + i)) == 0)
+						{
+							*type_p = i;
+							return true;
+						}
+					else
+						{
+							++ i;
+						}
+
+				}
+		}
+
+	return false;
+}
 
 
 static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t *observation_json_p, MEM_FLAG *phenotype_mem_p, FieldTrialServiceData *data_p)
