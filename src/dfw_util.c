@@ -404,6 +404,33 @@ bool CopyValidReal (const double64 *src_p, double64 **dest_pp)
 }
 
 
+bool CopyValidInteger (const int32 *src_p, int32 **dest_pp)
+{
+	bool success_flag = true;
+
+	if (src_p)
+		{
+			int32 *dest_p = (int32 *) AllocMemory (sizeof (int32));
+
+			if (dest_p)
+				{
+					*dest_p = *src_p;
+					*dest_pp = dest_p;
+				}
+			else
+				{
+					success_flag = false;
+				}
+		}
+	else
+		{
+			*dest_pp = NULL;
+		}
+
+	return success_flag;
+}
+
+
 bool CopyValidUnsignedInteger (const uint32 *src_p, uint32 **dest_pp)
 {
 	bool success_flag = true;

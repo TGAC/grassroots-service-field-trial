@@ -10,6 +10,10 @@
 #include "dfw_util.h"
 
 
+static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const double64 *value_p, const char *null_sequence_s);
+
+
+
 NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
 {
@@ -106,5 +110,49 @@ NumericObservation *GetNumericObservationFromJSON (const json_t *phenotype_json_
 }
 
 
+
+
+
+bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+{
+	return AddNumericValueToJSON (json_p, key_s, obs_p -> no_raw_value_p, null_sequence_s);
+}
+
+
+bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+{
+	return AddNumericValueToJSON (json_p, key_s, obs_p -> no_corrected_value_p, null_sequence_s);
+}
+
+
+static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const double64 *value_p, const char *null_sequence_s)
+{
+	bool success_flag = false;
+
+	if (value_p)
+		{
+			if (SetJSONReal (json_p, key_s, *value_p))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": " DOUBLE64_FMT " in JSON", key_s, *value_p);
+				}
+		}
+	else
+		{
+			if (SetJSONNull (json_p, key_s))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": null in JSON", key_s);
+				}
+		}
+
+	return success_flag;
+}
 
 

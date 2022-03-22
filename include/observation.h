@@ -33,6 +33,7 @@ typedef enum ObservationType
 {
 	OT_NUMERIC,
 	OT_STRING,
+	OT_SIGNED_INTEGER,
 	OT_NUM_TYPES
 } ObservationType;
 
@@ -102,37 +103,6 @@ typedef struct Observation
 	ObservationType ob_type;
 
 } Observation;
-
-
-/**
- * A datatype for storing a phneotypic observation within
- * an experiment.
- *
- * @ingroup field_trials_service
- */
-
-/**
- * A datatype for storing a phneotypic observation within
- * an experiment.
- *
- * @ingroup field_trials_service
- */
-typedef struct StringObservation
-{
-	Observation to_base_observation;
-
-	/**
-	 * The raw phenotypic value for this Observation.
-	 */
-	char *to_raw_value_s;
-
-	/**
-	 * The corrected phenotypic value for this Observation.
-	 */
-	char *to_corrected_value_s;
-
-
-} TextObservation;
 
 
 typedef struct ObservationNode

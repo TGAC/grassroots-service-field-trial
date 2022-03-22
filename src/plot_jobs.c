@@ -1107,16 +1107,10 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																											const char *value_s = NULL;
 
 																											value_p = json_object_iter_value (iterator_p);
-																											value_s = json_string_value (value_p);
-
-																											if (!IsStringEmpty (value_s))
-																												{
-
-																												}
 																											/*
 																											 * Is it an observation?
 																											 */
-																											status = AddObservationValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
+																											status = AddObservationValueToRow (row_p, key_s, value_p, study_p, job_p, row_index, data_p);
 
 																											if (status == OS_SUCCEEDED)
 																												{
@@ -1124,6 +1118,13 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																												}
 																											else if (status == OS_IDLE)
 																												{
+																													value_s = json_string_value (value_p);
+
+																													if (!IsStringEmpty (value_s))
+																														{
+
+																														}
+
 																													status = AddSingleTreatmentFactorValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 
 																													if (status == OS_SUCCEEDED)

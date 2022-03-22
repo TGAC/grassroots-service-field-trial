@@ -9,7 +9,7 @@
 #define SERVICES_FIELD_TRIALS_INCLUDE_NUMERIC_OBSERVATION_H_
 
 #include "observation.h"
-
+#include "typedefs.h"
 
 typedef struct NumericObservation
 {
@@ -48,6 +48,48 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetNumericObservationAsJSON (const Numeric
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL NumericObservation *GetNumericObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p);
+
+
+/**
+ * Set the raw value for a given Observation.
+ *
+ * The value is deep-copied to the Observation so the value passed in can be freed without causing any
+ * memory corruption.
+ *
+ * @param observation_p The Observation that will have its raw value updated.
+ * @param value_p The new raw value to store, this can be <code>NULL</code> which will clear the
+ * Observation's existing raw value if it has been previously set.
+ * @return <code>true</code> if the Observation's raw value was updated successfully, <code>false</code>
+ * if there errors.
+ * @memberof NumericObservation
+ * @ingroup field_trials_service
+ */
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationRawValue (NumericObservation *observation_p, const double64 *value_p);
+
+
+/**
+ * Set the corrected value for a given Observation.
+ *
+ * The value is deep-copied to the Observation so the value passed in can be freed without causing any
+ * memory corruption.
+ *
+ * @param observation_p The Observation that will have its corrected value updated.
+ * @param value_p The new corrected value to store, this can be <code>NULL</code> which will clear the
+ * Observation's existing corrected value if it has been previously set.
+ * @return <code>true</code> if the Observation's corrected value was updated successfully, <code>false</code>
+ * if there errors.
+ * @memberof NumericObservation
+ * @ingroup field_trials_service
+ */
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationCorrectedValue (NumericObservation *observation_p, const double64 *value_p);
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+
 
 
 #ifdef __cplusplus

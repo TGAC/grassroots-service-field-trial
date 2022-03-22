@@ -9,6 +9,7 @@
 #include "string_observation.h"
 
 
+static bool AddStringValueToJSON (json_t *json_p, const char *key_s, const char *value_s, const char *null_sequence_s);
 
 
 
@@ -160,3 +161,48 @@ bool SetStringObservationCorrectedValue (StringObservation *observation_p, const
 	return success_flag;
 }
 
+
+
+bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+{
+	return AddStringValueToJSON (json_p, key_s, obs_p -> so_raw_value_s, null_sequence_s);
+}
+
+
+bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+{
+	return AddStringValueToJSON (json_p, key_s, obs_p -> so_corrected_value_s, null_sequence_s);
+}
+
+
+
+static bool AddStringValueToJSON (json_t *json_p, const char *key_s, const char *value_s, const char *null_sequence_s)
+{
+	bool success_flag = false;
+
+	if (value_s)
+		{
+			if (SetJSONString (json_p, key_s, value_s))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": \"%s\" in JSON", key_s, value_s);
+				}
+		}
+	else
+		{
+			if (SetJSONNull (json_p, key_s))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": null in JSON", key_s);
+				}
+		}
+
+
+	return success_flag;
+}

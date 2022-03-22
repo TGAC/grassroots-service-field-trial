@@ -26,6 +26,7 @@ typedef struct StringObservation
 	char *so_corrected_value_s;
 
 
+
 } StringObservation;
 
 
@@ -84,6 +85,15 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationRawValue (Observation *ob
  * @ingroup field_trials_service
  */
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationCorrectedValue (Observation *observation_p, const char *value_s);
+
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
 
 
 #ifdef __cplusplus

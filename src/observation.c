@@ -43,6 +43,8 @@
 #include "dfw_util.h"
 
 #include "numeric_observation.h"
+#include "string_observation.h"
+#include "integer_observation.h"
 
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
@@ -632,6 +634,94 @@ bool AreObservationsMatchingByParts (const Observation *observation_p, const Mea
 }
 
 
+
+bool AddValuesToFDJSON (Observation *obs_p, json_t *fd_json_p)
+{
+	bool success_flag = false;
+	const char *variable_s = GetMeasuredVariableName (obs_p -> ob_phenotype_p);
+
+	if (variable_s)
+		{
+			char *key_s = NULL;
+
+			if (obs_p -> ob_start_date_p)
+				{
+					char *start_time_s = GetTimeAsString (obs_p -> ob_start_date_p, true);
+
+					if (start_time_s)
+						{
+							if (obs_p -> ob_end_date_p)
+								{
+									char *end_time_s = GetTimeAsString (obs_p -> ob_end_date_p, true);
+
+									if (end_time_s)
+										{
+											key_s = ConcatenateVarargsStrings (variable_s, " ", start_time_s, " ", end_time_s, NULL);
+											FreeCopiedString (end_time_s);
+										}
+								}
+							else
+								{
+									key_s = ConcatenateVarargsStrings (variable_s, " ", start_time_s, NULL);
+								}
+
+							FreeCopiedString (start_time_s);
+						}
+				}
+			else
+				{
+					key_s = (char *) variable_s;
+				}
+
+			if (key_s)
+				{
+					switch (obs_p -> ob_type)
+						{
+							case OT_STRING:
+								{
+									StringObservation *string_obs_p = (StringObservation *) obs_p;
+
+									if (AddStringObservationRawValueToJSON (string_obs_p, key_s, fd_json_p, "-"))
+										{
+											if (AddStringObservationCorrectedValueToJSON (string_obs_p, key_s, fd_json_p, "-"))
+												{
+													success_flag = true;
+												}
+										}
+								}
+								break;
+
+							case OT_NUMERIC:
+								{
+									NumericObservation *numeric_obs_p = (NumericObservation *) obs_p;
+
+									if (AddNumericObservationRawValueToJSON (numeric_obs_p, key_s, fd_json_p, "-"))
+										{
+											if (AddNumericObservationCorrectedValueToJSON (numeric_obs_p, key_s, fd_json_p, "-"))
+												{
+													success_flag = true;
+												}
+										}
+								}
+
+						}		/* switch (obs_p -> ob_type) */
+
+
+					if (key_s != variable_s)
+						{
+							FreeCopiedString (key_s);
+						}
+
+				}		/* if (key_s) */
+
+		}		/* if (variable_s) */
+	else
+		{
+			success_flag = false;
+		}
+
+	return success_flag;
+}
 
 
 /*

@@ -75,6 +75,7 @@ SRCS 	= \
 	image_util.c \
 	indexing.c \
 	instrument.c \
+	integer_observation.c \
 	json_processor.c \
 	location.c \
 	location_jobs.c \

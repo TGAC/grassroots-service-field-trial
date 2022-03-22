@@ -47,6 +47,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyValidReal (const double64 *src_p, double6
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyValidUnsignedInteger (const uint32 *src_p, uint32 **dest_pp);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyValidInteger (const int32 *src_p, int32 **dest_pp);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm **time_pp);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s, const bool add_time_flag);
