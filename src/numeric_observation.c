@@ -9,6 +9,9 @@
 #include "numeric_observation.h"
 #include "dfw_util.h"
 #include "math_utils.h"
+#include "memory_allocations.h"
+#include "typedefs.h"
+
 
 static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const double64 *value_p, const char *null_sequence_s);
 
@@ -124,15 +127,43 @@ bool SetNumericObservationCorrectedValueFromString (NumericObservation *observat
 
 
 
-bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
-	return AddNumericValueToJSON (json_p, key_s, obs_p -> no_raw_value_p, null_sequence_s);
+	bool success_flag = false;
+
+	if (only_if_exists_flag)
+		{
+			if ((! (obs_p -> no_raw_value_p)) || (AddNumericValueToJSON (json_p, key_s, obs_p -> no_raw_value_p, null_sequence_s)))
+				{
+					success_flag = true;
+				}
+		}
+	else
+		{
+			success_flag = AddNumericValueToJSON (json_p, key_s, obs_p -> no_raw_value_p, null_sequence_s);
+		}
+
+	return success_flag;
 }
 
 
-bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
-	return AddNumericValueToJSON (json_p, key_s, obs_p -> no_corrected_value_p, null_sequence_s);
+	bool success_flag = false;
+
+	if (only_if_exists_flag)
+		{
+			if ((! (obs_p -> no_corrected_value_p)) || (AddNumericValueToJSON (json_p, key_s, obs_p -> no_corrected_value_p, null_sequence_s)))
+				{
+					success_flag = true;
+				}
+		}
+	else
+		{
+			success_flag = AddNumericValueToJSON (json_p, key_s, obs_p -> no_corrected_value_p, null_sequence_s);
+		}
+
+	return success_flag;
 }
 
 

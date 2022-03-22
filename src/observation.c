@@ -705,6 +705,22 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 								}
 								break;
 
+							case OT_SIGNED_INTEGER:
+								{
+									IntegerObservation *integer_obs_p = (IntegerObservation *) obs_p;
+
+									if (AddIntegerObservationRawValueToJSON (integer_obs_p, key_s, fd_json_p, "-", true))
+										{
+											if (AddIntegerObservationCorrectedValueToJSON (integer_obs_p, key_s, fd_json_p, "-", true))
+												{
+													success_flag = true;
+												}
+										}
+								}
+								break;
+
+							case OT_NUM_TYPES:
+								break;
 						}		/* switch (obs_p -> ob_type) */
 
 
@@ -819,6 +835,32 @@ bool SetObservationCorrectedValueFromString (Observation *observation_p, const c
 	return success_flag;
 }
 
+
+
+ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p)
+{
+	ObservationType obs_type = OT_NUM_TYPES;
+
+	switch (class_p -> sc_type)
+		{
+			case PT_SIGNED_REAL:
+				obs_type = OT_NUMERIC;
+				break;
+
+			case PT_STRING:
+				obs_type = OT_STRING;
+				break;
+
+			case PT_SIGNED_INT:
+				obs_type = OT_SIGNED_INTEGER;
+				break;
+
+			default:
+				break;
+		}
+
+	return obs_type;
+}
 
 
 /*

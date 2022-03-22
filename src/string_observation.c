@@ -169,7 +169,7 @@ bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const c
 
 	if (only_if_exists_flag)
 		{
-			if ((! (obs_p -> so_raw_value_s)) || (AddStringObservationRawValueToJSON (obs_p, key_s, json_p, null_sequence_s)))
+			if ((! (obs_p -> so_raw_value_s)) || (AddStringValueToJSON (json_p, key_s, obs_p -> so_raw_value_s, null_sequence_s)))
 				{
 					success_flag = true;
 				}
@@ -189,14 +189,14 @@ bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, c
 
 	if (only_if_exists_flag)
 		{
-			if ((! (obs_p -> so_raw_value_s)) || (AddStringObservationRawValueToJSON (obs_p, key_s, json_p, null_sequence_s)))
+			if ((! (obs_p -> so_raw_value_s)) || (AddStringValueToJSON (json_p, key_s, obs_p -> so_corrected_value_s, null_sequence_s)))
 				{
 					success_flag = true;
 				}
 		}
 	else
 		{
-			success_flag = AddStringValueToJSON (json_p, key_s, obs_p -> so_raw_value_s, null_sequence_s);
+			success_flag = AddStringValueToJSON (json_p, key_s, obs_p -> so_corrected_value_s, null_sequence_s);
 		}
 
 	return success_flag;

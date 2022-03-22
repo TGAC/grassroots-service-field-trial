@@ -247,6 +247,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValueFromString (Obser
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p);
+
+
 #ifdef __cplusplus
 }
 #endif

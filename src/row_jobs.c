@@ -279,106 +279,18 @@ bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const Fi
 													while (obs_node_p && success_flag)
 														{
 															Observation *obs_p = obs_node_p -> on_observation_p;
-															const char *variable_s = GetMeasuredVariableName (obs_p -> ob_phenotype_p);
 
-															if (variable_s)
+															if (AddObservationValuesToFrictionlessData (obs_p, row_fd_p))
 																{
-																	char *key_s = NULL;
-
-																	if (obs_p -> ob_start_date_p)
-																		{
-																			char *start_time_s = GetTimeAsString (obs_p -> ob_start_date_p, true);
-
-																			if (start_time_s)
-																				{
-																					if (obs_p -> ob_end_date_p)
-																						{
-																							char *end_time_s = GetTimeAsString (obs_p -> ob_end_date_p, true);
-
-																							if (end_time_s)
-																								{
-																									key_s = ConcatenateVarargsStrings (variable_s, " ", start_time_s, " ", end_time_s, NULL);
-																									FreeCopiedString (end_time_s);
-																								}
-																						}
-																					else
-																						{
-																							key_s = ConcatenateVarargsStrings (variable_s, " ", start_time_s, NULL);
-																						}
-
-																					FreeCopiedString (start_time_s);
-																				}
-																		}
-																	else
-																		{
-																			key_s = (char *) variable_s;
-																		}
-
-																	if (key_s)
-																		{
-																			char *value_s = NULL;
-																			bool alloc_value_flag = false;
-
-																			if (obs_p -> ob_corrected_value_s)
-																				{
-																					if (obs_p -> ob_raw_value_s)
-																						{
-																							value_s = ConcatenateVarargsStrings (obs_p -> ob_corrected_value_s, " (", obs_p -> ob_raw_value_s, ")", NULL);
-
-																							if (value_s)
-																								{
-																									alloc_value_flag = true;
-																								}
-																						}
-																					else
-																						{
-																							value_s = obs_p -> ob_corrected_value_s;
-																						}
-																				}
-																			else
-																				{
-																					if (obs_p -> ob_raw_value_s)
-																						{
-																							value_s = obs_p -> ob_raw_value_s;
-																						}
-																					else
-																						{
-																							value_s = (char *) null_sequence_s;
-																						}
-																				}
-
-
-																			if (value_s)
-																				{
-																					if (SetJSONString (row_fd_p, key_s, value_s))
-																						{
-																							++ num_added;
-																						}
-
-																					if (alloc_value_flag)
-																						{
-																							FreeCopiedString (value_s);
-																						}
-																				}
-
-																			if (key_s != variable_s)
-																				{
-																					FreeCopiedString (key_s);
-																				}
-
-																		}		/* if (key_s) */
-
-																}		/* if (variable_s) */
+																	obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
+																	++ num_added;
+																}
 															else
 																{
 																	success_flag = false;
 																}
 
-															if (success_flag)
-																{
-																	obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
-																}
-														}
+														}		/* while (obs_node_p && success_flag) */
 
 												}		/* if (row_p -> ro_observations_p) */
 
@@ -967,7 +879,13 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 
 													if (observation_id_p)
 														{
-															observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index);
+															const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+															ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+
+															if (obs_type != OT_NUM_TYPES)
+																{
+																	observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
+																}
 
 															if (observation_p)
 																{
@@ -1181,7 +1099,14 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 									if (observation_id_p)
 										{
-											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index);
+											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+
+											if (obs_type != OT_NUM_TYPES)
+												{
+													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
+												}
+
 
 											if (observation_p)
 												{

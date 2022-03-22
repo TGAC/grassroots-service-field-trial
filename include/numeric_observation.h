@@ -92,10 +92,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationCorrectedValue (NumericO
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationCorrectedValueFromString (NumericObservation *observation_p, const char *value_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
 
