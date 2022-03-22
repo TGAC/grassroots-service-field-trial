@@ -932,7 +932,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 												{
 													if (corrected_value_flag)
 														{
-															if (!SetObservationCorrectedValue (observation_p, value_s))
+															if (!SetObservationCorrectedValueFromString (observation_p, value_s))
 																{
 																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
@@ -944,9 +944,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 														}
 													else
 														{
-															SetObservationRawValue (observation_p, value_s);
-
-															if (!SetObservationRawValue (observation_p, value_s))
+															if (!SetObservationRawValueFromString (observation_p, value_s))
 																{
 																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
@@ -1122,19 +1120,19 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 							const char *method_s = NULL;
 							ObservationNature nature = ON_ROW;
 							Instrument *instrument_p = NULL;
-							const json_t *raw_value_p = NULL;
-							const json_t *corrected_value_p = NULL;
+							const char *raw_value_s = NULL;
+							const char *corrected_value_s = NULL;
 
 							/* reset status */
 							status = OS_FAILED;
 
 							if (corrected_value_flag)
 								{
-									corrected_value_p = value_p;
+									corrected_value_s = value_s;
 								}
 							else
 								{
-									raw_value_p = value_p;
+									raw_value_s = value_s;
 								}
 
 							observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
@@ -1143,7 +1141,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 								{
 									if (corrected_value_flag)
 										{
-											if (SetObservationCorrectedValue (observation_p, value_p))
+											if (SetObservationCorrectedValueFromString (observation_p, value_s))
 												{
 													status = OS_SUCCEEDED;
 												}
@@ -1153,13 +1151,13 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 													bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 													FreeObservation (observation_p);
 												}
 										}
 									else
 										{
-											if (SetObservationRawValue (observation_p, value_p))
+											if (SetObservationRawValueFromString (observation_p, value_s))
 												{
 													status = OS_SUCCEEDED;
 												}
@@ -1169,7 +1167,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 													bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationRawValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 													FreeObservation (observation_p);
 												}
 
@@ -1183,7 +1181,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 
 									if (observation_id_p)
 										{
-											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index);
+											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index);
 
 											if (observation_p)
 												{

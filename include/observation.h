@@ -235,8 +235,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observa
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetObservationTypeAsString (const ObservationType obs_type);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool DetermineObservationTypeFromString (const char * const obs_type_s, ObservationType *obs_type_p)
-;
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool DetermineObservationTypeFromString (const char * const obs_type_s, ObservationType *obs_type_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationRawValueFromString (Observation *observation_p, const char * const value_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValueFromString (Observation *observation_p, const char * const value_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json_p);
+
 
 #ifdef __cplusplus
 }

@@ -635,7 +635,7 @@ bool AreObservationsMatchingByParts (const Observation *observation_p, const Mea
 
 
 
-bool AddValuesToFDJSON (Observation *obs_p, json_t *fd_json_p)
+bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json_p)
 {
 	bool success_flag = false;
 	const char *variable_s = GetMeasuredVariableName (obs_p -> ob_phenotype_p);
@@ -681,9 +681,9 @@ bool AddValuesToFDJSON (Observation *obs_p, json_t *fd_json_p)
 								{
 									StringObservation *string_obs_p = (StringObservation *) obs_p;
 
-									if (AddStringObservationRawValueToJSON (string_obs_p, key_s, fd_json_p, "-"))
+									if (AddStringObservationRawValueToJSON (string_obs_p, key_s, fd_json_p, "-", true))
 										{
-											if (AddStringObservationCorrectedValueToJSON (string_obs_p, key_s, fd_json_p, "-"))
+											if (AddStringObservationCorrectedValueToJSON (string_obs_p, key_s, fd_json_p, "-", true))
 												{
 													success_flag = true;
 												}
@@ -695,14 +695,15 @@ bool AddValuesToFDJSON (Observation *obs_p, json_t *fd_json_p)
 								{
 									NumericObservation *numeric_obs_p = (NumericObservation *) obs_p;
 
-									if (AddNumericObservationRawValueToJSON (numeric_obs_p, key_s, fd_json_p, "-"))
+									if (AddNumericObservationRawValueToJSON (numeric_obs_p, key_s, fd_json_p, "-", true))
 										{
-											if (AddNumericObservationCorrectedValueToJSON (numeric_obs_p, key_s, fd_json_p, "-"))
+											if (AddNumericObservationCorrectedValueToJSON (numeric_obs_p, key_s, fd_json_p, "-", true))
 												{
 													success_flag = true;
 												}
 										}
 								}
+								break;
 
 						}		/* switch (obs_p -> ob_type) */
 
@@ -722,6 +723,102 @@ bool AddValuesToFDJSON (Observation *obs_p, json_t *fd_json_p)
 
 	return success_flag;
 }
+
+
+
+bool SetObservationRawValueFromString (Observation *observation_p, const char * const value_s)
+{
+	bool success_flag = false;
+
+	switch (observation_p -> ob_type)
+		{
+			case OT_STRING:
+				{
+					StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+					if (SetStringObservationRawValue (string_obs_p, value_s))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUMERIC:
+				{
+					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
+
+					if (SetNumericObservationRawValueFromString (numeric_obs_p, value_s))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_SIGNED_INTEGER:
+				{
+					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+					if (SetIntegerObservationRawValueFromString (int_obs_p, value_s))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUM_TYPES:
+				break;
+		}
+
+	return success_flag;
+}
+
+
+bool SetObservationCorrectedValueFromString (Observation *observation_p, const char * const value_s)
+{
+	bool success_flag = false;
+
+	switch (observation_p -> ob_type)
+		{
+			case OT_STRING:
+				{
+					StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+					if (SetStringObservationCorrectedValue (string_obs_p, value_s))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUMERIC:
+				{
+					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
+
+					if (SetNumericObservationCorrectedValueFromString (numeric_obs_p, value_s))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_SIGNED_INTEGER:
+				{
+					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+					if (SetIntegerObservationCorrectedValueFromString (int_obs_p, value_s))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUM_TYPES:
+				break;
+		}
+
+	return success_flag;
+}
+
 
 
 /*

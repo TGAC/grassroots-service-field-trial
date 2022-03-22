@@ -51,6 +51,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetIntegerObservationAsJSON (const Integer
 DFW_FIELD_TRIAL_SERVICE_LOCAL IntegerObservation *GetIntegerObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p);
 
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIntegerObservationRawValueFromString (IntegerObservation *observation_p, const char *value_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIntegerObservationCorrectedValueFromString (IntegerObservation *observation_p, const char *value_s);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -10,10 +10,12 @@
 
 #include "integer_observation.h"
 #include "dfw_util.h"
-#include "typedefs.h"
+#include "math_utils.h"
 
 
 static bool AddIntegerValueToJSON (json_t *json_p, const char *key_s, const int32 *value_p, const char *null_sequence_s);
+
+static bool SetValueFromString (int32 **store_pp, const char *value_s);
 
 
 
@@ -114,17 +116,105 @@ IntegerObservation *GetIntegerObservationFromJSON (const json_t *phenotype_json_
 
 
 
-
-
-bool AddIntegerObservationRawValueToJSON (const IntegerObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+bool AddIntegerObservationRawValueToJSON (const IntegerObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
-	return AddIntegerValueToJSON (json_p, key_s, obs_p -> io_raw_value_p, null_sequence_s);
+	bool success_flag = false;
+
+	if (only_if_exists_flag)
+		{
+			if ((! (obs_p -> io_raw_value_p)) || (AddIntegerValueToJSON (json_p, key_s, obs_p -> io_raw_value_p, null_sequence_s)))
+				{
+					success_flag = true;
+				}
+		}
+	else
+		{
+			success_flag = AddIntegerValueToJSON (json_p, key_s, obs_p -> io_raw_value_p, null_sequence_s);
+		}
+
+	return success_flag;
 }
 
 
-bool AddIntegerObservationCorrectedValueToJSON (const IntegerObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s)
+bool AddIntegerObservationCorrectedValueToJSON (const IntegerObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
-	return AddIntegerValueToJSON (json_p, key_s, obs_p -> io_corrected_value_p, null_sequence_s);
+	bool success_flag = false;
+
+	if (only_if_exists_flag)
+		{
+			if ((! (obs_p -> io_corrected_value_p)) || (AddIntegerValueToJSON (json_p, key_s, obs_p -> io_corrected_value_p, null_sequence_s)))
+				{
+					success_flag = true;
+				}
+		}
+	else
+		{
+			success_flag = AddIntegerValueToJSON (json_p, key_s, obs_p -> io_corrected_value_p, null_sequence_s);
+		}
+
+	return success_flag;
+}
+
+
+bool SetIntegerObservationRawValueFromString (IntegerObservation *observation_p, const char *value_s)
+{
+	return SetValueFromString (& (observation_p -> io_raw_value_p), value_s);
+}
+
+
+bool SetIntegerObservationCorrectedValueFromString (IntegerObservation *observation_p, const char *value_s)
+{
+	return SetValueFromString (& (observation_p -> io_corrected_value_p), value_s);
+}
+
+
+/*
+ * STATIC DEFINITIONS
+ */
+
+
+static bool SetValueFromString (int32 **store_pp, const char *value_s)
+{
+	bool success_flag = false;
+
+	if (!IsStringEmpty (value_s))
+		{
+			int32 i;
+
+			if (GetValidInteger (&value_s, &i))
+				{
+					if (! (*store_pp))
+						{
+							int32 *i_p = (int32 *) AllocMemory (sizeof (int32));
+
+							if (i_p)
+								{
+									*store_pp = i_p;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing raw value " INT32_FMT " from \"%s\"", i, value_s);
+									return false;
+								}
+						}
+
+					**store_pp = i;
+					success_flag = true;
+				}
+
+		}
+	else
+		{
+			if (*store_pp)
+				{
+					FreeMemory (*store_pp);
+					*store_pp = NULL;
+				}
+
+			success_flag = true;
+		}
+
+	return success_flag;
 }
 
 

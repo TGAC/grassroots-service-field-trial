@@ -8,10 +8,11 @@
 
 #include "numeric_observation.h"
 #include "dfw_util.h"
-
+#include "math_utils.h"
 
 static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const double64 *value_p, const char *null_sequence_s);
 
+static bool SetValueFromString (double64 **store_pp, const char *value_s);
 
 
 NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
@@ -110,6 +111,16 @@ NumericObservation *GetNumericObservationFromJSON (const json_t *phenotype_json_
 }
 
 
+bool SetNumericObservationRawValueFromString (NumericObservation *observation_p, const char *value_s)
+{
+	return SetValueFromString (& (observation_p -> no_raw_value_p), value_s);
+}
+
+
+bool SetNumericObservationCorrectedValueFromString (NumericObservation *observation_p, const char *value_s)
+{
+	return SetValueFromString (& (observation_p -> no_corrected_value_p), value_s);
+}
 
 
 
@@ -123,6 +134,58 @@ bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p,
 {
 	return AddNumericValueToJSON (json_p, key_s, obs_p -> no_corrected_value_p, null_sequence_s);
 }
+
+
+/*
+ * STATIC DEFIINITIONS
+ */
+
+
+static bool SetValueFromString (double64 **store_pp, const char *value_s)
+{
+	bool success_flag = false;
+
+	if (!IsStringEmpty (value_s))
+		{
+			double d;
+
+			if (GetValidRealNumber (&value_s, &d, NULL))
+				{
+					if (! (*store_pp))
+						{
+							double64 *d_p = (double64 *) AllocMemory (sizeof (double64));
+
+							if (d_p)
+								{
+									*store_pp = d_p;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing raw value " DOUBLE64_FMT " from \"%s\"", d, value_s);
+									return false;
+								}
+						}
+
+					**store_pp = d;
+					success_flag = true;
+				}
+
+		}
+	else
+		{
+			if (*store_pp)
+				{
+					FreeMemory (*store_pp);
+					*store_pp = NULL;
+				}
+
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
 
 
 static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const double64 *value_p, const char *null_sequence_s)

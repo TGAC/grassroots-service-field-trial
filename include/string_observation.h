@@ -67,7 +67,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL StringObservation *GetStringObservationFromJSON (c
  * @memberof StringObservation
  * @ingroup field_trials_service
  */
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationRawValue (Observation *observation_p, const char *value_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationRawValue (StringObservation *observation_p, const char *value_s);
 
 
 /**
@@ -84,16 +84,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationRawValue (Observation *ob
  * @memberof StringObservation
  * @ingroup field_trials_service
  */
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationCorrectedValue (Observation *observation_p, const char *value_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationCorrectedValue (StringObservation *observation_p, const char *value_s);
 
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
 #ifdef __cplusplus
