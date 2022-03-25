@@ -950,7 +950,7 @@ static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, con
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add MeasuredVariable %s to ServiceJob", mv_p -> mv_internal_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add MeasuredVariable %s to ServiceJob", mv_p -> mv_variable_term_p -> st_name_s);
 												}
 
 											FreeMeasuredVariable (mv_p);

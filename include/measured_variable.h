@@ -36,18 +36,6 @@
 
 
 
-/* forward declaration */
-struct COScaleClass;
-
-
-typedef struct UnitTerm
-{
-	SchemaTerm ut_base_term;
-
-	const struct ScaleClass *ut_scale_class_p;
-} UnitTerm;
-
-
 typedef struct MeasuredVariable
 {
 	bson_oid_t *mv_id_p;
@@ -58,11 +46,9 @@ typedef struct MeasuredVariable
 
 	SchemaTerm *mv_measurement_term_p;
 
-	UnitTerm *mv_unit_term_p;
+	SchemaTerm *mv_unit_term_p;
 
-	SchemaTerm *mv_form_term_p;
-
-	char *mv_internal_name_s;
+	const ScaleClass *mv_scale_class_p;
 
 } MeasuredVariable;
 
@@ -108,6 +94,8 @@ MEASURED_VARIABLE_PREFIX const char *MV_VALUE_S MEASURED_VARIABLE_VAL ("value");
 
 MEASURED_VARIABLE_PREFIX const char *MV_INTERNAL_NAME_S MEASURED_VARIABLE_VAL ("internal_name");
 
+MEASURED_VARIABLE_PREFIX const char *MV_SCALE_S MEASURED_VARIABLE_VAL ("scale");
+
 MEASURED_VARIABLE_PREFIX const char *MV_NAME_S MEASURED_VARIABLE_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 
 
@@ -117,7 +105,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, UnitTerm *unit_p, SchemaTerm *variable_p, SchemaTerm *form_p, const char *internal_name_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, const ScaleClass *class_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariable (MeasuredVariable *treatment_p);
 

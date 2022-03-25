@@ -58,6 +58,7 @@ static const char * const S_FORM_ID_S = "Form Identifier";
 static const char * const S_FORM_ABBREVIATION_S = "Form Abbreviation";
 static const char * const S_FORM_NAME_S = "Form Name";
 static const char * const S_FORM_DESCRIPTION_S = "Form Description";
+static const char * const S_SCALE_CLASS_NAME_S = "Scale Class";
 
 
 static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimiter", PT_CHAR };
@@ -458,7 +459,7 @@ char *GetMeasuredVariableAsString (const MeasuredVariable *treatment_p)
 						{
 							if (treatment_p -> mv_unit_term_p)
 								{
-									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> mv_unit_term_p -> ut_base_term.st_name_s, NULL);
+									success_flag = AppendStringsToByteBuffer (buffer_p, " - ", treatment_p -> mv_unit_term_p -> st_name_s, NULL);
 								}
 						}
 
@@ -685,8 +686,8 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 
 					if (row_size > 0)
 						{
+							MeasuredVariable *mv_p = NULL;
 							MongoTool *mongo_p = data_p -> dftsd_mongo_p;
-							MeasuredVariable *treatment_p = NULL;
 							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, TT_TRAIT, mongo_p);
 
 							if (trait_p)
@@ -701,17 +702,54 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 												{
 													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S, TT_VARIABLE, mongo_p);
 
-													SchemaTerm *form_p = NULL; //GetSchemaTerm (table_row_json_p, S_FORM_ID_S, S_FORM_NAME_S, S_FORM_DESCRIPTION_S, S_FORM_ABBREVIATION_S);
-													char *created_internal_name_s = NULL;
-													const char *internal_name_s = NULL;
-
-													if (!form_p)
+													if (variable_p)
 														{
-															//PrintJSONToErrors (STM_LEVEL_FINE, __FILE__, __LINE__, table_row_json_p, "Failed to get Form");
-														}
+															const char *scale_s = GetJSONString (table_row_json_p, S_SCALE_CLASS_NAME_S);
 
+															if (scale_s)
+																{
+																	const ScaleClass *scale_p = GetScaleClassByName (scale_s);
 
-													if (!variable_p)
+																	if (scale_p)
+																		{
+																			mv_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, scale_p);
+
+																			if (mv_p)
+																				{
+																					if (!DoesMeasuredVariableExist (mv_p, data_p))
+																						{
+																							OperationStatus import_status;
+																							PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
+
+																							import_status = SaveMeasuredVariable (mv_p, job_p, data_p);
+
+																							if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
+																								{
+																									++ num_imported;
+																								}
+																							else
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
+																									success_flag = false;
+																								}
+
+																						}		/* if (!DoesMeasuredVariableExist (treatment_p)) */
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
+																						}
+
+																				}		/* if (mv_p) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with name \"%s\"  for row " SIZET_FMT, variable_p -> st_name_s, i);
+																				}
+
+																		}
+																}
+
+														}		/* if (variable_p */
+													else
 														{
 															char *row_s = GetRowAsString (i);
 															PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, table_row_json_p, "Failed to get Variable for row " SIZET_FMT, i);
@@ -733,70 +771,11 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 
 																	FreeCopiedString (row_s);
 																}
-
-
-															if ((trait_p -> st_abbreviation_s) && (method_p -> st_abbreviation_s) && (unit_p -> st_abbreviation_s))
-																{
-																	created_internal_name_s = ConcatenateVarargsStrings (trait_p  -> st_abbreviation_s, ":", method_p  -> st_abbreviation_s, ":", unit_p  -> st_abbreviation_s, NULL);
-
-																	if (created_internal_name_s)
-																		{
-																			internal_name_s = created_internal_name_s;
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to create internal name for row " SIZET_FMT, i);
-																		}
-																}
 														}
 
-													treatment_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, form_p, internal_name_s);
-
-													if (treatment_p)
+													if (!mv_p)
 														{
-															if (!DoesMeasuredVariableExist (treatment_p, data_p))
-																{
-																	OperationStatus import_status;
-																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
-
-																	import_status = SaveMeasuredVariable (treatment_p, job_p, data_p);
-
-
-																	if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
-																		{
-																			++ num_imported;
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
-																			success_flag = false;
-																		}
-
-																}		/* if (!DoesMeasuredVariableExist (treatment_p)) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
-																}
-
-														}		/* if (material_p) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with internal name \"%s\"  for row " SIZET_FMT, internal_name_s ? internal_name_s : "", i);
-														}
-
-													if (!treatment_p)
-														{
-															if (form_p)
-																{
-																	FreeSchemaTerm (form_p);
-																}
-
 															FreeSchemaTerm (unit_p);
-														}
-
-													if (created_internal_name_s)
-														{
-															FreeCopiedString (created_internal_name_s);
 														}
 
 												}		/* if (unit_p) */
@@ -806,7 +785,7 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 													AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create Unit", i, NULL);
 												}
 
-											if (!treatment_p)
+											if (!mv_p)
 												{
 													FreeSchemaTerm (method_p);
 												}
@@ -818,7 +797,7 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 											AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create Method", i, NULL);
 										}
 
-									if (!treatment_p)
+									if (!mv_p)
 										{
 											FreeSchemaTerm (trait_p);
 										}
@@ -830,9 +809,9 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 									AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create Trait", i, NULL);
 								}
 
-							if (treatment_p)
+							if (mv_p)
 								{
-									FreeMeasuredVariable (treatment_p);
+									FreeMeasuredVariable (mv_p);
 								}
 
 						}		/* if (row_size > 0) */
@@ -924,16 +903,21 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 }
 
 
-bool DoesMeasuredVariableExist (MeasuredVariable *treatment_p, const FieldTrialServiceData *data_p)
+bool DoesMeasuredVariableExist (MeasuredVariable *var_p, const FieldTrialServiceData *data_p)
 {
 	bool exists_flag = false;
 
-	if ((treatment_p -> mv_trait_term_p) && (treatment_p -> mv_measurement_term_p) && (treatment_p -> mv_unit_term_p))
+	if ((var_p -> mv_trait_term_p) && (var_p -> mv_measurement_term_p) && (var_p -> mv_unit_term_p))
 		{
-			MeasuredVariable *saved_treatment_p = GetMeasuredVariableBySchemaURLs (treatment_p -> mv_trait_term_p -> st_url_s, treatment_p -> mv_measurement_term_p -> st_url_s, treatment_p -> mv_unit_term_p -> ut_base_term.st_url_s, data_p);
+			MeasuredVariable *saved_treatment_p = GetMeasuredVariableBySchemaURLs (var_p -> mv_trait_term_p -> st_url_s, var_p -> mv_measurement_term_p -> st_url_s, var_p -> mv_unit_term_p -> st_url_s, data_p);
 
 			if (saved_treatment_p)
 				{
+					if (var_p -> mv_scale_class_p == NULL)
+						{
+							var_p -> mv_scale_class_p = saved_treatment_p -> mv_scale_class_p;
+						}
+
 					exists_flag = true;
 					FreeMeasuredVariable (saved_treatment_p);
 				}

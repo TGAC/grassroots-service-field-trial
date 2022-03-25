@@ -58,6 +58,12 @@ DFW_FIELD_TRIAL_SERVICE_API SchemaTerm *GetCropOnotologySchemaTerm (const char *
 DFW_FIELD_TRIAL_SERVICE_API json_t *GetScaleClassAsJSON (const ScaleClass *class_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_API json_t *GetScaleClassAsEmbeddedJSON (const ScaleClass *class_p, const char *key_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_API const ScaleClass *GetScaleClassFromJSON (const json_t *class_json_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_API OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p);
 
 

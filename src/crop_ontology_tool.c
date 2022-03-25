@@ -114,8 +114,8 @@ typedef struct
 static const char * const S_CROP_ONTOLOGY_API_URL_S = "http://www.cropontology.org/get-attributes/";
 
 
-static const char * const S_SCALE_CLASS_NAME_S = "unit.class_name";
-static const char * const S_SCALE_CLASS_TYPE_S = "unit.class_type";
+static const char * const S_SCALE_CLASS_NAME_S = CONTEXT_PREFIX_SCHEMA_ORG_S "name";
+static const char * const S_SCALE_CLASS_TYPE_S = "class_type";
 
 
 
@@ -690,7 +690,31 @@ static SchemaTerm *GetCachedCropOnotologySchemaTerm (const char *term_s, MongoTo
 
 */
 
+json_t *GetScaleClassAsEmbeddedJSON (const ScaleClass *class_p, const char *key_s)
+{
+	json_t *obj_p = json_object ();
 
+	if (obj_p)
+		{
+			json_t *sc_json_p = GetScaleClassAsJSON (class_p);
+
+			if (sc_json_p)
+				{
+					if (json_object_set_new (obj_p, key_s, sc_json_p) == 0)
+						{
+							return obj_p;
+						}
+					else
+						{
+							json_decref (sc_json_p);
+						}
+				}
+
+			json_decref (obj_p);
+		}
+
+	return NULL;
+}
 
 
 json_t *GetScaleClassAsJSON (const ScaleClass *class_p)
@@ -710,6 +734,39 @@ json_t *GetScaleClassAsJSON (const ScaleClass *class_p)
 				}
 
 			json_decref (sc_json_p);
+		}
+
+	return NULL;
+}
+
+
+const ScaleClass *GetScaleClassFromJSON (const json_t *class_json_p)
+{
+	const ScaleClass *class_p = NULL;
+	const char *name_s = GetJSONString (class_json_p, S_SCALE_CLASS_NAME_S);
+
+	if (name_s)
+		{
+			const char *type_s = GetJSONString (class_json_p, S_SCALE_CLASS_TYPE_S);
+
+			if (type_s)
+				{
+					ParameterType pt;
+
+					if (GetGrassrootsTypeFromString (type_s, &pt))
+						{
+							class_p = GetScaleClassByName (name_s);
+
+							if (class_p)
+								{
+									if (class_p -> sc_type == pt)
+										{
+											return class_p;
+										}
+								}
+
+						}
+				}
 		}
 
 	return NULL;
@@ -773,7 +830,7 @@ static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
 									if (scale_class_p)
 										{
 											/* update the variable in the db */
-											json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
+											json_t *scale_class_json_p = GetScaleClassAsEmbeddedJSON (scale_class_p, MV_SCALE_S);
 
 											if (scale_class_json_p)
 												{
