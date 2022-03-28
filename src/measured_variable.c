@@ -166,7 +166,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 															if (!AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
 																{
 																	success_flag = false;
-																}
+																}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
 														}
 												}
 

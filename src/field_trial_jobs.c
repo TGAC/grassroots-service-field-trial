@@ -817,7 +817,7 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 }
 
 
-json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p)
+json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, FieldTrialServiceData *data_p)
 {
 	json_t *trial_json_p = NULL;
 	FieldTrial *trial_p = GetFieldTrialByIdString (id_s, format, data_p);
