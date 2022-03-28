@@ -90,7 +90,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJobFromJSON (ServiceJob
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p);

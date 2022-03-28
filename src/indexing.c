@@ -1238,7 +1238,7 @@ static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServic
 
 											if (scale_class_p)
 												{
-													json_t *scale_class_json_p = GetScaleClassAsJSON (scale_class_p);
+													json_t *scale_class_json_p = GetScaleClassAsEmbeddedJSON (scale_class_p, MV_SCALE_S);
 
 													if (scale_class_json_p)
 														{
