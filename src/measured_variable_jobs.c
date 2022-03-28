@@ -426,11 +426,7 @@ char *GetMeasuredVariableAsString (const MeasuredVariable *treatment_p)
 {
 	char *title_s = NULL;
 
-	if (treatment_p -> mv_internal_name_s)
-		{
-			title_s = EasyCopyToNewString (treatment_p -> mv_internal_name_s);
-		}
-	else if (treatment_p -> mv_variable_term_p)
+	if (treatment_p -> mv_variable_term_p)
 		{
 			title_s = EasyCopyToNewString (treatment_p -> mv_variable_term_p -> st_name_s);
 		}

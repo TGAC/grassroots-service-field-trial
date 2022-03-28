@@ -163,15 +163,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 												{
 													if (format == VF_STORAGE)
 														{
-															if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
-																{
-																	if ((IsStringEmpty (mv_p -> mv_internal_name_s)) && (!SetJSONString (phenotype_json_p, MV_INTERNAL_NAME_S, mv_p -> mv_internal_name_s)))
-																		{
-																			success_flag = false;
-																		}		/* if ((IsStringEmpty (mv_p -> mv_internal_name_s)) && (!SetJSONString (phenotype_json_p, MV_INTERNAL_NAME_S, mv_p -> mv_internal_name_s))) */
-
-																}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
-															else
+															if (!AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
 																{
 																	success_flag = false;
 																}
@@ -368,7 +360,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 							if (status != OS_SUCCEEDED)
 								{
 									status = OS_PARTIALLY_SUCCEEDED;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index Measured Variable \"%s\" as JSON to Lucene", treatment_p -> mv_internal_name_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index Measured Variable \"%s\" as JSON to Lucene", treatment_p -> mv_variable_term_p -> st_name_s);
 									AddGeneralErrorMessageToServiceJob (job_p, "Measured Variable saved but failed to index for searching");
 								}
 
