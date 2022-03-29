@@ -789,6 +789,53 @@ bool SetObservationRawValueFromString (Observation *observation_p, const char * 
 }
 
 
+bool SetObservationCorrectedValueFromJSON (Observation *observation_p, const json_t *value_p)
+{
+	bool success_flag = false;
+
+	switch (observation_p -> ob_type)
+		{
+			case OT_STRING:
+				{
+					StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+					if (SetStringObservationCorrectedValueFromJSON (string_obs_p, value_p))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUMERIC:
+				{
+					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
+
+					if (SetNumericObservationCorrectedValueFromJSON (numeric_obs_p, value_p))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_SIGNED_INTEGER:
+				{
+					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+					if (SetIntegerObservationCorrectedValueFromJSON (int_obs_p, value_p))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUM_TYPES:
+				break;
+		}
+
+	return success_flag;
+}
+
+
 bool SetObservationCorrectedValueFromString (Observation *observation_p, const char * const value_s)
 {
 	bool success_flag = false;

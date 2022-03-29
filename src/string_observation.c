@@ -11,6 +11,7 @@
 
 static bool AddStringValueToJSON (json_t *json_p, const char *key_s, const char *value_s, const char *null_sequence_s);
 
+static bool SetValueFromJSON (char **store_ss, const json_t *value_p);
 
 
 StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char * const raw_value_s, const char * const corrected_value_s,
@@ -109,7 +110,7 @@ json_t *GetStringObservationAsJSON (const StringObservation *observation_p, cons
 
 StringObservation *GetStringObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p)
 {
-	StringObservation *observation_p = (StringObservation *) AllocMemory (sizeof (StringObservation));
+	StringObservation *oSetValueFromJSONbservation_p = (StringObservation *) AllocMemory (sizeof (StringObservation));
 
 	if (observation_p)
 		{
@@ -163,6 +164,20 @@ bool SetStringObservationCorrectedValue (StringObservation *observation_p, const
 
 
 
+
+bool SetStringObservationRawValueFromJSON (StringObservation *observation_p, const json_t *value_p)
+{
+	return SetValueFromJSON (& (observation_p -> so_raw_value_s), value_p);
+}
+
+
+bool SetStringObservationCorrectedValueFromJSON (StringObservation *observation_p, const json_t *value_p)
+{
+	return SetValueFromJSON (& (observation_p -> so_corrected_value_s), value_p);
+}
+
+
+
 bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
 	bool success_flag = false;
@@ -197,6 +212,32 @@ bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, c
 	else
 		{
 			success_flag = AddStringValueToJSON (json_p, key_s, obs_p -> so_corrected_value_s, null_sequence_s);
+		}
+
+	return success_flag;
+}
+
+
+static bool SetValueFromJSON (char **store_ss, const json_t *value_p)
+{
+	bool success_flag = false;
+
+	if (json_is_string (value_p))
+		{
+			const char *value_s = json_string_value (value_p);
+
+			if (value_s)
+				{
+					success_flag = ReplaceStringValue (store_ss, value_s);
+				}
+			else
+				{
+					if (*store_ss)
+						{
+							FreeCopiedString (*store_ss);
+							store_ss = NULL;
+						}
+				}
 		}
 
 	return success_flag;

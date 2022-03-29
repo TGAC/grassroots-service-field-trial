@@ -17,6 +17,8 @@ static bool AddIntegerValueToJSON (json_t *json_p, const char *key_s, const int3
 
 static bool SetValueFromString (int32 **store_pp, const char *value_s);
 
+static bool SetValueFromJSON (int32 **store_pp, const json_t *value_p);
+
 
 
 IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const int32 *raw_value_p, const int32 *corrected_value_p,
@@ -168,6 +170,17 @@ bool SetIntegerObservationCorrectedValueFromString (IntegerObservation *observat
 }
 
 
+bool SetIntegerObservationRawValueFromJSON (IntegerObservation *observation_p, const json_t *value_p)
+{
+	return SetValueFromJSON (& (observation_p -> io_raw_value_p), value_p);
+}
+
+
+bool SetIntegerObservationCorrectedValueFromJSON (IntegerObservation *observation_p, const json_t *value_p)
+{
+	return SetValueFromJSON (& (observation_p -> io_raw_value_p), value_p);
+}
+
 /*
  * STATIC DEFINITIONS
  */
@@ -202,6 +215,50 @@ static bool SetValueFromString (int32 **store_pp, const char *value_s)
 					success_flag = true;
 				}
 
+		}
+	else
+		{
+			if (*store_pp)
+				{
+					FreeMemory (*store_pp);
+					*store_pp = NULL;
+				}
+
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+static bool SetValueFromJSON (int32 **store_pp, const json_t *value_p)
+{
+	bool success_flag = false;
+
+	if (json_is_integer (value_p))
+		{
+			int32 i = json_integer_value (value_p);
+
+			if (*store_pp)
+				{
+					**store_pp = i;
+					success_flag = true;
+				}
+			else
+				{
+					int32 *i_p = (int32 *) AllocMemory (sizeof (int32));
+
+					if (i_p)
+						{
+							*i_p = i;
+							*store_pp = i_p;
+							success_flag = true;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing value " INT32_FMT, i);
+						}
+				}
 		}
 	else
 		{

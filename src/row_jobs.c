@@ -1008,7 +1008,9 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 }
 
 
-OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const char *value_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+
+
+OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 
@@ -1031,124 +1033,117 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const c
 					Observation *observation_p = NULL;
 					bool added_phenotype_flag = false;
 					bool free_measured_variable_flag = false;
+					const char *growth_stage_s = NULL;
+					const char *method_s = NULL;
+					ObservationNature nature = ON_ROW;
+					Instrument *instrument_p = NULL;
+					const json_t *raw_value_p = NULL;
+					const json_t *corrected_value_p = NULL;
 
-					if (!IsStringEmpty (value_s))
+
+					/* reset status */
+					status = OS_FAILED;
+
+					if (corrected_value_flag)
 						{
-							const char *growth_stage_s = NULL;
-							const char *method_s = NULL;
-							ObservationNature nature = ON_ROW;
-							Instrument *instrument_p = NULL;
-							const char *raw_value_s = NULL;
-							const char *corrected_value_s = NULL;
-
-							/* reset status */
-							status = OS_FAILED;
-
-							if (corrected_value_flag)
-								{
-									corrected_value_s = value_s;
-								}
-							else
-								{
-									raw_value_s = value_s;
-								}
-
-							observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
-
-							if (observation_p)
-								{
-									if (corrected_value_flag)
-										{
-											if (SetObservationCorrectedValueFromString (observation_p, value_s))
-												{
-													status = OS_SUCCEEDED;
-												}
-											else
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-													FreeObservation (observation_p);
-												}
-										}
-									else
-										{
-											if (SetObservationRawValueFromString (observation_p, value_s))
-												{
-													status = OS_SUCCEEDED;
-												}
-											else
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationRawValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-													FreeObservation (observation_p);
-												}
-
-										}
-
-									free_measured_variable_flag = true;
-								}		/* if (observation_p) */
-							else
-								{
-									bson_oid_t *observation_id_p = GetNewBSONOid ();
-
-									if (observation_id_p)
-										{
-											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
-											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
-
-											if (obs_type != OT_NUM_TYPES)
-												{
-													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
-												}
-
-
-											if (observation_p)
-												{
-													if (AddObservationToRow (row_p, observation_p))
-														{
-															added_phenotype_flag = true;
-															status = OS_SUCCEEDED;
-														}
-													else
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
-															FreeObservation (observation_p);
-														}
-
-												}		/* if (observation_p) */
-											else
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation failed for row \"%s\" and key \"%s\"", id_s, key_s);
-
-													free_measured_variable_flag = true;
-												}
-
-										}		/* if (observation_id_p) */
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation id for row number " UINT32_FMT " and key \"%s\"", row_index, key_s);
-										}
-								}
-
-						}		/* if ((!IsStringEmpty (raw_value_s)) */
+							corrected_value_p = value_p;
+						}
 					else
 						{
-							PrintLog (STM_LEVEL_FINE, __FILE__, __LINE__, "No measured value for \"%s\", skipping", key_s);
+							raw_value_p = value_p;
 						}
+
+					observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
+
+					if (observation_p)
+						{
+							if (corrected_value_flag)
+								{
+									if (SetObservationCorrectedValueFromJSON (observation_p, value_p))
+										{
+											status = OS_SUCCEEDED;
+										}
+									else
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
+											FreeObservation (observation_p);
+										}
+								}
+							else
+								{
+									if (SetObservationRawValueFromJSON (observation_p, value_p))
+										{
+											status = OS_SUCCEEDED;
+										}
+									else
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
+											FreeObservation (observation_p);
+										}
+
+								}
+
+							free_measured_variable_flag = true;
+						}		/* if (observation_p) */
+					else
+						{
+							bson_oid_t *observation_id_p = GetNewBSONOid ();
+
+							if (observation_id_p)
+								{
+									const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+									ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+
+									if (obs_type != OT_NUM_TYPES)
+										{
+											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
+										}
+
+
+									if (observation_p)
+										{
+											if (AddObservationToRow (row_p, observation_p))
+												{
+													added_phenotype_flag = true;
+													status = OS_SUCCEEDED;
+												}
+											else
+												{
+													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+													bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+													FreeObservation (observation_p);
+												}
+
+										}		/* if (observation_p) */
+									else
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation failed for row \"%s\" and key \"%s\"", id_s, key_s);
+
+											free_measured_variable_flag = true;
+										}
+
+								}		/* if (observation_id_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation id for row number " UINT32_FMT " and key \"%s\"", row_index, key_s);
+								}
+						}
+
 
 
 					if (start_date_p)

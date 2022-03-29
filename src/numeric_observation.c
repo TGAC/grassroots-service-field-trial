@@ -17,6 +17,7 @@ static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const doub
 
 static bool SetValueFromString (double64 **store_pp, const char *value_s);
 
+static bool SetValueFromJSON (double64 **store_pp, const json_t *value_p);
 
 NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
@@ -125,6 +126,16 @@ bool SetNumericObservationCorrectedValueFromString (NumericObservation *observat
 	return SetValueFromString (& (observation_p -> no_corrected_value_p), value_s);
 }
 
+bool SetNumericObservationRawValueFromJSON (NumericObservation *observation_p, const json_t *value_p)
+{
+	return SetValueFromJSON (& (observation_p -> no_raw_value_p), value_p);
+}
+
+
+bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observation_p, const json_t *value_p)
+{
+	return SetValueFromJSON (& (observation_p -> no_raw_value_p), value_p);
+}
 
 
 bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
@@ -217,6 +228,48 @@ static bool SetValueFromString (double64 **store_pp, const char *value_s)
 }
 
 
+static bool SetValueFromJSON (double64 **store_pp, const json_t *value_p)
+{
+	bool success_flag = false;
+
+	if (json_is_number (value_p))
+		{
+			double d = json_real_value (value_p);
+
+			if (*store_pp)
+				{
+					**store_pp = d;
+					success_flag = true;
+				}
+			else
+				{
+					double64 *d_p = (double64 *) AllocMemory (sizeof (double64));
+
+					if (d_p)
+						{
+							*d_p = d;
+							*store_pp = d_p;
+							success_flag = true;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing value %lf", d);
+						}
+				}
+		}
+	else
+		{
+			if (*store_pp)
+				{
+					FreeMemory (*store_pp);
+					*store_pp = NULL;
+				}
+
+			success_flag = true;
+		}
+
+	return success_flag;
+}
 
 
 static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const double64 *value_p, const char *null_sequence_s)

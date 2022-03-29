@@ -88,6 +88,25 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationCorrectedValue (StringObs
 
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationRawValueFromJSON (StringObservation *observation_p, const json_t *value_p);
+
+
+/**
+ * Set the corrected value for a given Observation.
+ *
+ * The value is deep-copied to the Observation so the value passed in can be freed without causing any
+ * memory corruption.
+ *
+ * @param observation_p The Observation that will have its corrected value updated.
+ * @param value_s The new corrected value to store, this can be <code>NULL</code> which will clear the
+ * Observation's existing corrected value if it has been previously set.
+ * @return <code>true</code> if the Observation's corrected value was updated successfully, <code>false</code>
+ * if there errors.
+ * @memberof StringObservation
+ * @ingroup field_trials_service
+ */
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStringObservationCorrectedValueFromJSON (StringObservation *observation_p, const json_t *value_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationRawValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 

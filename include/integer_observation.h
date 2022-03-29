@@ -58,6 +58,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIntegerObservationRawValueFromString (Inte
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIntegerObservationCorrectedValueFromString (IntegerObservation *observation_p, const char *value_s);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIntegerObservationRawValueFromJSON (IntegerObservation *observation_p, const json_t *value_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetIntegerObservationCorrectedValueFromJSON (IntegerObservation *observation_p, const json_t *value_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddIntegerObservationRawValueToJSON (const IntegerObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 

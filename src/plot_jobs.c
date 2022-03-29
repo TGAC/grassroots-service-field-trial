@@ -1107,6 +1107,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																											const char *value_s = NULL;
 
 																											value_p = json_object_iter_value (iterator_p);
+
 																											/*
 																											 * Is it an observation?
 																											 */
