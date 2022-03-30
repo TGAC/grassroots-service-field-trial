@@ -244,6 +244,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationRawValueFromString (Observation
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValueFromString (Observation *observation_p, const char * const value_s);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationRawValueFromJSON (Observation *observation_p, const json_t *value_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationCorrectedValueFromJSON (Observation *observation_p, const json_t *value_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json_p);
 
 

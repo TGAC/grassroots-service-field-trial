@@ -62,10 +62,11 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 
 
 
-void FreeNumericObservation (NumericObservation *observation_p)
-{
-	ClearObservation (& (observation_p -> no_base_observation));
 
+
+void ClearNumericObservation (NumericObservation *observation_p)
+
+{
 	if (observation_p -> no_raw_value_p)
 		{
 			FreeMemory (observation_p -> no_raw_value_p);
@@ -75,8 +76,6 @@ void FreeNumericObservation (NumericObservation *observation_p)
 		{
 			FreeMemory (observation_p -> no_corrected_value_p);
 		}
-
-	FreeMemory (observation_p);
 }
 
 

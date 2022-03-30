@@ -57,10 +57,8 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 
 
 
-void FreeStringObservation (StringObservation *observation_p)
+void ClearStringObservation (StringObservation *observation_p)
 {
-	ClearObservation (& (observation_p -> so_base_observation));
-
 	if (observation_p -> so_raw_value_s)
 		{
 			FreeCopiedString (observation_p -> so_raw_value_s);
@@ -70,9 +68,6 @@ void FreeStringObservation (StringObservation *observation_p)
 		{
 			FreeCopiedString (observation_p -> so_corrected_value_s);
 		}
-
-
-	FreeMemory (observation_p);
 }
 
 
@@ -110,7 +105,7 @@ json_t *GetStringObservationAsJSON (const StringObservation *observation_p, cons
 
 StringObservation *GetStringObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p)
 {
-	StringObservation *oSetValueFromJSONbservation_p = (StringObservation *) AllocMemory (sizeof (StringObservation));
+	StringObservation *observation_p = (StringObservation *) AllocMemory (sizeof (StringObservation));
 
 	if (observation_p)
 		{

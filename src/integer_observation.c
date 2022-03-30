@@ -64,10 +64,8 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 
 
 
-void FreeIntegerObservation (IntegerObservation *observation_p)
+void ClearIntegerObservation (IntegerObservation *observation_p)
 {
-	ClearObservation (& (observation_p -> io_base_observation));
-
 	if (observation_p -> io_raw_value_p)
 		{
 			FreeMemory (observation_p -> io_raw_value_p);
@@ -77,8 +75,6 @@ void FreeIntegerObservation (IntegerObservation *observation_p)
 		{
 			FreeMemory (observation_p -> io_corrected_value_p);
 		}
-
-	FreeMemory (observation_p);
 }
 
 
@@ -113,6 +109,7 @@ IntegerObservation *GetIntegerObservationFromJSON (const json_t *phenotype_json_
 		{
 
 		}
+
 	return NULL;
 }
 

@@ -33,6 +33,7 @@
 #include "mongodb_tool.h"
 #include "streams.h"
 #include "typedefs.h"
+#include "math_utils.h"
 
 #define ALLOCATE_OBSERVATION_TAGS (1)
 #include "observation.h"
@@ -176,6 +177,17 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 											raw_value = json_real_value (raw_value_p);
 											raw_p = &raw_value;
 										}
+									else if (json_is_string (raw_value_p))
+										{
+											if (GetRealValueFromJSONString (raw_value_p, &raw_value))
+												{
+													raw_p = &raw_value;
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
+										}
 								}
 
 							if (corrected_value_p)
@@ -185,6 +197,18 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 											corrected_value = json_real_value (corrected_value_p);
 											corrected_p = &corrected_value;
 										}
+									else if (json_is_string (corrected_value_p))
+										{
+											if (GetRealValueFromJSONString (corrected_value_p, &corrected_value))
+												{
+													corrected_p = &corrected_value;
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+										}
+
 								}
 
 							if (raw_p || corrected_p)
@@ -194,6 +218,98 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 									if (numeric_obs_p)
 										{
 											observation_p = & (numeric_obs_p -> no_base_observation);
+										}
+								}
+						}
+						break;
+
+					case PT_SIGNED_INT:
+						{
+							int32 *raw_p = NULL;
+							int32 *corrected_p = NULL;
+							int32 raw_value = 0;
+							int32 corrected_value = 0;
+
+							if (raw_value_p)
+								{
+									if (json_is_integer (raw_value_p))
+										{
+											raw_value = json_integer_value (raw_value_p);
+											raw_p = &raw_value;
+										}
+									else if (json_is_string (raw_value_p))
+										{
+											const char *value_s = json_string_value (raw_value_p);
+
+											if (GetValidInteger (&value_s, &raw_value))
+												{
+													raw_p = &raw_value;
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
+										}
+								}
+
+							if (corrected_value_p)
+								{
+									if (json_is_integer (corrected_value_p))
+										{
+											corrected_value = json_integer_value (corrected_value_p);
+											corrected_p = &corrected_value;
+										}
+									else if (json_is_string (corrected_value_p))
+										{
+											const char *value_s = json_string_value (corrected_value_p);
+
+											if (GetValidInteger (&value_s, &corrected_value))
+												{
+													corrected_p = &corrected_value;
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+										}
+
+								}
+
+							if (raw_p || corrected_p)
+								{
+									IntegerObservation *int_obs_p = AllocateIntegerObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p);
+
+									if (int_obs_p)
+										{
+											observation_p = & (int_obs_p -> io_base_observation);
+										}
+								}
+						}
+						break;
+
+
+					case PT_STRING:
+						{
+							const char *raw_value_s = NULL;
+							const char *corrected_value_s = NULL;
+
+							if (json_is_string (raw_value_p))
+								{
+									raw_value_s = json_string_value (raw_value_p);
+								}
+
+							if (json_is_string (corrected_value_p))
+								{
+									corrected_value_s = json_string_value (corrected_value_p);
+								}
+
+							if (raw_value_s || corrected_value_s)
+								{
+									StringObservation *string_obs_p = AllocateStringObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, index_p);
+
+									if (string_obs_p)
+										{
+											observation_p = & (string_obs_p -> so_base_observation);
 										}
 								}
 						}
@@ -223,7 +339,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 		}
 */
 
-	return NULL;
+	return observation_p;
 }
 
 
@@ -273,6 +389,25 @@ void ClearObservation (Observation *observation_p)
 
 void FreeObservation (Observation *observation_p)
 {
+	switch (observation_p -> ob_type)
+		{
+			case OT_NUMERIC:
+				ClearNumericObservation ((NumericObservation *) observation_p);
+				break;
+
+			case OT_SIGNED_INTEGER:
+				ClearIntegerObservation ((IntegerObservation *) observation_p);
+				break;
+
+			case OT_STRING:
+				ClearStringObservation ((StringObservation *) observation_p);
+				break;
+
+			default:
+				break;
+		}
+
+
 	ClearObservation (observation_p);
 
 	/*
@@ -470,6 +605,18 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 		}		/* if (observation_json_p) */
 
 	return NULL;
+}
+
+
+
+bool PopulateObservationFromJSON (Observation *observation_p, const json_t *observation_json_p, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+
+
+
+	return success_flag;
 }
 
 
@@ -735,6 +882,53 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 	else
 		{
 			success_flag = false;
+		}
+
+	return success_flag;
+}
+
+
+bool SetObservationRawValueFromJSON (Observation *observation_p, const json_t *value_p)
+{
+	bool success_flag = false;
+
+	switch (observation_p -> ob_type)
+		{
+			case OT_STRING:
+				{
+					StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+					if (SetStringObservationRawValueFromJSON (string_obs_p, value_p))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUMERIC:
+				{
+					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
+
+					if (SetNumericObservationRawValueFromJSON (numeric_obs_p, value_p))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_SIGNED_INTEGER:
+				{
+					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+					if (SetIntegerObservationRawValueFromJSON (int_obs_p, value_p))
+						{
+							success_flag = true;
+						}
+				}
+				break;
+
+			case OT_NUM_TYPES:
+				break;
 		}
 
 	return success_flag;

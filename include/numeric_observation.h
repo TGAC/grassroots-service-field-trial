@@ -42,7 +42,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL NumericObservation *AllocateNumericObservation (bs
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeNumericObservation (NumericObservation *observation_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearNumericObservation (NumericObservation *observation_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetNumericObservationAsJSON (const NumericObservation *observation_p, const ViewFormat format);
@@ -90,6 +90,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationCorrectedValue (NumericO
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationCorrectedValueFromString (NumericObservation *observation_p, const char *value_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationRawValueFromJSON (NumericObservation *observation_p, const json_t *value_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observation_p, const json_t *value_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationRawValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
