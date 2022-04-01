@@ -44,7 +44,9 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 									return observation_p;
 								}
 
-							FreeIntegerObservation (observation_p);
+							ClearObservation (& (observation_p -> io_base_observation));
+							ClearIntegerObservation (observation_p);
+							FreeMemory (observation_p);
 						}
 
 					if (copied_corrected_value_p)
@@ -99,6 +101,22 @@ json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, co
 	return NULL;
 }
 
+
+
+bool AddIntegerObservationValuesToJSON (const IntegerObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
+{
+	bool success_flag = false;
+
+	if (AddIntegerObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
+		{
+			if (AddIntegerObservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
 
 
 IntegerObservation *GetIntegerObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p)

@@ -115,6 +115,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationRawValueToJSON (const Str
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationCorrectedValueToJSON (const StringObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStringObservationValuesToJSON (const StringObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -50,8 +50,7 @@
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
 
-static const char *S_OBSERVATION_TYPES_SS [OT_NUM_TYPES] = { "xsd:double", "xsd:string" };
-
+static const char *S_OBSERVATION_TYPES_SS [OT_NUM_TYPES] = { "xsd:double", "xsd:string", 	"params:signed_integer" };
 
 
 static bool AddObservationNatureToJSON (const ObservationNature phenotype_nature, json_t *doc_p);
@@ -186,7 +185,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid jsonNumeric type: %d", json_typeof (raw_value_p));
 										}
 								}
 
@@ -542,7 +541,30 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 														{
 															if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
 																{
-																	return observation_json_p;
+																	switch (observation_p -> ob_type)
+																		{
+																			case OT_NUMERIC:
+																				done_objects_flag = AddNumericObservationValuesToJSON ((NumericObservation *) observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true);
+																				break;
+
+																			case OT_SIGNED_INTEGER:
+																				done_objects_flag = AddIntegerObservationValuesToJSON ((IntegerObservation *) observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true);
+																				break;
+
+																			case OT_STRING:
+																				done_objects_flag = AddStringObservationValuesToJSON ((StringObservation *) observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true);
+																				break;
+
+																			default:
+																				done_objects_flag = false;
+																				PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Unknown observation type %d", observation_p -> ob_type);
+																				break;
+																		}
+
+																	if (done_objects_flag)
+																		{
+																			return observation_json_p;
+																		}
 																}
 
 														}

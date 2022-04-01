@@ -37,7 +37,9 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 									return observation_p;
 								}
 
-							FreeStringObservation (observation_p);
+							ClearObservation (& (observation_p -> so_base_observation));
+							ClearStringObservation (observation_p);
+							FreeMemory (observation_p);
 						}
 
 					if (copied_corrected_value_s)
@@ -69,6 +71,24 @@ void ClearStringObservation (StringObservation *observation_p)
 			FreeCopiedString (observation_p -> so_corrected_value_s);
 		}
 }
+
+
+
+bool AddStringObservationValuesToJSON (const StringObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
+{
+	bool success_flag = false;
+
+	if (AddStringObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
+		{
+			if (AddStringbservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
 
 
 
