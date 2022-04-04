@@ -11,12 +11,17 @@
 #include "mongoc/mongoc.h"
 #include "jansson.h"
 
+#include "streams.h"
 
 #include "mongodb_tool.h"
 
 
 static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
 
+
+static int SetInteger (json_t *observation_json_p, const char * const key_s);
+
+static int SetReal (json_t *observation_json_p, const char * const key_s);
 
 
 int main (int argc, char *argv [])
@@ -26,7 +31,7 @@ int main (int argc, char *argv [])
 
 	mongoc_init ();
 
-	client_p = mongoc_client_new ("mongodb://localhost:27017/?appname=insert-example");
+	client_p = mongoc_client_new ("mongodb://localhost:27017/?appname=set_datatypes");
 
 	if (client_p)
 		{
@@ -109,8 +114,38 @@ int main (int argc, char *argv [])
 
 																															if (phenotype_json_p)
 																																{
+																																	ParameterType pt;
+																																	const char * const RAW_KEY_S = "raw_value";
+																																	const char * const CORRECTED_KEY_S = "corrected_value";
 
+																																	if (GetPhenotypeDatatype (phenotype_json_p, &pt))
+																																		{
+																																			switch (pt)
+																																				{
+																																					case PT_SIGNED_INT:
+																																						{
+																																							int raw_ret = SetInteger (observation_p, RAW_KEY_S);
+																																							int corrected_ret = SetInteger (observation_p, RAW_KEY_S);
 
+																																							if ((raw_ret == -1) || (corrected_ret == -1))
+																																								{
+																																									/* An error occurred */
+																																								}
+																																							else if ((raw_ret == 1) || (corrected_ret == 1))
+																																								{
+																																									/*
+																																									 * The observation's values have been updated so save it back to the database
+																																									 */
+
+																																								}
+																																						}
+																																						break;
+																																				}
+																																		}
+																																	else
+																																		{
+
+																																		}
 
 																																	json_decref (phenotype_json_p);
 																																}
@@ -118,6 +153,11 @@ int main (int argc, char *argv [])
 																															mongoc_cursor_destroy (phenotypes_cursor_p);
 																														}
 																												}
+
+																										}		/* if (GetNamedIdFromJSON (observation_p, "phenotype_id", &phenotype_id)) */
+																									else
+																										{
+
 																										}
 																								}
 																						}
@@ -185,7 +225,76 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 }
 
 
+static int SetInteger (json_t *observation_json_p, const char * const key_s)
+{
+	int ret = -1;
+	const char *value_s = GetJSONString (observation_json_p, key_s);
+	int i;
 
+	if (value_s)
+		{
+			int res = sscanf (value_s, "%d", &i);
+
+			if (res == 1)
+				{
+					if (SetJSONInteger (observation_json_p, key_s, i))
+						{
+							ret = 1;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %d", key_s, i);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+				}
+		}
+	else
+		{
+			/* no existing value set */
+			ret = 0;
+		}
+
+	return ret;
+}
+
+
+static int SetReal (json_t *observation_json_p, const char * const key_s)
+{
+	int ret = -1;
+	const char *value_s = GetJSONString (observation_json_p, key_s);
+	double d;
+
+	if (value_s)
+		{
+			int res = sscanf (value_s, "%lf", &d);
+
+			if (res == 1)
+				{
+					if (SetJSONReal (observation_json_p, key_s, d))
+						{
+							ret = 1;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %lf", key_s, d);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+				}
+		}
+	else
+		{
+			/* no existing value set */
+			ret = 0;
+		}
+
+	return ret;
+}
 
 bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p)
 {
