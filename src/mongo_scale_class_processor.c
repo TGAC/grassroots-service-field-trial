@@ -401,7 +401,7 @@ static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t 
 
   if (observations_s)
   	{
-  	  bson_t *query_p = BCON_NEW ("_id", BCON_OID (observation_id_p));
+  	  bson_t *query_p = BCON_NEW ("rows.observations._id", BCON_OID (observation_id_p));
 
 
   	  if (query_p)
