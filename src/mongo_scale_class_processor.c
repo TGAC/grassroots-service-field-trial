@@ -87,6 +87,8 @@ int main (int argc, char *argv [])
 																							json_t *observation_p;
 																							bson_t phenotype_query;
 																							bool first_flag = true;
+																							bool updated_flag = false;
+																							bool error_flag = false;
 
 																							json_array_foreach (observations_p, j, observation_p)
 																								{
@@ -120,27 +122,40 @@ int main (int argc, char *argv [])
 
 																																	if (GetPhenotypeDatatype (phenotype_json_p, &pt))
 																																		{
+																																			int raw_ret;
+																																			int corrected_ret;
+
 																																			switch (pt)
 																																				{
 																																					case PT_SIGNED_INT:
 																																						{
-																																							int raw_ret = SetInteger (observation_p, RAW_KEY_S);
-																																							int corrected_ret = SetInteger (observation_p, RAW_KEY_S);
+																																							raw_ret = SetInteger (observation_p, RAW_KEY_S);
+																																							corrected_ret = SetInteger (observation_p, RAW_KEY_S);
 
-																																							if ((raw_ret == -1) || (corrected_ret == -1))
-																																								{
-																																									/* An error occurred */
-																																								}
-																																							else if ((raw_ret == 1) || (corrected_ret == 1))
-																																								{
-																																									/*
-																																									 * The observation's values have been updated so save it back to the database
-																																									 */
-
-																																								}
 																																						}
 																																						break;
+
+																																					case PT_SIGNED_REAL:
+																																						{
+																																							raw_ret = SetReal (observation_p, RAW_KEY_S);
+																																							corrected_ret = SetReal (observation_p, RAW_KEY_S);
+																																						}
+																																				}		/* switch (pt) */
+
+																																			if ((raw_ret == -1) || (corrected_ret == -1))
+																																				{
+																																					/* An error occurred */
+																																					error_flag = true;
 																																				}
+																																			else if ((raw_ret == 1) || (corrected_ret == 1))
+																																				{
+																																					/*
+																																					 * The observation's values have been updated so we'll need to
+																																					 * save it back to the database
+																																					 */
+																																					updated_flag = true;
+																																				}
+
 																																		}
 																																	else
 																																		{
@@ -157,6 +172,20 @@ int main (int argc, char *argv [])
 																										}		/* if (GetNamedIdFromJSON (observation_p, "phenotype_id", &phenotype_id)) */
 																									else
 																										{
+
+																										}
+																								}		/* json_array_foreach (observations_p, j, observation_p) */
+
+
+																							if (error_flag)
+																								{
+
+																								}
+																							else
+																								{
+																									if (updated_flag)
+																										{
+																											/* Save the updated observations */
 
 																										}
 																								}
@@ -346,3 +375,40 @@ bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_
 	return success_flag;
 }
 
+
+static bool WriteObservations (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *observations_p)
+{
+	bool success_flag = false;
+  bson_t *query_p = BCON_NEW ("_id", BCON_OID (plot_id_p));
+
+  if (query_p)
+  	{
+			bson_t *update_p = BCON_NEW ("$set",
+											 "{",
+											 "key",
+											 BCON_UTF8 ("new_value"),
+											 "updated",
+											 BCON_BOOL (true),
+											 "}");
+
+			if (update_p)
+				{
+					bson_error_t error;
+
+				   if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, NULL, &error))
+				  	 {
+				  		 success_flag = true;
+				  	 }
+				   else
+				  	 {
+				  		 fprintf (stderr, "%s\n", error.message);
+				  	 }
+
+					bson_destroy (update_p);
+				}
+
+  		bson_destroy (query_p);
+  	}
+
+  return success_flag;
+}
