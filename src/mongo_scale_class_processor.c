@@ -23,6 +23,9 @@ static int SetInteger (json_t *observation_json_p, const char * const key_s);
 
 static int SetReal (json_t *observation_json_p, const char * const key_s);
 
+static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
+
+
 
 int main (int argc, char *argv [])
 {
@@ -154,6 +157,17 @@ int main (int argc, char *argv [])
 																																					 * save it back to the database
 																																					 */
 																																					updated_flag = true;
+																																					bson_oid_t observation_id;
+
+																																					if (GetMongoIdFromJSON (observation_p, &observation_id))
+																																						{
+																																							if (WriteObservation (&observation_id, plots_collection_p, observation_p))
+																																								{
+
+																																								}
+
+																																						}
+
 																																				}
 
 																																		}
@@ -376,38 +390,53 @@ bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_
 }
 
 
-static bool WriteObservations (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *observations_p)
+static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p)
 {
 	bool success_flag = false;
-  bson_t *query_p = BCON_NEW ("_id", BCON_OID (plot_id_p));
 
-  if (query_p)
+  char *observations_s = json_dumps (observation_p, 0);
+
+  if (observations_s)
   	{
-			bson_t *update_p = BCON_NEW ("$set",
-											 "{",
-											 "key",
-											 BCON_UTF8 ("new_value"),
-											 "updated",
-											 BCON_BOOL (true),
-											 "}");
+  	  bson_t *query_p = BCON_NEW ("_id", BCON_OID (observation_id_p));
 
-			if (update_p)
-				{
-					bson_error_t error;
 
-				   if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, NULL, &error))
-				  	 {
-				  		 success_flag = true;
-				  	 }
-				   else
-				  	 {
-				  		 fprintf (stderr, "%s\n", error.message);
-				  	 }
+  	  if (query_p)
+  	  	{
+  	  		bson_t *observations_bson_p = NULL;
+  				bson_error_t error;
 
-					bson_destroy (update_p);
-				}
+  				observations_bson_p = bson_new_from_json ((const uint8 *) observations_s, -1, &error);
 
-  		bson_destroy (query_p);
+  				if (observations_bson_p)
+  					{
+  	  	  		bson_t *update_p = BCON_NEW ("$set",
+  	  												 "{",
+  	  												 "observations.$",
+															 observations_bson_p,
+  	  												 "}");
+
+  	  				if (update_p)
+  	  					{
+									if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, NULL, &error))
+										{
+											success_flag = true;
+										}
+									else
+										{
+
+										}
+
+  	  						bson_destroy (update_p);
+  	  					}
+
+  						bson_destroy (observations_bson_p);
+  					}
+
+  	  		bson_destroy (query_p);
+  	  	}
+
+  		free (observations_s);
   	}
 
   return success_flag;
