@@ -125,7 +125,6 @@ LIB_LDFLAGS = 	\
 	-L$(DIR_GRASSROOTS_UUID_LIB) -l$(GRASSROOTS_UUID_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_SERVICES_LIB) -l$(GRASSROOTS_SERVICES_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_SERVER_LIB) -l$(GRASSROOTS_SERVER_LIB_NAME) \
-	-L$(DIR_GRASSROOTS_NETWORK_LIB) -l$(GRASSROOTS_NETWORK_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_PARAMS_LIB) -l$(GRASSROOTS_PARAMS_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_MONGODB_LIB) -l$(GRASSROOTS_MONGODB_LIB_NAME)  \
 	-L$(DIR_GRASSROOTS_SQLITE_LIB) -l$(GRASSROOTS_SQLITE_LIB_NAME)  \
@@ -138,17 +137,14 @@ LIB_LDFLAGS = 	\
 	-L$(DIR_MONGODB_LIB) -lmongoc-1.0 \
 	-L$(DIR_BSON_LIB) -lbson-1.0 \
 	-L$(DIR_LIBEXIF_LIB) -lexif \
+	-L$(DIR_UUID_LIB) -luuid \
+	-L$(DIR_GRASSROOTS_NETWORK_LIB) -l$(GRASSROOTS_NETWORK_LIB_NAME) \
 	
 LDFLAGS += $(LIB_LDFLAGS)
 
-		
-	
-
 APP_LDFLAGS = $(LIB_LDFLAGS) \
 	-L$(DIR_PCRE_LIB) -lpcre \
-	-L$(DIR_HTMLCXX_LIB) -lhtmlcxx \
-	-L$(DIR_HCXSELECT_LIB) -lhcxselect
-	
+	-lcurl	
 	
 ifeq ($(IRODS_ENABLED), 1)
 APP_LDFLAGS += -L$(DIR_GRASSROOTS_IRODS_LIB) -l$(GRASSROOTS_IRODS_LIB_NAME)
@@ -169,6 +165,17 @@ APP_LDFLAGS += \
 	-L$(DIR_HTCONDOR_DRMAA_LIB) -ldrmaa 
 endif	
 	
+SCALE_CLASS_APP_LDFLAGS = \
+	-L$(DIR_GRASSROOTS_UTIL_LIB) -l$(GRASSROOTS_UTIL_LIB_NAME) \
+	-L$(DIR_GRASSROOTS_PARAMS_LIB) -l$(GRASSROOTS_PARAMS_LIB_NAME) \
+	-L$(DIR_GRASSROOTS_MONGODB_LIB) -l$(GRASSROOTS_MONGODB_LIB_NAME)  \
+	-L$(DIR_JANSSON_LIB) -ljansson \
+	-L$(DIR_MONGODB_LIB) -lmongoc-1.0 \
+	-L$(DIR_BSON_LIB) -lbson-1.0 \
+	-L$(DIR_PCRE_LIB) -lpcre 
+	
+	
+	
 PLOT_ROW_APP_LDFLAGS += $(APP_LDFLAGS) \
 	-lcurl
 
@@ -185,6 +192,9 @@ importer: all
 plot_row_merger: all
 	$(CC) $(DIR_SRC)/merge_plot_row_collections.c -o $(DIR_BUILD)/$(BUILD)/merge_plot_row_collections -DUNIX=1 -Wall -Wshadow -Wextra  -g -O0 -ggdb  $(CPPFLAGS)  $(INCLUDES) -L$(DIR_BUILD)/$(BUILD) -l$(NAME) $(PLOT_ROW_APP_LDFLAGS)
 	
+
+scale_class_app: 
+	gcc $(DIR_SRC)/mongo_scale_class_processor.c -o $(DIR_BUILD)/$(BUILD)/mongo_scale_class_processor -DUNIX=1 -Wall -Wshadow -Wextra $(INCLUDES) $(SCALE_CLASS_APP_LDFLAGS) 
 
 
 include $(DIR_BUILD_CONFIG)/generic_makefiles/shared_library.makefile

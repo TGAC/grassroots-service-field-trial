@@ -9,11 +9,13 @@
 
 #include "bson/bson.h"
 #include "mongoc/mongoc.h"
-#include "jansson.h"
 
 #include "streams.h"
 
 #include "mongodb_tool.h"
+
+#include "parameter_type.h"
+#include "json_util.h"
 
 
 static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
@@ -25,16 +27,19 @@ static int SetReal (json_t *observation_json_p, const char * const key_s);
 
 static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
 
+static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p);
 
 
-int main (int argc, char *argv [])
+
+
+int main (void)
 {
 	mongoc_client_t *client_p;
-	const FieldTrialServiceData *data_p = NULL;
 
 	mongoc_init ();
 
 	client_p = mongoc_client_new ("mongodb://localhost:27017/?appname=set_datatypes");
+
 
 	if (client_p)
 		{
@@ -125,15 +130,15 @@ int main (int argc, char *argv [])
 
 																																	if (GetPhenotypeDatatype (phenotype_json_p, &pt))
 																																		{
-																																			int raw_ret;
-																																			int corrected_ret;
+																																			int raw_ret = 0;
+																																			int corrected_ret = 0;
 
 																																			switch (pt)
 																																				{
 																																					case PT_SIGNED_INT:
 																																						{
 																																							raw_ret = SetInteger (observation_p, RAW_KEY_S);
-																																							corrected_ret = SetInteger (observation_p, RAW_KEY_S);
+																																							corrected_ret = SetInteger (observation_p, CORRECTED_KEY_S);
 
 																																						}
 																																						break;
@@ -141,8 +146,25 @@ int main (int argc, char *argv [])
 																																					case PT_SIGNED_REAL:
 																																						{
 																																							raw_ret = SetReal (observation_p, RAW_KEY_S);
-																																							corrected_ret = SetReal (observation_p, RAW_KEY_S);
+																																							corrected_ret = SetReal (observation_p, CORRECTED_KEY_S);
 																																						}
+																																						break;
+
+																																					case PT_TIME:
+																																						{
+
+																																						}
+																																						break;
+
+																																					case PT_STRING:
+																																						{
+
+																																						}
+																																						break;
+
+																																					default:
+																																						break;
+
 																																				}		/* switch (pt) */
 
 																																			if ((raw_ret == -1) || (corrected_ret == -1))
@@ -237,7 +259,7 @@ int main (int argc, char *argv [])
 static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 {
 	json_t *json_p = NULL;
-	bson_t *doc_p;
+	const bson_t *doc_p;
 
 	if (mongoc_cursor_next (cursor_p, &doc_p))
 		{
@@ -246,7 +268,8 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 			if (doc_s)
 				{
 					json_error_t err;
-					json_t *json_p = json_loads (doc_s, 0, &err);
+
+					json_p = json_loads (doc_s, 0, &err);
 
 					if (!json_p)
 						{
@@ -260,7 +283,7 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 					puts ("Failed to convert bson to json");
 				}
 
-			bson_destroy (doc_p);
+			//bson_destroy (doc_p);
 		}
 
 
@@ -339,29 +362,32 @@ static int SetReal (json_t *observation_json_p, const char * const key_s)
 	return ret;
 }
 
-bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p)
+
+static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p)
 {
 	bool success_flag = false;
-	const ScaleClass *scale_class_p = NULL;
 	const json_t *scale_json_p = json_object_get (phenotype_json_p, "scale");
 
 	if (scale_json_p)
 		{
-			const char *class_s = GetJSONString (scale_class_p, "so:name");
+			const char *class_s = GetJSONString (scale_json_p, "so:name");
 
 			if (class_s)
 				{
 					if (strcmp (class_s, "Date") == 0)
 						{
-
+							*param_type_p = PT_TIME;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Duration") == 0)
 						{
-
+							*param_type_p = PT_SIGNED_REAL;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Nominal") == 0)
 						{
-
+							*param_type_p = PT_STRING;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Numerical") == 0)
 						{
@@ -370,7 +396,8 @@ bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_
 						}
 					else if (strcmp (class_s, "Ordinal") == 0)
 						{
-
+							*param_type_p = PT_SIGNED_INT;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Text") == 0)
 						{
@@ -384,7 +411,7 @@ bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_
 						}
 					else
 						{
-
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Unknown scale class \"%s\"", class_s);
 						}
 				}
 		}
