@@ -80,7 +80,7 @@ bool AddStringObservationValuesToJSON (const StringObservation *obs_p, const cha
 
 	if (AddStringObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
 		{
-			if (AddStringbservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+			if (AddStringObservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
 				{
 					success_flag = true;
 				}
