@@ -353,15 +353,18 @@ bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_
 				{
 					if (strcmp (class_s, "Date") == 0)
 						{
-
+							*param_type_p = PT_TIME;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Duration") == 0)
 						{
-
+							*param_type_p = PT_STRING;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Nominal") == 0)
 						{
-
+							*param_type_p = PT_STRING;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Numerical") == 0)
 						{
@@ -370,7 +373,8 @@ bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_
 						}
 					else if (strcmp (class_s, "Ordinal") == 0)
 						{
-
+							*param_type_p = PT_SIGNED_INT;
+							success_flag = true;
 						}
 					else if (strcmp (class_s, "Text") == 0)
 						{
