@@ -25,6 +25,9 @@ static int SetInteger (json_t *observation_json_p, const char * const key_s);
 
 static int SetReal (json_t *observation_json_p, const char * const key_s);
 
+static int CheckString (json_t *observation_json_p, const char * const key_s);
+
+
 static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
 
 static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p);
@@ -116,7 +119,7 @@ int main (void)
 
 																											if (BSON_APPEND_OID (&phenotype_query, MONGO_ID_S, &phenotype_id))
 																												{
-																													mongoc_cursor_t *phenotypes_cursor_p = mongoc_collection_find_with_opts (phenotypes_collection_p, query_p, NULL, NULL);
+																													mongoc_cursor_t *phenotypes_cursor_p = mongoc_collection_find_with_opts (phenotypes_collection_p, &phenotype_query, NULL, NULL);
 
 																													if (phenotypes_cursor_p)
 																														{
@@ -152,13 +155,13 @@ int main (void)
 
 																																					case PT_TIME:
 																																						{
-
 																																						}
 																																						break;
 
 																																					case PT_STRING:
 																																						{
-
+																																							raw_ret = CheckString (observation_p, RAW_KEY_S);
+																																							corrected_ret = CheckString (observation_p, CORRECTED_KEY_S);
 																																						}
 																																						break;
 
@@ -326,6 +329,33 @@ static int SetInteger (json_t *observation_json_p, const char * const key_s)
 	return ret;
 }
 
+
+static int CheckString (json_t *observation_json_p, const char * const key_s)
+{
+	int ret = -1;
+	json_t *value_p = json_object_get (observation_json_p, key_s);
+
+
+	if (value_p)
+		{
+			if (json_is_string (value_p))
+				{
+					ret = 1;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Stored value for \"%s\" is not a string: %d", key_s, json_typeof (value_p));
+				}
+		}
+	else
+		{
+			/* no existing value set */
+			ret = 0;
+		}
+
+	return ret;
+
+}
 
 static int SetReal (json_t *observation_json_p, const char * const key_s)
 {

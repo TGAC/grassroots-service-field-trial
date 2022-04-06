@@ -194,7 +194,7 @@ plot_row_merger: all
 	
 
 scale_class_app: 
-	gcc $(DIR_SRC)/mongo_scale_class_processor.c -o $(DIR_BUILD)/$(BUILD)/mongo_scale_class_processor -DUNIX=1 -Wall -Wshadow -Wextra $(INCLUDES) $(SCALE_CLASS_APP_LDFLAGS) 
+	gcc $(DIR_SRC)/mongo_scale_class_processor.c -o $(DIR_BUILD)/$(BUILD)/mongo_scale_class_processor  -g -O0 -ggdb -DUNIX=1 -Wall -Wshadow -Wextra $(INCLUDES) $(SCALE_CLASS_APP_LDFLAGS) 
 
 
 include $(DIR_BUILD_CONFIG)/generic_makefiles/shared_library.makefile
