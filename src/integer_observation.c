@@ -36,7 +36,10 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 
 					if (observation_p)
 						{
-							if (InitObservation (& (observation_p -> io_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_SIGNED_INTEGER))
+							memset (observation_p, 0, sizeof (IntegerObservation));
+
+							if (InitObservation (& (observation_p -> io_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_SIGNED_INTEGER,
+																	 ClearIntegerObservation, AddIntegerObservationValuesToJSON))
 								{
 									observation_p -> io_raw_value_p = copied_raw_value_p;
 									observation_p -> io_corrected_value_p = copied_corrected_value_p;
@@ -45,7 +48,7 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 								}
 
 							ClearObservation (& (observation_p -> io_base_observation));
-							ClearIntegerObservation (observation_p);
+							ClearIntegerObservation (& (observation_p -> io_base_observation));
 							FreeMemory (observation_p);
 						}
 
@@ -66,16 +69,18 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 
 
 
-void ClearIntegerObservation (IntegerObservation *observation_p)
+void ClearIntegerObservation (Observation *observation_p)
 {
-	if (observation_p -> io_raw_value_p)
+	IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+	if (int_obs_p -> io_raw_value_p)
 		{
-			FreeMemory (observation_p -> io_raw_value_p);
+			FreeMemory (int_obs_p -> io_raw_value_p);
 		}
 
-	if (observation_p -> io_corrected_value_p)
+	if (int_obs_p -> io_corrected_value_p)
 		{
-			FreeMemory (observation_p -> io_corrected_value_p);
+			FreeMemory (int_obs_p -> io_corrected_value_p);
 		}
 }
 

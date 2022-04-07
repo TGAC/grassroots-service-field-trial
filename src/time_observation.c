@@ -12,7 +12,7 @@
 #include "time_util.h"
 
 
-static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const int32 *value_p, const char *null_sequence_s);
+static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const struct tm *value_p, const char *null_sequence_s);
 
 static bool SetValueFromString (struct tm **store_pp, const char *value_s);
 
@@ -208,35 +208,29 @@ static bool SetValueFromString (struct tm **store_pp, const char *value_s)
 
 	if (!IsStringEmpty (value_s))
 		{
-			int32 i;
-
-			if (GetValidTime (&value_s, &i))
+			if (*store_pp)
 				{
-					if (! (*store_pp))
+					if (SetTimeFromString (*store_pp, value_s))
 						{
-							int32 *i_p = (int32 *) AllocMemory (sizeof (int32));
-
-							if (i_p)
-								{
-									*store_pp = i_p;
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing raw value " INT32_FMT " from \"%s\"", i, value_s);
-									return false;
-								}
+							success_flag = true;
 						}
-
-					**store_pp = i;
-					success_flag = true;
 				}
+			else
+				{
+					struct tm *time_p = GetTimeFromString (value_s);
 
+					if (time_p)
+						{
+							*store_pp = time_p;
+							success_flag = true;
+						}
+				}
 		}
 	else
 		{
 			if (*store_pp)
 				{
-					FreeMemory (*store_pp);
+					FreeTime (*store_pp);
 					*store_pp = NULL;
 				}
 
@@ -318,19 +312,28 @@ static bool CopyValidTime (const struct tm *src_p, struct tm **dest_pp)
 }
 
 
-static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const int32 *value_p, const char *null_sequence_s)
+static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const struct tm *time_p, const char *null_sequence_s)
 {
 	bool success_flag = false;
 
-	if (value_p)
+	if (time_p)
 		{
-			if (SetJSONTime (json_p, key_s, *value_p))
+			char *time_s = GetTimeAsString (time_p, true);
+
+			if (time_s)
 				{
-					success_flag = true;
+					if (SetJSONString (json_p, key_s, time_s))
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": \"%s\" in JSON", key_s, *time_s);
+						}
 				}
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": " INT32_FMT " in JSON", key_s, *value_p);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\" value as string", key_s);
 				}
 		}
 	else

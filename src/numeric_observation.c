@@ -34,7 +34,11 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 
 					if (observation_p)
 						{
-							if (InitObservation (& (observation_p -> no_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_NUMERIC))
+							memset (observation_p, 0, sizeof (NumericObservation));
+
+							if (InitObservation (& (observation_p -> no_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_NUMERIC,
+																	 ClearNumericObservation,
+																	 AddNumericObservationValuesToJSON))
 								{
 									observation_p -> no_raw_value_p = copied_raw_value_p;
 									observation_p -> no_corrected_value_p = copied_corrected_value_p;
@@ -43,7 +47,7 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 								}
 
 							ClearObservation (& (observation_p -> no_base_observation));
-							ClearNumericObservation (observation_p);
+							ClearNumericObservation (& (observation_p -> no_base_observation));
 							FreeMemory (observation_p);
 						}
 
@@ -66,17 +70,18 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 
 
 
-void ClearNumericObservation (NumericObservation *observation_p)
-
+void ClearNumericObservation (Observation *observation_p)
 {
-	if (observation_p -> no_raw_value_p)
+	NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
+
+	if (numeric_obs_p -> no_raw_value_p)
 		{
-			FreeMemory (observation_p -> no_raw_value_p);
+			FreeMemory (numeric_obs_p -> no_raw_value_p);
 		}
 
-	if (observation_p -> no_corrected_value_p)
+	if (numeric_obs_p -> no_corrected_value_p)
 		{
-			FreeMemory (observation_p -> no_corrected_value_p);
+			FreeMemory (numeric_obs_p -> no_corrected_value_p);
 		}
 }
 
@@ -139,13 +144,14 @@ bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observatio
 }
 
 
-bool AddNumericObservationValuesToJSON (const NumericObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
+bool AddNumericObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
+	const NumericObservation *num_obs_p = (const NumericObservation *) obs_p;
 	bool success_flag = false;
 
-	if (AddNumericObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
+	if (AddNumericObservationRawValueToJSON (num_obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
 		{
-			if (AddNumericObservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+			if (AddNumericObservationCorrectedValueToJSON (num_obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
 				{
 					success_flag = true;
 				}

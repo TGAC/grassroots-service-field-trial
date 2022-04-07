@@ -29,6 +29,8 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 
 					if (observation_p)
 						{
+							memset (observation_p, 0, sizeof (StringObservation));
+
 							if (InitObservation (& (observation_p -> so_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_STRING))
 								{
 									observation_p -> so_raw_value_s = copied_raw_value_s;
@@ -38,7 +40,7 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 								}
 
 							ClearObservation (& (observation_p -> so_base_observation));
-							ClearStringObservation (observation_p);
+							ClearStringObservation (& (observation_p -> so_base_observation));
 							FreeMemory (observation_p);
 						}
 
@@ -59,16 +61,18 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 
 
 
-void ClearStringObservation (StringObservation *observation_p)
+void ClearStringObservation (Observation *observation_p)
 {
-	if (observation_p -> so_raw_value_s)
+	StringObservation *string_obs_p = (StringObservation) observation_p;
+
+	if (string_obs_p -> so_raw_value_s)
 		{
-			FreeCopiedString (observation_p -> so_raw_value_s);
+			FreeCopiedString (string_obs_p -> so_raw_value_s);
 		}
 
-	if (observation_p -> so_corrected_value_s)
+	if (string_obs_p -> so_corrected_value_s)
 		{
-			FreeCopiedString (observation_p -> so_corrected_value_s);
+			FreeCopiedString (string_obs_p -> so_corrected_value_s);
 		}
 }
 

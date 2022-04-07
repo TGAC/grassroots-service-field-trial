@@ -77,7 +77,9 @@ static bool GetObservationTypeFromJSON (ObservationType *type_p, const json_t *d
 
 
 bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type)
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type,
+																	void (*clear_fn) (Observation *observation_p),
+																	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag))
 {
 	struct tm *copied_start_date_p = NULL;
 
@@ -114,6 +116,9 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 										{
 											observation_p -> ob_index = OB_DEFAULT_INDEX;
 										}
+
+									observation_p -> ob_clear_fn = clear_fn;
+									observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
 
 									return true;
 
@@ -153,7 +158,9 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 
 
 Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type)
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type,
+																	void (*clear_fn) (Observation *observation_p),
+																	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag))
 {
 	Observation *observation_p = NULL;
 	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
@@ -382,31 +389,17 @@ void ClearObservation (Observation *observation_p)
 			FreeCopiedString (observation_p -> ob_method_s);
 		}
 
+	if (observation_p -> ob_clear_fn)
+		{
+			observation_p -> ob_clear_fn (observation_p);
+		}
+
 }
 
 
 
 void FreeObservation (Observation *observation_p)
 {
-	switch (observation_p -> ob_type)
-		{
-			case OT_NUMERIC:
-				ClearNumericObservation ((NumericObservation *) observation_p);
-				break;
-
-			case OT_SIGNED_INTEGER:
-				ClearIntegerObservation ((IntegerObservation *) observation_p);
-				break;
-
-			case OT_STRING:
-				ClearStringObservation ((StringObservation *) observation_p);
-				break;
-
-			default:
-				break;
-		}
-
-
 	ClearObservation (observation_p);
 
 	/*
@@ -541,30 +534,15 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 														{
 															if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
 																{
-																	switch (observation_p -> ob_type)
-																		{
-																			case OT_NUMERIC:
-																				done_objects_flag = AddNumericObservationValuesToJSON ((NumericObservation *) observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true);
-																				break;
-
-																			case OT_SIGNED_INTEGER:
-																				done_objects_flag = AddIntegerObservationValuesToJSON ((IntegerObservation *) observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true);
-																				break;
-
-																			case OT_STRING:
-																				done_objects_flag = AddStringObservationValuesToJSON ((StringObservation *) observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true);
-																				break;
-
-																			default:
-																				done_objects_flag = false;
-																				PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Unknown observation type %d", observation_p -> ob_type);
-																				break;
-																		}
-
-																	if (done_objects_flag)
+																	if (observation_p -> ob_add_values_to_json_fn (observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true))
 																		{
 																			return observation_json_p;
 																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Unknown observation type %d", observation_p -> ob_type);
+																		}
+
 																}
 
 														}
@@ -844,54 +822,7 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 
 			if (key_s)
 				{
-					switch (obs_p -> ob_type)
-						{
-							case OT_STRING:
-								{
-									StringObservation *string_obs_p = (StringObservation *) obs_p;
-
-									if (AddStringObservationRawValueToJSON (string_obs_p, key_s, fd_json_p, "-", true))
-										{
-											if (AddStringObservationCorrectedValueToJSON (string_obs_p, key_s, fd_json_p, "-", true))
-												{
-													success_flag = true;
-												}
-										}
-								}
-								break;
-
-							case OT_NUMERIC:
-								{
-									NumericObservation *numeric_obs_p = (NumericObservation *) obs_p;
-
-									if (AddNumericObservationRawValueToJSON (numeric_obs_p, key_s, fd_json_p, "-", true))
-										{
-											if (AddNumericObservationCorrectedValueToJSON (numeric_obs_p, key_s, fd_json_p, "-", true))
-												{
-													success_flag = true;
-												}
-										}
-								}
-								break;
-
-							case OT_SIGNED_INTEGER:
-								{
-									IntegerObservation *integer_obs_p = (IntegerObservation *) obs_p;
-
-									if (AddIntegerObservationRawValueToJSON (integer_obs_p, key_s, fd_json_p, "-", true))
-										{
-											if (AddIntegerObservationCorrectedValueToJSON (integer_obs_p, key_s, fd_json_p, "-", true))
-												{
-													success_flag = true;
-												}
-										}
-								}
-								break;
-
-							case OT_NUM_TYPES:
-								break;
-						}		/* switch (obs_p -> ob_type) */
-
+					obs_p -> ob_add_values_to_json_fn (obs_p, "raw_value", "corrected_value", fd_json_p, "-", true);
 
 					if (key_s != variable_s)
 						{

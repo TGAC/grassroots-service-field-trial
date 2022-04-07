@@ -42,7 +42,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL IntegerObservation *AllocateIntegerObservation (bs
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearIntegerObservation (IntegerObservation *observation_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearIntegerObservation (Observation *observation_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, const ViewFormat format);
