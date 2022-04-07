@@ -27,6 +27,7 @@ static int SetReal (json_t *observation_json_p, const char * const key_s);
 
 static int CheckString (json_t *observation_json_p, const char * const key_s);
 
+static int CheckTime (json_t *observation_json_p, const char * const key_s);
 
 static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
 
@@ -142,7 +143,6 @@ int main (void)
 																																						{
 																																							raw_ret = SetInteger (observation_p, RAW_KEY_S);
 																																							corrected_ret = SetInteger (observation_p, CORRECTED_KEY_S);
-
 																																						}
 																																						break;
 
@@ -155,6 +155,8 @@ int main (void)
 
 																																					case PT_TIME:
 																																						{
+																																							raw_ret = CheckTime (observation_p, RAW_KEY_S);
+																																							corrected_ret = CheckTime (observation_p, CORRECTED_KEY_S);
 																																						}
 																																						break;
 
@@ -354,8 +356,37 @@ static int CheckString (json_t *observation_json_p, const char * const key_s)
 		}
 
 	return ret;
-
 }
+
+
+static int CheckTime (json_t *observation_json_p, const char * const key_s)
+{
+	int ret = -1;
+	const char *time_s = GetJSONString (observation_json_p, key_s);
+
+	if (time_s)
+		{
+			struct tm time_val;
+
+			if (SetTimeFromString (&time_val, time_s))
+				{
+					ret = 1;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Stored value for \"%s\", \"%s\" is not a time", key_s, time_s);
+				}
+		}
+	else
+		{
+			/* no existing value set */
+			ret = 0;
+		}
+
+	return ret;
+}
+
+
 
 static int SetReal (json_t *observation_json_p, const char * const key_s)
 {
