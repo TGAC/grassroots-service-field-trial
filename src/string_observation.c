@@ -31,7 +31,8 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 						{
 							memset (observation_p, 0, sizeof (StringObservation));
 
-							if (InitObservation (& (observation_p -> so_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_STRING))
+							if (InitObservation (& (observation_p -> so_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_STRING,
+																	 ClearStringObservation, AddStringObservationValuesToJSON))
 								{
 									observation_p -> so_raw_value_s = copied_raw_value_s;
 									observation_p -> so_corrected_value_s = copied_corrected_value_s;
@@ -63,7 +64,7 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 
 void ClearStringObservation (Observation *observation_p)
 {
-	StringObservation *string_obs_p = (StringObservation) observation_p;
+	StringObservation *string_obs_p = (StringObservation *) observation_p;
 
 	if (string_obs_p -> so_raw_value_s)
 		{
@@ -78,13 +79,14 @@ void ClearStringObservation (Observation *observation_p)
 
 
 
-bool AddStringObservationValuesToJSON (const StringObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
+bool AddStringObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
 	bool success_flag = false;
+	StringObservation *string_obs_p = (StringObservation *) obs_p;
 
-	if (AddStringObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
+	if (AddStringObservationRawValueToJSON (string_obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
 		{
-			if (AddStringObservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+			if (AddStringObservationCorrectedValueToJSON (string_obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
 				{
 					success_flag = true;
 				}

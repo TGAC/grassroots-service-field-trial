@@ -44,7 +44,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL TimeObservation *AllocateTimeObservation (bson_oid
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearTimeObservation (TimeObservation *observation_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearTimeObservation (Observation *observation_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const ViewFormat format);
@@ -72,7 +72,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTimeObservationRawValueToJSON (const TimeO
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTimeObservationCorrectedValueToJSON (const TimeObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTimeObservationValuesToJSON (const TimeObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTimeObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
 #ifdef __cplusplus

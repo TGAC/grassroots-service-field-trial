@@ -37,7 +37,9 @@ TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *sta
 
 					if (observation_p)
 						{
-							if (InitObservation (& (observation_p -> to_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_TIME))
+							if (InitObservation (& (observation_p -> to_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_TIME,
+									ClearTimeObservation,
+									AddTimeObservationValuesToJSON))
 								{
 									observation_p -> to_raw_value_p = copied_raw_value_p;
 									observation_p -> to_corrected_value_p = copied_corrected_value_p;
@@ -46,7 +48,7 @@ TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *sta
 								}
 
 							ClearObservation (& (observation_p -> to_base_observation));
-							ClearTimeObservation (observation_p);
+							ClearTimeObservation (& (observation_p -> to_base_observation));
 							FreeMemory (observation_p);
 						}
 
@@ -67,19 +69,20 @@ TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *sta
 
 
 
-void ClearTimeObservation (TimeObservation *observation_p)
+void ClearTimeObservation (Observation *observation_p)
 {
-	if (observation_p -> to_raw_value_p)
+	TimeObservation *time_obs_p = (TimeObservation *) observation_p;
+
+	if (time_obs_p -> to_raw_value_p)
 		{
-			FreeTime (observation_p -> to_raw_value_p);
+			FreeTime (time_obs_p -> to_raw_value_p);
 		}
 
-	if (observation_p -> to_corrected_value_p)
+	if (time_obs_p -> to_corrected_value_p)
 		{
-			FreeTime (observation_p -> to_corrected_value_p);
+			FreeTime (time_obs_p -> to_corrected_value_p);
 		}
 }
-
 
 
 json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const ViewFormat format)
@@ -104,13 +107,14 @@ json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const Vi
 
 
 
-bool AddTimeObservationValuesToJSON (const TimeObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
+bool AddTimeObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
 	bool success_flag = false;
+	TimeObservation *time_obs_p = (TimeObservation *) obs_p;
 
-	if (AddTimeObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
+	if (AddTimeObservationRawValueToJSON (time_obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
 		{
-			if (AddTimeObservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+			if (AddTimeObservationCorrectedValueToJSON (time_obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
 				{
 					success_flag = true;
 				}
@@ -245,40 +249,21 @@ static bool SetValueFromJSON (struct tm **store_pp, const json_t *value_p)
 {
 	bool success_flag = false;
 
-	if (json_is_integer (value_p))
-		{
-			int32 i = json_integer_value (value_p);
-
-			if (*store_pp)
-				{
-					**store_pp = i;
-					success_flag = true;
-				}
-			else
-				{
-					int32 *i_p = (int32 *) AllocMemory (sizeof (int32));
-
-					if (i_p)
-						{
-							*i_p = i;
-							*store_pp = i_p;
-							success_flag = true;
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing value " INT32_FMT, i);
-						}
-				}
-		}
-	else
+	if ((!value_p) || (json_is_null (value_p)))
 		{
 			if (*store_pp)
 				{
-					FreeMemory (*store_pp);
+					FreeTime (*store_pp);
 					*store_pp = NULL;
 				}
 
 			success_flag = true;
+		}
+	else if (json_is_string (value_p))
+		{
+			const char *value_s = json_string_value (value_p);
+
+			success_flag = SetValueFromString (store_pp, value_s);
 		}
 
 	return success_flag;

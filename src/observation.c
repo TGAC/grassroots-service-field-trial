@@ -46,6 +46,7 @@
 #include "numeric_observation.h"
 #include "string_observation.h"
 #include "integer_observation.h"
+#include "time_observation.h"
 
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
@@ -158,9 +159,7 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 
 
 Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type,
-																	void (*clear_fn) (Observation *observation_p),
-																	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag))
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type)
 {
 	Observation *observation_p = NULL;
 	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
@@ -321,6 +320,52 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 						}
 						break;
 
+					case PT_TIME:
+						{
+							struct tm *raw_time_p = NULL;
+							struct tm *corrected_time_p = NULL;
+							bool success_flag = true;
+
+							if (json_is_string (raw_value_p))
+								{
+									const char *raw_value_s = json_string_value (raw_value_p);
+									raw_time_p = GetTimeFromString (raw_value_s);
+
+									if (!raw_time_p)
+										{
+											success_flag = false;
+										}
+								}
+
+							if (success_flag)
+								{
+									if (json_is_string (corrected_value_p))
+										{
+											const char *corrected_value_s = json_string_value (corrected_value_p);
+											raw_time_p = GetTimeFromString (corrected_value_s);
+
+											if (!corrected_time_p)
+												{
+													success_flag = false;
+												}
+										}
+								}
+
+							if (success_flag)
+								{
+									if (raw_value_p || corrected_value_p)
+										{
+											TimeObservation *time_obs_p = AllocateTimeObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_time_p, corrected_time_p, growth_stage_s, method_s, instrument_p, nature, index_p);
+
+											if (time_obs_p)
+												{
+													observation_p = & (time_obs_p -> to_base_observation);
+												}
+										}
+								}
+						}
+						break;
+
 					default:
 						break;
 				}
@@ -330,20 +375,6 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 		{
 
 		}
-
-/*
-	observation_p = (Observation *) AllocMemory (sizeof (Observation));
-
-	if (observation_p)
-		{
-			if (InitObservation (observation_p, id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p))
-				{
-					return observation_p;
-				}
-
-			FreeMemory (observation_p);
-		}
-*/
 
 	return observation_p;
 }
@@ -843,192 +874,27 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 
 bool SetObservationRawValueFromJSON (Observation *observation_p, const json_t *value_p)
 {
-	bool success_flag = false;
-
-	switch (observation_p -> ob_type)
-		{
-			case OT_STRING:
-				{
-					StringObservation *string_obs_p = (StringObservation *) observation_p;
-
-					if (SetStringObservationRawValueFromJSON (string_obs_p, value_p))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUMERIC:
-				{
-					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
-
-					if (SetNumericObservationRawValueFromJSON (numeric_obs_p, value_p))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_SIGNED_INTEGER:
-				{
-					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
-
-					if (SetIntegerObservationRawValueFromJSON (int_obs_p, value_p))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUM_TYPES:
-				break;
-		}
-
-	return success_flag;
+	return ob_set_value_from_json_fn (observation_p, OVT_RAW_VALUE, value_p);
 }
 
 
 
 bool SetObservationRawValueFromString (Observation *observation_p, const char * const value_s)
 {
-	bool success_flag = false;
-
-	switch (observation_p -> ob_type)
-		{
-			case OT_STRING:
-				{
-					StringObservation *string_obs_p = (StringObservation *) observation_p;
-
-					if (SetStringObservationRawValue (string_obs_p, value_s))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUMERIC:
-				{
-					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
-
-					if (SetNumericObservationRawValueFromString (numeric_obs_p, value_s))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_SIGNED_INTEGER:
-				{
-					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
-
-					if (SetIntegerObservationRawValueFromString (int_obs_p, value_s))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUM_TYPES:
-				break;
-		}
-
-	return success_flag;
+	return ob_set_value_from_string_fn (observation_p, OVT_RAW_VALUE, value_s);
 }
 
 
 bool SetObservationCorrectedValueFromJSON (Observation *observation_p, const json_t *value_p)
 {
-	bool success_flag = false;
-
-	switch (observation_p -> ob_type)
-		{
-			case OT_STRING:
-				{
-					StringObservation *string_obs_p = (StringObservation *) observation_p;
-
-					if (SetStringObservationCorrectedValueFromJSON (string_obs_p, value_p))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUMERIC:
-				{
-					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
-
-					if (SetNumericObservationCorrectedValueFromJSON (numeric_obs_p, value_p))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_SIGNED_INTEGER:
-				{
-					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
-
-					if (SetIntegerObservationCorrectedValueFromJSON (int_obs_p, value_p))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUM_TYPES:
-				break;
-		}
-
-	return success_flag;
+	return ob_set_value_from_json_fn (observation_p, OVT_CORRECTED_VALUE, value_p);
 }
 
 
 bool SetObservationCorrectedValueFromString (Observation *observation_p, const char * const value_s)
 {
-	bool success_flag = false;
-
-	switch (observation_p -> ob_type)
-		{
-			case OT_STRING:
-				{
-					StringObservation *string_obs_p = (StringObservation *) observation_p;
-
-					if (SetStringObservationCorrectedValue (string_obs_p, value_s))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUMERIC:
-				{
-					NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
-
-					if (SetNumericObservationCorrectedValueFromString (numeric_obs_p, value_s))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_SIGNED_INTEGER:
-				{
-					IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
-
-					if (SetIntegerObservationCorrectedValueFromString (int_obs_p, value_s))
-						{
-							success_flag = true;
-						}
-				}
-				break;
-
-			case OT_NUM_TYPES:
-				break;
-		}
-
-	return success_flag;
+	return ob_set_value_from_string_fn (observation_p, OVT_CORRECTED_VALUE, value_s);
 }
-
 
 
 ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p)
@@ -1047,6 +913,10 @@ ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p)
 
 			case PT_SIGNED_INT:
 				obs_type = OT_SIGNED_INTEGER;
+				break;
+
+			case PT_TIME:
+				obs_type = OT_TIME;
 				break;
 
 			default:
