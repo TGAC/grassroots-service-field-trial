@@ -14,6 +14,12 @@ static bool AddStringValueToJSON (json_t *json_p, const char *key_s, const char 
 static bool SetValueFromJSON (char **store_ss, const json_t *value_p);
 
 
+static bool SetStringObservationValueFromString (Observation *observation_p, ObservationValueType ovt, const char *value_s);
+
+static bool SetStringObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
+
+
+
 StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char * const raw_value_s, const char * const corrected_value_s,
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
 {
@@ -32,7 +38,7 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 							memset (observation_p, 0, sizeof (StringObservation));
 
 							if (InitObservation (& (observation_p -> so_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_STRING,
-																	 ClearStringObservation, AddStringObservationValuesToJSON))
+																	 ClearStringObservation, AddStringObservationValuesToJSON, SetStringObservationValueFromJSON, SetStringObservationValueFromString))
 								{
 									observation_p -> so_raw_value_s = copied_raw_value_s;
 									observation_p -> so_corrected_value_s = copied_corrected_value_s;
@@ -140,6 +146,51 @@ StringObservation *GetStringObservationFromJSON (const json_t *phenotype_json_p,
 	return NULL;
 }
 
+
+static bool SetStringObservationValueFromString (Observation *observation_p, ObservationValueType ovt, const char *value_s)
+{
+	bool success_flag = false;
+	StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = SetStringObservationRawValue (string_obs_p, value_s);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = SetStringObservationCorrectedValue (string_obs_p, value_s);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+}
+
+
+static bool SetStringObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p)
+{
+	bool success_flag = false;
+	StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = SetStringObservationRawValueFromJSON (string_obs_p, value_p);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = SetStringObservationCorrectedValueFromJSON (string_obs_p, value_p);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+}
 
 
 bool SetStringObservationRawValue (StringObservation *observation_p, const char *value_s)

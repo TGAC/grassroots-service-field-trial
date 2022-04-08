@@ -18,8 +18,12 @@ static bool SetValueFromString (struct tm **store_pp, const char *value_s);
 
 static bool SetValueFromJSON (struct tm **store_pp, const json_t *value_p);
 
-
 static bool CopyValidTime (const struct tm *src_p, struct tm **dest_p);
+
+static bool SetTimeObservationValueFromString (Observation *observation_p, ObservationValueType ovt, const char *value_s);
+
+static bool SetTimeObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
+
 
 
 TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const struct tm *raw_value_p, const struct tm *corrected_value_p,
@@ -39,7 +43,9 @@ TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *sta
 						{
 							if (InitObservation (& (observation_p -> to_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_TIME,
 									ClearTimeObservation,
-									AddTimeObservationValuesToJSON))
+									AddTimeObservationValuesToJSON,
+									SetTimeObservationValueFromJSON,
+									SetTimeObservationValueFromString))
 								{
 									observation_p -> to_raw_value_p = copied_raw_value_p;
 									observation_p -> to_corrected_value_p = copied_corrected_value_p;
@@ -204,6 +210,53 @@ bool SetTimeObservationCorrectedValueFromJSON (TimeObservation *observation_p, c
 /*
  * STATIC DEFINITIONS
  */
+
+
+
+static bool SetTimeObservationValueFromString (Observation *observation_p, ObservationValueType ovt, const char *value_s)
+{
+	bool success_flag = false;
+	TimeObservation *time_obs_p = (TimeObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = SetTimeObservationRawValue (time_obs_p, value_s);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = SetTimeObservationCorrectedValue (time_obs_p, value_s);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+}
+
+
+static bool SetTimeObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p)
+{
+	bool success_flag = false;
+	TimeObservation *time_obs_p = (TimeObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = SetTimeObservationRawValueFromJSON (time_obs_p, value_p);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = SetTimeObservationCorrectedValueFromJSON (time_obs_p, value_p);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+}
 
 
 static bool SetValueFromString (struct tm **store_pp, const char *value_s)

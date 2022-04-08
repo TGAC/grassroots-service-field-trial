@@ -1047,7 +1047,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 				{
 					const char *id_s = NULL;
 					bool run_flag = false;
-					bool *run_flag_p = &run_flag;
+					const bool *run_flag_p = &run_flag;
 					json_t *terms_p = NULL;
 
 					RunReindexing (param_set_p, job_p, data_p);

@@ -19,6 +19,10 @@ static bool SetValueFromString (int32 **store_pp, const char *value_s);
 
 static bool SetValueFromJSON (int32 **store_pp, const json_t *value_p);
 
+static bool SetIntegerObservationValueFromString (Observation *observation_p, ObservationValueType ovt, const char *value_s);
+
+static bool SetIntegerObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
+
 
 
 IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const int32 *raw_value_p, const int32 *corrected_value_p,
@@ -39,7 +43,7 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 							memset (observation_p, 0, sizeof (IntegerObservation));
 
 							if (InitObservation (& (observation_p -> io_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_SIGNED_INTEGER,
-																	 ClearIntegerObservation, AddIntegerObservationValuesToJSON))
+																	 ClearIntegerObservation, AddIntegerObservationValuesToJSON, SetIntegerObservationValueFromJSON, SetIntegerObservationValueFromString))
 								{
 									observation_p -> io_raw_value_p = copied_raw_value_p;
 									observation_p -> io_corrected_value_p = copied_corrected_value_p;
@@ -108,13 +112,14 @@ json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, co
 
 
 
-bool AddIntegerObservationValuesToJSON (const IntegerObservation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
+bool AddIntegerObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
 {
 	bool success_flag = false;
+	IntegerObservation *int_obs_p = (IntegerObservation *) obs_p;
 
-	if (AddIntegerObservationRawValueToJSON (obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
+	if (AddIntegerObservationRawValueToJSON (int_obs_p, raw_key_s, json_p, null_sequence_s, only_if_exists_flag))
 		{
-			if (AddIntegerObservationCorrectedValueToJSON (obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
+			if (AddIntegerObservationCorrectedValueToJSON (int_obs_p, corrected_key_s, json_p, null_sequence_s, only_if_exists_flag))
 				{
 					success_flag = true;
 				}
@@ -204,6 +209,53 @@ bool SetIntegerObservationCorrectedValueFromJSON (IntegerObservation *observatio
 /*
  * STATIC DEFINITIONS
  */
+
+
+
+static bool SetIntegerObservationValueFromString (Observation *observation_p, ObservationValueType ovt, const char *value_s)
+{
+	bool success_flag = false;
+	IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = SetIntegerObservationRawValueFromString (int_obs_p, value_s);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = SetIntegerObservationCorrectedValueFromString (int_obs_p, value_s);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+}
+
+
+static bool SetIntegerObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p)
+{
+	bool success_flag = false;
+	IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = SetIntegerObservationRawValueFromJSON (int_obs_p, value_p);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = SetIntegerObservationCorrectedValueFromJSON (int_obs_p, value_p);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+}
 
 
 static bool SetValueFromString (int32 **store_pp, const char *value_s)
