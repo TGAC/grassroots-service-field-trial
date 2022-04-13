@@ -274,7 +274,7 @@ MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, c
 
 															if (!class_p)
 																{
-
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_json_p, "Failed to get scale class");
 																}
 														}
 
