@@ -763,10 +763,29 @@ const ScaleClass *GetScaleClassFromJSON (const json_t *class_json_p)
 										{
 											return class_p;
 										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, class_json_p, "class %s has sc_type %d that does not match %d", class_p -> sc_name_s, class_p -> sc_type, pt);
+										}
 								}
-
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, class_json_p, "GetScaleClassByName () failed for \"%s\"", name_s);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, class_json_p, "GetGrassrootsTypeFromString () for \"%s\"", type_s);
 						}
 				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, class_json_p, "Failed to find \"%s\"", S_SCALE_CLASS_TYPE_S);
+				}
+		}
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, class_json_p, "Failed to find \"%s\"", S_SCALE_CLASS_NAME_S);
 		}
 
 	return NULL;

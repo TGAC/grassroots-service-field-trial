@@ -33,7 +33,7 @@ typedef enum ObservationType
 {
 	OT_NUMERIC,
 	OT_STRING,
-	OT_SIGNED_INTEGER,
+	OT_INTEGER,
 	OT_TIME,
 	OT_NUM_TYPES
 } ObservationType;

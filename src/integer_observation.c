@@ -42,7 +42,7 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 						{
 							memset (observation_p, 0, sizeof (IntegerObservation));
 
-							if (InitObservation (& (observation_p -> io_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_SIGNED_INTEGER,
+							if (InitObservation (& (observation_p -> io_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_INTEGER,
 																	 ClearIntegerObservation, AddIntegerObservationValuesToJSON, SetIntegerObservationValueFromJSON, SetIntegerObservationValueFromString))
 								{
 									observation_p -> io_raw_value_p = copied_raw_value_p;

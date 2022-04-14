@@ -232,6 +232,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 						}
 						break;
 
+					case PT_UNSIGNED_INT:
 					case PT_SIGNED_INT:
 						{
 							int32 *raw_p = NULL;
@@ -918,7 +919,7 @@ ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p)
 
 			case PT_SIGNED_INT:
 			case PT_UNSIGNED_INT:
-				obs_type = OT_SIGNED_INTEGER;
+				obs_type = OT_INTEGER;
 				break;
 
 			case PT_TIME:
