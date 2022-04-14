@@ -122,6 +122,8 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 
 									observation_p -> ob_clear_fn = clear_fn;
 									observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
+									observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
+									observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
 
 									return true;
 
@@ -877,26 +879,26 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 
 bool SetObservationRawValueFromJSON (Observation *observation_p, const json_t *value_p)
 {
-	return ob_set_value_from_json_fn (observation_p, OVT_RAW_VALUE, value_p);
+	return observation_p -> ob_set_value_from_json_fn (observation_p, OVT_RAW_VALUE, value_p);
 }
 
 
 
 bool SetObservationRawValueFromString (Observation *observation_p, const char * const value_s)
 {
-	return ob_set_value_from_string_fn (observation_p, OVT_RAW_VALUE, value_s);
+	return observation_p -> ob_set_value_from_string_fn (observation_p, OVT_RAW_VALUE, value_s);
 }
 
 
 bool SetObservationCorrectedValueFromJSON (Observation *observation_p, const json_t *value_p)
 {
-	return ob_set_value_from_json_fn (observation_p, OVT_CORRECTED_VALUE, value_p);
+	return observation_p -> ob_set_value_from_json_fn (observation_p, OVT_CORRECTED_VALUE, value_p);
 }
 
 
 bool SetObservationCorrectedValueFromString (Observation *observation_p, const char * const value_s)
 {
-	return ob_set_value_from_string_fn (observation_p, OVT_CORRECTED_VALUE, value_s);
+	return observation_p -> ob_set_value_from_string_fn (observation_p, OVT_CORRECTED_VALUE, value_s);
 }
 
 
@@ -915,6 +917,7 @@ ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p)
 				break;
 
 			case PT_SIGNED_INT:
+			case PT_UNSIGNED_INT:
 				obs_type = OT_SIGNED_INTEGER;
 				break;
 

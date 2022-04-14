@@ -1069,7 +1069,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 											bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
 											FreeObservation (observation_p);
 										}
 								}
@@ -1085,7 +1085,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 											bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
 											FreeObservation (observation_p);
 										}
 

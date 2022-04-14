@@ -24,6 +24,8 @@ static bool SetTimeObservationValueFromString (Observation *observation_p, Obser
 
 static bool SetTimeObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
 
+static bool SetJSONTime (json_t *json_p, const char *key_s, const struct tm *time_p);
+
 
 
 TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const struct tm *raw_value_p, const struct tm *corrected_value_p,
@@ -97,9 +99,9 @@ json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const Vi
 
 	if (obs_json_p)
 		{
-			if ((! (observation_p -> to_raw_value_p)) || (SetJSONTime (obs_json_p, OB_RAW_VALUE_S, * (observation_p -> to_raw_value_p))))
+			if ((! (observation_p -> to_raw_value_p)) || (SetJSONTime (obs_json_p, OB_RAW_VALUE_S, observation_p -> to_raw_value_p)))
 				{
-					if ((! (observation_p -> to_corrected_value_p)) || (SetJSONTime (obs_json_p, OB_CORRECTED_VALUE_S, * (observation_p -> to_corrected_value_p))))
+					if ((! (observation_p -> to_corrected_value_p)) || (SetJSONTime (obs_json_p, OB_CORRECTED_VALUE_S, observation_p -> to_corrected_value_p)))
 						{
 							return obs_json_p;
 						}
@@ -110,7 +112,6 @@ json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const Vi
 
 	return NULL;
 }
-
 
 
 bool AddTimeObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag)
@@ -221,11 +222,11 @@ static bool SetTimeObservationValueFromString (Observation *observation_p, Obser
 	switch (ovt)
 		{
 			case OVT_RAW_VALUE:
-				success_flag = SetTimeObservationRawValue (time_obs_p, value_s);
+				success_flag = SetTimeObservationRawValueFromString (time_obs_p, value_s);
 				break;
 
 			case OVT_CORRECTED_VALUE:
-				success_flag = SetTimeObservationCorrectedValue (time_obs_p, value_s);
+				success_flag = SetTimeObservationCorrectedValueFromString (time_obs_p, value_s);
 				break;
 
 			default:
@@ -384,6 +385,33 @@ static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const struct 
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": null in JSON", key_s);
 				}
+		}
+
+	return success_flag;
+}
+
+
+static bool SetJSONTime (json_t *json_p, const char *key_s, const struct tm *time_p)
+{
+	bool success_flag = false;
+	char *time_s = GetTimeAsString (time_p, true);
+
+	if (time_s)
+		{
+			if (SetJSONString (json_p, key_s, time_s))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "SetJSONString () failed for \"%s\": \"%s\"", key_s, time_s);
+				}
+
+			FreeCopiedString (time_s);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTimeAsString () failed");
 		}
 
 	return success_flag;
