@@ -700,49 +700,63 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 
 													if (variable_p)
 														{
-															const char *scale_s = GetJSONString (table_row_json_p, S_SCALE_CLASS_NAME_S);
-
-															if (scale_s)
+															/*
+															 * Variable names must not contain any whitespace
+															 */
+															if (!DoesStringContainWhitespace (variable_p -> st_name_s))
 																{
-																	const ScaleClass *scale_p = GetScaleClassByName (scale_s);
+																	const char *scale_s = GetJSONString (table_row_json_p, S_SCALE_CLASS_NAME_S);
 
-																	if (scale_p)
+																	if (scale_s)
 																		{
-																			mv_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, scale_p);
+																			const ScaleClass *scale_p = GetScaleClassByName (scale_s);
 
-																			if (mv_p)
+																			if (scale_p)
 																				{
-																					if (!DoesMeasuredVariableExist (mv_p, data_p))
+																					mv_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, scale_p);
+
+																					if (mv_p)
 																						{
-																							OperationStatus import_status;
-																							PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
-
-																							import_status = SaveMeasuredVariable (mv_p, job_p, data_p);
-
-																							if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
+																							if (!DoesMeasuredVariableExist (mv_p, data_p))
 																								{
-																									++ num_imported;
-																								}
+																									OperationStatus import_status;
+																									PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
+
+																									import_status = SaveMeasuredVariable (mv_p, job_p, data_p);
+
+																									if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
+																										{
+																											++ num_imported;
+																										}
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
+																											success_flag = false;
+																										}
+
+																								}		/* if (!DoesMeasuredVariableExist (treatment_p)) */
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
-																									success_flag = false;
+																									PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
 																								}
 
-																						}		/* if (!DoesMeasuredVariableExist (treatment_p)) */
+																						}		/* if (mv_p) */
 																					else
 																						{
-																							PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
+																							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with name \"%s\"  for row " SIZET_FMT, variable_p -> st_name_s, i);
 																						}
 
-																				}		/* if (mv_p) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with name \"%s\"  for row " SIZET_FMT, variable_p -> st_name_s, i);
 																				}
 
-																		}
+																		}		/* if (scale_s) */
 																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Variable name \"%s\" on line " SIZET_FMT " contains whitespace", variable_p -> st_name_s, i);
+																	AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Variable name contains whitespace", i, NULL);
+																}
+
+
 
 														}		/* if (variable_p */
 													else
