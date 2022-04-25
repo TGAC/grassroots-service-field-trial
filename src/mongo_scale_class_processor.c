@@ -16,6 +16,7 @@
 
 #include "parameter_type.h"
 #include "json_util.h"
+#include "time_util.h"
 
 
 static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
@@ -32,6 +33,8 @@ static int CheckTime (json_t *observation_json_p, const char * const key_s);
 static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
 
 static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p);
+
+static bool WritePlot (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *plot_p);
 
 
 
@@ -86,6 +89,7 @@ int main (void)
 																{
 																	size_t i;
 																	json_t *row_p;
+																	bool plot_updated_flag = false;
 
 																	json_array_foreach (rows_p, i, row_p)
 																		{
@@ -99,7 +103,6 @@ int main (void)
 																							json_t *observation_p;
 																							bson_t phenotype_query;
 																							bool first_flag = true;
-																							bool updated_flag = false;
 																							bool error_flag = false;
 
 																							json_array_foreach (observations_p, j, observation_p)
@@ -121,6 +124,15 @@ int main (void)
 																											if (BSON_APPEND_OID (&phenotype_query, MONGO_ID_S, &phenotype_id))
 																												{
 																													mongoc_cursor_t *phenotypes_cursor_p = mongoc_collection_find_with_opts (phenotypes_collection_p, &phenotype_query, NULL, NULL);
+																													size_t query_length = 0;
+																													char *query_s = bson_as_json (&phenotype_query, &query_length);
+
+																													if (query_s)
+																														{
+																															PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "phenotype_query: \"%s\"", query_s);
+
+																															bson_free (query_s);
+																														}
 
 																													if (phenotypes_cursor_p)
 																														{
@@ -183,18 +195,7 @@ int main (void)
 																																					 * The observation's values have been updated so we'll need to
 																																					 * save it back to the database
 																																					 */
-																																					updated_flag = true;
-																																					bson_oid_t observation_id;
-
-																																					if (GetMongoIdFromJSON (observation_p, &observation_id))
-																																						{
-																																							if (WriteObservation (&observation_id, plots_collection_p, observation_p))
-																																								{
-
-																																								}
-
-																																						}
-
+																																					plot_updated_flag = true;
 																																				}
 
 																																		}
@@ -207,32 +208,73 @@ int main (void)
 																																}
 
 																															mongoc_cursor_destroy (phenotypes_cursor_p);
+																														}		/* if (phenotypes_cursor_p) */
+																													else
+																														{
+																															char *phenotype_id_s = GetBSONOidAsString (&phenotype_id);
+
+																															if (phenotype_id_s)
+																																{
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find phenotype with id \"%s\"", phenotype_id_s);
+																																}
+																															else
+																																{
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find phenotype");
+																																}
+
+																														}
+
+																												}		/* if (BSON_APPEND_OID (&phenotype_query, MONGO_ID_S, &phenotype_id)) */
+																											else
+																												{
+																													char *phenotype_id_s = GetBSONOidAsString (&phenotype_id);
+
+																													if (phenotype_id_s)
+																														{
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append \"%s\": \"%s\" to phenotype query", MONGO_ID_S, phenotype_id_s);
+																														}
+																													else
+																														{
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append id to phenotype query");
 																														}
 																												}
+
 
 																										}		/* if (GetNamedIdFromJSON (observation_p, "phenotype_id", &phenotype_id)) */
 																									else
 																										{
-
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_p, "Failed to get phenotype_id");
 																										}
-																								}		/* json_array_foreach (observations_p, j, observation_p) */
 
+																								}		/* json_array_foreach (observations_p, j, observation_p) */
 
 																							if (error_flag)
 																								{
 
 																								}
-																							else
-																								{
-																									if (updated_flag)
-																										{
-																											/* Save the updated observations */
 
-																										}
-																								}
+																						}		/* if (json_is_array (observations_p)) */
+
+																				}		/* if (observations_p) */
+
+																		}		/* json_array_foreach (rows_p, i, row_p) */
+
+																	if (plot_updated_flag)
+																		{
+																			bson_oid_t plot_id;
+
+																			if (GetMongoIdFromJSON (plot_json_p, &plot_id))
+																				{
+																					if (WritePlot (&plot_id, plots_collection_p, plot_json_p))
+																						{
+
 																						}
+
 																				}
+
+
 																		}
+
 																}
 														}
 
@@ -531,3 +573,71 @@ static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t 
 
   return success_flag;
 }
+
+
+
+
+static bool WritePlot (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *plot_p)
+{
+	bool success_flag = false;
+  char *plot_s = json_dumps (plot_p, 0);
+
+  if (plot_s)
+  	{
+  	  bson_t *query_p = BCON_NEW ("plot._id", BCON_OID (plot_id_p));
+
+  	  if (query_p)
+  	  	{
+  	  		bson_t *plot_bson_p = NULL;
+  				bson_error_t error;
+
+  				plot_bson_p = bson_new_from_json ((const uint8 *) plot_s, -1, &error);
+
+  				if (plot_bson_p)
+  					{
+  	  	  		bson_t *update_p = BCON_NEW ("$set",
+  	  												 "{",
+															 plot_bson_p,
+  	  												 "}");
+
+  	  				if (update_p)
+  	  					{
+									if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, NULL, &error))
+										{
+											success_flag = true;
+										}
+									else
+										{
+		  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "mongoc_collection_update_one () failed for \"%s\"", plot_s);
+										}
+
+  	  						bson_destroy (update_p);
+  	  					}
+  	  	  	  else
+  	  	  	  	{
+  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "Failed to create update statement for \"%s\"", plot_s);
+  	  	  	  	}
+
+  						bson_destroy (plot_bson_p);
+  					}
+  	  	  else
+  	  	  	{
+  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "Failed to create bson from \"%s\"", plot_s);
+  	  	  	}
+
+  	  		bson_destroy (query_p);
+  	  	}
+  	  else
+  	  	{
+  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "Failed to create query");
+  	  	}
+
+  		free (plot_s);
+  	}
+  else
+  	{
+  		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plot json as string");
+  	}
+  return success_flag;
+}
+
