@@ -19,16 +19,23 @@
 #include "time_util.h"
 
 
+typedef enum
+{
+	VS_FAIL,
+	VS_OK,
+	VS_NEEDS_UPDATE
+} ValueStatus;
+
 static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
 
 
-static int SetInteger (json_t *observation_json_p, const char * const key_s);
+static ValueStatus SetInteger (json_t *observation_json_p, const char * const key_s);
 
-static int SetReal (json_t *observation_json_p, const char * const key_s);
+static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s);
 
-static int CheckString (json_t *observation_json_p, const char * const key_s);
+static ValueStatus CheckString (json_t *observation_json_p, const char * const key_s);
 
-static int CheckTime (json_t *observation_json_p, const char * const key_s);
+static ValueStatus CheckTime (json_t *observation_json_p, const char * const key_s);
 
 static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
 
@@ -46,7 +53,6 @@ int main (void)
 	mongoc_init ();
 
 	client_p = mongoc_client_new ("mongodb://localhost:27017/?appname=set_datatypes");
-
 
 	if (client_p)
 		{
@@ -77,9 +83,13 @@ int main (void)
 
 									if (plots_cursor_p)
 										{
-											json_t *plot_json_p = GetNextDocAsJSON (plots_cursor_p);
+											size_t num_succeeded = 0;
+											size_t num_failed = 0;
+											size_t num_ignored = 0;
 
-											if (plot_json_p)
+											json_t *plot_json_p = NULL;
+
+											while ((plot_json_p = GetNextDocAsJSON (plots_cursor_p)) != NULL)
 												{
 													json_t *rows_p = json_object_get (plot_json_p, "rows");
 
@@ -146,8 +156,8 @@ int main (void)
 
 																																	if (GetPhenotypeDatatype (phenotype_json_p, &pt))
 																																		{
-																																			int raw_ret = 0;
-																																			int corrected_ret = 0;
+																																			ValueStatus raw_ret = VS_OK;
+																																			ValueStatus corrected_ret = VS_OK;
 
 																																			switch (pt)
 																																				{
@@ -184,12 +194,12 @@ int main (void)
 
 																																				}		/* switch (pt) */
 
-																																			if ((raw_ret == -1) || (corrected_ret == -1))
+																																			if ((raw_ret == VS_FAIL) || (corrected_ret == VS_FAIL))
 																																				{
 																																					/* An error occurred */
 																																					error_flag = true;
 																																				}
-																																			else if ((raw_ret == 1) || (corrected_ret == 1))
+																																			else if ((raw_ret == VS_NEEDS_UPDATE) || (corrected_ret == VS_NEEDS_UPDATE))
 																																				{
 																																					/*
 																																					 * The observation's values have been updated so we'll need to
@@ -197,15 +207,20 @@ int main (void)
 																																					 */
 																																					plot_updated_flag = true;
 																																				}
+																																			else if ((raw_ret == VS_OK) || (corrected_ret == VS_OK))
+																																				{
+																																					++ num_ignored;
+																																				}
 
-																																		}
+																																		}		/* if (GetPhenotypeDatatype (phenotype_json_p, &pt)) */
 																																	else
 																																		{
-
+																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "GetPhenotypeDatatype () failed");
+																																			error_flag = true;
 																																		}
 
 																																	json_decref (phenotype_json_p);
-																																}
+																																}		/* if (phenotype_json_p) */
 
 																															mongoc_cursor_destroy (phenotypes_cursor_p);
 																														}		/* if (phenotypes_cursor_p) */
@@ -222,6 +237,7 @@ int main (void)
 																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find phenotype");
 																																}
 
+																															error_flag = true;
 																														}
 
 																												}		/* if (BSON_APPEND_OID (&phenotype_query, MONGO_ID_S, &phenotype_id)) */
@@ -237,8 +253,9 @@ int main (void)
 																														{
 																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append id to phenotype query");
 																														}
-																												}
 
+																													error_flag = true;
+																												}
 
 																										}		/* if (GetNamedIdFromJSON (observation_p, "phenotype_id", &phenotype_id)) */
 																									else
@@ -250,7 +267,7 @@ int main (void)
 
 																							if (error_flag)
 																								{
-
+																									++ num_failed;
 																								}
 
 																						}		/* if (json_is_array (observations_p)) */
@@ -259,6 +276,9 @@ int main (void)
 
 																		}		/* json_array_foreach (rows_p, i, row_p) */
 
+																	/*
+																	 * Do we need to update the database?
+																	 */
 																	if (plot_updated_flag)
 																		{
 																			bson_oid_t plot_id;
@@ -267,33 +287,59 @@ int main (void)
 																				{
 																					if (WritePlot (&plot_id, plots_collection_p, plot_json_p))
 																						{
-
+																							++ num_succeeded;
 																						}
-
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "WritePlot () failed");
+																						}
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get plot_id");
 																				}
 
+																		}		/* if (plot_updated_flag) */
 
-																		}
-
-																}
+																}		/* if (json_is_array (rows_p)) */
 														}
 
 													json_decref (plot_json_p);
-												}
+												}		/* while ((plot_json_p = GetNextDocAsJSON (plots_cursor_p)) != NULL) */
 
 											mongoc_cursor_destroy (plots_cursor_p);
+										}		/* if (plots_cursor_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots cursor");
 										}
 
 									bson_destroy (query_p);
+								}		/* if (query_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query");
 								}
 
 							mongoc_collection_destroy (phenotypes_collection_p);
+						}		/* if (phenotypes_collection_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get phenotypes collection");
 						}
 
 					mongoc_collection_destroy (plots_collection_p);
+				}		/* if (plots_collection_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plots collection");
 				}
 
 			mongoc_client_destroy (client_p);
+		}		/* if (client_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get mongo client");
 		}
 
 	mongoc_cleanup ();
@@ -320,7 +366,7 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 
 					if (!json_p)
 						{
-							printf ("Failed to load json from \"%s\" error at %d\n", doc_s, err.position);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load json from \"%s\" error at %d\n", doc_s, err.position);
 						}
 
 					bson_free (doc_s);
@@ -338,9 +384,9 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 }
 
 
-static int SetInteger (json_t *observation_json_p, const char * const key_s)
+static ValueStatus SetInteger (json_t *observation_json_p, const char * const key_s)
 {
-	int ret = -1;
+	ValueStatus ret = VS_FAIL;
 	const char *value_s = GetJSONString (observation_json_p, key_s);
 	int i;
 
@@ -352,7 +398,7 @@ static int SetInteger (json_t *observation_json_p, const char * const key_s)
 				{
 					if (SetJSONInteger (observation_json_p, key_s, i))
 						{
-							ret = 1;
+							ret = VS_NEEDS_UPDATE;
 						}
 					else
 						{
@@ -367,16 +413,16 @@ static int SetInteger (json_t *observation_json_p, const char * const key_s)
 	else
 		{
 			/* no existing value set */
-			ret = 0;
+			ret = VS_OK;
 		}
 
 	return ret;
 }
 
 
-static int CheckString (json_t *observation_json_p, const char * const key_s)
+static ValueStatus CheckString (json_t *observation_json_p, const char * const key_s)
 {
-	int ret = -1;
+	ValueStatus ret = VS_FAIL;
 	json_t *value_p = json_object_get (observation_json_p, key_s);
 
 
@@ -384,7 +430,7 @@ static int CheckString (json_t *observation_json_p, const char * const key_s)
 		{
 			if (json_is_string (value_p))
 				{
-					ret = 1;
+					ret = VS_OK;
 				}
 			else
 				{
@@ -394,16 +440,16 @@ static int CheckString (json_t *observation_json_p, const char * const key_s)
 	else
 		{
 			/* no existing value set */
-			ret = 0;
+			ret = VS_OK;
 		}
 
 	return ret;
 }
 
 
-static int CheckTime (json_t *observation_json_p, const char * const key_s)
+static ValueStatus CheckTime (json_t *observation_json_p, const char * const key_s)
 {
-	int ret = -1;
+	ValueStatus ret = VS_FAIL;
 	const char *time_s = GetJSONString (observation_json_p, key_s);
 
 	if (time_s)
@@ -412,7 +458,7 @@ static int CheckTime (json_t *observation_json_p, const char * const key_s)
 
 			if (SetTimeFromString (&time_val, time_s))
 				{
-					ret = 1;
+					ret = VS_OK;
 				}
 			else
 				{
@@ -422,7 +468,7 @@ static int CheckTime (json_t *observation_json_p, const char * const key_s)
 	else
 		{
 			/* no existing value set */
-			ret = 0;
+			ret = VS_OK;
 		}
 
 	return ret;
@@ -430,9 +476,9 @@ static int CheckTime (json_t *observation_json_p, const char * const key_s)
 
 
 
-static int SetReal (json_t *observation_json_p, const char * const key_s)
+static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s)
 {
-	int ret = -1;
+	ValueStatus ret = VS_FAIL;
 	const char *value_s = GetJSONString (observation_json_p, key_s);
 	double d;
 
@@ -444,7 +490,7 @@ static int SetReal (json_t *observation_json_p, const char * const key_s)
 				{
 					if (SetJSONReal (observation_json_p, key_s, d))
 						{
-							ret = 1;
+							ret = VS_NEEDS_UPDATE;
 						}
 					else
 						{
@@ -459,7 +505,7 @@ static int SetReal (json_t *observation_json_p, const char * const key_s)
 	else
 		{
 			/* no existing value set */
-			ret = 0;
+			ret = VS_OK;
 		}
 
 	return ret;
@@ -638,6 +684,7 @@ static bool WritePlot (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collect
   	{
   		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get plot json as string");
   	}
+
   return success_flag;
 }
 
