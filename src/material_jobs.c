@@ -377,7 +377,7 @@ OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJo
 																					success_flag = false;
 																				}
 
-																			FreeCopiedString (id_s);
+																			FreeBSONOidString (id_s);
 																		}		/* if (id_s) */
 
 																}

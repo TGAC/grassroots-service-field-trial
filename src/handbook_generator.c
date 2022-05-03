@@ -217,7 +217,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get latex filename for \"%s\"", id_s);
 						}
 
-					FreeCopiedString (id_s);
+					FreeBSONOidString (id_s);
 				}		/* if (id_s) */
 			else
 				{

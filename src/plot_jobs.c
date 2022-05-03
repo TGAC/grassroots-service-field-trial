@@ -1365,7 +1365,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to clear cached Study with id \"%s\"", study_id_s);
 						}
 
-					FreeCopiedString (study_id_s);
+					FreeBSONOidString (study_id_s);
 				}
 			else
 				{

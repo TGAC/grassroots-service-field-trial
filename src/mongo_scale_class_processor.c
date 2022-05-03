@@ -41,7 +41,7 @@ static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t 
 
 static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p);
 
-static bool WritePlot (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *plot_p);
+static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *rows_p);
 
 
 
@@ -134,6 +134,9 @@ int main (void)
 																											if (BSON_APPEND_OID (&phenotype_query, MONGO_ID_S, &phenotype_id))
 																												{
 																													mongoc_cursor_t *phenotypes_cursor_p = mongoc_collection_find_with_opts (phenotypes_collection_p, &phenotype_query, NULL, NULL);
+
+
+																													/*
 																													size_t query_length = 0;
 																													char *query_s = bson_as_json (&phenotype_query, &query_length);
 
@@ -143,6 +146,7 @@ int main (void)
 
 																															bson_free (query_s);
 																														}
+																													*/
 
 																													if (phenotypes_cursor_p)
 																														{
@@ -231,6 +235,7 @@ int main (void)
 																															if (phenotype_id_s)
 																																{
 																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find phenotype with id \"%s\"", phenotype_id_s);
+																																	FreeBSONOidString (phenotype_id_s);
 																																}
 																															else
 																																{
@@ -248,6 +253,7 @@ int main (void)
 																													if (phenotype_id_s)
 																														{
 																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append \"%s\": \"%s\" to phenotype query", MONGO_ID_S, phenotype_id_s);
+																															FreeBSONOidString (phenotype_id_s);
 																														}
 																													else
 																														{
@@ -285,7 +291,19 @@ int main (void)
 
 																			if (GetMongoIdFromJSON (plot_json_p, &plot_id))
 																				{
-																					if (WritePlot (&plot_id, plots_collection_p, plot_json_p))
+																					char *id_s = GetBSONOidAsString (&plot_id);
+
+																					if (id_s)
+																						{
+																							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, plot_json_p, "About to update plot \"%s\"", id_s);
+																							FreeBSONOidString (id_s);
+																						}
+																					else
+																						{
+																							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, plot_json_p, "About to update plot");
+																						}
+
+																					if (WritePlotRows (&plot_id, plots_collection_p, rows_p))
 																						{
 																							++ num_succeeded;
 																						}
@@ -623,27 +641,28 @@ static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t 
 
 
 
-static bool WritePlot (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *plot_p)
+static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *rows_p)
 {
 	bool success_flag = false;
-  char *plot_s = json_dumps (plot_p, 0);
+  char *rows_s = json_dumps (rows_p, 0);
 
-  if (plot_s)
+  if (rows_s)
   	{
   	  bson_t *query_p = BCON_NEW ("plot._id", BCON_OID (plot_id_p));
 
   	  if (query_p)
   	  	{
-  	  		bson_t *plot_bson_p = NULL;
+  	  		bson_t *rows_bson_p = NULL;
   				bson_error_t error;
 
-  				plot_bson_p = bson_new_from_json ((const uint8 *) plot_s, -1, &error);
+  				rows_bson_p = bson_new_from_json ((const uint8 *) rows_s, -1, &error);
 
-  				if (plot_bson_p)
+  				if (rows_bson_p)
   					{
   	  	  		bson_t *update_p = BCON_NEW ("$set",
   	  												 "{",
-															 plot_bson_p,
+															 "rows",
+															 rows_bson_p,
   	  												 "}");
 
   	  				if (update_p)
@@ -654,31 +673,31 @@ static bool WritePlot (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collect
 										}
 									else
 										{
-		  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "mongoc_collection_update_one () failed for \"%s\"", plot_s);
+		  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_p, "mongoc_collection_update_one () failed for \"%s\" with error code: " UINT32_FMT " domain: " UINT32_FMT " message: \"%s\"", rows_s, error.code, error.domain, error.message);
 										}
 
   	  						bson_destroy (update_p);
   	  					}
   	  	  	  else
   	  	  	  	{
-  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "Failed to create update statement for \"%s\"", plot_s);
+  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_p, "Failed to create update statement for \"%s\"", rows_s);
   	  	  	  	}
 
-  						bson_destroy (plot_bson_p);
+  						bson_destroy (rows_bson_p);
   					}
   	  	  else
   	  	  	{
-  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "Failed to create bson from \"%s\"", plot_s);
+  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_p, "Failed to create bson from \"%s\"", rows_s);
   	  	  	}
 
   	  		bson_destroy (query_p);
   	  	}
   	  else
   	  	{
-  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_p, "Failed to create query");
+  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_p, "Failed to create query");
   	  	}
 
-  		free (plot_s);
+  		free (rows_s);
   	}
   else
   	{

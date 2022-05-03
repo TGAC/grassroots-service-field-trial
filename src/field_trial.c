@@ -419,7 +419,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 													if (id_s)
 														{
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetProgramById failed for %s", id_s);
-															FreeCopiedString (id_s);
+															FreeBSONOidString (id_s);
 														}
 													else
 														{
@@ -529,7 +529,7 @@ FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, 
 		{
 			trial_p = GetFieldTrialByIdString (id_s, format, data_p);
 
-			FreeCopiedString (id_s);
+			FreeBSONOidString (id_s);
 		}
 
 	return trial_p;

@@ -1383,7 +1383,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 
 												}		/* if (got_crops_flag) */
 
-											FreeCopiedString (field_trial_id_s);
+											FreeBSONOidString (field_trial_id_s);
 										}		/* if (field_trial_id_s) */
 									else
 										{
@@ -1395,7 +1395,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No parent field trial for study \"%s\"", study_p -> st_name_s);
 								}
 
-							FreeCopiedString (location_id_s);
+							FreeBSONOidString (location_id_s);
 						}		/* if (location_id_s) */
 					else
 						{
@@ -1407,7 +1407,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No location for study \"%s\"", study_p -> st_name_s);
 				}
 
-			FreeCopiedString (study_id_s);
+			FreeBSONOidString (study_id_s);
 		}		/* if (study_id_s) */
 	else
 		{
@@ -1884,7 +1884,7 @@ json_t *GetStudyIndexingData (Service *service_p)
 															if (id_s)
 																{
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyById () failed for %s", id_s);
-																	FreeCopiedString (id_s);
+																	FreeBSONOidString (id_s);
 																}
 															else
 																{
@@ -2195,7 +2195,7 @@ bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p)
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create data package for \"%s\"", study_p -> st_name_s);
 						}
 
-					FreeCopiedString (id_s);
+					FreeBSONOidString (id_s);
 				}		/* if (id_s) */
 			else
 				{
@@ -2536,7 +2536,7 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 
 								}		/* if (SetJSONString (study_fd_p, FD_ID_S, id_s)) */
 
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}		/* if (id_s) */
 					else
 						{
@@ -2621,7 +2621,7 @@ json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTria
 
 												}		/* if (SetJSONString (study_fd_p, FD_ID_S, id_s)) */
 
-											FreeCopiedString (id_s);
+											FreeBSONOidString (id_s);
 										}		/* if (id_s) */
 									else
 										{
@@ -2953,7 +2953,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s,  study_p -> st_name_s);
 																}
 
-															FreeCopiedString (id_s);
+															FreeBSONOidString (id_s);
 														}
 													else
 														{
@@ -3005,7 +3005,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 						{
 							success_flag = SetStringParameterDefaultValue (param_p, id_s);
 							success_flag = SetStringParameterCurrentValue (param_p, id_s);
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}
 					else
 						{
@@ -3279,7 +3279,7 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 													if (id_s)
 														{
 
-															FreeCopiedString (id_s);
+															FreeBSONOidString (id_s);
 														}		/* if (id_s) */
 
 												}		/* if (GetMongoIdFromJSON (entry_p, &id)) */

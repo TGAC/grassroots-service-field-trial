@@ -839,7 +839,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 										}
 
 
-									FreeCopiedString (id_s);
+									FreeBSONOidString (id_s);
 								}
 							else
 								{
@@ -1124,7 +1124,7 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 															if (id_s)
 																{
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed for %s", id_s);
-																	FreeCopiedString (id_s);
+																	FreeBSONOidString (id_s);
 																}
 															else
 																{
@@ -1405,7 +1405,7 @@ Study *GetStudyFromJSON (const json_t *json_p, const ViewFormat format, const Fi
 							if (id_s)
 								{
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetFieldTrialById failed for %s", id_s);
-									FreeCopiedString (id_s);
+									FreeBSONOidString (id_s);
 								}
 							else
 								{

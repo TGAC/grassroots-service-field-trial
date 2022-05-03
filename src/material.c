@@ -67,7 +67,7 @@ Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s
 
 					if (gene_bank_id_s)
 						{
-							FreeCopiedString (gene_bank_id_s);
+							FreeBSONOidString (gene_bank_id_s);
 						}
 				}
 
@@ -81,7 +81,7 @@ Material *AllocateMaterialByAccession (bson_oid_t *id_p, const char *accession_s
 
 			if (gene_bank_id_s)
 				{
-					FreeCopiedString (gene_bank_id_s);
+					FreeBSONOidString (gene_bank_id_s);
 				}
 
 		}
@@ -482,7 +482,7 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, const FieldTrialServ
 
 					if (id_s)
 						{
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}
 				}
 
@@ -497,7 +497,7 @@ Material *GetMaterialById (const bson_oid_t *material_id_p, const FieldTrialServ
 
 			if (id_s)
 				{
-					FreeCopiedString (id_s);
+					FreeBSONOidString (id_s);
 				}
 		}
 

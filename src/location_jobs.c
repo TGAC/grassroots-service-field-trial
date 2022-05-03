@@ -287,12 +287,12 @@ bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p
 
 				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, LOCATION_ID.npt_type, LOCATION_ID.npt_name_s, "Load Location", "Edit an existing location", id_s, PL_ADVANCED)) != NULL) */
 
-
-
-
-
 		}		/* if (defaults_flag) */
 
+	if (id_s)
+		{
+			FreeBSONOidString (id_s);
+		}
 
 	return success_flag;
 }
@@ -804,7 +804,7 @@ bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringPar
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
 																		}
 
-																	FreeCopiedString (id_s);
+																	FreeBSONOidString (id_s);
 																}
 															else
 																{

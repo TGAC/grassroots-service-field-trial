@@ -564,7 +564,7 @@ MeasuredVariableNode *AllocateMeasuredVariableNode (MeasuredVariable *variable_p
 					return mv_node_p;
 				}
 
-			FreeCopiedString (id_s);
+			FreeBSONOidString (id_s);
 		}
 	else
 		{
@@ -581,7 +581,7 @@ void FreeMeasuredVariableNode (ListItem *node_p)
 
 	if (mv_node_p -> mvn_id_s)
 		{
-			FreeCopiedString (mv_node_p -> mvn_id_s);
+			FreeBSONOidString (mv_node_p -> mvn_id_s);
 		}
 
 	if (mv_node_p -> mvn_measured_variable_p)

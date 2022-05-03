@@ -221,7 +221,7 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, program_p -> pr_name_s);
 																}
 
-															FreeCopiedString (id_s);
+															FreeBSONOidString (id_s);
 														}
 													else
 														{
@@ -272,7 +272,7 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 					if (id_s)
 						{
 							success_flag = SetStringParameterDefaultValue (param_p, id_s);
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}
 					else
 						{
@@ -567,7 +567,7 @@ json_t *GetProgrammeAsFrictionlessDataResource (const Programme *programme_p, co
 
 								}		/* if (SetJSONString (programme_fd_p, FD_ID_S, id_s)) */
 
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}		/* if (id_s) */
 					else
 						{

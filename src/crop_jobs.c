@@ -316,7 +316,7 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParamet
 
 															success_flag = CreateAndAddStringParameterOption (param_p, id_s, crop_p -> cr_name_s);
 
-															FreeCopiedString (id_s);
+															FreeBSONOidString (id_s);
 														}
 
 													FreeCrop (crop_p);
@@ -375,7 +375,7 @@ Crop *GetStoredCropValue (const json_t *json_p, const char *key_s, const FieldTr
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetCropByIdString failed for \"%s\"", id_s);
 										}
 
-									FreeCopiedString (id_s);
+									FreeBSONOidString (id_s);
 								}		/* if (id_s) */
 							else
 								{

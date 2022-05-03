@@ -593,7 +593,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
 																		}
 
-																	FreeCopiedString (id_s);
+																	FreeBSONOidString (id_s);
 																}
 															else
 																{
@@ -657,7 +657,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 					if (id_s)
 						{
 							success_flag = SetStringParameterDefaultValue (param_p, id_s);
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}
 					else
 						{
@@ -728,7 +728,7 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 
 								}		/* if (SetJSONString (trial_fd_p, FD_ID_S, id_s)) */
 
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}		/* if (id_s) */
 					else
 						{
@@ -1007,7 +1007,7 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 
 					if (!program_id_s)
 						{
-							FreeCopiedString (trial_id_s);
+							FreeBSONOidString (trial_id_s);
 							return false;
 						}
 				}

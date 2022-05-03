@@ -281,7 +281,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 															if (id_s)
 																{
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
-																	FreeCopiedString (id_s);
+																	FreeBSONOidString (id_s);
 																}
 															else
 																{
@@ -307,7 +307,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 																	if (id_s)
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row \"%s\"", id_s);
-																			FreeCopiedString (id_s);
+																			FreeBSONOidString (id_s);
 																		}
 																	else
 																		{
@@ -325,7 +325,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 															if (id_s)
 																{
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row \"%s\"", id_s);
-																	FreeCopiedString (id_s);
+																	FreeBSONOidString (id_s);
 																}
 															else
 																{

@@ -363,7 +363,7 @@ bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, St
 									loop_flag = false;
 								}
 
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}
 
 					if (loop_flag)
@@ -494,7 +494,7 @@ json_t *GetTreatmentFactorAsFrictionlessData (const TreatmentFactor *treatment_f
 
 								}		/* if (SetJSONString (treatment_fd_p, FD_ID_S, id_s)) */
 
-							FreeCopiedString (id_s);
+							FreeBSONOidString (id_s);
 						}		/* if (id_s) */
 					else
 						{

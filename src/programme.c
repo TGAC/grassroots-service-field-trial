@@ -572,7 +572,7 @@ Programme *GetProgrammeById (const bson_oid_t *id_p, const ViewFormat format, co
 		{
 			programme_p = GetProgrammeByIdString (id_s, format, data_p);
 
-			FreeCopiedString (id_s);
+			FreeBSONOidString (id_s);
 		}
 
 	return programme_p;

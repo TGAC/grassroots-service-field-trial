@@ -157,7 +157,7 @@ int main (void)
 
 																							if (id_s)
 																								{
-																									FreeCopiedString (id_s);
+																									FreeBSONOidString (id_s);
 																								}
 
 																						}		/* if (GetNamedIdFromJSON (plot_p, MONGO_ID_S, plot_id_p)) */
