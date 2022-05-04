@@ -2732,7 +2732,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 							else
 								{
 									size_t length;
-									char *json_s = bson_as_json (command_p, &length);
+									char *json_s = bson_as_extended_json (command_p, &length);
 									if (json_s)
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply for \"%s\"", json_s);
@@ -2748,7 +2748,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 					else
 						{
 							size_t length;
-							char *json_s = bson_as_json (command_p, &length);
+							char *json_s = bson_as_extended_json (command_p, &length);
 
 							if (json_s)
 								{

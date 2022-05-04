@@ -37,8 +37,6 @@ static ValueStatus CheckString (json_t *observation_json_p, const char * const k
 
 static ValueStatus CheckTime (json_t *observation_json_p, const char * const key_s);
 
-static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p);
-
 static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType *param_type_p);
 
 static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *rows_p);
@@ -202,6 +200,8 @@ int main (void)
 																																				{
 																																					/* An error occurred */
 																																					error_flag = true;
+																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Error occurred for plot");
+
 																																				}
 																																			else if ((raw_ret == VS_NEEDS_UPDATE) || (corrected_ret == VS_NEEDS_UPDATE))
 																																				{
@@ -324,6 +324,9 @@ int main (void)
 
 													json_decref (plot_json_p);
 												}		/* while ((plot_json_p = GetNextDocAsJSON (plots_cursor_p)) != NULL) */
+
+
+											PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "num suceeded = %lu", num_succeeded);
 
 											mongoc_cursor_destroy (plots_cursor_p);
 										}		/* if (plots_cursor_p) */
@@ -478,6 +481,10 @@ static ValueStatus CheckTime (json_t *observation_json_p, const char * const key
 				{
 					ret = VS_OK;
 				}
+			else if (SetTimeFromDDMMYYYYString (&time_val, time_s))
+				{
+					ret = VS_NEEDS_UPDATE;
+				}
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Stored value for \"%s\", \"%s\" is not a time", key_s, time_s);
@@ -587,60 +594,6 @@ static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType 
 }
 
 
-static bool WriteObservation (bson_oid_t *observation_id_p, mongoc_collection_t *plots_collection_p, json_t *observation_p)
-{
-	bool success_flag = false;
-
-  char *observations_s = json_dumps (observation_p, 0);
-
-  if (observations_s)
-  	{
-  	  bson_t *query_p = BCON_NEW ("rows.observations._id", BCON_OID (observation_id_p));
-
-  	  if (query_p)
-  	  	{
-  	  		bson_t *observations_bson_p = NULL;
-  				bson_error_t error;
-
-  				observations_bson_p = bson_new_from_json ((const uint8 *) observations_s, -1, &error);
-
-  				if (observations_bson_p)
-  					{
-  	  	  		bson_t *update_p = BCON_NEW ("$set",
-  	  												 "{",
-  	  												 "observations.$",
-															 observations_bson_p,
-  	  												 "}");
-
-  	  				if (update_p)
-  	  					{
-									if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, NULL, &error))
-										{
-											success_flag = true;
-										}
-									else
-										{
-
-										}
-
-  	  						bson_destroy (update_p);
-  	  					}
-
-  						bson_destroy (observations_bson_p);
-  					}
-
-  	  		bson_destroy (query_p);
-  	  	}
-
-  		free (observations_s);
-  	}
-
-  return success_flag;
-}
-
-
-
-
 static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *rows_p)
 {
 	bool success_flag = false;
@@ -648,7 +601,7 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
 
   if (rows_s)
   	{
-  	  bson_t *query_p = BCON_NEW ("plot._id", BCON_OID (plot_id_p));
+  	  bson_t *query_p = BCON_NEW ("_id", BCON_OID (plot_id_p));
 
   	  if (query_p)
   	  	{
@@ -662,15 +615,68 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
   	  	  		bson_t *update_p = BCON_NEW ("$set",
   	  												 "{",
 															 "rows",
-															 rows_bson_p,
+															 BCON_DOCUMENT (rows_bson_p),
   	  												 "}");
 
   	  				if (update_p)
   	  					{
-									if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, NULL, &error))
+  	  						bson_t reply;
+
+									if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, &reply, &error))
 										{
-											success_flag = true;
-										}
+											char *reply_s = bson_as_relaxed_extended_json (&reply, 0);
+
+											if (reply_s)
+												{
+													json_error_t err;
+													json_t *reply_p = json_loads (reply_s, 0, &err);
+
+													if (reply_p)
+														{
+															json_t *modified_p = json_object_get (reply_p, "modifiedCount");
+
+															if (modified_p)
+																{
+																	if (json_is_integer (modified_p))
+																		{
+																			int count = json_integer_value (modified_p);
+
+																			if (count == 1)
+																				{
+																					success_flag = true;
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, reply_p, "modified value is %d not 1", count);
+																				}
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, reply_p, "modified value is not an integer");
+																		}
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, reply_p, "Failed to get modified value");
+																}
+
+															json_decref (reply_p);
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to load reply \"%s\" from mongoc_collection_update_one () as json", reply_s);
+														}
+
+				  	  	  	  		// PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "mongoc_collection_update_one () reply \"%s\"", reply_s);
+
+													bson_free (reply_s);
+												}		/* if (reply_s) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to convert reply from mongoc_collection_update_one () to json", reply_s);
+												}
+
+										}		/* if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, &reply, &error)) */
 									else
 										{
 		  	  	  	  		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_p, "mongoc_collection_update_one () failed for \"%s\" with error code: " UINT32_FMT " domain: " UINT32_FMT " message: \"%s\"", rows_s, error.code, error.domain, error.message);
