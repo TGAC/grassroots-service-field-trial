@@ -23,7 +23,8 @@ typedef enum
 {
 	VS_FAIL,
 	VS_OK,
-	VS_NEEDS_UPDATE
+	VS_NEEDS_UPDATE,
+	VS_REMOVE
 } ValueStatus;
 
 static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
@@ -41,6 +42,7 @@ static bool GetPhenotypeDatatype (const json_t *phenotype_json_p, ParameterType 
 
 static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_collection_p, json_t *rows_p);
 
+static bool IsEmptyEntry (const char *value_s);
 
 
 
@@ -84,6 +86,7 @@ int main (void)
 											size_t num_succeeded = 0;
 											size_t num_failed = 0;
 											size_t num_ignored = 0;
+											size_t num_removed = 0;
 
 											json_t *plot_json_p = NULL;
 
@@ -107,15 +110,18 @@ int main (void)
 																				{
 																					if (json_is_array (observations_p))
 																						{
-																							size_t j;
-																							json_t *observation_p;
+																							size_t j = 0;
 																							bson_t phenotype_query;
 																							bool first_flag = true;
 																							bool error_flag = false;
+																							size_t num_observations = json_array_size (observations_p);
 
-																							json_array_foreach (observations_p, j, observation_p)
+																							while (j < num_observations)
 																								{
 																									bson_oid_t phenotype_id;
+																									json_t *observation_p = json_array_get (observations_p, j);
+																									bool remove_flag = false;
+
 
 																									if (GetNamedIdFromJSON (observation_p, "phenotype_id", &phenotype_id))
 																										{
@@ -132,19 +138,6 @@ int main (void)
 																											if (BSON_APPEND_OID (&phenotype_query, MONGO_ID_S, &phenotype_id))
 																												{
 																													mongoc_cursor_t *phenotypes_cursor_p = mongoc_collection_find_with_opts (phenotypes_collection_p, &phenotype_query, NULL, NULL);
-
-
-																													/*
-																													size_t query_length = 0;
-																													char *query_s = bson_as_json (&phenotype_query, &query_length);
-
-																													if (query_s)
-																														{
-																															PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "phenotype_query: \"%s\"", query_s);
-
-																															bson_free (query_s);
-																														}
-																													*/
 
 																													if (phenotypes_cursor_p)
 																														{
@@ -211,9 +204,12 @@ int main (void)
 																																					 */
 																																					plot_updated_flag = true;
 																																				}
+																																			else if ((raw_ret == VS_REMOVE) || (corrected_ret == VS_REMOVE))
+																																				{
+																																					remove_flag = true;
+																																				}
 																																			else if ((raw_ret == VS_OK) || (corrected_ret == VS_OK))
 																																				{
-																																					++ num_ignored;
 																																				}
 
 																																		}		/* if (GetPhenotypeDatatype (phenotype_json_p, &pt)) */
@@ -269,7 +265,32 @@ int main (void)
 																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_p, "Failed to get phenotype_id");
 																										}
 
-																								}		/* json_array_foreach (observations_p, j, observation_p) */
+																									if (remove_flag)
+																										{
+																											/* Remove the entry */
+																											if (json_array_remove (observations_p, j) == 0)
+																												{
+																													plot_updated_flag = true;
+																													-- num_observations;
+																													++ num_removed;
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_p, "Removed entry " SIZET_FMT, j);
+																												}
+																											else
+																												{
+																													error_flag = true;
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_p, "Error removing entry " SIZET_FMT, j);
+																													++ j;
+																												}
+
+																										}
+																									else
+																										{
+																											++ j;
+																										}
+
+
+																								}		/* while (j < num_observations) */
+
 
 																							if (error_flag)
 																								{
@@ -295,12 +316,12 @@ int main (void)
 
 																					if (id_s)
 																						{
-																							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, plot_json_p, "About to update plot \"%s\"", id_s);
+																							PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "About to update plot \"%s\"\n", id_s);
 																							FreeBSONOidString (id_s);
 																						}
 																					else
 																						{
-																							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, plot_json_p, "About to update plot");
+																							PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "About to update unknown plot\n");
 																						}
 
 																					if (WritePlotRows (&plot_id, plots_collection_p, rows_p))
@@ -318,6 +339,10 @@ int main (void)
 																				}
 
 																		}		/* if (plot_updated_flag) */
+																	else
+																		{
+																			++ num_ignored;
+																		}
 
 																}		/* if (json_is_array (rows_p)) */
 														}
@@ -326,7 +351,7 @@ int main (void)
 												}		/* while ((plot_json_p = GetNextDocAsJSON (plots_cursor_p)) != NULL) */
 
 
-											PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "num suceeded = %lu", num_succeeded);
+											PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "num plots updated = " SIZET_FMT " num observations removed = " SIZET_FMT " num plots ignored = " SIZET_FMT "\n",  num_succeeded, num_removed, num_ignored);
 
 											mongoc_cursor_destroy (plots_cursor_p);
 										}		/* if (plots_cursor_p) */
@@ -405,6 +430,7 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 }
 
 
+
 static ValueStatus SetInteger (json_t *observation_json_p, const char * const key_s)
 {
 	ValueStatus ret = VS_FAIL;
@@ -413,22 +439,29 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 
 	if (value_s)
 		{
-			int res = sscanf (value_s, "%d", &i);
-
-			if (res == 1)
+			if (IsEmptyEntry (value_s))
 				{
-					if (SetJSONInteger (observation_json_p, key_s, i))
-						{
-							ret = VS_NEEDS_UPDATE;
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %d", key_s, i);
-						}
+					ret = VS_REMOVE;
 				}
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+					int res = sscanf (value_s, "%d", &i);
+
+					if (res == 1)
+						{
+							if (SetJSONInteger (observation_json_p, key_s, i))
+								{
+									ret = VS_NEEDS_UPDATE;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %d", key_s, i);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+						}
 				}
 		}
 	else
@@ -509,22 +542,30 @@ static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s
 
 	if (value_s)
 		{
-			int res = sscanf (value_s, "%lf", &d);
-
-			if (res == 1)
+			if (IsEmptyEntry (value_s))
 				{
-					if (SetJSONReal (observation_json_p, key_s, d))
-						{
-							ret = VS_NEEDS_UPDATE;
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %lf", key_s, d);
-						}
+					ret = VS_REMOVE;
 				}
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+
+					int res = sscanf (value_s, "%lf", &d);
+
+					if (res == 1)
+						{
+							if (SetJSONReal (observation_json_p, key_s, d))
+								{
+									ret = VS_NEEDS_UPDATE;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %lf", key_s, d);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+						}
 				}
 		}
 	else
@@ -711,5 +752,30 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
   	}
 
   return success_flag;
+}
+
+
+/*
+ * Some values have been entered to stand for empty numeric entries
+ * which we'll remove to meet the datatype standards
+ */
+static bool IsEmptyEntry (const char *value_s)
+{
+	const char *values_ss [] = { "NA", "$$$", NULL };
+	const char **value_ss = values_ss;
+
+	while (*value_ss)
+		{
+			if (strcmp (value_s, *value_ss) == 0)
+				{
+					return true;
+				}
+			else
+				{
+					++ value_ss;
+				}
+		}
+
+	return false;
 }
 
