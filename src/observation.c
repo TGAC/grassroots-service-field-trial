@@ -51,7 +51,7 @@
 
 static const char *S_OBSERVATION_NATURES_SS [ON_NUM_PHENOTYPE_NATURES] = { "Row", "Experimental Area" };
 
-static const char *S_OBSERVATION_TYPES_SS [OT_NUM_TYPES] = { "xsd:double", "xsd:string", 	"params:signed_integer" };
+static const char *S_OBSERVATION_TYPES_SS [OT_NUM_TYPES] = { "xsd:double", "xsd:string", 	"params:signed_integer",	"xsd:date"};
 
 
 static bool AddObservationNatureToJSON (const ObservationNature phenotype_nature, json_t *doc_p);

@@ -18,6 +18,8 @@
 #include "json_util.h"
 #include "time_util.h"
 
+#define ALLOCATE_OBSERVATION_TAGS (1)
+#include "observation.h"
 
 typedef enum
 {
@@ -44,11 +46,37 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
 
 static bool IsEmptyEntry (const char *value_s);
 
+static const char *LocalGetObservationTypeAsString (const ObservationType obs_type);
 
 
-int main (void)
+
+int main (int argc, char *argv [])
 {
 	mongoc_client_t *client_p;
+	const char *plots_collection_s = "Plots";
+	int arg_index = 1;
+
+	while (arg_index < argc)
+		{
+			if (strcmp (argv [arg_index], "--plots") == 0)
+				{
+					if ((arg_index + 1) < argc)
+						{
+							plots_collection_s = argv [++ arg_index];
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Plots argument missing\n");
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown argument: \"%s\"\n", argv [arg_index]);
+				}
+
+			++ arg_index;
+		}		/* while (arg_index < argc) */
+
 
 	mongoc_init ();
 
@@ -56,7 +84,7 @@ int main (void)
 
 	if (client_p)
 		{
-			mongoc_collection_t *plots_collection_p = mongoc_client_get_collection (client_p, "dfw_field_trial", "Plots");
+			mongoc_collection_t *plots_collection_p = mongoc_client_get_collection (client_p, "dfw_field_trial", plots_collection_s);
 
 			if (plots_collection_p)
 				{
@@ -451,7 +479,25 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 						{
 							if (SetJSONInteger (observation_json_p, key_s, i))
 								{
-									ret = VS_NEEDS_UPDATE;
+									const char *type_s = LocalGetObservationTypeAsString (OT_INTEGER);
+
+									if (type_s)
+										{
+											if (SetJSONString (observation_json_p, OB_TYPE_S, type_s))
+												{
+													ret = VS_NEEDS_UPDATE;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
+												}
+
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "LocalGetObservationTypeAsString (OT_INTEGER) returned NULL");
+										}
+
 								}
 							else
 								{
@@ -484,7 +530,32 @@ static ValueStatus CheckString (json_t *observation_json_p, const char * const k
 		{
 			if (json_is_string (value_p))
 				{
-					ret = VS_OK;
+					const char *type_s = GetJSONString (observation_json_p, OB_TYPE_S);
+					const char *type_string_s = LocalGetObservationTypeAsString (OT_STRING);
+
+					if (type_string_s)
+						{
+							if ((!type_s) || (strcmp (OB_TYPE_S, type_string_s) != 0))
+								{
+									if (SetJSONString (observation_json_p, OB_TYPE_S, type_string_s))
+										{
+											ret = VS_NEEDS_UPDATE;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_string_s);
+										}
+								}
+							else
+								{
+									ret = VS_OK;
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "type_string_s is null");
+						}
+
 				}
 			else
 				{
@@ -512,7 +583,34 @@ static ValueStatus CheckTime (json_t *observation_json_p, const char * const key
 
 			if (SetTimeFromString (&time_val, time_s))
 				{
-					ret = VS_OK;
+					const char *type_s = GetJSONString (observation_json_p, OB_TYPE_S);
+					const char *type_time_s = LocalGetObservationTypeAsString (OT_TIME);
+
+					if (type_time_s)
+						{
+
+							if ((!type_s) || (strcmp (OB_TYPE_S, type_time_s) != 0))
+								{
+									if (SetJSONString (observation_json_p, OB_TYPE_S, type_time_s))
+										{
+											ret = VS_NEEDS_UPDATE;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_time_s);
+										}
+								}
+							else
+								{
+									ret = VS_OK;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "type_time_s is null");
+						}
+
 				}
 			else if (SetTimeFromDDMMYYYYString (&time_val, time_s))
 				{
@@ -548,14 +646,30 @@ static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s
 				}
 			else
 				{
-
 					int res = sscanf (value_s, "%lf", &d);
 
 					if (res == 1)
 						{
 							if (SetJSONReal (observation_json_p, key_s, d))
 								{
-									ret = VS_NEEDS_UPDATE;
+									const char *type_s = LocalGetObservationTypeAsString (OT_NUMERIC);
+
+									if (type_s)
+										{
+											if (SetJSONString (observation_json_p, OB_TYPE_S, type_s))
+												{
+													ret = VS_NEEDS_UPDATE;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
+												}
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "LocalGetObservationTypeAsString (OT_NUMERIC) returned NULL");
+										}
+
 								}
 							else
 								{
@@ -656,7 +770,7 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
   	  	  		bson_t *update_p = BCON_NEW ("$set",
   	  												 "{",
 															 "rows",
-															 BCON_DOCUMENT (rows_bson_p),
+															 BCON_ARRAY (rows_bson_p),
   	  												 "}");
 
   	  				if (update_p)
@@ -779,3 +893,18 @@ static bool IsEmptyEntry (const char *value_s)
 	return false;
 }
 
+
+static const char *S_OBSERVATION_TYPES_SS [OT_NUM_TYPES] = { "xsd:double", "xsd:string", 	"params:signed_integer", "xsd:date"};
+
+
+static const char *LocalGetObservationTypeAsString (const ObservationType obs_type)
+{
+	const char *obs_type_s = NULL;
+
+	if (obs_type < OT_NUM_TYPES)
+		{
+			obs_type_s = * (S_OBSERVATION_TYPES_SS + obs_type);
+		}
+
+	return obs_type_s;
+}

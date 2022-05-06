@@ -255,7 +255,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *o
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetObservationTypeAsString (const ObservationType obs_type);
+DFW_FIELD_TRIAL_SERVICE_API const char *GetObservationTypeAsString (const ObservationType obs_type);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool DetermineObservationTypeFromString (const char * const obs_type_s, ObservationType *obs_type_p);
