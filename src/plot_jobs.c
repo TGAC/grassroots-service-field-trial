@@ -1157,6 +1157,10 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																														}
 
 																												}		/* if (status == OS_IDLE) */
+																											else
+																												{
+
+																												}
 
 																										}		/* if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0)) */
 
@@ -1173,7 +1177,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 																								}
 
-																						}		/* if (json_object_size (table_row_json_p) > 0) */
+																						}		/* if ((num_columns = json_object_size (table_row_json_p)) > 0) */
 
 
 
@@ -1199,6 +1203,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																							else
 																								{
 																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+																									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
 																								}
 
 																						}
@@ -1233,6 +1238,10 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 													FreePlot (plot_p);
 												}		/* if (plot_p) */
+											else
+												{
+
+												}
 
 										}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
 									else
@@ -1252,6 +1261,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 						}		/* if (material_p) */
 					else
 						{
+							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unkown accession", row_index, PL_ACCESSION_TABLE_TITLE_S);
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, study_p -> st_name_s);
 						}
 
@@ -1270,6 +1280,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 		}		/* if (gene_bank_p) */
 	else
 		{
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown Gene Bank", row_index, S_GENE_BANK_S);
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
 		}
 
