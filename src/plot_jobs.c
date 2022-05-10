@@ -163,6 +163,7 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 
 static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
+static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unknown_cols_p);
 
 /*
  * API definitions
@@ -992,7 +993,8 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 													if (!plot_p)
 														{
-
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create the plot", row_index, NULL);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "CreatePlotFromTabularJSON () failed");
 														}		/* if (!plot_p) */
 
 												}		/* if (!plot_p) */
@@ -1024,9 +1026,20 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																				}
 																			else
 																				{
-																					success_flag = GetValidInteger (&rep_s, &replicate);
-																				}		/* if (value_s) */
-																		}
+																					if (GetValidInteger (&rep_s, &replicate))
+																						{
+																							success_flag = true;
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
+																							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
+																						}
+
+																				}
+
+																		}		/* if (!IsStringEmpty (rep_s)) */
+
 
 																	if (success_flag)
 																		{
@@ -1044,50 +1057,31 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																			else
 																				{
 																					row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
-																					is_existing_row_flag = false;
+
+																					if (row_p)
+																						{
+																							is_existing_row_flag = false;
+																						}
+																					else
+																						{
+																							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
+																						}
 																				}
 
 																			if (row_p)
 																				{
-																					const char *key_s;
-																					json_t *value_p;
 																					size_t num_columns;
 																					size_t imported_columns = 0;
 
-																					/*
-																					 * Remove any of the normal plot keys
-																					 */
-																					json_object_del (table_row_json_p, S_SOWING_TITLE_S);
-																					json_object_del (table_row_json_p, S_HARVEST_TITLE_S);
-																					json_object_del (table_row_json_p, S_WIDTH_TITLE_S);
-																					json_object_del (table_row_json_p, S_LENGTH_TITLE_S);
-																					json_object_del (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
-																					json_object_del (table_row_json_p, S_ROW_TITLE_S);
-																					json_object_del (table_row_json_p, S_COLUMN_TITLE_S);
-																					json_object_del (table_row_json_p, S_RACK_TITLE_S);
-																					json_object_del (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
-																					json_object_del (table_row_json_p, S_GENE_BANK_S);
-																					json_object_del (table_row_json_p, S_TREATMENT_TITLE_S);
-																					json_object_del (table_row_json_p, PL_REPLICATE_TITLE_S);
-																					json_object_del (table_row_json_p, S_COMMENT_TITLE_S);
-																					json_object_del (table_row_json_p, S_IMAGE_TITLE_S);
-																					json_object_del (table_row_json_p, S_THUMBNAIL_TITLE_S);
-																					json_object_del (table_row_json_p, S_SOWING_ORDER_TITLE_S);
-																					json_object_del (table_row_json_p, S_WALKING_ORDER_TITLE_S);
-
-																					/*
-																					 * Remove any columns that we have previously seen that we don't recognise
-																					 */
-																					json_object_foreach (unknown_cols_p, key_s, value_p)
-																						{
-																							json_object_del (table_row_json_p, key_s);
-																						}
+																					RemoveUnneededColumns (table_row_json_p, unknown_cols_p);
 
 																					/*
 																					 * If there are any columns left, try to add them as observations
 																					 */
 																					if ((num_columns = json_object_size (table_row_json_p)) > 0)
 																						{
+																							const char *key_s;
+																							json_t *value_p;
 																							OperationStatus status = OS_FAILED;
 
 																							bool loop_success_flag = true;
@@ -1167,10 +1161,6 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																									iterator_p = json_object_iter_next (table_row_json_p, iterator_p);
 
 																								}		/* while (iterator_p && loop_success_flag) */
-//
-//																							OperationStatus obs_status = AddObservationValuesToRow (row_p, table_row_json_p, study_p, unknown_cols_p, job_p, i, data_p);
-//																							OperationStatus tr_status = AddTreatmentFactorValuesToRow (row_p, table_row_json_p, study_p, unknown_cols_p, data_p);/
-
 
 																							if (status != OS_SUCCEEDED)
 																								{
@@ -1178,7 +1168,6 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																								}
 
 																						}		/* if ((num_columns = json_object_size (table_row_json_p)) > 0) */
-
 
 
 																					if (control_rep_flag)
@@ -1212,13 +1201,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																							FreeRow (row_p);
 																						}
 
-
-
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate row");
-																				}
+																				}		/* if (row_p) */
 
 																		}		/* if (success_flag) */
 
@@ -1238,10 +1221,6 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 													FreePlot (plot_p);
 												}		/* if (plot_p) */
-											else
-												{
-
-												}
 
 										}		/* if (GetJSONStringAsInteger (row_p, S_COLUMN_TITLE_S, &column)) */
 									else
@@ -1924,3 +1903,42 @@ static bool AddPlotDefaultsFromStudy (Study *study_p, ServiceData *data_p, Param
 	return success_flag;
 }
 
+
+
+static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unknown_cols_p)
+{
+	const char *key_s;
+	json_t *value_p;
+
+	/*
+	 * Remove any of the normal plot keys
+	 */
+	json_object_del (table_row_json_p, S_SOWING_TITLE_S);
+	json_object_del (table_row_json_p, S_HARVEST_TITLE_S);
+	json_object_del (table_row_json_p, S_WIDTH_TITLE_S);
+	json_object_del (table_row_json_p, S_LENGTH_TITLE_S);
+	json_object_del (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
+	json_object_del (table_row_json_p, S_ROW_TITLE_S);
+	json_object_del (table_row_json_p, S_COLUMN_TITLE_S);
+	json_object_del (table_row_json_p, S_RACK_TITLE_S);
+	json_object_del (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
+	json_object_del (table_row_json_p, S_GENE_BANK_S);
+	json_object_del (table_row_json_p, S_TREATMENT_TITLE_S);
+	json_object_del (table_row_json_p, PL_REPLICATE_TITLE_S);
+	json_object_del (table_row_json_p, S_COMMENT_TITLE_S);
+	json_object_del (table_row_json_p, S_IMAGE_TITLE_S);
+	json_object_del (table_row_json_p, S_THUMBNAIL_TITLE_S);
+	json_object_del (table_row_json_p, S_SOWING_ORDER_TITLE_S);
+	json_object_del (table_row_json_p, S_WALKING_ORDER_TITLE_S);
+
+	/*
+	 * Remove any columns that we have previously seen that we don't recognise
+	 */
+	json_object_foreach (unknown_cols_p, key_s, value_p)
+		{
+			json_object_del (table_row_json_p, key_s);
+		}
+
+
+}
+}
