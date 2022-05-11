@@ -199,8 +199,15 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 * The filesystem path to where to save the Studies will be backed up to
 	 * when they are deleted
 	 */
-	const char *dftsd_backup_path_s;
+	const char *dftsd_wastebasket_path_s;
 
+
+	/**
+	 * @private
+	 *
+	 * The filesystem path to where to save the uploaded plot submission data to
+	 */
+	const char *dftsd_plots_uploads_path_s;
 
 	/**
 	 * @private

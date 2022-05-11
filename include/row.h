@@ -68,6 +68,7 @@ typedef struct Row
 
 	bool ro_replicate_control_flag;
 
+	bool ro_discard_flag;
 
 
 } Row;
@@ -129,6 +130,8 @@ ROW_PREFIX const char *RO_TREATMENTS_S  ROW_VAL ("treatments");
 ROW_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
 
 
+ROW_PREFIX const char *RO_DISCARD_S ROW_VAL ("discard");
+
 
 ROW_PREFIX const char *RO_IMPORT_RACK_S ROW_VAL ("Rack");
 
@@ -158,10 +161,17 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *p
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationToRow (Row *row_p, Observation *observation_p);
 
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowGenotypeControl (Row *row_p, bool control_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowGenotypeControl (const Row *row_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowDiscard (Row *row_p, bool discard_flag);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowDiscard (const Row *row_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate);

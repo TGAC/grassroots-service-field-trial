@@ -104,6 +104,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFrictionlessDataURL (const char *const na
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetBackupFilename (const char *id_s, const FieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *data_p);
+
 
 
 

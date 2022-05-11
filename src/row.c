@@ -85,6 +85,7 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 											row_p -> ro_treatment_factor_values_p = tf_values_p;
 											row_p -> ro_replicate_index = replicate;
 											row_p -> ro_replicate_control_flag = false;
+											row_p -> ro_discard_flag = false;
 
 											return row_p;
 										}
@@ -984,6 +985,17 @@ void SetRowGenotypeControl (Row *row_p, bool control_flag)
 bool IsRowGenotypeControl (const Row *row_p)
 {
 	return row_p -> ro_replicate_control_flag;
+}
+
+
+void SetRowDiscard (Row *row_p, bool discard_flag)
+{
+	row_p -> ro_discard_flag = discard_flag;
+}
+
+bool IsRowDiscard (const Row *row_p)
+{
+	return (row_p -> ro_discard_flag);
 }
 
 

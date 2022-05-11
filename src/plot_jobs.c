@@ -273,6 +273,18 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 											const bool *append_flag_p = NULL;
 											bool success_flag = true;
 
+
+											if (data_p -> dftsd_plots_uploads_path_s)
+												{
+													char *uploads_path_s = GetPlotsUploadsFilename (study_id_s, data_p);
+
+													if (uploads_path_s)
+														{
+
+														}
+
+												}
+
 											GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_AMEND.npt_name_s, &append_flag_p);
 
 											if (!append_flag_p || (! (*append_flag_p)))
@@ -965,13 +977,24 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 	if (gene_bank_p)
 		{
+			const char * const DISCARD_S = "discard";
 			const char *accession_s = GetJSONString (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
 
 			if (!IsStringEmpty (accession_s))
 				{
-					Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
+					Material *material_p = NULL;
+					bool discard_flag = false;
 
-					if (material_p)
+					if (Stricmp (accession_s, DISCARD_S) == 0)
+						{
+							discard_flag = true;
+						}
+					else
+						{
+							material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
+						}
+
+					if ((material_p != NULL) || (discard_flag))
 						{
 							Plot *plot_p = NULL;
 							int32 row = -1;
@@ -1170,10 +1193,9 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 																						}		/* if ((num_columns = json_object_size (table_row_json_p)) > 0) */
 
 
-																					if (control_rep_flag)
-																						{
-																							SetRowGenotypeControl (row_p, true);
-																						}
+
+																					SetRowGenotypeControl (row_p, control_rep_flag);
+																					SetRowDiscard (row_p, discard_flag);
 
 																					if (is_existing_row_flag || (AddRowToPlot (plot_p, row_p)))
 																						{

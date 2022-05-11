@@ -84,7 +84,9 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 			data_p -> dftsd_database_s = NULL;
 			data_p -> dftsd_facet_key_s = NULL;
 			data_p -> dftsd_study_cache_path_s = NULL;
-			data_p -> dftsd_backup_path_s = NULL;
+			data_p -> dftsd_wastebasket_path_s = NULL;
+
+			data_p -> dftsd_plots_uploads_path_s = NULL;
 
 			data_p -> dftsd_measured_variables_cache_p = NULL;
 
@@ -234,6 +236,12 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 								{
 									data_p -> dftsd_latex_commmand_s = "pdflatex";
 								}
+
+
+							data_p -> dftsd_wastebasket_path_s = GetJSONString (service_config_p, "wastebasket_path");
+
+							data_p -> dftsd_plots_uploads_path_s = GetJSONString (service_config_p, "plots_uploads_path");
+
 
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;

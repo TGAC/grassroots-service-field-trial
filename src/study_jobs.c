@@ -3702,7 +3702,7 @@ bool BackupStudy (const Study *study_p, const char *id_s, FieldTrialServiceData 
 {
 	bool saved_study_flag = false;
 
-	if (data_p -> dftsd_backup_path_s)
+	if (data_p -> dftsd_wastebasket_path_s)
 		{
 			json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_FULL, NULL, data_p);
 

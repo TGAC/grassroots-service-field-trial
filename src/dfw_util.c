@@ -971,6 +971,12 @@ static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *da
 
 char *GetBackupFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {
-	return GetIdBasedFilename (id_s, data_p -> dftsd_backup_path_s);
+	return GetIdBasedFilename (id_s, data_p -> dftsd_wastebasket_path_s);
+}
+
+
+char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *data_p)
+{
+	return GetIdBasedFilename (id_s, data_p -> dftsd_plots_uploads_path_s);
 }
 
