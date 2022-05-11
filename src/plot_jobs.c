@@ -1941,4 +1941,4 @@ static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unkno
 
 
 }
-}
+
