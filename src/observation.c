@@ -703,13 +703,18 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 													 */
 													if (raw_value_p || corrected_value_p)
 														{
-															ObservationType obs_type = OT_NUM_TYPES;
+															const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
 
-															GetObservationNatureFromJSON (&nature, observation_json_p);
-
-															if (GetObservationTypeFromJSON (&obs_type, observation_json_p))
+															if (class_p)
 																{
-																	observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index, obs_type);
+																	ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+
+																	if (obs_type != OT_NUM_TYPES)
+																		{
+																			GetObservationNatureFromJSON (&nature, observation_json_p);
+
+																			observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index, class_p -> sc_type);
+																		}
 																}
 
 															if (!observation_p)

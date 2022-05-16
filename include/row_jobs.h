@@ -82,6 +82,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *GetMatchingObservation (const Row *ro
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddSingleTreatmentFactorValueToRow  (Row *row_p, const char *key_s, const char *value_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetDiscardValueFromJSON (const json_t *row_json_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetBlankValueFromJSON (const json_t *row_json_p);
+
+
 #ifdef __cplusplus
 }
 #endif

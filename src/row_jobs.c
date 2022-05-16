@@ -826,16 +826,16 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 											const char *method_s = NULL;
 											ObservationNature nature = ON_ROW;
 											Instrument *instrument_p = NULL;
-											const char *raw_value_s = NULL;
-											const char *corrected_value_s = NULL;
+											json_t *raw_value_p = NULL;
+											json_t *corrected_value_p = NULL;
 
 											if (corrected_value_flag)
 												{
-													corrected_value_s = value_s;
+													corrected_value_p = value_p;
 												}
 											else
 												{
-													raw_value_s = value_s;
+													raw_value_p = value_p;
 												}
 
 											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
@@ -884,7 +884,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 
 															if (obs_type != OT_NUM_TYPES)
 																{
-																	observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
+																	observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
 																}
 
 															if (observation_p)
@@ -1328,7 +1328,7 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialS
 														}		/* if (num_results == 1) */
 													else
 														{
-															char *query_json_s = bson_as_extended_json (query_p, NULL);
+															char *query_json_s = bson_as_relaxed_extended_json (query_p, NULL);
 
 															if (query_json_s)
 																{
@@ -1405,6 +1405,59 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 
 	return success_flag;
 }
+
+
+
+bool GetDiscardValueFromJSON (const json_t *row_json_p)
+{
+	const char *value_s = GetJSONString (row_json_p, RO_DISCARD_S);
+
+	if (value_s)
+		{
+			if (Stricmp (value_s, "1") == 0)
+				{
+					return true;
+				}
+		}		/* if (value_s) */
+
+	value_s = GetJSONString (row_json_p, PL_ACCESSION_TABLE_TITLE_S);
+	if (value_s)
+		{
+			if (Stricmp (value_s, "discard") == 0)
+				{
+					return true;
+				}
+		}		/* if (value_s) */
+
+	return false;
+}
+
+
+
+bool GetBlankValueFromJSON (const json_t *row_json_p)
+{
+	const char *value_s = GetJSONString (row_json_p, RO_BLANK_S);
+
+	if (value_s)
+		{
+			if (Stricmp (value_s, "1") == 0)
+				{
+					return true;
+				}
+		}		/* if (value_s) */
+
+	value_s = GetJSONString (row_json_p, PL_ACCESSION_TABLE_TITLE_S);
+	if (value_s)
+		{
+			if (Stricmp (value_s, "blank") == 0)
+				{
+					return true;
+				}
+		}		/* if (value_s) */
+
+	return false;
+}
+
 
 
 

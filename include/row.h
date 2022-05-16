@@ -68,8 +68,18 @@ typedef struct Row
 
 	bool ro_replicate_control_flag;
 
+	/**
+	 * A physical plot where no measurements are taken, just there as a physical spacer
+	 * which will appear in the plot-based view.
+	 */
 	bool ro_discard_flag;
 
+	/**
+	 * Used to keep the stylised view when laying out the plots and you have non-regular gaps.
+	 * Grassroots won't draw these plots and will use them for gaps calculations and draw
+	 * gaps instead
+	 */
+	bool ro_blank_flag;
 
 } Row;
 
@@ -133,6 +143,9 @@ ROW_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
 ROW_PREFIX const char *RO_DISCARD_S ROW_VAL ("discard");
 
 
+ROW_PREFIX const char *RO_BLANK_S ROW_VAL ("blank");
+
+
 ROW_PREFIX const char *RO_IMPORT_RACK_S ROW_VAL ("Rack");
 
 
@@ -172,6 +185,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowDiscard (Row *row_p, bool discard_flag)
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowDiscard (const Row *row_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowBlank (Row *row_p, bool blank_flag);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowBlank (const Row *row_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate);

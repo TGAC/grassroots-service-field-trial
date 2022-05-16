@@ -36,10 +36,10 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 
 static bool GetObservationsFromJSON (const json_t *row_json_p, Row *row_p, FieldTrialServiceData *data_p);
 
-
 static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const Study *study_p, const FieldTrialServiceData *data_p);
 
 static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const Study *study_p, const ViewFormat format);
+
 
 
 Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
@@ -86,6 +86,7 @@ Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_
 											row_p -> ro_replicate_index = replicate;
 											row_p -> ro_replicate_control_flag = false;
 											row_p -> ro_discard_flag = false;
+											row_p -> ro_blank_flag = false;
 
 											return row_p;
 										}
@@ -233,7 +234,7 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 									default:
 										break;
 								}
-						}
+						}		/* if (row_p -> ro_material_p) */
 					else
 						{
 							success_flag = true;
@@ -241,116 +242,134 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 
 					if (success_flag)
 						{
-							if (SetJSONInteger (row_json_p, RO_RACK_INDEX_S, row_p -> ro_rack_index))
+							if (SetJSONBoolean (row_json_p, RO_DISCARD_S, row_p -> ro_discard_flag))
 								{
-									if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index))
+									if (SetJSONBoolean (row_json_p, RO_BLANK_S, row_p -> ro_blank_flag))
 										{
-											/*
-											 * We only need to store the parent plot id if the JSON is for the backend
-											 */
-											if (format == VF_STORAGE)
+											if (SetJSONInteger (row_json_p, RO_RACK_INDEX_S, row_p -> ro_rack_index))
 												{
-													if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+													if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index))
 														{
-
-															if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
+															/*
+															 * We only need to store the parent plot id if the JSON is for the backend
+															 */
+															if (format == VF_STORAGE)
 																{
-																	if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_study_p -> st_id_p, RO_STUDY_ID_S))
+																	if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
 																		{
 
-																		}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
+																			if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
+																				{
+																					if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_study_p -> st_id_p, RO_STUDY_ID_S))
+																						{
+
+																						}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
+																					else
+																						{
+																							success_flag = false;
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add id for for plot [" UINT32_FMT, ", " UINT32_FMT "] in study \"%s\"",
+																																 row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+																						}
+
+																				}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
+																			else
+																				{
+																					success_flag = false;
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add id for for plot [" UINT32_FMT, ", " UINT32_FMT "] in study \"%s\"",
+																														 row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+																				}
+
+																		}		/* if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p)) */
 																	else
 																		{
-																			success_flag = false;
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add id for for plot [" UINT32_FMT, ", " UINT32_FMT "] in study \"%s\"",
-																												 row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+																			char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+																			if (id_s)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
+																					FreeBSONOidString (id_s);
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to row add compound id");
+																				}
 																		}
 
-																}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
-															else
-																{
-																	success_flag = false;
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add id for for plot [" UINT32_FMT, ", " UINT32_FMT "] in study \"%s\"",
-																										 row_p -> ro_plot_p -> pl_row_index, row_p -> ro_plot_p -> pl_column_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
-																}
 
-														}		/* if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p)) */
+																}		/* if (format == VF_STORAGE) */
+
+															if (success_flag)
+																{
+																	if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
+																		{
+																			if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p,  row_p -> ro_study_p, format))
+																				{
+																					return row_json_p;
+																				}		/* if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p, format)) */
+																			else
+																				{
+																					char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+																					if (id_s)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row \"%s\"", id_s);
+																							FreeBSONOidString (id_s);
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row");
+																						}
+
+																				}
+
+
+																		}		/* if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format)) */
+																	else
+																		{
+																			char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+																			if (id_s)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row \"%s\"", id_s);
+																					FreeBSONOidString (id_s);
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row");
+																				}
+
+																		}
+
+
+																}		/* if (success_flag) */
+
+														}		/* if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index)) */
 													else
 														{
-															char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
-
-															if (id_s)
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
-																	FreeBSONOidString (id_s);
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to row add compound id");
-																}
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_STUDY_INDEX_S, row_p -> ro_by_study_index);
 														}
 
 
-												}		/* if (format == VF_STORAGE) */
-
-											if (success_flag)
+												}		/* if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index)) */
+											else
 												{
-													if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
-														{
-															if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p,  row_p -> ro_study_p, format))
-																{
-																	return row_json_p;
-																}		/* if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p, format)) */
-															else
-																{
-																	char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_RACK_INDEX_S, row_p -> ro_rack_index);
+												}
 
-																	if (id_s)
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row \"%s\"", id_s);
-																			FreeBSONOidString (id_s);
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row");
-																		}
-
-																}
-
-
-														}		/* if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format)) */
-													else
-														{
-															char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
-
-															if (id_s)
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row \"%s\"", id_s);
-																	FreeBSONOidString (id_s);
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row");
-																}
-
-														}
-
-
-												}		/* if (success_flag) */
-
-										}		/* if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index)) */
+										}		/* if (SetJSONBoolean (row_json_p, RO_BLANK_S, row_p -> ro_blank_flag)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_STUDY_INDEX_S, row_p -> ro_by_study_index);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": %s", RO_BLANK_S, row_p -> ro_blank_flag ? "true" : "false");
+
 										}
 
-
-								}		/* if (SetJSONInteger (row_json_p, RO_INDEX_S, row_p -> ro_index)) */
+								}		/* if (SetJSONBoolean (row_json_p, RO_DISCARD_S, row_p -> ro_discard_flag)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_RACK_INDEX_S, row_p -> ro_rack_index);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": %s", RO_DISCARD_S, row_p -> ro_discard_flag ? "true" : "false");
 								}
 						}
+
 				}		/* if (success_flag) */
 
 			json_decref (row_json_p);
@@ -384,6 +403,8 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 			if (format == VF_CLIENT_FULL)
 				{
+
+
 					/*
 					 * If we haven't already got the material, get it!
 					 */
@@ -491,6 +512,18 @@ Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, c
 
 															if (row_p)
 																{
+																	bool flag = false;
+
+																	if (GetJSONBoolean (json_p, RO_DISCARD_S, &flag))
+																		{
+																			SetRowDiscard (row_p, flag);
+																		}
+
+																	if (GetJSONBoolean (json_p, RO_BLANK_S, &flag))
+																		{
+																			SetRowBlank (row_p, flag);
+																		}
+
 																	if (rep_control_flag)
 																		{
 																			SetRowGenotypeControl (row_p, true);
@@ -918,7 +951,6 @@ static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment
 }
 
 
-
 static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, Row *row_p, const Study *study_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
@@ -998,4 +1030,14 @@ bool IsRowDiscard (const Row *row_p)
 	return (row_p -> ro_discard_flag);
 }
 
+
+void SetRowBlank (Row *row_p, bool blank_flag)
+{
+	row_p -> ro_blank_flag = blank_flag;
+}
+
+bool IsRowBlank (const Row *row_p)
+{
+	return (row_p -> ro_blank_flag);
+}
 
