@@ -43,28 +43,9 @@
 /*
  * static declarations
  */
-
-static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
-
-static const char * const S_ROW_S = "Row";
-static const char * const S_COLUMN_S = "Column";
 static const char * const S_RACK_S = "Rack";
 static const char * const S_PLOT_INDEX_S = "Plot index";
 
-
-static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER = { "RO phenotype data delimiter", PT_CHAR };
-static NamedParameterType S_ROW_PHENOTYPE_DATA_TABLE = { "RO phenotype data upload", PT_JSON_TABLE};
-static NamedParameterType S_STUDIES_LIST = { "RO Study", PT_STRING };
-
-
-static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
-
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, FieldTrialServiceData *data_p);
-
-
-static json_t *GetTableParameterHints (void);
-
-static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *plot_index_p);
 
 
 /**
@@ -82,130 +63,6 @@ static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefi
 /*
  * API Definitions
  */
-
-
-bool AddSubmissionRowPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
-{
-	bool success_flag = false;
-
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Row Phenotypes", false, data_p, param_set_p);
-
-	if (group_p)
-		{
-			Parameter *param_p = NULL;
-			const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
-
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study to update the phenotypes for", NULL, PL_ALL)) != NULL)
-				{
-					if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL, false))
-						{
-							char delim = S_DEFAULT_COLUMN_DELIMITER;
-
-							if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &delim, PL_ADVANCED)) != NULL)
-								{
-									if ((param_p = GetPhenotypesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
-										{
-											success_flag = true;
-										}
-								}
-
-						}
-
-				}
-
-		}		/* if (group_p) */
-
-
-	return success_flag;
-}
-
-
-bool RunForSubmissionRowPhenotypeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
-{
-	bool job_done_flag = false;
-	const char *study_id_s = NULL;
-
-	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
-		{
-			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
-
-			if (study_p)
-				{
-					const json_t *rows_json_p = NULL;
-
-					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, &rows_json_p))
-						{
-							/*
-							 * Has a spreadsheet been uploaded?
-							 */
-							job_done_flag = true;
-
-							/*
-							 * Has a spreadsheet been uploaded?
-							 */
-							if (rows_json_p)
-								{
-									const size_t num_rows = json_array_size (rows_json_p);
-
-									if (num_rows > 0)
-										{
-											//if (AddTreatmentFactorsFromJSON (job_p, rows_json_p, study_p, data_p))
-												{
-
-												}
-
-											if (!AddObservationValuesFromJSON (job_p, rows_json_p, study_p, data_p))
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, rows_json_p, "AddObservationValuesFromJSON for study \"%s\" failed", study_id_s);
-												}
-
-										}		/* if (num_rows > 0) */
-
-									else
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
-										}
-
-								}		/* if (table_value.st_json_p) */
-							else
-								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
-								}
-
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_PHENOTYPE_TABLE.npt_name_s, &value, true)) */
-
-					FreeStudy (study_p);
-				}		/* if (study_p) */
-
-		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_experimental_area_value, true)) */
-
-	return job_done_flag;
-}
-
-
-bool GetSubmissionRowPhenotypeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
-{
-	bool success_flag = true;
-
-	if (strcmp (param_name_s, S_STUDIES_LIST.npt_name_s) == 0)
-		{
-			*pt_p = S_STUDIES_LIST.npt_type;
-		}
-	else if (strcmp (param_name_s, S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
-		{
-			*pt_p = S_ROW_PHENOTYPE_DATA_TABLE_COLUMN_DELIMITER.npt_type;
-		}
-	else if (strcmp (param_name_s, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s) == 0)
-		{
-			*pt_p = S_ROW_PHENOTYPE_DATA_TABLE.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
-
-	return success_flag;
-}
 
 
 bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
@@ -320,206 +177,6 @@ bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const Fi
  */
 
 
-
-static json_t *GetTableParameterHints (void)
-{
-	json_t *hints_p = json_array ();
-
-	if (hints_p)
-		{
-			if (AddColumnParameterHint (S_ROW_S, NULL, PT_UNSIGNED_INT, false, hints_p))
-				{
-					if (AddColumnParameterHint (S_COLUMN_S, NULL, PT_UNSIGNED_INT, false, hints_p))
-						{
-							if (AddColumnParameterHint (S_RACK_S, NULL, PT_UNSIGNED_INT, false, hints_p))
-								{
-									return hints_p;
-								}
-						}
-				}
-
-			json_decref (hints_p);
-		}
-
-	return NULL;
-}
-
-
-static Parameter *GetPhenotypesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
-{
-	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_ROW_PHENOTYPE_DATA_TABLE.npt_type, S_ROW_PHENOTYPE_DATA_TABLE.npt_name_s, "Phenotype data values to upload", "The data to upload", NULL, PL_ALL);
-
-	if (param_p)
-		{
-			bool success_flag = false;
-			json_t *hints_p = GetTableParameterHints ();
-
-			if (hints_p)
-				{
-					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
-						{
-							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
-
-							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
-								{
-									if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_HEADERS_PLACEMENT_S, PA_TABLE_COLUMN_HEADERS_PLACEMENT_FIRST_ROW_S))
-										{
-											success_flag = true;
-										}
-								}
-						}
-
-					json_decref (hints_p);
-				}
-
-			if (!success_flag)
-				{
-					FreeParameter (param_p);
-					param_p = NULL;
-				}
-
-		}		/* if (param_p) */
-
-	return param_p;
-}
-
-
-static bool GetRackStudyIndex (const json_t *observation_json_p, int32 *rack_study_index_p)
-{
-	bool success_flag = false;
-	const json_t *index_p = json_object_get (observation_json_p, PL_INDEX_TABLE_TITLE_S);
-
-	if (index_p)
-		{
-			if (json_is_integer (index_p))
-				{
-					*rack_study_index_p = json_integer_value (index_p);
-					success_flag = true;
-				}
-			else if (json_is_string (index_p))
-				{
-					const char *index_s = json_string_value (index_p);
-
-					if (GetValidInteger (&index_s, rack_study_index_p))
-						{
-							success_flag = true;
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get plot index \"%s\" as integer", index_s);
-						}
-				}
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "\"%s\" is not a string or a number", S_PLOT_INDEX_S);
-				}
-		}		/* if (index_p) */
-	else
-		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get \"%s\"", S_PLOT_INDEX_S);
-		}
-
-
-	return success_flag;
-}
-
-
-static bool AddObservationValuesFromJSON (ServiceJob *job_p, const json_t *observations_json_p, Study *study_p, FieldTrialServiceData *data_p)
-{
-	bool success_flag	= true;
-	OperationStatus status = OS_FAILED;
-
-	if (json_is_array (observations_json_p))
-		{
-			const size_t num_rows = json_array_size (observations_json_p);
-			size_t i;
-			size_t num_imported = 0;
-			size_t num_empty_rows = 0;
-			bool imported_obeservation_flag = false;
-
-			for (i = 0; i < num_rows; ++ i)
-				{
-					json_t *observation_json_p = json_array_get (observations_json_p, i);
-					const size_t row_size = json_object_size (observation_json_p);
-
-					if (row_size > 0)
-						{
-							int32 rack_index = -1;
-
-							imported_obeservation_flag = false;
-
-							if (GetRackStudyIndex (observation_json_p, &rack_index))
-								{
-									const bool expand_fields_flag = true;
-									Row *row_p = GetRowByStudyIndex (rack_index, study_p, data_p);
-
-									if (row_p)
-										{
-											OperationStatus import_row_status = AddObservationValuesToRow (row_p, observation_json_p, study_p, job_p, i, data_p);
-
-											if ((import_row_status == OS_PARTIALLY_SUCCEEDED) || (import_row_status == OS_SUCCEEDED))
-												{
-													if (SavePlot (row_p -> ro_plot_p, data_p))
-														{
-															imported_obeservation_flag = true;
-															++ num_imported;
-														}
-													else
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (study_p -> st_id_p, id_s);
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to save row " INT32_FMT " for Study \"%s\"", rack_index, id_s);
-														}
-												}		/* if (loop_success_flag) */
-
-											FreeRow (row_p);
-
-										}		/*  if (row_p) */
-									else
-										{
-											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-											bson_oid_to_string (study_p -> st_id_p, id_s);
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get row " INT32_FMT " for Study \"%s\"", rack_index, id_s);
-										}
-
-								}		/* if (GetIntegerFromJSON (observation_json_p, S_PLOT_INDEX_S, &plot_index)) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to get %s", S_PLOT_INDEX_S);
-								}
-
-							if (!imported_obeservation_flag)
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to import observations");
-								}
-
-						}		/* if (row_size > 0) */
-					else
-						{
-							++ num_empty_rows;
-						}
-
-
-				}		/* for (i = 0; i < num_rows; ++ i) */
-
-
-			if (num_imported + num_empty_rows == num_rows)
-				{
-					status = OS_SUCCEEDED;
-				}
-			else if (num_imported > 0)
-				{
-					status = OS_PARTIALLY_SUCCEEDED;
-				}
-
-		}		/* if (json_is_array (plots_json_p)) */
-
-	SetServiceJobStatus (job_p, status);
-
-	return success_flag;
-}
 
 
 OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, FieldTrialServiceData *data_p)
@@ -1408,7 +1065,7 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 
 
 
-bool GetDiscardValueFromJSON (const json_t *row_json_p)
+bool GetDiscardValueFromSubmissionJSON (const json_t *row_json_p)
 {
 	const char *value_s = GetJSONString (row_json_p, RO_DISCARD_S);
 
@@ -1434,7 +1091,7 @@ bool GetDiscardValueFromJSON (const json_t *row_json_p)
 
 
 
-bool GetBlankValueFromJSON (const json_t *row_json_p)
+bool GetBlankValueFromSubmissionJSON (const json_t *row_json_p)
 {
 	const char *value_s = GetJSONString (row_json_p, RO_BLANK_S);
 

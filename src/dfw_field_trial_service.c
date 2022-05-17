@@ -35,7 +35,6 @@
 #include "audit.h"
 
 #include "search_service.h"
-#include "submission_service.h"
 #include "submit_field_trial.h"
 #include "submit_gene_bank.h"
 #include "submit_location.h"
@@ -44,7 +43,6 @@
 #include "submit_measured_variables.h"
 #include "submit_crop.h"
 #include "submit_plots.h"
-#include "submit_phenotypes.h"
 #include "submit_program.h"
 #include "submit_treatment.h"
 #include "submit_treatment_factor.h"
@@ -87,7 +85,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *measured_variables_submission_service_p = GetMeasuredVariablesSubmissionService (grassroots_p);
 	Service *crop_submission_service_p = GetCropSubmissionService (grassroots_p);
 	Service *plots_submission_service_p = GetPlotsSubmissionService (grassroots_p);
-	Service *phenotypes_submission_service_p = GetPhenotypesSubmissionService (grassroots_p);
+	Service *phenotypes_submission_service_p = NULL; // GetPhenotypesSubmissionService (grassroots_p);
 	Service *indexing_service_p = GetFieldTrialIndexingService (grassroots_p);
 	Service *programme_submission_service_p = GetProgrammeSubmissionService (grassroots_p);
 	Service *treatments_submission_service_p = GetTreatmentSubmissionService (grassroots_p);

@@ -971,11 +971,11 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 	bool discard_flag = false;
 	bool blank_flag = false;
 
-	if (GetDiscardValueFromJSON (table_row_json_p))
+	if (GetDiscardValueFromSubmissionJSON (table_row_json_p))
 		{
 			success_flag = true;
 		}
-	else if (GetBlankValueFromJSON (table_row_json_p))
+	else if (GetBlankValueFromSubmissionJSON (table_row_json_p))
 		{
 			success_flag = true;
 		}

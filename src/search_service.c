@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-#include "submission_service.h"
+#include "search_service.h"
 #include "plot_jobs.h"
 #include "field_trial_jobs.h"
 #include "study_jobs.h"

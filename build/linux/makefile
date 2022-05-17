@@ -98,13 +98,11 @@ SRCS 	= \
 	string_observation.c \
 	study.c \
 	study_jobs.c \
-	submission_service.c \
 	submit_crop.c \
 	submit_field_trial.c \
 	submit_gene_bank.c \
 	submit_location.c \
 	submit_material.c \
-	submit_phenotypes.c \
 	submit_plots.c \
 	submit_program.c \
 	submit_study.c \
