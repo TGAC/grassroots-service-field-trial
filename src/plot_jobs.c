@@ -968,15 +968,16 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 	Material *material_p = NULL;
 	OperationStatus add_status = OS_FAILED;
 	bool success_flag = false;
-	bool discard_flag = false;
-	bool blank_flag = false;
+	RowType rt = RT_NORMAL;
 
 	if (GetDiscardValueFromSubmissionJSON (table_row_json_p))
 		{
+			rt = RT_DISCARD;
 			success_flag = true;
 		}
 	else if (GetBlankValueFromSubmissionJSON (table_row_json_p))
 		{
+			rt = RT_BLANK;
 			success_flag = true;
 		}
 	else
@@ -1091,11 +1092,11 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 													/*
 													 * update existing row
 													 */
-													UpdateRow (row_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate);
+													UpdateRow (row_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate, rt);
 												}
 											else
 												{
-													row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
+													row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, rt, material_p, material_mem, plot_p);
 
 													if (row_p)
 														{
@@ -1209,8 +1210,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 
 													SetRowGenotypeControl (row_p, control_rep_flag);
-													SetRowDiscard (row_p, discard_flag);
-													SetRowBlank (row_p, blank_flag);
+													SetRowType (row_p, rt);
 
 													if (is_existing_row_flag || (AddRowToPlot (plot_p, row_p)))
 														{

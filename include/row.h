@@ -33,6 +33,34 @@
 struct Study;
 
 
+typedef enum
+{
+	/**
+	 * A normal plot which is part of an experiment.
+	 */
+	RT_NORMAL,
+
+	/**
+	 * A physical plot where no measurements are taken, just there as a physical spacer
+	 * which will appear in the plot-based view.
+	 */
+	RT_DISCARD,
+
+	/**
+	 * Used to keep the stylised view when laying out the plots and you have non-regular gaps.
+	 * Grassroots won't draw these plots and will use them for gaps calculations and draw
+	 * gaps instead
+	 */
+	RT_BLANK,
+
+	/**
+	 * The number of different values that a RoType can take.
+	 */
+	RT_NUM_VALUES
+} RowType;
+
+
+
 typedef struct Row
 {
 	bson_oid_t *ro_id_p;
@@ -68,18 +96,7 @@ typedef struct Row
 
 	bool ro_replicate_control_flag;
 
-	/**
-	 * A physical plot where no measurements are taken, just there as a physical spacer
-	 * which will appear in the plot-based view.
-	 */
-	bool ro_discard_flag;
-
-	/**
-	 * Used to keep the stylised view when laying out the plots and you have non-regular gaps.
-	 * Grassroots won't draw these plots and will use them for gaps calculations and draw
-	 * gaps instead
-	 */
-	bool ro_blank_flag;
+	RowType ro_type;
 
 } Row;
 
@@ -158,7 +175,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, const RowType rt, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
 
@@ -181,19 +198,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowGenotypeControl (Row *row_p, bool contr
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowGenotypeControl (const Row *row_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowDiscard (Row *row_p, bool discard_flag);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowType (Row *row_p, RowType rt);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowDiscard (const Row *row_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL RowType GetRowType (const Row *row_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowBlank (Row *row_p, bool blank_flag);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowBlank (const Row *row_p);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactorValue *tf_value_p);
