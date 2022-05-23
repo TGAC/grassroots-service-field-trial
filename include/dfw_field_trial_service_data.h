@@ -406,6 +406,14 @@ DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_TEXT DFW_FIELD_TRIAL_STRUCT_VAL ("
 DFW_FIELD_TRIAL_PREFIX const ScaleClass SCALE_DATE DFW_FIELD_TRIAL_STRUCT_VAL ("Date", PT_TIME);
 
 
+
+/**
+ * The key for specifying the timestamp of a saved piece of data
+ *
+ * @ingroup field_trials_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_TIMESTAMP_S DFW_FIELD_TRIAL_VAL ("Modified");
+
 /*
  * forward declarations
  */
