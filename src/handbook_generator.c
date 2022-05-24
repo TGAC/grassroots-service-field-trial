@@ -114,7 +114,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 														{
 															if (programme_p -> pr_logo_url_s)
 																{
-																	char *image_s = NULL; // DownloadToFile (programme_p -> pr_logo_url_s, download_path_s);
+																	char *image_s = DownloadToFile (programme_p -> pr_logo_url_s, download_path_s);
 
 																	if (image_s)
 																		{
@@ -239,6 +239,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 {
 	bool success_flag = true;
 	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+	json_t *phenotypes_p = NULL;
 
 	fputs ("\\section* {Study}\n", study_tex_f);
 
@@ -359,7 +360,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 		}
 
 
-	json_t *phenotypes_p = GetStudyDistinctPhenotypesAsJSON (study_p -> st_id_p, data_p);
+	phenotypes_p = GetStudyDistinctPhenotypesAsJSON (study_p -> st_id_p, data_p);
 	if (phenotypes_p)
 		{
 			ByteBuffer *phenotypes_buffer_p = AllocateByteBuffer (256);

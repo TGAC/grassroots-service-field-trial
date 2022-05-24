@@ -139,6 +139,9 @@ static bool AddPhenotype (const char *oid_s, json_t *values_p, const FieldTrialS
 
 static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p);
 
+static bool AddFullPhenotypeAsJSON (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p);
+
+
 static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_s, bool (*add_value_fn) (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p), const FieldTrialServiceData *data_p);
 
 
@@ -166,6 +169,10 @@ static bool AddCropAsFrictionlessData (const Crop * const crop_p, json_t *json_p
 static bool AddTreatmentFactorsAsFrictionlessData (json_t *json_p, LinkedList *treatments_p, const char * const key_s);
 
 static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *id_s, const char *trial_s, const char *location_s, ParameterSet *params_p, ParameterGroup *group_p, ServiceData *data_p);
+
+
+static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p);
+
 
 
 /*
@@ -1642,7 +1649,7 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 
 	if (key_s)
 		{
-			phenotypes_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddFullPhenotype /*  AddPhenotype */, data_p);
+			phenotypes_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddFullPhenotypeAsJSON /*  AddPhenotype */, data_p);
 
 			FreeCopiedString (key_s);
 		}		/* if (key_s) */
@@ -2359,6 +2366,116 @@ json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTria
 
 
 
+static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
+{
+	json_t *values_p = NULL;
+
+	if (SetMongoToolCollection (service_data_p -> dftsd_mongo_p, service_data_p -> dftsd_collection_ss [DFTD_PLOT]))
+		{
+			bson_t *command_p = BCON_NEW ("distinct",
+														 BCON_UTF8 (service_data_p -> dftsd_collection_ss [DFTD_PLOT]),
+														 "key",
+														 BCON_UTF8 (key_s),
+														 "query",
+														 "{",
+														 PL_PARENT_STUDY_S,
+														 BCON_OID (study_id_p),
+														 "}");
+
+			if (command_p)
+				{
+					bson_t *reply_p = NULL;
+
+					if (RunMongoCommand (service_data_p -> dftsd_mongo_p, command_p, &reply_p))
+						{
+							if (reply_p)
+								{
+									json_t *results_p = ConvertBSONToJSON (reply_p);
+
+									if (results_p)
+										{
+											json_t *oid_values_p = json_object_get (results_p, "values");
+
+											if (oid_values_p)
+												{
+													if (json_is_array (oid_values_p))
+														{
+															json_t *oid_value_p;
+															size_t i;
+
+															json_array_foreach (oid_values_p, i, oid_value_p)
+																{
+																	const char *oid_s = GetJSONString (oid_value_p, "$oid");
+
+																	if (oid_s)
+																		{
+																			if (!process_value_fn (oid_s, user_data_p, service_data_p))
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
+																				}
+																		}		/* if (oid_s) */
+
+																}		/* json_array_foreach (oids_p, i, oid_p) */
+
+
+														}		/* if (json_is_array (oids_p)) */
+
+												}		/* if (oids_p) */
+
+
+											json_decref (results_p);
+										}		/* if (results_p) */
+
+
+									bson_destroy (reply_p);
+								}		/* if (reply_p) */
+							else
+								{
+									size_t length;
+									char *json_s = bson_as_relaxed_extended_json (command_p, &length);
+									if (json_s)
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply for \"%s\"", json_s);
+											bson_free (json_s);
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply");
+										}
+
+								}
+						}		/* if (RunMongoCommand (data_p -> dftsd_mongo_p, command_p, &reply_p)) */
+					else
+						{
+							size_t length;
+							char *json_s = bson_as_relaxed_extended_json (command_p, &length);
+
+							if (json_s)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand failed for \"%s\"", json_s);
+									bson_free (json_s);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand failed");
+								}
+						}
+
+					bson_destroy (command_p);
+				}		/* if (command_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create command");
+				}
+
+		}
+
+	return values_p;
+
+}
+
+
+
 static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_s, bool (*add_value_fn) (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p), const FieldTrialServiceData *data_p)
 {
 	json_t *values_p = NULL;
@@ -2540,7 +2657,8 @@ static bool AddPhenotype (const char *oid_s, json_t *values_p, const FieldTrialS
 }		/* if (oid_s) */
 
 
-static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p)
+
+static bool AddFullPhenotypeAsJSON (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	bson_oid_t *phenotype_id_p = GetBSONOidFromString (oid_s);
@@ -2552,6 +2670,40 @@ static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTr
 			if (variable_p)
 				{
 					json_t * mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL);
+
+					if (mv_json_p)
+						{
+							if (json_array_append_new (values_p, mv_json_p) == 0)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									json_decref (mv_json_p);
+								}
+						}
+					FreeMeasuredVariable (variable_p);
+				}		/* if (variable_p) */
+
+			FreeBSONOid (phenotype_id_p);
+		}		/* if (phenotype_id_p) */
+
+	return success_flag;
+}		/* if (oid_s) */
+
+
+static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	bson_oid_t *phenotype_id_p = GetBSONOidFromString (oid_s);
+
+	if (phenotype_id_p)
+		{
+			MeasuredVariable *variable_p = GetMeasuredVariableById (phenotype_id_p, data_p);
+
+			if (variable_p)
+				{
+					json_t *mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL);
 
 					if (mv_json_p)
 						{
