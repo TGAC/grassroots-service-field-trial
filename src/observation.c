@@ -797,11 +797,11 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 
 bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p)
 {
-	return AreObservationsMatchingByParts (observation_0_p, observation_1_p -> ob_phenotype_p, observation_1_p -> ob_start_date_p, observation_1_p -> ob_end_date_p, observation_1_p -> ob_index);
+	return AreObservationsMatchingByParts (observation_0_p, observation_1_p -> ob_phenotype_p, observation_1_p -> ob_start_date_p, observation_1_p -> ob_end_date_p, & (observation_1_p -> ob_index));
 }
 
 
-bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index)
+bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
 {
 	bool match_flag = false;
 
@@ -811,7 +811,7 @@ bool AreObservationsMatchingByParts (const Observation *observation_p, const Mea
 				{
 					if (CompareObservationDates (observation_p -> ob_end_date_p, end_date_p))
 						{
-							if (observation_p -> ob_index == index)
+							if ((!index_p) || (observation_p -> ob_index == *index_p))
 								{
 									match_flag = true;
 								}

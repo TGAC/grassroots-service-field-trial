@@ -495,7 +495,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 													raw_value_p = value_p;
 												}
 
-											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
+											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
 
 											if (observation_p)
 												{
@@ -710,7 +710,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 							raw_value_p = value_p;
 						}
 
-					observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, observation_index);
+					observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
 
 					if (observation_p)
 						{
@@ -914,7 +914,7 @@ OperationStatus AddSingleTreatmentFactorValueToRow  (Row *row_p, const char *key
 
 
 
-Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index)
+Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
 {
 	ObservationNode *node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
 
@@ -922,7 +922,7 @@ Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *v
 		{
 			Observation *existing_observation_p = node_p -> on_observation_p;
 
-			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p, index))
+			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p, index_p))
 				{
 					return existing_observation_p;
 				}

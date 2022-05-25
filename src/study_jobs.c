@@ -2365,6 +2365,106 @@ json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTria
 }
 
 
+OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServiceData *service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+
+
+
+
+	return status;
+}
+
+
+typedef struct
+{
+	Study *spd_study_p;
+	Statistics *spd_stats_p;
+} StudyProcessData;
+
+static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p)
+{
+	bool success_flag = false;
+	MeasuredVariable *phenotype_p = GetMeasuredVariableByIdString (phenotype_oid_s, service_data_p);
+
+	if (phenotype_p)
+		{
+			const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
+
+			if (class_p)
+				{
+					/*
+					 * Is it a numerical phenotype?
+					 */
+					if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0)
+						{
+							StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
+							Statistics *stats_p = spd_p -> spd_stats_p;
+							PlotNode *plot_node_p = (PlotNode *) (spd_p -> spd_study_p -> st_plots_p -> ll_head_p);
+
+							ResetStatistics (stats_p);
+
+							while (plot_node_p)
+								{
+									Plot *plot_p = plot_node_p -> pn_plot_p;
+
+									/*
+									 * Are there any rows?
+									 */
+									if (plot_p -> pl_rows_p -> ll_size > 0)
+										{
+											RowNode *row_node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
+
+											while (row_node_p)
+												{
+													Row *row_p = row_node_p -> rn_row_p;
+
+													/*
+													 * Are there any observations?
+													 */
+													if (row_p -> ro_observations_p -> ll_size > 0)
+														{
+															Observation *obs_p = GetMatchingObservation (row_p, phenotype_p, NULL, NULL, NULL);
+
+															if (obs_p)
+																{
+																	if (obs_p -> ob_type == OT_NUMERIC)
+																		{
+																			bool success_flag = true;
+																			NumericObservation *num_obs_p = (NumericObservation *) obs_p;
+
+																			if (num_obs_p -> no_corrected_value_p)
+																				{
+																					success_flag = AddStatisticsValue (stats_p, * (num_obs_p -> no_corrected_value_p));
+																				}
+																			else if (num_obs_p -> no_raw_value_p)
+																				{
+																					success_flag = AddStatisticsValue (stats_p, * (num_obs_p -> no_raw_value_p));
+																				}
+
+
+																		}
+																}
+														}
+
+													row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+												}		/* while (row_node_p) */
+
+										}		/* if (plot_p -> pl_rows_p -> ll_size > 0) */
+
+									plot_node_p = (PlotNode *) (plot_node_p -> pn_node.ln_next_p);
+								}		/* while (plot_node_p) */
+
+						}		/* if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0) */
+
+				}		/* if (class_p) */
+
+			FreeMeasuredVariable (phenotype_p);
+		}		/* if (phenotype_p) */
+
+	return success_flag;
+}
+
 
 static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
 {

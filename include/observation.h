@@ -252,7 +252,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveObservation (Observation *observation_p, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 index);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_API const char *GetObservationTypeAsString (const ObservationType obs_type);
