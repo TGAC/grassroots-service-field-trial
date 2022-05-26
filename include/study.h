@@ -259,6 +259,8 @@ typedef struct Study
 
 	char *st_image_collection_notes_s;
 
+	LinkedList *st_phenotype_statistics_p;
+
 } Study;
 
 

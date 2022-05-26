@@ -206,6 +206,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveStudyAsFrictionlessData (Study *study_p, 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctPhenotypesAsFrictionlessDataJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServiceData *service_data_p);
+
 #ifdef __cplusplus
 }
 #endif

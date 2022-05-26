@@ -28,6 +28,7 @@
 #include "string_utils.h"
 #include "crop_jobs.h"
 #include "plot_jobs.h"
+#include "row_jobs.h"
 #include "location_jobs.h"
 #include "field_trial_jobs.h"
 #include "programme_jobs.h"
@@ -42,6 +43,7 @@
 #include "plot.h"
 #include "row.h"
 #include "observation.h"
+#include "numeric_observation.h"
 #include "treatment_factor.h"
 
 #include "string_parameter.h"
@@ -54,6 +56,16 @@
 #include "json_parameter.h"
 #include "mongodb_tool.h"
 #include "lucene_tool.h"
+#include "statistics.h"
+
+
+
+
+typedef struct
+{
+	Study *spd_study_p;
+	StatisticsTool *spd_stats_p;
+} StudyProcessData;
 
 
 /*
@@ -173,6 +185,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 
 static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p);
 
+static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p);
 
 
 /*
@@ -2368,19 +2381,37 @@ json_t *GetStudyAsFrictionlessDataPackage (const Study *study_p, const FieldTria
 OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
+	size_t num_plots = study_p -> st_plots_p -> ll_size;
+	Statistics *stats_p = AllocateStatistics (num_plots);
 
+	if (stats_p)
+		{
+			char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
 
+			if (key_s)
+				{
+					StudyProcessData spd;
+					bool b;
+
+					spd.spd_study_p = study_p;
+					spd.spd_stats_p = stats_p;
+
+					b = ProcessDistinctValues (study_p -> st_id_p, key_s, ProcessStudyPhenotype, &spd, service_data_p);
+
+					FreeCopiedString (key_s);
+				}		/* if (key_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
+				}
+
+			FreeStatistics (stats_p);
+		}
 
 
 	return status;
 }
 
-
-typedef struct
-{
-	Study *spd_study_p;
-	Statistics *spd_stats_p;
-} StudyProcessData;
 
 static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p)
 {
@@ -2396,13 +2427,13 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 					/*
 					 * Is it a numerical phenotype?
 					 */
-					if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0)
+					if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL.sc_name_s) == 0)
 						{
 							StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
-							Statistics *stats_p = spd_p -> spd_stats_p;
+							StatisticsTool *stats_tool_p = spd_p -> spd_stats_p;
 							PlotNode *plot_node_p = (PlotNode *) (spd_p -> spd_study_p -> st_plots_p -> ll_head_p);
 
-							ResetStatistics (stats_p);
+							ResetStatistics (stats_tool_p);
 
 							while (plot_node_p)
 								{
@@ -2430,18 +2461,41 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 																{
 																	if (obs_p -> ob_type == OT_NUMERIC)
 																		{
-																			bool success_flag = true;
 																			NumericObservation *num_obs_p = (NumericObservation *) obs_p;
+																			double d;
+																			bool value_flag = true;
 
 																			if (num_obs_p -> no_corrected_value_p)
 																				{
-																					success_flag = AddStatisticsValue (stats_p, * (num_obs_p -> no_corrected_value_p));
+																					d = * (num_obs_p -> no_corrected_value_p);
 																				}
 																			else if (num_obs_p -> no_raw_value_p)
 																				{
-																					success_flag = AddStatisticsValue (stats_p, * (num_obs_p -> no_raw_value_p));
+																					d = * (num_obs_p -> no_raw_value_p);
+																				}
+																			else
+																				{
+																					value_flag = false;
 																				}
 
+																			if (value_flag)
+																				{
+																					if (!AddStatisticsValue (stats_tool_p, d))
+																						{
+																							char *obs_id_s = GetBSONOidAsString (obs_p -> ob_id_p);
+																							const char *phenotype_s = GetMeasuredVariableName (phenotype_p);
+
+																							if (obs_id_s)
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %lf to \"%s\" for variable \"%s\"", d, obs_id_s, phenotype_s);
+																									FreeBSONOidString (obs_id_s);
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %lf for variable \"%s\"", d, phenotype_s);
+																								}
+																						}
+																				}
 
 																		}
 																}
@@ -2454,6 +2508,16 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 
 									plot_node_p = (PlotNode *) (plot_node_p -> pn_node.ln_next_p);
 								}		/* while (plot_node_p) */
+
+							/*
+							 * Do we have any stats?
+							 */
+							if (stats_tool_p -> st_current_index > 0)
+								{
+									CalculateStatistics (stats_tool_p);
+
+								}
+
 
 						}		/* if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0) */
 
