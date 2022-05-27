@@ -68,7 +68,7 @@ void FreePhenotypeStatisticsNode (ListItem *node_p)
 }
 
 
-bool GetPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, json_t *parent_p)
+bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, json_t *parent_p)
 {
 	bool success_flag = false;
 	json_t *stats_json_p = GetStatisticsAsJSON (psn_p -> psn_stats_p);
