@@ -57,7 +57,7 @@
 #include "mongodb_tool.h"
 #include "lucene_tool.h"
 #include "statistics.h"
-
+#include "phenotype_statistics.h"
 
 
 
@@ -2431,7 +2431,8 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 						{
 							StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
 							StatisticsTool *stats_tool_p = spd_p -> spd_stats_p;
-							PlotNode *plot_node_p = (PlotNode *) (spd_p -> spd_study_p -> st_plots_p -> ll_head_p);
+							Study *study_p = spd_p -> spd_study_p;
+							PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
 
 							ResetStatistics (stats_tool_p);
 
@@ -2514,12 +2515,28 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 							 */
 							if (stats_tool_p -> st_current_index > 0)
 								{
+									const char *mv_s = GetMeasuredVariableName (phenotype_p);
+									PhenotypeStatisticsNode *node_p = NULL;
+
 									CalculateStatistics (stats_tool_p);
+
+									node_p = AllocatePhenotypeStatisticsNode (mv_s, & (stats_tool_p -> st_stats));
+
+									if (node_p)
+										{
+											LinkedListAddTail (study_p -> st_phenotype_statistics_p, & (node_p -> psn_node));
+
+											success_flag = true;
+										}
 
 								}
 
 
 						}		/* if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0) */
+					else
+						{
+							success_flag = true;
+						}
 
 				}		/* if (class_p) */
 
@@ -2566,6 +2583,10 @@ static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bo
 														{
 															json_t *oid_value_p;
 															size_t i;
+
+															/*
+															 * Create a stats list node for each measured variable
+															 */
 
 															json_array_foreach (oid_values_p, i, oid_value_p)
 																{
