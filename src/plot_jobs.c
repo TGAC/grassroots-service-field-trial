@@ -254,6 +254,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
 		{
+			OperationStatus status = OS_FAILED;
 			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
 
 			if (study_p)
@@ -323,6 +324,19 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 					else
 						{
 							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", PL_PLOT_TABLE.npt_name_s);
+						}
+
+
+					status = CalculateStudyStatistics (study_p, data_p);
+
+					if (status == OS_SUCCEEDED)
+						{
+							OperationStatus old_status = job_p -> sj_status;
+
+							status = SaveStudy (study_p, job_p, data_p);
+
+							MergeServiceJobStatus(job_p, old_status);
+
 						}
 
 					FreeStudy (study_p);

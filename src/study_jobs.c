@@ -183,7 +183,7 @@ static bool AddTreatmentFactorsAsFrictionlessData (json_t *json_p, LinkedList *t
 static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *id_s, const char *trial_s, const char *location_s, ParameterSet *params_p, ParameterGroup *group_p, ServiceData *data_p);
 
 
-static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p);
+static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p);
 
 static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p);
 
@@ -2391,12 +2391,11 @@ OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServic
 			if (key_s)
 				{
 					StudyProcessData spd;
-					bool b;
 
 					spd.spd_study_p = study_p;
 					spd.spd_stats_p = stats_p;
 
-					b = ProcessDistinctValues (study_p -> st_id_p, key_s, ProcessStudyPhenotype, &spd, service_data_p);
+					status = ProcessDistinctValues (study_p -> st_id_p, key_s, ProcessStudyPhenotype, &spd, service_data_p);
 
 					FreeCopiedString (key_s);
 				}		/* if (key_s) */
@@ -2547,8 +2546,9 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 }
 
 
-static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
+static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
 {
+	OperationStatus status = OS_FAILED_TO_START;
 	json_t *values_p = NULL;
 
 	if (SetMongoToolCollection (service_data_p -> dftsd_mongo_p, service_data_p -> dftsd_collection_ss [DFTD_PLOT]))
@@ -2583,6 +2583,8 @@ static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bo
 														{
 															json_t *oid_value_p;
 															size_t i;
+															const size_t size = json_array_size (oid_values_p);
+															size_t num_successes = 0;
 
 															/*
 															 * Create a stats list node for each measured variable
@@ -2594,7 +2596,11 @@ static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bo
 
 																	if (oid_s)
 																		{
-																			if (!process_value_fn (oid_s, user_data_p, service_data_p))
+																			if (process_value_fn (oid_s, user_data_p, service_data_p))
+																				{
+																					++ num_successes;
+																				}
+																			else
 																				{
 																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
 																				}
@@ -2602,6 +2608,19 @@ static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bo
 
 																}		/* json_array_foreach (oids_p, i, oid_p) */
 
+
+															if (num_successes == size)
+																{
+																	status = OS_SUCCEEDED;
+																}
+															else if (num_successes > 0)
+																{
+																	status = OS_PARTIALLY_SUCCEEDED;
+																}
+															else
+																{
+																	status = OS_FAILED;
+																}
 
 														}		/* if (json_is_array (oids_p)) */
 
@@ -2655,8 +2674,7 @@ static bool ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bo
 
 		}
 
-	return values_p;
-
+	return status;
 }
 
 
