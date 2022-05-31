@@ -327,16 +327,24 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 						}
 
 
-					status = CalculateStudyStatistics (study_p, data_p);
-
-					if (status == OS_SUCCEEDED)
+					if (GetStudyPlots (study_p, data_p))
 						{
-							OperationStatus old_status = job_p -> sj_status;
+							status = CalculateStudyStatistics (study_p, data_p);
 
-							status = SaveStudy (study_p, job_p, data_p);
+							if (status == OS_SUCCEEDED)
+								{
+									OperationStatus old_status = job_p -> sj_status;
 
-							MergeServiceJobStatus(job_p, old_status);
+									status = SaveStudy (study_p, job_p, data_p);
 
+									MergeServiceJobStatus(job_p, old_status);
+
+								}
+
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyPlots () failed for \"%s\"", study_p -> st_name_s);
 						}
 
 					FreeStudy (study_p);

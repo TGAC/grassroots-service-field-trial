@@ -64,7 +64,7 @@
 typedef struct
 {
 	Study *spd_study_p;
-	StatisticsTool *spd_stats_p;
+	StatisticsTool *spd_stats_tool_p;
 } StudyProcessData;
 
 
@@ -352,7 +352,6 @@ json_t *GetOldStudyIndexingData (Service *service_p)
 					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 					size_t i;
 					json_t *src_study_p;
-					size_t num_added = 0;
 
 					json_array_foreach (src_studies_p, i, src_study_p)
 						{
@@ -2382,9 +2381,9 @@ OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServic
 {
 	OperationStatus status = OS_FAILED;
 	size_t num_plots = study_p -> st_plots_p -> ll_size;
-	Statistics *stats_p = AllocateStatistics (num_plots);
+	StatisticsTool *stats_tool_p = AllocateStatisticsTool (num_plots);
 
-	if (stats_p)
+	if (stats_tool_p)
 		{
 			char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
 
@@ -2393,7 +2392,7 @@ OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServic
 					StudyProcessData spd;
 
 					spd.spd_study_p = study_p;
-					spd.spd_stats_p = stats_p;
+					spd.spd_stats_tool_p = stats_tool_p;
 
 					status = ProcessDistinctValues (study_p -> st_id_p, key_s, ProcessStudyPhenotype, &spd, service_data_p);
 
@@ -2404,7 +2403,7 @@ OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServic
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
 				}
 
-			FreeStatistics (stats_p);
+			FreeStatisticsTool (stats_tool_p);
 		}
 
 
@@ -2429,11 +2428,11 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 					if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL.sc_name_s) == 0)
 						{
 							StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
-							StatisticsTool *stats_tool_p = spd_p -> spd_stats_p;
+							StatisticsTool *stats_tool_p = spd_p -> spd_stats_tool_p;
 							Study *study_p = spd_p -> spd_study_p;
 							PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
 
-							ResetStatistics (stats_tool_p);
+							ResetStatisticsTool (stats_tool_p);
 
 							while (plot_node_p)
 								{
@@ -2549,7 +2548,6 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char *key_s, bool (*process_value_fn) (const char *oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED_TO_START;
-	json_t *values_p = NULL;
 
 	if (SetMongoToolCollection (service_data_p -> dftsd_mongo_p, service_data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
@@ -3418,7 +3416,6 @@ static Parameter *GetAndAddAspectParameter (const char *aspect_s, FieldTrialServ
 		{
 			uint32 i = S_NUM_DIRECTIONS;
 			const KeyValuePair *direction_p = S_DIRECTIONS_P;
-			bool success_flag = false;
 
 			while (i > 0)
 				{
