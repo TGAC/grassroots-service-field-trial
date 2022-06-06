@@ -277,7 +277,7 @@ Treatment *GetTreatmentByURL (const char *term_url_s, const ViewFormat format, c
 bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatmemts", false, data_p, param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatments", false, data_p, param_set_p);
 
 	if (group_p)
 		{

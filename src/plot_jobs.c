@@ -327,24 +327,16 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 						}
 
 
-					if (GetStudyPlots (study_p, data_p))
+					status = CalculateStudyStatistics (study_p, data_p);
+
+					if (status == OS_SUCCEEDED)
 						{
-							status = CalculateStudyStatistics (study_p, data_p);
+							OperationStatus old_status = job_p -> sj_status;
 
-							if (status == OS_SUCCEEDED)
-								{
-									OperationStatus old_status = job_p -> sj_status;
+							status = SaveStudy (study_p, job_p, data_p);
 
-									status = SaveStudy (study_p, job_p, data_p);
+							MergeServiceJobStatus(job_p, old_status);
 
-									MergeServiceJobStatus(job_p, old_status);
-
-								}
-
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyPlots () failed for \"%s\"", study_p -> st_name_s);
 						}
 
 					FreeStudy (study_p);
@@ -1070,6 +1062,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 					 * plot_p now has an id, so we can add the row/rack.
 					 */
 					int32 rack_plotwise_index = -1;
+					bool added_plot_to_study_flag = false;
 
 					if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index))
 						{
@@ -1238,15 +1231,19 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 														{
 															if (SavePlot (plot_p, data_p))
 																{
-																	if (num_columns == imported_columns)
+																	if (AddPlotToStudy (study_p, plot_p))
 																		{
-																			add_status = OS_SUCCEEDED;
-																		}
-																	else if (imported_columns > 0)
-																		{
-																			add_status = OS_PARTIALLY_SUCCEEDED;
-																		}
+																			added_plot_to_study_flag = true;
 
+																			if (num_columns == imported_columns)
+																				{
+																					add_status = OS_SUCCEEDED;
+																				}
+																			else if (imported_columns > 0)
+																				{
+																					add_status = OS_PARTIALLY_SUCCEEDED;
+																				}
+																		}
 																}
 															else
 																{
@@ -1278,7 +1275,11 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
 						}
 
-					FreePlot (plot_p);
+					if (!added_plot_to_study_flag)
+						{
+							FreePlot (plot_p);
+						}
+
 				}		/* if (plot_p) */
 
 
@@ -1374,19 +1375,19 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 											OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i, data_p);
 
 											switch (add_status)
-											{
-												case OS_SUCCEEDED:
-													++ num_fully_imported;
-													break;
+												{
+													case OS_SUCCEEDED:
+														++ num_fully_imported;
+														break;
 
-												case OS_PARTIALLY_SUCCEEDED:
-													++ num_partially_imported;
-													break;
+													case OS_PARTIALLY_SUCCEEDED:
+														++ num_partially_imported;
+														break;
 
-												default:
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plots row");
-													break;
-											}
+													default:
+														PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plots row");
+														break;
+												}
 										}
 									else
 										{

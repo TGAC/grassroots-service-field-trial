@@ -794,15 +794,9 @@ bool GetStudyPlots (Study *study_p, FieldTrialServiceData *data_p)
 
 															if (plot_p)
 																{
-																	PlotNode *node_p = AllocatePlotNode (plot_p);
-
-																	if (node_p)
+																	if (! (AddPlotToStudy (study_p, plot_p)))
 																		{
-																			LinkedListAddTail (study_p -> st_plots_p, & (node_p -> pn_node));
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add plot to experimental area's list");
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add plot to study's list");
 																			FreePlot (plot_p);
 																		}
 																}
@@ -827,6 +821,27 @@ bool GetStudyPlots (Study *study_p, FieldTrialServiceData *data_p)
 
 	return success_flag;
 }
+
+
+
+bool AddPlotToStudy (Study *study_p, Plot *plot_p)
+{
+	bool success_flag = false;
+	PlotNode *node_p = AllocatePlotNode (plot_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (study_p -> st_plots_p, & (node_p -> pn_node));
+			success_flag = true;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add plot to study \"%s\"", study_p -> st_name_s);
+		}
+
+	return success_flag;
+}
+
 
 
 OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
@@ -1139,26 +1154,23 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 											Location *location_p = NULL;
 											bool success_flag = true;
 
-											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+											if (! (location_p = GetLocationById (location_id_p, format, data_p)))
 												{
-													if (! (location_p = GetLocationById (location_id_p, format, data_p)))
+													char *id_s = GetBSONOidAsString (location_id_p);
+
+													if (id_s)
 														{
-															char *id_s = GetBSONOidAsString (location_id_p);
-
-															if (id_s)
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed for %s", id_s);
-																	FreeBSONOidString (id_s);
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed");
-																}
-
-															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed for %s", id_s);
+															FreeBSONOidString (id_s);
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetLocationById failed");
 														}
 
-												}		/* if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL)) */
+													success_flag = false;
+												}
+
 
 											if (success_flag)
 												{

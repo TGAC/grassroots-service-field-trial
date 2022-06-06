@@ -279,6 +279,9 @@ typedef struct StudyNode
 
 
 
+/* forward declarations */
+struct Plot;
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -323,6 +326,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyByIdString (const char *study_id_s,
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *st_id_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *study_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *plot_p);
+
 
 #ifdef __cplusplus
 }

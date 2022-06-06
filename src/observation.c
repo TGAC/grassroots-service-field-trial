@@ -1121,6 +1121,11 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 							if (has_cache_flag)
 								{
 									phenotype_p = GetCachedMeasuredVariableById (data_p, oid_s);
+
+									if (phenotype_p)
+										{
+											*phenotype_mem_p = MF_SHADOW_USE;
+										}
 								}
 
 							if (!phenotype_p)
@@ -1137,7 +1142,11 @@ static MeasuredVariable *CreateMeasuredVariableFromObservationJSON (const json_t
 												{
 													if (has_cache_flag)
 														{
-															if (!AddMeasuredVariableToCache (data_p, phenotype_p, MF_SHALLOW_COPY))
+															if (AddMeasuredVariableToCache (data_p, phenotype_p, MF_SHALLOW_COPY))
+																{
+																	*phenotype_mem_p = MF_SHADOW_USE;
+																}
+															else
 																{
 																	PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddMeasuredVariableToCache () failed to cache MeasuredVariable for \"%s\"", oid_s);
 																}
