@@ -70,7 +70,7 @@ static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, con
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format);
+static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p);
 
 
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
@@ -873,7 +873,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 										{
 											if (!SaveStudyAsFrictionlessData (study_p, data_p))
 												{
-
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveStudyAsFrictionlessData () failed for Study \"%s\"", study_p -> st_name_s);
 												}
 										}
 
@@ -888,10 +888,21 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 								}
 
 						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
+						}
 
 					json_decref (study_json_p);
 				}		/* if (study_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsJSON () failed for Study \"%s\"", study_p -> st_name_s);
+				}
 
+			/*
+			 * Index the Study using Lucene
+			 */
 			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 				{
 					study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
@@ -1273,11 +1284,18 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 																									 photo_s, image_collection_notes_s,
 																									 data_p);
 
+
 													if (study_p)
 														{
+															if (!AddStatisticsFromJSON (study_p, json_p, data_p))
+																{
+																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddStatistcsFromJSON () failed");
+																}
+
+
 															if (!AddTreatmentsFromJSON (study_p, json_p, data_p))
 																{
-																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddTreatmentsFromJSON failed");
+																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddTreatmentsFromJSON () failed");
 																}
 														}
 
@@ -1913,7 +1931,15 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																																																				{
 																																																					if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																																						{
-																																																							success_flag = true;
+																																																							if (AddStatisticsToJSON (study_p, study_json_p))
+																																																								{
+																																																									success_flag = true;
+																																																								}
+																																																							else
+																																																								{
+																																																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
+																																																								}
+
 																																																						}
 
 																																																				}
@@ -2045,11 +2071,12 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 }
 
 
-static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format)
+static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
 {
-	bool success_flag = false;
-
-	if (study_p -> st_phenotype_statistics_p)
+	/*
+	 * Are there any statistics?
+	 */
+	if ((study_p -> st_phenotype_statistics_p) && (study_p -> st_phenotype_statistics_p -> ll_size > 0))
 		{
 			json_t *statistics_p = json_object ();
 
@@ -2087,19 +2114,23 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, con
 								{
 									return true;
 								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistcs for \"%s\"", ST_PHENOTYPE_STATISTICS_S);
+
+								}
 						}
 
 					json_decref (statistics_p);
 				}		/* if (statistics_p) */
 
-		}		/* if (study_p -> st_phenotype_statistics_p) */
+		}		/* if ((study_p -> st_phenotype_statistics_p) && (study_p -> st_phenotype_statistics_p -> ll_size > 0)) */
 	else
 		{
 			return true;
 		}
 
 	return false;
-
 }
 
 
