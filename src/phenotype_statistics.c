@@ -20,9 +20,21 @@ PhenotypeStatisticsNode *AllocatePhenotypeStatisticsNode (const char *measured_v
 
 	if (mv_s)
 		{
-			Statistics *copied_stats_p = CopyStatistics (src_p);
+			bool success_flag = true;
+			Statistics *copied_stats_p = NULL;
 
-			if (copied_stats_p)
+			if (src_p)
+				{
+					copied_stats_p = CopyStatistics (src_p);
+
+					if (!copied_stats_p)
+						{
+							success_flag = false;
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CopyStatistics () failed for \"%s\"", measured_variable_name_s);
+						}
+				}
+
+			if (success_flag)
 				{
 					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) AllocMemory (sizeof (PhenotypeStatisticsNode));
 
@@ -39,7 +51,10 @@ PhenotypeStatisticsNode *AllocatePhenotypeStatisticsNode (const char *measured_v
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate stats node for measured variable name \"%s\"", measured_variable_name_s);
 						}
 
-					FreeStatistics (copied_stats_p);
+					if (copied_stats_p)
+						{
+							FreeStatistics (copied_stats_p);
+						}
 				}
 			else
 				{
@@ -62,7 +77,11 @@ void FreePhenotypeStatisticsNode (ListItem *node_p)
 	PhenotypeStatisticsNode *psn_p = (PhenotypeStatisticsNode *) node_p;
 
 	FreeCopiedString (psn_p -> psn_measured_variable_name_s);
-	FreeStatistics (psn_p -> psn_stats_p);
+
+	if (psn_p -> psn_stats_p)
+		{
+			FreeStatistics (psn_p -> psn_stats_p);
+		}
 
 	FreeMemory (psn_p);
 }
@@ -71,7 +90,16 @@ void FreePhenotypeStatisticsNode (ListItem *node_p)
 bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, json_t *parent_p)
 {
 	bool success_flag = false;
-	json_t *stats_json_p = GetStatisticsAsJSON (psn_p -> psn_stats_p);
+	json_t *stats_json_p = NULL;
+
+	if (psn_p -> psn_stats_p)
+		{
+			stats_json_p = GetStatisticsAsJSON (psn_p -> psn_stats_p);
+		}
+	else
+		{
+			stats_json_p = json_null ();
+		}
 
 	if (stats_json_p)
 		{
@@ -87,7 +115,7 @@ bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, jso
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStatisticsAsJSON () failed for \"%s\"", psn_p -> psn_measured_variable_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to gets stats as json for \"%s\"", psn_p -> psn_measured_variable_name_s);
 		}
 
 	return success_flag;

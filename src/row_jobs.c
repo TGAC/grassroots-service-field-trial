@@ -752,52 +752,71 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 						}		/* if (observation_p) */
 					else
 						{
-							bson_oid_t *observation_id_p = GetNewBSONOid ();
 
-							if (observation_id_p)
+							/*
+							 * Are the json values non-trivial?
+							 */
+							if (! ((IsJSONEmpty (raw_value_p)) && (IsJSONEmpty (corrected_value_p))))
 								{
-									const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
-									ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+									bson_oid_t *observation_id_p = GetNewBSONOid ();
 
-									if (obs_type != OT_NUM_TYPES)
+									if (observation_id_p)
 										{
-											observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
-										}
+											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
 
-
-									if (observation_p)
-										{
-											if (AddObservationToRow (row_p, observation_p))
+											if (obs_type != OT_NUM_TYPES)
 												{
-													added_phenotype_flag = true;
-													status = OS_SUCCEEDED;
+													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetObservationTypeForScaleClass () failed for \"%s\" and variable \"%s\"", class_p -> sc_name_s, GetMeasuredVariableName (measured_variable_p));
+												}
+
+
+											if (observation_p)
+												{
+													if (AddObservationToRow (row_p, observation_p))
+														{
+															added_phenotype_flag = true;
+															status = OS_SUCCEEDED;
+														}
+													else
+														{
+															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+															bson_oid_to_string (row_p -> ro_id_p, id_s);
+
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+															FreeObservation (observation_p);
+														}
+
+												}		/* if (observation_p) */
 											else
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 													bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
-													FreeObservation (observation_p);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation failed for row \"%s\" and key \"%s\"", id_s, key_s);
+
+													free_measured_variable_flag = true;
 												}
 
-										}		/* if (observation_p) */
+										}		/* if (observation_id_p) */
 									else
 										{
-											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-											bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation failed for row \"%s\" and key \"%s\"", id_s, key_s);
-
-											free_measured_variable_flag = true;
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation id for row number " UINT32_FMT " and key \"%s\"", row_index, key_s);
 										}
-
-								}		/* if (observation_id_p) */
+								}		/* if (! ((IsJSONEmpty (raw_value_p)) && (IsJSONEmpty (corrected_value_p)))) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation id for row number " UINT32_FMT " and key \"%s\"", row_index, key_s);
+									/*
+									 * A new Observation but with no value e.g. empty row-column entry in the
+									 * spreadsheet.
+									 */
+									status = OS_SUCCEEDED;
 								}
 						}
 

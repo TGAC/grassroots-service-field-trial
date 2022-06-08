@@ -2087,26 +2087,17 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
 
 					while (node_p && b)
 						{
-							json_t *stats_json_p = GetStatisticsAsJSON (node_p -> psn_stats_p);
-
-							if (stats_json_p)
+							if (AddPhenotypeStatisticsNodeAsJSON (node_p, statistics_p))
 								{
-									if (json_object_set_new (statistics_p, node_p -> psn_measured_variable_name_s, stats_json_p) == 0)
-										{
-											node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
-										}
-									else
-										{
-											json_decref (stats_json_p);
-											b = false;
-										}
+									node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
 								}
 							else
 								{
 									b = false;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddPhenotypeStatisticsNodeAsJSON () failed for \"%s\"", node_p -> psn_measured_variable_name_s);
 								}
 
-						}
+						}		/* while (node_p && b) */
 
 					if (json_object_size (statistics_p) == study_p -> st_phenotype_statistics_p -> ll_size)
 						{
@@ -2116,8 +2107,7 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistcs for \"%s\"", ST_PHENOTYPE_STATISTICS_S);
-
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics for \"%s\"", ST_PHENOTYPE_STATISTICS_S);
 								}
 						}
 

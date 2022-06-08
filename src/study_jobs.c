@@ -2431,6 +2431,9 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 							StatisticsTool *stats_tool_p = spd_p -> spd_stats_tool_p;
 							Study *study_p = spd_p -> spd_study_p;
 							PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
+							const char *mv_s = GetMeasuredVariableName (phenotype_p);
+							PhenotypeStatisticsNode *node_p = NULL;
+							Statistics *stats_p = NULL;
 
 							ResetStatisticsTool (stats_tool_p);
 
@@ -2508,26 +2511,28 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 									plot_node_p = (PlotNode *) (plot_node_p -> pn_node.ln_next_p);
 								}		/* while (plot_node_p) */
 
+
+
 							/*
 							 * Do we have any stats?
 							 */
 							if (stats_tool_p -> st_current_index > 0)
 								{
-									const char *mv_s = GetMeasuredVariableName (phenotype_p);
-									PhenotypeStatisticsNode *node_p = NULL;
-
 									CalculateStatistics (stats_tool_p);
 
-									node_p = AllocatePhenotypeStatisticsNode (mv_s, & (stats_tool_p -> st_stats));
-
-									if (node_p)
-										{
-											LinkedListAddTail (study_p -> st_phenotype_statistics_p, & (node_p -> psn_node));
-
-											success_flag = true;
-										}
-
+									stats_p = & (stats_tool_p -> st_stats);
 								}
+
+							node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
+
+							if (node_p)
+								{
+									LinkedListAddTail (study_p -> st_phenotype_statistics_p, & (node_p -> psn_node));
+
+									success_flag = true;
+								}
+
+
 
 
 						}		/* if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0) */
