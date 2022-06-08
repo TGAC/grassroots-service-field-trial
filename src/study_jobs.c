@@ -2527,7 +2527,7 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 
 							if (node_p)
 								{
-									LinkedListAddTail (study_p -> st_phenotype_statistics_p, & (node_p -> psn_node));
+									LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
 
 									success_flag = true;
 								}

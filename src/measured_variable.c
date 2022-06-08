@@ -42,6 +42,8 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 static bool AppendSchemaTermQuery (bson_t *query_p, const char *parent_key_s, const char *child_key_s, const char *child_value_s);
 
 
+static bool AddCommonTermsToJSON (const MeasuredVariable *mv_p, json_t *phenotype_json_p);
+
 
 /*
 static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p)
@@ -133,79 +135,74 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 		{
 			if (AddDatatype (phenotype_json_p, DFTD_MEASURED_VARIABLE))
 				{
-					if (AppendSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, mv_p -> mv_variable_term_p))
+					bool success_flag = false;
+
+					switch (format)
 						{
-							bool success_flag = false;
-
-							if (format == VF_STORAGE)
+							case VF_STORAGE:
 								{
-									if (AppendSchemaTermToJSON (phenotype_json_p, MV_TRAIT_S, mv_p -> mv_trait_term_p))
+									if (AddCommonTermsToJSON (mv_p, phenotype_json_p))
 										{
-											if (AppendSchemaTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, mv_p -> mv_measurement_term_p))
+											if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
 												{
-													if (AppendSchemaTermToJSON (phenotype_json_p, MV_UNIT_S, mv_p -> mv_unit_term_p))
+													if (mv_p -> mv_scale_class_p)
 														{
-															if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
+															json_t *scale_json_p = GetScaleClassAsJSON (mv_p -> mv_scale_class_p);
+
+															if (scale_json_p)
 																{
-																	if (mv_p -> mv_scale_class_p)
+																	if (json_object_set_new (phenotype_json_p, MV_SCALE_S, scale_json_p) == 0)
 																		{
-																			json_t *scale_json_p = GetScaleClassAsJSON (mv_p -> mv_scale_class_p);
-
-																			if (scale_json_p)
-																				{
-																					if (json_object_set_new (phenotype_json_p, MV_SCALE_S, scale_json_p) == 0)
-																						{
-																							success_flag = true;
-																						}
-																					else
-																						{
-																							json_decref (scale_json_p);
-																						}
-																				}
+																			success_flag = true;
 																		}
-
-																}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddCompoundIdToJSON () failed for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
+																	else
+																		{
+																			json_decref (scale_json_p);
+																		}
 																}
-
-														}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_UNIT_S, mv_p -> mv_unit_term_p)) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_unit_term_p -> st_url_s);
 														}
 
-												}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, mv_p -> mv_measurement_term_p)) */
+												}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_measurement_term_p -> st_url_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddCompoundIdToJSON () failed for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
 												}
 
-										}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_TRAIT_S, mv_p -> mv_trait_term_p)) */
+										}		/* if (AddCommonTermsToJSON (mv_p, phenotype_json_p)) */
+
+								}		/* case VF_STORAGE: */
+								break;
+
+							case VF_CLIENT_FULL:
+								{
+									success_flag = AddCommonTermsToJSON (mv_p, phenotype_json_p);
+								}		/* case VF_CLIENT_FULL: */
+								break;
+
+							case VF_CLIENT_MINIMAL:
+								{
+									const char *variable_s = GetMeasuredVariableName (mv_p);
+
+									if (SetJSONString (phenotype_json_p, MV_VARIABLE_S, variable_s))
+										{
+											success_flag = true;
+										}
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_trait_term_p -> st_url_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, MV_VARIABLE_S, variable_s);
 										}
 
+								}		/* case VF_CLIENT_FULL: */
+								break;
 
-								}		/* if (format == VF_STORAGE) */
-							else
-								{
-									success_flag = true;
-								}
-
-							if (success_flag)
-								{
-									return phenotype_json_p;
-								}		/* if (success_flag) */
+						}		/* switch (format) */
 
 
-						}		/* if (AppendSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, mv_p -> mv_variable_term_p)) */
-					else
+					if (success_flag)
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
-						}
+							return phenotype_json_p;
+						}		/* if (success_flag) */
+
 
 				}		/* if (AddDatatype (phenotype_json_p, DFTD_MEASURED_VARIABLE)) */
 
@@ -661,5 +658,48 @@ static SchemaTerm *GetChildSchemTermFromJSON (const json_t *doc_p, const char * 
 		}
 
 	return NULL;
+}
+
+
+
+static bool AddCommonTermsToJSON (const MeasuredVariable *mv_p, json_t *phenotype_json_p)
+{
+	bool success_flag = false;
+
+	if (AppendSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, mv_p -> mv_variable_term_p))
+		{
+			if (AppendSchemaTermToJSON (phenotype_json_p, MV_TRAIT_S, mv_p -> mv_trait_term_p))
+				{
+					if (AppendSchemaTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, mv_p -> mv_measurement_term_p))
+						{
+							if (AppendSchemaTermToJSON (phenotype_json_p, MV_UNIT_S, mv_p -> mv_unit_term_p))
+								{
+									success_flag = true;
+
+								}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_UNIT_S, mv_p -> mv_unit_term_p)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_unit_term_p -> st_url_s);
+								}
+
+						}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_MEASUREMENT_S, mv_p -> mv_measurement_term_p)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_measurement_term_p -> st_url_s);
+						}
+
+				}		/* if (AddSchemTermToJSON (phenotype_json_p, MV_TRAIT_S, mv_p -> mv_trait_term_p)) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_trait_term_p -> st_url_s);
+				}
+
+		}		/* if (AppendSchemaTermToJSON (phenotype_json_p, MV_VARIABLE_S, mv_p -> mv_variable_term_p)) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to add SchemaTerm for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
+		}
+
+	return success_flag;
 }
 

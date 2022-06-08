@@ -564,7 +564,26 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 																	bson_oid_to_string (observation_p -> ob_id_p, id_s);
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
 																}
-														}
+
+														}		/* else if (format == VF_STORAGE) */
+													else if (format == VF_CLIENT_MINIMAL)
+														{
+															json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, VF_CLIENT_MINIMAL);
+
+															if (phenotype_json_p)
+																{
+																	if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
+																		{
+																			done_objects_flag = true;
+																		}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
+																	else
+																		{
+																			json_decref (phenotype_json_p);
+																		}
+																}
+
+														}		/* else if (format == VF_CLIENT_MINIMAL) */
+
 
 													if (done_objects_flag)
 														{

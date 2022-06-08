@@ -70,7 +70,7 @@ static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, con
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p);
+static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
@@ -282,7 +282,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 																																																																	study_p -> st_photo_url_s = copied_photo_url_s;
 																																																																	study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
 
-																																																																	study_p -> st_phenotype_statistics_p = stats_p;
+																																																																	study_p -> st_phenotypes_p = stats_p;
 
 																																																																	return study_p;
 																																																																}
@@ -695,9 +695,9 @@ void FreeStudy (Study *study_p)
 		}
 
 
-	if (study_p -> st_phenotype_statistics_p)
+	if (study_p -> st_phenotypes_p)
 		{
-			FreeLinkedList (study_p -> st_phenotype_statistics_p);
+			FreeLinkedList (study_p -> st_phenotypes_p);
 		}
 
 	FreeMemory (study_p);
@@ -1931,7 +1931,7 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																																																				{
 																																																					if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																																						{
-																																																							if (AddStatisticsToJSON (study_p, study_json_p))
+																																																							if (AddStatisticsToJSON (study_p, study_json_p, format, data_p))
 																																																								{
 																																																									success_flag = true;
 																																																								}
@@ -2071,23 +2071,23 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 }
 
 
-static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
+static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	/*
 	 * Are there any statistics?
 	 */
-	if ((study_p -> st_phenotype_statistics_p) && (study_p -> st_phenotype_statistics_p -> ll_size > 0))
+	if ((study_p -> st_phenotypes_p) && (study_p -> st_phenotypes_p -> ll_size > 0))
 		{
-			json_t *statistics_p = json_object ();
+			json_t *phenotypes_p = json_object ();
 
-			if (statistics_p)
+			if (phenotypes_p)
 				{
 					bool b = true;
-					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotype_statistics_p -> ll_head_p);
+					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
 
 					while (node_p && b)
 						{
-							if (AddPhenotypeStatisticsNodeAsJSON (node_p, statistics_p))
+							if (AddPhenotypeStatisticsNodeAsJSON (node_p, phenotypes_p, format, data_p))
 								{
 									node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
 								}
@@ -2099,9 +2099,9 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
 
 						}		/* while (node_p && b) */
 
-					if (json_object_size (statistics_p) == study_p -> st_phenotype_statistics_p -> ll_size)
+					if (json_object_size (phenotypes_p) == study_p -> st_phenotypes_p -> ll_size)
 						{
-							if (json_object_set_new (study_json_p, ST_PHENOTYPE_STATISTICS_S, statistics_p) == 0)
+							if (json_object_set_new (study_json_p, ST_PHENOTYPES_S, phenotypes_p) == 0)
 								{
 									return true;
 								}
@@ -2111,8 +2111,8 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
 								}
 						}
 
-					json_decref (statistics_p);
-				}		/* if (statistics_p) */
+					json_decref (phenotypes_p);
+				}		/* if (phenotypes_p) */
 
 		}		/* if ((study_p -> st_phenotype_statistics_p) && (study_p -> st_phenotype_statistics_p -> ll_size > 0)) */
 	else
@@ -2124,50 +2124,39 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p)
 }
 
 
-static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p)
+static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = true;
-	const json_t *statistics_p = json_object_get (study_json_p, ST_PHENOTYPE_STATISTICS_S);
+	const json_t *phenotypes_p = json_object_get (study_json_p, ST_PHENOTYPES_S);
 
-	if (statistics_p)
+	if (phenotypes_p)
 		{
-			const size_t size = json_object_size (statistics_p);
+			const size_t size = json_object_size (phenotypes_p);
 			const char *key_s;
-			json_t *value_p;
+			json_t *phenotype_json_p;
+			size_t num_added = 0;
 
-			json_object_foreach (statistics_p, key_s, value_p)
+			json_object_foreach (phenotypes_p, key_s, phenotype_json_p)
 				{
-					Statistics *stats_p = GetStatisticsFromJSON (value_p);
-
-					if (stats_p)
+					if (AddPhenotypeStatisticsNodeFromJSON (study_p -> st_phenotypes_p, phenotype_json_p, service_data_p))
 						{
-							PhenotypeStatisticsNode *node_p = AllocatePhenotypeStatisticsNode (key_s, stats_p);
-
-							if (node_p)
-								{
-									LinkedListAddTail (study_p -> st_phenotype_statistics_p, & (node_p -> psn_node));
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "AllocatePhenotypeStatisticsNode () failed for \"%s\"", key_s);
-								}
-
-							FreeStatistics (stats_p);
+							++ num_added;
 						}
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "GetStatisticsFromJSON () failed for \"%s\"", key_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddPhenotypeStatisticsNodeFromJSON () failed for \"%s\"", key_s);
 						}
+
 
 				}		/* json_object_foreach (statistics_p, key_s, value_p) */
 
-			if (study_p -> st_phenotype_statistics_p -> ll_size != size)
+			if (num_added != size)
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, statistics_p, "Failed to get all statistics from json");
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_p, "Failed to get all statistics from json");
 					success_flag = false;
 				}
 
-		}		/* if (statistics_p) */
+		}		/* if (phenotypes_p) */
 
 	return success_flag;
 }

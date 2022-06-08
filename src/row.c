@@ -326,7 +326,9 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 
 													if (success_flag)
 														{
-															if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, format))
+															const ViewFormat obs_format = (format == VF_STORAGE) ? VF_STORAGE : VF_CLIENT_MINIMAL;
+
+															if (AddObservationsToJSON (row_json_p, row_p -> ro_observations_p, obs_format))
 																{
 																	if (AddTreatmentFactorsToJSON (row_json_p, row_p -> ro_treatment_factor_values_p,  row_p -> ro_study_p, format))
 																		{

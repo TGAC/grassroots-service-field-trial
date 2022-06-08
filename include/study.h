@@ -137,7 +137,11 @@ STUDY_PREFIX const char *ST_PLOT_COLS_PER_BLOCK_S STUDY_VAL ("plot_block_columns
 STUDY_PREFIX const char *ST_TREATMENTS_S STUDY_VAL ("treatment_factors");
 
 
-STUDY_PREFIX const char *ST_PHENOTYPE_STATISTICS_S STUDY_VAL ("phenotype_statistics");
+STUDY_PREFIX const char *ST_PHENOTYPES_S STUDY_VAL ("phenotypes");
+
+STUDY_PREFIX const char *ST_PHENOTYPE_STATISTICS_S STUDY_VAL ("statistics");
+
+STUDY_PREFIX const char *ST_PHENOTYPE_DEFINITION_S STUDY_VAL ("definition");
 
 
 STUDY_PREFIX const char *ST_HARVEST_YEAR_S STUDY_VAL ("harvest_year");
@@ -263,7 +267,7 @@ typedef struct Study
 
 	char *st_image_collection_notes_s;
 
-	LinkedList *st_phenotype_statistics_p;
+	LinkedList *st_phenotypes_p;
 
 } Study;
 
