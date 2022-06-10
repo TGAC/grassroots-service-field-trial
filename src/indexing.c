@@ -110,6 +110,8 @@ static NamedParameterType S_UPDATE_SCALE_TERMS = { "SS Update Scale Classes", PT
 
 static NamedParameterType S_ROTHAMSTED_TERMS = { "SS Roth Upload", PT_JSON_TABLE };
 
+static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SS Generate Handbook", PT_LARGE_STRING };
+
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
 
@@ -1055,6 +1057,9 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 					RunCaching (param_set_p, job_p, data_p);
 
 
+					/*
+					 * Generate Frictionless Data packages
+					 */
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &id_s))
 						{
 							OperationStatus fd_status = OS_FAILED_TO_START;
@@ -1201,6 +1206,102 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 								}
 						}
 
+
+
+					/*
+					 * Generate Study Statistics
+					 */
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &id_s))
+						{
+							OperationStatus stats_status = OS_FAILED_TO_START;
+
+							if (strcmp (id_s, "*") == 0)
+								{
+									stats_status = GenerateStatisticsForAllStudies (job_p, data_p);
+								}
+							else
+								{
+									/* reindex the given studies by their ids */
+									LinkedList *ids_p = ParseStringToStringLinkedList (id_s, " ", true);
+									uint32 num_done = 0;
+
+									if (ids_p)
+										{
+											StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
+
+											while (node_p)
+												{
+													const char *study_id_s = node_p -> sln_string_s;
+													Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL, data_p);
+
+													if (study_p)
+														{
+															if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+																{
+																	++ num_done;
+																}
+															else
+																{
+																	char *error_s = ConcatenateVarargsStrings ("Could not generate statistics for study with id \"", study_id_s, "\"", NULL);
+
+																	if (error_s)
+																		{
+																			AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, error_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
+																			FreeCopiedString (error_s);
+																		}
+																	else
+																		{
+																			const char * const default_error_s = "Could not generate statistics for study by id";
+
+																			AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, default_error_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
+																		}
+
+																}
+
+															FreeStudy (study_p);
+														}
+													else
+														{
+															char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", study_id_s, "\"", NULL);
+
+															if (error_s)
+																{
+																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, error_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
+																	FreeCopiedString (error_s);
+																}
+															else
+																{
+																	const char * const default_error_s = "Could not find study by id";
+
+																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, default_error_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
+																}
+
+
+														}
+
+													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+												}
+
+											if (num_done == ids_p -> ll_size)
+												{
+													stats_status = OS_SUCCEEDED;
+												}
+											else if (num_done > 0)
+												{
+													stats_status = OS_PARTIALLY_SUCCEEDED;
+												}
+
+											FreeLinkedList (ids_p);
+										}
+
+								}
+
+							MergeServiceJobStatus (job_p, stats_status);
+						}
 				}
 
 		}
@@ -1335,6 +1436,7 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 			S_GENERATE_HANDBOOK,
 			S_UPDATE_SCALE_TERMS,
 			S_ROTHAMSTED_TERMS,
+			S_GENERATE_STUDY_STATISTICS,
 			NULL
 		};
 
@@ -1377,7 +1479,7 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																						{
 																							ParameterGroup *manager_group_p = CreateAndAddParameterGroupToParameterSet ("Studies", false, data_p, params_p);
 
-																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACKAGES.npt_type, S_GENERATE_FD_PACKAGES.npt_name_s, "Generate Frictionless Data Packages", "Generate FD pacakges for given Study Ids. Use * to generate them all", NULL, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_FD_PACKAGES.npt_type, S_GENERATE_FD_PACKAGES.npt_name_s, "Generate Frictionless Data Packages", "Generate FD pacakges for given Study Ids. Use * to generate them all.", NULL, PL_ALL)) != NULL)
 																								{
 																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, manager_group_p, S_REMOVE_STUDY_PLOTS.npt_type, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots for the given Study Id", NULL, PL_ALL)) != NULL)
 																										{
@@ -1389,7 +1491,10 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 																																{
 																																	AddParameterKeyStringValuePair (param_p, PA_TABLE_ADD_COLUMNS_FLAG_S, "true");
 
-																																	return params_p;
+																																	if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_STUDY_STATISTICS.npt_type, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Generate Statistics", "Generate the Phenotype statistics for the given Study Ids. Use * to generate them all.", NULL, PL_ALL)) != NULL)
+																																		{
+																																			return params_p;
+																																		}
 																																}
 																														}
 																												}

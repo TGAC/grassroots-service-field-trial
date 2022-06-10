@@ -1771,6 +1771,53 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 
 
+OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+
+	return status;
+}
+
+
+OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+
+	/* Does the study already have its plots? */
+	if (study_p -> st_plots_p -> ll_size == 0)
+		{
+			if (!GetStudyPlots (study_p, data_p))
+				{
+					status = OS_FAILED;
+				}
+
+		}		/*( if (study_p -> st_plots_p -> ll_size == 0) */
+
+	if (status == OS_IDLE)
+		{
+			/* Does the study have any plots? */
+			if (study_p -> st_plots_p -> ll_size == 0)
+				{
+					status = CalculateStudyStatistics (study_p, data_p);
+
+					if (status == OS_SUCCEEDED)
+						{
+							OperationStatus old_status = job_p -> sj_status;
+
+							status = SaveStudy (study_p, job_p, data_p);
+
+							MergeServiceJobStatus (job_p, old_status);
+						}
+				}
+			else
+				{
+					/* no plots so nothing to do */
+					status = OS_SUCCEEDED;
+				}
+		}
+
+	return status;
+}
 
 
 bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p)
@@ -2419,6 +2466,11 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 	if (phenotype_p)
 		{
 			const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
+			const char *mv_s = GetMeasuredVariableName (phenotype_p);
+			Statistics *stats_p = NULL;
+			PhenotypeStatisticsNode *node_p = NULL;
+			StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
+			Study *study_p = spd_p -> spd_study_p;
 
 			if (class_p)
 				{
@@ -2427,12 +2479,8 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 					 */
 					if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL.sc_name_s) == 0)
 						{
-							StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
 							StatisticsTool *stats_tool_p = spd_p -> spd_stats_tool_p;
-							Study *study_p = spd_p -> spd_study_p;
 							PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
-							const char *mv_s = GetMeasuredVariableName (phenotype_p);
-							PhenotypeStatisticsNode *node_p = NULL;
 							Statistics *stats_p = NULL;
 
 							ResetStatisticsTool (stats_tool_p);
@@ -2512,7 +2560,6 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 								}		/* while (plot_node_p) */
 
 
-
 							/*
 							 * Do we have any stats?
 							 */
@@ -2523,25 +2570,20 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 									stats_p = & (stats_tool_p -> st_stats);
 								}
 
-							node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
-
-							if (node_p)
-								{
-									LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
-
-									success_flag = true;
-								}
-
-
-
-
 						}		/* if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0) */
-					else
-						{
-							success_flag = true;
-						}
 
 				}		/* if (class_p) */
+
+
+			node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
+
+			if (node_p)
+				{
+					LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
+
+					success_flag = true;
+				}
+
 
 			FreeMeasuredVariable (phenotype_p);
 		}		/* if (phenotype_p) */
