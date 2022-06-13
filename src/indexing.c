@@ -110,7 +110,7 @@ static NamedParameterType S_UPDATE_SCALE_TERMS = { "SS Update Scale Classes", PT
 
 static NamedParameterType S_ROTHAMSTED_TERMS = { "SS Roth Upload", PT_JSON_TABLE };
 
-static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SS Generate Handbook", PT_LARGE_STRING };
+static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SS Generate Phenotypes", PT_LARGE_STRING };
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);

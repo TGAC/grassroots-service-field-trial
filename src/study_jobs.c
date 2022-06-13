@@ -1774,6 +1774,74 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
+	json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+
+	if (all_studies_p)
+		{
+			size_t i;
+			json_t *study_json_p;
+			const size_t num_studies = json_array_size (all_studies_p);
+			size_t num_successes = 0;
+
+			json_array_foreach (all_studies_p, i, study_json_p)
+				{
+					Study *study_p = GetStudyFromJSON (study_json_p, VF_STORAGE, data_p);
+
+					if (study_p)
+						{
+							OperationStatus stats_status = GenerateStatisticsForStudy (study_p, job_p, data_p);
+
+							FILE *stats_f = fopen ("/home/billy/Applications/grassroots/working_directory/field_trials/stats", "a");
+							if (stats_f)
+								{
+									char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+									int64 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+									fprintf (stats_f, "\"%s\" %s %ld\n", study_p -> st_name_s, id_s ? id_s : "_", num_plots);
+
+									if (id_s)
+										{
+											FreeBSONOidString (id_s);
+										}
+
+									fclose (stats_f);
+								}
+
+
+							if (stats_status == OS_SUCCEEDED)
+								{
+									++ num_successes;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+								}
+
+							FreeStudy (study_p);
+						}		/* if (study_p) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
+						}
+
+				}		/* json_array_foreach (all_studies_p, i, study_json_p) */
+
+
+			if (num_successes == num_studies)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_successes > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+
+			json_decref (all_studies_p);
+		}
+
+
+
+	MergeServiceJobStatus (job_p, status);
 
 	return status;
 }

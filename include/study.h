@@ -335,6 +335,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *st
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *plot_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
+
+
+
 #ifdef __cplusplus
 }
 #endif

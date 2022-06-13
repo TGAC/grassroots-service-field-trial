@@ -56,7 +56,6 @@ static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p);
 
 static bool AddValidCropToJSON (Crop *crop_p, json_t *study_json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
-static int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
 static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
 
@@ -1677,7 +1676,7 @@ static bool AddPlotsToJSON (Study *study_p, json_t *study_json_p, const ViewForm
 
 
 
-static int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p)
+int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p)
 {
 	int64 res = -1;
 
