@@ -579,48 +579,91 @@ static ValueStatus CheckTime (json_t *observation_json_p, const char * const key
 
 	if (time_s)
 		{
+			bool time_set_flag = false;
 			struct tm time_val;
 
 			if (SetTimeFromString (&time_val, time_s))
 				{
-					const char *type_s = GetJSONString (observation_json_p, OB_TYPE_S);
-					const char *type_time_s = LocalGetObservationTypeAsString (OT_TIME);
-
-					if (type_time_s)
-						{
-
-							if ((!type_s) || (strcmp (OB_TYPE_S, type_time_s) != 0))
-								{
-									if (SetJSONString (observation_json_p, OB_TYPE_S, type_time_s))
-										{
-											ret = VS_NEEDS_UPDATE;
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_time_s);
-										}
-								}
-							else
-								{
-									ret = VS_OK;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
-								}
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "type_time_s is null");
-						}
-
+					time_set_flag = true;
 				}
 			else if (SetTimeFromDDMMYYYYString (&time_val, time_s))
 				{
-					ret = VS_NEEDS_UPDATE;
+					time_set_flag = true;
 				}
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Stored value for \"%s\", \"%s\" is not a time", key_s, time_s);
 				}
-		}
+
+
+			if (time_set_flag)
+				{
+					bool include_time_flag = false;
+					char *parsed_time_s = GetTimeAsString (&time_val, include_time_flag);
+
+					if (parsed_time_s)
+						{
+							bool times_match_flag = (strcmp (time_s, parsed_time_s) == 0);
+							bool type_exists_flag = false;
+							bool changed_flag = false;
+
+							if (!times_match_flag)
+								{
+									if (SetJSONString (observation_json_p, key_s, parsed_time_s))
+										{
+											changed_flag = true;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", key_s, parsed_time_s);
+											time_set_flag = false;
+										}
+								}
+
+							if (time_set_flag)
+								{
+									const char *type_s = GetJSONString (observation_json_p, OB_TYPE_S);
+									const char *type_time_s = LocalGetObservationTypeAsString (OT_TIME);
+
+									if (type_time_s)
+										{
+											if ((!type_s) || (strcmp (OB_TYPE_S, type_time_s) != 0))
+												{
+													if (SetJSONString (observation_json_p, OB_TYPE_S, type_time_s))
+														{
+															changed_flag = true;
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_time_s);
+														}
+												}
+											else
+												{
+													ret = VS_OK;
+												}
+
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "type_time_s is null");
+										}
+
+
+									if (changed_flag)
+										{
+											ret = VS_NEEDS_UPDATE;
+										}
+
+								}
+
+
+							FreeCopiedString (parsed_time_s);
+						}
+
+				}		/* if (time_set_flag) */
+
+		}		/* if (time_s) */
 	else
 		{
 			/* no existing value set */
