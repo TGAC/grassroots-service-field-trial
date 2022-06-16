@@ -1864,7 +1864,7 @@ OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  
 	if (status == OS_IDLE)
 		{
 			/* Does the study have any plots? */
-			if (study_p -> st_plots_p -> ll_size == 0)
+			if (study_p -> st_plots_p -> ll_size > 0)
 				{
 					status = CalculateStudyStatistics (study_p, data_p);
 
@@ -2549,7 +2549,6 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 						{
 							StatisticsTool *stats_tool_p = spd_p -> spd_stats_tool_p;
 							PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
-							Statistics *stats_p = NULL;
 
 							ResetStatisticsTool (stats_tool_p);
 
