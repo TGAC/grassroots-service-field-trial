@@ -1771,6 +1771,121 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 
 
 
+OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+
+	if (all_studies_p)
+		{
+			size_t i;
+			json_t *study_json_p;
+			const size_t num_studies = json_array_size (all_studies_p);
+			size_t num_successes = 0;
+
+			json_array_foreach (all_studies_p, i, study_json_p)
+				{
+					Study *study_p = GetStudyFromJSON (study_json_p, VF_STORAGE, data_p);
+
+					if (study_p)
+						{
+							OperationStatus stats_status = GenerateStatisticsForStudy (study_p, job_p, data_p);
+
+							FILE *stats_f = fopen ("/home/billy/Applications/grassroots/working_directory/field_trials/stats", "a");
+							if (stats_f)
+								{
+									char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+									int64 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+									fprintf (stats_f, "\"%s\" %s %ld\n", study_p -> st_name_s, id_s ? id_s : "_", num_plots);
+
+									if (id_s)
+										{
+											FreeBSONOidString (id_s);
+										}
+
+									fclose (stats_f);
+								}
+
+
+							if (stats_status == OS_SUCCEEDED)
+								{
+									++ num_successes;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+								}
+
+							FreeStudy (study_p);
+						}		/* if (study_p) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
+						}
+
+				}		/* json_array_foreach (all_studies_p, i, study_json_p) */
+
+
+			if (num_successes == num_studies)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_successes > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+
+			json_decref (all_studies_p);
+		}
+
+
+
+	MergeServiceJobStatus (job_p, status);
+
+	return status;
+}
+
+
+OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+
+	/* Does the study already have its plots? */
+	if (study_p -> st_plots_p -> ll_size == 0)
+		{
+			if (!GetStudyPlots (study_p, data_p))
+				{
+					status = OS_FAILED;
+				}
+
+		}		/*( if (study_p -> st_plots_p -> ll_size == 0) */
+
+	if (status == OS_IDLE)
+		{
+			/* Does the study have any plots? */
+			if (study_p -> st_plots_p -> ll_size == 0)
+				{
+					status = CalculateStudyStatistics (study_p, data_p);
+
+					if (status == OS_SUCCEEDED)
+						{
+							OperationStatus old_status = job_p -> sj_status;
+
+							status = SaveStudy (study_p, job_p, data_p);
+
+							MergeServiceJobStatus (job_p, old_status);
+						}
+				}
+			else
+				{
+					/* no plots so nothing to do */
+					status = OS_SUCCEEDED;
+				}
+		}
+
+	return status;
+}
 
 
 bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p)
@@ -2419,6 +2534,11 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 	if (phenotype_p)
 		{
 			const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
+			const char *mv_s = GetMeasuredVariableName (phenotype_p);
+			Statistics *stats_p = NULL;
+			PhenotypeStatisticsNode *node_p = NULL;
+			StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
+			Study *study_p = spd_p -> spd_study_p;
 
 			if (class_p)
 				{
@@ -2427,12 +2547,8 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 					 */
 					if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL.sc_name_s) == 0)
 						{
-							StudyProcessData *spd_p = (StudyProcessData *) user_data_p;
 							StatisticsTool *stats_tool_p = spd_p -> spd_stats_tool_p;
-							Study *study_p = spd_p -> spd_study_p;
 							PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
-							const char *mv_s = GetMeasuredVariableName (phenotype_p);
-							PhenotypeStatisticsNode *node_p = NULL;
 							Statistics *stats_p = NULL;
 
 							ResetStatisticsTool (stats_tool_p);
@@ -2512,7 +2628,6 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 								}		/* while (plot_node_p) */
 
 
-
 							/*
 							 * Do we have any stats?
 							 */
@@ -2523,25 +2638,20 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 									stats_p = & (stats_tool_p -> st_stats);
 								}
 
-							node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
-
-							if (node_p)
-								{
-									LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
-
-									success_flag = true;
-								}
-
-
-
-
 						}		/* if (strcmp (class_p -> sc_name_s, SCALE_NUMERICAL -> sc_name_s) == 0) */
-					else
-						{
-							success_flag = true;
-						}
 
 				}		/* if (class_p) */
+
+
+			node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
+
+			if (node_p)
+				{
+					LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
+
+					success_flag = true;
+				}
+
 
 			FreeMeasuredVariable (phenotype_p);
 		}		/* if (phenotype_p) */

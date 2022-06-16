@@ -14,6 +14,7 @@
 
 #include "study.h"
 
+static const char * const S_MV_ID_S = "measured_variable_id";
 
 
 PhenotypeStatisticsNode *AllocatePhenotypeStatisticsNode (const char *measured_variable_name_s, const Statistics *src_p)
@@ -101,7 +102,27 @@ bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, jso
 
 			if (phenotype_p)
 				{
-					json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, format);
+					json_t *mv_json_p = NULL;
+
+					if (format == VF_STORAGE)
+						{
+							mv_json_p = json_object ();
+
+							if (mv_json_p)
+								{
+									if (!AddNamedCompoundIdToJSON (mv_json_p, mv_p -> mv_id_p, S_MV_ID_S))
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "Failed tp add id  \"%s\":  for \"%s\"", S_MV_ID_S, GetMeasuredVariableAName (mv_p));
+											json_decref (mv_json_p);
+											mv_json_p = NULL;
+										}
+								}
+
+						}
+					else
+						{
+							mv_json_p = GetMeasuredVariableAsJSON (mv_p, format);
+						}
 
 					if (mv_json_p)
 						{
@@ -188,7 +209,32 @@ bool AddPhenotypeStatisticsNodeFromJSON (LinkedList *nodes_p, const json_t *phen
 
 	if (mv_json_p)
 		{
-			MeasuredVariable *mv_p = GetMeasuredVariableFromJSON (mv_json_p, service_data_p);
+			MeasuredVariable *mv_p = NULL;
+			bson_oid_t *mv_id_p = GetNewUnitialisedBSONOid ();
+
+			if (mv_id_p)
+				{
+					if (GetNamedIdFromJSON (mv_json_p, S_MV_ID_S, mv_id_p))
+						{
+							mv_p = GetMeasuredVariableById (mv_id_p, service_data_p);
+
+							if (!mv_p)
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "GetMeasuredVariableById () failed");
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "GetNamedIdFromJSON () for \"%s\" failed", S_MV_ID_S);
+						}
+
+					FreeBSONOid (mv_id_p);
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "GetNewUnitialisedBSONOid () failed");
+				}
+
 
 			if (mv_p)
 				{

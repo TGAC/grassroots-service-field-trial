@@ -21,16 +21,21 @@
 #define ALLOCATE_OBSERVATION_TAGS (1)
 #include "observation.h"
 
+
 typedef enum
 {
 	VS_FAIL,
-	VS_OK,
+	VS_REMOVE,
 	VS_NEEDS_UPDATE,
-	VS_REMOVE
+	VS_OK,
 } ValueStatus;
 
-static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
 
+/*
+ * static declarations
+ */
+
+static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p);
 
 static ValueStatus SetInteger (json_t *observation_json_p, const char * const key_s);
 
@@ -47,6 +52,8 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
 static bool IsEmptyEntry (const char *value_s);
 
 static const char *LocalGetObservationTypeAsString (const ObservationType obs_type);
+
+static ValueStatus UpdateType (json_t * const observation_json_p, const ObservationType obs_type);
 
 
 
@@ -479,25 +486,7 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 						{
 							if (SetJSONInteger (observation_json_p, key_s, i))
 								{
-									const char *type_s = LocalGetObservationTypeAsString (OT_INTEGER);
-
-									if (type_s)
-										{
-											if (SetJSONString (observation_json_p, OB_TYPE_S, type_s))
-												{
-													ret = VS_NEEDS_UPDATE;
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
-												}
-
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "LocalGetObservationTypeAsString (OT_INTEGER) returned NULL");
-										}
-
+									ret = VS_NEEDS_UPDATE;
 								}
 							else
 								{
@@ -516,6 +505,18 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 			ret = VS_OK;
 		}
 
+
+	if (ret != VS_FAIL)
+		{
+			ValueStatus type_status = UpdateType (observation_json_p, OT_INTEGER);
+
+			if (type_status != VS_OK)
+				{
+					ret = type_status;
+				}
+		}
+
+
 	return ret;
 }
 
@@ -528,34 +529,9 @@ static ValueStatus CheckString (json_t *observation_json_p, const char * const k
 
 	if (value_p)
 		{
-			if (json_is_string (value_p))
+			if ((json_is_string (value_p)) || (json_is_null (value_p)))
 				{
-					const char *type_s = GetJSONString (observation_json_p, OB_TYPE_S);
-					const char *type_string_s = LocalGetObservationTypeAsString (OT_STRING);
-
-					if (type_string_s)
-						{
-							if ((!type_s) || (strcmp (OB_TYPE_S, type_string_s) != 0))
-								{
-									if (SetJSONString (observation_json_p, OB_TYPE_S, type_string_s))
-										{
-											ret = VS_NEEDS_UPDATE;
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_string_s);
-										}
-								}
-							else
-								{
-									ret = VS_OK;
-								}
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "type_string_s is null");
-						}
-
+					ret = VS_OK;
 				}
 			else
 				{
@@ -566,6 +542,17 @@ static ValueStatus CheckString (json_t *observation_json_p, const char * const k
 		{
 			/* no existing value set */
 			ret = VS_OK;
+		}
+
+
+	if (ret != VS_FAIL)
+		{
+			ValueStatus type_status = UpdateType (observation_json_p, OT_STRING);
+
+			if (type_status != VS_OK)
+				{
+					ret = type_status;
+				}
 		}
 
 	return ret;
@@ -579,53 +566,83 @@ static ValueStatus CheckTime (json_t *observation_json_p, const char * const key
 
 	if (time_s)
 		{
+			bool time_set_flag = false;
 			struct tm time_val;
 
 			if (SetTimeFromString (&time_val, time_s))
 				{
-					const char *type_s = GetJSONString (observation_json_p, OB_TYPE_S);
-					const char *type_time_s = LocalGetObservationTypeAsString (OT_TIME);
-
-					if (type_time_s)
-						{
-
-							if ((!type_s) || (strcmp (OB_TYPE_S, type_time_s) != 0))
-								{
-									if (SetJSONString (observation_json_p, OB_TYPE_S, type_time_s))
-										{
-											ret = VS_NEEDS_UPDATE;
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_time_s);
-										}
-								}
-							else
-								{
-									ret = VS_OK;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
-								}
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "type_time_s is null");
-						}
-
+					time_set_flag = true;
 				}
 			else if (SetTimeFromDDMMYYYYString (&time_val, time_s))
 				{
-					ret = VS_NEEDS_UPDATE;
+					time_set_flag = true;
 				}
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Stored value for \"%s\", \"%s\" is not a time", key_s, time_s);
 				}
-		}
+
+
+			if (time_set_flag)
+				{
+					bool include_time_flag = false;
+					char *parsed_time_s = NULL;
+
+					if ((time_val.tm_hour != 0) || (time_val.tm_min != 0) || (time_val.tm_sec != 0))
+						{
+							include_time_flag = true;
+						}
+
+					parsed_time_s = GetTimeAsString (&time_val, include_time_flag);
+
+
+					if (parsed_time_s)
+						{
+							bool times_match_flag = (strcmp (time_s, parsed_time_s) == 0);
+
+							if (times_match_flag)
+								{
+									ret = VS_OK;
+								}
+							else
+								{
+									if (SetJSONString (observation_json_p, key_s, parsed_time_s))
+										{
+											ret = VS_NEEDS_UPDATE;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", key_s, parsed_time_s);
+										}
+								}
+
+							FreeCopiedString (parsed_time_s);
+						}		/* if (parsed_time_s) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "GetTimeAsString () failed for \"%s\"", key_s);
+						}
+
+				}		/* if (time_set_flag) */
+
+		}		/* if (time_s) */
 	else
 		{
 			/* no existing value set */
 			ret = VS_OK;
 		}
+
+
+	if (ret != VS_FAIL)
+		{
+			ValueStatus type_status = UpdateType (observation_json_p, OT_TIME);
+
+			if (type_status != VS_OK)
+				{
+					ret = type_status;
+				}
+		}
+
 
 	return ret;
 }
@@ -652,24 +669,7 @@ static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s
 						{
 							if (SetJSONReal (observation_json_p, key_s, d))
 								{
-									const char *type_s = LocalGetObservationTypeAsString (OT_NUMERIC);
-
-									if (type_s)
-										{
-											if (SetJSONString (observation_json_p, OB_TYPE_S, type_s))
-												{
-													ret = VS_NEEDS_UPDATE;
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
-												}
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "LocalGetObservationTypeAsString (OT_NUMERIC) returned NULL");
-										}
-
+									ret = VS_NEEDS_UPDATE;
 								}
 							else
 								{
@@ -686,6 +686,54 @@ static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s
 		{
 			/* no existing value set */
 			ret = VS_OK;
+		}
+
+	if (ret != VS_FAIL)
+		{
+			ValueStatus type_status = UpdateType (observation_json_p, OT_NUMERIC);
+
+			if (type_status != VS_OK)
+				{
+					ret = type_status;
+				}
+		}
+
+	return ret;
+}
+
+
+/**
+ *
+ * @return VS_FAIL for failure, VS_OK for no change and VS_NEEDS_UPDATE if the json has been updated
+ */
+static ValueStatus UpdateType (json_t * const observation_json_p, const ObservationType obs_type)
+{
+	int ret = VS_FAIL;
+	const char *type_s = LocalGetObservationTypeAsString (obs_type);
+
+	if (type_s)
+		{
+			const char *existing_type_s = GetJSONString (observation_json_p, OB_TYPE_S);
+
+			if ((!existing_type_s) || (strcmp (type_s, existing_type_s) != 0))
+				{
+					if (SetJSONString (observation_json_p, OB_TYPE_S, type_s))
+						{
+							ret = VS_NEEDS_UPDATE;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", OB_TYPE_S, type_s);
+						}
+				}
+			else
+				{
+					ret = VS_OK;
+				}
+		}
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "LocalGetObservationTypeAsString (%d) returned NULL", obs_type);
 		}
 
 	return ret;

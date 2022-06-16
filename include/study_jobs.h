@@ -208,6 +208,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctPhenotypesAsFrictionlessDa
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServiceData *service_data_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif
