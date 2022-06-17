@@ -1874,7 +1874,17 @@ OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  
 
 							status = SaveStudy (study_p, job_p, data_p);
 
+							if (status != OS_SUCCEEDED)
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveStudy () for \"%s\" had status %d", study_p -> st_name_s, status);
+								}
+
+
 							MergeServiceJobStatus (job_p, old_status);
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CalculateStudyStatistics () failed for \"%s\"", study_p -> st_name_s);
 						}
 				}
 			else
