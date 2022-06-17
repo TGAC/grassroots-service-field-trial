@@ -1077,21 +1077,14 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 											{
 												json_int_t num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
 
-												if (num_plots >= 0)
+												if (SetJSONInteger (study_json_p, ST_NUMBER_OF_PLOTS_S, num_plots))
 													{
-														if (SetJSONInteger (study_json_p, ST_NUMBER_OF_PLOTS_S, num_plots))
+														const bool has_shape_data_flag = (study_p -> st_shape_p) ? true : false;
+
+														if (SetJSONBoolean (study_json_p, ST_HAS_SHAPE_S, has_shape_data_flag))
 															{
-																const bool has_shape_data_flag = (study_p -> st_shape_p) ? true : false;
-
-																if (SetJSONBoolean (study_json_p, ST_HAS_SHAPE_S, has_shape_data_flag))
-																	{
-																		success_flag = true;
-																	}
+																success_flag = true;
 															}
-													}
-												else
-													{
-
 													}
 
 											}
@@ -1099,23 +1092,29 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 
 										case VF_STORAGE:
 											{
-												if (study_p -> st_shape_p)
+												json_int_t num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+												if (SetJSONInteger (study_json_p, ST_NUMBER_OF_PLOTS_S, num_plots))
 													{
-														if (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0)
+
+														if (study_p -> st_shape_p)
 															{
-																success_flag = true;
-															}		/*  if (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0) */
+																if (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0)
+																	{
+																		success_flag = true;
+																	}		/*  if (json_object_set (study_json_p, ST_SHAPE_S, study_p -> st_shape_p) == 0) */
+																else
+																	{
+																		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p -> st_shape_p, "Failed to add shape sata to study json for \"%s\"",
+																											 study_p -> st_name_s ? study_p -> st_name_s : "unknown study");
+																	}
+
+															}
 														else
 															{
-																PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_p -> st_shape_p, "Failed to add shape sata to study json for \"%s\"",
-																									 study_p -> st_name_s ? study_p -> st_name_s : "unknown study");
-															}
-
+																success_flag = true;
+															}		/* if ((!study_p -> st_shape_p) */
 													}
-												else
-													{
-														success_flag = true;
-													}		/* if ((!study_p -> st_shape_p) */
 											}
 
 									}
