@@ -392,6 +392,13 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_S DFW_FIELD_TRIAL_VAL ("Treatme
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_SELECTED_S DFW_FIELD_TRIAL_VAL ("selected");
 
+
+
+DFW_FIELD_TRIAL_PREFIX const char DFT_DEFAULT_COLUMN_DELIMITER DFW_FIELD_TRIAL_VAL (',');
+
+
+
+
 /** The prefix to use for Field Trial Service aliases. */
 #define DFT_GROUP_ALIAS_PREFIX_S "field_trial"
 

@@ -74,6 +74,9 @@
 #include "study.h"
 #include "jansson.h"
 
+#include "material.h"
+#include "plot.h"
+#include "measured_variable.h"
 
 /*
  * Static declarations
@@ -111,6 +114,9 @@ static NamedParameterType S_UPDATE_SCALE_TERMS = { "SS Update Scale Classes", PT
 static NamedParameterType S_ROTHAMSTED_TERMS = { "SS Roth Upload", PT_JSON_TABLE };
 
 static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SS Generate Phenotypes", PT_LARGE_STRING };
+
+
+static NamedParameterType S_ADD_MONGODB_INDEXES = { "SS Add MongoDB Indexes", PT_BOOLEAN };
 
 
 static const char *GetFieldTrialIndexingServiceName (const Service *service_p);
@@ -154,6 +160,9 @@ static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, Fi
 
 
 static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServiceData *data_p);
+
+static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p);
+
 
 /*
  * API definitions
@@ -1302,6 +1311,18 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 							MergeServiceJobStatus (job_p, stats_status);
 						}
+
+
+					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_ADD_MONGODB_INDEXES.npt_name_s, &run_flag_p))
+						{
+							if ((run_flag_p != NULL) && (*run_flag_p == true))
+								{
+									OperationStatus s = CreateMongoIndexes (data_p);
+
+									MergeServiceJobStatus (job_p, s);
+								}
+						}
+
 				}
 
 		}
@@ -1437,6 +1458,7 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 			S_UPDATE_SCALE_TERMS,
 			S_ROTHAMSTED_TERMS,
 			S_GENERATE_STUDY_STATISTICS,
+			S_ADD_MONGODB_INDEXES,
 			NULL
 		};
 
@@ -1493,7 +1515,10 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 
 																																	if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, manager_group_p, S_GENERATE_STUDY_STATISTICS.npt_type, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Generate Statistics", "Generate the Phenotype statistics for the given Study Ids. Use * to generate them all.", NULL, PL_ALL)) != NULL)
 																																		{
-																																			return params_p;
+																																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, manager_group_p, S_ADD_MONGODB_INDEXES.npt_name_s, "Add MongoDB Indexes", "Add MongoDB Indexes for faster data handling", &b, PL_ALL)) != NULL)
+																																				{
+																																					return params_p;
+																																				}
 																																		}
 																																}
 																														}
@@ -1772,4 +1797,48 @@ static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, Fi
 }
 
 
+static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	const char *keys_array_ss [4];
+	const char **keys_ss = keys_array_ss;
+
+	keys_array_ss [0] = MA_ACCESSION_S;
+	keys_array_ss [1] = MA_GENE_BANK_ID_S;
+	keys_array_ss [2] = NULL;
+
+	/* Materials */
+	if (AddCollectionCompoundIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MATERIAL], keys_ss, true, false))
+		{
+
+			keys_array_ss [0] = PL_PARENT_STUDY_S;
+			keys_array_ss [1] = PL_ROW_INDEX_S;
+			keys_array_ss [2] = PL_COLUMN_INDEX_S;
+			keys_array_ss [3] = NULL;
+
+			/* Plots */
+			if (AddCollectionCompoundIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], keys_ss, true, false))
+				{
+					/* Measured Variables */
+					char *key_s = GetMeasuredVariablesNameKey ();
+
+					if (key_s)
+						{
+							if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], key_s, true, false))
+								{
+									status = OS_SUCCEEDED;
+								}
+
+							FreeMeasuredVariablesNameKey (key_s);
+						}
+
+				}
+
+		}		/* if (AddCollectionIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MATERIAL], MA_ACCESSION_S, false, false)) */
+
+
+	return status;
+}
 

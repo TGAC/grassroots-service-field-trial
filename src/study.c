@@ -889,7 +889,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
 						}
 
 					json_decref (study_json_p);

@@ -39,8 +39,6 @@
  * static declarations
  */
 
-static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
-
 /*
 static const char * const S_INTERNAL_NAME_TITLE_S = "Accession";
 static const char * const S_PEDIGREE_TITLE_S = "Pedigree";
@@ -107,7 +105,7 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 								{
 									if (SetUpGenBanksListParameter ((FieldTrialServiceData *) data_p, string_param_p))
 										{
-											const char c = S_DEFAULT_COLUMN_DELIMITER;
+											const char c = DFT_DEFAULT_COLUMN_DELIMITER;
 											Parameter *param_p;
 
 											if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
@@ -600,7 +598,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
-							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+							const char delim_s [2] = { DFT_DEFAULT_COLUMN_DELIMITER, '\0' };
 
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{

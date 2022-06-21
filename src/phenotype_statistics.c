@@ -112,7 +112,7 @@ bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, jso
 								{
 									if (!AddNamedCompoundIdToJSON (mv_json_p, mv_p -> mv_id_p, S_MV_ID_S))
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "Failed tp add id  \"%s\":  for \"%s\"", S_MV_ID_S, GetMeasuredVariableAName (mv_p));
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "Failed to add id  \"%s\":  for \"%s\"", S_MV_ID_S, GetMeasuredVariableName (mv_p));
 											json_decref (mv_json_p);
 											mv_json_p = NULL;
 										}

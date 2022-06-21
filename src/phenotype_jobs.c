@@ -31,8 +31,6 @@ static NamedParameterType S_PHENOTYPES_TABLE = { "PH Upload", PT_JSON_TABLE};
 static NamedParameterType S_STUDIES_LIST = { "PH Study", PT_STRING };
 
 
-static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
-
 static const char * const S_ROW_INDEX_TITLE_S = "Plot ID";
 
 
@@ -63,7 +61,7 @@ bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_
 
 			if (SetUpStudiesListParameter (dfw_service_data_p, (StringParameter *) param_p, NULL, false))
 				{
-					const char delim = S_DEFAULT_COLUMN_DELIMITER;
+					const char delim = DFT_DEFAULT_COLUMN_DELIMITER;
 
 					if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPES_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &delim, PL_ADVANCED)) != NULL)
 						{
@@ -185,7 +183,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
-							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+							const char delim_s [2] = { DFT_DEFAULT_COLUMN_DELIMITER, '\0' };
 
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{

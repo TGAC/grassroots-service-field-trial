@@ -36,8 +36,6 @@
  */
 
 
-static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
-
 static const char * const S_VARIABLE_ID_S = "Variable Identifier";
 static const char * const S_VARIABLE_NAME_S = "Variable Name";
 static const char * const S_VARIABLE_DESCRIPTION_S = "Variable Description";
@@ -88,7 +86,7 @@ bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *par
 	if (group_p)
 		{
 			Parameter *param_p = NULL;
-			const char c = S_DEFAULT_COLUMN_DELIMITER;
+			const char c = DFT_DEFAULT_COLUMN_DELIMITER;
 
 			if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 				{
@@ -165,7 +163,7 @@ bool AddSearchTraitParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 	if (group_p)
 		{
-			const char c = S_DEFAULT_COLUMN_DELIMITER;
+			const char c = DFT_DEFAULT_COLUMN_DELIMITER;
 			Parameter *param_p = NULL;
 
 			if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
@@ -243,9 +241,6 @@ json_t *GetAllTraitsAsJSON (const FieldTrialServiceData *data_p)
 }
 
 
-
-
-
 MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLAG *mv_mem_p, FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *phenotype_p = NULL;
@@ -264,7 +259,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLA
 		{
 			if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
 				{
-					char *key_s = ConcatenateVarargsStrings (MV_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
+					char *key_s = GetMeasuredVariablesNameKey ();
 
 					if (key_s)
 						{
@@ -338,11 +333,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLA
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for \"%s\": \"%s\"", key_s, name_s);
 								}
 
-							FreeCopiedString (key_s);
-						}		/* if (key_s) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate strings for variable name key");
+							FreeMeasuredVariablesNameKey (key_s);
 						}
 
 				}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
@@ -355,6 +346,29 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLA
 
 
 	return phenotype_p;
+}
+
+
+char *GetMeasuredVariablesNameKey (void)
+{
+	char *key_s = ConcatenateVarargsStrings (MV_VARIABLE_S, ".", SCHEMA_TERM_NAME_S, NULL);
+
+	if (key_s)
+		{
+			return key_s;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \".\" and \"%s\"", MV_VARIABLE_S, SCHEMA_TERM_NAME_S);
+		}
+
+	return NULL;
+}
+
+
+void FreeMeasuredVariablesNameKey (char *key_s)
+{
+	FreeCopiedString (key_s);
 }
 
 
@@ -623,7 +637,7 @@ static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_se
 				{
 					if (AddParameterKeyJSONValuePair (param_p, PA_TABLE_COLUMN_HEADINGS_S, hints_p))
 						{
-							const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+							const char delim_s [2] = { DFT_DEFAULT_COLUMN_DELIMITER, '\0' };
 
 							if (AddParameterKeyStringValuePair (param_p, PA_TABLE_COLUMN_DELIMITER_S, delim_s))
 								{

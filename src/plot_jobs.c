@@ -126,8 +126,6 @@ static NamedParameterType S_AMEND = { "PL Amend", PT_BOOLEAN};
 static NamedParameterType S_STUDIES_LIST = { "PL Study", PT_STRING };
 
 
-static const char S_DEFAULT_COLUMN_DELIMITER =  '|';
-
 
 /*
  * static declarations
@@ -165,7 +163,10 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unknown_cols_p);
 
-static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, FieldTrialServiceData *data_p);
+
+static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, bool *new_plot_flag_p, FieldTrialServiceData *data_p);
+
+static OperationStatus ProcessRow (Row *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const bool control_rep_flag, const uint32 row_index, FieldTrialServiceData *data_p);
 
 
 /*
@@ -185,7 +186,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Re
 		{
 			if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p, false))
 				{
-					char c = S_DEFAULT_COLUMN_DELIMITER;
+					char c = DFT_DEFAULT_COLUMN_DELIMITER;
 
 					/*
 					 * We want to update all of the values in the form
@@ -906,7 +907,7 @@ static json_t *GetTableParameterHints (void)
 static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, Study *active_study_p, FieldTrialServiceData *data_p)
 {
 	Parameter *param_p = NULL;
-	const char delim_s [2] = { S_DEFAULT_COLUMN_DELIMITER, '\0' };
+	const char delim_s [2] = { DFT_DEFAULT_COLUMN_DELIMITER, '\0' };
 	bool success_flag = false;
 	json_t *hints_p = GetTableParameterHints ();
 
@@ -1054,231 +1055,149 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 	if (success_flag)
 		{
-			Plot *plot_p = GetPlotForUpdating (job_p, table_row_json_p, study_p, row_index, data_p);
+			bool is_new_plot_flag = false;
+
+			/*
+			 * Either get the existing plot at the specified row/column of the json or create a new one
+			 */
+			Plot *plot_p = GetPlotForUpdating (job_p, table_row_json_p, study_p, row_index, &is_new_plot_flag, data_p);
 
 			if (plot_p)
 				{
+					int32 rack_studywise_index = -1;
+					bool added_plot_to_study_flag = false;
+
+
 					/*
 					 * plot_p now has an id, so we can add the row/rack.
 					 */
-					int32 rack_plotwise_index = -1;
-					bool added_plot_to_study_flag = false;
 
-					if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index))
+					if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
 						{
-							int32 rack_studywise_index = -1;
+							Row *row_p = NULL;
+							bool control_rep_flag = false;
+							int32 replicate = 1;
+							int32 rack_plotwise_index = -1;
+							bool is_existing_row_flag = true;
 
-							if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
+							if (rt == RT_NORMAL)
 								{
-									int32 replicate = 1;
-									const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
-									bool control_rep_flag = false;
 
-									success_flag = true;
-
-									if (!IsStringEmpty (rep_s))
+									if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index))
 										{
-											if (Stricmp (rep_s, RO_REPLICATE_CONTROL_S) == 0)
+											const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
+
+											success_flag = true;
+
+											if (!IsStringEmpty (rep_s))
 												{
-													control_rep_flag = true;
-												}
-											else
-												{
-													if (!GetValidInteger (&rep_s, &replicate))
+													if (Stricmp (rep_s, RO_REPLICATE_CONTROL_S) == 0)
 														{
-															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
-														}
-
-												}
-
-										}		/* if (!IsStringEmpty (rep_s)) */
-
-
-									if (success_flag)
-										{
-											Row *row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
-											bool is_existing_row_flag = true;
-											const MEM_FLAG material_mem = MF_SHALLOW_COPY;
-
-											if (row_p)
-												{
-													/*
-													 * update existing row
-													 */
-													UpdateRow (row_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate, rt);
-												}
-											else
-												{
-													row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, rt, material_p, material_mem, plot_p);
-
-													if (row_p)
-														{
-															is_existing_row_flag = false;
+															control_rep_flag = true;
 														}
 													else
 														{
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
+															if (!GetValidInteger (&rep_s, &replicate))
+																{
+																	success_flag = false;
+																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
+																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
+																}
+
 														}
-												}
+
+												}		/* if (!IsStringEmpty (rep_s)) */
+
+
+										}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index)) */
+									else
+										{
+											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, S_RACK_TITLE_S);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
+										}
+
+								}		/* if (rt == RT_NORMAL) */
+
+							if (success_flag)
+								{
+									row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
+									const MEM_FLAG material_mem = MF_SHALLOW_COPY;
+
+									if (row_p)
+										{
+											/*
+											 * update existing row
+											 */
+											UpdateRow (row_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate, rt);
+										}
+									else
+										{
+											row_p = AllocateRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, rt, material_p, material_mem, plot_p);
 
 											if (row_p)
 												{
-													size_t num_columns;
-													size_t imported_columns = 0;
-
-													RemoveUnneededColumns (table_row_json_p, unknown_cols_p);
-
-													/*
-													 * If there are any columns left, try to add them as observations
-													 */
-													if ((num_columns = json_object_size (table_row_json_p)) > 0)
+													if (!AddRowToPlot (plot_p, row_p))
 														{
-															const char *key_s;
-															json_t *value_p;
-															OperationStatus status = OS_FAILED;
-
-															bool loop_success_flag = true;
-															void *iterator_p = json_object_iter (table_row_json_p);
-
-															while (iterator_p && loop_success_flag)
-																{
-																	key_s = json_object_iter_key (iterator_p);
-
-																	/*
-																	 * ignore our column names
-																	 */
-																	if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0))
-																		{
-																			const char *value_s = NULL;
-
-																			value_p = json_object_iter_value (iterator_p);
-
-																			/*
-																			 * Is it an observation?
-																			 */
-																			status = AddObservationValueToRow (row_p, key_s, value_p, study_p, job_p, row_index, data_p);
-
-																			if (status == OS_SUCCEEDED)
-																				{
-																					++ imported_columns;
-																				}
-																			else if (status == OS_IDLE)
-																				{
-																					value_s = json_string_value (value_p);
-
-																					if (!IsStringEmpty (value_s))
-																						{
-
-																						}
-
-																					status = AddSingleTreatmentFactorValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
-
-																					if (status == OS_SUCCEEDED)
-																						{
-																							++ imported_columns;
-																						}
-																					else if (status == OS_IDLE)
-																						{
-																							char *error_s = ConcatenateVarargsStrings ("Unknown column name \"", key_s, "\"", NULL);
-
-																							/*
-																							 * unknown column
-																							 */
-																							if (!SetJSONNull (unknown_cols_p, key_s))
-																								{
-																									PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, unknown_cols_p, "Failed to add unknown column \"%s\"", key_s);
-																								}
-
-																							if (error_s)
-																								{
-																									AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
-																									FreeCopiedString (error_s);
-																								}
-																							else
-																								{
-																									AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name");
-																								}
-
-																						}
-
-																				}		/* if (status == OS_IDLE) */
-																			else
-																				{
-
-																				}
-
-																		}		/* if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0)) */
-
-																	iterator_p = json_object_iter_next (table_row_json_p, iterator_p);
-
-																}		/* while (iterator_p && loop_success_flag) */
-
-															if (status != OS_SUCCEEDED)
-																{
-
-																}
-
-														}		/* if ((num_columns = json_object_size (table_row_json_p)) > 0) */
-
-
-
-													SetRowGenotypeControl (row_p, control_rep_flag);
-													SetRowType (row_p, rt);
-
-													if (is_existing_row_flag || (AddRowToPlot (plot_p, row_p)))
-														{
-															if (SavePlot (plot_p, data_p))
-																{
-																	if (AddPlotToStudy (study_p, plot_p))
-																		{
-																			added_plot_to_study_flag = true;
-
-																			if (num_columns == imported_columns)
-																				{
-																					add_status = OS_SUCCEEDED;
-																				}
-																			else if (imported_columns > 0)
-																				{
-																					add_status = OS_PARTIALLY_SUCCEEDED;
-																				}
-																		}
-																}
-															else
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
-																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
-																}
-
-														}
-													else
-														{
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
 															FreeRow (row_p);
+															row_p = NULL;
 														}
 
-												}		/* if (row_p) */
-
-										}		/* if (success_flag) */
-
-								}		/* if (GetJSONStringAsInteger (table_row_json_p, S_INDEX_TITLE_S, &study_index)) */
-							else
-								{
-									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
+													is_existing_row_flag = false;
+												}
+											else
+												{
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
+												}
+										}
 								}
 
-						}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack)) */
+
+							if (row_p)
+								{
+									bool b = true;
+									SetRowType (row_p, rt);
+
+									if (rt == RT_NORMAL)
+										{
+											OperationStatus s = ProcessRow (row_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
+
+											if ((s == OS_SUCCEEDED) || (s != OS_PARTIALLY_SUCCEEDED))
+												{
+													b = true;
+												}
+											else
+												{
+													b = false;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to process row");
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to process row", row_index, NULL);
+
+												}
+
+										}		/* if (rt == RT_NORMAL) */
+
+
+									if (b)
+										{
+											if (!SavePlot (plot_p, data_p))
+												{
+													add_status = OS_FAILED;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
+												}
+
+										}
+
+
+								}		/* if (row_p) */
+
+						}		/* if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index)) */
 					else
 						{
-							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, S_RACK_TITLE_S);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", S_RACK_TITLE_S);
+							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
 						}
 
-					if (!added_plot_to_study_flag)
-						{
-							FreePlot (plot_p);
-						}
 
 				}		/* if (plot_p) */
 
@@ -1296,7 +1215,127 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 
 
-static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, FieldTrialServiceData *data_p)
+static OperationStatus ProcessRow (Row *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const bool control_rep_flag, const uint32 row_index, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_SUCCEEDED;
+	size_t num_columns;
+	size_t imported_columns = 0;
+
+	RemoveUnneededColumns (table_row_json_p, unknown_cols_p);
+
+	/*
+	 * If there are any columns left, try to add them as observations
+	 */
+	if ((num_columns = json_object_size (table_row_json_p)) > 0)
+		{
+			const char *key_s;
+			json_t *value_p;
+			bool loop_success_flag = true;
+			void *iterator_p = json_object_iter (table_row_json_p);
+			OperationStatus add_status;
+
+			status = OS_FAILED;
+
+			while (iterator_p && loop_success_flag)
+				{
+					key_s = json_object_iter_key (iterator_p);
+
+					/*
+					 * ignore our column names
+					 */
+					if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0))
+						{
+							const char *value_s = NULL;
+
+							value_p = json_object_iter_value (iterator_p);
+
+							/*
+							 * Is it an observation?
+							 */
+							add_status = AddObservationValueToRow (row_p, key_s, value_p, study_p, job_p, row_index, data_p);
+
+							if (add_status == OS_SUCCEEDED)
+								{
+									++ imported_columns;
+								}
+							else if (add_status == OS_IDLE)
+								{
+									value_s = json_string_value (value_p);
+
+									if (!IsStringEmpty (value_s))
+										{
+
+										}
+
+									add_status = AddSingleTreatmentFactorValueToRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
+
+									if (add_status == OS_SUCCEEDED)
+										{
+											++ imported_columns;
+										}
+									else if (add_status == OS_IDLE)
+										{
+											char *error_s = ConcatenateVarargsStrings ("Unknown column name \"", key_s, "\"", NULL);
+
+											/*
+											 * unknown column
+											 */
+											if (!SetJSONNull (unknown_cols_p, key_s))
+												{
+													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, unknown_cols_p, "Failed to add unknown column \"%s\"", key_s);
+												}
+
+											if (error_s)
+												{
+													AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
+													FreeCopiedString (error_s);
+												}
+											else
+												{
+													AddParameterErrorMessageToServiceJob (job_p,PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown column name");
+												}
+
+										}
+
+								}		/* if (add_status == OS_IDLE) */
+							else
+								{
+
+								}
+
+						}		/* if ((strcmp (key_s, RO_IMPORT_RACK_S) != 0) && (strcmp (key_s, RO_PLOT_INDEX_S) != 0)) */
+
+					iterator_p = json_object_iter_next (table_row_json_p, iterator_p);
+
+				}		/* while (iterator_p && loop_success_flag) */
+
+			if (add_status != OS_SUCCEEDED)
+				{
+
+				}
+
+		}		/* if ((num_columns = json_object_size (table_row_json_p)) > 0) */
+
+
+
+	SetRowGenotypeControl (row_p, control_rep_flag);
+
+	if (num_columns == imported_columns)
+		{
+			status = OS_SUCCEEDED;
+		}
+	else if (imported_columns > 0)
+		{
+			status = OS_PARTIALLY_SUCCEEDED;
+		}
+
+
+	return status;
+
+}
+
+
+static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, bool *new_plot_flag_p, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	int32 row = -1;
@@ -1312,11 +1351,28 @@ static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, St
 					 */
 					plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
 
-					if (!plot_p)
+					if (plot_p)
+						{
+							*new_plot_flag_p = false;
+						}
+					else
 						{
 							plot_p = CreatePlotFromTabularJSON (table_row_json_p, row, column, study_p, data_p);
 
-							if (!plot_p)
+							if (plot_p)
+								{
+									if (AddPlotToStudy (study_p, plot_p))
+										{
+											*new_plot_flag_p = true;
+										}
+									else
+										{
+											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add the plot to the study", row_index, NULL);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AddPlotToStudy () failed");
+											FreePlot (plot_p);
+										}
+								}
+							else
 								{
 									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create the plot", row_index, NULL);
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "GetPlotForUpdating () failed");

@@ -89,6 +89,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMeasuredVariableIndexingData (Service *
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllMeasuredVariablesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetMeasuredVariablesNameKey (void);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariablesNameKey (char *key_s);
+
+
 #ifdef __cplusplus
 }
 #endif

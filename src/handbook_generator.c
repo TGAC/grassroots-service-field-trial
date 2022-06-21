@@ -59,6 +59,8 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, const char *key_s, const char *printed_key_s, CapitalizeState capitalize, ByteBuffer *buffer_p);
 
+static char *DownloadToFile (const char *url_s_, const char *download_path_s);
+
 
 
 OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData *data_p)
@@ -232,6 +234,14 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 
 	return status;
+}
+
+
+static char *DownloadToFile (const char *url_s, const char *download_path_s)
+{
+	char *result_s = NULL;
+
+	return result_s;
 }
 
 
