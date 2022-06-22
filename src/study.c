@@ -69,7 +69,7 @@ static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, con
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
@@ -1929,7 +1929,7 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																																																				{
 																																																					if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																																						{
-																																																							if (AddStatisticsToJSON (study_p, study_json_p, format, data_p))
+																																																							if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
 																																																								{
 																																																									success_flag = true;
 																																																								}
@@ -2069,10 +2069,10 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 }
 
 
-static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	/*
-	 * Are there any statistics?
+	 * Are there any phenotypes?
 	 */
 	if ((study_p -> st_phenotypes_p) && (study_p -> st_phenotypes_p -> ll_size > 0))
 		{
@@ -2082,22 +2082,30 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, con
 				{
 					bool b = true;
 					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
+					uint32 i = 0;
 
+					/*
+					 * Keep looping and adding the phenotypes
+					 */
 					while (node_p && b)
 						{
 							if (AddPhenotypeStatisticsNodeAsJSON (node_p, phenotypes_p, format, data_p))
 								{
 									node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
+									++ i;
 								}
 							else
 								{
 									b = false;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddPhenotypeStatisticsNodeAsJSON () failed for \"%s\"", node_p -> psn_measured_variable_name_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddPhenotypeStatisticsNodeAsJSON () failed for \"%s\" for study \"%s\"", node_p -> psn_measured_variable_name_s, study_p -> st_name_s);
 								}
 
 						}		/* while (node_p && b) */
 
-					if (json_object_size (phenotypes_p) == study_p -> st_phenotypes_p -> ll_size)
+					/*
+					 * Did we process all of the phenotypes?
+					 */
+					if (i == study_p -> st_phenotypes_p -> ll_size)
 						{
 							if (json_object_set_new (study_json_p, ST_PHENOTYPES_S, phenotypes_p) == 0)
 								{
@@ -2105,16 +2113,25 @@ static bool AddStatisticsToJSON (const Study *study_p, json_t *study_json_p, con
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics for \"%s\"", ST_PHENOTYPE_STATISTICS_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics for \"%s\" for study \"%s\"", ST_PHENOTYPE_STATISTICS_S, study_p -> st_name_s);
 								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_p, "phenotypes has " UINT32_FMT " entries instead of " UINT32_FMT "  for study \"%s\"", i, study_p -> st_phenotypes_p -> ll_size, study_p -> st_name_s);
 						}
 
 					json_decref (phenotypes_p);
 				}		/* if (phenotypes_p) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to create phenotypes object for \"%s\"", study_p -> st_name_s);
+				}
 
 		}		/* if ((study_p -> st_phenotype_statistics_p) && (study_p -> st_phenotype_statistics_p -> ll_size > 0)) */
 	else
 		{
+			/* no phenotypes to do */
 			return true;
 		}
 
