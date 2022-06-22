@@ -71,99 +71,171 @@ bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const Fi
 
 	if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index))
 		{
-			if (SetJSONInteger (row_fd_p, S_RACK_S, row_p -> ro_rack_index))
+			switch (row_p -> ro_type)
 				{
-					if ((! (row_p -> ro_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s)))
+					case RT_NORMAL:
 						{
-							if (row_p -> ro_replicate_control_flag)
+							if (SetJSONInteger (row_fd_p, S_RACK_S, row_p -> ro_rack_index))
 								{
-									success_flag = SetJSONString (row_fd_p, PL_REPLICATE_TITLE_S, RO_REPLICATE_CONTROL_S);
-								}
-							else
-								{
-									success_flag = SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> ro_rack_index);
-								}
-
-							if (success_flag)
-								{
-									/*
-									 * Add the treatment factors
-									 */
-
-									if (row_p -> ro_treatment_factor_values_p)
+									if ((! (row_p -> ro_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s)))
 										{
-											uint32 num_added = 0;
-											TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
-
-											while (tfv_node_p && success_flag)
+											if (row_p -> ro_replicate_control_flag)
 												{
-													TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
-
-													const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
-
-													if (url_s)
+													if (SetJSONString (row_fd_p, PL_REPLICATE_TITLE_S, RO_REPLICATE_CONTROL_S))
 														{
-															if (SetFDTableString (row_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
-																{
-																	++ num_added;
-																}
-															else
-																{
-																	success_flag = false;
-																}
+															success_flag = true;
 														}
 													else
 														{
-															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": \"%s\"", PL_REPLICATE_TITLE_S, RO_REPLICATE_CONTROL_S);
 														}
+												}
+											else
+												{
+													success_flag = SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index);
+
+													if (SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index))
+														{
+															success_flag = true;
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index);
+														}
+
+												}
+
+											if (success_flag)
+												{
+													/*
+													 * Add the treatment factors
+													 */
+
+													if (row_p -> ro_treatment_factor_values_p)
+														{
+															uint32 num_added = 0;
+															TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
+
+															while (tfv_node_p && success_flag)
+																{
+																	TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
+
+																	const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
+
+																	if (url_s)
+																		{
+																			if (SetFDTableString (row_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
+																				{
+																					++ num_added;
+																				}
+																			else
+																				{
+																					success_flag = false;
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "SetFDTableString () failed for url: \"%s\" label: \"%s\" null sequence: \"%s\"",
+																														 url_s, tf_value_p -> tfv_label_s, null_sequence_s ? null_sequence_s : "NULL");
+																				}
+																		}
+																	else
+																		{
+																			success_flag = false;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "GetTreatmentFactorUrl () failed for url: \"%s\" in study \"%s\"",
+																												 tf_value_p -> tfv_label_s, tf_value_p -> tfv_factor_p -> tf_study_p -> st_name_s);
+																		}
+
+																	if (success_flag)
+																		{
+																			tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
+																		}
+																}
+
+														}		/* if (row_p -> ro_treatment_factor_values_p) */
+
 
 													if (success_flag)
 														{
-															tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
-														}
-												}
-
-										}		/* if (row_p -> ro_treatment_factor_values_p) */
-
-
-									if (success_flag)
-										{
-											if (row_p -> ro_observations_p)
-												{
-													uint32 num_added = 0;
-													ObservationNode *obs_node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
-
-													while (obs_node_p && success_flag)
-														{
-															Observation *obs_p = obs_node_p -> on_observation_p;
-
-															if (AddObservationValuesToFrictionlessData (obs_p, row_fd_p))
+															if (row_p -> ro_observations_p)
 																{
-																	obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
-																	++ num_added;
-																}
-															else
-																{
-																	success_flag = false;
-																}
+																	uint32 num_added = 0;
+																	ObservationNode *obs_node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
 
-														}		/* while (obs_node_p && success_flag) */
+																	while (obs_node_p && success_flag)
+																		{
+																			Observation *obs_p = obs_node_p -> on_observation_p;
 
-												}		/* if (row_p -> ro_observations_p) */
+																			if (AddObservationValuesToFrictionlessData (obs_p, row_fd_p))
+																				{
+																					obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
+																					++ num_added;
+																				}
+																			else
+																				{
+																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																					success_flag = false;
+
+																					bson_oid_to_string (obs_p -> ob_id_p, id_s);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "AddObservationValuesToFrictionlessData () failed for \"%s\"",
+																														 id_s);
+																				}
+
+																		}		/* while (obs_node_p && success_flag) */
+
+																}		/* if (row_p -> ro_observations_p) */
 
 
+														}		/* if (success_flag) */
 
-										}		/* if (success_flag) */
+												}		/* if (success_flag) */
 
-								}		/* if (success_flag) */
+										}		/* if ((! (row_p -> ro_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s))) */
 
-						}		/* if ((! (row_p -> ro_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s))) */
+								}		/* if (SetJSONInteger (row_fd_p, RO_RACK_INDEX_S, row_p -> ro_rack_index)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, RO_RACK_INDEX_S, row_p -> ro_rack_index);
+								}
+						}
+						break;
 
+					case RT_BLANK:
+						{
+							if (SetJSONBoolean (row_fd_p, RO_BLANK_S, true))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": true", RO_BLANK_S);
+								}
+						}
+						break;
 
-				}		/* if (SetJSONInteger (row_fd_p, RO_RACK_INDEX_S, row_p -> ro_rack_index)) */
+					case RT_DISCARD:
+						{
+							if (SetJSONBoolean (row_fd_p, RO_DISCARD_S, true))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": true", RO_DISCARD_S);
+								}
+						}
+						break;
 
+					default:
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddRowFrictionlessDataDetails () failed: unknown type %d", row_p -> ro_type);
+						}
+						break;
+
+				}		/* switch (row_p -> ro_type) */
+
+		}		/* if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index)) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index);
 		}
-
 
 
 	return success_flag;
