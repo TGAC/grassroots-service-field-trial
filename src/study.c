@@ -2071,6 +2071,8 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 
 static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
+	bool success_flag = false;
+
 	/*
 	 * Are there any phenotypes?
 	 */
@@ -2109,7 +2111,7 @@ static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, con
 						{
 							if (json_object_set_new (study_json_p, ST_PHENOTYPES_S, phenotypes_p) == 0)
 								{
-									return true;
+									success_flag = true;
 								}
 							else
 								{
@@ -2121,7 +2123,11 @@ static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, con
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_p, "phenotypes has " UINT32_FMT " entries instead of " UINT32_FMT "  for study \"%s\"", i, study_p -> st_phenotypes_p -> ll_size, study_p -> st_name_s);
 						}
 
-					json_decref (phenotypes_p);
+					if (!success_flag)
+						{
+							json_decref (phenotypes_p);
+						}
+
 				}		/* if (phenotypes_p) */
 			else
 				{
@@ -2132,10 +2138,10 @@ static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, con
 	else
 		{
 			/* no phenotypes to do */
-			return true;
+			success_flag = true;
 		}
 
-	return false;
+	return success_flag;
 }
 
 
