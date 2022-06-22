@@ -3305,11 +3305,11 @@ static bool GetStudyForGivenId (FieldTrialServiceData *data_p, ParameterSet *par
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ID.npt_name_s, &id_s))
 		{
-			if (id_s)
+			if (!IsStringEmpty (id_s))
 				{
 					FindAndAddStudyToServiceJob (id_s, format, job_p, processor_p, data_p);
 					job_done_flag = true;
-				}		/* if (id_s*/
+				}		/* if (!IsStringEmpty (id_s)) */
 
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_ARST_ID.npt_name_s, &value, true)) */
 
@@ -4522,7 +4522,7 @@ static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set
 	GetCurrentStringParameterValueFromParameterSet (param_set_p, name_param_s, &name_s);
 	GetCurrentStringParameterValueFromParameterSet (param_set_p, email_param_s, &email_s);
 
-	if ((name_s != NULL) || (email_s != NULL))
+	if ((!IsStringEmpty (name_s)) || (!IsStringEmpty (email_s)))
 		{
 			Person *person_p = AllocatePerson (name_s, email_s);
 

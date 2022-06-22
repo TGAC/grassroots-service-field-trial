@@ -436,7 +436,7 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_CACHE_CLEAR.npt_name_s, &entries_s))
 						{
-							if (entries_s)
+							if (!IsStringEmpty (entries_s))
 								{
 									LinkedList *entries_p = NULL;
 
@@ -1071,36 +1071,61 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 					 */
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &id_s))
 						{
-							OperationStatus fd_status = OS_FAILED_TO_START;
 
-							if (strcmp (id_s, "*") == 0)
+							if (!IsStringEmpty (id_s))
 								{
-									fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
-								}
-							else
-								{
-									/* reindex the given studies by their ids */
-									LinkedList *ids_p = ParseStringToStringLinkedList (id_s, " ", true);
-									uint32 num_done = 0;
+									OperationStatus fd_status = OS_FAILED_TO_START;
 
-									if (ids_p)
+									if (strcmp (id_s, "*") == 0)
 										{
-											StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
+											fd_status = GenerateAllFrictionlessDataStudies (job_p, data_p);
+										}
+									else
+										{
+											/* reindex the given studies by their ids */
+											LinkedList *ids_p = ParseStringToStringLinkedList (id_s, " ", true);
+											uint32 num_done = 0;
 
-											while (node_p)
+											if (ids_p)
 												{
-													const char *study_id_s = node_p -> sln_string_s;
-													Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL, data_p);
+													StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
 
-													if (study_p)
+													while (node_p)
 														{
-															if (SaveStudyAsFrictionlessData (study_p, data_p))
+															const char *study_id_s = node_p -> sln_string_s;
+															Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL, data_p);
+
+															if (study_p)
 																{
-																	++ num_done;
+																	if (SaveStudyAsFrictionlessData (study_p, data_p))
+																		{
+																			++ num_done;
+																		}
+																	else
+																		{
+																			char *error_s = ConcatenateVarargsStrings ("Could not generate fd package for study with id \"", study_id_s, "\"", NULL);
+
+																			if (error_s)
+																				{
+																					AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, error_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
+																					FreeCopiedString (error_s);
+																				}
+																			else
+																				{
+																					const char * const default_error_s = "Could not generate fd package study by id";
+
+																					AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, default_error_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
+																				}
+
+																		}
+
+																	FreeStudy (study_p);
 																}
 															else
 																{
-																	char *error_s = ConcatenateVarargsStrings ("Could not generate fd package for study with id \"", study_id_s, "\"", NULL);
+																	char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", study_id_s, "\"", NULL);
 
 																	if (error_s)
 																		{
@@ -1110,71 +1135,54 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 																		}
 																	else
 																		{
-																			const char * const default_error_s = "Could not generate fd package study by id";
+																			const char * const default_error_s = "Could not find study by id";
 
 																			AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, default_error_s);
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
 																		}
 
+
 																}
 
-															FreeStudy (study_p);
+															node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 														}
-													else
+
+													if (num_done == ids_p -> ll_size)
 														{
-															char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", study_id_s, "\"", NULL);
-
-															if (error_s)
-																{
-																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, error_s);
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
-																	FreeCopiedString (error_s);
-																}
-															else
-																{
-																	const char * const default_error_s = "Could not find study by id";
-
-																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_FD_PACKAGES.npt_name_s, S_GENERATE_FD_PACKAGES.npt_type, default_error_s);
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
-																}
-
-
+															fd_status = OS_SUCCEEDED;
+														}
+													else if (num_done > 0)
+														{
+															fd_status = OS_PARTIALLY_SUCCEEDED;
 														}
 
-													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+													FreeLinkedList (ids_p);
 												}
 
-											if (num_done == ids_p -> ll_size)
-												{
-													fd_status = OS_SUCCEEDED;
-												}
-											else if (num_done > 0)
-												{
-													fd_status = OS_PARTIALLY_SUCCEEDED;
-												}
-
-											FreeLinkedList (ids_p);
 										}
 
-								}
+									MergeServiceJobStatus (job_p, fd_status);
+								}		/* if (!IsStringEmpty (id_s)) */
 
-							MergeServiceJobStatus (job_p, fd_status);
-						}
+						}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGES.npt_name_s, &id_s)) */
 
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_HANDBOOK.npt_name_s, &id_s))
 						{
-							Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
-
-							if (study_p)
+							if (!IsStringEmpty (id_s))
 								{
-									if (GetStudyPlots (study_p, data_p))
+									Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
+
+									if (study_p)
 										{
-											OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
+											if (GetStudyPlots (study_p, data_p))
+												{
+													OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
 
-											MergeServiceJobStatus (job_p, handbook_status);
+													MergeServiceJobStatus (job_p, handbook_status);
 
-											FreeStudy (study_p);
+													FreeStudy (study_p);
+												}
 										}
 								}
 						}
@@ -1182,10 +1190,13 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &id_s))
 						{
-							OperationStatus plot_status = RemovePlotsForStudyById (id_s, data_p);
+							if (!IsStringEmpty (id_s))
+								{
+									OperationStatus plot_status = RemovePlotsForStudyById (id_s, data_p);
 
-							MergeServiceJobStatus (job_p, plot_status);
-						}		/* if (id_s) */
+									MergeServiceJobStatus (job_p, plot_status);
+								}		/* if (!IsStringEmpty (id_s)) */
+						}
 
 
 
@@ -1222,36 +1233,60 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 					 */
 					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &id_s))
 						{
-							OperationStatus stats_status = OS_FAILED_TO_START;
-
-							if (strcmp (id_s, "*") == 0)
+							if (!IsStringEmpty (id_s))
 								{
-									stats_status = GenerateStatisticsForAllStudies (job_p, data_p);
-								}
-							else
-								{
-									/* reindex the given studies by their ids */
-									LinkedList *ids_p = ParseStringToStringLinkedList (id_s, " ", true);
-									uint32 num_done = 0;
+									OperationStatus stats_status = OS_FAILED_TO_START;
 
-									if (ids_p)
+									if (strcmp (id_s, "*") == 0)
 										{
-											StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
+											stats_status = GenerateStatisticsForAllStudies (job_p, data_p);
+										}
+									else
+										{
+											/* reindex the given studies by their ids */
+											LinkedList *ids_p = ParseStringToStringLinkedList (id_s, " ", true);
+											uint32 num_done = 0;
 
-											while (node_p)
+											if (ids_p)
 												{
-													const char *study_id_s = node_p -> sln_string_s;
-													Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL, data_p);
+													StringListNode *node_p = (StringListNode *) (ids_p -> ll_head_p);
 
-													if (study_p)
+													while (node_p)
 														{
-															if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+															const char *study_id_s = node_p -> sln_string_s;
+															Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_FULL, data_p);
+
+															if (study_p)
 																{
-																	++ num_done;
+																	if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+																		{
+																			++ num_done;
+																		}
+																	else
+																		{
+																			char *error_s = ConcatenateVarargsStrings ("Could not generate statistics for study with id \"", study_id_s, "\"", NULL);
+
+																			if (error_s)
+																				{
+																					AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, error_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
+																					FreeCopiedString (error_s);
+																				}
+																			else
+																				{
+																					const char * const default_error_s = "Could not generate statistics for study by id";
+
+																					AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, default_error_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
+																				}
+
+																		}
+
+																	FreeStudy (study_p);
 																}
 															else
 																{
-																	char *error_s = ConcatenateVarargsStrings ("Could not generate statistics for study with id \"", study_id_s, "\"", NULL);
+																	char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", study_id_s, "\"", NULL);
 
 																	if (error_s)
 																		{
@@ -1261,55 +1296,36 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 																		}
 																	else
 																		{
-																			const char * const default_error_s = "Could not generate statistics for study by id";
+																			const char * const default_error_s = "Could not find study by id";
 
 																			AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, default_error_s);
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
 																		}
 
+
 																}
 
-															FreeStudy (study_p);
+															node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 														}
-													else
+
+													if (num_done == ids_p -> ll_size)
 														{
-															char *error_s = ConcatenateVarargsStrings ("Could not find study with id \"", study_id_s, "\"", NULL);
-
-															if (error_s)
-																{
-																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, error_s);
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, error_s);
-																	FreeCopiedString (error_s);
-																}
-															else
-																{
-																	const char * const default_error_s = "Could not find study by id";
-
-																	AddParameterErrorMessageToServiceJob (job_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, S_GENERATE_STUDY_STATISTICS.npt_type, default_error_s);
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, default_error_s);
-																}
-
-
+															stats_status = OS_SUCCEEDED;
+														}
+													else if (num_done > 0)
+														{
+															stats_status = OS_PARTIALLY_SUCCEEDED;
 														}
 
-													node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+													FreeLinkedList (ids_p);
 												}
 
-											if (num_done == ids_p -> ll_size)
-												{
-													stats_status = OS_SUCCEEDED;
-												}
-											else if (num_done > 0)
-												{
-													stats_status = OS_PARTIALLY_SUCCEEDED;
-												}
-
-											FreeLinkedList (ids_p);
 										}
 
-								}
+									MergeServiceJobStatus (job_p, stats_status);
 
-							MergeServiceJobStatus (job_p, stats_status);
+								}		/* if (!IsStringEmpty (id_s)) */
+
 						}
 
 

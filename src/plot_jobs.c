@@ -255,97 +255,100 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &study_id_s))
 		{
-			OperationStatus status = OS_FAILED;
-			Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
-
-			if (study_p)
+			if (!IsStringEmpty (study_id_s))
 				{
-					json_t *plots_table_p = NULL;
+					OperationStatus status = OS_FAILED;
+					Study *study_p = GetStudyByIdString (study_id_s, VF_STORAGE, data_p);
 
-					if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, PL_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
+					if (study_p)
 						{
-							job_done_flag = true;
+							json_t *plots_table_p = NULL;
 
-							/*
-							 * Has a spreadsheet been uploaded?
-							 */
-							if (plots_table_p)
+							if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, PL_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
 								{
-									const size_t num_rows = json_array_size (plots_table_p);
+									job_done_flag = true;
 
-									if (num_rows > 0)
+									/*
+									 * Has a spreadsheet been uploaded?
+									 */
+									if (plots_table_p)
 										{
-											const bool *append_flag_p = NULL;
-											bool success_flag = true;
+											const size_t num_rows = json_array_size (plots_table_p);
 
-
-											if (data_p -> dftsd_plots_uploads_path_s)
+											if (num_rows > 0)
 												{
-													char *uploads_path_s = GetPlotsUploadsFilename (study_id_s, data_p);
+													const bool *append_flag_p = NULL;
+													bool success_flag = true;
 
-													if (uploads_path_s)
+
+													if (data_p -> dftsd_plots_uploads_path_s)
 														{
+															char *uploads_path_s = GetPlotsUploadsFilename (study_id_s, data_p);
+
+															if (uploads_path_s)
+																{
+
+																}
 
 														}
 
-												}
+													GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_AMEND.npt_name_s, &append_flag_p);
 
-											GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_AMEND.npt_name_s, &append_flag_p);
-
-											if (!append_flag_p || (! (*append_flag_p)))
-												{
-													if (!RemoveExistingPlotsForStudy (study_p, data_p))
+													if (!append_flag_p || (! (*append_flag_p)))
 														{
-															success_flag = false;
-															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to remove existing plots for study \"%s\"", study_id_s);
+															if (!RemoveExistingPlotsForStudy (study_p, data_p))
+																{
+																	success_flag = false;
+																	PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to remove existing plots for study \"%s\"", study_id_s);
+																}
 														}
-												}
 
-											if (success_flag)
-												{
-													if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
+													if (success_flag)
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+															if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+																}
 														}
+
+												}		/* if (num_rows > 0) */
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
 												}
 
-										}		/* if (num_rows > 0) */
+										}		/* if (table_value.st_json_p) */
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
 										}
 
-								}		/* if (table_value.st_json_p) */
+								}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", PL_PLOT_TABLE.npt_name_s);
 								}
 
-						}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
+
+							status = CalculateStudyStatistics (study_p, data_p);
+
+							if (status == OS_SUCCEEDED)
+								{
+									OperationStatus old_status = job_p -> sj_status;
+
+									status = SaveStudy (study_p, job_p, data_p);
+
+									MergeServiceJobStatus(job_p, old_status);
+
+								}
+
+							FreeStudy (study_p);
+						}		/* if (study_p) */
 					else
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", PL_PLOT_TABLE.npt_name_s);
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
 						}
-
-
-					status = CalculateStudyStatistics (study_p, data_p);
-
-					if (status == OS_SUCCEEDED)
-						{
-							OperationStatus old_status = job_p -> sj_status;
-
-							status = SaveStudy (study_p, job_p, data_p);
-
-							MergeServiceJobStatus(job_p, old_status);
-
-						}
-
-					FreeStudy (study_p);
-				}		/* if (study_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
-				}
+				}		/* if (!IsStringEmpty (study_id_s)) */
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 	else

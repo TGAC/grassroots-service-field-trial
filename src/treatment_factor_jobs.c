@@ -254,60 +254,64 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_STUDY_ID.npt_name_s, &study_id_s))
 		{
-			Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_MINIMAL, data_p);
-
-			if (study_p)
+			if (!IsStringEmpty (study_id_s))
 				{
-					const char *tf_url_s = NULL;
+					Study *study_p = GetStudyByIdString (study_id_s, VF_CLIENT_MINIMAL, data_p);
 
-					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_NAME.npt_name_s, &tf_url_s))
+					if (study_p)
 						{
-							Treatment *treatment_p = GetTreatmentByURL (tf_url_s, VF_STORAGE, data_p);
+							const char *tf_url_s = NULL;
 
-							if (treatment_p)
+							if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_NAME.npt_name_s, &tf_url_s))
 								{
-									const json_t *factors_json_p = NULL;
+									Treatment *treatment_p = GetTreatmentByURL (tf_url_s, VF_STORAGE, data_p);
 
-									if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p))
+									if (treatment_p)
 										{
-											status = OS_FAILED;
+											const json_t *factors_json_p = NULL;
 
-											if (AddTreatmentFactorToStudy (tf_url_s, factors_json_p, study_p, data_p))
+											if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p))
 												{
-													if (SaveStudy (study_p, job_p, data_p))
+													status = OS_FAILED;
+
+													if (AddTreatmentFactorToStudy (tf_url_s, factors_json_p, study_p, data_p))
 														{
-															status = OS_SUCCEEDED;
+															if (SaveStudy (study_p, job_p, data_p))
+																{
+																	status = OS_SUCCEEDED;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveStudy failed for url \"%s\" on study \"%s\"", tf_url_s, study_p -> st_name_s);
+																}
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SaveStudy failed for url \"%s\" on study \"%s\"", tf_url_s, study_p -> st_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddTreatmentFactorToStudy failed for url \"%s\" on study \"%s\"", tf_url_s, study_p -> st_name_s);
 														}
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddTreatmentFactorToStudy failed for url \"%s\" on study \"%s\"", tf_url_s, study_p -> st_name_s);
-												}
 
-											SetServiceJobStatus (job_p, status);
-											job_done_flag = true;
-										}		/* if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p)) */
+													SetServiceJobStatus (job_p, status);
+													job_done_flag = true;
+												}		/* if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, TFJ_VALUES.npt_name_s, &factors_json_p)) */
 
-								}		/* if (treatment_p) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Treatment for url \"%s\"", tf_url_s);
-								}
+										}		/* if (treatment_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Treatment for url \"%s\"", tf_url_s);
+										}
 
-							job_done_flag = true;
+									job_done_flag = true;
 
-						}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_NAME.npt_name_s, &tf_url_s)) */
+								}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, TFJ_TREATMENT_NAME.npt_name_s, &tf_url_s)) */
 
-					FreeStudy (study_p);
-				}		/* if (study_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
-				}
+							FreeStudy (study_p);
+						}		/* if (study_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
+						}
+
+				}		/* if (!IsStringEmpty (study_id_s)) */
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 	else
