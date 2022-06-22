@@ -1693,6 +1693,10 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceDa
 										}
 
 								}		/* if (num_results == 1) */
+							else
+								{
+									PrintBSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "query produced " SIZET_FMT " results for study \"%s\"", num_results, study_p -> st_name_s);
+								}
 
 						}		/* if (json_is_array (results_p)) */
 

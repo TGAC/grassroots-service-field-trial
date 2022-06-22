@@ -911,7 +911,7 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 
 			if (!term_p)
 				{
-					if (name_s && description_s)
+					if (name_s)
 						{
 							term_p = AllocateExtendedSchemaTerm (id_s, name_s, description_s, abbreviation_s);
 						}

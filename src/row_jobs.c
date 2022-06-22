@@ -871,7 +871,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 													bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation failed for row \"%s\" and key \"%s\"", id_s, key_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
 
 													free_measured_variable_flag = true;
 												}
