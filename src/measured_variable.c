@@ -467,7 +467,6 @@ MeasuredVariable *GetMeasuredVariableByIdString (const char *id_s, const FieldTr
 }
 
 
-
 MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, const FieldTrialServiceData *data_p)
 {
 	MeasuredVariable *treatment_p = NULL;

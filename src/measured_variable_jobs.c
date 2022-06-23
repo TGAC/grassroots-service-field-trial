@@ -277,7 +277,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLA
 
 													if (num_results > 1)
 														{
-															PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, results_p, "Multiple matching treatments " SIZET_FMT ", using the first", num_results);
+															PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, results_p, "Multiple matching measured variables " SIZET_FMT ", using the first", num_results);
 														}
 
 													if (num_results != 0)
@@ -310,7 +310,7 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLA
 														}		/* if (num_results != 0) */
 													else
 														{
-															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "No treatments found for \"%s\": \"%s\"", key_s, name_s);
+															PrintBSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "No measured variables found for \"%s\": \"%s\"", key_s, name_s);
 														}
 
 												}		/* if (json_is_array (results_p)) */
@@ -334,6 +334,10 @@ MeasuredVariable *GetMeasuredVariableByVariableName (const char *name_s, MEM_FLA
 								}
 
 							FreeMeasuredVariablesNameKey (key_s);
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariablesNameKey () failed", data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]);
 						}
 
 				}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_RAW_PHENOTYPE])) */
@@ -687,6 +691,7 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 			size_t i;
 			size_t num_imported = 0;
 			size_t num_empty_rows = 0;
+			size_t num_existing = 0;
 
 			for (i = 0; i < num_rows; ++ i)
 				{
@@ -731,10 +736,13 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 
 																					if (mv_p)
 																						{
-																							if (!DoesMeasuredVariableExist (mv_p, data_p))
+																							int res = CheckMeasuredVariable (mv_p, data_p);
+
+																							if (res == 0)
 																								{
 																									OperationStatus import_status;
-																									PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
+
+																									PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
 
 																									import_status = SaveMeasuredVariable (mv_p, job_p, data_p);
 
@@ -745,24 +753,42 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 																									else
 																										{
 																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
+																											AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to save measured variable", i, NULL);
 																											success_flag = false;
 																										}
 
-																								}		/* if (!DoesMeasuredVariableExist (treatment_p)) */
-																							else
+																								}		/* if (res == 0) */
+																							else if (res == 1)
 																								{
-																									PrintJSONToErrors (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
+																									++ num_existing;
+																									PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
 																								}
-
+																							else if (res == -1)
+																								{
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "MeasuredVariable Trait, Measurement and Unit Combination already exist for different Variable " SIZET_FMT, i);
+																									AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "MeasuredVariable Trait, Measurement and Unit Combination already exist for different Variable", i, NULL);
+																								}
 																						}		/* if (mv_p) */
 																					else
 																						{
 																							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with name \"%s\"  for row " SIZET_FMT, variable_p -> st_name_s, i);
+																							AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create measured variable", i, NULL);
 																						}
 
+																				}		/*  if (scale_p) */
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to get scale class for \"%s\" for row " SIZET_FMT, scale_s, i);
+																					AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to get scale class", i, NULL);
 																				}
 
 																		}		/* if (scale_s) */
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, table_row_json_p, "No scale class specified for row " SIZET_FMT, i);
+																			AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "No scale class specified", i, NULL);
+																		}
+
 																}
 															else
 																{
@@ -846,7 +872,7 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 				}		/* for (i = 0; i < num_rows; ++ i) */
 
 
-			if (num_imported + num_empty_rows == num_rows)
+			if (num_imported + num_empty_rows  + num_existing == num_rows)
 				{
 					status = OS_SUCCEEDED;
 				}
@@ -927,9 +953,9 @@ static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, co
 }
 
 
-bool DoesMeasuredVariableExist (MeasuredVariable *var_p, const FieldTrialServiceData *data_p)
+int CheckMeasuredVariable (MeasuredVariable *var_p, const FieldTrialServiceData *data_p)
 {
-	bool exists_flag = false;
+	int res = 0;
 
 	if ((var_p -> mv_trait_term_p) && (var_p -> mv_measurement_term_p) && (var_p -> mv_unit_term_p))
 		{
@@ -937,17 +963,35 @@ bool DoesMeasuredVariableExist (MeasuredVariable *var_p, const FieldTrialService
 
 			if (saved_treatment_p)
 				{
-					if (var_p -> mv_scale_class_p == NULL)
+
+					/*
+					 * Does the Variable match?
+					 */
+
+					const char *var_url_s = GetMeasuredVariableURL (var_p);
+					const char *saved_treatment_url_s = GetMeasuredVariableURL (saved_treatment_p);
+
+					if (DoStringsMatch (var_url_s, saved_treatment_url_s))
 						{
-							var_p -> mv_scale_class_p = saved_treatment_p -> mv_scale_class_p;
+							if (var_p -> mv_scale_class_p == NULL)
+								{
+									var_p -> mv_scale_class_p = saved_treatment_p -> mv_scale_class_p;
+								}
+
+							res = 1;
+						}
+					else
+						{
+							res = -1;
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__,  "\"%s\" and \"%s\" have matching traits, measurements and units",
+													 GetMeasuredVariableName (var_p), GetMeasuredVariableName (saved_treatment_p));
+
 						}
 
-					exists_flag = true;
 					FreeMeasuredVariable (saved_treatment_p);
 				}
-
 		}
 
-	return exists_flag;
+	return res;
 }
 
