@@ -139,7 +139,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 static json_t *GetTableParameterHints (void);
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p);
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p, const bool must_exist_flag);
 
 static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p);
 
@@ -1193,6 +1193,11 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 
 								}		/* if (row_p) */
+							else
+								{
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row", row_index, NULL);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get row");
+								}
 
 						}		/* if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index)) */
 					else
@@ -1203,7 +1208,10 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 
 				}		/* if (plot_p) */
-
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "GetPlotForUpdating () failed");
+				}
 
 		}		/* if (success_flag) */
 
@@ -1595,7 +1603,7 @@ Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, FieldTrialServiceData *data
 
 	if (query_p)
 		{
-			plot_p = GetUniquePlot (query_p, study_p, data_p);
+			plot_p = GetUniquePlot (query_p, study_p, data_p, true);
 
 			bson_destroy (query_p);
 		}		/* if (query_p) */
@@ -1611,7 +1619,7 @@ Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study
 
 	if (query_p)
 		{
-			plot_p = GetUniquePlot (query_p, study_p, data_p);
+			plot_p = GetUniquePlot (query_p, study_p, data_p, false);
 
 			bson_destroy (query_p);
 		}		/* if (query_p) */
@@ -1666,7 +1674,7 @@ static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialService
 }
 
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p)
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p, const bool must_exist_flag)
 {
 	Plot *plot_p = NULL;
 
@@ -1689,13 +1697,16 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceDa
 
 									if (!plot_p)
 										{
-
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetPlotFromJSON () failed");
 										}
 
 								}		/* if (num_results == 1) */
 							else
 								{
-									PrintBSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "query produced " SIZET_FMT " results for study \"%s\"", num_results, study_p -> st_name_s);
+									if (must_exist_flag)
+										{
+											PrintBSONToLog (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "query produced " SIZET_FMT " results for study \"%s\"", num_results, study_p -> st_name_s);
+										}
 								}
 
 						}		/* if (json_is_array (results_p)) */
