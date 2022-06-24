@@ -242,7 +242,7 @@ bool AddPhenotypeStatisticsNodeFromJSON (LinkedList *nodes_p, const json_t *phen
 					const json_t *stats_json_p = json_object_get (phenotype_p, ST_PHENOTYPE_STATISTICS_S);
 					bool stats_flag = true;
 
-					if (stats_json_p)
+					if ((stats_json_p) && (stats_json_p != json_null ()))
 						{
 							stats_p = GetStatisticsFromJSON (stats_json_p);
 

@@ -1182,7 +1182,11 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 									if (b)
 										{
-											if (!SavePlot (plot_p, data_p))
+											if (SavePlot (plot_p, data_p))
+												{
+													add_status = OS_SUCCEEDED;
+												}
+											else
 												{
 													add_status = OS_FAILED;
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
@@ -1715,7 +1719,10 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceDa
 				}		/* if (results_p) */
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
-
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetMongoToolCollection () failed for \"%s\"", data_p -> dftsd_collection_ss [DFTD_PLOT]);
+		}
 
 	return plot_p;
 }
