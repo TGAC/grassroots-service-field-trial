@@ -2052,18 +2052,33 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, c
 static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
+	char *full_study_filename_s = GetFrictionlessDataFilename (study_p -> st_name_s, data_p);
 
-	char *fd_url_s = GetFrictionlessDataURL (study_p -> st_name_s, data_p);
-
-	if (fd_url_s)
+	if (full_study_filename_s)
 		{
-			if (SetJSONString (study_json_p, ST_FRICTIONLESS_DATA_LINK_S, fd_url_s))
+			if (DoesFileExist (full_study_filename_s))
 				{
-					success_flag = true;
+					char *fd_url_s = GetFrictionlessDataURL (study_p -> st_name_s, data_p);
+
+					if (fd_url_s)
+						{
+							if (SetJSONString (study_json_p, ST_FRICTIONLESS_DATA_LINK_S, fd_url_s))
+								{
+									success_flag = true;
+								}
+
+							FreeCopiedString (fd_url_s);
+						}
+
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Frictionless Data file does not exist for study \"%s\"", study_p -> st_name_s);
 				}
 
-			FreeCopiedString (fd_url_s);
+			FreeCopiedString (full_study_filename_s);
 		}
+
 
 	return success_flag;
 }
