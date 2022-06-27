@@ -1350,6 +1350,199 @@ static OperationStatus ProcessRow (Row *row_p, ServiceJob *job_p, json_t *table_
 }
 
 
+static json_t *GetOrCreateJSONChild (json_t *cache_p, const char * const key_s)
+{
+
+	/*
+	 * Is this combo unique within the data that we are currently
+	 * importing?
+	 */
+	json_t *child_obj_p = json_object_get (cache_p, key_s);
+
+	if (child_obj_p)
+		{
+
+		}
+	else
+		{
+			child_obj_p = json_object ();
+
+			if (child_obj_p)
+				{
+					if (json_object_set_new (cache_p, key_s, child_obj_p) != 0)
+						{
+
+						}
+					else
+						{
+
+						}
+				}
+		}
+
+	return child_obj_p;
+}
+
+
+
+bool IsPlotUniqueInData (const json_t *table_row_json_p, json_t *cache_p, ServiceJob *job_p)
+{
+	const char *row_s = GetJSONString (table_row_json_p, S_ROW_TITLE_S);
+
+	if (row_s)
+		{
+			const char *column_s = GetJSONString (table_row_json_p, S_COLUMN_TITLE_S);
+
+			if (column_s)
+				{
+					const char * const sep_s = " - ";
+					char *row_and_column_s = ConcatenateVarargsStrings (row_s, sep_s, column_s, NULL);
+
+					if (row_and_column_s)
+						{
+							const char *index_s = GetJSONString (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
+
+							if (index_s)
+								{
+									/*
+									 * Is this combo unique within the data that we are currently
+									 * importing?
+									 */
+									json_t *index_value_p = json_object_get (cache_p, index_s);
+
+									if (index_value_p)
+										{
+
+										}
+									else
+										{
+
+							FreeCopiedString (row_and_column_s);
+						}		/* if (row_and_column_s) */
+
+
+
+
+					const char *index_s = GetJSONString (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
+
+					if (index_s)
+						{
+							/*
+							 * Is this combo unique within the data that we are currently
+							 * importing?
+							 */
+							json_t *index_value_p = json_object_get (cache_p, index_s);
+
+							if (index_value_p)
+								{
+
+								}
+							else
+								{
+									index_value_p = json_object ();
+
+									if (index_value_p)
+										{
+											if (json_object_set_new (cache_p, index_s, index_value_p) == 0)
+												{
+
+												}
+											else
+												{
+
+												}
+										}
+									else
+										{
+
+										}
+								}
+
+
+							/*
+							 * Is this combo unique within the data that we are currently
+							 * importing?
+							 */
+							json_t *row_value_p = json_object_get (cache_p, row_s);
+
+							if (row_value_p)
+								{
+
+								}
+							else
+								{
+									row_value_p = json_object ();
+
+									if (row_value_p)
+										{
+											if (json_object_set_new (cache_p, row_s, row_value_p) == 0)
+												{
+
+												}
+											else
+												{
+
+												}
+										}
+									else
+										{
+
+										}
+								}
+
+
+
+
+
+
+						}		/* if (index_s) */
+
+				}		/* if (column_s) */
+
+		}		/* if (row_s) */
+
+
+
+	if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
+		{
+			int32 column = -1;
+
+			if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
+				{
+					int32 rack_studywise_index = -1;
+					bool added_plot_to_study_flag = false;
+
+
+					/*
+					 * plot_p now has an id, so we can add the row/rack.
+					 */
+
+					if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
+						{
+
+
+
+						}		/* if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index)) */
+					else
+						{
+							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
+						}
+				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column)) */
+			else
+				{
+					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get value", row_index, S_COLUMN_TITLE_S);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Could not parse \"%s\" to an integer", S_COLUMN_TITLE_S);
+				}
+
+		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row)) */
+	else
+		{
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get value", row_index, S_ROW_TITLE_S);
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Could not parse \"%s\" to an integer", S_ROW_TITLE_S);
+		}
+}
+
 static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, bool *new_plot_flag_p, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
