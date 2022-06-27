@@ -1350,8 +1350,9 @@ static OperationStatus ProcessRow (Row *row_p, ServiceJob *job_p, json_t *table_
 }
 
 
-static json_t *GetOrCreateJSONChild (json_t *cache_p, const char * const key_s)
+static int IsCachedEntry (json_t *cache_p, const char * const key_s, const size_t row_index, size_t *duplicate_value_p)
 {
+	int cached_res = 0;
 
 	/*
 	 * Is this combo unique within the data that we are currently
@@ -1361,32 +1362,26 @@ static json_t *GetOrCreateJSONChild (json_t *cache_p, const char * const key_s)
 
 	if (child_obj_p)
 		{
-
+			*duplicate_value_p =  (size_t) json_integer_value (child_obj_p);
+			cached_res = 1;
 		}
 	else
 		{
-			child_obj_p = json_object ();
-
-			if (child_obj_p)
+			if (!SetJSONInteger (cache_p, key_s, row_index))
 				{
-					if (json_object_set_new (cache_p, key_s, child_obj_p) != 0)
-						{
-
-						}
-					else
-						{
-
-						}
+					cached_res = -1;
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, cache_p, "Failed to add cache entry for \"%s\": " SIZET_FMT, key_s, row_index);
 				}
 		}
 
-	return child_obj_p;
+	return cached_res;
 }
 
 
 
-bool IsPlotUniqueInData (const json_t *table_row_json_p, json_t *cache_p, ServiceJob *job_p)
+bool CheckPlotRequirements (const json_t *table_row_json_p, const size_t row_index, json_t *grid_cache_p, json_t *index_cache_p, ServiceJob *job_p, uint32 *row_p, uint32 *column_p, uint32 *index_p)
 {
+	bool success_flag = false;
 	const char *row_s = GetJSONString (table_row_json_p, S_ROW_TITLE_S);
 
 	if (row_s)
@@ -1404,144 +1399,97 @@ bool IsPlotUniqueInData (const json_t *table_row_json_p, json_t *cache_p, Servic
 
 							if (index_s)
 								{
-									/*
-									 * Is this combo unique within the data that we are currently
-									 * importing?
-									 */
-									json_t *index_value_p = json_object_get (cache_p, index_s);
+									size_t matched_row;
+									int res = IsCachedEntry (index_cache_p, index_s, row_index, &matched_row);
 
-									if (index_value_p)
+									if (res == 0)
+										{
+											int res = IsCachedEntry (grid_cache_p, row_and_column_s, row_index);
+
+											if (res == 0)
+												{
+													if (GetValidInteger (&row_s, row_p))
+														{
+															if (GetValidInteger (&column_s, column_p))
+																{
+																	if (GetValidInteger (&index_s, index_p))
+																		{
+																			success_flag = true;
+																		}		/* if (GetValidInteger (&index_s, index_p)) */
+																	else
+																		{
+																			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row as a number", row_index, S_COLUMN_TITLE_S);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", column_s, S_COLUMN_TITLE_S);
+																		}
+
+																}		/* if (GetValidInteger (&column_s, column_p)) */
+															else
+																{
+																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row as a number", row_index, S_COLUMN_TITLE_S);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", column_s, S_COLUMN_TITLE_S);
+																}
+
+														}		/* if (GetValidInteger (&row_s, row_p)) */
+													else
+														{
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row as a number", row_index, S_ROW_TITLE_S);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", row_s, S_ROW_TITLE_S);
+														}
+
+												}		/* if (res == 0) */
+											else if (res == 1)
+												{
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Row and column are duplicate of another row in the spreadsheet", row_index, S_ROW_TITLE_S);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Row \"%s\" and column \"%s\" on row " SIZET_FMT " are duplicate of row " SIZET_FMT " in the spreadsheet", row_s, column_s, row_index, matched_row, S_ROW_TITLE_S);
+												}		/* else if (res == 1) */
+											else if (res == -1)
+												{
+
+												}		/* else if (res == -1) */
+
+										}		/* if (res == 0) */
+									else if (res == 1)
 										{
 
-										}
-									else
+										}		/* else if (res == 1) */
+									else if (res == -1)
 										{
+
+										}		/* else if (res == -1) */
+
+								}		/* if (index_s) */
+							else
+								{
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
+								}
 
 							FreeCopiedString (row_and_column_s);
 						}		/* if (row_and_column_s) */
-
-
-
-
-					const char *index_s = GetJSONString (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
-
-					if (index_s)
-						{
-							/*
-							 * Is this combo unique within the data that we are currently
-							 * importing?
-							 */
-							json_t *index_value_p = json_object_get (cache_p, index_s);
-
-							if (index_value_p)
-								{
-
-								}
-							else
-								{
-									index_value_p = json_object ();
-
-									if (index_value_p)
-										{
-											if (json_object_set_new (cache_p, index_s, index_value_p) == 0)
-												{
-
-												}
-											else
-												{
-
-												}
-										}
-									else
-										{
-
-										}
-								}
-
-
-							/*
-							 * Is this combo unique within the data that we are currently
-							 * importing?
-							 */
-							json_t *row_value_p = json_object_get (cache_p, row_s);
-
-							if (row_value_p)
-								{
-
-								}
-							else
-								{
-									row_value_p = json_object ();
-
-									if (row_value_p)
-										{
-											if (json_object_set_new (cache_p, row_s, row_value_p) == 0)
-												{
-
-												}
-											else
-												{
-
-												}
-										}
-									else
-										{
-
-										}
-								}
-
-
-
-
-
-
-						}		/* if (index_s) */
-
-				}		/* if (column_s) */
-
-		}		/* if (row_s) */
-
-
-
-	if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row))
-		{
-			int32 column = -1;
-
-			if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column))
-				{
-					int32 rack_studywise_index = -1;
-					bool added_plot_to_study_flag = false;
-
-
-					/*
-					 * plot_p now has an id, so we can add the row/rack.
-					 */
-
-					if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
-						{
-
-
-
-						}		/* if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index)) */
 					else
 						{
-							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
+
 						}
-				}		/* if (GetJSONStringAsInteger (table_row_json_p, S_COLUMN_TITLE_S, &column)) */
+
+				}		/* if (column_s) */
 			else
 				{
 					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get value", row_index, S_COLUMN_TITLE_S);
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Could not parse \"%s\" to an integer", S_COLUMN_TITLE_S);
 				}
 
-		}		/* if (GetJSONStringAsInteger (table_row_json_p, S_ROW_TITLE_S, &row)) */
+		}		/* if (row_s) */
 	else
 		{
 			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get value", row_index, S_ROW_TITLE_S);
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Could not parse \"%s\" to an integer", S_ROW_TITLE_S);
 		}
+
+
+	return success_flag;
 }
+
+
 
 static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, bool *new_plot_flag_p, FieldTrialServiceData *data_p)
 {
