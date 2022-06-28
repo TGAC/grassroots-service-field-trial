@@ -90,6 +90,7 @@ SRCS 	= \
 	phenotype_statistics.c \
 	plot.c \
 	plot_jobs.c \
+  plots_cache.c \
 	programme.c \
 	programme_jobs.c \
 	row.c \
