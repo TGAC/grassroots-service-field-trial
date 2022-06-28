@@ -1172,7 +1172,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 										{
 											OperationStatus s = ProcessRow (row_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
 
-											if ((s == OS_SUCCEEDED) || (s != OS_PARTIALLY_SUCCEEDED))
+											if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
 												{
 													b = true;
 												}
