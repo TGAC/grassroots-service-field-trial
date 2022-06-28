@@ -195,7 +195,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid jsonNumeric type: %d", json_typeof (raw_value_p));
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json Numeric type: %d", json_typeof (raw_value_p));
 										}
 								}
 

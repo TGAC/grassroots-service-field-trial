@@ -860,7 +860,9 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 															bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add observed measured variable", row_index, key_s);
+
 															FreeObservation (observation_p);
 														}
 
@@ -871,7 +873,8 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 													bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observationfor row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Invalid value", row_index, key_s);
 
 													free_measured_variable_flag = true;
 												}
