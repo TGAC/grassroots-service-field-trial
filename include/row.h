@@ -29,54 +29,16 @@
 #include "observation.h"
 #include "treatment_factor_value.h"
 
+#include "base_row.h"
 
 struct Study;
 
-
-typedef enum
-{
-	/**
-	 * A normal plot which is part of an experiment.
-	 */
-	RT_NORMAL,
-
-	/**
-	 * A physical plot where no measurements are taken, just there as a physical spacer
-	 * which will appear in the plot-based view.
-	 */
-	RT_DISCARD,
-
-	/**
-	 * Used to keep the stylised view when laying out the plots and you have non-regular gaps.
-	 * Grassroots won't draw these plots and will use them for gaps calculations and draw
-	 * gaps instead
-	 */
-	RT_BLANK,
-
-	/**
-	 * The number of different values that a RoType can take.
-	 */
-	RT_NUM_VALUES
-} RowType;
 
 
 
 typedef struct Row
 {
-	bson_oid_t *ro_id_p;
-
-	const Study *ro_study_p;
-
-	bson_oid_t *ro_study_id_p;
-
-
-	Plot *ro_plot_p;
-
-	/**
-	 * The unique index for this row within
-	 * its parent study.
-	 */
-	uint32 ro_by_study_index;
+	BaseRow ro_base;
 
 	/**
 	 * The row factor/category for this rack within
@@ -96,7 +58,6 @@ typedef struct Row
 
 	bool ro_replicate_control_flag;
 
-	RowType ro_type;
 
 } Row;
 
@@ -105,7 +66,7 @@ typedef struct RowNode
 {
 	ListItem rn_node;
 
-	Row *rn_row_p;
+	BaseRow *rn_row_p;
 } RowNode;
 
 
@@ -197,12 +158,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowGenotypeControl (Row *row_p, bool contr
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowGenotypeControl (const Row *row_p);
 
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowType (Row *row_p, RowType rt);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL RowType GetRowType (const Row *row_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt);

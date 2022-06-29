@@ -1033,11 +1033,11 @@ Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *v
 Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
-	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_INDEX_S, NULL);
+	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", BR_STUDY_INDEX_S, NULL);
 
 	if (index_key_s)
 		{
-			char *study_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_ID_S, NULL);
+			char *study_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", BR_STUDY_ID_S, NULL);
 
 			if (study_key_s)
 				{
@@ -1124,14 +1124,14 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialS
 				}		/* if (study_key_s) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, RO_STUDY_ID_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, BR_STUDY_ID_S);
 				}
 
 			FreeCopiedString (index_key_s);
 		}		/* if (index_key_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, RO_STUDY_INDEX_S);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, BR_STUDY_INDEX_S);
 		}
 
 	return row_p;

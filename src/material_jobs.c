@@ -358,7 +358,7 @@ OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJo
 															/*
 															 * Get the study id
 															 */
-															if (GetNamedIdFromJSON (row_json_p, RO_STUDY_ID_S, &oid))
+															if (GetNamedIdFromJSON (row_json_p, BR_STUDY_ID_S, &oid))
 																{
 																	char *id_s = GetBSONOidAsString (&oid);
 

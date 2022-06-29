@@ -60,6 +60,7 @@ INCLUDES = \
 	-I$(DIR_LIBEXIF_INC) \
 	
 SRCS 	= \
+	base_row.c \
 	crop.c \
 	crop_jobs.c \
 	crop_ontology_tool.c \
