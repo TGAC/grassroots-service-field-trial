@@ -73,7 +73,7 @@ typedef struct RowNode
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef ALLOCATE_ROW_TAGS
-	#define ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_API
+	#define BASE_ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_API
 	#define ROW_VAL(x)	= x
 	#define ROW_CONCAT_VAL(x,y)	= x y
 #else
@@ -85,15 +85,15 @@ typedef struct RowNode
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
-ROW_PREFIX const char *RO_ID_S ROW_VAL ("id");
+ROW_PREFIX const char *BR_ID_S ROW_VAL ("id");
 
 ROW_PREFIX const char *RO_RACK_INDEX_S ROW_VAL ("rack_index");
 
-ROW_PREFIX const char *RO_STUDY_INDEX_S ROW_VAL ("study_index");
+ROW_PREFIX const char *BR_STUDY_INDEX_S ROW_VAL ("study_index");
 
-ROW_PREFIX const char *RO_PLOT_ID_S ROW_VAL ("plot_id");
+ROW_PREFIX const char *BR_PLOT_ID_S ROW_VAL ("plot_id");
 
-ROW_PREFIX const char *RO_STUDY_ID_S ROW_VAL ("study_id");
+ROW_PREFIX const char *BR_STUDY_ID_S ROW_VAL ("study_id");
 
 ROW_PREFIX const char *RO_REPLICATE_S ROW_VAL ("replicate");
 
