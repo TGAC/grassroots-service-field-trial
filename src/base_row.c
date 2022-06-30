@@ -120,17 +120,35 @@ bool AddBaseRowToJSON (const BaseRow *row_p, json_t *row_json_p, const ViewForma
 								{
 									if (AddNamedCompoundIdToJSON (row_json_p, row_p -> br_study_p -> st_id_p, BR_STUDY_ID_S))
 										{
+											const char *type_s = GetRowTypeAsString (row_p -> br_type);
 
-
-
-											if (row_p -> br_add_to_json_fn)
+											if (type_s)
 												{
-													success_flag = row_p -> br_add_to_json_fn (row_p, row_json_p, format, data_p);
-												}
+													if (SetJSONString (row_json_p, BR_ROW_TYPE_S, type_s))
+														{
+															if (row_p -> br_add_to_json_fn)
+																{
+																	success_flag = row_p -> br_add_to_json_fn (row_p, row_json_p, format, data_p);
+																}
+															else
+																{
+																	success_flag = true;
+																}
+														}		/* if (SetJSONString (row_json_p, BR_ROW_TYPE_S, type_s)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SetJSONString() failed for row " UINT32_FMT " in study \"%s\", \"%s\": \"%s\"",
+																								 row_p -> br_by_study_index, row_p -> br_plot_p -> pl_parent_p -> st_name_s,
+																								 BR_ROW_TYPE_S, type_s);
+														}
+
+												}		/* if (type_s) */
 											else
 												{
-													success_flag = true;
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowTypeAsString () failed for row " UINT32_FMT " in study \"%s\" with type %d",
+																				 row_p -> br_by_study_index, row_p -> br_plot_p -> pl_parent_p -> st_name_s, row_p -> br_type);
 												}
+
 										}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
 									else
 										{
@@ -223,6 +241,9 @@ BaseRow *GetBaseRowFromJSON (const json_t *json_p, Plot *plot_p, const Study *st
 bool PopulateBaseRowFromJSON (BaseRow *row_p, const json_t *row_json_p)
 {
 	bool success_flag = false;
+
+	RowType rt = RT_STANDARD;
+	if ()
 
 	return success_flag;
 }

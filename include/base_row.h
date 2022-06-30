@@ -119,6 +119,10 @@ BASE_ROW_PREFIX const char *BR_DISCARD_S BASE_ROW_VAL ("discard");
 BASE_ROW_PREFIX const char *BR_BLANK_S BASE_ROW_VAL ("blank");
 
 
+BASE_ROW_PREFIX const char *BR_ROW_TYPE_S BASE_ROW_VAL ("row_type");
+
+
+
 
 #ifdef __cplusplus
 extern "C"
