@@ -61,6 +61,12 @@ PLOT_JOB_PREFIX const char *PL_ROW_TITLE_S PLOT_JOB_VAL("Row");
 PLOT_JOB_PREFIX const char *PL_COLUMN_TITLE_S PLOT_JOB_VAL ("Column");
 
 
+
+PLOT_JOB_PREFIX const char * const PL_RACK_TITLE_S PLOT_JOB_VAL ("Rack");
+
+PLOT_JOB_PREFIX const char * const PL_GENE_BANK_S PLOT_JOB_VAL ("Gene Bank");
+
+
 PLOT_JOB_PREFIX NamedParameterType PL_PLOT_TABLE PLOT_VARIABLE_JOB_STRUCT_VAL ("PL Upload", PT_JSON_TABLE);
 
 

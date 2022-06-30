@@ -36,98 +36,73 @@ struct Study;
 
 
 
-typedef struct Row
+typedef struct StandardRow
 {
-	BaseRow ro_base;
+	BaseRow sr_base;
 
 	/**
 	 * The row factor/category for this rack within
 	 * its parent plot.
 	 */
-	uint32 ro_rack_index;
+	uint32 sr_rack_index;
 
-	Material *ro_material_p;
+	Material *sr_material_p;
 
-	MEM_FLAG ro_material_mem;
+	MEM_FLAG sr_material_mem;
 
-	LinkedList *ro_observations_p;
+	LinkedList *sr_observations_p;
 
-	LinkedList *ro_treatment_factor_values_p;
+	LinkedList *sr_treatment_factor_values_p;
 
-	uint32 ro_replicate_index;
+	uint32 sr_replicate_index;
 
-	bool ro_replicate_control_flag;
-
-
-} Row;
+	bool sr_replicate_control_flag;
 
 
-typedef struct RowNode
-{
-	ListItem rn_node;
-
-	BaseRow *rn_row_p;
-} RowNode;
+} StandardRow;
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-#ifdef ALLOCATE_ROW_TAGS
-	#define BASE_ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_API
-	#define ROW_VAL(x)	= x
-	#define ROW_CONCAT_VAL(x,y)	= x y
+#ifdef ALLOCATE_STANDARD_ROW_TAGS
+	#define STANDARD_ROW_PREFIX DFW_FIELD_TRIAL_SERVICE_API
+	#define STANDARD_ROW_VAL(x)	= x
+	#define STANDARD_ROW_CONCAT_VAL(x,y)	= x y
 #else
-	#define ROW_PREFIX extern
-	#define ROW_VAL(x)
-	#define ROW_CONCAT_VAL(x,y)
+	#define STANDARD_ROW_PREFIX extern
+	#define STANDARD_ROW_VAL(x)
+	#define STANDARD_ROW_CONCAT_VAL(x,y)
 #endif
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
 
-ROW_PREFIX const char *BR_ID_S ROW_VAL ("id");
 
-ROW_PREFIX const char *RO_RACK_INDEX_S ROW_VAL ("rack_index");
-
-ROW_PREFIX const char *BR_STUDY_INDEX_S ROW_VAL ("study_index");
-
-ROW_PREFIX const char *BR_PLOT_ID_S ROW_VAL ("plot_id");
-
-ROW_PREFIX const char *BR_STUDY_ID_S ROW_VAL ("study_id");
-
-ROW_PREFIX const char *RO_REPLICATE_S ROW_VAL ("replicate");
-
-ROW_PREFIX const char *RO_MATERIAL_ID_S ROW_VAL ("material_id");
-
-/**
- * The internal name for a field trial's material. This is
- * used as a temporary holding value until the material pointer
- * has been linked up
- */
-ROW_PREFIX const char *RO_TRIAL_MATERIAL_S ROW_VAL ("trial_material");
+STANDARD_ROW_PREFIX const char *SR_RACK_INDEX_S STANDARD_ROW_VAL ("rack_index");
 
 
-ROW_PREFIX const char *RO_MATERIAL_S ROW_VAL ("material");
+STANDARD_ROW_PREFIX const char *SR_REPLICATE_S STANDARD_ROW_VAL ("replicate");
+
+STANDARD_ROW_PREFIX const char *SR_MATERIAL_ID_S STANDARD_ROW_VAL ("material_id");
 
 
-ROW_PREFIX const char *RO_OBSERVATIONS_S  ROW_VAL ("observations");
-
-ROW_PREFIX const char *RO_TREATMENTS_S  ROW_VAL ("treatments");
+STANDARD_ROW_PREFIX const char *SR_MATERIAL_S STANDARD_ROW_VAL ("material");
 
 
-ROW_PREFIX const char *RO_REPLICATE_CONTROL_S ROW_VAL ("control");
+STANDARD_ROW_PREFIX const char *SR_OBSERVATIONS_S  STANDARD_ROW_VAL ("observations");
+
+STANDARD_ROW_PREFIX const char *SR_TREATMENTS_S  STANDARD_ROW_VAL ("treatments");
 
 
-ROW_PREFIX const char *RO_DISCARD_S ROW_VAL ("discard");
+STANDARD_ROW_PREFIX const char *SR_REPLICATE_CONTROL_S STANDARD_ROW_VAL ("control");
 
 
-ROW_PREFIX const char *RO_BLANK_S ROW_VAL ("blank");
 
 
-ROW_PREFIX const char *RO_IMPORT_RACK_S ROW_VAL ("Rack");
+STANDARD_ROW_PREFIX const char *SR_IMPORT_RACK_S STANDARD_ROW_VAL ("Rack");
 
 
-ROW_PREFIX const char *RO_PLOT_INDEX_S ROW_VAL ("Plot index");
+STANDARD_ROW_PREFIX const char *SR_PLOT_INDEX_S STANDARD_ROW_VAL ("Plot index");
 
 
 #ifdef __cplusplus
@@ -136,34 +111,34 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, const RowType rt, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, const RowType rt, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRow (Row *row_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL RowNode *AllocateRowNode (Row *row_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const struct Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *GetRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const struct Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 //DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const FieldTrialServiceData *data_p, bool insert_flag);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationToRow (Row *row_p, Observation *observation_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationToStandardRow (StandardRow *row_p, Observation *observation_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowGenotypeControl (Row *row_p, bool control_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetStandardRowGenotypeControl (StandardRow *row_p, bool control_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsRowGenotypeControl (const Row *row_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsStandardRowGenotypeControl (const StandardRow *row_p);
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateRow (Row *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateStandardRow (StandardRow *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToRow (Row *row_p, TreatmentFactorValue *tf_value_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToStandardRow (StandardRow *row_p, TreatmentFactorValue *tf_value_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStandardRowToJSON (const StandardRow *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStandardRowToPlotTable (const StandardRow *row_p, json_t *row_json_p, const FieldTrialServiceData *service_data_p);
 
 
 #ifdef __cplusplus

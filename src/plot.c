@@ -718,15 +718,15 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, FieldTr
 }
 
 
-Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index)
+BaseRow *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index)
 {
 	RowNode *node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
 
 	while (node_p)
 		{
-			Row *row_p = node_p -> rn_row_p;
+			BaseRow *row_p = node_p -> rn_row_p;
 
-			if (row_p -> ro_by_study_index == by_study_index)
+			if (row_p -> br_by_study_index == by_study_index)
 				{
 					return row_p;
 				}
@@ -738,17 +738,21 @@ Row *GetRowFromPlotByStudyIndex (Plot *plot_p, const uint32 by_study_index)
 }
 
 
-Row *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index)
+BaseRow *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index)
 {
 	RowNode *node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
 
 	while (node_p)
 		{
-			Row *row_p = node_p -> rn_row_p;
-
-			if (row_p -> ro_rack_index == rack_index)
+			if (node_p -> rn_row_p -> br_type == RT_STANDARD)
 				{
-					return row_p;
+					StandardRow *row_p = (StandardRow *) (node_p -> rn_row_p);
+
+					if (row_p -> sr_rack_index == rack_index)
+						{
+							return (& (row_p -> sr_base));
+						}
+
 				}
 
 			node_p = (RowNode *) (node_p -> rn_node.ln_next_p);
@@ -758,7 +762,7 @@ Row *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index)
 }
 
 
-bool AddRowToPlot (Plot *plot_p, Row *row_p)
+bool AddRowToPlot (Plot *plot_p, BaseRow *row_p)
 {
 	bool success_flag = false;
 	RowNode *node_p = AllocateRowNode (row_p);
@@ -793,7 +797,8 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 
 			json_array_foreach (rows_array_p, i, row_json_p)
 				{
-					Row *row_p = GetRowFromJSON (row_json_p, plot_p, NULL, study_p, true, data_p);
+					BaseRow *row_p = GetBaseRowFromJSON (row_json_p, plot_p, study_p, data_p);
+
 
 					if (row_p)
 						{
@@ -803,7 +808,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 								}
 							else
 								{
-									FreeRow (row_p);
+									FreeBaseRow (row_p);
 								}
 
 						}		/* if (row_p) */
@@ -918,7 +923,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFo
 
 					while (node_p && success_flag)
 						{
-							Row *row_p = node_p -> rn_row_p;
+							BaseRow *row_p = node_p -> rn_row_p;
 							json_t *row_json_p = ProcessRowJSON (processor_p, row_p, format, data_p);
 
 							if (row_json_p)
@@ -938,7 +943,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFo
 									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 									success_flag = false;
-									bson_oid_to_string (node_p -> rn_row_p -> ro_id_p, id_s);
+									bson_oid_to_string (node_p -> rn_row_p -> br_id_p, id_s);
 
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to create row json for \"%s\"", id_s);
 								}
