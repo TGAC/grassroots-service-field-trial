@@ -327,7 +327,7 @@ OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJo
 	OperationStatus status = OS_FAILED;
 	bool success_flag = true;
 
-	char *query_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_MATERIAL_ID_S, NULL);
+	char *query_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_MATERIAL_ID_S, NULL);
 
 	if (query_key_s)
 		{

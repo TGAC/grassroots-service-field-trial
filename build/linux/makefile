@@ -61,12 +61,14 @@ INCLUDES = \
 	
 SRCS 	= \
 	base_row.c \
+	blank_row.c \
 	crop.c \
 	crop_jobs.c \
 	crop_ontology_tool.c \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
 	dfw_util.c \
+	discard_row.c \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \

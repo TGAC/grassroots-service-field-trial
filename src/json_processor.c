@@ -7,14 +7,14 @@
 
 #include "json_processor.h"
 #include "plot.h"
-#include "row.h"
+#include "base_row.h"
 #include "material.h"
 
 
 
 void InitialiseJSONProcessor (struct JSONProcessor *processor_p,
 															json_t *(*process_plot_json_fn) (struct JSONProcessor *processor_p, struct Plot *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p),
-															json_t *(*process_row_json_fn) (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p),
+															json_t *(*process_row_json_fn) (struct JSONProcessor *processor_p, struct BaseRow *row_p, ViewFormat format, const FieldTrialServiceData *service_data_p),
 															void (*free_fn) (struct JSONProcessor *processor_p))
 {
 	processor_p -> jp_process_row_json_fn = process_row_json_fn;
@@ -53,7 +53,7 @@ json_t *ProcessPlotJSON (struct JSONProcessor *processor_p, Plot *plot_p, ViewFo
 }
 
 
-json_t *ProcessRowJSON (struct JSONProcessor *processor_p, Row *row_p, ViewFormat format, const FieldTrialServiceData *service_data_p)
+json_t *ProcessRowJSON (struct JSONProcessor *processor_p, BaseRow *row_p, ViewFormat format, const FieldTrialServiceData *service_data_p)
 {
 	json_t *row_json_p = NULL;
 
@@ -63,7 +63,7 @@ json_t *ProcessRowJSON (struct JSONProcessor *processor_p, Row *row_p, ViewForma
 		}
 	else
 		{
-			row_json_p = GetRowAsJSON (row_p, format, processor_p, service_data_p);
+			row_json_p = GetBaseRowAsJSON (row_p, format, processor_p, service_data_p);
 		}
 
 	return row_json_p;

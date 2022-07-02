@@ -14,6 +14,7 @@
 #include "dfw_field_trial_service_library.h"
 #include "plot.h"
 
+
 /*
  * Forward declarations
  */
@@ -25,7 +26,7 @@ typedef enum
 	/**
 	 * A normal plot which is part of an experiment.
 	 */
-	RT_NORMAL,
+	RT_STANDARD,
 
 	/**
 	 * A physical plot where no measurements are taken, just there as a physical spacer
@@ -41,13 +42,16 @@ typedef enum
 	RT_BLANK,
 
 	/**
-	 * The number of different values that a RoType can take.
+	 * The number of different values that a RowType can take.
 	 */
 	RT_NUM_VALUES
 } RowType;
 
 
-typedef struct
+typedef struct BaseRow BaseRow;
+
+
+struct BaseRow
 {
 	RowType br_type;
 
@@ -63,7 +67,25 @@ typedef struct
 	 */
 	uint32 br_by_study_index;
 
-} BaseRow;
+
+	void (*br_clear_fn) (struct BaseRow *row_p);
+
+	bool (*br_add_to_json_fn) (const struct BaseRow *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+	bool (*br_add_to_fd_fn) (const BaseRow *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+
+};
+
+
+
+typedef struct RowNode
+{
+	ListItem rn_node;
+
+	BaseRow *rn_row_p;
+} RowNode;
+
+
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -91,6 +113,16 @@ BASE_ROW_PREFIX const char *BR_PLOT_ID_S BASE_ROW_VAL ("plot_id");
 
 BASE_ROW_PREFIX const char *BR_STUDY_ID_S BASE_ROW_VAL ("study_id");
 
+BASE_ROW_PREFIX const char *BR_DISCARD_S BASE_ROW_VAL ("discard");
+
+
+BASE_ROW_PREFIX const char *BR_BLANK_S BASE_ROW_VAL ("blank");
+
+
+BASE_ROW_PREFIX const char *BR_ROW_TYPE_S BASE_ROW_VAL ("row_type");
+
+
+
 
 #ifdef __cplusplus
 extern "C"
@@ -99,16 +131,21 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *AllocateBlankRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *AllocateDiscardRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *AllocateBaseRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt);
+DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *AllocateBaseRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt,
+																												void (*clear_fn) (BaseRow *row_p),
+																												bool (*add_to_json_fn) (const BaseRow *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+																												bool (*add_to_fd_fn) (const BaseRow *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s));
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool InitBaseRow (BaseRow *row_p, bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt);
+DFW_FIELD_TRIAL_SERVICE_LOCAL  bool InitBaseRow (BaseRow *row_p, bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt,
+																								 void (*clear_fn) (BaseRow *row_p),
+																								 bool (*add_to_json_fn) (const BaseRow *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+																								 bool (*add_to_fd_fn) (const BaseRow *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s));
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearBaseRow (BaseRow *row_p);
@@ -117,17 +154,38 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearBaseRow (BaseRow *row_p);
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeBaseRow (BaseRow *row_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL RowNode *AllocateRowNode (BaseRow *row_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowNode (ListItem *node_p);
+
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowType (BaseRow *row_p, RowType rt);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL RowType GetRowType (const BaseRow *row_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddBaseRowToJSON (const BaseRow *row_p, json_t *row_json_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddBaseRowToJSON (const BaseRow *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *GetBaseRowFromJSON (const json_t *json_p, Plot *plot_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool PopulateBaseRowFromJSON (BaseRow *row_p, const json_t *row_json_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool PopulateBaseRowFromJSON (BaseRow *row_p, const json_t *row_json_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetBaseRowAsJSON (const BaseRow *row_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetRowTypeAsString (const RowType rt);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetRowTypeFromString (RowType *rt_p, const char *value_s);
 
 
 

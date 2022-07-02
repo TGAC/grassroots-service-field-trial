@@ -65,135 +65,26 @@ static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefi
  */
 
 
-bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
+bool AddRowFrictionlessDataDetails (const BaseRow *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
 {
-	bool success_flag = true;
+	bool success_flag = false;
 
-	if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index))
+	if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> br_by_study_index))
 		{
+			if (row_p -> br_add_to_fd_fn)
+				{
+					success_flag = row_p -> br_add_to_fd_fn (row_p, row_fd_p, service_data_p, null_sequence_s);
+				}
+			else
+				{
+					success_flag = true;
+				}
+
 			switch (row_p -> ro_type)
 				{
-					case RT_NORMAL:
+					case RT_STANDARD:
 						{
-							if (SetJSONInteger (row_fd_p, S_RACK_S, row_p -> ro_rack_index))
-								{
-									if ((! (row_p -> ro_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s)))
-										{
-											if (row_p -> ro_replicate_control_flag)
-												{
-													if (SetJSONString (row_fd_p, PL_REPLICATE_TITLE_S, RO_REPLICATE_CONTROL_S))
-														{
-															success_flag = true;
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": \"%s\"", PL_REPLICATE_TITLE_S, RO_REPLICATE_CONTROL_S);
-														}
-												}
-											else
-												{
-													success_flag = SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index);
 
-													if (SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index))
-														{
-															success_flag = true;
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, PL_REPLICATE_TITLE_S, row_p -> ro_replicate_index);
-														}
-
-												}
-
-											if (success_flag)
-												{
-													/*
-													 * Add the treatment factors
-													 */
-
-													if (row_p -> ro_treatment_factor_values_p)
-														{
-															uint32 num_added = 0;
-															TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> ro_treatment_factor_values_p -> ll_head_p);
-
-															while (tfv_node_p && success_flag)
-																{
-																	TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
-
-																	const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
-
-																	if (url_s)
-																		{
-																			if (SetFDTableString (row_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
-																				{
-																					++ num_added;
-																				}
-																			else
-																				{
-																					success_flag = false;
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "SetFDTableString () failed for url: \"%s\" label: \"%s\" null sequence: \"%s\"",
-																														 url_s, tf_value_p -> tfv_label_s, null_sequence_s ? null_sequence_s : "NULL");
-																				}
-																		}
-																	else
-																		{
-																			success_flag = false;
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "GetTreatmentFactorUrl () failed for url: \"%s\" in study \"%s\"",
-																												 tf_value_p -> tfv_label_s, tf_value_p -> tfv_factor_p -> tf_study_p -> st_name_s);
-																		}
-
-																	if (success_flag)
-																		{
-																			tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
-																		}
-																}
-
-														}		/* if (row_p -> ro_treatment_factor_values_p) */
-
-
-													if (success_flag)
-														{
-															if (row_p -> ro_observations_p)
-																{
-																	uint32 num_added = 0;
-																	ObservationNode *obs_node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
-
-																	while (obs_node_p && success_flag)
-																		{
-																			Observation *obs_p = obs_node_p -> on_observation_p;
-
-																			if (AddObservationValuesToFrictionlessData (obs_p, row_fd_p))
-																				{
-																					obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
-																					++ num_added;
-																				}
-																			else
-																				{
-																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																					success_flag = false;
-
-																					bson_oid_to_string (obs_p -> ob_id_p, id_s);
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "AddObservationValuesToFrictionlessData () failed for \"%s\"",
-																														 id_s);
-																				}
-
-																		}		/* while (obs_node_p && success_flag) */
-
-																}		/* if (row_p -> ro_observations_p) */
-
-
-														}		/* if (success_flag) */
-
-												}		/* if (success_flag) */
-
-										}		/* if ((! (row_p -> ro_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> ro_material_p -> ma_accession_s))) */
-
-								}		/* if (SetJSONInteger (row_fd_p, RO_RACK_INDEX_S, row_p -> ro_rack_index)) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, RO_RACK_INDEX_S, row_p -> ro_rack_index);
-								}
 						}
 						break;
 
@@ -251,7 +142,7 @@ bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const Fi
 
 
 
-OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, Study *study_p, FieldTrialServiceData *data_p)
+OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_t *plot_json_p, Study *study_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	void *temp_p = NULL;
@@ -329,7 +220,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 
 
 
-//OperationStatus OldAddObservationValuesToRow (Row *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
+//OperationStatus OldAddObservationValuesToBaseRow (BaseRow *row_p, json_t *observation_json_p, Study *study_p, const FieldTrialServiceData *data_p)
 //{
 //	OperationStatus status = OS_FAILED;
 //
@@ -422,7 +313,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 //
 //															if (observation_p)
 //																{
-//																	if (AddObservationToRow (row_p, observation_p))
+//																	if (AddObservationToBaseRow (row_p, observation_p))
 //																		{
 //																			++ imported_obs;
 //																			added_phenotype_flag = true;
@@ -434,7 +325,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 //
 //																			bson_oid_to_string (row_p -> ro_id_p, id_s);
 //
-//																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+//																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "AddObservationToBaseRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
 //																			FreeObservation (observation_p);
 //																		}
 //
@@ -502,7 +393,7 @@ OperationStatus AddTreatmentFactorValuesToRow (Row *row_p, json_t *plot_json_p, 
 //}
 
 
-OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddStatsValuesToBaseRow (BaseRow *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -511,7 +402,7 @@ OperationStatus AddStatsValuesToRow (Row *row_p, json_t *stas_json_p, Study *stu
 
 
 
-OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, json_t *observations_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -618,7 +509,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 
 															if (observation_p)
 																{
-																	if (AddObservationToRow (row_p, observation_p))
+																	if (AddObservationToBaseRow (row_p, observation_p))
 																		{
 																			added_phenotype_flag = true;
 																			loop_success_flag = true;
@@ -629,7 +520,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 
 																			bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "AddObservationToRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "AddObservationToBaseRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
 																			FreeObservation (observation_p);
 																		}
 
@@ -739,7 +630,7 @@ OperationStatus AddObservationValuesToRow (Row *row_p, json_t *observations_json
 
 
 
-OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 
@@ -849,7 +740,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 											if (observation_p)
 												{
-													if (AddObservationToRow (row_p, observation_p))
+													if (AddObservationToBaseRow (row_p, observation_p))
 														{
 															added_phenotype_flag = true;
 															status = OS_SUCCEEDED;
@@ -860,7 +751,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 															bson_oid_to_string (row_p -> ro_id_p, id_s);
 
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToBaseRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
 															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add observed measured variable", row_index, key_s);
 
 															FreeObservation (observation_p);
@@ -933,7 +824,7 @@ OperationStatus AddObservationValueToRow (Row *row_p, const char *key_s, const j
 
 
 
-OperationStatus AddSingleTreatmentFactorValueToRow  (Row *row_p, const char *key_s, const char *name_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddSingleTreatmentFactorValueToStandardRow  (StandardRow *row_p, const char *key_s, const char *name_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	void *temp_p = NULL;
@@ -1008,9 +899,9 @@ OperationStatus AddSingleTreatmentFactorValueToRow  (Row *row_p, const char *key
 
 
 
-Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
+Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
 {
-	ObservationNode *node_p = (ObservationNode *) (row_p -> ro_observations_p -> ll_head_p);
+	ObservationNode *node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
 
 	while (node_p)
 		{
@@ -1030,9 +921,9 @@ Observation *GetMatchingObservation (const Row *row_p, const MeasuredVariable *v
 }
 
 
-Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
+BaseRow *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
 {
-	Row *row_p = NULL;
+	BaseRow *row_p = NULL;
 	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", BR_STUDY_INDEX_S, NULL);
 
 	if (index_key_s)
@@ -1138,14 +1029,14 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialS
 }
 
 
-bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, const char *value_s)
+bool AddTreatmentFactorValueToRowByParts (StandardRow *row_p, TreatmentFactor *tf_p, const char *value_s)
 {
 	bool success_flag = false;
 	TreatmentFactorValue *tf_value_p = AllocateTreatmentFactorValue (tf_p, value_s);
 
 	if (tf_value_p)
 		{
-			success_flag = AddTreatmentFactorValueToRow (row_p, tf_value_p);
+			success_flag = AddTreatmentFactorValueToStandardRow (row_p, tf_value_p);
 		}
 	else
 		{
@@ -1161,7 +1052,7 @@ bool AddTreatmentFactorValueToRowByParts (Row *row_p, TreatmentFactor *tf_p, con
 
 bool GetDiscardValueFromSubmissionJSON (const json_t *row_json_p)
 {
-	const char *value_s = GetJSONString (row_json_p, RO_DISCARD_S);
+	const char *value_s = GetJSONString (row_json_p, BR_DISCARD_S);
 
 	if (value_s)
 		{
@@ -1187,7 +1078,7 @@ bool GetDiscardValueFromSubmissionJSON (const json_t *row_json_p)
 
 bool GetBlankValueFromSubmissionJSON (const json_t *row_json_p)
 {
-	const char *value_s = GetJSONString (row_json_p, RO_BLANK_S);
+	const char *value_s = GetJSONString (row_json_p, BR_BLANK_S);
 
 	if (value_s)
 		{
