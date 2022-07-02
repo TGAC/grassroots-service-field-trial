@@ -24,6 +24,8 @@
 #include "programme_jobs.h"
 #include "crop_jobs.h"
 #include "dfw_util.h"
+#include "operation.h"
+
 
 #include "frictionless_data_util.h"
 
@@ -35,6 +37,22 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss);
+
+
+bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+{
+	bool success_flag = false;
+	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
+	Parameter *param_p = NULL;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Programmes", false, data_p, param_set_p);
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PROGRAMME_SEARCH.npt_type, PROGRAMME_SEARCH.npt_name_s, "Search Programmes", "Search Programmes by Id. Use * to get all Programmes.", NULL, PL_ALL)) != NULL)
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
 
 
 bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -294,53 +312,47 @@ bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSe
 }
 
 
+bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool success_flag = AddProgramme (job_p, param_set_p, data_p);
+
+	return success_flag;
+}
+
+
 
 bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
 
-	if (strcmp (param_name_s, PROGRAMME_ID.npt_name_s) == 0)
+	const NamedParameterType params [] =
 		{
-			*pt_p = PROGRAMME_ID.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_ABBREVIATION.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_ABBREVIATION.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_CROP.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_CROP.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_NAME.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_NAME.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_OBJECTIVE.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_OBJECTIVE.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_PI_NAME.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_PI_NAME.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_PI_EMAIL.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_PI_EMAIL.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_URL.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_URL.npt_type;
-		}
-	else if (strcmp (param_name_s, PROGRAMME_LOGO.npt_name_s) == 0)
-		{
-			*pt_p = PROGRAMME_LOGO.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
+			PROGRAMME_ID,
+			PROGRAMME_ABBREVIATION,
+			PROGRAMME_CROP,
+			PROGRAMME_NAME,
+			PROGRAMME_OBJECTIVE,
+			PROGRAMME_PI_NAME,
+			PROGRAMME_PI_EMAIL,
+			PROGRAMME_URL,
+			PROGRAMME_LOGO,
+			NULL
+		};
 
-	return success_flag;
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);}
+}
+
+
+
+bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+
+	const NamedParameterType params [] =
+		{
+			PROGRAMME_SEARCH,
+			NULL
+		};
+
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);}
 }
 
 
@@ -784,6 +796,135 @@ static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *progra
 		}		/* if (dest_record_p) */
 
 	return success_flag;
+}
+
+
+bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	const char *id_s = NULL;
+
+
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_SEARCH.npt_name_s, &id_s))
+		{
+			if (!IsStringEmpty (id_s))
+				{
+					ViewFormat format = VF_CLIENT_FULL;
+
+					if (strcmp (id_s, "*") == 0)
+						{
+							OperationStatus = OS_FAILED;
+
+							/* Get all programmes */
+							json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
+
+							if (programmes_json_p)
+								{
+									size_t i;
+									size_t num_programmes = json_array_size (programmes_json_p);
+									size_t num_succeeded = 0;
+
+									for (i = 0; i < num_programmes; ++ i)
+										{
+											const json_t *src_json_p = json_array_get (programmes_json_p, i);
+											Programme *programme_p = GetProgrammeFromJSON (src_json_p, format, data_p);
+
+											if (programme_p)
+												{
+													if (AddProgrammeToServiceJob (job_p, programme_p, format, data_p))
+														{
+															++ num_succeeded;
+														}
+												}
+
+										}
+
+
+									job_done_flag = true;
+
+									if (num_succeeded == num_programmes)
+										{
+											status = OS_SUCCEEDED;
+										}
+									else if (num_succeeded > 0)
+										{
+											status = OS_PARTIALLY_SUCCEEDED;
+										}
+
+									MergeServiceJobStatus (job_p, status);
+
+								}
+						}
+					else
+						{
+							const size_t l = strlen (id_s);
+
+							if (bson_oid_is_valid (id_s, l))
+								{
+									Programme *programme_p = GetProgrammeByIdString (id_s, format, data_p);
+
+									if (programme_p)
+										{
+											if (AddProgrammeToServiceJob (job_p, programme_p, format, data_p))
+												{
+													job_done_flag = true;
+													SetServiceJobStatus (job_p, OS_SUCCEEDED);
+												}
+
+											FreeProgramme (programme_p);
+										}
+
+								}
+						}
+
+					job_done_flag = true;
+				}
+
+		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ID.npt_name_s, &value)) */
+
+
+	if (!job_done_flag)
+		{
+			const char *name_s = NULL;
+			const char *team_s = NULL;
+			const bool *search_flag_p = NULL;
+
+			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
+				{
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &team_s);
+				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
+
+
+			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_SEARCH.npt_name_s, &search_flag_p))
+				{
+					if ((search_flag_p != NULL) && (*search_flag_p == true))
+						{
+							bool success_flag;
+							const bool *fuzzy_search_flag_p = NULL;
+							bool fuzzy_search_flag = false;
+							ViewFormat vf = VF_CLIENT_MINIMAL;
+
+							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s, &fuzzy_search_flag_p);
+
+							if ((fuzzy_search_flag_p != NULL) && (*fuzzy_search_flag_p == true))
+								{
+									fuzzy_search_flag = true;
+								}
+
+							if ((full_data_flag_p != NULL) && (*full_data_flag_p == true))
+								{
+									vf = VF_CLIENT_FULL;
+								}
+
+							success_flag = SearchFieldTrials (job_p, name_s, team_s, fuzzy_search_flag, vf, data_p);
+
+							job_done_flag = true;
+						}		/* if (value.st_boolean_value) */
+				}
+
+		}		/* if (!job_done_flag) */
+
+	return job_done_flag;
 }
 
 

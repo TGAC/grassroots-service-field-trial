@@ -177,6 +177,31 @@ void FreeProgramme (Programme *programme_p)
 }
 
 
+ProgrammeNode *AllocateProgrammeNode (Programme *programme_p)
+{
+	ProgrammeNode *node_p = (ProgrammeNode *) AllocMemory (sizeof (ProgrammeNode));
+
+	if (node_p)
+		{
+			InitListItem (& (node_p -> pn_node));
+
+			node_p -> pn_programme_p = programme_p;
+		}
+
+	return node_p;
+}
+
+
+void FreeProgrammeNode (ListItem *node_p)
+{
+	ProgrammeNode *pr_node_p = (ProgrammeNode *) node_p;
+
+	FreeProgramme (pr_node_p -> pn_programme_p);
+
+	FreeMemory (pr_node_p);
+}
+
+
 
 json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
@@ -472,7 +497,7 @@ LinkedList *GetProgrammesByName (const char * const programme_s, const FieldTria
 
 static LinkedList *GetMatchingProgrammes (const FieldTrialServiceData *data_p, const char **keys_ss, const char **values_ss)
 {
-	LinkedList *field_trials_list_p = AllocateLinkedList (FreeFieldTrialNode);
+	LinkedList *field_trials_list_p = AllocateLinkedList (FreeProgrammeNode);
 
 	if (field_trials_list_p)
 		{
@@ -480,21 +505,26 @@ static LinkedList *GetMatchingProgrammes (const FieldTrialServiceData *data_p, c
 
 			if (query_p)
 				{
-					const char **key_ss = keys_ss;
-					const char **value_ss = values_ss;
 					bool success_flag = true;
 
-					while (success_flag && (*key_ss != NULL) && (*value_ss != NULL))
+					if (keys_ss && values_ss)
 						{
-							if (BSON_APPEND_UTF8 (query_p, *key_ss, *value_ss))
+							const char **key_ss = keys_ss;
+							const char **value_ss = values_ss;
+
+							while (success_flag && (*key_ss != NULL) && (*value_ss != NULL))
 								{
-									++ key_ss;
-									++ value_ss;
+									if (BSON_APPEND_UTF8 (query_p, *key_ss, *value_ss))
+										{
+											++ key_ss;
+											++ value_ss;
+										}
+									else
+										{
+											success_flag = false;
+										}
 								}
-							else
-								{
-									success_flag = false;
-								}
+
 						}
 
 					if (success_flag)

@@ -56,6 +56,7 @@ PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_PI_NAME PROGRAMME_JOB_STRUCT_V
 PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_PI_EMAIL PROGRAMME_JOB_STRUCT_VAL("PR PI Email", PT_STRING);
 PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_LOGO PROGRAMME_JOB_STRUCT_VAL("PR Logo", PT_STRING);
 
+PROGRAMME_JOB_PREFIX NamedParameterType PROGRAMME_SEARCH PROGRAMME_JOB_STRUCT_VAL("PR Search", PT_STRING);
 
 
 #ifdef __cplusplus
@@ -70,13 +71,22 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpProgrammesListParameter (const FieldTria
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammeToServiceJob (ServiceJob *job_p, Programme *program_p, const ViewFormat format, FieldTrialServiceData *data_p);

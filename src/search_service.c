@@ -553,6 +553,10 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 												{
 													if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
 														{
+															if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p))
+																{
+
+																}		/* if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p)) */
 
 														}		/* if (!RunForSearchMaterialParams (data_p, param_set_p, job_p)) */
 

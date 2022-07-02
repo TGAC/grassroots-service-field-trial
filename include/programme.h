@@ -154,6 +154,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, co
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgramme (Programme *programme_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL ProgrammeNode *AllocateProgrammeNode (Programme *programme_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgrammeNode (ListItem *node_p);
+
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p, MEM_FLAG mf);
 
 
