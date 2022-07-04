@@ -686,7 +686,6 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 												{
 													if (AddObservationToStandardRow (row_p, observation_p))
 														{
-															added_phenotype_flag = true;
 															status = OS_SUCCEEDED;
 														}
 													else
