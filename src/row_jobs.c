@@ -65,15 +65,15 @@ static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefi
  */
 
 
-bool AddRowFrictionlessDataDetails (const BaseRow *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
+bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
 {
 	bool success_flag = false;
 
-	if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> br_by_study_index))
+	if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index))
 		{
-			if (row_p -> br_add_to_fd_fn)
+			if (row_p -> ro_add_to_fd_fn)
 				{
-					success_flag = row_p -> br_add_to_fd_fn (row_p, row_fd_p, service_data_p, null_sequence_s);
+					success_flag = row_p -> ro_add_to_fd_fn (row_p, row_fd_p, service_data_p, null_sequence_s);
 				}
 			else
 				{
@@ -393,7 +393,7 @@ OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_
 //}
 
 
-OperationStatus AddStatsValuesToBaseRow (BaseRow *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -402,226 +402,171 @@ OperationStatus AddStatsValuesToBaseRow (BaseRow *row_p, json_t *stas_json_p, St
 
 
 
-OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, json_t *observations_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
-	OperationStatus status = OS_FAILED;
+	OperationStatus status = OS_IDLE;
 
-	bool loop_success_flag = true;
-	void *iterator_p = json_object_iter (observations_json_p);
-	size_t imported_obs = 0;
-	size_t total_obs = 0;
-	LinkedList *processed_keys_p = AllocateStringLinkedList ();
 
-	if (processed_keys_p)
+	/*
+	 * ignore our column names
+	 */
+	if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
 		{
-			while (iterator_p && loop_success_flag)
+			MeasuredVariable *measured_variable_p = NULL;
+			MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
+			struct tm *start_date_p = NULL;
+			struct tm *end_date_p = NULL;
+			bool corrected_value_flag = false;
+			uint32 observation_index = OB_DEFAULT_INDEX;
+
+			if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
 				{
-					const char *key_s = json_object_iter_key (iterator_p);
-					json_t *value_p = json_object_iter_value (iterator_p);
-					bool observation_key_flag = false;
+					Observation *observation_p = NULL;
+					bool free_measured_variable_flag = false;
+					const char *value_s = json_string_value (value_p);
 
-
-					/*
-					 * ignore our column names
-					 */
-					if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
+					if (!IsStringEmpty (value_s))
 						{
-							MeasuredVariable *measured_variable_p = NULL;
-							MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
-							struct tm *start_date_p = NULL;
-							struct tm *end_date_p = NULL;
-							bool corrected_value_flag = false;
-							uint32 observation_index = OB_DEFAULT_INDEX;
+							const char *growth_stage_s = NULL;
+							const char *method_s = NULL;
+							ObservationNature nature = ON_ROW;
+							Instrument *instrument_p = NULL;
+							const json_t *raw_value_p = NULL;
+							const json_t *corrected_value_p = NULL;
 
-							if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
+							if (corrected_value_flag)
 								{
-									Observation *observation_p = NULL;
-									bool added_phenotype_flag = false;
-									bool free_measured_variable_flag = false;
-									const char *value_s = json_string_value (value_p);
+									corrected_value_p = value_p;
+								}
+							else
+								{
+									raw_value_p = value_p;
+								}
 
-									if (!IsStringEmpty (value_s))
+							observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+
+							if (observation_p)
+								{
+									if (corrected_value_flag)
 										{
-											const char *growth_stage_s = NULL;
-											const char *method_s = NULL;
-											ObservationNature nature = ON_ROW;
-											Instrument *instrument_p = NULL;
-											json_t *raw_value_p = NULL;
-											json_t *corrected_value_p = NULL;
-
-											if (corrected_value_flag)
+											if (!SetObservationCorrectedValueFromString (observation_p, value_s))
 												{
-													corrected_value_p = value_p;
+													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationCorrectedValueFromString failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+													FreeObservation (observation_p);
 												}
-											else
+										}
+									else
+										{
+											if (!SetObservationRawValueFromString (observation_p, value_s))
 												{
-													raw_value_p = value_p;
+													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationRawValueFromString failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+
+													FreeObservation (observation_p);
 												}
 
-											observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+										}
+
+									free_measured_variable_flag = true;
+
+								}		/* if (observation_p) */
+							else
+								{
+									bson_oid_t *observation_id_p = GetNewBSONOid ();
+
+									if (observation_id_p)
+										{
+											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+
+											if (obs_type != OT_NUM_TYPES)
+												{
+													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
+												}
 
 											if (observation_p)
 												{
-													if (corrected_value_flag)
+													if (AddObservationToStandardRow (row_p, observation_p))
 														{
-															if (!SetObservationCorrectedValueFromString (observation_p, value_s))
-																{
-																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																	bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-																	FreeObservation (observation_p);
-																}
+															status = OS_SUCCEEDED;
 														}
 													else
 														{
-															if (!SetObservationRawValueFromString (observation_p, value_s))
-																{
-																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-																	bson_oid_to_string (row_p -> ro_id_p, id_s);
+															bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-																	FreeObservation (observation_p);
-																}
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 
+															FreeObservation (observation_p);
 														}
-
-													free_measured_variable_flag = true;
-
-													++ imported_obs;
 
 												}		/* if (observation_p) */
 											else
 												{
-													bson_oid_t *observation_id_p = GetNewBSONOid ();
+													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-													if (observation_id_p)
-														{
-															const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
-															ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
-
-															if (obs_type != OT_NUM_TYPES)
-																{
-																	observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
-																}
-
-															if (observation_p)
-																{
-																	if (AddObservationToBaseRow (row_p, observation_p))
-																		{
-																			added_phenotype_flag = true;
-																			loop_success_flag = true;
-																		}
-																	else
-																		{
-																			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																			bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "AddObservationToBaseRow failed for row \"%s\" and key \"%s\"", id_s, key_s);
-																			FreeObservation (observation_p);
-																		}
-
-																}		/* if (observation_p) */
-															else
-																{
-																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																	bson_oid_to_string (row_p -> ro_id_p, id_s);
-
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "Failed to allocate Observation for row \"%s\" and key \"%s\"", id_s, key_s);
+													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
 
-																	free_measured_variable_flag = true;
-																}
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observations_json_p, "Failed to allocate observation id");
-														}
+													free_measured_variable_flag = true;
 												}
 
-											++ total_obs;
-
-
-
-										}		/* if ((!IsStringEmpty (raw_value_s)) */
+										}
 									else
 										{
-											PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, observations_json_p, "No measured value for \"%s\", skipping", key_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation for \"%s\" with value \"%s\"", key_s, value_s);
 										}
+								}
 
-
-									if (start_date_p)
-										{
-											FreeTime (start_date_p);
-											start_date_p = NULL;
-										}
-
-									if (end_date_p)
-										{
-											FreeTime (end_date_p);
-											end_date_p = NULL;
-										}
-
-									/*
-									 * If the Observation failed to be allocated then, we need to free the
-									 * Measured Variable as FreeObservation () would normally take care of
-									 * that when the
-									 */
-									if (free_measured_variable_flag && measured_variable_p)
-										{
-											FreeMeasuredVariable (measured_variable_p);
-											measured_variable_p = NULL;
-										}
-
-									if (!AddStringToStringLinkedList (processed_keys_p, key_s, MF_DEEP_COPY))
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddStringToStringLinkedList () failed for \"%s\"", key_s);
-										}
-
-
-								}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
-
-
-						}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
-
-
-					iterator_p = json_object_iter_next (observations_json_p, iterator_p);
-				}		/* while (iterator_p && loop_success_flag) */
-
-
-			/*
-			 * Remove all of the processed observation keys from the JSON
-			 */
-			if (processed_keys_p -> ll_size > 0)
-				{
-					StringListNode *node_p = (StringListNode *) (processed_keys_p -> ll_head_p);
-
-					while (node_p)
+						}		/* if ((!IsStringEmpty (raw_value_s)) */
+					else
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Removing observation \"%s\" from the json", node_p -> sln_string_s);
-
-							json_object_del (observations_json_p, node_p -> sln_string_s);
-
-							node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
+							PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No measured value for \"%s\", skipping", key_s);
 						}
-				}
-
-			FreeLinkedList (processed_keys_p);
-		}		/* if (processed_keys_p) */
 
 
-	if (imported_obs == total_obs)
+					if (start_date_p)
+						{
+							FreeTime (start_date_p);
+							start_date_p = NULL;
+						}
+
+					if (end_date_p)
+						{
+							FreeTime (end_date_p);
+							end_date_p = NULL;
+						}
+
+					/*
+					 * If the Observation failed to be allocated then, we need to free the
+					 * Measured Variable as FreeObservation () would normally take care of
+					 * that when the
+					 */
+					if (free_measured_variable_flag && measured_variable_p)
+						{
+							FreeMeasuredVariable (measured_variable_p);
+							measured_variable_p = NULL;
+						}
+
+
+
+				}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
+
+
+		}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
+	else
 		{
-			status = OS_SUCCEEDED;
-		}
-	else if (imported_obs > 0)
-		{
-			status = OS_PARTIALLY_SUCCEEDED;
+			status = OS_IDLE;
 		}
 
 	return status;
@@ -651,7 +596,6 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 			if (status == OS_SUCCEEDED)
 				{
 					Observation *observation_p = NULL;
-					bool added_phenotype_flag = false;
 					bool free_measured_variable_flag = false;
 					const char *growth_stage_s = NULL;
 					const char *method_s = NULL;
@@ -687,7 +631,7 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 										{
 											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-											bson_oid_to_string (row_p -> ro_id_p, id_s);
+											bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
 											FreeObservation (observation_p);
@@ -703,7 +647,7 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 										{
 											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-											bson_oid_to_string (row_p -> ro_id_p, id_s);
+											bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
 											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
 											FreeObservation (observation_p);
@@ -740,7 +684,7 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 
 											if (observation_p)
 												{
-													if (AddObservationToBaseRow (row_p, observation_p))
+													if (AddObservationToStandardRow (row_p, observation_p))
 														{
 															added_phenotype_flag = true;
 															status = OS_SUCCEEDED;
@@ -749,9 +693,9 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 														{
 															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-															bson_oid_to_string (row_p -> ro_id_p, id_s);
+															bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToBaseRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
 															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add observed measured variable", row_index, key_s);
 
 															FreeObservation (observation_p);
@@ -762,9 +706,9 @@ OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const cha
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
-													bson_oid_to_string (row_p -> ro_id_p, id_s);
+													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observationfor row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
 													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Invalid value", row_index, key_s);
 
 													free_measured_variable_flag = true;
@@ -921,14 +865,14 @@ Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVar
 }
 
 
-BaseRow *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
+Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
 {
-	BaseRow *row_p = NULL;
-	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", BR_STUDY_INDEX_S, NULL);
+	Row *row_p = NULL;
+	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_INDEX_S, NULL);
 
 	if (index_key_s)
 		{
-			char *study_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", BR_STUDY_ID_S, NULL);
+			char *study_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_ID_S, NULL);
 
 			if (study_key_s)
 				{
@@ -1015,14 +959,14 @@ BaseRow *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTr
 				}		/* if (study_key_s) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, BR_STUDY_ID_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, RO_STUDY_ID_S);
 				}
 
 			FreeCopiedString (index_key_s);
 		}		/* if (index_key_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, BR_STUDY_INDEX_S);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to concatenate \"%s\", \".\" and \"%s\"", PL_ROWS_S, RO_STUDY_INDEX_S);
 		}
 
 	return row_p;
@@ -1052,7 +996,7 @@ bool AddTreatmentFactorValueToRowByParts (StandardRow *row_p, TreatmentFactor *t
 
 bool GetDiscardValueFromSubmissionJSON (const json_t *row_json_p)
 {
-	const char *value_s = GetJSONString (row_json_p, BR_DISCARD_S);
+	const char *value_s = GetJSONString (row_json_p, RO_DISCARD_S);
 
 	if (value_s)
 		{
@@ -1078,7 +1022,7 @@ bool GetDiscardValueFromSubmissionJSON (const json_t *row_json_p)
 
 bool GetBlankValueFromSubmissionJSON (const json_t *row_json_p)
 {
-	const char *value_s = GetJSONString (row_json_p, BR_BLANK_S);
+	const char *value_s = GetJSONString (row_json_p, RO_BLANK_S);
 
 	if (value_s)
 		{

@@ -47,7 +47,6 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p);
 
 
-static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p);
 
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
@@ -884,7 +883,7 @@ bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p,
 
 
 
-static bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p)
+bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	OperationStatus status = OS_FAILED_TO_START;

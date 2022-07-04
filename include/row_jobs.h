@@ -26,7 +26,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 
-#include "row.h"
+#include "standard_row.h"
 
 #include "plot.h"
 #include "treatment_factor_value.h"
@@ -40,10 +40,10 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *GetRowByRackIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByRackIndex (const int32 row, Plot *plot_p, const bool expand_fields_flag, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllRowsContainingMaterial (Material *material_p, const FieldTrialServiceData *data_p);
@@ -56,14 +56,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRow (
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_t *plot_json_p, Study *study_p, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddStatsValuesToBaseRow (BaseRow *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToRowByParts (StandardRow *row_p, TreatmentFactor *tf_p, const char *value_s);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsFrictionlessData (const BaseRow *row_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetRowAsFrictionlessData (const Row *row_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowFrictionlessDataDetails (const BaseRow *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p);

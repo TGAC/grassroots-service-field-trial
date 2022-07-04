@@ -1,1119 +1,483 @@
 /*
- ** Copyright 2014-2018 The Earlham Institute
- **
- ** Licensed under the Apache License, Version 2.0 (the "License");
- ** you may not use this file except in compliance with the License.
- ** You may obtain a copy of the License at
- **
- **     http://www.apache.org/licenses/LICENSE-2.0
- **
- ** Unless required by applicable law or agreed to in writing, software
- ** distributed under the License is distributed on an "AS IS" BASIS,
- ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- ** See the License for the specific language governing permissions and
- ** limitations under the License.
- */
-/*
- * row.c
+ * base_row.c
  *
- *  Created on: 28 Sep 2018
+ *  Created on: 29 Jun 2022
  *      Author: billy
  */
 
-#define ALLOCATE_STANDARD_ROW_TAGS (1)
+#define ALLOCATE_BASE_ROW_TAGS (1)
 #include "row.h"
 
 #include "memory_allocations.h"
-#include "string_utils.h"
 #include "streams.h"
-#include "observation.h"
-#include "dfw_util.h"
+#include "mongodb_tool.h"
+#include "plot.h"
+
+#include "blank_row.h"
+#include "discard_row.h"
+#include "standard_row.h"
 #include "plot_jobs.h"
-#include "treatment_factor_value.h"
-#include "frictionless_data_util.h"
 
 
-static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
-
-static bool GetObservationsFromJSON (const json_t *row_json_p, StandardRow *row_p, FieldTrialServiceData *data_p);
-
-static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, StandardRow *row_p, const Study *study_p, const FieldTrialServiceData *data_p);
-
-static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const Study *study_p, const ViewFormat format);
-
-static bool IsFlagTrue (const json_t *json_p, const char * const key_s);
-
-
-static void ClearStandardRow (BaseRow *row_p);
-
-static bool AddStandardRowFrictionlessDataDetails (const BaseRow *base_row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
+static const char *S_ROW_TYPES_SS [] = { "Standard", "Discard", "Blank" };
 
 
 
-
-StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, const RowType rt, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
+Row *AllocateBaseRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt,
+													void (*clear_fn) (Row *row_p),
+													bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+													bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
+													bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
 {
-	if ((material_p != NULL) || (rt == RT_BLANK) || (rt == RT_DISCARD))
+	Row *row_p = (Row *) AllocMemory (sizeof (Row));
+
+	if (row_p)
 		{
-			LinkedList *observations_p = AllocateLinkedList (FreeObservationNode);
-
-
-			if (observations_p)
+			if (InitRow (row_p, id_p, study_index, parent_plot_p, rt, clear_fn, add_to_json_fn, add_from_json_fn, add_to_fd_fn))
 				{
-					LinkedList *tf_values_p = AllocateLinkedList (FreeTreatmentFactorValueNode);
-
-					if (tf_values_p)
-						{
-							StandardRow *row_p = (StandardRow *) AllocMemory (sizeof (StandardRow));
-
-							if (row_p)
-								{
-									if (InitBaseRow (& (row_p -> sr_base), id_p, study_index, parent_plot_p, rt, ClearStandardRow, AddStandardRowToJSON, AddStandardRowFrictionlessDataDetails))
-										{
-											row_p -> sr_rack_index = rack_index;
-											row_p -> sr_material_p = material_p;
-											row_p -> sr_material_mem = material_mem;
-											row_p -> sr_observations_p = observations_p;
-											row_p -> sr_treatment_factor_values_p = tf_values_p;
-											row_p -> sr_replicate_index = replicate;
-											row_p -> sr_replicate_control_flag = false;
-
-											return row_p;
-										}
-
-									FreeMemory (row_p);
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
-								}
-
-							FreeLinkedList (tf_values_p);
-						}		/* if (tf_values_p) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate treatment factors list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
-						}
-
-
-					FreeLinkedList (observations_p);
+					return row_p;
 				}
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observations list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
-				}
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No valid material for row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+
+			FreeMemory (row_p);
 		}
 
 	return NULL;
 }
 
 
-void ClearStandardRow (BaseRow *row_p)
+bool InitRow (Row *row_p, bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt,
+									void (*clear_fn) (Row *row_p),
+									bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+									bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
+									bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
+
 {
-	StandardRow *standard_row_p = (StandardRow *) row_p;
-
-	FreeLinkedList (standard_row_p -> sr_treatment_factor_values_p);
-
-	FreeLinkedList (standard_row_p -> sr_observations_p);
-
-	if ((standard_row_p -> sr_material_mem == MF_DEEP_COPY) || (standard_row_p -> sr_material_mem == MF_SHALLOW_COPY))
+	if (!id_p)
 		{
-			if (standard_row_p -> sr_material_p)
+			id_p = GetNewBSONOid ();
+
+			if (!id_p)
 				{
-					FreeMaterial (standard_row_p -> sr_material_p);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate BSON oid for row at [" UINT32_FMT ", " UINT32_FMT "] for study \"%s\"", parent_plot_p -> pl_parent_p -> st_name_s);
+					return false;
 				}
 		}
+
+	row_p -> ro_type = rt;
+	row_p -> ro_id_p = id_p;
+	row_p -> ro_by_study_index = study_index;
+	row_p -> ro_plot_p = parent_plot_p;
+	row_p -> ro_study_p = parent_plot_p -> pl_parent_p;
+
+	SetRowCallbackFunctions (row_p, clear_fn, add_to_json_fn, add_from_json_fn, add_to_fd_fn);
+
+	return true;
+}
+
+
+void ClearRow (Row *row_p)
+{
+	FreeBSONOid (row_p -> ro_id_p);
+}
+
+
+void FreeRow (Row *row_p)
+{
+	ClearRow (row_p);
+
+	if (row_p -> ro_clear_fn)
+		{
+			row_p -> ro_clear_fn (row_p);
+		}
+
+	FreeMemory (row_p);
 }
 
 
 
-BaseRow *GetStandardRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
+void SetRowType (Row *row_p, RowType rt)
+{
+	row_p -> ro_type = rt;
+}
+
+
+RowType GetRowType (const Row *row_p)
+{
+	return (row_p -> ro_type);
+}
+
+
+
+bool AddRowToJSON (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index))
+		{
+			/*
+			 * We only need to store the parent plot id if the JSON is for the backend
+			 */
+			if (format == VF_STORAGE)
+				{
+					if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+						{
+							if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
+								{
+									if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_study_p -> st_id_p, RO_STUDY_ID_S))
+										{
+											const char *type_s = GetRowTypeAsString (row_p -> ro_type);
+
+											if (type_s)
+												{
+													if (SetJSONString (row_json_p, RO_ROW_TYPE_S, type_s))
+														{
+															if (row_p -> ro_add_to_json_fn)
+																{
+																	success_flag = row_p -> ro_add_to_json_fn (row_p, row_json_p, format, data_p);
+																}
+															else
+																{
+																	success_flag = true;
+																}
+														}		/* if (SetJSONString (row_json_p, BR_ROW_TYPE_S, type_s)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SetJSONString() failed for row " UINT32_FMT " in study \"%s\", \"%s\": \"%s\"",
+																								 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s,
+																								 RO_ROW_TYPE_S, type_s);
+														}
+
+												}		/* if (type_s) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowTypeAsString () failed for row " UINT32_FMT " in study \"%s\" with type %d",
+																				 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s, row_p -> ro_type);
+												}
+
+										}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add study id for row " UINT32_FMT " in study \"%s\"",
+																				 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+										}
+
+								}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add plot id for for row " UINT32_FMT " in study \"%s\"",
+																		 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
+								}
+
+						}		/* if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p)) */
+					else
+						{
+							char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+							if (id_s)
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
+									FreeBSONOidString (id_s);
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to row add compound id");
+								}
+						}
+
+
+				}		/* if (format == VF_STORAGE) */
+			else
+				{
+					success_flag = true;
+				}
+
+		}		/* if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index)) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, RO_STUDY_INDEX_S, row_p -> ro_by_study_index);
+		}
+
+	return success_flag;
+}
+
+
+json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
+{
+	json_t *row_json_p = json_object ();
+
+	if (row_json_p)
+		{
+			if (AddRowToJSON (row_p, row_json_p, format, data_p))
+				{
+					bool success_flag = true;
+
+					if (row_p -> ro_add_to_json_fn)
+						{
+							success_flag = row_p -> ro_add_to_json_fn (row_p, row_json_p, format, data_p);
+						}
+
+					if (success_flag)
+						{
+							return row_json_p;
+						}
+
+				}		/* if (AddBaseRowToJSON (& (row_p -> sr_base), row_json_p, format)) */
+			else
+				{
+
+				}
+
+			json_decref (row_json_p);
+		}		/* if (row_json_p) */
+
+	return NULL;
+}
+
+
+Row *GetRowFromJSON (const json_t *row_json_p, Plot *plot_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
-	Material *material_to_use_p = material_p;
+	RowType rt = RT_STANDARD;
+	const char *type_s = GetJSONString (row_json_p, RO_ROW_TYPE_S);
+
+	if (type_s)
+		{
+			if (!SetRowTypeFromString (&rt, type_s))
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Unknown row type \"%s\"", type_s);
+				}
+
+		}		/* if (type_s) */
+
+	switch (rt)
+		{
+			case RT_STANDARD:
+				{
+					StandardRow *sr_p = GetStandardRowFromJSON (row_json_p, plot_p, NULL, study_p, format, data_p);
+
+					if (sr_p)
+						{
+							row_p = & (sr_p -> sr_base);
+						}
+				}
+				break;
+
+			case RT_BLANK:
+				{
+					BlankRow *br_p = GetBlankRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
+
+					if (br_p)
+						{
+							row_p = & (br_p -> br_base);
+						}
+				}
+				break;
+
+			case RT_DISCARD:
+				{
+					DiscardRow *dr_p = GetDiscardRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
+
+					if (dr_p)
+						{
+							row_p = & (dr_p -> dr_base);
+						}
+				}
+				break;
+
+			default:
+				break;
+		}		/* switch (rt) */
+
+
+	return row_p;
+}
+
+
+static bson_oid_t *GetNamedBSONOidFromJSON (const json_t *json_p, const char *key_s)
+{
+	bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+	if (id_p)
+		{
+			if (GetNamedIdFromJSON (json_p, key_s, id_p))
+				{
+					return id_p;
+				}		/* if (GetNamedIdFromJSON (json_p, key_s, id_p)) */
+			else
+				{
+
+				}
+
+			FreeBSONOid (id_p);
+		}		/* if (id_p) */
+	else
+		{
+
+		}
+
+	return NULL;
+}
+
+
+void SetRowCallbackFunctions (Row *row_p,
+															void (*clear_fn) (Row *row_p),
+															bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+															bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
+															bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
+{
+	row_p -> ro_clear_fn = clear_fn;
+	row_p -> ro_add_to_json_fn = add_to_json_fn;
+	row_p -> ro_add_from_json_fn = add_from_json_fn;
+	row_p -> ro_add_to_fd_fn = add_to_fd_fn;
+}
+
+
+
+bool PopulateRowFromJSON (Row *row_p, Plot *plot_p, const json_t *row_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
 
 	if (!plot_p)
 		{
-			bson_oid_t *plot_id_p = GetNewUnitialisedBSONOid ();
+			bson_oid_t *plot_id_p = GetNamedBSONOidFromJSON (row_json_p, RO_PLOT_ID_S);
 
 			if (plot_id_p)
 				{
-					if (GetNamedIdFromJSON (json_p, BR_PLOT_ID_S, plot_id_p))
-						{
-							plot_p = GetPlotById (plot_id_p, NULL, data_p);
-						}
-				}
+					plot_p = GetPlotById (plot_id_p, NULL, data_p);
+
+					FreeBSONOid (plot_id_p);
+				}		/* if (plot_id_p) */
 		}
 
 	if (plot_p)
 		{
 			RowType rt = RT_STANDARD;
-
-			bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+			bson_oid_t *id_p = GetNamedBSONOidFromJSON (row_json_p, MONGO_ID_S);
 
 			if (id_p)
 				{
-					if (GetMongoIdFromJSON (json_p, id_p))
+					json_int_t study_index = -1;
+
+					if (GetJSONInteger (row_json_p, RO_STUDY_INDEX_S, &study_index))
 						{
-							json_int_t study_index = -1;
+							SetRowTypeFromJSON (&rt, row_json_p);
 
-							if (GetJSONInteger (json_p, BR_STUDY_INDEX_S, &study_index))
+							switch (rt)
 								{
-									if (format == VF_CLIENT_FULL)
-										{
 
-											if (IsFlagTrue (json_p, BR_DISCARD_S))
-												{
-													/*
-													 * This is a discard plot
-													 */
-													rt = RT_DISCARD;
-												}
-											else if (IsFlagTrue (json_p, BR_BLANK_S))
-												{
-													/*
-													 * This is a blank plot
-													 */
-													rt = RT_BLANK;
-												}
-											else		/* it's a normal row */
-												{
-													/*
-													 * If we haven't already got the material, get it!
-													 */
-													if (!material_to_use_p)
-														{
-															bson_oid_t *material_id_p = GetNewUnitialisedBSONOid ();
-
-															success_flag = true;
-
-															if (material_id_p)
-																{
-																	if (GetNamedIdFromJSON (json_p, SR_MATERIAL_ID_S, material_id_p))
-																		{
-																			material_to_use_p = GetMaterialById (material_id_p, data_p);
-
-																			if (material_to_use_p)
-																				{
-																					success_flag = true;
-																				}
-																			else
-																				{
-																					char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																					bson_oid_to_string (material_id_p, id_s);
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get material with id %s", id_s);
-																				}
-
-																		}		/* if (GetNamedIdFromJSON (json_p, SR_MATERIAL_ID_S, material_id_p)) */
-																	else
-																		{
-																			char plot_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																			bson_oid_to_string (plot_p -> pl_id_p, plot_id_s);
-
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", plot_id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
-																		}
-
-																	FreeBSONOid (material_id_p);
-																}		/* if (material_id_p) */
-															else
-																{
-																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																	bson_oid_to_string (plot_p -> pl_id_p, id_s);
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row's material id for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
-																}
-
-														}		/* if (!material_to_use_p) */
-
-													if (material_to_use_p)
-														{
-															json_int_t rack_index = -1;
-
-															if (GetJSONInteger (json_p, SR_RACK_INDEX_S, &rack_index))
-																{
-																	bool rep_control_flag = false;
-																	uint32 replicate = 1;
-																	const json_t *rep_json_p = json_object_get (json_p, SR_REPLICATE_S);
-
-																	if (rep_json_p)
-																		{
-																			if (json_is_string (rep_json_p))
-																				{
-																					const char *rep_s = json_string_value (rep_json_p);
-
-																					if (rep_s)
-																						{
-																							if (Stricmp (rep_s, SR_REPLICATE_CONTROL_S) == 0)
-																								{
-																									rep_control_flag = true;
-																								}
-																							else
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Invalid replicate value \"%s\"", rep_s);
-																								}
-																						}
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Missing replicate value");
-																						}
-																				}
-																			else if (json_is_integer (rep_json_p))
-																				{
-																					replicate = json_integer_value (rep_json_p);
-																				}
-																		}
-
-																	if ((replicate != 0) || (rep_control_flag))
-																		{
-																			MEM_FLAG mf = material_to_use_p == material_p ? MF_SHADOW_USE : MF_SHALLOW_COPY;
-																			row_p = AllocateRow (id_p, rack_index, study_index, replicate, rt, material_to_use_p, mf, plot_p);
-
-																			if (row_p)
-																				{
-																					if (rep_control_flag)
-																						{
-																							SetStandardRowGenotypeControl (row_p, true);
-																						}
-
-																					if (GetObservationsFromJSON (json_p, row_p, data_p))
-																						{
-																							if (!GetTreatmentFactorValuesFromJSON (json_p, row_p, study_p, data_p))
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetTreatmentFactorValuesFromJSON failed");
-																									FreeRow (row_p);
-																									row_p = NULL;
-
-																									/* id_p and material_to_use_p have been freed by FreeRow () */
-																									material_to_use_p = NULL;
-																									id_p = NULL;
-																								}
-																						}
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetObservationsFromJSON failed");
-																							FreeRow (row_p);
-																							row_p = NULL;
-
-																							/* id_p has been freed by FreeRow () */
-																							material_to_use_p = NULL;
-																							id_p = NULL;
-																						}
-
-																				}
-
-																		}		/* if ((replicate != 0) || (rep_control_flag)) */
-
-																}		/* if (GetJSONInteger (json_p, SR_RACK_INDEX_S, &rack_index)) */
-
-														}		/* if (material_to_use_p) */
-													else
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (plot_p -> pl_id_p, id_s);
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row's material for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
-														}
-
-												}		/* end of normal row */
-
-										}		/* if (format == VF_CLIENT_FULL) */
-
-								}		/* if (GetJSONInteger (json_p, SR_STUDY_INDEX_S, &study_index)) */
-
-						}		/* if (GetMongoIdFromJSON (json_p, id_p)) */
-
-					if (!row_p)
-						{
-							if (id_p)
-								{
-									FreeBSONOid (id_p);
 								}
-						}
 
+						}
+					else
+						{
+
+						}
 				}		/* if (id_p) */
+			else
+				{
+
+				}
 
 		}		/* if (plot_p) */
-
-	if (!row_p)
+	else
 		{
-			if (material_to_use_p && (material_to_use_p != material_p))
-				{
-					FreeMaterial (material_to_use_p);
-				}
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get plot for row");
 		}
 
-	return row_p;
+
+	return success_flag;
 }
 
-//
-//bool SaveRow (Row *row_p, const FieldTrialServiceData *data_p, bool insert_flag)
-//{
-//	bson_t *selector_p = NULL;
-//	bool success_flag = false;
-//
-//	if (PrepareSaveData (& (row_p -> sr_id_p), &selector_p))
-//		{
-//			json_t *row_json_p = GetRowAsJSON (row_p, VF_STORAGE, NULL, data_p);
-//
-//			if (row_json_p)
-//				{
-//					if (SaveMongoData (data_p -> dftsd_mongo_p, row_json_p, data_p -> dftsd_collection_ss [DFTD_ROW], selector_p))
-//						{
-//							success_flag = true;
-//						}
-//					else
-//						{
-//							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SaveMongoData failed");
-//						}
-//
-//					json_decref (row_json_p);
-//				}		/* if (row_json_p) */
-//			else
-//				{
-//					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowAsJSON failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> sr_rack_index, row_p -> sr_plot_p -> pl_row_index, row_p -> sr_plot_p -> pl_column_index, row_p -> sr_plot_p -> pl_parent_p -> st_name_s);
-//				}
-//
-//		}		/* if (row_p -> sr_id_p) */
-//	else
-//		{
-//			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData failed for row " UINT32_FMT " for plot [" UINT32_FMT ", " UINT32_FMT "] in study \"%s\"", row_p -> sr_rack_index, row_p -> sr_plot_p -> pl_row_index, row_p -> sr_plot_p -> pl_column_index, row_p -> sr_plot_p -> pl_parent_p -> st_name_s);
-//		}
-//
-//	return success_flag;
-//}
-//
 
-
-
-
-bool AddObservationToStandardRow (StandardRow *row_p, Observation *observation_p)
+RowNode *AllocateRowNode (Row *row_p)
 {
-	bool success_flag = false;
-	ObservationNode *node_p = NULL;
+	RowNode *sr_node_p = (RowNode *) AllocMemory (sizeof (RowNode));
 
-	/*
-	 * If the observation has the same phenotype and date as an existing one,
-	 * then replace it. If not, then simply add it.
-	 */
-	node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
-	while (node_p && (!success_flag))
+	if (sr_node_p)
 		{
-			Observation *existing_observation_p = node_p -> on_observation_p;
+			InitListItem (& (sr_node_p -> rn_node));
 
-			if (observation_p == existing_observation_p)
+			sr_node_p -> rn_row_p = row_p;
+		}
+
+	return sr_node_p;
+}
+
+
+
+void FreeRowNode (ListItem *node_p)
+{
+	RowNode *sr_node_p = (RowNode *) node_p;
+
+	if (sr_node_p -> rn_row_p)
+		{
+			FreeRow (sr_node_p -> rn_row_p);
+		}
+
+	FreeMemory (sr_node_p);
+}
+
+
+const char *GetRowTypeAsString (const RowType rt)
+{
+	if (rt <= RT_NUM_VALUES)
+		{
+			return (* (S_ROW_TYPES_SS + rt));
+		}
+
+	return NULL;
+}
+
+
+bool SetRowTypeFromString (RowType *rt_p, const char *value_s)
+{
+	const char **type_ss = S_ROW_TYPES_SS;
+	RowType r = RT_STANDARD;
+
+	while (r < RT_NUM_VALUES)
+		{
+			if (strcmp (*type_ss, value_s) == 0)
 				{
-					success_flag = true;
-				}
-			else if (AreObservationsMatching (existing_observation_p, observation_p))
-				{
-					node_p -> on_observation_p = observation_p;
-					FreeObservation (existing_observation_p);
-					success_flag = true;
+					*rt_p = r;
 				}
 			else
 				{
-					node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
+					++ type_ss;
+					++ r;
 				}
 		}
 
-	if (!success_flag)
-		{
-			node_p = AllocateObservationNode (observation_p);
-
-			if (node_p)
-				{
-					LinkedListAddTail (row_p -> sr_observations_p, & (node_p -> on_node));
-					success_flag = true;
-				}
-			else
-				{
-					char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-					char observation_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-					bson_oid_to_string (row_p -> sr_base.br_id_p, row_id_s);
-					bson_oid_to_string (observation_p -> ob_id_p, observation_id_s);
-
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", observation_id_s, row_id_s);
-				}
-		}
-
-	return success_flag;
+	return false;
 }
 
 
-
-bool AddTreatmentFactorValueToStandardRow (StandardRow *row_p, TreatmentFactorValue *tf_value_p)
+bool SetRowTypeFromJSON (RowType *rt_p, const json_t *row_json_p)
 {
 	bool success_flag = false;
-	TreatmentFactorValueNode *node_p = NULL;
+	const char *type_s = GetJSONString (row_json_p, RO_ROW_TYPE_S);
 
-	/*
-	 * If the treatment factor has the same treatment factor and date as an existing one,
-	 * then replace it. If not, then simply add it.
-	 */
-	node_p = (TreatmentFactorValueNode *) (row_p -> sr_treatment_factor_values_p -> ll_head_p);
-	while (node_p)
+	if (type_s)
 		{
-			TreatmentFactorValue *existing_tf_value_p = node_p -> tfvn_value_p;
-
-			if (AreTreatmentFactorValuesMatching (existing_tf_value_p, tf_value_p))
-				{
-					node_p -> tfvn_value_p = tf_value_p;
-					FreeTreatmentFactorValue (existing_tf_value_p);
-					success_flag = true;
-					node_p = NULL;		/* force exit from loop */
-				}
-			else
-				{
-					node_p = (TreatmentFactorValueNode *) (node_p -> tfvn_node.ln_next_p);
-				}
-		}
-
-	if (!success_flag)
-		{
-			node_p = AllocateTreatmentFactorValueNode (tf_value_p);
-
-			if (node_p)
-				{
-					LinkedListAddTail (row_p -> sr_treatment_factor_values_p, & (node_p -> tfvn_node));
-					success_flag = true;
-				}
-			else
-				{
-					char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-					char treatment_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-					const bson_oid_t *treatment_id_p = GetTreatmentIdForTreatmentFactorValue (tf_value_p);
-
-					bson_oid_to_string (row_p -> sr_base.br_id_p, row_id_s);
-					bson_oid_to_string (treatment_id_p, treatment_id_s);
-
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add observation \"%s\" to row \"%s\"", treatment_id_s, row_id_s);
-				}
-		}
-
-	return success_flag;
-}
-
-
-
-void UpdateStandardRow (StandardRow *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt)
-{
-	if (row_p -> sr_rack_index != rack_plotwise_index)
-		{
-			row_p -> sr_rack_index = rack_plotwise_index;
-		}
-
-	if (row_p -> sr_material_p -> ma_id_p != material_p -> ma_id_p)
-		{
-			if ((row_p -> sr_material_mem == MF_DEEP_COPY) || (row_p -> sr_material_mem == MF_SHALLOW_COPY))
-				{
-					if (row_p -> sr_material_p)
-						{
-							FreeMaterial (row_p -> sr_material_p);
-						}
-				}
-
-			row_p -> sr_material_p = material_p;
-			row_p -> sr_material_mem = material_mem;
-		}
-
-	if (control_rep_flag != IsStandardRowGenotypeControl (row_p))
-		{
-			SetStandardRowGenotypeControl (row_p, control_rep_flag);
-		}
-
-	if (!control_rep_flag)
-		{
-			if (row_p -> sr_replicate_index != replicate)
-				{
-					row_p -> sr_replicate_index = replicate;
-				}
-		}
-
-	row_p -> sr_base.br_type = rt;
-}
-
-
-static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format)
-{
-	bool success_flag = false;
-
-	if (observations_p -> ll_size > 0)
-		{
-			json_t *observations_json_p = json_array ();
-
-			if (observations_json_p)
-				{
-					if (json_object_set_new (row_json_p, SR_OBSERVATIONS_S, observations_json_p) == 0)
-						{
-							ObservationNode *node_p = (ObservationNode *) (observations_p -> ll_head_p);
-
-							success_flag = true;
-
-							while (node_p && success_flag)
-								{
-									const Observation *observation_p = node_p -> on_observation_p;
-									json_t *observation_json_p = GetObservationAsJSON (observation_p, format);
-
-									if (observation_json_p)
-										{
-											if (json_array_append_new (observations_json_p, observation_json_p) == 0)
-												{
-													node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
-												}
-											else
-												{
-													success_flag = false;
-													json_decref (observation_json_p);
-												}
-										}
-									else
-										{
-											success_flag = false;
-										}
-								}		/* while (node_p && success_flag) */
-
-						}		/* if (json_object_set_new (row_json_p, SR_PHENOTYPES_S, phenotypes_array_p) == 0) */
-					else
-						{
-							json_decref (observations_json_p);
-						}
-
-				}		/* if (phenotypes_array_p) */
-
-		}
+			success_flag = SetRowTypeFromString (rt_p, type_s);
+		}		/* if (type_s) */
 	else
 		{
-			success_flag = true;
-		}
+			bool b;
 
-	return success_flag;
-}
-
-
-
-static bool GetObservationsFromJSON (const json_t *row_json_p, StandardRow *row_p, FieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-	const json_t *observations_json_p = json_object_get (row_json_p, SR_OBSERVATIONS_S);
-
-	/*
-	 * Are there any observations?
-	 */
-	if (observations_json_p)
-		{
-			size_t size = json_array_size (observations_json_p);
-			size_t i;
-
-			success_flag = true;
-
-			for (i = 0; i < size; ++ i)
+			if (GetJSONBoolean (row_json_p, RO_DISCARD_S, &b))
 				{
-					const json_t *observation_json_p = json_array_get (observations_json_p, i);
-					Observation *observation_p = GetObservationFromJSON (observation_json_p, data_p);
-
-					if (observation_p)
+					if (b)
 						{
-							if (!AddObservationToStandardRow (row_p, observation_p))
-								{
-									char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-									bson_oid_to_string (row_p -> sr_base.br_id_p, row_id_s);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add observation to for row \"%s\"", row_id_s);
-
-									FreeObservation (observation_p);
-									success_flag = false;
-									i = size;		/* force exit from loop */
-								}
-
-						}		/* if (observation_p) */
-					else
-						{
-							char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-							bson_oid_to_string (row_p -> sr_base.br_id_p, row_id_s);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "GetObservationFromJSON failed for row \"%s\"", row_id_s);
-
-							success_flag = false;
-							i = size;		/* force exit from loop */
+							*rt_p = RT_DISCARD;
 						}
-
-				}		/* for (i = 0; i < size; ++ i) */
-
-		}		/* if (observations_json_p) */
-	else
-		{
-			success_flag = true;
-		}
-
-	return success_flag;
-}
-
-
-static bool AddTreatmentFactorsToJSON (json_t *row_json_p, LinkedList *treatment_factors_p, const Study *study_p, const ViewFormat format)
-{
-	bool success_flag = false;
-
-	if (treatment_factors_p -> ll_size > 0)
-		{
-			json_t *treatment_factors_json_p = json_array ();
-
-			if (treatment_factors_json_p)
-				{
-					if (json_object_set_new (row_json_p, SR_TREATMENTS_S, treatment_factors_json_p) == 0)
-						{
-							TreatmentFactorValueNode *node_p = (TreatmentFactorValueNode *) (treatment_factors_p -> ll_head_p);
-
-							success_flag = true;
-
-							while (node_p && success_flag)
-								{
-									const TreatmentFactorValue *tfv_p = node_p -> tfvn_value_p;
-									json_t *treatment_factor_json_p = GetTreatmentFactorValueAsJSON (tfv_p, study_p);
-
-									if (treatment_factor_json_p)
-										{
-											if (json_array_append_new (treatment_factors_json_p, treatment_factor_json_p) == 0)
-												{
-													node_p = (TreatmentFactorValueNode *) (node_p -> tfvn_node.ln_next_p);
-												}
-											else
-												{
-													success_flag = false;
-													json_decref (treatment_factor_json_p);
-												}
-										}
-									else
-										{
-											success_flag = false;
-										}
-								}		/* while (node_p && success_flag) */
-
-						}		/* if (json_object_set_new (row_json_p, SR_PHENOTYPES_S, phenotypes_array_p) == 0) */
-					else
-						{
-							json_decref (treatment_factors_json_p);
-						}
-
-				}		/* if (phenotypes_array_p) */
-
-		}
-	else
-		{
-			success_flag = true;
-		}
-
-	return success_flag;
-}
-
-
-static bool GetTreatmentFactorValuesFromJSON (const json_t *row_json_p, StandardRow *row_p, const Study *study_p, const FieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-	const json_t *tf_values_json_p = json_object_get (row_json_p, SR_TREATMENTS_S);
-
-	if (tf_values_json_p)
-		{
-			size_t size = json_array_size (tf_values_json_p);
-			size_t i;
-
-			success_flag = true;
-
-			for (i = 0; i < size; ++ i)
-				{
-					const json_t *tf_value_json_p = json_array_get (tf_values_json_p, i);
-					TreatmentFactorValue *tf_value_p = GetTreatmentFactorValueFromJSON (tf_value_json_p, study_p, data_p);
-
-					if (tf_value_p)
-						{
-							if (!AddTreatmentFactorValueToStandardRow (row_p, tf_value_p))
-								{
-									char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-									bson_oid_to_string (row_p -> sr_base.br_id_p, row_id_s);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, tf_value_json_p, "Failed to add TreatmentFactorValue to for row \"%s\"", row_id_s);
-
-									FreeTreatmentFactorValue (tf_value_p);
-									success_flag = false;
-									i = size;		/* force exit from loop */
-								}
-
-						}		/* if (observation_p) */
-					else
-						{
-							char row_id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-							bson_oid_to_string (row_p -> sr_base.br_id_p, row_id_s);
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTreatmentFactorValueFromJSON failed for row \"%s\"", row_id_s);
-
-
-							success_flag = false;
-							i = size;		/* force exit from loop */
-						}
-
-				}		/* for (i = 0; i < size; ++ i) */
-
-		}		/* if (phenotypes_json_p) */
-	else
-		{
-			success_flag = true;
-		}
-
-	return success_flag;
-}
-
-
-
-void SetStandardRowGenotypeControl (StandardRow *row_p, bool control_flag)
-{
-	row_p -> sr_replicate_control_flag = control_flag;
-}
-
-
-bool IsStandardRowGenotypeControl (const StandardRow *row_p)
-{
-	return row_p -> sr_replicate_control_flag;
-}
-
-
-bool AddStandardRowToPlotTable (const StandardRow *row_p, json_t *table_row_p, const FieldTrialServiceData *service_data_p)
-{
-	bool success_flag = false;
-
-	if ((row_p -> sr_rack_index == 0) || (SetJSONInteger (table_row_p, PL_RACK_TITLE_S, row_p -> sr_rack_index)))
-		{
-			if ((row_p -> sr_replicate_index == 0) || (SetJSONInteger (table_row_p, PL_REPLICATE_TITLE_S, row_p -> sr_replicate_index)))
-				{
-					if (row_p -> sr_material_p)
-						{
-							if ((row_p -> sr_material_p -> ma_accession_s == NULL) || (SetJSONString (table_row_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> sr_material_p -> ma_accession_s)))
-								{
-									GeneBank *gene_bank_p = GetGeneBankById (row_p -> sr_material_p -> ma_gene_bank_id_p, VF_CLIENT_MINIMAL, service_data_p);
-
-									if (gene_bank_p)
-										{
-											if (SetJSONString (table_row_p, PL_GENE_BANK_S, gene_bank_p -> gb_name_s))
-												{
-													success_flag = true;
-												}
-
-											FreeGeneBank (gene_bank_p);
-										}
-								}
-						}
-					else
-						{
-							success_flag = true;
-						}
-
-				}		/* if ((row_p -> sr_replicate_index == 0) || (SetJSONInteger (table_row_p, PL_REPLICATE_TITLE_S, row_p -> sr_rephttps://www.theguardian.com/ukhttps://www.theguardian.com/uklicate_index))) */
-
-		}		/* if ((row_p -> sr_rack_index == 0) || (SetJSONInteger (table_row_p, S_RACK_TITLE_S, row_p -> sr_rack_index))) */
-
-	return success_flag;
-}
-
-
-
-
-static bool IsFlagTrue (const json_t *json_p, const char * const key_s)
-{
-	bool value_flag = false;
-
-	GetJSONBoolean (json_p, key_s, &value_flag);
-
-	return value_flag;
-}
-
-
-
-bool AddStandardRowToJSON (const BaseRow *base_row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
-{
-	bool success_flag = false;
-	StandardRow *row_p = (StandardRow *) base_row_p;
-
-	/*
-	 * If there's a material, add it
-	 */
-	if (row_p -> sr_material_p)
-		{
-			switch (format)
-				{
-					case VF_CLIENT_FULL:
-						{
-							json_t *material_json_p = GetMaterialAsJSON (row_p -> sr_material_p, true, data_p);
-
-							if (material_json_p)
-								{
-									if (json_object_set_new (row_json_p, SR_MATERIAL_S, material_json_p) == 0)
-										{
-											success_flag = true;
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, material_json_p, "Failed to add material to row json");
-											json_decref (material_json_p);
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMaterialAsJSON failed for \"%s\"", row_p -> sr_material_p -> ma_accession_s);
-								}
-						}
-						break;
-
-					case VF_STORAGE:
-						{
-							if (AddNamedCompoundIdToJSON (row_json_p, row_p -> sr_material_p -> ma_id_p, SR_MATERIAL_ID_S))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add material \"%s\" to row json", row_p -> sr_material_p -> ma_accession_s);
-								}
-						}
-						break;
-
-					default:
-						break;
 				}
-		}		/* if (row_p -> sr_material_p) */
-	else
-		{
-			success_flag = true;
-		}
-
-	if (success_flag)
-		{
-			if (SetJSONInteger (row_json_p, SR_RACK_INDEX_S, row_p -> sr_rack_index))
+			else if (GetJSONBoolean (row_json_p, RO_BLANK_S, &b))
 				{
-					const ViewFormat obs_format = (format == VF_STORAGE) ? VF_STORAGE : VF_CLIENT_MINIMAL;
-
-					if (AddObservationsToJSON (row_json_p, row_p -> sr_observations_p, obs_format))
+					if (b)
 						{
-							if (AddTreatmentFactorsToJSON (row_json_p, row_p -> sr_treatment_factor_values_p, row_p -> sr_base.br_study_p, format))
-								{
-									if (row_p -> sr_replicate_control_flag)
-										{
-											if (SetJSONString (row_json_p, SR_REPLICATE_S, SR_REPLICATE_CONTROL_S))
-												{
-													success_flag = true;
-												}
-											else
-												{
-													char *id_s = GetBSONOidAsString (row_p -> sr_base.br_id_p);
-
-													if (id_s)
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SetJSONString () failed for \"%s\": \"%s\" in row \"%s\"", SR_REPLICATE_S, SR_REPLICATE_CONTROL_S, id_s);
-															FreeBSONOidString (id_s);
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SetJSONString () failed for \"%s\": \"%s\" in row", SR_REPLICATE_S, SR_REPLICATE_CONTROL_S);
-														}
-												}
-										}
-									else
-										{
-
-											if (SetJSONInteger (row_json_p, SR_REPLICATE_S, row_p -> sr_replicate_index))
-												{
-													success_flag = true;
-												}
-											else
-												{
-													char *id_s = GetBSONOidAsString (row_p -> sr_base.br_id_p);
-
-													if (id_s)
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SetJSONInteger () failed for \"%s\": " UINT32_FMT " in row \"%s\"", SR_REPLICATE_S, row_p -> sr_replicate_index, id_s);
-															FreeBSONOidString (id_s);
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "SetJSONInteger () failed for \"%s\": " UINT32_FMT " in row", SR_REPLICATE_S, row_p -> sr_replicate_index);
-														}
-												}
-										}
-
-								}		/* if (AddTreatmentFactorsToJSON (row_json_p, row_p -> sr_treatment_factor_values_p, format)) */
-							else
-								{
-									char *id_s = GetBSONOidAsString (row_p -> sr_base.br_id_p);
-
-									if (id_s)
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row \"%s\"", id_s);
-											FreeBSONOidString (id_s);
-										}
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddTreatmentFactorsToJSON failed for row");
-										}
-
-								}
-
-
-						}		/* if (AddObservationsToJSON (row_json_p, row_p -> sr_observations_p, format)) */
-					else
-						{
-							char *id_s = GetBSONOidAsString (row_p -> sr_base.br_id_p);
-
-							if (id_s)
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row \"%s\"", id_s);
-									FreeBSONOidString (id_s);
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddObservationsToJSON failed for row");
-								}
-
+							*rt_p = RT_BLANK;
 						}
-
-				}		/* if (SetJSONInteger (row_json_p, SR_INDEX_S, row_p -> sr_index)) */
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": " UINT32_FMT, SR_RACK_INDEX_S, row_p -> sr_rack_index);
 				}
-		}
-
-	return success_flag;
-}
-
-
-
-static bool AddStandardRowFrictionlessDataDetails (const BaseRow *base_row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s)
-{
-	StandardRow *row_p = (StandardRow *) base_row_p;
-	bool success_flag = false;
-
-	if (SetJSONInteger (row_fd_p, PL_RACK_TITLE_S, row_p -> sr_rack_index))
-		{
-			if ((! (row_p -> sr_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> sr_material_p -> ma_accession_s)))
-				{
-					if (row_p -> sr_replicate_control_flag)
-						{
-							if (SetJSONString (row_fd_p, PL_REPLICATE_TITLE_S, SR_REPLICATE_CONTROL_S))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": \"%s\"", PL_REPLICATE_TITLE_S, SR_REPLICATE_CONTROL_S);
-								}
-						}
-					else
-						{
-							success_flag = SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> sr_replicate_index);
-
-							if (SetJSONInteger (row_fd_p, PL_REPLICATE_TITLE_S, row_p -> sr_replicate_index))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, PL_REPLICATE_TITLE_S, row_p -> sr_replicate_index);
-								}
-
-						}
-
-					if (success_flag)
-						{
-							/*
-							 * Add the treatment factors
-							 */
-
-							if (row_p -> sr_treatment_factor_values_p)
-								{
-									uint32 num_added = 0;
-									TreatmentFactorValueNode *tfv_node_p = (TreatmentFactorValueNode *) (row_p -> sr_treatment_factor_values_p -> ll_head_p);
-
-									while (tfv_node_p && success_flag)
-										{
-											TreatmentFactorValue *tf_value_p = tfv_node_p -> tfvn_value_p;
-
-											const char *url_s = GetTreatmentFactorUrl (tf_value_p -> tfv_factor_p);
-
-											if (url_s)
-												{
-													if (SetFDTableString (row_fd_p, url_s, tf_value_p -> tfv_label_s, null_sequence_s))
-														{
-															++ num_added;
-														}
-													else
-														{
-															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "SetFDTableString () failed for url: \"%s\" label: \"%s\" null sequence: \"%s\"",
-																								 url_s, tf_value_p -> tfv_label_s, null_sequence_s ? null_sequence_s : "NULL");
-														}
-												}
-											else
-												{
-													success_flag = false;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "GetTreatmentFactorUrl () failed for url: \"%s\" in study \"%s\"",
-																						 tf_value_p -> tfv_label_s, tf_value_p -> tfv_factor_p -> tf_study_p -> st_name_s);
-												}
-
-											if (success_flag)
-												{
-													tfv_node_p = (TreatmentFactorValueNode *) (tfv_node_p -> tfvn_node.ln_next_p);
-												}
-										}
-
-								}		/* if (row_p -> sr_treatment_factor_values_p) */
-
-
-							if (success_flag)
-								{
-									if (row_p -> sr_observations_p)
-										{
-											uint32 num_added = 0;
-											ObservationNode *obs_node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
-
-											while (obs_node_p && success_flag)
-												{
-													Observation *obs_p = obs_node_p -> on_observation_p;
-
-													if (AddObservationValuesToFrictionlessData (obs_p, row_fd_p))
-														{
-															obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
-															++ num_added;
-														}
-													else
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															success_flag = false;
-
-															bson_oid_to_string (obs_p -> ob_id_p, id_s);
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "AddObservationValuesToFrictionlessData () failed for \"%s\"",
-																								 id_s);
-														}
-
-												}		/* while (obs_node_p && success_flag) */
-
-										}		/* if (row_p -> sr_observations_p) */
-
-
-								}		/* if (success_flag) */
-
-						}		/* if (success_flag) */
-
-				}		/* if ((! (row_p -> sr_material_p)) || (SetJSONString (row_fd_p, PL_ACCESSION_TABLE_TITLE_S, row_p -> sr_material_p -> ma_accession_s))) */
-
-		}		/* if (SetJSONInteger (row_fd_p, SR_RACK_INDEX_S, row_p -> sr_rack_index)) */
-	else
-		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": " UINT32_FMT, SR_RACK_INDEX_S, row_p -> sr_rack_index);
 		}
 
 	return success_flag;

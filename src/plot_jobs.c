@@ -143,7 +143,7 @@ static json_t *GetTableParameterHints (void);
 
 static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p, const bool must_exist_flag);
 
-static json_t *GetPlotTableRow (const BaseRow *row_p, const FieldTrialServiceData *service_data_p);
+static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p);
 
 static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, FieldTrialServiceData *service_data_p);
 
@@ -1082,7 +1082,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 					if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
 						{
-							BaseRow *row_p = NULL;
+							Row *row_p = NULL;
 							bool control_rep_flag = false;
 							int32 replicate = 1;
 							int32 rack_plotwise_index = -1;
@@ -1133,7 +1133,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 									if (row_p)
 										{
-											if (row_p -> br_type == RT_STANDARD)
+											if (row_p -> ro_type == RT_STANDARD)
 												{
 													StandardRow *sr_p = (StandardRow *) row_p;
 													/*
@@ -1144,14 +1144,14 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 										}
 									else
 										{
-											StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, rt, material_p, material_mem, plot_p);
+											StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
 
 											if (sr_p)
 												{
 													if (!AddRowToPlot (plot_p, & (sr_p -> sr_base)))
 														{
 															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
-															FreeBaseRow (row_p);
+															FreeRow (row_p);
 															row_p = NULL;
 														}
 
@@ -1928,7 +1928,7 @@ static json_t *GetPlotRowTemplate (const uint32 row, const uint32 column, const 
 }
 
 
-static json_t *GetPlotTableRow (const BaseRow *row_p, const FieldTrialServiceData *service_data_p)
+static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p)
 {
 	json_t *table_row_p = json_object ();
 
@@ -1937,7 +1937,7 @@ static json_t *GetPlotTableRow (const BaseRow *row_p, const FieldTrialServiceDat
 			/*
 				if (AddColumnParameterHint (S_ACCESSION_TITLE_S, PT_STRING, hints_p))
 			 */
-			Plot *plot_p = row_p -> br_plot_p;
+			Plot *plot_p = row_p -> ro_plot_p;
 
 			if ((plot_p -> pl_row_index == 0) || (SetJSONInteger (table_row_p, PL_ROW_TITLE_S, plot_p -> pl_row_index)))
 				{
@@ -1955,11 +1955,11 @@ static json_t *GetPlotTableRow (const BaseRow *row_p, const FieldTrialServiceDat
 																{
 																	if (AddValidDateToJSON (plot_p -> pl_harvest_date_p, table_row_p, S_HARVEST_TITLE_S, false))
 																		{
-																			if ((row_p -> br_by_study_index == 0) || (SetJSONInteger (table_row_p, PL_INDEX_TABLE_TITLE_S, row_p -> br_by_study_index)))
+																			if ((row_p -> ro_by_study_index == 0) || (SetJSONInteger (table_row_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index)))
 																				{
 																					bool success_flag = true;
 
-																					if (row_p -> br_type == RT_STANDARD)
+																					if (row_p -> ro_type == RT_STANDARD)
 																						{
 																							success_flag = AddStandardRowToPlotTable ((StandardRow *) row_p, table_row_p, service_data_p);
 																						}

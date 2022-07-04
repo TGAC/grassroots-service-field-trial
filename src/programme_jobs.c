@@ -25,7 +25,8 @@
 #include "crop_jobs.h"
 #include "dfw_util.h"
 #include "operation.h"
-
+#include "field_trial_jobs.h"
+#include "boolean_parameter.h"
 
 #include "frictionless_data_util.h"
 
@@ -42,7 +43,6 @@ static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, ch
 bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
 {
 	bool success_flag = false;
-	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Programmes", false, data_p, param_set_p);
 
@@ -338,7 +338,7 @@ bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_nam
 			NULL
 		};
 
-	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);}
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 
@@ -352,7 +352,7 @@ bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s,
 			NULL
 		};
 
-	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);}
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 
@@ -813,7 +813,7 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 
 					if (strcmp (id_s, "*") == 0)
 						{
-							OperationStatus = OS_FAILED;
+							OperationStatus status = OS_FAILED;
 
 							/* Get all programmes */
 							json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
@@ -881,48 +881,6 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 				}
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_ID.npt_name_s, &value)) */
-
-
-	if (!job_done_flag)
-		{
-			const char *name_s = NULL;
-			const char *team_s = NULL;
-			const bool *search_flag_p = NULL;
-
-			if (GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &name_s))
-				{
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_NAME.npt_name_s, &team_s);
-				}		/* if (GetParameterValueFromParameterSet (param_set_p, S_FIELD_TRIAL_NAME.npt_name_s, &value, true)) */
-
-
-			if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_SEARCH.npt_name_s, &search_flag_p))
-				{
-					if ((search_flag_p != NULL) && (*search_flag_p == true))
-						{
-							bool success_flag;
-							const bool *fuzzy_search_flag_p = NULL;
-							bool fuzzy_search_flag = false;
-							ViewFormat vf = VF_CLIENT_MINIMAL;
-
-							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s, &fuzzy_search_flag_p);
-
-							if ((fuzzy_search_flag_p != NULL) && (*fuzzy_search_flag_p == true))
-								{
-									fuzzy_search_flag = true;
-								}
-
-							if ((full_data_flag_p != NULL) && (*full_data_flag_p == true))
-								{
-									vf = VF_CLIENT_FULL;
-								}
-
-							success_flag = SearchFieldTrials (job_p, name_s, team_s, fuzzy_search_flag, vf, data_p);
-
-							job_done_flag = true;
-						}		/* if (value.st_boolean_value) */
-				}
-
-		}		/* if (!job_done_flag) */
 
 	return job_done_flag;
 }

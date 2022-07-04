@@ -8,6 +8,8 @@
 #include "row_processor.h"
 #include "row.h"
 #include "streams.h"
+#include "standard_row.h"
+
 
 
 static json_t *HighlightPlotsContainingMaterial (struct JSONProcessor *processor_p, struct Row *plot_p, ViewFormat format, const FieldTrialServiceData *service_data_p);
@@ -36,17 +38,23 @@ static json_t *HighlightPlotsContainingMaterial (struct JSONProcessor *processor
 
 	if (row_json_p)
 		{
-			if ((row_processor_p -> rp_material_p) && (row_p -> ro_material_p))
+			if (row_p -> ro_type == RT_STANDARD)
 				{
-					if (bson_oid_compare (row_processor_p -> rp_material_p -> ma_id_p, row_p -> ro_material_p -> ma_id_p) == 0)
-						{
-							if (!SetJSONBoolean (row_json_p, DFT_SELECTED_S, true))
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": true for Material \"%s\"", DFT_SELECTED_S, row_processor_p -> rp_material_p -> ma_accession_s);
+					StandardRow *standard_row_p = (StandardRow *) row_p;
 
+					if ((row_processor_p -> rp_material_p) && (standard_row_p -> sr_material_p))
+						{
+							if (bson_oid_compare (row_processor_p -> rp_material_p -> ma_id_p, standard_row_p -> sr_material_p -> ma_id_p) == 0)
+								{
+									if (!SetJSONBoolean (row_json_p, DFT_SELECTED_S, true))
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add \"%s\": true for Material \"%s\"", DFT_SELECTED_S, row_processor_p -> rp_material_p -> ma_accession_s);
+										}
 								}
 						}
 				}
+
+
 
 		}
 

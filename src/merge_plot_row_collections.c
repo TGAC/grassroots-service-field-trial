@@ -93,7 +93,7 @@ int main (void)
 																							/*
 																							 * Get all of the rows for this plot
 																							 */
-																							bson_t *row_query_p = BCON_NEW (BR_PLOT_ID_S, BCON_OID (plot_id_p));
+																							bson_t *row_query_p = BCON_NEW (RO_PLOT_ID_S, BCON_OID (plot_id_p));
 
 																							if (row_query_p)
 																								{

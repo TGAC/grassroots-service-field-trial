@@ -621,7 +621,7 @@ bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *pa
 {
 	const NamedParameterType params [] =
 		{
-			STUDY_NUM_PLOT_ROWS,
+			STUDY_NUM_PLOT_ROWS ,
 			STUDY_NUM_PLOT_COLS,
 			STUDY_NUM_REPLICATES,
 			STUDY_PLOT_WIDTH,
@@ -1642,7 +1642,7 @@ json_t *GetStudyIndexingData (Service *service_p)
 json_t *GetStudyDistinctAccessionsAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
 {
 	json_t *accessions_p = NULL;
-	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_MATERIAL_ID_S, NULL);
+	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_MATERIAL_ID_S, NULL);
 
 	if (key_s)
 		{
@@ -1657,7 +1657,7 @@ json_t *GetStudyDistinctAccessionsAsJSON (bson_oid_t *study_id_p, const FieldTri
 json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
 {
 	json_t *phenotypes_p = NULL;
-	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
+	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
 
 	if (key_s)
 		{
@@ -1667,7 +1667,7 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 		}		/* if (key_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, SR_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
 		}
 
 	return phenotypes_p;
@@ -1677,7 +1677,7 @@ json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTri
 json_t *GetStudyDistinctPhenotypesAsFrictionlessDataJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
 {
 	json_t *phenotypes_p = NULL;
-	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
+	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
 
 	if (key_s)
 		{
@@ -1687,7 +1687,7 @@ json_t *GetStudyDistinctPhenotypesAsFrictionlessDataJSON (bson_oid_t *study_id_p
 		}		/* if (key_s) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, SR_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
 		}
 
 	return phenotypes_p;
@@ -2510,7 +2510,7 @@ OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServic
 
 	if (stats_tool_p)
 		{
-			char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
+			char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_OBSERVATIONS_S, ".", OB_PHENOTYPE_ID_S, NULL);
 
 			if (key_s)
 				{
@@ -2525,7 +2525,7 @@ OperationStatus CalculateStudyStatistics (Study *study_p, const FieldTrialServic
 				}		/* if (key_s) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, RO_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \"%s\", \"%s\"", PL_ROWS_S, SR_OBSERVATIONS_S, OB_PHENOTYPE_ID_S);
 				}
 
 			FreeStatisticsTool (stats_tool_p);
@@ -2578,55 +2578,66 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 													Row *row_p = row_node_p -> rn_row_p;
 
 													/*
-													 * Are there any observations?
+													 * Is it a standard row?
 													 */
-													if (row_p -> ro_observations_p -> ll_size > 0)
+													if (row_p -> ro_type == RT_STANDARD)
 														{
-															Observation *obs_p = GetMatchingObservation (row_p, phenotype_p, NULL, NULL, NULL);
+															StandardRow *standard_row_p = (StandardRow *) row_p;
 
-															if (obs_p)
+															/*
+															 * Are there any observations?
+															 */
+															if (standard_row_p -> sr_observations_p -> ll_size > 0)
 																{
-																	if (obs_p -> ob_type == OT_NUMERIC)
+																	Observation *obs_p = GetMatchingObservation (standard_row_p, phenotype_p, NULL, NULL, NULL);
+
+																	if (obs_p)
 																		{
-																			NumericObservation *num_obs_p = (NumericObservation *) obs_p;
-																			double d;
-																			bool value_flag = true;
+																			if (obs_p -> ob_type == OT_NUMERIC)
+																				{
+																					NumericObservation *num_obs_p = (NumericObservation *) obs_p;
+																					double d;
+																					bool value_flag = true;
 
-																			if (num_obs_p -> no_corrected_value_p)
-																				{
-																					d = * (num_obs_p -> no_corrected_value_p);
-																				}
-																			else if (num_obs_p -> no_raw_value_p)
-																				{
-																					d = * (num_obs_p -> no_raw_value_p);
-																				}
-																			else
-																				{
-																					value_flag = false;
-																				}
-
-																			if (value_flag)
-																				{
-																					if (!AddStatisticsValue (stats_tool_p, d))
+																					if (num_obs_p -> no_corrected_value_p)
 																						{
-																							char *obs_id_s = GetBSONOidAsString (obs_p -> ob_id_p);
-																							const char *phenotype_s = GetMeasuredVariableName (phenotype_p);
+																							d = * (num_obs_p -> no_corrected_value_p);
+																						}
+																					else if (num_obs_p -> no_raw_value_p)
+																						{
+																							d = * (num_obs_p -> no_raw_value_p);
+																						}
+																					else
+																						{
+																							value_flag = false;
+																						}
 
-																							if (obs_id_s)
+																					if (value_flag)
+																						{
+																							if (!AddStatisticsValue (stats_tool_p, d))
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %lf to \"%s\" for variable \"%s\"", d, obs_id_s, phenotype_s);
-																									FreeBSONOidString (obs_id_s);
-																								}
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %lf for variable \"%s\"", d, phenotype_s);
+																									char *obs_id_s = GetBSONOidAsString (obs_p -> ob_id_p);
+																									const char *phenotype_s = GetMeasuredVariableName (phenotype_p);
+
+																									if (obs_id_s)
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %lf to \"%s\" for variable \"%s\"", d, obs_id_s, phenotype_s);
+																											FreeBSONOidString (obs_id_s);
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %lf for variable \"%s\"", d, phenotype_s);
+																										}
 																								}
 																						}
-																				}
 
+																				}
 																		}
 																}
-														}
+
+														}		/* if (row_p -> ro_type == RT_STANDARD) */
+
+
 
 													row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
 												}		/* while (row_node_p) */

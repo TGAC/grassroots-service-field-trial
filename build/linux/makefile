@@ -60,7 +60,6 @@ INCLUDES = \
 	-I$(DIR_LIBEXIF_INC) \
 	
 SRCS 	= \
-	base_row.c \
 	blank_row.c \
 	crop.c \
 	crop_jobs.c \
@@ -100,6 +99,7 @@ SRCS 	= \
 	row_jobs.c \
 	row_processor.c \
 	search_service.c \
+	standard_row.c \
 	string_observation.c \
 	study.c \
 	study_jobs.c \

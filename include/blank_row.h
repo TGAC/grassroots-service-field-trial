@@ -8,12 +8,12 @@
 #ifndef SERVICES_FIELD_TRIALS_INCLUDE_BLANK_ROW_H_
 #define SERVICES_FIELD_TRIALS_INCLUDE_BLANK_ROW_H_
 
-#include "base_row.h"
+#include "row.h"
 
 
 typedef struct BlankRow
 {
-	BaseRow br_base;
+	Row br_base;
 } BlankRow;
 
 
@@ -23,8 +23,10 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL BaseRow *AllocateBlankRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *AllocateBlankRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL BlankRow *GetBlankRowFromJSON (const json_t *row_json_p, Plot *plot_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 #ifdef __cplusplus
 }
