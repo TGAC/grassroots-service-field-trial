@@ -301,23 +301,14 @@ bool RunForSearchMaterialParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 bool GetSearchMaterialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
-
-	if (strcmp (param_name_s, S_MATERIAL_ACCESSION.npt_name_s) == 0)
+	const NamedParameterType params [] =
 		{
-			*pt_p = S_MATERIAL_ACCESSION.npt_type;
-		}
-	else if (strcmp (param_name_s, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s) == 0)
-		{
-			*pt_p = S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
+			S_MATERIAL_ACCESSION,
+			S_MATERIAL_ACCESSION_CASE_SENSITIVE,
+			NULL
+		};
 
-	return success_flag;
-
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 

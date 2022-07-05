@@ -314,7 +314,136 @@ bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSe
 
 bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
-	bool success_flag = AddProgramme (job_p, param_set_p, data_p);
+	bool success_flag = false;
+	const char *programme_id_s = NULL;
+
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_SEARCH.npt_name_s, &programme_id_s);
+
+	if (programme_id_s)
+		{
+			OperationStatus status = OS_FAILED;
+
+			if (strcmp (programme_id_s, "*") == 0)
+				{
+					json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
+
+					if (programmes_json_p)
+						{
+							size_t num_results = json_array_size (programmes_json_p);
+							size_t i;
+							size_t num_added = 0;
+
+							for (i = 0; i < num_results; ++ i)
+								{
+									json_t *src_json_p = json_array_get (programmes_json_p, i);
+									Programme *programme_p = GetProgrammeFromJSON (src_json_p, VF_STORAGE, data_p);
+
+									if (programme_p)
+										{
+											json_t *programme_json_p = GetProgrammeAsJSON (programme_p, VF_CLIENT_FULL, data_p);
+
+											if (programme_json_p)
+												{
+													json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, programme_p -> pr_name_s, programme_json_p);
+
+													if (job_result_p)
+														{
+															if (AddResultToServiceJob (job_p, job_result_p))
+																{
+																	++ num_added;
+																}		/* if (AddResultToServiceJob (job_p, job_result_p)) */
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, job_result_p, "Failed to add result " SIZET_FMT " to ServiceJob", i);
+
+																	json_decref (job_result_p);
+																}
+														}		/* if (job_result_p) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_json_p, "Failed to create result " SIZET_FMT " to ServiceJob", i);
+														}
+
+													json_decref (programme_json_p);
+												}		/* if (programme_json_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_json_p, "GetProgrammeFromJSON () failed " SIZET_FMT, i);
+												}
+
+											FreeProgramme (programme_p);
+										}		/* if (programme_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_json_p, "Failed to create programme " SIZET_FMT, i);
+										}
+
+								}		/* for (i = 0; i < num_results; ++ i) */
+
+							if (num_added == num_results)
+								{
+									status = OS_SUCCEEDED;
+								}
+							else if (num_added > 0)
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+								}
+
+							json_decref (programmes_json_p);
+						}		/* if (programmes_json_p) */
+
+				}
+			else
+				{
+					Programme *programme_p = GetProgrammeByIdString (programme_id_s, VF_STORAGE, data_p);
+
+					if (programme_p)
+						{
+							json_t *programme_json_p = GetProgrammeAsJSON (programme_p, VF_CLIENT_FULL, data_p);
+
+							if (programme_json_p)
+								{
+									json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, programme_p -> pr_name_s, programme_json_p);
+
+									if (job_result_p)
+										{
+											if (AddResultToServiceJob (job_p, job_result_p))
+												{
+													status = OS_SUCCEEDED;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, job_result_p, "Failed to add result to ServiceJob");
+
+													json_decref (job_result_p);
+												}
+										}		/* if (job_result_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to create result for Programme \"%s\"", programme_p -> pr_name_s);
+										}
+
+									json_decref (programme_json_p);
+								}		/* if (programme_json_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Programme \"%s\" as JSON", programme_p -> pr_name_s);
+								}
+
+							FreeProgramme (programme_p);
+						}		/* if (programme_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to find Programme \"%s\"", programme_id_s);
+						}
+
+				}
+
+			SetServiceJobStatus (job_p, status);
+
+
+		}		/* if (value_s) */
+
 
 	return success_flag;
 }

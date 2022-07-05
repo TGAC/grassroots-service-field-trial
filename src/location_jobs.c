@@ -418,22 +418,14 @@ bool AddSearchLocationParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 bool GetSearchLocationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	const NamedParameterType params [] =
+		{
+			LOCATION_GET_ALL_LOCATIONS,
+			LOCATION_ID,
+			NULL
+		};
 
-	if (strcmp (param_name_s, LOCATION_GET_ALL_LOCATIONS.npt_name_s) == 0)
-		{
-			*pt_p = LOCATION_GET_ALL_LOCATIONS.npt_type;
-		}
-	else if (strcmp (param_name_s, LOCATION_ID.npt_name_s) == 0)
-		{
-			*pt_p = LOCATION_ID.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
-
-	return success_flag;
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 
@@ -553,6 +545,8 @@ bool RunForSearchLocationParams (FieldTrialServiceData *data_p, ParameterSet *pa
 												{
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, location_json_p, "Failed to create result for Location \"%s\"", location_p -> lo_address_p -> ad_name_s);
 												}
+
+											json_decref (location_json_p);
 										}
 									else
 										{

@@ -398,38 +398,18 @@ bool AddSearchFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	const NamedParameterType params [] =
+		{
+			FIELD_TRIAL_ID,
+			FIELD_TRIAL_NAME,
+			FIELD_TRIAL_TEAM,
+			FIELD_TRIAL_SEARCH,
+			S_FUZZY_SEARCH_FIELD_TRIALS,
+			S_FULL_DATA,
+			NULL
+		};
 
-	if (strcmp (param_name_s, FIELD_TRIAL_ID.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_ID.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_NAME.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_NAME.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_TEAM.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_TEAM.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_SEARCH.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_SEARCH.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FUZZY_SEARCH_FIELD_TRIALS.npt_name_s) == 0)
-		{
-			*pt_p = S_FUZZY_SEARCH_FIELD_TRIALS.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FULL_DATA.npt_name_s) == 0)
-		{
-			*pt_p = S_FULL_DATA.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
-
-	return success_flag;
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 

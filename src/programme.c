@@ -21,7 +21,7 @@
  */
 
 
-#define ALLOCATE_PROGRAMME_TAGS (1)
+
 #include "programme.h"
 
 #include "memory_allocations.h"

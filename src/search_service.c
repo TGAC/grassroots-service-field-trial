@@ -359,47 +359,22 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 {
 	bool success_flag = true;
 
-	if (strcmp (param_name_s, S_KEYWORD.npt_name_s) == 0)
+	const NamedParameterType params [] =
 		{
-			*pt_p = S_KEYWORD.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET.npt_type;
-		}
-	else if (strcmp (param_name_s, S_PAGE_NUMBER.npt_name_s) == 0)
-		{
-			*pt_p = S_PAGE_NUMBER.npt_type;
-		}
-	else if (strcmp (param_name_s, S_PAGE_SIZE.npt_name_s) == 0)
-		{
-			*pt_p = S_PAGE_SIZE.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET_STUDY.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET_STUDY.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET_FIELD_TRIAL.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET_FIELD_TRIAL.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET_LOCATION.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET_LOCATION.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET_VARIABLE.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET_VARIABLE.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET_PROGRAMME.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET_PROGRAMME.npt_type;
-		}
-	else if (strcmp (param_name_s, S_FACET_TREATMENT.npt_name_s) == 0)
-		{
-			*pt_p = S_FACET_TREATMENT.npt_type;
-		}
-	else
+			S_KEYWORD,
+			S_FACET,
+			S_PAGE_NUMBER,
+			S_PAGE_SIZE,
+			S_FACET_STUDY,
+			S_FACET_FIELD_TRIAL,
+			S_FACET_LOCATION,
+			S_FACET_VARIABLE,
+			S_FACET_PROGRAMME,
+			S_FACET_TREATMENT,
+			NULL
+		};
+
+	if (!DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
 		{
 			if (!GetSearchFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p))
 				{
@@ -409,7 +384,10 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 								{
 									if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
 										{
-											success_flag = false;
+											if (!GetSearchProgrammeParameterTypeForNamedParameter (param_name_s, pt_p))
+												{
+													success_flag = false;
+												}
 										}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
 								}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
