@@ -1171,11 +1171,12 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						{
 							if (!IsStringEmpty (id_s))
 								{
-									Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
+									const ViewFormat format = VF_CLIENT_FULL;
+									Study *study_p = GetStudyByIdString (id_s, format, data_p);
 
 									if (study_p)
 										{
-											if (GetStudyPlots (study_p, data_p))
+											if (GetStudyPlots (study_p, format, data_p))
 												{
 													OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
 

@@ -332,18 +332,29 @@ void SetRowCallbackFunctions (Row *row_p,
 }
 
 
+/*
+
+	bson_oid_t *ro_id_p;
+
+
+};
+ */
+
 
 bool PopulateRowFromJSON (Row *row_p, Plot *plot_p, const json_t *row_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
-	bool success_flag = false;
-
 	if (!plot_p)
 		{
 			bson_oid_t *plot_id_p = GetNamedBSONOidFromJSON (row_json_p, RO_PLOT_ID_S);
 
 			if (plot_id_p)
 				{
-					plot_p = GetPlotById (plot_id_p, NULL, data_p);
+					plot_p = GetPlotById (plot_id_p, NULL, format, data_p);
+
+					if (!plot_p)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get plot for row");
+						}
 
 					FreeBSONOid (plot_id_p);
 				}		/* if (plot_id_p) */
@@ -362,30 +373,30 @@ bool PopulateRowFromJSON (Row *row_p, Plot *plot_p, const json_t *row_json_p, co
 						{
 							SetRowTypeFromJSON (&rt, row_json_p);
 
-							switch (rt)
-								{
+							row_p -> ro_id_p = id_p;
+							row_p -> ro_type = rt;
+							row_p -> ro_plot_p = plot_p;
+							row_p -> ro_study_p = plot_p -> pl_parent_p;
+							row_p -> ro_by_study_index = study_index;
 
-								}
-
+							return true;
 						}
 					else
 						{
-
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get study index for row using \"%s\"", RO_STUDY_INDEX_S);
 						}
+
+					FreeBSONOid (id_p);
 				}		/* if (id_p) */
 			else
 				{
-
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get id for row using \"%s\"", MONGO_ID_S);
 				}
 
 		}		/* if (plot_p) */
-	else
-		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get plot for row");
-		}
 
 
-	return success_flag;
+	return false;
 }
 
 

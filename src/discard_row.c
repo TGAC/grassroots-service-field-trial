@@ -40,6 +40,11 @@ DiscardRow *GetDiscardRowFromJSON (const json_t *row_json_p, Plot *plot_p, const
 
 	if (row_p)
 		{
+			SetRowCallbackFunctions (& (row_p -> dr_base),
+															 NULL,
+															 AddDiscardRowToJSON,
+															 NULL,
+															 AddDiscardRowToFD);
 
 			if (PopulateRowFromJSON (& (row_p -> dr_base), plot_p, row_json_p, format, data_p))
 				{

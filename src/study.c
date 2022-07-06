@@ -753,7 +753,7 @@ bool AddStudyPlotsJSONDirectly (Study *study_p, json_t *study_json_p,  const Fie
 }
 
 
-bool GetStudyPlots (Study *study_p, FieldTrialServiceData *data_p)
+bool GetStudyPlots (Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -789,7 +789,7 @@ bool GetStudyPlots (Study *study_p, FieldTrialServiceData *data_p)
 
 													json_array_foreach (results_p, i, plot_json_p)
 														{
-															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, format, data_p);
 
 															if (plot_p)
 																{
@@ -1047,7 +1047,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 									{
 										case VF_CLIENT_FULL:
 											{
-												if (GetStudyPlots (study_p, data_p))
+												if (GetStudyPlots (study_p, format, data_p))
 													{
 														if (AddPlotsToJSON (study_p, study_json_p, format, processor_p, data_p))
 															{

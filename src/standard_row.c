@@ -193,7 +193,7 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 				{
 					if (GetNamedIdFromJSON (row_json_p, RO_PLOT_ID_S, plot_id_p))
 						{
-							plot_p = GetPlotById (plot_id_p, NULL, data_p);
+							plot_p = GetPlotById (plot_id_p, NULL, format, data_p);
 						}
 
 					FreeBSONOid (plot_id_p);
@@ -318,7 +318,7 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 																			if (!GetTreatmentFactorValuesFromJSON (row_json_p, row_p, study_p, data_p))
 																				{
 																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "GetTreatmentFactorValuesFromJSON failed");
-																					FreeRow (row_p);
+																					FreeRow (& (row_p -> sr_base));
 																					row_p = NULL;
 
 																					/* id_p and material_to_use_p have been freed by FreeRow () */
@@ -328,7 +328,7 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 																	else
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "GetObservationsFromJSON failed");
-																			FreeRow (row_p);
+																			FreeRow (& (row_p -> sr_base));
 																			row_p = NULL;
 
 																			/* id_p has been freed by FreeRow () */
@@ -360,15 +360,19 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 
 
 
-	if (!row_p)
+	if (row_p)
+		{
+			return (& (row_p -> sr_base));
+		}
+	else
 		{
 			if (material_to_use_p && (material_to_use_p != material_p))
 				{
 					FreeMaterial (material_to_use_p);
 				}
-		}
 
-	return (& (row_p -> sr_base));
+			return NULL;
+		}
 }
 
 //

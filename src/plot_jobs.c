@@ -146,7 +146,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 
 static json_t *GetTableParameterHints (void);
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p, const bool must_exist_flag);
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p, const bool must_exist_flag);
 
 static json_t *GetPlotTableRow (const Row *row_p, const FieldTrialServiceData *service_data_p);
 
@@ -1377,7 +1377,7 @@ static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, St
 			/*
 			 * does the plot already exist?
 			 */
-			plot_p = GetPlotByRowAndColumn (row, column, study_p, data_p);
+			plot_p = GetPlotByRowAndColumn (row, column, study_p, VF_STORAGE, data_p);
 
 			if (plot_p)
 				{
@@ -1612,7 +1612,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 }
 
 
-Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, FieldTrialServiceData *data_p)
+Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 
@@ -1620,7 +1620,7 @@ Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, FieldTrialServiceData *data
 
 	if (query_p)
 		{
-			plot_p = GetUniquePlot (query_p, study_p, data_p, true);
+			plot_p = GetUniquePlot (query_p, study_p, format, data_p, true);
 
 			bson_destroy (query_p);
 		}		/* if (query_p) */
@@ -1629,14 +1629,14 @@ Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, FieldTrialServiceData *data
 }
 
 
-Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study_p, FieldTrialServiceData *data_p)
+Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
 
 	if (query_p)
 		{
-			plot_p = GetUniquePlot (query_p, study_p, data_p, false);
+			plot_p = GetUniquePlot (query_p, study_p, format, data_p, false);
 
 			bson_destroy (query_p);
 		}		/* if (query_p) */
@@ -1691,7 +1691,7 @@ static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialService
 }
 
 
-static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceData *data_p, const bool must_exist_flag)
+static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p, const bool must_exist_flag)
 {
 	Plot *plot_p = NULL;
 
@@ -1710,7 +1710,7 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, FieldTrialServiceDa
 									size_t i = 0;
 									json_t *entry_p = json_array_get (results_p, i);
 
-									plot_p = GetPlotFromJSON (entry_p, study_p, data_p);
+									plot_p = GetPlotFromJSON (entry_p, study_p, format, data_p);
 
 									if (!plot_p)
 										{
@@ -1750,7 +1750,7 @@ static json_t *GetStudyPlotsForSubmissionTable (Study *study_p, FieldTrialServic
 	 */
 	if (study_p -> st_plots_p -> ll_size == 0)
 		{
-			if (!GetStudyPlots (study_p, service_data_p))
+			if (!GetStudyPlots (study_p, VF_CLIENT_FULL, service_data_p))
 				{
 
 				}

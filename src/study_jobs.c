@@ -1854,7 +1854,7 @@ OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  
 	/* Does the study already have its plots? */
 	if (study_p -> st_plots_p -> ll_size == 0)
 		{
-			if (!GetStudyPlots (study_p, data_p))
+			if (!GetStudyPlots (study_p, VF_STORAGE, data_p))
 				{
 					status = OS_FAILED;
 				}
@@ -1935,7 +1935,7 @@ bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p)
 														{
 															if (json_array_append_new (resources_p, programme_fd_p) == 0)
 																{
-																	if (GetStudyPlots (study_p, data_p))
+																	if (GetStudyPlots (study_p, VF_CLIENT_FULL, data_p))
 																		{
 																			json_t *study_fd_p = GetStudyAsFrictionlessDataResource (study_p, data_p);
 

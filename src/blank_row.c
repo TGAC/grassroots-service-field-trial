@@ -40,6 +40,12 @@ BlankRow *GetBlankRowFromJSON (const json_t *row_json_p, Plot *plot_p, const Stu
 
 	if (row_p)
 		{
+			SetRowCallbackFunctions (& (row_p -> br_base),
+															 NULL,
+															 AddBlankRowToJSON,
+															 NULL,
+															 AddBlankRowToFD);
+
 			if (PopulateRowFromJSON (& (row_p -> br_base), plot_p, row_json_p, format, data_p))
 				{
 					return row_p;

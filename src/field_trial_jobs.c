@@ -275,18 +275,15 @@ json_t *GetFieldTrialIndexingData (Service *service_p)
 		{
 			if (json_is_array (src_trials_p))
 				{
-					FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 					size_t i;
 					json_t *src_trial_p;
 					size_t num_added = 0;
 
 					json_array_foreach (src_trials_p, i, src_trial_p)
 						{
-							bson_oid_t id;
-
 							if (AddDatatype (src_trial_p, DFTD_FIELD_TRIAL))
 								{
-
+									++ num_added;
 								}
 
 

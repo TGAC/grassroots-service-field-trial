@@ -394,7 +394,7 @@ OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_
 //}
 
 
-OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stas_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stats_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -875,7 +875,7 @@ Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVar
 }
 
 
-Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialServiceData *data_p)
+Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;
 	char *index_key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", RO_STUDY_INDEX_S, NULL);
@@ -904,7 +904,7 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, FieldTrialS
 														{
 															size_t i = 0;
 															json_t *plot_json_p = json_array_get (results_p, i);
-															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, data_p);
+															Plot *plot_p = GetPlotFromJSON (plot_json_p, study_p, format, data_p);
 
 															if (plot_p)
 																{

@@ -34,8 +34,6 @@
 
 static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
 
-static Plot *SearchForPlot (bson_t *query_p, FieldTrialServiceData *data_p);
-
 static bool SetValidPlotImage (const Plot *plot_p, json_t *plot_json_p);
 
 
@@ -571,7 +569,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 
 
 
-Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, FieldTrialServiceData *data_p)
+Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
 	json_int_t row;
@@ -643,7 +641,7 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, FieldTr
 
 															if (rows_array_p)
 																{
-																	if (GetPlotRows (plot_p, rows_array_p, parent_study_p, data_p))
+																	if (GetPlotRows (plot_p, rows_array_p, parent_study_p, format, data_p))
 																		{
 
 																		}
@@ -781,7 +779,7 @@ bool AddRowToPlot (Plot *plot_p, Row *row_p)
 }
 
 
-bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, FieldTrialServiceData *data_p)
+bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -797,9 +795,7 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 
 			json_array_foreach (rows_array_p, i, row_json_p)
 				{
-					ViewFormat fmt = VF_STORAGE;
-
-					Row *row_p = GetRowFromJSON (row_json_p, plot_p, study_p, fmt, data_p);
+					Row *row_p = GetRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
 
 					if (row_p)
 						{
@@ -856,57 +852,6 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, Fiel
 //
 //	return plot_p;
 //}
-
-
-static Plot *SearchForPlot (bson_t *query_p, FieldTrialServiceData *data_p)
-{
-	Plot *plot_p = NULL;
-
-	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
-		{
-			json_t *results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, NULL);
-
-			if (results_p)
-				{
-					if (json_is_array (results_p))
-						{
-							if (json_array_size (results_p) == 1)
-								{
-									json_t *result_p = json_array_get (results_p, 0);
-
-									plot_p = GetPlotFromJSON (result_p, false, data_p);
-
-									if (!plot_p)
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_p, "Failed to get Plot from JSON");
-										}
-
-								}		/* if (json_array_size (results_p) == 1) */
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Plots array does not contain just a single item");
-								}
-
-						}		/* if (json_is_array (results_p)) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "results are not an array");
-						}
-
-					json_decref (results_p);
-				}		/* if (results_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No results returned");
-				}
-		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL])) */
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_PLOT]);
-		}
-
-	return plot_p;
-}
 
 
 static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p)
