@@ -82,46 +82,46 @@ bool AddRowFrictionlessDataDetails (const Row *row_p, json_t *row_fd_p, const Fi
 				}
 
 			switch (row_p -> ro_type)
-				{
-					case RT_STANDARD:
-						{
+			{
+				case RT_STANDARD:
+					{
 
-						}
-						break;
+					}
+					break;
 
-					case RT_BLANK:
-						{
-							if (SetJSONBoolean (row_fd_p, RO_BLANK_S, true))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": true", RO_BLANK_S);
-								}
-						}
-						break;
+				case RT_BLANK:
+					{
+						if (SetJSONBoolean (row_fd_p, RO_BLANK_S, true))
+							{
+								success_flag = true;
+							}
+						else
+							{
+								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": true", RO_BLANK_S);
+							}
+					}
+					break;
 
-					case RT_DISCARD:
-						{
-							if (SetJSONBoolean (row_fd_p, RO_DISCARD_S, true))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": true", RO_DISCARD_S);
-								}
-						}
-						break;
+				case RT_DISCARD:
+					{
+						if (SetJSONBoolean (row_fd_p, RO_DISCARD_S, true))
+							{
+								success_flag = true;
+							}
+						else
+							{
+								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_fd_p, "Failed to add \"%s\": true", RO_DISCARD_S);
+							}
+					}
+					break;
 
-					default:
-						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddRowFrictionlessDataDetails () failed: unknown type %d", row_p -> ro_type);
-						}
-						break;
+				default:
+					{
+						PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "AddRowFrictionlessDataDetails () failed: unknown type %d", row_p -> ro_type);
+					}
+					break;
 
-				}		/* switch (row_p -> ro_type) */
+			}		/* switch (row_p -> ro_type) */
 
 		}		/* if (SetJSONInteger (row_fd_p, PL_INDEX_TABLE_TITLE_S, row_p -> ro_by_study_index)) */
 	else
@@ -153,52 +153,52 @@ OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_
 	size_t num_added = 0;
 
 	json_object_foreach_safe (plot_json_p, temp_p, key_s, value_p)
-		{
-			/* Is it a treatment? */
-			Treatment *treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
+	{
+		/* Is it a treatment? */
+		Treatment *treatment_p = GetTreatmentByURL (key_s, VF_STORAGE, data_p);
 
 
-			if (treatment_p)
-				{
-					/*
-					 * Does the Study have a TreatmentFactor for this
-					 * Treatment?
-					 */
-					TreatmentFactor *tf_p = GetTreatmentFactorForStudy (study_p, treatment_p -> tr_id_p, data_p);
+		if (treatment_p)
+			{
+				/*
+				 * Does the Study have a TreatmentFactor for this
+				 * Treatment?
+				 */
+				TreatmentFactor *tf_p = GetTreatmentFactorForStudy (study_p, treatment_p -> tr_id_p, data_p);
 
-					if (tf_p)
-						{
-							if (json_is_string (value_p))
-								{
-									const char *name_s = json_string_value (value_p);
-									const char *value_s = GetTreatmentFactorValue (tf_p, name_s);
+				if (tf_p)
+					{
+						if (json_is_string (value_p))
+							{
+								const char *name_s = json_string_value (value_p);
+								const char *value_s = GetTreatmentFactorValue (tf_p, name_s);
 
-									/* Is it a valid defined label? */
-									if (value_s)
-										{
-											if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, name_s))
-												{
-													++ num_added;
-												}
-										}
-								}
+								/* Is it a valid defined label? */
+								if (value_s)
+									{
+										if (AddTreatmentFactorValueToRowByParts (row_p, tf_p, name_s))
+											{
+												++ num_added;
+											}
+									}
+							}
 
 
-							//FreeTreatmentFactor (tf_p);
-						}
+						//FreeTreatmentFactor (tf_p);
+					}
 
-					FreeTreatment (treatment_p);
+				FreeTreatment (treatment_p);
 
-					/*
-					 * We know that it's a Treatment so remove it from any later processing
-					 * and increment the number that we've seen
-					 */
-					json_object_del (plot_json_p, key_s);
-					++ num_treatments;
+				/*
+				 * We know that it's a Treatment so remove it from any later processing
+				 * and increment the number that we've seen
+				 */
+				json_object_del (plot_json_p, key_s);
+				++ num_treatments;
 
-				}		/* if (treatment_p) */
+			}		/* if (treatment_p) */
 
-		}		/* json_array_foreach_safe (plot_json_p, temp_p, key_s, value_p) */
+	}		/* json_array_foreach_safe (plot_json_p, temp_p, key_s, value_p) */
 
 	if (num_treatments > 0)
 		{
@@ -403,7 +403,7 @@ OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stas_json_p, Study 
 
 
 
-OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 
@@ -413,21 +413,21 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 	 */
 	if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
 		{
-			MeasuredVariable *measured_variable_p = NULL;
-			MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
-			struct tm *start_date_p = NULL;
-			struct tm *end_date_p = NULL;
-			bool corrected_value_flag = false;
-			uint32 observation_index = OB_DEFAULT_INDEX;
+			const char *value_s = json_string_value (value_p);
 
-			if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
+			if (!IsStringEmpty (value_s))
 				{
-					Observation *observation_p = NULL;
-					bool free_measured_variable_flag = false;
-					const char *value_s = json_string_value (value_p);
+					MeasuredVariable *measured_variable_p = NULL;
+					MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
+					struct tm *start_date_p = NULL;
+					struct tm *end_date_p = NULL;
+					bool corrected_value_flag = false;
+					uint32 observation_index = OB_DEFAULT_INDEX;
 
-					if (!IsStringEmpty (value_s))
+					if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
 						{
+							Observation *observation_p = NULL;
+							bool free_measured_variable_flag = false;
 							const char *growth_stage_s = NULL;
 							const char *method_s = NULL;
 							ObservationNature nature = ON_ROW;
@@ -485,40 +485,50 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 									if (observation_id_p)
 										{
 											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
-											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
 
-											if (obs_type != OT_NUM_TYPES)
+											if (class_p)
 												{
-													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
-												}
+													ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
 
-											if (observation_p)
-												{
-													if (AddObservationToStandardRow (row_p, observation_p))
+													if (obs_type != OT_NUM_TYPES)
 														{
-															status = OS_SUCCEEDED;
+															observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
 														}
+
+													if (observation_p)
+														{
+															if (AddObservationToStandardRow (row_p, observation_p))
+																{
+																	status = OS_SUCCEEDED;
+																}
+															else
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+
+																	FreeObservation (observation_p);
+																}
+
+														}		/* if (observation_p) */
 													else
 														{
 															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 															bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
 
-															FreeObservation (observation_p);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+
+															free_measured_variable_flag = true;
 														}
 
-												}		/* if (observation_p) */
+												}		/* if (class_p) */
 											else
 												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Scale Class for Measured Variable \"%s\"", GetMeasuredVariableName (measured_variable_p));
 													free_measured_variable_flag = true;
 												}
 
@@ -529,39 +539,39 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 										}
 								}
 
-						}		/* if ((!IsStringEmpty (raw_value_s)) */
-					else
-						{
-							PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No measured value for \"%s\", skipping", key_s);
-						}
+							if (start_date_p)
+								{
+									FreeTime (start_date_p);
+									start_date_p = NULL;
+								}
 
+							if (end_date_p)
+								{
+									FreeTime (end_date_p);
+									end_date_p = NULL;
+								}
 
-					if (start_date_p)
-						{
-							FreeTime (start_date_p);
-							start_date_p = NULL;
-						}
+							/*
+							 * If the Observation failed to be allocated then, we need to free the
+							 * Measured Variable as FreeObservation () would normally take care of
+							 * that when the
+							 */
+							if (free_measured_variable_flag && measured_variable_p)
+								{
+									if (!HasMeasuredVariableCache (data_p))
+										{
+											FreeMeasuredVariable (measured_variable_p);
+											measured_variable_p = NULL;
+										}
+								}
+						}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
 
-					if (end_date_p)
-						{
-							FreeTime (end_date_p);
-							end_date_p = NULL;
-						}
-
-					/*
-					 * If the Observation failed to be allocated then, we need to free the
-					 * Measured Variable as FreeObservation () would normally take care of
-					 * that when the
-					 */
-					if (free_measured_variable_flag && measured_variable_p)
-						{
-							FreeMeasuredVariable (measured_variable_p);
-							measured_variable_p = NULL;
-						}
-
-
-
-				}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
+				}		/* if ((!IsStringEmpty (raw_value_s)) */
+			else
+				{
+					PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No measured value for \"%s\", skipping", key_s);
+					status = OS_SUCCEEDED;
+				}
 
 
 		}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */

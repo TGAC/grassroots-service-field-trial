@@ -1118,7 +1118,6 @@ static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_
 }
 
 
-
 static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus add_status = OS_FAILED;
@@ -1280,7 +1279,7 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 							/*
 							 * Is it an observation?
 							 */
-							add_status = AddObservationValueToStandardRow (row_p, key_s, value_p, study_p, job_p, row_index, data_p);
+							add_status = AddObservationValueToStandardRow (row_p, key_s, value_p, job_p, row_index, data_p);
 
 							if (add_status == OS_SUCCEEDED)
 								{
@@ -1292,10 +1291,9 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 
 									if (!IsStringEmpty (value_s))
 										{
-
+											add_status = AddSingleTreatmentFactorValueToStandardRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 										}
 
-									add_status = AddSingleTreatmentFactorValueToStandardRow (row_p, key_s, value_s, study_p, job_p, row_index, data_p);
 
 									if (add_status == OS_SUCCEEDED)
 										{
