@@ -34,6 +34,11 @@
 #include "gene_bank.h"
 #include "dfw_util.h"
 
+#include "blank_row.h"
+#include "discard_row.h"
+#include "standard_row.h"
+
+
 #include "boolean_parameter.h"
 #include "char_parameter.h"
 #include "double_parameter.h"
@@ -172,6 +177,7 @@ static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, St
 
 static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const bool control_rep_flag, const uint32 row_index, FieldTrialServiceData *data_p);
 
+static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p);
 
 
 /*
@@ -985,86 +991,145 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p)
+static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
 {
+	StandardRow *sr_p= NULL;
 	GeneBank *gene_bank_p = NULL;
-	Material *material_p = NULL;
-	OperationStatus add_status = OS_FAILED;
-	bool success_flag = false;
-	RowType rt = RT_STANDARD;
+	const char *gene_bank_s = GetJSONString (table_row_json_p, PL_GENE_BANK_S);
 
-	if (GetDiscardValueFromSubmissionJSON (table_row_json_p))
+	if (!IsStringEmpty (gene_bank_s))
 		{
-			rt = RT_DISCARD;
-			success_flag = true;
-		}
-	else if (GetBlankValueFromSubmissionJSON (table_row_json_p))
-		{
-			rt = RT_BLANK;
-			success_flag = true;
+			gene_bank_p = GetGeneBankByName (gene_bank_s, data_p);
+
+			if (!gene_bank_p)
+				{
+					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown gene bank name", row_index, PL_GENE_BANK_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get gene bank with name \"%s\" for area \"%s\"", gene_bank_s, study_p -> st_name_s);
+				}
 		}
 	else
 		{
-			const char *gene_bank_s = GetJSONString (table_row_json_p, PL_GENE_BANK_S);
-
-			if (!IsStringEmpty (gene_bank_s))
-				{
-					gene_bank_p = GetGeneBankByName (gene_bank_s, data_p);
-
-					if (!gene_bank_p)
-						{
-							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown gene bank name", row_index, PL_GENE_BANK_S);
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get gene bank with name \"%s\" for area \"%s\"", gene_bank_s, study_p -> st_name_s);
-						}
-				}
-			else
-				{
-					/* default to using the GRU */
-					gene_bank_p = gru_gene_bank_p;
-				}
-
-			if (gene_bank_p)
-				{
-					const char *accession_s = GetJSONString (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
-
-					if (!IsStringEmpty (accession_s))
-						{
-							material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
-
-							if (material_p)
-								{
-									success_flag = true;
-								}
-							else
-								{
-									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown accession", row_index, PL_ACCESSION_TABLE_TITLE_S);
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, study_p -> st_name_s);
-								}
-						}		/* if (!IsStringEmpty (accession_s)) */
-					else
-						{
-							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_ACCESSION_TABLE_TITLE_S);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_ACCESSION_TABLE_TITLE_S);
-						}
-
-					if (gene_bank_p != gru_gene_bank_p)
-						{
-							FreeGeneBank (gene_bank_p);
-						}
-
-				}		/* if (gene_bank_p) */
-			else
-				{
-					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown Gene Bank", row_index, PL_GENE_BANK_S);
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
-				}
+			/* default to using the GRU */
+			gene_bank_p = gru_gene_bank_p;
 		}
 
-
-	if (success_flag)
+	if (gene_bank_p)
 		{
-			bool is_new_plot_flag = false;
+			const char *accession_s = GetJSONString (table_row_json_p, PL_ACCESSION_TABLE_TITLE_S);
 
+			if (!IsStringEmpty (accession_s))
+				{
+					Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
+
+					if (material_p)
+						{
+							int32 rack_plotwise_index = -1;
+
+							if (GetJSONStringAsInteger (table_row_json_p, PL_RACK_TITLE_S, &rack_plotwise_index))
+								{
+									bool control_rep_flag = false;
+									int32 replicate = 1;
+									bool success_flag = true;
+									const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
+
+									if (!IsStringEmpty (rep_s))
+										{
+											if (Stricmp (rep_s, SR_REPLICATE_CONTROL_S) == 0)
+												{
+													control_rep_flag = true;
+												}
+											else
+												{
+													if (!GetValidInteger (&rep_s, &replicate))
+														{
+															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
+														}
+
+												}
+
+										}		/* if (!IsStringEmpty (rep_s)) */
+
+									if (success_flag)
+										{
+											const MEM_FLAG material_mem = MF_SHALLOW_COPY;
+											sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
+
+											if (sr_p)
+												{
+													OperationStatus s = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
+
+													if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+														{
+
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "ProcessStandardRow () failed");
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to process row", row_index, NULL);
+
+															FreeRow (& (sr_p -> sr_base));
+															sr_p = NULL;
+														}
+
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AllocateStandardRow () failed");
+												}
+
+										}
+
+
+								}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index)) */
+							else
+								{
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_RACK_TITLE_S);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_RACK_TITLE_S);
+								}
+
+						}
+					else
+						{
+							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown accession", row_index, PL_ACCESSION_TABLE_TITLE_S);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Material with internal name \"%s\" for area \"%s\"", accession_s, study_p -> st_name_s);
+						}
+				}		/* if (!IsStringEmpty (accession_s)) */
+			else
+				{
+					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_ACCESSION_TABLE_TITLE_S);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_ACCESSION_TABLE_TITLE_S);
+				}
+
+			if (gene_bank_p != gru_gene_bank_p)
+				{
+					FreeGeneBank (gene_bank_p);
+				}
+
+		}		/* if (gene_bank_p) */
+	else
+		{
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown Gene Bank", row_index, PL_GENE_BANK_S);
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
+		}
+
+	return sr_p;
+}
+
+
+
+static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus add_status = OS_FAILED;
+	int32 rack_studywise_index = -1;
+	bool added_plot_to_study_flag = false;
+	bool is_new_plot_flag = true;
+
+
+
+	if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
+		{
 			/*
 			 * Either get the existing plot at the specified row/column of the json or create a new one
 			 */
@@ -1072,151 +1137,84 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 			if (plot_p)
 				{
-					int32 rack_studywise_index = -1;
-					bool added_plot_to_study_flag = false;
+					Row *row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
 
-
-					/*
-					 * plot_p now has an id, so we can add the row/rack.
-					 */
-
-					if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
+					if (row_p)
 						{
-							Row *row_p = NULL;
-							bool control_rep_flag = false;
-							int32 replicate = 1;
-							int32 rack_plotwise_index = -1;
-							bool is_existing_row_flag = true;
-
-							if (rt == RT_STANDARD)
+							if (row_p -> ro_type == RT_STANDARD)
 								{
+									StandardRow *sr_p = (StandardRow *) row_p;
+									/*
+									 * update existing row
+									 */
+									//UpdateStandardRow (sr_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate, rt);
+								}
 
-									if (GetJSONStringAsInteger (table_row_json_p, PL_RACK_TITLE_S, &rack_plotwise_index))
-										{
-											const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
-
-											success_flag = true;
-
-											if (!IsStringEmpty (rep_s))
-												{
-													if (Stricmp (rep_s, SR_REPLICATE_CONTROL_S) == 0)
-														{
-															control_rep_flag = true;
-														}
-													else
-														{
-															if (!GetValidInteger (&rep_s, &replicate))
-																{
-																	success_flag = false;
-																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
-																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
-																}
-
-														}
-
-												}		/* if (!IsStringEmpty (rep_s)) */
-
-
-										}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index)) */
-									else
-										{
-											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_RACK_TITLE_S);
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_RACK_TITLE_S);
-										}
-
-								}		/* if (rt == RT_NORMAL) */
-
-							if (success_flag)
+						}		/* if (row_p) */
+					else
+						{
+							/* Is it a Discard Row? */
+							if (GetDiscardValueFromSubmissionJSON (table_row_json_p))
 								{
-									row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
-									const MEM_FLAG material_mem = MF_SHALLOW_COPY;
+									row_p = AllocateDiscardRow (NULL, rack_studywise_index, plot_p);
 
-									if (row_p)
+									if (!row_p)
 										{
-											if (row_p -> ro_type == RT_STANDARD)
-												{
-													StandardRow *sr_p = (StandardRow *) row_p;
-													/*
-													 * update existing row
-													 */
-													UpdateStandardRow (sr_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate, rt);
-												}
-										}
-									else
-										{
-											StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
-
-											if (sr_p)
-												{
-													if (!AddRowToPlot (plot_p, & (sr_p -> sr_base)))
-														{
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
-															FreeRow (row_p);
-															row_p = NULL;
-														}
-
-													is_existing_row_flag = false;
-												}
-											else
-												{
-													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
-												}
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AllocateDiscardRow () failed");
 										}
 								}
+							/* Is it a Blank Row? */
+							else if (GetBlankValueFromSubmissionJSON (table_row_json_p))
+								{
+									row_p = AllocateBlankRow (NULL, rack_studywise_index, plot_p);
+
+									if (!row_p)
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AllocateBlankRow () failed");
+										}
+								}
+							else
+								{
+									/* Assume a Standard Row */
+									StandardRow *sr_p = CreateStandardRowFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, row_index, rack_studywise_index, plot_p, data_p);
+
+									if (sr_p)
+										{
+											row_p = & (sr_p -> sr_base);
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "CreateStandardRowFromJSON () failed");
+										}
+
+								}		/* standard row */
 
 
 							if (row_p)
 								{
-									bool b = true;
-									SetRowType (row_p, rt);
-
-									if (rt == RT_STANDARD)
+									if (!AddRowToPlot (plot_p, row_p))
 										{
-											OperationStatus s = ProcessStandardRow ((StandardRow *) row_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
-
-											if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
-												{
-													b = true;
-												}
-											else
-												{
-													b = false;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to process row");
-													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to process row", row_index, NULL);
-
-												}
-
-										}		/* if (rt == RT_NORMAL) */
-
-
-									if (b)
-										{
-											if (SavePlot (plot_p, data_p))
-												{
-													add_status = OS_SUCCEEDED;
-												}
-											else
-												{
-													add_status = OS_FAILED;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
-													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
-												}
-
+											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
+											FreeRow (row_p);
+											row_p = NULL;
 										}
 
 
-								}		/* if (row_p) */
+									if (SavePlot (plot_p, data_p))
+										{
+											add_status = OS_SUCCEEDED;
+										}
+									else
+										{
+											add_status = OS_FAILED;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
+										}
+								}
 							else
 								{
-									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row", row_index, NULL);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get row");
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
 								}
-
-						}		/* if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index)) */
-					else
-						{
-							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
 						}
 
 
@@ -1226,7 +1224,13 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "GetPlotForUpdating () failed");
 				}
 
-		}		/* if (success_flag) */
+		}		/* if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index)) */
+	else
+		{
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_INDEX_TABLE_TITLE_S);
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
+		}
+
 
 
 	if (add_status == OS_FAILED)

@@ -21,7 +21,7 @@ Row *AllocateDiscardRow (bson_oid_t *id_p, const uint32 study_index, Plot *paren
 
 	if (row_p)
 		{
-			if (InitRow (& (row_p -> dr_base), id_p, study_index, parent_plot_p, RT_BLANK, NULL, AddDiscardRowToJSON, NULL, AddDiscardRowToFD))
+			if (InitRow (& (row_p -> dr_base), id_p, study_index, parent_plot_p, RT_DISCARD, NULL, AddDiscardRowToJSON, NULL, AddDiscardRowToFD))
 				{
 					return (& (row_p -> dr_base));
 				}
