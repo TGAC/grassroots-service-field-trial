@@ -439,6 +439,7 @@ bool SetRowTypeFromString (RowType *rt_p, const char *value_s)
 			if (strcmp (*type_ss, value_s) == 0)
 				{
 					*rt_p = r;
+					return true;
 				}
 			else
 				{
