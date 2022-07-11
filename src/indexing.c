@@ -1838,19 +1838,23 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 			/* Plots */
 			if (AddCollectionCompoundIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], keys_ss, true, false))
 				{
-					/* Measured Variables */
-					char *key_s = GetMeasuredVariablesNameKey ();
-
-					if (key_s)
+					if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], PL_PARENT_STUDY_S, false, false))
 						{
-							if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], key_s, true, false))
+							/* Measured Variables */
+							char *key_s = GetMeasuredVariablesNameKey ();
+
+							if (key_s)
 								{
-									status = OS_SUCCEEDED;
+									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], key_s, true, false))
+										{
+											status = OS_SUCCEEDED;
+										}
+
+									FreeMeasuredVariablesNameKey (key_s);
 								}
 
-							FreeMeasuredVariablesNameKey (key_s);
-						}
 
+						}
 				}
 
 		}		/* if (AddCollectionIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MATERIAL], MA_ACCESSION_S, false, false)) */

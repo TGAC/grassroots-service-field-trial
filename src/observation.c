@@ -347,7 +347,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 									if (json_is_string (corrected_value_p))
 										{
 											const char *corrected_value_s = json_string_value (corrected_value_p);
-											raw_time_p = GetTimeFromString (corrected_value_s);
+											corrected_value_p = GetTimeFromString (corrected_value_s);
 
 											if (!corrected_time_p)
 												{
@@ -368,6 +368,17 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												}
 										}
 								}
+
+							if (raw_time_p)
+								{
+									FreeTime (raw_time_p);
+								}
+
+							if (corrected_time_p)
+								{
+									FreeTime (corrected_time_p);
+								}
+
 						}
 						break;
 

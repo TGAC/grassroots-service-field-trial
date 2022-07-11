@@ -699,6 +699,17 @@ void FreeStudy (Study *study_p)
 			FreeLinkedList (study_p -> st_phenotypes_p);
 		}
 
+
+	if (study_p -> st_photo_url_s)
+		{
+			FreeCopiedString (study_p -> st_photo_url_s);
+		}
+
+	if (study_p -> st_image_collection_notes_s)
+		{
+			FreeCopiedString (study_p -> st_image_collection_notes_s);
+		}
+
 	FreeMemory (study_p);
 }
 

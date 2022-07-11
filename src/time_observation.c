@@ -369,6 +369,8 @@ static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const struct 
 						{
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to set \"%s\": \"%s\" in JSON", key_s, *time_s);
 						}
+
+					FreeTimeString (time_s);
 				}
 			else
 				{

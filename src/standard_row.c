@@ -360,8 +360,14 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 
 
 
+
 	if (row_p)
 		{
+			if (material_to_use_p && (material_to_use_p != material_p) && (row_p -> sr_material_p != material_to_use_p))
+				{
+					FreeMaterial (material_to_use_p);
+				}
+
 			return (& (row_p -> sr_base));
 		}
 	else

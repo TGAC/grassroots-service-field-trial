@@ -753,39 +753,53 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 {
 	bool success_flag = false;
 
-	if (GetAllFieldTrialStudies (trial_p, format, data_p))
+	if (format == VF_CLIENT_FULL)
 		{
-			if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+			if (GetAllFieldTrialStudies (trial_p, format, data_p))
 				{
-					char *title_s = GetFieldTrialAsString (trial_p);
-
-					if (title_s)
+					if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 						{
-							if (AddContext (trial_json_p))
+							success_flag = true;
+						}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
+
+				}
+		}
+	else
+		{
+			success_flag = true;
+		}
+
+	if (success_flag)
+		{
+			char *title_s = GetFieldTrialAsString (trial_p);
+
+			success_flag = false;
+
+			if (title_s)
+				{
+					if (AddContext (trial_json_p))
+						{
+							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+
+							if (dest_record_p)
 								{
-									json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+									AddImage (dest_record_p, DFTD_FIELD_TRIAL, data_p);
 
-									if (dest_record_p)
+									if (AddResultToServiceJob (job_p, dest_record_p))
 										{
-											AddImage (dest_record_p, DFTD_FIELD_TRIAL, data_p);
+											success_flag = true;
+										}
+									else
+										{
+											json_decref (dest_record_p);
+										}
 
-											if (AddResultToServiceJob (job_p, dest_record_p))
-												{
-													success_flag = true;
-												}
-											else
-												{
-													json_decref (dest_record_p);
-												}
+								}		/* if (dest_record_p) */
 
-										}		/* if (dest_record_p) */
+						}		/* if (AddContext (trial_json_p)) */
 
-								}		/* if (AddContext (trial_json_p)) */
-
-							FreeCopiedString (title_s);
-						}		/* if (title_s) */
-
-				}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
+					FreeCopiedString (title_s);
+				}		/* if (title_s) */
 
 		}
 
@@ -838,20 +852,35 @@ bool AddFieldTrialToServiceJob (ServiceJob *job_p, FieldTrial *trial_p, const Vi
 }
 
 
-bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
+bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *src_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	FieldTrial *trial_p = GetFieldTrialFromJSON (trial_json_p, format, data_p);
+	FieldTrial *trial_p = GetFieldTrialFromJSON (src_json_p, format, data_p);
 
 	if (trial_p)
 		{
-			if (AddFieldTrialToServiceJobResult (job_p, trial_p, trial_json_p, format, data_p))
+			json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, format, data_p);
+
+			if (trial_json_p)
 				{
-					success_flag = true;
+					if (AddFieldTrialToServiceJobResult (job_p, trial_p, trial_json_p, format, data_p))
+						{
+							success_flag = true;
+						}
+
+					json_decref (trial_json_p);
+				}		/* if (trial_json_p) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_json_p, "GetFieldTrialAsJSON () for format %d failed", format);
 				}
 
 			FreeFieldTrial (trial_p);
 		}		/* if (trial_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_json_p, "GetFieldTrialFromJSON () failed");
+		}
 
 	return success_flag;
 }
