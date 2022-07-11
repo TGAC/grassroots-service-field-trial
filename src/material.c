@@ -272,7 +272,6 @@ json_t *GetMaterialAsJSON (const Material *material_p, const ViewFormat format, 
 
 Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	Material *material_p = NULL;
 	const char *accession_s = GetJSONString (json_p, MA_ACCESSION_S);
 
 	if (accession_s)
@@ -301,9 +300,13 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 
 											if (success_flag)
 												{
-													material_p = AllocateMaterialByAccession (id_p, accession_s, gene_bank_id_p, data_p);
+													Material *material_p = AllocateMaterialByAccession (id_p, accession_s, gene_bank_id_p, data_p);
 
-													if (!material_p)
+													if (material_p)
+														{
+															return material_p;
+														}
+													else
 														{
 															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to allocate Material");
 														}
@@ -328,10 +331,7 @@ Material *GetMaterialFromJSON (const json_t *json_p, const ViewFormat format, co
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to get \"%s\"", MONGO_ID_S);
 						}
 
-					if (!material_p)
-						{
-							FreeBSONOid (id_p);
-						}
+					FreeBSONOid (id_p);
 				}		/* if (id_p) */
 			else
 				{
@@ -521,7 +521,7 @@ static Material *SearchForMaterial (bson_t *query_p, const FieldTrialServiceData
 								{
 									json_t *result_p = json_array_get (results_p, 0);
 
-									material_p = GetMaterialFromJSON (result_p, false, data_p);
+									material_p = GetMaterialFromJSON (result_p, VF_STORAGE, data_p);
 
 									if (!material_p)
 										{
