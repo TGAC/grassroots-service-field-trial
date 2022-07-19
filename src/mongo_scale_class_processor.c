@@ -474,7 +474,8 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 
 	if (value_s)
 		{
-			if (IsEmptyEntry (value_s))
+			/* If the value is set to empty or "na", remove it */
+			if ((IsEmptyEntry (value_s)) || (strcmp (value_s, "na") == 0))
 				{
 					ret = VS_REMOVE;
 				}
@@ -490,7 +491,7 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %d", key_s, i);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set integer \"%s\": %d", key_s, i);
 								}
 						}
 					else
@@ -612,7 +613,7 @@ static ValueStatus CheckTime (json_t *observation_json_p, const char * const key
 										}
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\"", key_s, parsed_time_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set time \"%s\": \"%s\"", key_s, parsed_time_s);
 										}
 								}
 
@@ -657,7 +658,8 @@ static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s
 
 	if (value_s)
 		{
-			if (IsEmptyEntry (value_s))
+			/* If the value is set to empty or "na", remove it */
+			if ((IsEmptyEntry (value_s)) || (strcmp (value_s, "na") == 0))
 				{
 					ret = VS_REMOVE;
 				}
@@ -673,12 +675,12 @@ static ValueStatus SetReal (json_t *observation_json_p, const char * const key_s
 								}
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": %lf", key_s, d);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set double \"%s\": %lf", key_s, d);
 								}
 						}
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to an integer, err: %d", value_s, res);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to convert \"%s\" to a double, err: %d", value_s, res);
 						}
 				}
 		}
