@@ -1,19 +1,19 @@
 
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * handbook_generator.c
  *
@@ -31,6 +31,8 @@
 #include "treatment_factor.h"
 #include "study_jobs.h"
 #include "measured_variable.h"
+#include "phenotype_statistics.h"
+#include "measured_variable_jobs.h"
 
 
 typedef enum
@@ -60,6 +62,8 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, const char *key_s, const char *printed_key_s, CapitalizeState capitalize, ByteBuffer *buffer_p);
 
 static char *DownloadToFile (const char *url_s_, const char *download_path_s);
+
+static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s, const char *filename_s);
 
 
 
@@ -99,6 +103,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 													fputs ("\\usepackage{tabularx}\n", study_tex_f);
 													fputs ("\\usepackage{hyperref}\n", study_tex_f);
+													fputs ("\\usepackage{bookmark}\n", study_tex_f);
 													fputs ("\\usepackage[margin=0.6in]{geometry}\n", study_tex_f);
 
 													fputs ("\\usepackage{sectsty}\n", study_tex_f);
@@ -193,11 +198,8 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 											fclose (study_tex_f);
 
-											/* Run pdflatex */
-											/*
-												 pdflatex -interaction=nonstopmode -output-directory=/home/billy/Applications/apache/htdocs/grassroots/frictionless/ ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
-												 latexmk -c -cd ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
-											 */
+											RunLatex (data_p -> dftsd_latex_commmand_s, data_p -> dftsd_assets_path_s, study_filename_s);
+
 
 										}		/* if (study_tex_f) */
 									else
@@ -237,6 +239,41 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 }
 
 
+
+static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s, const char *latex_filename_s)
+{
+	bool success_flag = false;
+	/*
+		 pdflatex -interaction=nonstopmode -output-directory=/home/billy/Applications/apache/htdocs/grassroots/frictionless/ ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
+		 latexmk -c -cd ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
+	 */
+	char *command_s = ConcatenateVarargsStrings (pdf_latex_command_s, " -interaction=nonstopmode -output-directory=", output_path_s, " ", latex_filename_s, NULL);
+
+	if (command_s)
+		{
+			int res = system (command_s);
+
+			if (res == 0)
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" failed with res %d", command_s, res);
+				}
+
+			FreeCopiedString (command_s);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to generate latex command for \"%s\", \"%s\" and \"%s\"", pdf_latex_command_s, output_path_s, latex_filename_s);
+		}
+
+	return success_flag;
+}
+
+
+
 static char *DownloadToFile (const char *url_s, const char *download_path_s)
 {
 	char *result_s = NULL;
@@ -249,7 +286,6 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 {
 	bool success_flag = true;
 	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
-	json_t *phenotypes_p = NULL;
 
 	fputs ("\\section* {Study}\n", study_tex_f);
 
@@ -291,7 +327,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 	InsertLatexTabularRowAsHyperlink (study_tex_f, "Weather", study_p -> st_weather_link_s, buffer_p);
 
-  fputs ("\\end{tabularx}\n", study_tex_f);
+	fputs ("\\end{tabularx}\n", study_tex_f);
 
 	/* Plots */
 	fputs ("\\subsection* {Layout}\n", study_tex_f);
@@ -317,7 +353,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Vertical Gap", study_p -> st_plot_block_vertical_gap_p);
 
 
-  fputs ("\\end{tabularx}\n", study_tex_f);
+	fputs ("\\end{tabularx}\n", study_tex_f);
 
 
 	/*
@@ -343,7 +379,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 									tf_name_s = GetByteBufferData (names_buffer_p);
 									fprintf (study_tex_f, "\\subsubsection* {%s}\n", tf_name_s);
 
-								  ResetByteBuffer (names_buffer_p);
+									ResetByteBuffer (names_buffer_p);
 
 									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
@@ -357,7 +393,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 											kvp_node_p = (KeyValuePairNode *) (kvp_node_p -> kvpn_node.ln_next_p);
 										}
 
-								  fputs ("\\end{tabularx}\n", study_tex_f);
+									fputs ("\\end{tabularx}\n", study_tex_f);
 
 								}
 
@@ -370,13 +406,13 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 		}
 
 
-	phenotypes_p = GetStudyDistinctPhenotypesAsJSON (study_p -> st_id_p, data_p);
-	if (phenotypes_p)
+	if (study_p -> st_phenotypes_p -> ll_size > 0)
 		{
 			ByteBuffer *phenotypes_buffer_p = AllocateByteBuffer (256);
 
 			if (phenotypes_buffer_p)
 				{
+					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
 					/*
 					 {
 					    "trait": {
@@ -401,23 +437,17 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 					    "@type": "Grassroots:MeasuredVariable",
 					    "type_description": "Measured Variable"
 					  },
-					*/
-					const size_t num_phenotypes = json_array_size (phenotypes_p);
-					size_t i;
-
+					 */
 					fputs ("\\subsection* {Measured Variables}\n", study_tex_f);
 
-					for (i = 0; i < num_phenotypes; ++ i)
+					while (node_p)
 						{
-							json_t *phentotype_p = json_array_get (phenotypes_p, i);
-							json_t *variable_p = json_object_get (phentotype_p, MV_VARIABLE_S);
+							MEM_FLAG variable_mem = MF_ALREADY_FREED;
+							MeasuredVariable *variable_p = GetMeasuredVariableByVariableName (node_p -> psn_measured_variable_name_s, &variable_mem, data_p);
 
 							if (variable_p)
 								{
-									const char *name_s = GetJSONString (variable_p, SCHEMA_TERM_NAME_S);
-									json_t *term_p;
-
-									if (EscapeLatexCharacters (phenotypes_buffer_p, name_s, CS_NORMAL))
+									if (EscapeLatexCharacters (phenotypes_buffer_p, node_p -> psn_measured_variable_name_s, CS_NORMAL))
 										{
 											fprintf (study_tex_f, "\\subsubsection* {%s}\n", GetByteBufferData (phenotypes_buffer_p));
 											ResetByteBuffer(phenotypes_buffer_p);
@@ -425,45 +455,63 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-									term_p = json_object_get (phentotype_p, MV_TRAIT_S);
-
-									if (term_p)
+									if (variable_p -> mv_trait_term_p)
 										{
-											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_NAME_S, "Trait Name", CS_NORMAL, buffer_p);
-											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_DESCRIPTION_S, "Trait Description", CS_FIRST_WORD_ONLY, buffer_p);
-											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_ABBREVIATION_S, "Trait Abbreviation", CS_NORMAL, buffer_p);
+											InsertLatexTabularRow (study_tex_f, "Trait Name", variable_p -> mv_trait_term_p -> st_name_s, CS_NORMAL, buffer_p);
+											InsertLatexTabularRow (study_tex_f, "Trait Description", variable_p -> mv_trait_term_p -> st_description_s, CS_FIRST_WORD_ONLY, buffer_p);
+											InsertLatexTabularRow (study_tex_f, "Trait Abbreviation", variable_p -> mv_trait_term_p -> st_abbreviation_s, CS_NORMAL, buffer_p);
 										}
 
-									term_p = json_object_get (phentotype_p, MV_MEASUREMENT_S);
 
-									if (term_p)
+									if (variable_p -> mv_measurement_term_p)
 										{
-											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_NAME_S, "Measurement Name", CS_NORMAL, buffer_p);
-											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_DESCRIPTION_S, "Measurement Description", CS_FIRST_WORD_ONLY, buffer_p);
+											InsertLatexTabularRow (study_tex_f, "Measurement Name", variable_p -> mv_measurement_term_p -> st_name_s, CS_NORMAL, buffer_p);
+											InsertLatexTabularRow (study_tex_f, "Measurement Description", variable_p -> mv_measurement_term_p -> st_description_s, CS_FIRST_WORD_ONLY, buffer_p);
 										}
 
-									term_p = json_object_get (phentotype_p, MV_UNIT_S);
-
-									if (term_p)
+									if (variable_p -> mv_unit_term_p)
 										{
-											PrintJSONChildValue (study_tex_f, term_p, SCHEMA_TERM_NAME_S, "Unit Name", CS_NORMAL, buffer_p);
+											InsertLatexTabularRow (study_tex_f, "Unit Name", variable_p -> mv_unit_term_p -> st_name_s, CS_NORMAL, buffer_p);
 										}
 
 									fputs ("\\end{tabularx}\n", study_tex_f);
 
-								}
 
-						}
+									if ((variable_mem == MF_DEEP_COPY) || (variable_mem == MF_SHALLOW_COPY))
+										{
+											FreeMeasuredVariable (variable_p);
+										}
 
+								}		/* if (variable_p) */
+
+							if (node_p -> psn_stats_p)
+								{
+									const Statistics *stats_p = node_p -> psn_stats_p;
+
+									fprintf (study_tex_f, "\\subsubsection* {Statistics}\n");
+
+									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+
+									InsertLatexTabularRowAsUint (study_tex_f, "Number of samples", & (stats_p -> st_population_size));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Minimum", & (stats_p -> st_min));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Arithmetic Mean", & (stats_p -> st_mean));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Maximum", & (stats_p -> st_max));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Standard Deviation", & (stats_p -> st_std_dev));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Variance", & (stats_p -> st_variance));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Sum", & (stats_p -> st_sum));
+
+									fputs ("\\end{tabularx}\n", study_tex_f);
+								}		/* if (node_p -> psn_stats_p) */
+
+							node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
+						}		/* while (node_p) */
 
 					FreeByteBuffer (phenotypes_buffer_p);
-				}
+				}		/* if (phenotypes_buffer_p) */
 
-			json_decref (phenotypes_p);
-		}
+		}		/* if (study_p -> st_phenotypes_p -> ll_size > 0) */
 
-
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -508,9 +556,9 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 			InsertLatexTabularRow (study_tex_f, "Crop", programme_p -> pr_crop_p -> cr_name_s, CS_ALL_WORDS, buffer_p);
 		}
 
-  fputs ("\\end{tabularx}\n", study_tex_f);
+	fputs ("\\end{tabularx}\n", study_tex_f);
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -533,7 +581,7 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 				}
 		}
 
-  return false;
+	return false;
 }
 
 
@@ -552,9 +600,9 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 			if (address_s)
 				{
-			    InsertLatexTabularRow (study_tex_f, "Address", address_s, CS_NORMAL, buffer_p);
+					InsertLatexTabularRow (study_tex_f, "Address", address_s, CS_NORMAL, buffer_p);
 
-			    FreeCopiedString (address_s);
+					FreeCopiedString (address_s);
 				}
 
 			if (centre_p)
@@ -570,10 +618,10 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 	InsertLatexTabularRowAsDouble (study_tex_f, "Minimum pH", location_p -> lo_min_ph_p);
 	InsertLatexTabularRowAsDouble (study_tex_f, "Maximum pH", location_p -> lo_max_ph_p);
 
-  fputs ("\\end{tabularx}\n", study_tex_f);
+	fputs ("\\end{tabularx}\n", study_tex_f);
 
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -582,12 +630,12 @@ static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, 
 {
 	bool success_flag = true;
 
-  if (value_p)
-  	{
+	if (value_p)
+		{
 			success_flag = (fprintf (out_f, "\\textbf{%s}: & " UINT32_FMT " \\\\\n", key_s, *value_p) > 0);
-  	}
+		}
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -595,12 +643,12 @@ static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s
 {
 	bool success_flag = true;
 
-  if (value_p)
-  	{
+	if (value_p)
+		{
 			success_flag = (fprintf (out_f, "\\textbf{%s}: & " DOUBLE64_FMT " \\\\\n", key_s, *value_p) > 0);
-  	}
+		}
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -608,21 +656,21 @@ static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const 
 {
 	bool success_flag = true;
 
-  if (value_s)
-  	{
-  		if (EscapeLatexCharacters (buffer_p, value_s, capitalize))
-  			{
-  				success_flag = (fprintf (out_f, "\\textbf{%s}: & %s \\\\\n", key_s, GetByteBufferData (buffer_p)) > 0);
-  			}
-  		else
-  			{
-  				success_flag = false;
-  			}
+	if (value_s)
+		{
+			if (EscapeLatexCharacters (buffer_p, value_s, capitalize))
+				{
+					success_flag = (fprintf (out_f, "\\textbf{%s}: & %s \\\\\n", key_s, GetByteBufferData (buffer_p)) > 0);
+				}
+			else
+				{
+					success_flag = false;
+				}
 
-  		ResetByteBuffer (buffer_p);
-  	}
+			ResetByteBuffer (buffer_p);
+		}
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -630,21 +678,21 @@ static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const ke
 {
 	bool success_flag = true;
 
-  if (value_s)
-  	{
-  		if (EscapeLatexCharacters (buffer_p, value_s, CS_NORMAL))
-  			{
-  				success_flag = (fprintf (out_f, "\\textbf{%s}: & \\url{%s} \\\\\n", key_s, value_s) > 0);
-  			}
-  		else
-  			{
-  				success_flag = false;
-  			}
+	if (value_s)
+		{
+			if (EscapeLatexCharacters (buffer_p, value_s, CS_NORMAL))
+				{
+					success_flag = (fprintf (out_f, "\\textbf{%s}: & \\url{%s} \\\\\n", key_s, value_s) > 0);
+				}
+			else
+				{
+					success_flag = false;
+				}
 
-  		ResetByteBuffer (buffer_p);
-  	}
+			ResetByteBuffer (buffer_p);
+		}
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -653,16 +701,16 @@ static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s
 {
 	bool success_flag = false;
 
-  if (person_p)
-  	{
+	if (person_p)
+		{
 			success_flag = (fprintf (out_f, "\\textbf{%s}: & %s (\\href{mailto:%s}{%s}) \\\\\n", key_s, person_p -> pe_name_s, person_p -> pe_email_s, person_p -> pe_email_s) > 0);
-  	}
-  else
-  	{
-  		success_flag = true;
-  	}
+		}
+	else
+		{
+			success_flag = true;
+		}
 
-  return success_flag;
+	return success_flag;
 }
 
 
@@ -699,40 +747,40 @@ static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, co
 					char c = *input_s;
 
 					switch (capitalize)
-						{
-							case CS_FIRST_WORD_ONLY:
-								{
-									if (first_char_flag)
-										{
-											c = toupper (c);
-											first_char_flag = false;
-										}
-								}
-								break;
+					{
+						case CS_FIRST_WORD_ONLY:
+							{
+								if (first_char_flag)
+									{
+										c = toupper (c);
+										first_char_flag = false;
+									}
+							}
+							break;
 
-							case CS_ALL_WORDS:
-								{
-									if (isspace (*input_s))
-										{
-											space_flag = true;
-										}
-									else if (first_char_flag)
-										{
-											c = toupper (c);
-											first_char_flag = false;
-										}
-									else if (space_flag)
-										{
-											c = toupper (c);
-											space_flag = false;
-										}
-								}
-								break;
+						case CS_ALL_WORDS:
+							{
+								if (isspace (*input_s))
+									{
+										space_flag = true;
+									}
+								else if (first_char_flag)
+									{
+										c = toupper (c);
+										first_char_flag = false;
+									}
+								else if (space_flag)
+									{
+										c = toupper (c);
+										space_flag = false;
+									}
+							}
+							break;
 
-							case CS_NORMAL:
-							default:
-								break;
-						}
+						case CS_NORMAL:
+						default:
+							break;
+					}
 
 					if (AppendToByteBuffer (buffer_p, &c, 1))
 						{
