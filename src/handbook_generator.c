@@ -143,6 +143,15 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 							fputs ("\\usepackage{graphicx}\n", study_tex_f);
 							fprintf (study_tex_f, "\\graphicspath{ {%s} }\n", download_path_s);
 
+							fputs ("\n\\usepackage{calc}\n", study_tex_f);
+							fputs ("\\newlength{\\imgwidth}\n\n", study_tex_f);
+
+							fputs ("\\newcommand\\scalegraphics[1]{\%\n", study_tex_f);
+							fputs ("\t\\settowidth{\\imgwidth}{\\includegraphics{#1}}\%\n", study_tex_f);
+							fputs ("\t\\setlength{\\imgwidth}{\\minof{\\imgwidth}{\\textwidth}}\%\n", study_tex_f);
+							fputs ("\t\\includegraphics[width=\\imgwidth,keepaspectratio]{#1}\%\n}\n", study_tex_f);
+
+
 
 							if (programme_p)
 								{
@@ -156,12 +165,25 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 													if (image_s)
 														{
+															char *last_dot_p = strrchr (image_s, '.');
+
+															/*
+															 * includegraphics doesn;t use the extension so
+															 * remove it if it's there
+															 */
+															if (last_dot_p)
+																{
+																	*last_dot_p = '\0';
+																}
+
 															fputs ("\\usepackage{titling}\n", study_tex_f);
 
 															fputs ("\\pretitle{%\n\\begin{center}\n\\LARGE\n}\n", study_tex_f);
 
 															fputs ("\\posttitle{\%\n\\begin{figure}[H]\n\\centering\n", study_tex_f);
-															fprintf (study_tex_f, "\\includegraphics[scale=1.0]{%s}\n", image_s);
+
+															fprintf (study_tex_f, "\\scalegraphics{%s}\n", image_s);
+
 															fputs ("\\end{figure}\n\\end{center}\n}\n", study_tex_f);
 
 															FreeCopiedString (image_s);
@@ -291,9 +313,10 @@ static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s
 
 
 
-static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *filename_s)
+static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *prefix_s)
 {
 	char *result_s = NULL;
+	char *full_output_filename_s = NULL;
 
 	if (EnsureDirectoryExists (download_directory_s))
 		{
@@ -309,8 +332,28 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 						}
 				}
 
+			if (prefix_s)
+				{
+					if (local_url_s)
+						{
+							char *local_filename_s = ConcatenateStrings (prefix_s, local_url_s);
 
-			char *full_output_filename_s = MakeFilename (download_directory_s, filename_s);
+							if (local_filename_s)
+								{
+									full_output_filename_s = MakeFilename (download_directory_s, local_filename_s);
+
+									FreeCopiedString (local_filename_s);
+								}
+						}
+				}
+			else
+				{
+					if (local_url_s)
+						{
+							full_output_filename_s = MakeFilename (download_directory_s, local_url_s);
+						}
+
+				}
 
 			if (full_output_filename_s)
 				{
@@ -462,9 +505,20 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 					if (image_s)
 						{
-							fputs ("\\begin{figure}[H]\n\\centering\n", study_tex_f);
-							fprintf (study_tex_f, "\\includegraphics[scale=1.0]{%s}\n", image_s);
-							fputs ("\\end{figure}\n\\end{center}\n}\n", study_tex_f);
+							char *last_dot_p = strrchr (image_s, '.');
+
+							/*
+							 * includegraphics doesn't use the extension so
+							 * remove it if it's there
+							 */
+							if (last_dot_p)
+								{
+									*last_dot_p = '\0';
+								}
+
+							fputs ("\\begin{center}\n\\begin{figure}[H]\n", study_tex_f);
+							fprintf (study_tex_f, "\\scalegraphics{%s}\n", image_s);
+							fputs ("\\end{figure}\n\\end{center}\n\n", study_tex_f);
 						}
 
 					FreeBSONOidString (id_s);
