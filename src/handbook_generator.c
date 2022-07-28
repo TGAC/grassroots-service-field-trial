@@ -314,7 +314,7 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 
 			if (full_output_filename_s)
 				{
-					CurlTool *curl_tool_p = AllocateCurlTool (CM_MEMORY);
+					CurlTool *curl_tool_p = AllocateCurlTool (CM_FILE);
 
 					if (curl_tool_p)
 						{
