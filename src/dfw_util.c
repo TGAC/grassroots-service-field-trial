@@ -198,6 +198,20 @@ bool ClearCachedStudy (const char *id_s, const FieldTrialServiceData *data_p)
 }
 
 
+char *GetStudyHandbookURL (const char *const name_s, const FieldTrialServiceData *data_p)
+{
+	char *url_s = NULL;
+
+	/*
+	 * Do we have a frictionless data directory configured?
+	 */
+	if (data_p -> dftsd_fd_url_s)
+		{
+			url_s = ConcatenateVarargsStrings (data_p -> dftsd_fd_url_s, name_s, ".pdf", NULL);
+		}
+
+	return url_s;
+}
 
 
 char *GetFrictionlessDataURL (const char *const name_s, const FieldTrialServiceData *data_p)
@@ -243,6 +257,8 @@ char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialSe
 
 	return full_study_filename_s;
 }
+
+
 
 void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {

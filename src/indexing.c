@@ -163,6 +163,8 @@ static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServic
 
 static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p);
 
+static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
 
 /*
  * API definitions
@@ -1171,21 +1173,48 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 						{
 							if (!IsStringEmpty (id_s))
 								{
-									const ViewFormat format = VF_CLIENT_FULL;
-									Study *study_p = GetStudyByIdString (id_s, format, data_p);
+									const ViewFormat format = VF_CLIENT_MINIMAL;
 
-									if (study_p)
+									if (strcmp (id_s, "*") == 0)
 										{
-											if (GetStudyPlots (study_p, format, data_p))
+											json_t *studies_json_p = GetAllStudiesAsJSON (data_p);
+
+											if (studies_json_p)
 												{
-													OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
+													size_t i;
+													json_t *study_json_p;
 
-													MergeServiceJobStatus (job_p, handbook_status);
+													json_array_foreach (studies_json_p, i, study_json_p)
+														{
+															Study *study_p = GetStudyFromJSON (study_json_p, format, data_p);
 
-													FreeStudy (study_p);
+															if (study_p)
+																{
+																	GenerateStudyHandbook (study_p, job_p, format, data_p);
+
+																	FreeStudy (study_p);
+																}
+
+
+														}		/* json_array_foreach (studies_json_p, i, study_json_p) */
+
+													json_decref (studies_json_p);
 												}
 										}
-								}
+									else
+										{
+											Study *study_p = GetStudyByIdString (id_s, format, data_p);
+
+											if (study_p)
+												{
+													GenerateStudyHandbook (study_p, job_p, format, data_p);
+
+													FreeStudy (study_p);
+												}		/*  if (study_p) */
+
+										}
+
+								}		/* if (!IsStringEmpty (id_s)) */
 						}
 
 
@@ -1345,6 +1374,18 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 		}
 
 	return service_p -> se_jobs_p;
+}
+
+
+
+static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+//	if (GetStudyPlots (study_p, format, data_p))
+		{
+			OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
+
+			MergeServiceJobStatus (job_p, handbook_status);
+		}
 }
 
 

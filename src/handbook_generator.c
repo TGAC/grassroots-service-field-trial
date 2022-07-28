@@ -48,6 +48,8 @@ static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const 
 static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
 static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p);
 static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, const uint32 * const value_p);
+static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p);
+
 static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p);
 static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, const CapitalizeState capitalize);
 
@@ -61,171 +63,34 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, const char *key_s, const char *printed_key_s, CapitalizeState capitalize, ByteBuffer *buffer_p);
 
-static char *DownloadToFile (const char *url_s_, const char *download_path_s);
+static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *filename_s);
 
 static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s, const char *filename_s);
 
 
 
-OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData *data_p)
+char *GetStudyHandbookFilename (const Study *study_p, const FieldTrialServiceData *data_p)
 {
-	OperationStatus status = OS_FAILED;
+	char *full_filename_s = NULL;
 
 	if (data_p -> dftsd_assets_path_s)
 		{
-			char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+			char *study_filename_s = ConcatenateStrings (study_p -> st_name_s, ".tex");
 
-			if (id_s)
+			if (study_filename_s)
 				{
-					char *study_filename_s = ConcatenateStrings (id_s, ".tex");
+					full_filename_s = MakeFilename (data_p -> dftsd_assets_path_s, study_filename_s);
 
-					if (study_filename_s)
+					if (!full_filename_s)
 						{
-							char *full_filename_s = MakeFilename (data_p -> dftsd_assets_path_s, study_filename_s);
-
-							if (full_filename_s)
-								{
-									FILE *study_tex_f = fopen (full_filename_s, "w");
-
-									if (study_tex_f)
-										{
-											ByteBuffer *buffer_p = AllocateByteBuffer (4096);
-
-											if (buffer_p)
-												{
-													const FieldTrial *trial_p = study_p -> st_parent_p;
-													const Programme *programme_p = trial_p ? trial_p -> ft_parent_p : NULL;
-													const Location *location_p = study_p -> st_location_p;
-													const char *download_path_s = "./";
-
-													/* start the doc and use a sans serif font */
-													fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
-
-													fputs ("\\usepackage{tabularx}\n", study_tex_f);
-													fputs ("\\usepackage{hyperref}\n", study_tex_f);
-													fputs ("\\usepackage{bookmark}\n", study_tex_f);
-													fputs ("\\usepackage[margin=0.6in]{geometry}\n", study_tex_f);
-
-													fputs ("\\usepackage{sectsty}\n", study_tex_f);
-
-
-													fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
-													fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
-
-													fputs ("\\usepackage{float}\n", study_tex_f);
-													fputs ("\\usepackage{graphicx}\n", study_tex_f);
-													fprintf (study_tex_f, "\\graphicspath{ {%s} }\n", download_path_s);
-
-
-													if (programme_p)
-														{
-															if (programme_p -> pr_logo_url_s)
-																{
-																	char *image_s = DownloadToFile (programme_p -> pr_logo_url_s, download_path_s);
-
-																	if (image_s)
-																		{
-																			fputs ("\\usepackage{titling}\n", study_tex_f);
-
-																			fputs ("\\pretitle{%\n\\begin{center}\n\\LARGE\n}\n", study_tex_f);
-
-																			fputs ("\\posttitle{\%\n\\begin{figure}[H]\n\\centering\n", study_tex_f);
-																			fprintf (study_tex_f, "\\includegraphics[scale=1.0]{%s}\n", image_s);
-																			fputs ("\\end{figure}\n\\end{center}\n}\n", study_tex_f);
-																		}
-																}
-
-														}		/* if (programme_p) */
-
-
-
-
-
-
-
-													fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
-
-													fputs ("\\begin{document}\n\\sffamily\n\\allsectionsfont{\\sffamily}\n", study_tex_f);
-
-													fputs ("\\maketitle\n", study_tex_f);
-
-													if (data_p -> dftsd_view_study_url_s)
-														{
-															fprintf (study_tex_f, "To view this study online, go to \\url{%s%s}\n", data_p -> dftsd_view_study_url_s, id_s);
-														}
-
-													if (programme_p)
-														{
-															if (!PrintProgramme (study_tex_f, programme_p, buffer_p, data_p))
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme to \"%s\"", full_filename_s);
-																}
-														}		/* if (programme_p) */
-
-
-													if (trial_p)
-														{
-															if (!PrintTrial (study_tex_f, trial_p, buffer_p, data_p))
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial to \"%s\"", full_filename_s);
-																}
-
-														}		/* if (trial_p) */
-
-
-													if (!PrintStudy (study_tex_f, study_p, buffer_p, data_p))
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study to \"%s\"", full_filename_s);
-														}
-
-
-													if (location_p)
-														{
-															if (!PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p))
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add location to \"%s\"", full_filename_s);
-																}
-														}
-
-													fputs ("\\end{document}\n", study_tex_f);
-
-													FreeByteBuffer (buffer_p);
-												}		/* if (buffer_p); */
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate byte buffer \"%s\"", full_filename_s);
-												}
-
-											fclose (study_tex_f);
-
-											RunLatex (data_p -> dftsd_latex_commmand_s, data_p -> dftsd_assets_path_s, study_filename_s);
-
-
-										}		/* if (study_tex_f) */
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get open file \"%s\"", full_filename_s);
-										}
-
-								}		/* if (full_filename_s) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get full filename for \"%s\" & \"%s\"", data_p -> dftsd_assets_path_s, study_filename_s);
-								}
-
-
-							FreeCopiedString (study_filename_s);
-						}		/* if (study_filename_s) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get latex filename for \"%s\"", id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get full filename for \"%s\" & \"%s\"", data_p -> dftsd_assets_path_s, study_filename_s);
 						}
 
-					FreeBSONOidString (id_s);
-				}		/* if (id_s) */
+					FreeCopiedString (study_filename_s);
+				}		/* if (study_filename_s) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get ID as string for \"%s\"", study_p -> st_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get latex filename for \"%s\"", study_p -> st_name_s);
 				}
 
 		}		/** if (data_p -> dftsd_assets_path_s) */
@@ -234,6 +99,158 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 			PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No path specified for field trials assets so cannot generate handbook");
 		}
 
+
+
+	return full_filename_s;
+}
+
+
+OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	char *full_filename_s = GetStudyHandbookFilename (study_p, data_p);
+
+	if (full_filename_s)
+		{
+			FILE *study_tex_f = fopen (full_filename_s, "w");
+
+			if (study_tex_f)
+				{
+					ByteBuffer *buffer_p = AllocateByteBuffer (4096);
+
+					if (buffer_p)
+						{
+							const FieldTrial *trial_p = study_p -> st_parent_p;
+							const Programme *programme_p = trial_p ? trial_p -> ft_parent_p : NULL;
+							const Location *location_p = study_p -> st_location_p;
+							const char *download_path_s = data_p -> dftsd_assets_path_s;
+
+							/* start the doc and use a sans serif font */
+							fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
+
+							fputs ("\\usepackage{tabularx}\n", study_tex_f);
+							fputs ("\\usepackage{hyperref}\n", study_tex_f);
+							fputs ("\\usepackage{bookmark}\n", study_tex_f);
+							fputs ("\\usepackage[margin=0.6in]{geometry}\n", study_tex_f);
+
+							fputs ("\\usepackage{sectsty}\n", study_tex_f);
+
+
+							fputs ("\\urlstyle{same}\n\\hypersetup{\n\tcolorlinks=true,\n\tlinkcolor=blue,\n\tfilecolor=blue,\n\turlcolor=blue,\n", study_tex_f);
+							fprintf (study_tex_f, "\tpdftitle={%s}\n}\n", study_p -> st_name_s);
+
+							fputs ("\\usepackage{float}\n", study_tex_f);
+							fputs ("\\usepackage{graphicx}\n", study_tex_f);
+							fprintf (study_tex_f, "\\graphicspath{ {%s} }\n", download_path_s);
+
+
+							if (programme_p)
+								{
+									if (programme_p -> pr_logo_url_s)
+										{
+											char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
+
+											if (id_s)
+												{
+													char *image_s = DownloadToFile (programme_p -> pr_logo_url_s, download_path_s, id_s);
+
+													if (image_s)
+														{
+															fputs ("\\usepackage{titling}\n", study_tex_f);
+
+															fputs ("\\pretitle{%\n\\begin{center}\n\\LARGE\n}\n", study_tex_f);
+
+															fputs ("\\posttitle{\%\n\\begin{figure}[H]\n\\centering\n", study_tex_f);
+															fprintf (study_tex_f, "\\includegraphics[scale=1.0]{%s}\n", image_s);
+															fputs ("\\end{figure}\n\\end{center}\n}\n", study_tex_f);
+
+															FreeCopiedString (image_s);
+														}
+
+
+													FreeBSONOidString (id_s);
+												}
+
+										}
+
+								}		/* if (programme_p) */
+
+							fprintf (study_tex_f, "\\title {%s}\n", study_p -> st_name_s);
+
+							fputs ("\\begin{document}\n\\sffamily\n\\allsectionsfont{\\sffamily}\n", study_tex_f);
+
+							fputs ("\\maketitle\n", study_tex_f);
+
+							if (data_p -> dftsd_view_study_url_s)
+								{
+									char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+
+									if (id_s)
+										{
+											fprintf (study_tex_f, "To view this study online, go to \\url{%s%s}\n", data_p -> dftsd_view_study_url_s, id_s);
+
+											FreeBSONOidString (id_s);
+										}
+								}
+
+							if (programme_p)
+								{
+									if (!PrintProgramme (study_tex_f, programme_p, buffer_p, data_p))
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme to \"%s\"", full_filename_s);
+										}
+								}		/* if (programme_p) */
+
+
+							if (trial_p)
+								{
+									if (!PrintTrial (study_tex_f, trial_p, buffer_p, data_p))
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial to \"%s\"", full_filename_s);
+										}
+
+								}		/* if (trial_p) */
+
+
+							if (!PrintStudy (study_tex_f, study_p, buffer_p, data_p))
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study to \"%s\"", full_filename_s);
+								}
+
+
+							if (location_p)
+								{
+									if (!PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p))
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add location to \"%s\"", full_filename_s);
+										}
+								}
+
+							fputs ("\\end{document}\n", study_tex_f);
+
+							FreeByteBuffer (buffer_p);
+						}		/* if (buffer_p); */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate byte buffer \"%s\"", full_filename_s);
+						}
+
+					fclose (study_tex_f);
+
+					RunLatex (data_p -> dftsd_latex_commmand_s, data_p -> dftsd_assets_path_s, full_filename_s);
+
+
+				}		/* if (study_tex_f) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get open file \"%s\"", full_filename_s);
+				}
+
+		}		/* if (full_filename_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get full filename for \"%s\" & \"%s\"", data_p -> dftsd_assets_path_s, study_p -> st_name_s);
+		}
 
 	return status;
 }
@@ -247,7 +264,7 @@ static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s
 		 pdflatex -interaction=nonstopmode -output-directory=/home/billy/Applications/apache/htdocs/grassroots/frictionless/ ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
 		 latexmk -c -cd ~/Applications/apache/htdocs/grassroots/frictionless/5f8eebc202700f64852ae919.tex
 	 */
-	char *command_s = ConcatenateVarargsStrings (pdf_latex_command_s, " -interaction=nonstopmode -output-directory=", output_path_s, " ", latex_filename_s, NULL);
+	char *command_s = ConcatenateVarargsStrings (pdf_latex_command_s, " -interaction=nonstopmode -output-directory=", output_path_s, " \"", latex_filename_s, "\"", NULL);
 
 	if (command_s)
 		{
@@ -274,18 +291,78 @@ static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s
 
 
 
-static char *DownloadToFile (const char *url_s, const char *download_path_s)
+static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *filename_s)
 {
 	char *result_s = NULL;
 
+	if (EnsureDirectoryExists (download_directory_s))
+		{
+			char *full_output_filename_s = MakeFilename (download_directory_s, filename_s);
+
+			if (full_output_filename_s)
+				{
+					CurlTool *curl_tool_p = AllocateCurlTool (CM_MEMORY);
+
+					if (curl_tool_p)
+						{
+							if (SetUriForCurlTool (curl_tool_p, url_s))
+								{
+									CURLcode res = curl_easy_setopt (curl_tool_p -> ct_curl_p, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE);
+
+									res = RunCurlTool (curl_tool_p);
+
+									if (res == CURLE_OK)
+										{
+											FILE *out_f = fopen (full_output_filename_s, "w");
+
+											if (out_f)
+												{
+													size_t length = GetCurlToolDataSize (curl_tool_p);
+													const char *data_p = GetCurlToolData (curl_tool_p);
+
+													size_t s = fwrite (data_p, sizeof (char), length, out_f);
+
+													if (s == length)
+														{
+															int r = fclose (out_f);
+
+															if (r == 0)
+																{
+																	result_s = full_output_filename_s;
+																}
+														}
+
+
+												}
+
+
+										}
+								}
+
+							FreeCurlTool (curl_tool_p);
+						}
+
+					if (!result_s)
+						{
+							FreeCopiedString (full_output_filename_s);
+						}
+				}		/* if (full_output_filename_s) */
+
+		}
+
+
 	return result_s;
 }
+
+
+
 
 
 static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
+	size_t num_plots = (size_t) GetNumberOfPlotsInStudy (study_p, data_p);
 
 	fputs ("\\section* {Study}\n", study_tex_f);
 
@@ -321,8 +398,11 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRow (study_tex_f, "Changes to Plan", study_p -> st_aspect_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Data not stored in Grassroots", study_p -> st_data_not_included_s, CS_FIRST_WORD_ONLY, buffer_p);
 
+	InsertLatexTabularRow (study_tex_f, "Image Collection Notes", study_p -> st_image_collection_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
+
+
 	InsertLatexTabularRow (study_tex_f, "Aspect", study_p -> st_aspect_s, CS_FIRST_WORD_ONLY, buffer_p);
-	InsertLatexTabularRow (study_tex_f, "Sloper", study_p -> st_slope_s, CS_FIRST_WORD_ONLY, buffer_p);
+	InsertLatexTabularRow (study_tex_f, "Slope", study_p -> st_slope_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 
 	InsertLatexTabularRowAsHyperlink (study_tex_f, "Weather", study_p -> st_weather_link_s, buffer_p);
@@ -334,7 +414,9 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-	InsertLatexTabularRowAsUint (study_tex_f, "Number of Plots", & (study_p -> st_plots_p -> ll_size));
+
+
+	InsertLatexTabularRowAsSizeT (study_tex_f, "Number of Plots", &num_plots);
 
 	InsertLatexTabularRowAsUint (study_tex_f, "Number of Rows", study_p -> st_num_rows_p);
 	InsertLatexTabularRowAsUint (study_tex_f, "Number of Columns", study_p -> st_num_columns_p);
@@ -343,8 +425,8 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Width", study_p -> st_default_plot_width_p);
 	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Length", study_p -> st_default_plot_length_p);
 
-	InsertLatexTabularRowAsUint (study_tex_f, "Plot Rows Per Block", study_p -> st_plots_rows_per_block_p);
-	InsertLatexTabularRowAsUint (study_tex_f, "Plot Columns Per Block", study_p -> st_plots_columns_per_block_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Plot Rows per Block", study_p -> st_plots_rows_per_block_p);
+	InsertLatexTabularRowAsUint (study_tex_f, "Plot Columns per Block", study_p -> st_plots_columns_per_block_p);
 
 	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Horizontal Gap", study_p -> st_plot_horizontal_gap_p);
 	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Vertical Gap", study_p -> st_plot_vertical_gap_p);
@@ -354,6 +436,28 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 
 	fputs ("\\end{tabularx}\n", study_tex_f);
+
+
+
+	if (study_p -> st_photo_url_s)
+		{
+			char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+
+			if (id_s)
+				{
+					char *image_s = DownloadToFile (study_p -> st_photo_url_s, data_p -> dftsd_assets_path_s, id_s);
+
+					if (image_s)
+						{
+							fputs ("\\begin{figure}[H]\n\\centering\n", study_tex_f);
+							fprintf (study_tex_f, "\\includegraphics[scale=1.0]{%s}\n", image_s);
+							fputs ("\\end{figure}\n\\end{center}\n}\n", study_tex_f);
+						}
+
+					FreeBSONOidString (id_s);
+				}
+
+		}
 
 
 	/*
@@ -487,12 +591,11 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 							if (node_p -> psn_stats_p)
 								{
 									const Statistics *stats_p = node_p -> psn_stats_p;
-
 									fprintf (study_tex_f, "\\subsubsection* {Statistics}\n");
 
 									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-									InsertLatexTabularRowAsUint (study_tex_f, "Number of samples", & (stats_p -> st_population_size));
+									InsertLatexTabularRowAsSizeT (study_tex_f, "Number of samples", & (stats_p -> st_population_size));
 									InsertLatexTabularRowAsDouble (study_tex_f, "Minimum", & (stats_p -> st_min));
 									InsertLatexTabularRowAsDouble (study_tex_f, "Arithmetic Mean", & (stats_p -> st_mean));
 									InsertLatexTabularRowAsDouble (study_tex_f, "Maximum", & (stats_p -> st_max));
@@ -638,6 +741,19 @@ static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, 
 	return success_flag;
 }
 
+
+
+static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p)
+{
+	bool success_flag = true;
+
+	if (value_p)
+		{
+			success_flag = (fprintf (out_f, "\\textbf{%s}: & " SIZET_FMT " \\\\\n", key_s, *value_p) > 0);
+		}
+
+	return success_flag;
+}
 
 static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p)
 {

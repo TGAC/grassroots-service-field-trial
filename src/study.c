@@ -37,7 +37,7 @@
 #include "programme.h"
 #include "person.h"
 #include "phenotype_statistics.h"
-
+#include "handbook_generator.h"
 
 /*
  * DB COLUMN NAMES
@@ -79,6 +79,9 @@ static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, c
 static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
+
+static bool AddHandbookLinks (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p);
+
 
 static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint32 *year_p, const char *deprecated_key_s);
 
@@ -978,6 +981,8 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																	if (AddGrandParentProgramToJSON (study_p, study_json_p, format, data_p))
 																		{
 																			AddFrictionlessDataLink (study_p, study_json_p, data_p);
+
+																			AddHandbookLinks (study_p, study_json_p, data_p);
 
 																			add_item_flag = true;
 																		}
@@ -2093,6 +2098,97 @@ static bool AddFrictionlessDataLink (const Study * const study_p, json_t *study_
 
 	return success_flag;
 }
+
+
+
+static bool AddHandbookLinks (const Study * const study_p, json_t *study_json_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	char *full_study_filename_s = GetStudyHandbookFilename (study_p, data_p);
+
+	if (full_study_filename_s)
+		{
+			if (DoesFileExist (full_study_filename_s))
+				{
+					char *handbook_url_s = GetStudyHandbookURL (study_p -> st_name_s, data_p);
+
+					if (handbook_url_s)
+						{
+							json_t *handbook_p = json_object ();
+
+							if (handbook_p)
+								{
+									const char * const type_s = CONTEXT_PREFIX_SCHEMA_ORG_S "DigitalDocument";
+
+									if (SetJSONString (handbook_p, "@type", type_s))
+										{
+											if (SetJSONString (handbook_p, "name", study_p -> st_name_s))
+												{
+													const char * const url_key_s = CONTEXT_PREFIX_SCHEMA_ORG_S "url";
+
+													if (SetJSONString (handbook_p, url_key_s, handbook_url_s))
+														{
+															if (json_object_set_new (study_json_p, ST_HANDBOOK_DATA_LINK_S, handbook_p) == 0)
+																{
+																	success_flag = true;
+																}
+															else
+																{
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, handbook_p, "Failed to add handbook object to study json for \"%s\"", study_p -> st_name_s);
+																}
+
+														}		/* if (SetJSONString (handbook_p, url_key_s, handbook_url_s)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, handbook_p, "SetJSONString () failed study \"%s\" adding \"%s\": \"%s\"", url_key_s, handbook_url_s);
+														}
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, handbook_p, "SetJSONString () failed study \"%s\" adding \"%s\": \"%s\"", "name", study_p -> st_name_s);
+												}
+
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, handbook_p, "SetJSONString () failed study \"%s\" adding \"%s\": \"%s\"", "@type", type_s);
+										}
+
+									if (!success_flag)
+										{
+											json_decref (handbook_p);
+										}
+
+								}		/* if (handbook_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to allocate handbook metadata json object for study \"%s\"", study_p -> st_name_s);
+								}
+
+							FreeCopiedString (handbook_url_s);
+						}		/* if (handbook_url_s) */
+					else
+						{
+							PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "GetStudyHandbookURL () failed for study \"%s\"", study_p -> st_name_s);
+						}
+
+				}		/* if (DoesFileExist (full_study_filename_s)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Handbook file does not exist for study \"%s\"", study_p -> st_name_s);
+				}
+
+			FreeCopiedString (full_study_filename_s);
+		}		/* if (full_study_filename_s) */
+	else
+		{
+			PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "GetStudyHandbookFilename () failed for study \"%s\"", study_p -> st_name_s);
+		}
+
+
+	return success_flag;
+}
+
 
 
 static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
