@@ -297,6 +297,19 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 
 	if (EnsureDirectoryExists (download_directory_s))
 		{
+			const char *local_url_s = strrchr (url_s, '/');
+
+			if (local_url_s)
+				{
+					++ local_url_s;
+
+					if (*local_url_s == '\0')
+						{
+							local_url_s = NULL;
+						}
+				}
+
+
 			char *full_output_filename_s = MakeFilename (download_directory_s, filename_s);
 
 			if (full_output_filename_s)
