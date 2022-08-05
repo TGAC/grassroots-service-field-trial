@@ -753,20 +753,13 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 {
 	bool success_flag = false;
 
-	if (format == VF_CLIENT_FULL)
+	if (GetAllFieldTrialStudies (trial_p, format, data_p))
 		{
-			if (GetAllFieldTrialStudies (trial_p, format, data_p))
+			if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
 				{
-					if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
-						{
-							success_flag = true;
-						}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
+					success_flag = true;
+				}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, data_p)) */
 
-				}
-		}
-	else
-		{
-			success_flag = true;
 		}
 
 	if (success_flag)
