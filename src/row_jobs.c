@@ -569,7 +569,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 				}		/* if ((!IsStringEmpty (raw_value_s)) */
 			else
 				{
-					PrintLog (STM_LEVEL_INFO, __FILE__, __LINE__, "No measured value for \"%s\", skipping", key_s);
+					PrintLog (STM_LEVEL_FINER, __FILE__, __LINE__, "Skipping empty value for \"%s\" on row " UINT32_FMT, key_s, row_index);
 					status = OS_SUCCEEDED;
 				}
 
