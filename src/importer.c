@@ -279,7 +279,7 @@ static bool ImportLocation (const json_t *location_p, const char *grassroots_url
 							/*
 							 * https://grassroots.tools/grassroots-test/5/controller/service/DFWFieldTrial%20search%20service?FT%20Keyword%20Search=simon
 							 */
-							CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
+							CurlTool *curl_p = AllocateMemoryCurlTool (0);
 
 							if (curl_p)
 								{
@@ -389,7 +389,7 @@ static bool ImportTrial (const json_t *trial_p, const char *grassroots_url_s, si
 
 			if (team_s)
 				{
-					CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
+					CurlTool *curl_p = AllocateMemoryCurlTool (0);
 
 					if (curl_p)
 						{
@@ -707,7 +707,7 @@ static bool AddParam (json_t *params_p, const char *key_s, const char *value_s)
 static bool ImportStudy (const json_t *study_p, const char *grassroots_url_s, size_t *num_successes_p, size_t *num_failures_p)
 {
 	bool success_flag = false;
-	CurlTool *curl_p = AllocateCurlTool (CM_MEMORY);
+	CurlTool *curl_p = AllocateMemoryCurlTool (0);
 
 	if (curl_p)
 		{

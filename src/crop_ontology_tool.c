@@ -168,7 +168,7 @@ SchemaTerm *GetCropOnotologySchemaTerm (const char *crop_ontology_term_s, TermTy
 
 			if (url_s)
 				{
-					CurlTool *tool_p = AllocateCurlTool (CM_MEMORY);
+					CurlTool *tool_p = AllocateMemoryCurlTool (0);
 
 					if (tool_p)
 						{
@@ -795,7 +795,7 @@ const ScaleClass *GetScaleClassFromJSON (const json_t *class_json_p)
 OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
-	CurlTool *curl_tool_p = AllocateCurlTool (CM_MEMORY);
+	CurlTool *curl_tool_p = AllocateMemoryCurlTool (0);
 
 	if (curl_tool_p)
 		{

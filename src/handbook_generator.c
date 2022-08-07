@@ -268,6 +268,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get open file \"%s\"", full_filename_s);
 				}
 
+			FreeCopiedString (full_filename_s);
 		}		/* if (full_filename_s) */
 	else
 		{
@@ -336,7 +337,7 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 				{
 					if (local_url_s)
 						{
-							char *local_filename_s = ConcatenateStrings (prefix_s, local_url_s);
+							char *local_filename_s = ConcatenateVarargsStrings (prefix_s, "_", local_url_s, NULL);
 
 							if (local_filename_s)
 								{
@@ -357,7 +358,7 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 
 			if (full_output_filename_s)
 				{
-					CurlTool *curl_tool_p = AllocateCurlTool (CM_FILE);
+					CurlTool *curl_tool_p = AllocateFileCurlTool (full_output_filename_s);
 
 					if (curl_tool_p)
 						{
@@ -369,29 +370,7 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 
 									if (res == CURLE_OK)
 										{
-											FILE *out_f = fopen (full_output_filename_s, "w");
-
-											if (out_f)
-												{
-													size_t length = GetCurlToolDataSize (curl_tool_p);
-													const char *data_p = GetCurlToolData (curl_tool_p);
-
-													size_t s = fwrite (data_p, sizeof (char), length, out_f);
-
-													if (s == length)
-														{
-															int r = fclose (out_f);
-
-															if (r == 0)
-																{
-																	result_s = full_output_filename_s;
-																}
-														}
-
-
-												}
-
-
+											result_s = full_output_filename_s;
 										}
 								}
 
@@ -519,6 +498,8 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 							fputs ("\\begin{center}\n\\begin{figure}[H]\n", study_tex_f);
 							fprintf (study_tex_f, "\\scalegraphics{%s}\n", image_s);
 							fputs ("\\end{figure}\n\\end{center}\n\n", study_tex_f);
+
+							FreeCopiedString (image_s);
 						}
 
 					FreeBSONOidString (id_s);
