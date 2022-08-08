@@ -849,7 +849,7 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 							if (y_s)
 								{
-									const char *url_s = ConcatenateVarargsStrings ("https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=600&height=400&center=lonlat:",
+									char *url_s = ConcatenateVarargsStrings ("https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=600&height=400&center=lonlat:",
 																																 y_s, ",", x_s, "&marker=lonlat:", y_s, ",", x_s, ";color:%23ff0000;size:medium&zoom=14&apiKey=",
 																																 data_p -> dftsd_geoapify_key_s, NULL);
 
