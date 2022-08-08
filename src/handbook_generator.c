@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "string_utils.h"
+#include "math_utils.h"
 #include "byte_buffer.h"
 
 #include "programme.h"
@@ -51,7 +52,9 @@ static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, 
 
 static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p, const bool end_row_flag);
 
-static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p);
+static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p, const uint32 num_dps);
+
+
 static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, const CapitalizeState capitalize);
 
 static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p);
@@ -64,11 +67,11 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 static bool PrintJSONChildValue (FILE *study_tex_f, const json_t *parent_p, const char *key_s, const char *printed_key_s, CapitalizeState capitalize, ByteBuffer *buffer_p);
 
-static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *filename_s);
+static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *filename_s, const bool use_local_url_flag);
 
 static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s, const char *filename_s);
 
-static char *GetFullFilenameForDownload (const char *url_s, const char *download_directory_s, const char *prefix_s);
+static char *GetFullFilenameForDownload (const char *url_s, const char *download_directory_s, const char *prefix_s, const bool use_local_url_flag);
 
 static bool InsertLine (FILE *study_tex_f);
 
@@ -165,7 +168,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 											if (id_s)
 												{
-													char *image_s = DownloadToFile (programme_p -> pr_logo_url_s, download_path_s, id_s);
+													char *image_s = DownloadToFile (programme_p -> pr_logo_url_s, download_path_s, id_s, true);
 
 													if (image_s)
 														{
@@ -311,33 +314,46 @@ static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s
 
 
 
-static char *GetFullFilenameForDownload (const char *url_s, const char *download_directory_s, const char *prefix_s)
+static char *GetFullFilenameForDownload (const char *url_s, const char *download_directory_s, const char *prefix_s, const bool use_local_url_flag)
 {
 	char *full_output_filename_s = NULL;
-	const char *local_url_s = strrchr (url_s, '/');
+	const char *local_url_s = NULL;
 
-	if (local_url_s)
+
+	if (use_local_url_flag)
 		{
-			++ local_url_s;
+			local_url_s = strrchr (url_s, '/');
 
-			if (*local_url_s == '\0')
+			if (local_url_s)
 				{
-					local_url_s = NULL;
+					++ local_url_s;
+
+					if (*local_url_s == '\0')
+						{
+							local_url_s = NULL;
+						}
 				}
 		}
 
+
 	if (prefix_s)
 		{
+			char *local_filename_s = NULL;
+
 			if (local_url_s)
 				{
-					char *local_filename_s = ConcatenateVarargsStrings (prefix_s, "_", local_url_s, NULL);
+					local_filename_s = ConcatenateVarargsStrings (prefix_s, "_", local_url_s, NULL);
+				}
+			else
+				{
+					local_filename_s = ConcatenateVarargsStrings (prefix_s, ".jpeg", NULL);
+				}
 
-					if (local_filename_s)
-						{
-							full_output_filename_s = MakeFilename (download_directory_s, local_filename_s);
+			if (local_filename_s)
+				{
+					full_output_filename_s = MakeFilename (download_directory_s, local_filename_s);
 
-							FreeCopiedString (local_filename_s);
-						}
+					FreeCopiedString (local_filename_s);
 				}
 		}
 	else
@@ -353,18 +369,18 @@ static char *GetFullFilenameForDownload (const char *url_s, const char *download
 }
 
 
-static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *prefix_s)
+static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *prefix_s, const bool use_local_url_flag)
 {
 	char *result_s = NULL;
 	char *full_output_filename_s = NULL;
 
 	if (EnsureDirectoryExists (download_directory_s))
 		{
-			full_output_filename_s = GetFullFilenameForDownload (url_s, download_directory_s, prefix_s);
+			full_output_filename_s = GetFullFilenameForDownload (url_s, download_directory_s, prefix_s, use_local_url_flag);
 
 			if (full_output_filename_s)
 				{
-					if (DoesFileExist (full_output_filename_s))
+					if (!DoesFileExist (full_output_filename_s))
 						{
 							CurlTool *curl_tool_p = AllocateFileCurlTool (full_output_filename_s);
 
@@ -411,6 +427,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	bool success_flag = true;
 	TreatmentFactorNode *tf_node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
 	size_t num_plots = (size_t) GetNumberOfPlotsInStudy (study_p, data_p);
+	const uint32 num_dps = 2;
 
 	fputs ("\\section* {Study}\n", study_tex_f);
 
@@ -481,17 +498,17 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRowAsUint (study_tex_f, "Number of Columns", study_p -> st_num_columns_p);
 	InsertLatexTabularRowAsUint (study_tex_f, "Number of Replicates", study_p -> st_num_replicates_p);
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Width", study_p -> st_default_plot_width_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Length", study_p -> st_default_plot_length_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Width", study_p -> st_default_plot_width_p, num_dps);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Default Plot Length", study_p -> st_default_plot_length_p, num_dps);
 
 	InsertLatexTabularRowAsUint (study_tex_f, "Plot Rows per Block", study_p -> st_plots_rows_per_block_p);
 	InsertLatexTabularRowAsUint (study_tex_f, "Plot Columns per Block", study_p -> st_plots_columns_per_block_p);
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Horizontal Gap", study_p -> st_plot_horizontal_gap_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Vertical Gap", study_p -> st_plot_vertical_gap_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Horizontal Gap", study_p -> st_plot_horizontal_gap_p, num_dps);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Vertical Gap", study_p -> st_plot_vertical_gap_p, num_dps);
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Horizontal Gap", study_p -> st_plot_block_horizontal_gap_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Vertical Gap", study_p -> st_plot_block_vertical_gap_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Horizontal Gap", study_p -> st_plot_block_horizontal_gap_p, num_dps);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Plot Block Vertical Gap", study_p -> st_plot_block_vertical_gap_p, num_dps);
 
 
 	fputs ("\\end{tabularx}\n", study_tex_f);
@@ -504,7 +521,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 			if (id_s)
 				{
-					char *image_s = DownloadToFile (study_p -> st_photo_url_s, data_p -> dftsd_assets_path_s, id_s);
+					char *image_s = DownloadToFile (study_p -> st_photo_url_s, data_p -> dftsd_assets_path_s, id_s, true);
 
 					if (image_s)
 						{
@@ -665,17 +682,19 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 							if (node_p -> psn_stats_p)
 								{
 									const Statistics *stats_p = node_p -> psn_stats_p;
+									const uint32 num_stats_dps = 4;
+
 									fprintf (study_tex_f, "\\subsubsection* {Statistics}\n");
 
 									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
 									InsertLatexTabularRowAsSizeT (study_tex_f, "Number of samples", & (stats_p -> st_population_size), true);
-									InsertLatexTabularRowAsDouble (study_tex_f, "Minimum", & (stats_p -> st_min));
-									InsertLatexTabularRowAsDouble (study_tex_f, "Arithmetic Mean", & (stats_p -> st_mean));
-									InsertLatexTabularRowAsDouble (study_tex_f, "Maximum", & (stats_p -> st_max));
-									InsertLatexTabularRowAsDouble (study_tex_f, "Standard Deviation", & (stats_p -> st_std_dev));
-									InsertLatexTabularRowAsDouble (study_tex_f, "Variance", & (stats_p -> st_variance));
-									InsertLatexTabularRowAsDouble (study_tex_f, "Sum", & (stats_p -> st_sum));
+									InsertLatexTabularRowAsDouble (study_tex_f, "Minimum", & (stats_p -> st_min), num_stats_dps);
+									InsertLatexTabularRowAsDouble (study_tex_f, "Arithmetic Mean", & (stats_p -> st_mean), num_stats_dps);
+									InsertLatexTabularRowAsDouble (study_tex_f, "Maximum", & (stats_p -> st_max), num_stats_dps);
+									InsertLatexTabularRowAsDouble (study_tex_f, "Standard Deviation", & (stats_p -> st_std_dev), num_stats_dps);
+									InsertLatexTabularRowAsDouble (study_tex_f, "Variance", & (stats_p -> st_variance), num_stats_dps);
+									InsertLatexTabularRowAsDouble (study_tex_f, "Sum", & (stats_p -> st_sum), num_stats_dps);
 
 									fputs ("\\end{tabularx}\n", study_tex_f);
 								}		/* if (node_p -> psn_stats_p) */
@@ -699,7 +718,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 static bool InsertLine (FILE *study_tex_f)
 {
 	/* insert a horizontal line at full page width */
-	return (fputs ("\\makebox[\\linewidth]{\\rule{\\paperwidth}{0.4pt}}}\n", study_tex_f) != EOF);
+	return (fputs ("{\\rule{\\linewidth}{0.4pt}}\n", study_tex_f) != EOF);
 }
 
 
@@ -776,15 +795,19 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 static bool PrintLocation (FILE *study_tex_f, const Location * const location_p, ByteBuffer *buffer_p, FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
+	const uint32 num_ph_dps = 1;
+	const uint32 num_coord_dps = 6;
+	const Coordinate *centre_p = NULL;
 
-	fputs ("\\section* {Location}\n", study_tex_f);
+	fputs ("\\subsection* {Location}\n", study_tex_f);
 
 	fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
 	if (location_p -> lo_address_p)
 		{
-			const Coordinate *centre_p = location_p -> lo_address_p -> ad_gps_centre_p;
 			char *address_s = GetAddressAsString (location_p -> lo_address_p);
+
+			centre_p = location_p -> lo_address_p -> ad_gps_centre_p;
 
 			if (address_s)
 				{
@@ -795,19 +818,87 @@ static bool PrintLocation (FILE *study_tex_f, const Location * const location_p,
 
 			if (centre_p)
 				{
-					InsertLatexTabularRowAsDouble (study_tex_f, "Latitude", & (centre_p -> co_x));
-					InsertLatexTabularRowAsDouble (study_tex_f, "Longitude", & (centre_p -> co_y));
-					InsertLatexTabularRowAsDouble (study_tex_f, "Elevation", centre_p -> co_elevation_p);
+					InsertLatexTabularRowAsDouble (study_tex_f, "Latitude", & (centre_p -> co_x), num_coord_dps);
+					InsertLatexTabularRowAsDouble (study_tex_f, "Longitude", & (centre_p -> co_y), num_coord_dps);
+					InsertLatexTabularRowAsDouble (study_tex_f, "Elevation", centre_p -> co_elevation_p, num_coord_dps);
 				}
+
 		}
 
 	InsertLatexTabularRow (study_tex_f, "Soil", location_p -> lo_soil_s, CS_FIRST_WORD_ONLY, buffer_p);
 
-	InsertLatexTabularRowAsDouble (study_tex_f, "Minimum pH", location_p -> lo_min_ph_p);
-	InsertLatexTabularRowAsDouble (study_tex_f, "Maximum pH", location_p -> lo_max_ph_p);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Minimum pH", location_p -> lo_min_ph_p, num_ph_dps);
+	InsertLatexTabularRowAsDouble (study_tex_f, "Maximum pH", location_p -> lo_max_ph_p, num_ph_dps);
+
+
 
 	fputs ("\\end{tabularx}\n", study_tex_f);
 
+	if (centre_p)
+		{
+			if (data_p -> dftsd_geoapify_key_s)
+				{
+					/*
+					 * https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=600&height=400&center=lonlat:-122.304378,47.526022&zoom=14&apiKey=YOUR_API_KEY
+					 */
+					char *x_s = ConvertDoubleToString (centre_p -> co_x);
+
+					if (x_s)
+						{
+							char *y_s = ConvertDoubleToString (centre_p -> co_y);
+
+							if (y_s)
+								{
+									const char *url_s = ConcatenateVarargsStrings ("https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=600&height=400&center=lonlat:",
+																																 y_s, ",", x_s, "&marker=lonlat:", y_s, ",", x_s, ";color:%23ff0000;size:medium&zoom=14&apiKey=",
+																																 data_p -> dftsd_geoapify_key_s, NULL);
+
+									if (url_s)
+										{
+											char *id_s = GetBSONOidAsString (location_p -> lo_id_p);
+
+											if (id_s)
+												{
+													char *map_s = DownloadToFile (url_s, data_p -> dftsd_assets_path_s, id_s, false);
+
+													if (map_s)
+														{
+															char *last_dot_p = strrchr (map_s, '.');
+
+															/*
+															 * includegraphics doesn't use the extension so
+															 * remove it if it's there
+															 */
+															if (last_dot_p)
+																{
+																	*last_dot_p = '\0';
+																}
+
+															fputs ("\\begin{center}\n\\begin{figure}[H]\n", study_tex_f);
+															fprintf (study_tex_f, "\\scalegraphics{%s}\n", map_s);
+															fputs ("\\end{figure}\n\\end{center}\n\n", study_tex_f);
+
+															FreeCopiedString (map_s);
+														}
+
+													FreeCopiedString (id_s);
+												}
+
+											FreeCopiedString (url_s);
+										}
+
+
+									FreeCopiedString (y_s);
+								}		/* if (y_s) */
+
+							FreeCopiedString (x_s);
+						}		/* if (x_s) */
+
+
+
+				}		/* if (data_p -> dftsd_geoapify_key_s) */
+
+		}		/* if (centre_p) */
 
 	return success_flag;
 }
@@ -840,13 +931,20 @@ static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s,
 	return success_flag;
 }
 
-static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p)
+static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p, const uint32 num_dps)
 {
 	bool success_flag = true;
 
 	if (value_p)
 		{
-			success_flag = (fprintf (out_f, "\\textbf{%s}: & " DOUBLE64_FMT " \\\\\n", key_s, *value_p) > 0);
+			if (num_dps > 0)
+				{
+					success_flag = (fprintf (out_f, "\\textbf{%s}: & %.*" DOUBLE64_FMT_IDENT " \\\\\n", key_s, num_dps, *value_p) > 0);
+				}
+			else
+				{
+					success_flag = (fprintf (out_f, "\\textbf{%s}: & " DOUBLE64_FMT " \\\\\n", key_s, *value_p) > 0);
+				}
 		}
 
 	return success_flag;

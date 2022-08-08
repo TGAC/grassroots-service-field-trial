@@ -247,6 +247,15 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 
 	LinkedList *dftsd_treatments_cache_p;
 
+
+	/**
+	 * @private
+	 *
+	 * The GeoAPIFY api key for generating static
+	 * map images for the handbook
+	 */
+	const char *dftsd_geoapify_key_s;
+
 } FieldTrialServiceData;
 
 
