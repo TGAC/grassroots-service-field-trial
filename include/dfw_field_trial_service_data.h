@@ -256,6 +256,11 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_geoapify_key_s;
 
+	const char *dftsd_map_tile_width_s;
+
+
+	const char *dftsd_map_tile_height_s;
+
 } FieldTrialServiceData;
 
 
