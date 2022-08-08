@@ -48,7 +48,8 @@ static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const 
 static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
 static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p);
 static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, const uint32 * const value_p);
-static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p);
+
+static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p, const bool end_row_flag);
 
 static bool InsertLatexTabularRowAsDouble (FILE *out_f, const char * const key_s, const double64 * const value_p);
 static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, const CapitalizeState capitalize);
@@ -67,6 +68,9 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 
 static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s, const char *filename_s);
 
+static char *GetFullFilenameForDownload (const char *url_s, const char *download_directory_s, const char *prefix_s);
+
+static bool InsertLine (FILE *study_tex_f);
 
 
 char *GetStudyHandbookFilename (const Study *study_p, const FieldTrialServiceData *data_p)
@@ -126,7 +130,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 							const char *download_path_s = data_p -> dftsd_assets_path_s;
 
 							/* start the doc and use a sans serif font */
-							fputs ("\\documentclass[a4paper,12pt]{article}\n", study_tex_f);
+							fputs ("\\documentclass[a4paper,10pt]{article}\n", study_tex_f);
 
 							fputs ("\\usepackage{tabularx}\n", study_tex_f);
 							fputs ("\\usepackage{hyperref}\n", study_tex_f);
@@ -168,7 +172,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 															char *last_dot_p = strrchr (image_s, '.');
 
 															/*
-															 * includegraphics doesn;t use the extension so
+															 * includegraphics doesn't use the extension so
 															 * remove it if it's there
 															 */
 															if (last_dot_p)
@@ -215,6 +219,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 										}
 								}
 
+
 							if (programme_p)
 								{
 									if (!PrintProgramme (study_tex_f, programme_p, buffer_p, data_p))
@@ -222,7 +227,6 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add programme to \"%s\"", full_filename_s);
 										}
 								}		/* if (programme_p) */
-
 
 							if (trial_p)
 								{
@@ -234,19 +238,12 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 								}		/* if (trial_p) */
 
 
+
 							if (!PrintStudy (study_tex_f, study_p, buffer_p, data_p))
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add study to \"%s\"", full_filename_s);
 								}
 
-
-							if (location_p)
-								{
-									if (!PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p))
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add location to \"%s\"", full_filename_s);
-										}
-								}
 
 							fputs ("\\end{document}\n", study_tex_f);
 
@@ -314,6 +311,48 @@ static bool RunLatex (const char *pdf_latex_command_s, const char *output_path_s
 
 
 
+static char *GetFullFilenameForDownload (const char *url_s, const char *download_directory_s, const char *prefix_s)
+{
+	char *full_output_filename_s = NULL;
+	const char *local_url_s = strrchr (url_s, '/');
+
+	if (local_url_s)
+		{
+			++ local_url_s;
+
+			if (*local_url_s == '\0')
+				{
+					local_url_s = NULL;
+				}
+		}
+
+	if (prefix_s)
+		{
+			if (local_url_s)
+				{
+					char *local_filename_s = ConcatenateVarargsStrings (prefix_s, "_", local_url_s, NULL);
+
+					if (local_filename_s)
+						{
+							full_output_filename_s = MakeFilename (download_directory_s, local_filename_s);
+
+							FreeCopiedString (local_filename_s);
+						}
+				}
+		}
+	else
+		{
+			if (local_url_s)
+				{
+					full_output_filename_s = MakeFilename (download_directory_s, local_url_s);
+				}
+		}
+
+	return full_output_filename_s;
+
+}
+
+
 static char *DownloadToFile (const char *url_s, const char *download_directory_s, const char *prefix_s)
 {
 	char *result_s = NULL;
@@ -321,60 +360,34 @@ static char *DownloadToFile (const char *url_s, const char *download_directory_s
 
 	if (EnsureDirectoryExists (download_directory_s))
 		{
-			const char *local_url_s = strrchr (url_s, '/');
-
-			if (local_url_s)
-				{
-					++ local_url_s;
-
-					if (*local_url_s == '\0')
-						{
-							local_url_s = NULL;
-						}
-				}
-
-			if (prefix_s)
-				{
-					if (local_url_s)
-						{
-							char *local_filename_s = ConcatenateVarargsStrings (prefix_s, "_", local_url_s, NULL);
-
-							if (local_filename_s)
-								{
-									full_output_filename_s = MakeFilename (download_directory_s, local_filename_s);
-
-									FreeCopiedString (local_filename_s);
-								}
-						}
-				}
-			else
-				{
-					if (local_url_s)
-						{
-							full_output_filename_s = MakeFilename (download_directory_s, local_url_s);
-						}
-
-				}
+			full_output_filename_s = GetFullFilenameForDownload (url_s, download_directory_s, prefix_s);
 
 			if (full_output_filename_s)
 				{
-					CurlTool *curl_tool_p = AllocateFileCurlTool (full_output_filename_s);
-
-					if (curl_tool_p)
+					if (DoesFileExist (full_output_filename_s))
 						{
-							if (SetUriForCurlTool (curl_tool_p, url_s))
+							CurlTool *curl_tool_p = AllocateFileCurlTool (full_output_filename_s);
+
+							if (curl_tool_p)
 								{
-									CURLcode res = curl_easy_setopt (curl_tool_p -> ct_curl_p, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE);
-
-									res = RunCurlTool (curl_tool_p);
-
-									if (res == CURLE_OK)
+									if (SetUriForCurlTool (curl_tool_p, url_s))
 										{
-											result_s = full_output_filename_s;
-										}
-								}
+											CURLcode res = curl_easy_setopt (curl_tool_p -> ct_curl_p, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE);
 
-							FreeCurlTool (curl_tool_p);
+											res = RunCurlTool (curl_tool_p);
+
+											if (res == CURLE_OK)
+												{
+													result_s = full_output_filename_s;
+												}
+										}
+
+									FreeCurlTool (curl_tool_p);
+								}
+						}
+					else
+						{
+							result_s = full_output_filename_s;
 						}
 
 					if (!result_s)
@@ -442,7 +455,18 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 	InsertLatexTabularRowAsHyperlink (study_tex_f, "Weather", study_p -> st_weather_link_s, buffer_p);
 
+
+
 	fputs ("\\end{tabularx}\n", study_tex_f);
+
+	if (study_p -> st_location_p)
+		{
+			if (!PrintLocation (study_tex_f, study_p -> st_location_p, buffer_p, data_p))
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add location to handbook for \"%s\"", study_p -> st_name_s);
+				}
+		}
+
 
 	/* Plots */
 	fputs ("\\subsection* {Layout}\n", study_tex_f);
@@ -451,7 +475,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 
 
-	InsertLatexTabularRowAsSizeT (study_tex_f, "Number of Plots", &num_plots);
+	InsertLatexTabularRowAsSizeT (study_tex_f, "Number of Plots", &num_plots, true);
 
 	InsertLatexTabularRowAsUint (study_tex_f, "Number of Rows", study_p -> st_num_rows_p);
 	InsertLatexTabularRowAsUint (study_tex_f, "Number of Columns", study_p -> st_num_columns_p);
@@ -549,6 +573,8 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 								}
 
+							InsertLine (study_tex_f);
+
 							tf_node_p = (TreatmentFactorNode *) (tf_node_p -> tfn_node.ln_next_p);
 						}		/* while (tf_node_p) */
 
@@ -643,7 +669,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 									fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
 
-									InsertLatexTabularRowAsSizeT (study_tex_f, "Number of samples", & (stats_p -> st_population_size));
+									InsertLatexTabularRowAsSizeT (study_tex_f, "Number of samples", & (stats_p -> st_population_size), true);
 									InsertLatexTabularRowAsDouble (study_tex_f, "Minimum", & (stats_p -> st_min));
 									InsertLatexTabularRowAsDouble (study_tex_f, "Arithmetic Mean", & (stats_p -> st_mean));
 									InsertLatexTabularRowAsDouble (study_tex_f, "Maximum", & (stats_p -> st_max));
@@ -654,6 +680,10 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 									fputs ("\\end{tabularx}\n", study_tex_f);
 								}		/* if (node_p -> psn_stats_p) */
 
+
+							InsertLine (study_tex_f);
+
+
 							node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
 						}		/* while (node_p) */
 
@@ -663,6 +693,13 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 		}		/* if (study_p -> st_phenotypes_p -> ll_size > 0) */
 
 	return success_flag;
+}
+
+
+static bool InsertLine (FILE *study_tex_f)
+{
+	/* insert a horizontal line at full page width */
+	return (fputs ("\\makebox[\\linewidth]{\\rule{\\paperwidth}{0.4pt}}}\n", study_tex_f) != EOF);
 }
 
 
@@ -791,13 +828,13 @@ static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, 
 
 
 
-static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p)
+static bool InsertLatexTabularRowAsSizeT (FILE *out_f, const char * const key_s, const size_t * const value_p, const bool end_row_flag)
 {
 	bool success_flag = true;
 
 	if (value_p)
 		{
-			success_flag = (fprintf (out_f, "\\textbf{%s}: & " SIZET_FMT " \\\\\n", key_s, *value_p) > 0);
+			success_flag = (fprintf (out_f, "\\textbf{%s}: & " SIZET_FMT " %s", key_s, *value_p, end_row_flag ? "\\\\\n": " ") > 0);
 		}
 
 	return success_flag;
