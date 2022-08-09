@@ -542,3 +542,54 @@ bool HasTreatmentCache (FieldTrialServiceData *data_p)
 	return (data_p -> dftsd_treatments_cache_p != NULL);
 }
 
+
+
+char *GetFullCacheFilename (const FieldTrialServiceData *data_p, const char *name_s)
+{
+	const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
+	const size_t cache_path_length = strlen (cache_path_s);
+	char *filename_s = NULL;
+	const char * const suffix_s = ".json";
+
+	if (!DoesStringEndWith (name_s, suffix_s))
+		{
+			filename_s = ConcatenateStrings (name_s, suffix_s);
+
+			if (!filename_s)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for \"%s\" and \"%s\"", name_s, suffix_s);
+				}
+		}
+	else
+		{
+			filename_s = (char *) name_s;
+		}
+
+	if (filename_s)
+		{
+			/*
+			 * Is it the full path?
+			 */
+			if (strncmp (cache_path_s, filename_s, cache_path_length) != 0)
+				{
+					char *full_filename_s = MakeFilename (cache_path_s, filename_s);
+
+					if (!full_filename_s)
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "MakeFilename failed for \"%s\" and \"%s\"", cache_path_s, filename_s);
+						}
+
+					if (filename_s != name_s)
+						{
+							FreeCopiedString (filename_s);
+						}
+
+					filename_s = full_filename_s;
+
+				}
+		}		/* if (filename_s) */
+
+	return filename_s;
+}
+
+

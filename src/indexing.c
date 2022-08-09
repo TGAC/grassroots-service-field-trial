@@ -154,8 +154,6 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 
 static LinkedList *GetFieldTrialFiles (const char * const path_s, const char * const local_pattern_s, const bool full_path_flag);
 
-static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length);
-
 static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
@@ -163,7 +161,7 @@ static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServic
 
 static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p);
 
-static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, const ViewFormat format, FieldTrialServiceData *data_p);
+static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 /*
@@ -457,14 +455,12 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 
 									if (entries_p)
 										{
-											const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
-											const size_t cache_path_length = strlen (cache_path_s);
 											StringListNode *node_p = (StringListNode *) (entries_p -> ll_head_p);
 											size_t num_removed = 0;
 
 											while (node_p)
 												{
-													char *filename_s = GetFullCacheFilename (node_p -> sln_string_s, cache_path_s, cache_path_length);
+													char *filename_s = GetFullCacheFilename (node_p -> sln_string_s, data_p);
 
 													if (filename_s)
 														{
@@ -513,53 +509,6 @@ static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrial
 		}
 
 	return done_flag;
-}
-
-
-static char *GetFullCacheFilename (const char *name_s, const char *cache_path_s, const size_t cache_path_length)
-{
-	char *filename_s = NULL;
-	const char * const suffix_s = ".json";
-
-	if (!DoesStringEndWith (name_s, suffix_s))
-		{
-			filename_s = ConcatenateStrings (name_s, suffix_s);
-
-			if (!filename_s)
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateStrings failed for \"%s\" and \"%s\"", name_s, suffix_s);
-				}
-		}
-	else
-		{
-			filename_s = (char *) name_s;
-		}
-
-	if (filename_s)
-		{
-			/*
-			 * Is it the full path?
-			 */
-			if (strncmp (cache_path_s, filename_s, cache_path_length) != 0)
-				{
-					char *full_filename_s = MakeFilename (cache_path_s, filename_s);
-
-					if (!full_filename_s)
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "MakeFilename failed for \"%s\" and \"%s\"", cache_path_s, filename_s);
-						}
-
-					if (filename_s != name_s)
-						{
-							FreeCopiedString (filename_s);
-						}
-
-					filename_s = full_filename_s;
-
-				}
-		}		/* if (filename_s) */
-
-	return filename_s;
 }
 
 
@@ -1190,7 +1139,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 															if (study_p)
 																{
-																	GenerateStudyHandbook (study_p, job_p, format, data_p);
+																	GenerateStudyHandbook (study_p, job_p, data_p);
 
 																	FreeStudy (study_p);
 																}
@@ -1207,7 +1156,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 											if (study_p)
 												{
-													GenerateStudyHandbook (study_p, job_p, format, data_p);
+													GenerateStudyHandbook (study_p, job_p, data_p);
 
 													FreeStudy (study_p);
 												}		/*  if (study_p) */
@@ -1378,14 +1327,11 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 
 
-static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, const ViewFormat format, FieldTrialServiceData *data_p)
+static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
-//	if (GetStudyPlots (study_p, format, data_p))
-		{
-			OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
+	OperationStatus handbook_status = GenerateStudyAsPDF (study_p, data_p);
 
-			MergeServiceJobStatus (job_p, handbook_status);
-		}
+	MergeServiceJobStatus (job_p, handbook_status);
 }
 
 
