@@ -3981,8 +3981,8 @@ OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrial
 
 			if (success_flag)
 				{
-
 					bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
 					if (id_p)
 						{
 							GrassrootsServer *server_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
