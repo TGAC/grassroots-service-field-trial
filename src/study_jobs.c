@@ -3884,6 +3884,31 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 }
 
 
+bool BackupStudyByIdString (const char *id_s, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
+
+	if (study_p)
+		{
+			if (BackupStudy (study_p, id_s, data_p))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_p, "BackupStudy () failed for id \"%s\"", id_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetStudyByIdString () failed for id \"%s\"", id_s);
+		}
+
+	return success_flag;
+}
+
+
 bool BackupStudy (Study *study_p, const char *id_s, FieldTrialServiceData *data_p)
 {
 	bool saved_study_flag = false;
@@ -3894,7 +3919,7 @@ bool BackupStudy (Study *study_p, const char *id_s, FieldTrialServiceData *data_
 
 			if (study_json_p)
 				{
-					char *filename_s = GetBackupFilename(id_s, data_p);
+					char *filename_s = GetBackupFilename (id_s, data_p);
 
 					if (filename_s)
 						{
@@ -3918,72 +3943,83 @@ bool BackupStudy (Study *study_p, const char *id_s, FieldTrialServiceData *data_
 }
 
 
-OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrialServiceData *data_p)
+OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrialServiceData *data_p, const bool backup_flag)
 {
 	OperationStatus status = OS_FAILED;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
 	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
-			bool saved_study_flag = false;
-			Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
+			bool success_flag = false;
 
-			if (study_p)
+			if (backup_flag)
 				{
-					json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_FULL, NULL, data_p);
+					Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, data_p);
 
-					if (study_json_p)
+					if (study_p)
 						{
-							/*
-							 * Back up study
-							 */
-							if (BackupStudy (study_p, id_s, data_p))
+							json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_FULL, NULL, data_p);
+
+							if (study_json_p)
 								{
-									bson_oid_t *id_p = GetBSONOidFromString (id_s);
+									/*
+									 * Back up study
+									 */
+									success_flag = BackupStudy (study_p, id_s, data_p);
 
-									if (id_p)
-										{
-											GrassrootsServer *server_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
-
-											bson_t *query_p = bson_new ();
-
-											if (query_p)
-												{
-													if (BSON_APPEND_OID (query_p, ST_ID_S, id_p))
-														{
-															if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
-																{
-																	status = RemovePlotsForStudyById (id_s, data_p);
-																}
-														}
-
-													bson_free (query_p);
-												}
-
-											if (server_p)
-												{
-													LuceneTool *lucene_p = AllocateLuceneTool (server_p, job_p -> sj_id);
-
-													if (lucene_p)
-														{
-
-														}
-												}
-
-											FreeBSONOid (id_p);
-										}		/* if (id_p) */
-
+									json_decref (study_json_p);
 								}
 
-
-							json_decref (study_json_p);
+							FreeStudy (study_p);
 						}
 
-					FreeStudy (study_p);
+				}		/* if (backup_flag) */
+			else
+				{
+					success_flag = true;
 				}
 
+			if (success_flag)
+				{
 
-		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
+					bson_oid_t *id_p = GetBSONOidFromString (id_s);
+					if (id_p)
+						{
+							GrassrootsServer *server_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
+
+							bson_t *query_p = bson_new ();
+
+							if (query_p)
+								{
+									if (BSON_APPEND_OID (query_p, ST_ID_S, id_p))
+										{
+											if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
+												{
+													status = RemovePlotsForStudyById (id_s, data_p);
+												}
+										}
+
+									bson_free (query_p);
+								}
+
+							if (server_p)
+								{
+									LuceneTool *lucene_p = AllocateLuceneTool (server_p, job_p -> sj_id);
+
+									if (lucene_p)
+										{
+
+										}
+								}
+
+							FreeBSONOid (id_p);
+						}		/* if (id_p) */
+
+				}		/* if (success_flag) */
+
+
+
+		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_STUDY])) */
 
 	return status;
 

@@ -352,6 +352,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 								{
 									bool run_flag = false;
 									bool *run_flag_p = &run_flag;
+									bool backed_up_flag = false;
 
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CACHE_CLEAR.npt_name_s, &run_flag_p))
 										{
@@ -382,27 +383,34 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												}
 										}
 
+									run_flag = false;
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &run_flag_p))
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))
 												{
-													OperationStatus s = RemovePlotsForStudyById (id_s, data_p);
+													if (BackupStudyByIdString ())
+														{
+															OperationStatus s = RemovePlotsForStudyById (id_s, data_p);
 
-													MergeServiceJobStatus (job_p, s);
+															backed_up_flag = true;
+
+															MergeServiceJobStatus (job_p, s);
+														}
 												}
 										}
-
 
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY.npt_name_s, &run_flag_p))
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))
 												{
-													OperationStatus s = DeleteStudyById (id_s, job_p, data_p);
+													if (backed_up_flag || (BackupStudyByIdString ()))
+														{
+															OperationStatus s = DeleteStudyById (id_s, job_p, data_p);
 
-													MergeServiceJobStatus (job_p, s);
+															MergeServiceJobStatus (job_p, s);
+														}
 												}
 										}
-
 
 
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_FD_PACKAGE.npt_name_s, &run_flag_p))
@@ -424,7 +432,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												}
 										}
 
-
+									run_flag = false;
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &run_flag_p))
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))
@@ -446,7 +454,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 										}
 
 
-
+									run_flag = false;
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_HANDBOOK.npt_name_s, &run_flag_p))
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))

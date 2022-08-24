@@ -212,6 +212,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GenerateStatisticsForAllStudies (S
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool BackupStudyByIdString (const char *id_s, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool BackupStudy (Study *study_p, const char *id_s, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrialServiceData *data_p, const bool backup_flag);
+
+
+
 #ifdef __cplusplus
 }
 #endif
