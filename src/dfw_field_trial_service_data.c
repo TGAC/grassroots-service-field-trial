@@ -544,7 +544,7 @@ bool HasTreatmentCache (FieldTrialServiceData *data_p)
 
 
 
-char *GetFullCacheFilename (const FieldTrialServiceData *data_p, const char *name_s)
+char *GetFullCacheFilename (const char *name_s, const FieldTrialServiceData *data_p)
 {
 	const char *cache_path_s = data_p -> dftsd_study_cache_path_s;
 	const size_t cache_path_length = strlen (cache_path_s);

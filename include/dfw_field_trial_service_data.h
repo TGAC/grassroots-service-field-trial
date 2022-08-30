@@ -503,6 +503,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentToCache (FieldTrialServiceData *d
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasTreatmentCache (FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFullCacheFilename (const char *name_s, const FieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }

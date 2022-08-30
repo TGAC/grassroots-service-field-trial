@@ -38,6 +38,7 @@
 
 #include "boolean_parameter.h"
 
+#include "handbook_generator.h"
 
 /*
  * Static declarations
@@ -351,7 +352,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 							if (study_p)
 								{
 									bool run_flag = false;
-									bool *run_flag_p = &run_flag;
+									const bool *run_flag_p = &run_flag;
 									bool backed_up_flag = false;
 
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_CACHE_CLEAR.npt_name_s, &run_flag_p))
@@ -383,12 +384,11 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												}
 										}
 
-									run_flag = false;
 									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_REMOVE_STUDY_PLOTS.npt_name_s, &run_flag_p))
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))
 												{
-													if (BackupStudyByIdString ())
+													if (BackupStudyByIdString (id_s, data_p))
 														{
 															OperationStatus s = RemovePlotsForStudyById (id_s, data_p);
 
@@ -403,9 +403,9 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))
 												{
-													if (backed_up_flag || (BackupStudyByIdString ()))
+													if (backed_up_flag || (BackupStudyByIdString (id_s, data_p)))
 														{
-															OperationStatus s = DeleteStudyById (id_s, job_p, data_p);
+															OperationStatus s = DeleteStudyById (id_s, job_p, data_p, false);
 
 															MergeServiceJobStatus (job_p, s);
 														}
