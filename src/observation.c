@@ -636,7 +636,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 						}		/* if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, false)) */
 					else
 						{
-							char *date_s = GetTimeAsString (observation_p -> ob_end_date_p, false);
+							char *date_s = GetTimeAsString (observation_p -> ob_end_date_p, false, NULL);
 
 							if (date_s)
 								{
@@ -654,7 +654,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 				}		/* if (AddValidDateToJSON (observation_p -> ob_date_p, observation_json_p, OB_START_DATE_S)) */
 			else
 				{
-					char *date_s = GetTimeAsString (observation_p -> ob_start_date_p, false);
+					char *date_s = GetTimeAsString (observation_p -> ob_start_date_p, false, NULL);
 
 					if (date_s)
 						{
@@ -865,13 +865,13 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 
 			if (obs_p -> ob_start_date_p)
 				{
-					char *start_time_s = GetTimeAsString (obs_p -> ob_start_date_p, true);
+					char *start_time_s = GetTimeAsString (obs_p -> ob_start_date_p, true, NULL);
 
 					if (start_time_s)
 						{
 							if (obs_p -> ob_end_date_p)
 								{
-									char *end_time_s = GetTimeAsString (obs_p -> ob_end_date_p, true);
+									char *end_time_s = GetTimeAsString (obs_p -> ob_end_date_p, true, NULL);
 
 									if (end_time_s)
 										{

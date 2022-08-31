@@ -37,7 +37,7 @@
 
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p);
 
-static char *GetIdBasedFilename (const char *id_s, const char *prefix_s);
+static char *GetIdBasedFilename (const char *id_s, const char *directory_s, const char *suffix_s);
 
 
 
@@ -481,7 +481,7 @@ bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s, c
 
 	if (time_p)
 		{
-			char *time_s = GetTimeAsString (time_p, add_time_flag);
+			char *time_s = GetTimeAsString (time_p, add_time_flag, NULL);
 
 			if (time_s)
 				{
@@ -949,28 +949,37 @@ const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *par
 }
 
 
-static char *GetIdBasedFilename (const char *id_s, const char *prefix_s)
+static char *GetIdBasedFilename (const char *id_s, const char *directory_s, const char *suffix_s)
 {
 	char *filename_s = NULL;
 
-	if (prefix_s)
+	if (directory_s)
 		{
-			char *local_filename_s = ConcatenateStrings (id_s, ".json");
+			char *local_filename_s = NULL;
+
+			if (suffix_s)
+				{
+					local_filename_s = ConcatenateVarargsStrings (id_s, suffix_s, ".json", NULL);
+				}
+			else
+				{
+					local_filename_s = ConcatenateStrings (id_s, ".json");
+				}
 
 			if (local_filename_s)
 				{
-					filename_s = MakeFilename (prefix_s, local_filename_s);
+					filename_s = MakeFilename (directory_s, local_filename_s);
 
 					if (!filename_s)
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get main cache filename for \"%s\" and \"%s\"", prefix_s, local_filename_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "MakeFilename () failed for \"%s\" and \"%s\"", directory_s, local_filename_s);
 						}		/* if (filename_s) */
 
 					FreeCopiedString (local_filename_s);
 				}		/* if (local_filename_s) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get local cache filename for \"%s\"", id_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get local filename for \"%s\" and \"%s\"", id_s, suffix_s ? suffix_s : "NULL");
 				}
 		}
 
@@ -981,18 +990,49 @@ static char *GetIdBasedFilename (const char *id_s, const char *prefix_s)
 
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {
-	return GetIdBasedFilename (id_s, data_p -> dftsd_study_cache_path_s);
+	return GetIdBasedFilename (id_s, data_p -> dftsd_study_cache_path_s, NULL);
 }
 
 
 char *GetBackupFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {
-	return GetIdBasedFilename (id_s, data_p -> dftsd_wastebasket_path_s);
+	char *filename_s = NULL;
+	struct tm current_time;
+
+	if (GetCurrentTime (&current_time))
+		{
+			/*
+			 * Use '-' as the delimiter as the default one ':'
+			 * is a reserved character on Windows and Amiga so the
+			 * filename would be invalid.
+			 */
+			const char time_delimiter = '-';
+			char *time_s = GetTimeAsString (&current_time, true, &time_delimiter);
+
+			if (time_s)
+				{
+					char *suffix_s = ConcatenateStrings ("_", time_s);
+
+					if (suffix_s)
+						{
+							filename_s = GetIdBasedFilename (id_s, data_p -> dftsd_wastebasket_path_s, suffix_s);
+							FreeCopiedString (suffix_s);
+						}
+					else
+						{
+							filename_s = GetIdBasedFilename (id_s, data_p -> dftsd_wastebasket_path_s, time_s);
+						}
+
+					FreeTimeString (time_s);
+				}
+		}
+
+	return filename_s;
 }
 
 
 char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *data_p)
 {
-	return GetIdBasedFilename (id_s, data_p -> dftsd_plots_uploads_path_s);
+	return GetIdBasedFilename (id_s, data_p -> dftsd_plots_uploads_path_s, NULL);
 }
 

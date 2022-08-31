@@ -3897,7 +3897,7 @@ bool BackupStudyByIdString (const char *id_s, FieldTrialServiceData *data_p)
 				}
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, study_p, "BackupStudy () failed for id \"%s\"", id_s);
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "BackupStudy () failed for id \"%s\"", id_s);
 				}
 		}
 	else
@@ -3991,7 +3991,7 @@ OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrial
 
 							if (query_p)
 								{
-									if (BSON_APPEND_OID (query_p, ST_ID_S, id_p))
+									if (BSON_APPEND_OID (query_p, MONGO_ID_S, id_p))
 										{
 											if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
 												{
@@ -4008,6 +4008,7 @@ OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrial
 
 									if (lucene_p)
 										{
+											OperationStatus s = DeleteLucene (lucene_p, const char *query_s);
 
 										}
 								}

@@ -357,7 +357,7 @@ static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const struct 
 
 	if (time_p)
 		{
-			char *time_s = GetTimeAsString (time_p, true);
+			char *time_s = GetTimeAsString (time_p, true, NULL);
 
 			if (time_s)
 				{
@@ -396,7 +396,7 @@ static bool AddTimeValueToJSON (json_t *json_p, const char *key_s, const struct 
 static bool SetJSONTime (json_t *json_p, const char *key_s, const struct tm *time_p)
 {
 	bool success_flag = false;
-	char *time_s = GetTimeAsString (time_p, true);
+	char *time_s = GetTimeAsString (time_p, true, NULL);
 
 	if (time_s)
 		{

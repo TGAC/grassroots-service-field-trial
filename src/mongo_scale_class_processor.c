@@ -594,7 +594,7 @@ static ValueStatus CheckTime (json_t *observation_json_p, const char * const key
 							include_time_flag = true;
 						}
 
-					parsed_time_s = GetTimeAsString (&time_val, include_time_flag);
+					parsed_time_s = GetTimeAsString (&time_val, include_time_flag, NULL);
 
 
 					if (parsed_time_s)
