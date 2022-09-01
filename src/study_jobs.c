@@ -3985,9 +3985,8 @@ OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrial
 
 					if (id_p)
 						{
-							GrassrootsServer *server_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
-
 							bson_t *query_p = bson_new ();
+							OperationStatus s;
 
 							if (query_p)
 								{
@@ -4002,16 +4001,8 @@ OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrial
 									bson_free (query_p);
 								}
 
-							if (server_p)
-								{
-									LuceneTool *lucene_p = AllocateLuceneTool (server_p, job_p -> sj_id);
 
-									if (lucene_p)
-										{
-											OperationStatus s = DeleteLucene (lucene_p, const char *query_s);
-
-										}
-								}
+							s = DeleteStudyFromLuceneIndexById (id_s,  job_p -> sj_id, data_p);
 
 							FreeBSONOid (id_p);
 						}		/* if (id_p) */
@@ -4024,6 +4015,34 @@ OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrial
 
 	return status;
 
+}
+
+
+OperationStatus DeleteStudyFromLuceneIndexById (const char *id_s, uuid_t uuid, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED_TO_START;
+	GrassrootsServer *server_p = GetGrassrootsServerFromService (data_p -> dftsd_base_data.sd_service_p);
+
+	if (server_p)
+		{
+			LuceneTool *lucene_p = AllocateLuceneTool (server_p, uuid);
+
+			if (lucene_p)
+				{
+					char *query_s = ConcatenateVarargsStrings (LUCENE_ID_S, LT_EXACT_SEARCH_OP_S, id_s, NULL);
+
+					if (query_s)
+						{
+							status = DeleteLucene (lucene_p, query_s);
+							FreeCopiedString (query_s);
+						}
+
+					FreeLuceneTool (lucene_p);
+				}
+
+		}		/* if (server_p) */
+
+	return status;
 }
 
 

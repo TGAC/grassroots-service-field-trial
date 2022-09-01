@@ -221,6 +221,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool BackupStudy (Study *study_p, const char *id_s
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus DeleteStudyById (const char *id_s, ServiceJob *job_p, FieldTrialServiceData *data_p, const bool backup_flag);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus DeleteStudyFromLuceneIndexById (const char *id_s, uuid_t uuid, FieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }

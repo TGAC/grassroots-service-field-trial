@@ -66,6 +66,11 @@ static NamedParameterType S_GENERATE_HANDBOOK = { "SM Generate Handbook", PT_BOO
 
 static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SM Generate Phenotypes", PT_BOOLEAN };
 
+static NamedParameterType S_INDEXER = { "SM indexer", PT_STRING };
+
+static const char * const  S_INDEXER_NONE_S = "<NONE>";
+static const char * const  S_INDEXER_DELETE_S = "SM indexer delete";
+static const char * const  S_INDEXER_INDEX_S = "SM indexer index";
 
 
 static const char *GetStudyManagerServiceDescription (const Service *service_p);
@@ -89,6 +94,9 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 static bool CloseStudyManagerService (Service *service_p);
 
 static ServiceMetadata *GetStudyManagerServiceMetadata (Service *service_p);
+
+static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
+
 
 /*
  * API definitions
@@ -189,6 +197,7 @@ static bool GetStudyManagerServiceParameterTypesForNamedParameters (const struct
 			S_REMOVE_STUDY,
 			S_GENERATE_HANDBOOK,
 			S_GENERATE_STUDY_STATISTICS,
+			S_INDEXER,
 			NULL
 		};
 
@@ -242,7 +251,10 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, Resou
 																{
 																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
 																		{
-																			return params_p;
+																			if (SetUpIndexingParameter (params_p, group_p, data_p))
+																				{
+																					return params_p;
+																				}
 																		}
 																	else
 																		{
@@ -298,7 +310,31 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, Resou
 
 
 
+static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
 
+	StringParameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
+
+	if (param_p)
+		{
+			if (CreateAndAddStringParameterOption (param_p, S_INDEXER_NONE_S, S_INDEXER_NONE_S))
+				{
+					if (CreateAndAddStringParameterOption (param_p, S_INDEXER_INDEX_S, S_INDEXER_INDEX_S))
+						{
+							if (CreateAndAddStringParameterOption (param_p, S_INDEXER_DELETE_S, S_INDEXER_DELETE_S))
+								{
+									success_flag = true;
+								}
+
+						}
+
+				}
+
+		}
+
+	return success_flag;
+}
 
 
 static void ReleaseStudyManagerServiceParameters (Service * UNUSED_PARAM (service_p), ParameterSet *params_p)
@@ -464,6 +500,32 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 													MergeServiceJobStatus (job_p, s);
 												}
 										}
+
+									const char *value_s = NULL;
+
+									if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_INDEXER.npt_name_s, &value_s))
+										{
+											if (value_s)
+												{
+													if (strcmp (value_s, S_INDEXER_INDEX_S) == 0)
+														{
+
+														}
+													else if (strcmp (value_s, S_INDEXER_DELETE_S) == 0)
+														{
+															OperationStatus s = DeleteStudyFromLuceneIndexById (id_s,  job_p -> sj_id, data_p);
+
+															MergeServiceJobStatus (job_p, s);
+														}
+													else
+														{
+
+														}
+
+												}
+
+										}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_INDEXER.npt_name_s, &value_s)) */
+
 								}		/*  if (study_p) */
 
 
