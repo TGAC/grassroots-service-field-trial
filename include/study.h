@@ -340,6 +340,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

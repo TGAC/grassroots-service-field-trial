@@ -69,8 +69,8 @@ static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SM Generate Phenotype
 static NamedParameterType S_INDEXER = { "SM indexer", PT_STRING };
 
 static const char * const  S_INDEXER_NONE_S = "<NONE>";
-static const char * const  S_INDEXER_DELETE_S = "SM indexer delete";
-static const char * const  S_INDEXER_INDEX_S = "SM indexer index";
+static const char * const  S_INDEXER_DELETE_S = "Delete";
+static const char * const  S_INDEXER_INDEX_S = "Reindex";
 
 
 static const char *GetStudyManagerServiceDescription (const Service *service_p);
@@ -509,7 +509,9 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												{
 													if (strcmp (value_s, S_INDEXER_INDEX_S) == 0)
 														{
+															OperationStatus s = IndexStudy (study_p, job_p, data_p);
 
+															MergeServiceJobStatus (job_p, s);
 														}
 													else if (strcmp (value_s, S_INDEXER_DELETE_S) == 0)
 														{
