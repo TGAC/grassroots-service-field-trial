@@ -607,7 +607,7 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 
 																	if (localtime_r (& (info.fi_last_modified), &timestamp))
 																		{
-																			char *time_s = GetTimeAsString (&timestamp, true);
+																			char *time_s = GetTimeAsString (&timestamp, true, NULL);
 
 																			if (time_s)
 																				{

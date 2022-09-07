@@ -449,7 +449,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 
 																									if (plot_p -> pl_harvest_date_p)
 																										{
-																											time_s = GetTimeAsString (plot_p -> pl_harvest_date_p, false);
+																											time_s = GetTimeAsString (plot_p -> pl_harvest_date_p, false, NULL);
 																										}
 
 																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_HARVEST_DATE_S, time_s ? time_s : "");
@@ -467,7 +467,7 @@ json_t *GetPlotAsJSON (Plot *plot_p, const ViewFormat format, JSONProcessor *pro
 
 																							if (plot_p -> pl_sowing_date_p)
 																								{
-																									time_s = GetTimeAsString (plot_p -> pl_sowing_date_p, false);
+																									time_s = GetTimeAsString (plot_p -> pl_sowing_date_p, false, NULL);
 																								}
 
 																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to add \"%s\": \"%s\"", PL_SOWING_DATE_S, time_s ? time_s : "");

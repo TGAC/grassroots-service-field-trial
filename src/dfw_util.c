@@ -465,7 +465,7 @@ bool AddValidDateToJSON (struct tm *time_p, json_t *json_p, const char *key_s, c
 
 	if (time_p)
 		{
-			char *time_s = GetTimeAsString (time_p, add_time_flag);
+			char *time_s = GetTimeAsString (time_p, add_time_flag, NULL);
 
 			if (time_s)
 				{
