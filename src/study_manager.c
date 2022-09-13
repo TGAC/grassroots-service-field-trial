@@ -428,6 +428,19 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 														{
 															OperationStatus s = RemovePlotsForStudyById (id_s, data_p);
 
+															if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+																{
+																	if (!ClearCachedStudy (id_s, data_p))
+																		{
+																			AddGeneralErrorMessageToServiceJob (job_p, "Failed to remove cached Study");
+
+																			if (s == OS_SUCCEEDED)
+																				{
+																					s = OS_PARTIALLY_SUCCEEDED;
+																				}
+																		}
+																}
+
 															backed_up_flag = true;
 
 															MergeServiceJobStatus (job_p, s);
@@ -442,6 +455,19 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 													if (backed_up_flag || (BackupStudyByIdString (id_s, data_p)))
 														{
 															OperationStatus s = DeleteStudyById (id_s, job_p, data_p, false);
+
+															if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+																{
+																	if (!ClearCachedStudy (id_s, data_p))
+																		{
+																			AddGeneralErrorMessageToServiceJob (job_p, "Failed to remove cached Study");
+
+																			if (s == OS_SUCCEEDED)
+																				{
+																					s = OS_PARTIALLY_SUCCEEDED;
+																				}
+																		}
+																}
 
 															MergeServiceJobStatus (job_p, s);
 														}
