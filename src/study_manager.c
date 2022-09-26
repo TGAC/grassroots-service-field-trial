@@ -40,6 +40,8 @@
 
 #include "handbook_generator.h"
 
+#include "dfw_util.h"
+
 /*
  * Static declarations
  */
@@ -98,7 +100,7 @@ static bool CloseStudyManagerService (Service *service_p);
 
 static ServiceMetadata *GetStudyManagerServiceMetadata (Service *service_p);
 
-static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
+static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *group_p, const ServiceData *data_p);
 
 
 /*
@@ -325,11 +327,11 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, Resou
 
 
 
-static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
+static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *group_p, const ServiceData *data_p)
 {
 	bool success_flag = false;
 
-	StringParameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
+	StringParameter *param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
 
 	if (param_p)
 		{
@@ -443,6 +445,19 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 														{
 															OperationStatus s = RemovePlotsForStudyById (id_s, data_p);
 
+															if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+																{
+																	if (!ClearCachedStudy (id_s, data_p))
+																		{
+																			AddGeneralErrorMessageToServiceJob (job_p, "Failed to remove cached Study");
+
+																			if (s == OS_SUCCEEDED)
+																				{
+																					s = OS_PARTIALLY_SUCCEEDED;
+																				}
+																		}
+																}
+
 															backed_up_flag = true;
 
 															MergeServiceJobStatus (job_p, s);
@@ -457,6 +472,19 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 													if (backed_up_flag || (BackupStudyByIdString (id_s, data_p)))
 														{
 															OperationStatus s = DeleteStudyById (id_s, job_p, data_p, false);
+
+															if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+																{
+																	if (!ClearCachedStudy (id_s, data_p))
+																		{
+																			AddGeneralErrorMessageToServiceJob (job_p, "Failed to remove cached Study");
+
+																			if (s == OS_SUCCEEDED)
+																				{
+																					s = OS_PARTIALLY_SUCCEEDED;
+																				}
+																		}
+																}
 
 															MergeServiceJobStatus (job_p, s);
 														}
