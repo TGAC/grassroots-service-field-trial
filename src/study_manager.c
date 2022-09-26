@@ -50,6 +50,9 @@
  */
 
 
+static NamedParameterType S_READONLY_UUID = { "SM uuid", PT_STRING };
+
+
 /*
  * caching parameters
  */
@@ -191,6 +194,7 @@ static bool GetStudyManagerServiceParameterTypesForNamedParameters (const struct
 	const NamedParameterType params [] =
 		{
 			STUDY_ID,
+			S_READONLY_UUID,
 			S_CACHE_CLEAR,
 			S_REMOVE_STUDY_PLOTS,
 			S_GENERATE_FD_PACKAGE,
@@ -239,52 +243,63 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, Resou
 							param_p -> pa_refresh_service_flag = true;
 							bool b = false;
 
-							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_CACHE_CLEAR.npt_name_s, "Clear cached Study", "If the Study is cached, clear it", &b, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_READONLY_UUID.npt_type, S_READONLY_UUID.npt_name_s, "UUID", "The UUID for the given Study", study_id_s, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REMOVE_STUDY.npt_name_s, "Remove Study", "Remove a Study and all of its Plots", &b, PL_ALL)) != NULL)
+									param_p -> pa_read_only_flag = true;
+
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_CACHE_CLEAR.npt_name_s, "Clear cached Study", "If the Study is cached, clear it", &b, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots from a Study", &b, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REMOVE_STUDY.npt_name_s, "Remove Study", "Remove a Study and all of its Plots", &b, PL_ALL)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p,S_GENERATE_FD_PACKAGE.npt_name_s, "Frictionless Data", "Generate the Frictionless Data Package for a Study", &b, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_REMOVE_STUDY_PLOTS.npt_name_s, "Remove Plots", "Remove all of the Plots from a Study", &b, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate a handbook for a Study ", &b, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p,S_GENERATE_FD_PACKAGE.npt_name_s, "Frictionless Data", "Generate the Frictionless Data Package for a Study", &b, PL_ALL)) != NULL)
 																{
-																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate a handbook for a Study ", &b, PL_ALL)) != NULL)
 																		{
-																			if (SetUpIndexingParameter (params_p, group_p, data_p))
+																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
 																				{
-																					return params_p;
+																					if (SetUpIndexingParameter (params_p, group_p, data_p))
+																						{
+																							return params_p;
+																						}
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_GENERATE_STUDY_STATISTICS.npt_name_s);
 																				}
 																		}
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_GENERATE_STUDY_STATISTICS.npt_name_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_GENERATE_HANDBOOK.npt_name_s);
 																		}
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_GENERATE_HANDBOOK.npt_name_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_GENERATE_FD_PACKAGE.npt_name_s);
 																}
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_GENERATE_FD_PACKAGE.npt_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_REMOVE_STUDY_PLOTS.npt_name_s);
 														}
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_REMOVE_STUDY_PLOTS.npt_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_REMOVE_STUDY.npt_name_s);
 												}
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_REMOVE_STUDY.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_CACHE_CLEAR.npt_name_s);
 										}
-								}
+
+								}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_READONLY_UUID.npt_type, S_READONLY_UUID.npt_name_s, "UUID", "The UUID for the given Study", study_id_s, PL_ALL)) != NULL) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_CACHE_CLEAR.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate %s Parameter", S_READONLY_UUID.npt_name_s);
 								}
+
 						}
 					else
 						{
