@@ -60,12 +60,25 @@ static ValueStatus UpdateType (json_t * const observation_json_p, const Observat
 int main (int argc, char *argv [])
 {
 	mongoc_client_t *client_p;
+	const char *db_s = "dfw_field_trial";
 	const char *plots_collection_s = "Plots";
+	const char *phenotypes_collection_s = "Phenotypes";
 	int arg_index = 1;
 
 	while (arg_index < argc)
 		{
-			if (strcmp (argv [arg_index], "--plots") == 0)
+			if (strcmp (argv [arg_index], "--db") == 0)
+				{
+					if ((arg_index + 1) < argc)
+						{
+							db_s = argv [++ arg_index];
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Database argument missing\n");
+						}
+				}
+			else if (strcmp (argv [arg_index], "--plots") == 0)
 				{
 					if ((arg_index + 1) < argc)
 						{
@@ -76,7 +89,17 @@ int main (int argc, char *argv [])
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Plots argument missing\n");
 						}
 				}
-			else
+			else if (strcmp (argv [arg_index], "--phenotypes") == 0)
+				{
+					if ((arg_index + 1) < argc)
+						{
+							phenotypes_collection_s = argv [++ arg_index];
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Phenotypes argument missing\n");
+						}
+				}			else
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown argument: \"%s\"\n", argv [arg_index]);
 				}
@@ -91,11 +114,11 @@ int main (int argc, char *argv [])
 
 	if (client_p)
 		{
-			mongoc_collection_t *plots_collection_p = mongoc_client_get_collection (client_p, "dfw_field_trial", plots_collection_s);
+			mongoc_collection_t *plots_collection_p = mongoc_client_get_collection (client_p, db_s, plots_collection_s);
 
 			if (plots_collection_p)
 				{
-					mongoc_collection_t *phenotypes_collection_p = mongoc_client_get_collection (client_p, "dfw_field_trial", "Phenotypes");
+					mongoc_collection_t *phenotypes_collection_p = mongoc_client_get_collection (client_p, db_s, phenotypes_collection_s);
 
 					if (phenotypes_collection_p)
 						{
@@ -475,7 +498,7 @@ static ValueStatus SetInteger (json_t *observation_json_p, const char * const ke
 	if (value_s)
 		{
 			/* If the value is set to empty or "na", remove it */
-			if ((IsEmptyEntry (value_s)) || (strcmp (value_s, "na") == 0))
+			if ((IsEmptyEntry (value_s)) || (Stricmp (value_s, "na") == 0))
 				{
 					ret = VS_REMOVE;
 				}
