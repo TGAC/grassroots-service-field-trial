@@ -1191,28 +1191,62 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 							if (row_p)
 								{
-									if (!AddRowToPlot (plot_p, row_p))
+
+									bool success_flag = false;
+
+									if (AddRowToPlot (plot_p, row_p))
+										{
+											if (is_new_plot_flag)
+												{
+													if (AddPlotToStudy (study_p, plot_p))
+														{
+															success_flag = true;
+														}
+													else
+														{
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add the plot to the study", row_index, NULL);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AddPlotToStudy () failed");
+															FreePlot (plot_p);
+														}
+												}
+											else
+												{
+													success_flag = true;
+												}
+
+											if (success_flag)
+												{
+													if (SavePlot (plot_p, data_p))
+														{
+															add_status = OS_SUCCEEDED;
+														}
+													else
+														{
+															add_status = OS_FAILED;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
+														}
+
+												}
+										}
+									else
 										{
 											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
 											FreeRow (row_p);
 											row_p = NULL;
 										}
 
-
-									if (SavePlot (plot_p, data_p))
-										{
-											add_status = OS_SUCCEEDED;
-										}
-									else
-										{
-											add_status = OS_FAILED;
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
-											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
-										}
 								}
 							else
 								{
 									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
+
+									if (is_new_plot_flag)
+										{
+											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add the plot to the study", row_index, NULL);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AddPlotToStudy () failed");
+											FreePlot (plot_p);
+										}
 								}
 						}
 
@@ -1389,16 +1423,7 @@ static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, St
 
 					if (plot_p)
 						{
-							if (AddPlotToStudy (study_p, plot_p))
-								{
-									*new_plot_flag_p = true;
-								}
-							else
-								{
-									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add the plot to the study", row_index, NULL);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AddPlotToStudy () failed");
-									FreePlot (plot_p);
-								}
+							*new_plot_flag_p = true;
 						}
 					else
 						{
@@ -1570,17 +1595,7 @@ static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const in
 	plot_p = AllocatePlot (NULL, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatment_s, comment_s,
 												 image_s, thumbnail_s, sowing_order_p, walking_order_p, study_p);
 
-	if (plot_p)
-		{
-			if (!SavePlot (plot_p, data_p))
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save plot");
-
-					FreePlot (plot_p);
-					plot_p = NULL;
-				}		/* if (!SavePlot (plot_p, data_p)) */
-		}		/* if (plot_p) */
-	else
+	if (!plot_p)
 		{
 			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to allocate Plot");
 		}
