@@ -75,6 +75,10 @@ static char *GetFullFilenameForDownload (const char *url_s, const char *download
 
 static bool InsertLine (FILE *study_tex_f);
 
+static bool InsertPhenotypeHeatmap (FILE *study_tex_f, const char * const study_uuid_s, char * const variable_name_s, const FieldTrialServiceData *data_p);
+
+
+
 
 char *GetStudyHandbookFilename (const Study *study_p, const FieldTrialServiceData *data_p)
 {
@@ -607,6 +611,8 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 			if (phenotypes_buffer_p)
 				{
+					char *study_id_s = GetBSONOidAsString (study_p -> st_id_p);
+
 					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
 					/*
 					 {
@@ -672,6 +678,13 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 									fputs ("\\end{tabularx}\n", study_tex_f);
 
 
+									if (study_id_s)
+										{
+											InsertPhenotypeHeatmap (study_tex_f, study_id_s,  node_p -> psn_measured_variable_name_s, data_p);
+										}
+
+
+
 									if ((variable_mem == MF_DEEP_COPY) || (variable_mem == MF_SHALLOW_COPY))
 										{
 											FreeMeasuredVariable (variable_p);
@@ -705,6 +718,11 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 							node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
 						}		/* while (node_p) */
+
+					if (study_id_s)
+						{
+							FreeBSONOidString (study_id_s);
+						}
 
 					FreeByteBuffer (phenotypes_buffer_p);
 				}		/* if (phenotypes_buffer_p) */
@@ -1112,3 +1130,73 @@ static bool EscapeLatexCharacters (ByteBuffer *buffer_p, const char *input_s, co
 
 	return success_flag;
 }
+
+
+static bool InsertPhenotypeHeatmap (FILE *study_tex_f, const char * const study_uuid_s, char * const variable_name_s, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (data_p -> dftsd_phenotype_images_path_s)
+		{
+			char *dir_s = MakeFilename (data_p -> dftsd_phenotype_images_path_s, study_uuid_s);
+
+			if (dir_s)
+				{
+					char *full_filename_without_extension_s = MakeFilename (dir_s, variable_name_s);
+
+					if (full_filename_without_extension_s)
+						{
+							char *full_filename_s = NULL;
+
+							/* Any variable names that contain the file separator character get replaced with a -. */
+							ReplaceCharacter (variable_name_s + strlen (dir_s), GetFileSeparatorChar (), '-');
+
+							full_filename_s = ConcatenateStrings (full_filename_without_extension_s, ".png");
+
+							if (full_filename_s)
+								{
+									if (DoesFileExist (full_filename_s))
+										{
+											fputs ("\\begin{center}\n\\begin{figure}[H]\n", study_tex_f);
+											fprintf (study_tex_f, "\\scalegraphics{%s}\n", full_filename_without_extension_s);
+											fputs ("\\end{figure}\n\\end{center}\n\n", study_tex_f);
+
+											success_flag = true;
+										}		/* if (DoesFileExist (full_filename_s)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "static heatmap image \"%s\" does not exist", full_filename_s);
+										}
+
+									FreeCopiedString (full_filename_s);
+								}		/* if (full_filename_s) */
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ConcatenateStrings () failed for \"%s\" and \".png\"", full_filename_without_extension_s);
+								}
+
+							FreeCopiedString (full_filename_without_extension_s);
+						}		/* if (full_filename_without_extension_s) */
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "MakeFilename () failed for \"%s\" and \"%s\"", dir_s, variable_name_s);
+						}
+
+					FreeCopiedString (dir_s);
+				}		/* if (dir_s) */
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "MakeFilename () failed for \"%s\" and \"%s\"", data_p -> dftsd_phenotype_images_path_s, study_uuid_s);
+				}
+
+		}		/* if (data_p -> dftsd_phenotype_images_path_s) */
+	else
+		{
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+

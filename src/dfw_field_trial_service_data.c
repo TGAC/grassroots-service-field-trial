@@ -106,6 +106,8 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 
 			data_p -> dftsd_map_tile_height_s = NULL;
 
+			data_p -> dftsd_phenotype_images_path_s = NULL;
+
 			memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
 
 			return data_p;
@@ -252,6 +254,10 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							data_p -> dftsd_map_tile_width_s = GetJSONString (service_config_p, "map_tile_width");
 							data_p -> dftsd_map_tile_height_s = GetJSONString (service_config_p, "map_tile_height");
+
+
+							data_p -> dftsd_phenotype_images_path_s = GetJSONString (service_config_p, "handbook_phenotype_images");
+
 
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;

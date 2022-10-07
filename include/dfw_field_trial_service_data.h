@@ -261,6 +261,15 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 
 	const char *dftsd_map_tile_height_s;
 
+
+	/**
+	 * @private
+	 *
+	 * The filesystem path to where any phenotype heatmap images
+	 * are stored.
+	 */
+	const char *dftsd_phenotype_images_path_s;
+
 } FieldTrialServiceData;
 
 
