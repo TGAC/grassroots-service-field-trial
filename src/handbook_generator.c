@@ -1149,7 +1149,7 @@ static bool InsertPhenotypeHeatmap (FILE *study_tex_f, const char * const study_
 							char *full_filename_s = NULL;
 
 							/* Any variable names that contain the file separator character get replaced with a -. */
-							ReplaceCharacter (variable_name_s + strlen (dir_s), GetFileSeparatorChar (), '-');
+							ReplaceCharacter (full_filename_without_extension_s + strlen (dir_s), GetFileSeparatorChar (), '-');
 
 							full_filename_s = ConcatenateStrings (full_filename_without_extension_s, ".png");
 
