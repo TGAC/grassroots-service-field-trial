@@ -2197,6 +2197,57 @@ static bool AddHandbookLinks (const Study * const study_p, json_t *study_json_p,
 
 
 
+static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	/*
+	 * Are there any phenotypes?
+	 */
+	if ((study_p -> st_plots_p) && (study_p -> st_plots_p -> ll_size > 0))
+		{
+			json_t *accessions_p = json_object ();
+
+			if (accessions_p)
+				{
+					PlotNode *plot_node_p = (PlotNode *) (study_p -> st_plots_p -> ll_head_p);
+
+					success_flag = true;
+
+					while (plot_node_p && success_flag)
+						{
+							Plot *plot_p = plot_node_p -> pn_plot_p;
+
+							if (plot_p -> pl_accession_s)
+								{
+									if (!GetJSONString (accessions_p, plot_p -> pl_accession_s))
+										{
+											if (!SetJSONString (accessions_p, plot_p -> pl_accession_s, "1"))
+												{
+													success_flag = false;
+												}
+										}
+								}		/* if (plot_p -> pl_accession_s) */
+
+						}		/* while (plot_node_p && success_flag) */
+
+				}		/* if (phenotypes_p) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to create phenotypes object for \"%s\"", study_p -> st_name_s);
+				}
+
+		}		/* if ((study_p -> st_phenotype_statistics_p) && (study_p -> st_phenotype_statistics_p -> ll_size > 0)) */
+	else
+		{
+			/* no phenotypes to do */
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
 static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;

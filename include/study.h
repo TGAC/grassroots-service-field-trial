@@ -142,6 +142,9 @@ STUDY_PREFIX const char *ST_TREATMENTS_S STUDY_VAL ("treatment_factors");
 
 STUDY_PREFIX const char *ST_PHENOTYPES_S STUDY_VAL ("phenotypes");
 
+STUDY_PREFIX const char *ST_ACCESSIONS_S STUDY_VAL ("accessions");
+
+
 STUDY_PREFIX const char *ST_PHENOTYPE_STATISTICS_S STUDY_VAL ("statistics");
 
 STUDY_PREFIX const char *ST_PHENOTYPE_DEFINITION_S STUDY_VAL ("definition");
