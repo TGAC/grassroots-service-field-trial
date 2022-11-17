@@ -2214,6 +2214,9 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 
 					success_flag = true;
 
+					/*
+					 * get all of the unique accession names
+					 */
 					while (plot_node_p && success_flag)
 						{
 							Plot *plot_p = plot_node_p -> pn_plot_p;
@@ -2231,7 +2234,60 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 
 						}		/* while (plot_node_p && success_flag) */
 
-				}		/* if (phenotypes_p) */
+					if (success_flag)
+						{
+							json_t *accessions_array_p = json_array ();
+
+							if (accessions_array_p)
+								{
+									/*
+									 * Transform the accession table into an array
+									 */
+									const char *key_s;
+									json_t *value_p;
+									void *iterator_p = json_object_iter (accessions_p);
+
+									while (iterator_p && success_flag)
+										{
+											const char *key_s = json_object_iter_key (iterator_p);
+											json_t *accession_p = json_string (key_s);
+
+											if (accession_p)
+												{
+													if (json_array_append_new (accessions_array_p, accession_p) == 0)
+														{
+															iterator_p = json_object_iter_next (accession_p, iterator_p);
+														}
+													else
+														{
+															json_decref (accession_p);
+															success_flag = false;
+														}
+												}
+
+
+										}		/*while (iterator_p && success_flag) */
+
+									if (success_flag)
+										{
+											if (json_object_set_new (study_json_p, ST_ACCESSIONS_S, accessions_array_p) != 0)
+												{
+													success_flag = false;
+												}
+										}
+
+
+									if (!success_flag)
+										{
+											json_decref (accessions_array_p);
+										}
+
+								}		/* if (accessions_array_p) */
+
+						}
+
+					json_decref (accessions_p);
+				}		/* if (accessions_p) */
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to create phenotypes object for \"%s\"", study_p -> st_name_s);
