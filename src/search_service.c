@@ -795,7 +795,7 @@ static void SearchFieldTrialsForKeyword (const char *keyword_s, LinkedList *face
 				{
 					if (SetLuceneToolName (lucene_p, "search_keywords"))
 						{
-							if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size))
+							if (SearchLucene (lucene_p, keyword_s, facets_p, "drill-down", page_number, page_size, QM_TERMS))
 								{
 									SearchData sd;
 									const uint32 from = page_number * page_size;

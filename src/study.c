@@ -26,6 +26,8 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "plot.h"
+#include "row.h"
+#include "standard_row.h"
 #include "treatment_factor.h"
 #include "location.h"
 #include "dfw_util.h"
@@ -70,6 +72,8 @@ static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, c
 
 
 static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
@@ -932,24 +936,28 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
 
-	if (study_json_p)
+	if (GetStudyPlots (study_p, VF_CLIENT_FULL, data_p))
 		{
-			status = IndexData (job_p, study_json_p);
+			json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
 
-			if (status != OS_SUCCEEDED)
+			if (study_json_p)
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to index Study \"%s\" as JSON to Lucene", study_p -> st_name_s);
+					status = IndexData (job_p, study_json_p);
+
+					if (status != OS_SUCCEEDED)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to index Study \"%s\" as JSON to Lucene", study_p -> st_name_s);
+							AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
+						}
+
+					json_decref (study_json_p);
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsJSON for \"%s\" failed", study_p -> st_name_s);
 					AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
 				}
-
-			json_decref (study_json_p);
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyAsJSON for \"%s\" failed", study_p -> st_name_s);
-			AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
 		}
 
 	return status;
@@ -1953,7 +1961,10 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																																																						{
 																																																							if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
 																																																								{
-																																																									success_flag = true;
+																																																									if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
+																																																										{
+																																																											success_flag = true;
+																																																										}
 																																																								}
 																																																							else
 																																																								{
@@ -2221,17 +2232,37 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 						{
 							Plot *plot_p = plot_node_p -> pn_plot_p;
 
-							if (plot_p -> pl_accession_s)
+							if ((plot_p -> pl_rows_p) && (plot_p -> pl_rows_p -> ll_size > 0))
 								{
-									if (!GetJSONString (accessions_p, plot_p -> pl_accession_s))
+									RowNode *row_node_p = (RowNode *) (plot_p -> pl_rows_p -> ll_head_p);
+
+									if (row_node_p -> rn_row_p -> ro_type == RT_STANDARD)
 										{
-											if (!SetJSONString (accessions_p, plot_p -> pl_accession_s, "1"))
+											StandardRow *row_p = (StandardRow *) (row_node_p -> rn_row_p);
+
+											if (row_p -> sr_material_p)
 												{
-													success_flag = false;
+													const char *accession_s = row_p -> sr_material_p -> ma_accession_s;
+
+													if (accession_s)
+														{
+															if (!GetJSONString (accessions_p, accession_s))
+																{
+																	if (!SetJSONString (accessions_p, accession_s, "1"))
+																		{
+																			success_flag = false;
+																		}
+																}
+
+														}
 												}
 										}
-								}		/* if (plot_p -> pl_accession_s) */
 
+									row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+								}
+
+
+							plot_node_p = (PlotNode *) (plot_node_p -> pn_node.ln_next_p);
 						}		/* while (plot_node_p && success_flag) */
 
 					if (success_flag)
@@ -2245,26 +2276,19 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 									 */
 									const char *key_s;
 									json_t *value_p;
-									void *iterator_p = json_object_iter (accessions_p);
 
-									while (iterator_p && success_flag)
+									json_object_foreach (accessions_p, key_s, value_p)
 										{
-											const char *key_s = json_object_iter_key (iterator_p);
 											json_t *accession_p = json_string (key_s);
 
 											if (accession_p)
 												{
-													if (json_array_append_new (accessions_array_p, accession_p) == 0)
+													if (json_array_append_new (accessions_array_p, accession_p) != 0)
 														{
-															iterator_p = json_object_iter_next (accession_p, iterator_p);
-														}
-													else
-														{
-															json_decref (accession_p);
 															success_flag = false;
+															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to add \"%s\" to accessions array", key_s);
 														}
 												}
-
 
 										}		/*while (iterator_p && success_flag) */
 
@@ -2273,6 +2297,7 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 											if (json_object_set_new (study_json_p, ST_ACCESSIONS_S, accessions_array_p) != 0)
 												{
 													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, accessions_array_p, "Failed to accessions array to study");
 												}
 										}
 

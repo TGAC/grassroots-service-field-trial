@@ -95,8 +95,6 @@ typedef struct Plot
 
 	uint32 pl_column_index;
 
-	char *pl_accession_s;
-
 	struct tm *pl_sowing_date_p;
 
 	double pl_sowing_rate;

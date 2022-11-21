@@ -1578,18 +1578,22 @@ json_t *GetStudyIndexingData (Service *service_p)
 
 													if (study_p)
 														{
-															json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
-
-															if (study_json_p)
+															if (GetStudyPlots (study_p, VF_CLIENT_FULL, data_p))
 																{
-																	if (json_array_append_new (studies_p, study_json_p) == 0)
+
+																	json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
+
+																	if (study_json_p)
 																		{
-																			++ num_added;
-																		}
-																	else
-																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add study to array for indexing");
-																			json_decref (study_json_p);
+																			if (json_array_append_new (studies_p, study_json_p) == 0)
+																				{
+																					++ num_added;
+																				}
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add study to array for indexing");
+																					json_decref (study_json_p);
+																				}
 																		}
 																}
 
@@ -1601,7 +1605,7 @@ json_t *GetStudyIndexingData (Service *service_p)
 
 															if (id_s)
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyById () failed for %s", id_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudy/ById () failed for %s", id_s);
 																	FreeBSONOidString (id_s);
 																}
 															else
@@ -4033,7 +4037,7 @@ OperationStatus DeleteStudyFromLuceneIndexById (const char *id_s, uuid_t uuid, F
 
 					if (query_s)
 						{
-							status = DeleteLucene (lucene_p, query_s);
+							status = DeleteLucene (lucene_p, query_s, QM_PARSER);
 							FreeCopiedString (query_s);
 						}
 

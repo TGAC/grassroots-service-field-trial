@@ -106,7 +106,6 @@ Plot *AllocatePlot (bson_oid_t *id_p, const struct tm *sowing_date_p, const stru
 
 																									plot_p -> pl_treatments_s = copied_treatments_s;
 
-																									plot_p -> pl_accession_s = NULL;
 																									plot_p -> pl_soil_type_s = NULL;
 																									plot_p -> pl_sowing_rate = 0.0f;
 
