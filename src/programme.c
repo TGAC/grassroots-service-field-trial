@@ -225,6 +225,7 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 														{
 															case VF_CLIENT_FULL:
 															case VF_CLIENT_MINIMAL:
+															case VF_INDEXING:
 																{
 																	if (programme_p -> pr_crop_p)
 																		{

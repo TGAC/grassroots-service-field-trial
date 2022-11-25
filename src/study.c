@@ -936,10 +936,11 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
+	const ViewFormat format = VF_INDEXING;
 
-	if (GetStudyPlots (study_p, VF_CLIENT_FULL, data_p))
+	if (GetStudyPlots (study_p, format, data_p))
 		{
-			json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
+			json_t *study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
 			if (study_json_p)
 				{
@@ -978,7 +979,7 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 					/*
 					 * Add the location
 					 */
-					if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+					if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL) || (format == VF_INDEXING))
 						{
 							json_t *location_json_p = GetLocationAsJSON (study_p -> st_location_p);
 
@@ -1075,6 +1076,10 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 
 									switch (format)
 									{
+										case VF_INDEXING:
+											success_flag = true;
+											break;
+
 										case VF_CLIENT_FULL:
 											{
 												if (GetStudyPlots (study_p, format, data_p))

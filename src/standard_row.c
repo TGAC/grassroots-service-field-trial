@@ -208,7 +208,7 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 				{
 					if (PopulateRowFromJSON (& (row_p -> sr_base), plot_p, row_json_p, format, data_p))
 						{
-							if (format == VF_CLIENT_FULL)
+							if ((format == VF_CLIENT_FULL) || (format == VF_INDEXING))
 								{
 									/*
 									 * If we haven't already got the material, get it!

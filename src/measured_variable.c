@@ -174,6 +174,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 								break;
 
 							case VF_CLIENT_FULL:
+							case VF_INDEXING:
 								{
 									success_flag = AddCommonTermsToJSON (mv_p, phenotype_json_p);
 								}		/* case VF_CLIENT_FULL: */

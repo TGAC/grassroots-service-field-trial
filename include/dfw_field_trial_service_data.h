@@ -86,6 +86,13 @@ typedef enum
 	 */
 	VF_CLIENT_MINIMAL,
 
+
+	/**
+	 * Get the object with all of the relevant data
+	 * needed for indexing into the Lucene component
+	 */
+	VF_INDEXING,
+
 	/**
 	 * The number of available formats
 	 */

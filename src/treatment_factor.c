@@ -150,24 +150,47 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 
 	if (tf_json_p)
 		{
-			json_t *values_json_p = GetTreatmentFactorValuesAsJSON (treatment_factor_p, format);
+			bool success_flag = false;
 
-			if (values_json_p)
+			if (format != VF_INDEXING)
 				{
-					if (json_object_set_new (tf_json_p, TF_VALUES_S, values_json_p) == 0)
-						{
-							bool success_flag = false;
+					json_t *values_json_p = GetTreatmentFactorValuesAsJSON (treatment_factor_p, format);
 
-							if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_study_p -> st_id_p, TF_STUDY_ID_S))
+					if (values_json_p)
+						{
+							if (json_object_set_new (tf_json_p, TF_VALUES_S, values_json_p) == 0)
 								{
-									if (format == VF_STORAGE)
+									success_flag = true;
+								}
+							else
+								{
+									json_decref (values_json_p);
+								}
+						}
+				}
+			else
+				{
+					success_flag = true;
+				}
+
+			if (success_flag)
+				{
+					if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_study_p -> st_id_p, TF_STUDY_ID_S))
+						{
+							switch (format)
+								{
+									case VF_STORAGE:
 										{
 											if (AddNamedCompoundIdToJSON (tf_json_p, treatment_factor_p -> tf_treatment_p -> tr_id_p, TF_TREATMENT_ID_S))
 												{
 													success_flag = true;
 												}
 										}
-									else
+										break;
+
+									case VF_CLIENT_FULL:
+									case VF_CLIENT_MINIMAL:
+									case VF_INDEXING:
 										{
 											json_t *treatment_json_p = GetTreatmentAsJSON (treatment_factor_p -> tf_treatment_p);
 
@@ -185,20 +208,23 @@ json_t *GetTreatmentFactorAsJSON (const TreatmentFactor *treatment_factor_p, con
 															json_decref (treatment_json_p);
 														}
 												}
+
 										}
+										break;
+
+
 								}
 
-							if (success_flag)
-								{
-									return tf_json_p;
-								}
+
 						}
-					else
+
+					if (success_flag)
 						{
-							json_decref (values_json_p);
+							return tf_json_p;
 						}
 
-				}		/* if (values_json_p) */
+				}		/* if (success_flag) */
+
 
 			json_decref (tf_json_p);
 		}		/* if (tf_json_p) */

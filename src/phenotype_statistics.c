@@ -128,42 +128,59 @@ bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, jso
 						{
 							if (json_object_set_new (phenotype_p, ST_PHENOTYPE_DEFINITION_S, mv_json_p) == 0)
 								{
-									json_t *stats_json_p = NULL;
+									/*
+									 * We don't need the stats if we're indexing the study
+									 */
+									if (format != VF_INDEXING)
+										{
+											json_t *stats_json_p = NULL;
 
-									if (psn_p -> psn_stats_p)
-										{
-											stats_json_p = GetStatisticsAsJSON (psn_p -> psn_stats_p);
-										}
-									else
-										{
-											stats_json_p = json_null ();
-										}
-
-									if (stats_json_p)
-										{
-											if (json_object_set_new (phenotype_p, ST_PHENOTYPE_STATISTICS_S, stats_json_p) == 0)
+											if (psn_p -> psn_stats_p)
 												{
-													if (json_object_set_new (parent_p, psn_p -> psn_measured_variable_name_s, phenotype_p) == 0)
+													stats_json_p = GetStatisticsAsJSON (psn_p -> psn_stats_p);
+												}
+											else
+												{
+													stats_json_p = json_null ();
+												}
+
+											if (stats_json_p)
+												{
+													if (json_object_set_new (phenotype_p, ST_PHENOTYPE_STATISTICS_S, stats_json_p) == 0)
 														{
 															success_flag = true;
 														}
 													else
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_p, "Failed to add phenotype json for \"%s\" to parent json", psn_p -> psn_measured_variable_name_s);
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, stats_json_p, "Failed to add stats json to phenotype json");
 															json_decref (stats_json_p);
 														}
-												}		/* if (json_object_set_new (phenotype_p, ST_PHENOTYPE_STATISTICS_S, stats_json_p) == 0) */
+												}
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, stats_json_p, "Failed to add stats json to phenotype json");
-													json_decref (stats_json_p);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to gets stats as json for \"%s\"", psn_p -> psn_measured_variable_name_s);
+												}
+
+
+										}		/* if (format != VF_INDEXING) */
+									else
+										{
+											success_flag = true;
+										}
+
+									if (success_flag)
+										{
+											if (json_object_set_new (parent_p, psn_p -> psn_measured_variable_name_s, phenotype_p) == 0)
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_p, "Failed to add phenotype json for \"%s\" to parent json", psn_p -> psn_measured_variable_name_s);
 												}
 
 										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to gets stats as json for \"%s\"", psn_p -> psn_measured_variable_name_s);
-										}
+
 								}
 							else
 								{
