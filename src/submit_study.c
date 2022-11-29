@@ -90,7 +90,7 @@ Service *GetStudySubmissionService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetStudySubmissionServiceMetadata,
-														 GetStudyIndexingData,
+														 NULL,
 														 grassroots_p))
 						{
 

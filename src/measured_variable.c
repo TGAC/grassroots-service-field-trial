@@ -355,7 +355,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 				{
 					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], selector_p, DFT_TIMESTAMP_S))
 						{
-							status = IndexData (job_p, phenotype_json_p);
+							status = IndexData (job_p, phenotype_json_p, NULL);
 
 							if (status != OS_SUCCEEDED)
 								{

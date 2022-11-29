@@ -756,7 +756,7 @@ static LinkedList *GetFieldTrialFiles (const char * const path_s, const char * c
 }
 
 
-OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
+OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p, const char *job_name_s)
 {
 	OperationStatus status = OS_FAILED;
 	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
@@ -764,6 +764,14 @@ OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p)
 
 	if (lucene_p)
 		{
+			if (job_name_s)
+				{
+					if (!SetLuceneToolName (lucene_p, job_name_s))
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "SetLuceneToolName () failed for \"%s\"", job_name_s);
+						}
+				}
+
 			status = IndexLucene (lucene_p, data_to_index_p, true);
 
 			FreeLuceneTool (lucene_p);
@@ -879,17 +887,54 @@ OperationStatus ReindexAllData (ServiceJob *job_p, const bool update_flag, const
 OperationStatus ReindexStudies (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *studies_p = GetStudyIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
+	json_t *id_results_p = GetAllStudyIds (service_data_p -> dftsd_base_data.sd_service_p);
 
-	if (studies_p)
+
+	if (id_results_p)
 		{
-			if (SetLuceneToolName (lucene_p, "index_studies"))
-				{
-					status = IndexLucene (lucene_p, studies_p, update_flag);
-				}
+			json_t *id_result_p;
+			size_t i;
+			size_t num_successes = 0;
 
-			json_decref (studies_p);
-		}
+			json_array_foreach (id_results_p, i, id_result_p)
+				{
+					bson_oid_t id;
+
+					if (GetMongoIdFromJSON (id_result_p, &id))
+						{
+							char *id_s = GetBSONOidAsString (&id);
+
+							if (id_s)
+								{
+									Study *study_p = GetStudyByIdString (id_s, VF_CLIENT_FULL, service_data_p);
+
+									if (study_p)
+										{
+											OperationStatus s = IndexStudy (study_p, job_p, id_s, service_data_p);
+
+											FreeStudy (study_p);
+										}		/* if (study_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyByIdString () failed for \"%s\"", id_s);
+										}
+								}		/* if (id_s) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, id_result_p, "GetBSONOidAsString () failed");
+								}
+
+						}		/* if (GetMongoIdFromJSON (id_result_p, &id)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, id_result_p, "GetMongoIdFromJSON () failed");
+						}
+
+				}		/* json_array_foreach (id_results_p, i, id_result_p) */
+
+			json_decref (id_results_p);
+		}		/* if (id_results_p) */
+
 
 	return status;
 }

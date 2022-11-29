@@ -134,7 +134,7 @@ Service *GetStudyManagerService (GrassrootsServer *grassroots_p)
 														 SY_SYNCHRONOUS,
 														 (ServiceData *) data_p,
 														 GetStudyManagerServiceMetadata,
-														 GetStudyIndexingData,
+														 NULL,
 														 grassroots_p))
 						{
 
@@ -552,7 +552,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												{
 													if (strcmp (value_s, S_INDEXER_INDEX_S) == 0)
 														{
-															OperationStatus s = IndexStudy (study_p, job_p, data_p);
+															OperationStatus s = IndexStudy (study_p, job_p, id_s, data_p);
 
 															MergeServiceJobStatus (job_p, s);
 														}

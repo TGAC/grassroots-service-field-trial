@@ -664,7 +664,7 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 
 							if (programme_indexing_p)
 								{
-									status = IndexData (job_p, programme_indexing_p);
+									status = IndexData (job_p, programme_indexing_p, NULL);
 									json_decref (programme_indexing_p);
 								}
 

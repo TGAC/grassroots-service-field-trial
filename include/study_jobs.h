@@ -180,7 +180,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyDistinctAccessionsAsJSON (bson_oid
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStudyIndexingData (Service *service_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudyIds (Service *service_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct TreatmentFactor *GetOrCreateTreatmentFactorForStudy (Study *study_p, const bson_oid_t *treatment_id_p, const FieldTrialServiceData *data_p);

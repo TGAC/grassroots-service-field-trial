@@ -130,7 +130,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceDa
 				{
 					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p, DFT_TIMESTAMP_S))
 						{
-							status = IndexData (job_p, field_trial_json_p);
+							status = IndexData (job_p, field_trial_json_p, NULL);
 
 							if (status != OS_SUCCEEDED)
 								{

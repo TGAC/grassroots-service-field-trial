@@ -922,7 +922,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 			 */
 			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 				{
-					IndexStudy (study_p, job_p, data_p);
+					IndexStudy (study_p, job_p, NULL, data_p);
 				}
 
 		}		/* if (success_flag) */
@@ -933,7 +933,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 }
 
 
-OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, const char *job_name_s, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	const ViewFormat format = VF_INDEXING;
@@ -944,7 +944,7 @@ OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, FieldTrialService
 
 			if (study_json_p)
 				{
-					status = IndexData (job_p, study_json_p);
+					status = IndexData (job_p, job_name_s, study_json_p);
 
 					if (status != OS_SUCCEEDED)
 						{

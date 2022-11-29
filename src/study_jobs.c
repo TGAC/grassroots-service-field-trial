@@ -1542,8 +1542,9 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
 }
 
 
-json_t *GetStudyIndexingData (Service *service_p)
+json_t *GetAllStudyIds (Service *service_p)
 {
+	json_t *id_results_p = NULL;
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
@@ -1555,90 +1556,18 @@ json_t *GetStudyIndexingData (Service *service_p)
 
 			if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, &query, fields_ss, NULL))
 				{
-					json_t *id_results_p = GetAllExistingMongoResultsAsJSON (data_p -> dftsd_mongo_p);
+					id_results_p = GetAllExistingMongoResultsAsJSON (data_p -> dftsd_mongo_p);
 
-					if (id_results_p)
+					if (!id_results_p)
 						{
-							json_t *studies_p = json_array ();
 
-							if (studies_p)
-								{
-									size_t i;
-									bson_oid_t oid;
-									const size_t num_results = json_array_size (id_results_p);
-									size_t num_added = 0;
-
-									for (i = 0; i < num_results; ++ i)
-										{
-											json_t *id_result_p = json_array_get (id_results_p, i);
-
-											if (GetMongoIdFromJSON (id_result_p, &oid))
-												{
-													Study *study_p = GetStudyById (&oid, VF_CLIENT_MINIMAL, data_p);
-
-													if (study_p)
-														{
-															if (GetStudyPlots (study_p, VF_CLIENT_FULL, data_p))
-																{
-
-																	json_t *study_json_p = GetStudyAsJSON (study_p, VF_CLIENT_MINIMAL, NULL, data_p);
-
-																	if (study_json_p)
-																		{
-																			if (json_array_append_new (studies_p, study_json_p) == 0)
-																				{
-																					++ num_added;
-																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add study to array for indexing");
-																					json_decref (study_json_p);
-																				}
-																		}
-																}
-
-															FreeStudy (study_p);
-														}		/* if (study_p) */
-													else
-														{
-															char *id_s = GetBSONOidAsString (&oid);
-
-															if (id_s)
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudy/ById () failed for %s", id_s);
-																	FreeBSONOidString (id_s);
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyById () failed");
-																}
-
-														}
-
-												}		/* if (GetMongoIdFromJSON (id_result_p, &oid)) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, id_result_p, "Failed to get study id for indexing");
-												}
-
-										}		/* json_array_foreach (results_p, i, id_p) */
-
-									if (num_added == num_results)
-										{
-											return studies_p;
-										}
-
-									json_decref (studies_p);
-								}		/* if (studies_p) */
-
-							json_decref (id_results_p);
 						}		/* if (id_results_p) */
 
 				}		/* if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, NULL, fields_ss, NULL)) */
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY])) */
 
-	return NULL;
+	return id_results_p;
 }
 
 
