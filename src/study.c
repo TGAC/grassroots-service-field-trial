@@ -944,7 +944,7 @@ OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, const char *job_n
 
 			if (study_json_p)
 				{
-					status = IndexData (job_p, job_name_s, study_json_p);
+					status = IndexData (job_p, study_json_p, job_name_s);
 
 					if (status != OS_SUCCEEDED)
 						{
