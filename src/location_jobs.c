@@ -620,121 +620,133 @@ static bool AddLocation (ServiceJob *job_p, ParameterSet *param_set_p, FieldTria
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_s))
 		{
-			Address *address_p = NULL;
-			const char *street_s = NULL;
-			const char *town_s = NULL;
-			const char *county_s = NULL;
-			const char *country_s = NULL;
-			const char *postcode_s = NULL;
-			const bool *use_gps_flag_p = NULL;
-			const char *country_code_s = NULL;
-			const char *gps_s = NULL;
-
-			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_s);
-			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_s);
-			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_s);
-			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_s);
-			GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_s);
-			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_flag_p);
-
-			address_p = AllocateAddress (name_s, street_s, town_s, county_s,
-																	 country_s, postcode_s, country_code_s, gps_s);
-
-			if (address_p)
+			if (!IsStringEmpty (name_s))
 				{
-					GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
+					Address *address_p = NULL;
+					const char *street_s = NULL;
+					const char *town_s = NULL;
+					const char *county_s = NULL;
+					const char *country_s = NULL;
+					const char *postcode_s = NULL;
+					const bool *use_gps_flag_p = NULL;
+					const char *country_code_s = NULL;
+					const char *gps_s = NULL;
 
-					if ((use_gps_flag_p != NULL) && (*use_gps_flag_p == true))
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_STREET.npt_name_s, &street_s);
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_TOWN.npt_name_s, &town_s);
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTY.npt_name_s, &county_s);
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_COUNTRY.npt_name_s, &country_s);
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_POSTCODE.npt_name_s, &postcode_s);
+					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, LOCATION_USE_GPS.npt_name_s, &use_gps_flag_p);
+
+					address_p = AllocateAddress (name_s, street_s, town_s, county_s,
+																			 country_s, postcode_s, country_code_s, gps_s);
+
+					if (address_p)
 						{
-							const double64 *latitude_p = NULL;
+							GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
 
-							if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_p)) && (latitude_p != NULL))
+							if ((use_gps_flag_p != NULL) && (*use_gps_flag_p == true))
 								{
-									const double64 *longitude_p = NULL;
+									const double64 *latitude_p = NULL;
 
-									if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_p)) && (longitude_p != NULL))
+									if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_p)) && (latitude_p != NULL))
 										{
-											const double64 *elevation_p = NULL;
+											const double64 *longitude_p = NULL;
 
-											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_p);
-
-											if (latitude_p && longitude_p)
+											if ((GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_LONGITUDE.npt_name_s, &longitude_p)) && (longitude_p != NULL))
 												{
-													if (SetAddressCentreCoordinate (address_p, *latitude_p, *longitude_p, elevation_p))
+													const double64 *elevation_p = NULL;
+
+													GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_ALTITUDE.npt_name_s, &elevation_p);
+
+													if (latitude_p && longitude_p)
 														{
-															success_flag = true;
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set GPS coordinate to [ %lf, %lf ] for %s", *latitude_p, *longitude_p, address_p -> ad_name_s);
-															AddGeneralErrorMessageToServiceJob (job_p, "Failed to save GPS coordinate");
+															if (SetAddressCentreCoordinate (address_p, *latitude_p, *longitude_p, elevation_p))
+																{
+																	success_flag = true;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set GPS coordinate to [ %lf, %lf ] for %s", *latitude_p, *longitude_p, address_p -> ad_name_s);
+																	AddGeneralErrorMessageToServiceJob (job_p, "Failed to save GPS coordinate");
+																}
 														}
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Longitude for %s", address_p -> ad_name_s);
+													AddParameterErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, LOCATION_LONGITUDE.npt_type, "Value required when using your own specified GPS Coordinates");
+												}
+
+
+										}		/* if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Latitude for %s", address_p -> ad_name_s);
+											AddParameterErrorMessageToServiceJob (job_p, LOCATION_LATITUDE.npt_name_s, LOCATION_LATITUDE.npt_type, "Value required when using your own specified GPS Coordinates");
+										}
+
+								}		/* if (use_gps_value.st_boolean_value) */
+							else
+								{
+									if (DetermineGPSLocationForAddress (address_p, NULL, grassroots_p))
+										{
+											success_flag = true;
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Longitude for %s", address_p -> ad_name_s);
-											AddParameterErrorMessageToServiceJob (job_p, LOCATION_LONGITUDE.npt_name_s, LOCATION_LONGITUDE.npt_type, "Value required when using your own specified GPS Coordinates");
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "DetermineGPSLocationForAddress faialed for %s", address_p -> ad_name_s);
+											AddGeneralErrorMessageToServiceJob (job_p, "Unable to determine GPS coordinate");
+										}
+								}
+
+
+							if (success_flag)
+								{
+									const uint32 order = 0;
+									const char *soil_s = NULL;
+									const double64 *ph_min_p = NULL;
+									const double64 *ph_max_p = NULL;
+									Location *location_p = NULL;
+									const char *type_s = NULL;
+									LocationType loc_type = LT_UNKNOWN;
+
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_SOIL.npt_name_s, &soil_s);
+									GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MIN_PH.npt_name_s, &ph_min_p);
+									GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MAX_PH.npt_name_s, &ph_max_p);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_TYPE.npt_name_s, &type_s);
+
+									GetLocationTypeFromString (type_s, &loc_type);
+
+
+									location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, loc_type, id_p);
+
+									if (location_p)
+										{
+											status = SaveLocation (location_p, job_p, data_p);
+										}
+									else
+										{
+											success_flag = false;
 										}
 
-
-								}		/* if (GetParameterValueFromParameterSet (param_set_p, LOCATION_LATITUDE.npt_name_s, &latitude_value, true)) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Latitude for %s", address_p -> ad_name_s);
-									AddParameterErrorMessageToServiceJob (job_p, LOCATION_LATITUDE.npt_name_s, LOCATION_LATITUDE.npt_type, "Value required when using your own specified GPS Coordinates");
 								}
 
-						}		/* if (use_gps_value.st_boolean_value) */
-					else
-						{
-							if (DetermineGPSLocationForAddress (address_p, NULL, grassroots_p))
-								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "DetermineGPSLocationForAddress faialed for %s", address_p -> ad_name_s);
-									AddGeneralErrorMessageToServiceJob (job_p, "Unable to determine GPS coordinate");
-								}
-						}
+							FreeAddress (address_p);
+						}		/* if (address_p) */
 
-
-					if (success_flag)
-						{
-							const uint32 order = 0;
-							const char *soil_s = NULL;
-							const double64 *ph_min_p = NULL;
-							const double64 *ph_max_p = NULL;
-							Location *location_p = NULL;
-							const char *type_s = NULL;
-							LocationType loc_type = LT_UNKNOWN;
-
-							GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_SOIL.npt_name_s, &soil_s);
-							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MIN_PH.npt_name_s, &ph_min_p);
-							GetCurrentDoubleParameterValueFromParameterSet (param_set_p, LOCATION_MAX_PH.npt_name_s, &ph_max_p);
-							GetCurrentStringParameterValueFromParameterSet (param_set_p, LOCATION_TYPE.npt_name_s, &type_s);
-
-							GetLocationTypeFromString (type_s, &loc_type);
-
-
-							location_p = AllocateLocation (address_p, order, soil_s, ph_min_p, ph_max_p, loc_type, id_p);
-
-							if (location_p)
-								{
-									status = SaveLocation (location_p, job_p, data_p);
-								}
-							else
-								{
-									success_flag = false;
-								}
-
-						}
-
-					FreeAddress (address_p);
-				}		/* if (address_p) */
+				}		/* if (!IsStringEmpty (name_s)) */
+			else
+				{
+					AddParameterErrorMessageToServiceJob (job_p, LOCATION_NAME.npt_name_s, LOCATION_NAME.npt_type, "Name is a required field");
+				}
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, LOCATION_NAME.npt_name_s, &name_value)) */
+	else
+		{
+			AddParameterErrorMessageToServiceJob (job_p, LOCATION_NAME.npt_name_s, LOCATION_NAME.npt_type, "Name is a required field");
+		}
 
 
 	return ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED));
