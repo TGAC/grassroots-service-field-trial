@@ -894,7 +894,7 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 
 			if (key_s)
 				{
-					obs_p -> ob_add_values_to_json_fn (obs_p, "raw_value", "corrected_value", fd_json_p, "-", true);
+					success_flag = obs_p -> ob_add_values_to_json_fn (obs_p, "raw_value", "corrected_value", fd_json_p, "-", true);
 
 					if (key_s != variable_s)
 						{
@@ -904,10 +904,6 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 				}		/* if (key_s) */
 
 		}		/* if (variable_s) */
-	else
-		{
-			success_flag = false;
-		}
 
 	return success_flag;
 }
