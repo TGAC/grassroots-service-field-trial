@@ -329,7 +329,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyWithParentTrialFromJSON (const json
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetStudyPlots (Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p, const char *url_key_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyByIdString (const char *study_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 

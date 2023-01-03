@@ -130,6 +130,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceDa
 				{
 					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p, DFT_TIMESTAMP_S))
 						{
+							char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 							status = IndexData (job_p, field_trial_json_p, NULL);
 
 							if (status != OS_SUCCEEDED)
@@ -139,6 +140,25 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceDa
 
 									status = OS_PARTIALLY_SUCCEEDED;
 								}
+
+							if (id_s)
+								{
+									/*
+									 * If we have the front-end web address to view the trial,
+									 * save it to the ServiceJob.
+									 */
+									if (data_p -> dftsd_view_trial_url_s)
+										{
+											SetFieldTrialServiceJobURL (job_p, data_p -> dftsd_view_trial_url_s, id_s);
+										}
+
+									FreeBSONOidString (id_s);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", trial_p -> ft_name_s);
+								}
+
 
 						}		/* if (SaveMongoData (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], selector_p)) */
 

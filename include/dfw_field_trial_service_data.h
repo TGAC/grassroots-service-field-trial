@@ -241,6 +241,44 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	 */
 	const char *dftsd_view_study_url_s;
 
+
+	/**
+	 * @private
+	 *
+	 * The base url for where each trial can be viewed on the
+	 * front end.
+	 */
+	const char *dftsd_view_trial_url_s;
+
+	/**
+	 * @private
+	 *
+	 * The base url for where each location can be viewed on the
+	 * front end.
+	 */
+	const char *dftsd_view_location_url_s;
+
+
+	/**
+	 * @private
+	 *
+	 * The base url for where each programme can be viewed on the
+	 * front end.
+	 */
+	const char *dftsd_view_programme_url_s;
+
+
+	/**
+	 * @private
+	 *
+	 * The base url for where each study's plots can be viewed on the
+	 * front end.
+	 */
+	const char *dftsd_view_plots_url_s;
+
+
+
+
 	/**
 	 * @private
 	 *

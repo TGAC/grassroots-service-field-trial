@@ -347,7 +347,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 								{
 									OperationStatus old_status = job_p -> sj_status;
 
-									status = SaveStudy (study_p, job_p, data_p);
+									status = SaveStudy (study_p, job_p, data_p, data_p -> dftsd_view_plots_url_s);
 
 									MergeServiceJobStatus(job_p, old_status);
 

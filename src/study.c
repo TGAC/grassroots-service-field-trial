@@ -861,7 +861,7 @@ bool AddPlotToStudy (Study *study_p, Plot *plot_p)
 
 
 
-OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p, const char *url_key_s)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -894,6 +894,19 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 												}
 										}
 
+									/*
+									 * If we have the front-end web address to view the study,
+									 * save it to the ServiceJob.
+									 */
+									if (!url_key_s)
+										{
+											url_key_s = data_p -> dftsd_view_study_url_s;
+										}
+
+									if (url_key_s)
+										{
+											SetFieldTrialServiceJobURL (job_p, url_key_s, id_s);
+										}
 
 									FreeBSONOidString (id_s);
 								}

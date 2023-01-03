@@ -1036,3 +1036,41 @@ char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *da
 	return GetIdBasedFilename (id_s, data_p -> dftsd_plots_uploads_path_s, NULL);
 }
 
+
+
+bool SetFieldTrialServiceJobURL (ServiceJob *job_p, const char * const url_prefix_s, const char * const id_s)
+{
+	bool success_flag = false;
+	char *url_s = NULL;
+	const char * const sep_s = "/";
+
+	if (DoesStringEndWith (url_prefix_s, sep_s))
+		{
+			url_s = ConcatenateStrings (url_prefix_s, id_s);
+		}
+	else
+		{
+			url_s = ConcatenateVarargsStrings (url_prefix_s, sep_s, id_s, NULL);
+		}
+
+	if (url_s)
+		{
+			if (SetServiceJobURL (job_p, url_s))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to set service job url to %s", url_s);
+				}
+
+			FreeCopiedString (url_s);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to make service job url for \"%s\" and \"%s\"", url_prefix_s, id_s);
+		}
+
+	return success_flag;
+}
+

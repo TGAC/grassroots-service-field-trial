@@ -110,6 +110,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetBackupFilename (const char *id_s, const F
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFieldTrialServiceJobURL (ServiceJob *job_p, const char * const url_prefix_s, const char * const id_s);
 
 
 #ifdef __cplusplus

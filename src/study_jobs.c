@@ -1346,7 +1346,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 																													if (AddTreatmentFactorsToStudy (study_p, treatment_names_p, treatment_levels_p, num_treatment_levels, job_p, data_p))
 																														{
-																															status = SaveStudy (study_p, job_p, data_p);
+																															status = SaveStudy (study_p, job_p, data_p, NULL);
 
 																															if (status == OS_FAILED)
 																																{
@@ -1805,7 +1805,7 @@ OperationStatus GenerateStatisticsForStudy (Study *study_p, ServiceJob *job_p,  
 						{
 							OperationStatus old_status = job_p -> sj_status;
 
-							status = SaveStudy (study_p, job_p, data_p);
+							status = SaveStudy (study_p, job_p, data_p, NULL);
 
 							if (status != OS_SUCCEEDED)
 								{

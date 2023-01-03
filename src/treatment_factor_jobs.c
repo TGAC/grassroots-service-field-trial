@@ -276,7 +276,7 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 													if (AddTreatmentFactorToStudy (tf_url_s, factors_json_p, study_p, data_p))
 														{
-															if (SaveStudy (study_p, job_p, data_p))
+															if (SaveStudy (study_p, job_p, data_p, NULL))
 																{
 																	status = OS_SUCCEEDED;
 																}

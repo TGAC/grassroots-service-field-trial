@@ -237,6 +237,10 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							data_p -> dftsd_fd_url_s = GetJSONString (service_config_p, "fd_url");
 
 							data_p -> dftsd_view_study_url_s = GetJSONString (service_config_p, "view_study_url");
+							data_p -> dftsd_view_trial_url_s = GetJSONString (service_config_p, "view_trial_url");
+							data_p -> dftsd_view_location_url_s = GetJSONString (service_config_p, "view_location_url");
+							data_p -> dftsd_view_programme_url_s = GetJSONString (service_config_p, "view_programme_url");
+							data_p -> dftsd_view_plots_url_s = GetJSONString (service_config_p, "view_plots_url");
 
 							data_p -> dftsd_latex_commmand_s = GetJSONString (service_config_p, "pdflatex_path");
 							if (! (data_p -> dftsd_latex_commmand_s))
