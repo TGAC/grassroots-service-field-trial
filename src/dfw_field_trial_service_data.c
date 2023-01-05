@@ -91,6 +91,10 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 			data_p -> dftsd_measured_variables_cache_p = NULL;
 
 			data_p -> dftsd_view_study_url_s = NULL;
+			data_p -> dftsd_view_trial_url_s = NULL;
+			data_p -> dftsd_view_plots_url_s = NULL;
+			data_p -> dftsd_view_location_url_s = NULL;
+			data_p -> dftsd_view_programme_url_s = NULL;
 
 			data_p -> dftsd_latex_commmand_s = NULL;
 
