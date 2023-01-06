@@ -224,6 +224,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus DeleteStudyById (const char *id_s,
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus DeleteStudyFromLuceneIndexById (const char *id_s, uuid_t uuid, FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RemoveStudyPhenotypesFromStudyById (const char *id_s, FieldTrialServiceData *data_p);
+
 #ifdef __cplusplus
 }
 #endif

@@ -60,7 +60,6 @@
 #include "phenotype_statistics.h"
 
 
-
 typedef struct
 {
 	Study *spd_study_p;
@@ -3785,7 +3784,72 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 	OperationStatus status = OS_FAILED;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
-	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+	OperationStatus phenotypes_status = RemoveStudyPhenotypesFromStudyById (id_s, data_p);
+
+	if (phenotypes_status == OS_SUCCEEDED)
+		{
+			if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
+				{
+					bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
+					if (id_p)
+						{
+							bson_t *query_p = bson_new ();
+
+							if (query_p)
+								{
+									if (BSON_APPEND_OID (query_p, PL_PARENT_STUDY_S, id_p))
+										{
+											if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
+												{
+													status = OS_SUCCEEDED;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RemoveMongoDocumentsByBSON () failed for \"%s\"", id_s);
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "BSON_APPEND_OID () failed for \"%s\"", id_s);
+										}
+
+									bson_free (query_p);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "bson_new () failed");
+								}
+
+							FreeBSONOid (id_p);
+						}		/* if (id_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetBSONOidFromString () failed for \"%s\"", id_s);
+						}
+
+				}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_PLOT]);
+				}
+
+		}		/* if (phenotypes_status == OS_SUCCEEDED) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RemoveStudyPhenotypesFromStudyById () failed for \"%s\"", id_s);
+		}
+
+	return status;
+}
+
+
+OperationStatus RemoveStudyPhenotypesFromStudyById (const char *id_s, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
 			bson_oid_t *id_p = GetBSONOidFromString (id_s);
 
@@ -3795,23 +3859,40 @@ OperationStatus RemovePlotsForStudyById (const char *id_s, FieldTrialServiceData
 
 					if (query_p)
 						{
-							if (BSON_APPEND_OID (query_p, PL_PARENT_STUDY_S, id_p))
+							if (BSON_APPEND_OID (query_p, ST_ID_S, id_p))
 								{
-									if (RemoveMongoDocumentsByBSON (tool_p, query_p, false))
-										{
-											status = OS_SUCCEEDED;
-										}
+									bson_t *reply_p = NULL;
+									const char *fields_ss [] = { ST_PHENOTYPES_S, NULL };
 
+									if (RemoveMongoFields (tool_p, query_p, fields_ss, &reply_p))
+										{
+
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "BSON_APPEND_OID () failed for \"%s\"", id_s);
 								}
 
 							bson_free (query_p);
 						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "bson_new () failed");
+						}
 
 					FreeBSONOid (id_p);
 				}		/* if (id_p) */
-
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetBSONOidFromString () failed for \"%s\"", id_s);
+				}
 
 		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_PLOT])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set mongo collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_PLOT]);
+		}
 
 	return status;
 }

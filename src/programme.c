@@ -660,6 +660,7 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 				{
 					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME], selector_p, DFT_TIMESTAMP_S))
 						{
+							char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
 							json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_CLIENT_MINIMAL, data_p);
 
 							if (programme_indexing_p)
@@ -681,6 +682,24 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 										{
 
 										}
+								}
+
+							if (id_s)
+								{
+									/*
+									 * If we have the front-end web address to view the trial,
+									 * save it to the ServiceJob.
+									 */
+									if (data_p -> dftsd_view_programme_url_s)
+										{
+											SetFieldTrialServiceJobURL (job_p, data_p -> dftsd_view_programme_url_s, id_s);
+										}
+
+									FreeBSONOidString (id_s);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", trial_p -> ft_name_s);
 								}
 
 						}
