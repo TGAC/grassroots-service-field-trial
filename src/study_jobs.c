@@ -3859,7 +3859,7 @@ OperationStatus RemoveStudyPhenotypesFromStudyById (const char *id_s, FieldTrial
 
 					if (query_p)
 						{
-							if (BSON_APPEND_OID (query_p, ST_ID_S, id_p))
+							if (BSON_APPEND_OID (query_p, MONGO_ID_S, id_p))
 								{
 									bson_t *reply_p = NULL;
 									const char *fields_ss [] = { ST_PHENOTYPES_S, NULL };

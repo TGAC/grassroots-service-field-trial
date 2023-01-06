@@ -56,9 +56,6 @@
 
 #endif 		/* #ifndef DOXYGEN_SHOULD_SKIP_THIS */
 
-
-STUDY_PREFIX const char *ST_ID_S STUDY_VAL ("id");
-
 STUDY_PREFIX const char *ST_NAME_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 
 STUDY_PREFIX const char *ST_LOCATION_ID_S STUDY_VAL ("address_id");
