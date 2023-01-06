@@ -3866,7 +3866,7 @@ OperationStatus RemoveStudyPhenotypesFromStudyById (const char *id_s, FieldTrial
 
 									if (RemoveMongoFields (tool_p, query_p, fields_ss, &reply_p))
 										{
-
+											status = OS_SUCCEEDED;
 										}
 								}
 							else

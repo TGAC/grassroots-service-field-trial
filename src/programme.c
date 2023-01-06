@@ -699,7 +699,7 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", trial_p -> ft_name_s);
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", programme_p -> pr_name_s);
 								}
 
 						}
