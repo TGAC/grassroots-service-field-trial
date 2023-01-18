@@ -58,7 +58,6 @@ typedef struct StandardRow
 
 	bool sr_replicate_control_flag;
 
-
 } StandardRow;
 
 

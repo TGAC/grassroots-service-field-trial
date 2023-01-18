@@ -17,7 +17,6 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -28,58 +27,68 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared" >
+  <ImportGroup Label="Shared">
   </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\project.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies-dev.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\project.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies-dev.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\project.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies-dev.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\project.props" />
+    <Import Project="..\..\..\..\..\build-config\windows\dependencies-dev.props" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;WIN32;_DEBUG;DFW_FIELD_TRIAL_LIBRARY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(DIR_BSON_INC);$(DIR_JANSSON_INC);$(DIR_MONGODB_INC);$(DIR_GRASSROOTS_UTIL_INC);$(DIR_GRASSROOTS_LUCENE_INC);$(DIR_PCRE_INC);$(DIR_BSON_INC);..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,8 +101,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;WIN32;NDEBUG;DFW_FIELD_TRIAL_LIBRARY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(DIR_BSON_INC);$(DIR_JANSSON_INC);$(DIR_MONGODB_INC);$(DIR_GRASSROOTS_UTIL_INC);$(DIR_GRASSROOTS_LUCENE_INC);$(DIR_PCRE_INC);$(DIR_BSON_INC);..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,8 +116,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;_DEBUG;DFW_FIELD_TRIAL_LIBRARY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(DIR_BSON_INC);$(DIR_JANSSON_INC);$(DIR_MONGODB_INC);$(DIR_GRASSROOTS_UTIL_INC);$(DIR_GRASSROOTS_LUCENE_INC);$(DIR_PCRE_INC);$(DIR_BSON_INC);..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,8 +131,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;NDEBUG;DFW_FIELD_TRIAL_LIBRARY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);SHARED_LIBRARY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\..\include;$(DIR_BSON_INC);$(DIR_JANSSON_INC);$(DIR_MONGODB_INC);$(DIR_PCRE_INC);$(DIR_GRASSROOTS_UTIL_INC);$(DIR_GRASSROOTS_LUCENE_INC);$(DIR_GRASSROOTS_SERVICES_INC);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,8 +142,149 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-
-  <ItemGroup></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\blank_row.c" />
+    <ClCompile Include="..\..\..\src\crop.c" />
+    <ClCompile Include="..\..\..\src\crop_jobs.c" />
+    <ClCompile Include="..\..\..\src\crop_ontology_tool.c" />
+    <ClCompile Include="..\..\..\src\dfw_field_trial_service.c" />
+    <ClCompile Include="..\..\..\src\dfw_field_trial_service_data.c" />
+    <ClCompile Include="..\..\..\src\dfw_util.c" />
+    <ClCompile Include="..\..\..\src\discard_row.c" />
+    <ClCompile Include="..\..\..\src\field_trial.c" />
+    <ClCompile Include="..\..\..\src\field_trial_jobs.c" />
+    <ClCompile Include="..\..\..\src\field_trial_mongodb.c" />
+    <ClCompile Include="..\..\..\src\gene_bank.c" />
+    <ClCompile Include="..\..\..\src\gene_bank_jobs.c" />
+    <ClCompile Include="..\..\..\src\handbook_generator.c" />
+    <ClCompile Include="..\..\..\src\image_util.c" />
+    <ClCompile Include="..\..\..\src\importer.c" />
+    <ClCompile Include="..\..\..\src\indexing.c" />
+    <ClCompile Include="..\..\..\src\instrument.c" />
+    <ClCompile Include="..\..\..\src\integer_observation.c" />
+    <ClCompile Include="..\..\..\src\json_processor.c" />
+    <ClCompile Include="..\..\..\src\location.c" />
+    <ClCompile Include="..\..\..\src\location_jobs.c" />
+    <ClCompile Include="..\..\..\src\material.c" />
+    <ClCompile Include="..\..\..\src\material_jobs.c" />
+    <ClCompile Include="..\..\..\src\measured_variable.c" />
+    <ClCompile Include="..\..\..\src\measured_variable_jobs.c" />
+    <ClCompile Include="..\..\..\src\merge_plot_row_collections.c" />
+    <ClCompile Include="..\..\..\src\mongo_scale_class_processor.c" />
+    <ClCompile Include="..\..\..\src\nominal_scale_class.c" />
+    <ClCompile Include="..\..\..\src\numeric_observation.c" />
+    <ClCompile Include="..\..\..\src\observation.c" />
+    <ClCompile Include="..\..\..\src\person.c" />
+    <ClCompile Include="..\..\..\src\phenotype_jobs.c" />
+    <ClCompile Include="..\..\..\src\phenotype_statistics.c" />
+    <ClCompile Include="..\..\..\src\plot.c" />
+    <ClCompile Include="..\..\..\src\plots_cache.c" />
+    <ClCompile Include="..\..\..\src\plot_jobs.c" />
+    <ClCompile Include="..\..\..\src\programme.c" />
+    <ClCompile Include="..\..\..\src\programme_jobs.c" />
+    <ClCompile Include="..\..\..\src\row.c" />
+    <ClCompile Include="..\..\..\src\row_jobs.c" />
+    <ClCompile Include="..\..\..\src\row_processor.c" />
+    <ClCompile Include="..\..\..\src\search_service.c" />
+    <ClCompile Include="..\..\..\src\standard_row.c" />
+    <ClCompile Include="..\..\..\src\string_observation.c" />
+    <ClCompile Include="..\..\..\src\study.c" />
+    <ClCompile Include="..\..\..\src\study_germplasms.c" />
+    <ClCompile Include="..\..\..\src\study_jobs.c" />
+    <ClCompile Include="..\..\..\src\study_manager.c" />
+    <ClCompile Include="..\..\..\src\submit_crop.c" />
+    <ClCompile Include="..\..\..\src\submit_drilling.c" />
+    <ClCompile Include="..\..\..\src\submit_field_trial.c" />
+    <ClCompile Include="..\..\..\src\submit_gene_bank.c" />
+    <ClCompile Include="..\..\..\src\submit_location.c" />
+    <ClCompile Include="..\..\..\src\submit_material.c" />
+    <ClCompile Include="..\..\..\src\submit_measured_variables.c" />
+    <ClCompile Include="..\..\..\src\submit_plots.c" />
+    <ClCompile Include="..\..\..\src\submit_program.c" />
+    <ClCompile Include="..\..\..\src\submit_study.c" />
+    <ClCompile Include="..\..\..\src\submit_treatment.c" />
+    <ClCompile Include="..\..\..\src\submit_treatment_factor.c" />
+    <ClCompile Include="..\..\..\src\time_observation.c" />
+    <ClCompile Include="..\..\..\src\treatment.c" />
+    <ClCompile Include="..\..\..\src\treatment_factor.c" />
+    <ClCompile Include="..\..\..\src\treatment_factor_jobs.c" />
+    <ClCompile Include="..\..\..\src\treatment_factor_value.c" />
+    <ClCompile Include="..\..\..\src\treatment_jobs.c" />
+    <ClCompile Include="..\..\..\src\treatment_sanitiser.c" />
+    <ClCompile Include="..\..\..\src\url_setter.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\include\blank_row.h" />
+    <ClInclude Include="..\..\..\..\include\crop.h" />
+    <ClInclude Include="..\..\..\..\include\crop_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\crop_ontology_tool.h" />
+    <ClInclude Include="..\..\..\..\include\design.h" />
+    <ClInclude Include="..\..\..\..\include\dfw_field_trial_service.h" />
+    <ClInclude Include="..\..\..\..\include\dfw_field_trial_service_data.h" />
+    <ClInclude Include="..\..\..\..\include\dfw_field_trial_service_library.h" />
+    <ClInclude Include="..\..\..\..\include\dfw_util.h" />
+    <ClInclude Include="..\..\..\..\include\discard_row.h" />
+    <ClInclude Include="..\..\..\..\include\experimental_area_phenotype.h" />
+    <ClInclude Include="..\..\..\..\include\field.h" />
+    <ClInclude Include="..\..\..\..\include\field_trial.h" />
+    <ClInclude Include="..\..\..\..\include\field_trial_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\field_trial_mongodb.h" />
+    <ClInclude Include="..\..\..\..\include\field_trial_sqlite.h" />
+    <ClInclude Include="..\..\..\..\include\gene_bank.h" />
+    <ClInclude Include="..\..\..\..\include\gene_bank_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\handbook_generator.h" />
+    <ClInclude Include="..\..\..\..\include\highlighter.h" />
+    <ClInclude Include="..\..\..\..\include\image_util.h" />
+    <ClInclude Include="..\..\..\..\include\indexing.h" />
+    <ClInclude Include="..\..\..\..\include\instrument.h" />
+    <ClInclude Include="..\..\..\..\include\integer_observation.h" />
+    <ClInclude Include="..\..\..\..\include\json_processor.h" />
+    <ClInclude Include="..\..\..\..\include\location.h" />
+    <ClInclude Include="..\..\..\..\include\location_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\material.h" />
+    <ClInclude Include="..\..\..\..\include\material_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\measured_variable.h" />
+    <ClInclude Include="..\..\..\..\include\measured_variable_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\nominal_scale_class.h" />
+    <ClInclude Include="..\..\..\..\include\numeric_observation.h" />
+    <ClInclude Include="..\..\..\..\include\observation.h" />
+    <ClInclude Include="..\..\..\..\include\person.h" />
+    <ClInclude Include="..\..\..\..\include\phenotype_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\phenotype_statistics.h" />
+    <ClInclude Include="..\..\..\..\include\plot.h" />
+    <ClInclude Include="..\..\..\..\include\plots_cache.h" />
+    <ClInclude Include="..\..\..\..\include\plot_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\programme.h" />
+    <ClInclude Include="..\..\..\..\include\programme_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\row.h" />
+    <ClInclude Include="..\..\..\..\include\row_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\row_phenotype.h" />
+    <ClInclude Include="..\..\..\..\include\row_processor.h" />
+    <ClInclude Include="..\..\..\..\include\search_service.h" />
+    <ClInclude Include="..\..\..\..\include\standard_row.h" />
+    <ClInclude Include="..\..\..\..\include\string_observation.h" />
+    <ClInclude Include="..\..\..\..\include\study.h" />
+    <ClInclude Include="..\..\..\..\include\study_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\study_manager.h" />
+    <ClInclude Include="..\..\..\..\include\submit_crop.h" />
+    <ClInclude Include="..\..\..\..\include\submit_drilling.h" />
+    <ClInclude Include="..\..\..\..\include\submit_field_trial.h" />
+    <ClInclude Include="..\..\..\..\include\submit_gene_bank.h" />
+    <ClInclude Include="..\..\..\..\include\submit_location.h" />
+    <ClInclude Include="..\..\..\..\include\submit_material.h" />
+    <ClInclude Include="..\..\..\..\include\submit_measured_variables.h" />
+    <ClInclude Include="..\..\..\..\include\submit_plots.h" />
+    <ClInclude Include="..\..\..\..\include\submit_program.h" />
+    <ClInclude Include="..\..\..\..\include\submit_study.h" />
+    <ClInclude Include="..\..\..\..\include\submit_treatment.h" />
+    <ClInclude Include="..\..\..\..\include\submit_treatment_factor.h" />
+    <ClInclude Include="..\..\..\..\include\time_observation.h" />
+    <ClInclude Include="..\..\..\..\include\treatment.h" />
+    <ClInclude Include="..\..\..\..\include\treatment_factor.h" />
+    <ClInclude Include="..\..\..\..\include\treatment_factor_jobs.h" />
+    <ClInclude Include="..\..\..\..\include\treatment_factor_value.h" />
+    <ClInclude Include="..\..\..\..\include\treatment_jobs.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

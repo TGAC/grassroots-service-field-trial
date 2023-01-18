@@ -85,6 +85,28 @@ typedef struct MaterialStudyDetails
 
 	bool ma_cleaned_flag;
 
+	/**
+	 * Optional full name of a toolkit line.
+	 */
+	char *ma_primary_name_s;
+
+
+	/**
+   * Optional simpler code for a toolkit line
+   */
+  char *ma_secondary_name_s;
+
+	/**
+	 * Optional Breeders Toolkit Number if the line is selected for the toolkit
+ 	 */
+	char *ma_tertiary_name_s;
+
+	/**
+	 * Store code from the GRU
+	 */
+	char *ma_store_code_s;
+
+
 }  MaterialStudyDetails;
 
 
@@ -157,6 +179,10 @@ MATERIAL_PREFIX const char *MA_IN_GRU_S MATERIAL_VAL ("in_gru");
 MATERIAL_PREFIX const char *MA_TGW_S MATERIAL_VAL ("tgw");
 MATERIAL_PREFIX const char *MA_SEED_TREATMENT_S MATERIAL_VAL ("seed_treatment");
 
+MATERIAL_PREFIX const char *MA_PRIMARY_NAME_S MATERIAL_VAL("primary_name");
+MATERIAL_PREFIX const char *MA_SECONDARY_NAME_S MATERIAL_VAL("secondary_name");
+MATERIAL_PREFIX const char *MA_TERTIARY_NAME_S MATERIAL_VAL("tertiary_name");
+MATERIAL_PREFIX const char *MA_STODE_CODE_S MATERIAL_VAL("store_code");
 
 MATERIAL_PREFIX const char *MA_CLEANED_NAME_S MATERIAL_VAL ("cleaned");
 

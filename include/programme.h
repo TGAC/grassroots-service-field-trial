@@ -85,9 +85,20 @@ typedef struct Programme
 
 
 	/**
-	 * Web address of on optional logo
+	 * Web address of on optional logo.
 	 */
 	char *pr_logo_url_s;
+
+
+	/**
+	 *  The name of the funding organisation.
+	 */
+	char *pr_funding_organistaion_s;
+
+	/**
+	 *  The programme's pproject or grant code.
+	 */
+	char *pr_project_code_s;
 
 } Programme;
 
@@ -135,6 +146,10 @@ PROGRAMME_PREFIX const char *PR_LOGO_S PROGRAMME_CONCAT_VAL (CONTEXT_PREFIX_SCHE
 
 
 PROGRAMME_PREFIX const char *PR_FD_NAME_S PROGRAMME_VAL ("name");
+
+PROGRAMME_PREFIX const char *PR_FUNDERS_S PROGRAMME_VAL("funders");
+
+PROGRAMME_PREFIX const char *PR_CODE_S PROGRAMME_VAL("code");
 
 
 #ifdef __cplusplus
