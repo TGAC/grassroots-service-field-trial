@@ -811,3 +811,13 @@ static json_t *HighlightRowsWithMaterial (struct JSONProcessor *processor_p, str
 }
 
 
+Material *GetOrCreateMaterial (const json_t *plot_data_p, GeneBank *gene_bank_p, const FieldTrialServiceData *data_p)
+{
+	Material *material_p = NULL;
+
+	return material_p;
+}
+
+
+
+

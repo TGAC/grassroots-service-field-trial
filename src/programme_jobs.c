@@ -37,7 +37,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss);
+static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss, char **funder_ss, char **project_code_ss);
 
 
 bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
@@ -68,13 +68,15 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 	char *pi_name_s = NULL;
 	char *pi_email_s = NULL;
 	char *logo_s = NULL;
+	char *funder_s = NULL;
+	char *project_code_s = NULL;
 	Crop *crop_p = NULL;
 	Programme *active_program_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, dfw_data_p);
 	bool defaults_flag = false;
 
 	if (active_program_p)
 		{
-			if (SetUpDefaultsFromExistingProgramme (active_program_p, &id_s,  &name_s, &abbreviation_s, &crop_p, &documentation_url_s, &objective_s, &pi_name_s, &pi_email_s, &logo_s))
+			if (SetUpDefaultsFromExistingProgramme (active_program_p, &id_s,  &name_s, &abbreviation_s, &crop_p, &documentation_url_s, &objective_s, &pi_name_s, &pi_email_s, &logo_s, &funder_s, &project_code_s))
 				{
 					defaults_flag = true;
 				}
@@ -113,7 +115,7 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 														{
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_OBJECTIVE.npt_type, PROGRAMME_OBJECTIVE.npt_name_s, "Objective", "The Programme's objective", objective_s, PL_ALL)) != NULL)
 																{
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_URL.npt_type, PROGRAMME_URL.npt_name_s, "Web address", "The web page documenting this Programme", documentation_url_s, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_URL.npt_type, PROGRAMME_URL.npt_name_s, "Web Address", "The web page documenting this Programme", documentation_url_s, PL_ALL)) != NULL)
 																		{
 																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_PI_NAME.npt_type, PROGRAMME_PI_NAME.npt_name_s, "Principal Investigator Name", "The name of the Programme's lead", pi_name_s, PL_ALL)) != NULL)
 																				{
@@ -126,7 +128,24 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 
 																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_LOGO.npt_type, PROGRAMME_LOGO.npt_name_s, "Logo", "The web address of the programme logo", logo_s, PL_ALL)) != NULL)
 																								{
-																									success_flag = true;
+
+																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_FUNDER.npt_type, PROGRAMME_FUNDER.npt_name_s, "Funder", "The Programme's funding organization", funder_s, PL_ALL)) != NULL)
+																										{
+																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, PROGRAMME_CODE.npt_type, PROGRAMME_CODE.npt_name_s, "Project Code", "The Programme's project code", project_code_s, PL_ALL)) != NULL)
+																												{
+																													success_flag = true;
+																												}
+																											else
+																												{
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_CODE.npt_name_s);
+																												}
+
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_FUNDER.npt_name_s);
+																										}
+
 																								}
 																							else
 																								{
@@ -464,6 +483,8 @@ bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_nam
 			PROGRAMME_PI_EMAIL,
 			PROGRAMME_URL,
 			PROGRAMME_LOGO,
+			PROGRAMME_CODE,
+			PROGRAMME_FUNDER,
 			NULL
 		};
 
@@ -782,6 +803,8 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 									const char *url_s = NULL;
 									const char *objective_s = NULL;
 									const char *logo_s = NULL;
+									const char *funders_s = NULL;
+									const char *project_code_s = NULL;
 									Crop *crop_p = NULL;
 
 									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
@@ -789,10 +812,12 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_URL.npt_name_s, &url_s);
 									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_OBJECTIVE.npt_name_s, &objective_s);
 									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_LOGO.npt_name_s, &logo_s);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_FUNDER.npt_name_s, &funders_s);
+									GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CODE.npt_name_s, &project_code_s);
 
 									crop_p = GetCropByIdString (crop_id_s, data_p);
 
-									programme_p = AllocateProgramme (programme_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s);
+									programme_p = AllocateProgramme (programme_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s);
 
 									if (programme_p)
 										{
@@ -870,7 +895,7 @@ bool AddProgrammeToServiceJob (ServiceJob *job_p, Programme *program_p, const Vi
 
 
 
-static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss)
+static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss, char **funder_ss, char **project_code_ss)
 {
 	char *program_id_s = GetBSONOidAsString (programme_p -> pr_id_p);
 
@@ -883,6 +908,8 @@ static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, ch
 			*documentation_url_ss = programme_p -> pr_documentation_url_s;
 			*objective_ss = programme_p -> pr_objective_s;
 			*logo_ss = programme_p -> pr_logo_url_s;
+			*funder_ss = programme_p -> pr_funding_organisation_s;
+			*project_code_ss = programme_p -> pr_project_code_s;
 
 			if (programme_p -> pr_pi_p)
 				{
