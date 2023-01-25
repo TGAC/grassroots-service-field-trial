@@ -1023,70 +1023,62 @@ static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_
 
 					if (material_p)
 						{
-							int32 rack_plotwise_index = -1;
+							int32 rack_plotwise_index = 1;
+							bool control_rep_flag = false;
+							int32 replicate = 1;
+							bool success_flag = true;
+							const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
 
-							if (GetJSONStringAsInteger (table_row_json_p, PL_RACK_TITLE_S, &rack_plotwise_index))
+							GetJSONStringAsInteger (table_row_json_p, PL_RACK_TITLE_S, &rack_plotwise_index);
+
+
+							if (!IsStringEmpty (rep_s))
 								{
-									bool control_rep_flag = false;
-									int32 replicate = 1;
-									bool success_flag = true;
-									const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
-
-									if (!IsStringEmpty (rep_s))
+									if (Stricmp (rep_s, SR_REPLICATE_CONTROL_S) == 0)
 										{
-											if (Stricmp (rep_s, SR_REPLICATE_CONTROL_S) == 0)
-												{
-													control_rep_flag = true;
-												}
-											else
-												{
-													if (!GetValidInteger (&rep_s, &replicate))
-														{
-															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
-														}
-
-												}
-
-										}		/* if (!IsStringEmpty (rep_s)) */
-
-									if (success_flag)
+											control_rep_flag = true;
+										}
+									else
 										{
-											const MEM_FLAG material_mem = MF_SHALLOW_COPY;
-											sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
-
-											if (sr_p)
+											if (!GetValidInteger (&rep_s, &replicate))
 												{
-													OperationStatus s = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
-
-													if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
-														{
-
-														}
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "ProcessStandardRow () failed");
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to process row", row_index, NULL);
-
-															FreeRow (& (sr_p -> sr_base));
-															sr_p = NULL;
-														}
-
-												}
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AllocateStandardRow () failed");
+													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
 												}
 
 										}
 
+								}		/* if (!IsStringEmpty (rep_s)) */
 
-								}		/* if (GetJSONStringAsInteger (table_row_json_p, S_RACK_TITLE_S, &rack_plotwise_index)) */
-							else
+							if (success_flag)
 								{
-									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Value not set", row_index, PL_RACK_TITLE_S);
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_RACK_TITLE_S);
+									const MEM_FLAG material_mem = MF_SHALLOW_COPY;
+									sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
+
+									if (sr_p)
+										{
+											OperationStatus s = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
+
+											if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+												{
+
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "ProcessStandardRow () failed");
+													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to process row", row_index, NULL);
+
+													FreeRow (& (sr_p -> sr_base));
+													sr_p = NULL;
+												}
+
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AllocateStandardRow () failed");
+										}
+
 								}
 
 						}
