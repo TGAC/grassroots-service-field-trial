@@ -123,7 +123,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
@@ -162,7 +162,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const KeyValuePair *GetAspect (const char *aspect_
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSONInViewFormat (FieldTrialServiceData *data_p, const ViewFormat format);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyFromResource (DataResource *resource_p, const NamedParameterType study_param_type, FieldTrialServiceData *dfw_data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);

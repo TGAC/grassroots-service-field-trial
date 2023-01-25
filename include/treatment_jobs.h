@@ -33,7 +33,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionTreatmentParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);

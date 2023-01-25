@@ -44,7 +44,7 @@ static const char *GetMeasuredVariableSubmissionServiceAlias (const Service *ser
 
 static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -151,7 +151,7 @@ static bool GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters
 
 
 
-static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 

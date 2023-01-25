@@ -184,7 +184,7 @@ static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_
  * API definitions
  */
 
-bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;

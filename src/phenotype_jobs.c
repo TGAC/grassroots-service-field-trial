@@ -49,7 +49,7 @@ static bool AddPhenotypesFromJSON (ServiceJob *job_p, const json_t *phenotypes_j
  * API definitions
  */
 
-bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;

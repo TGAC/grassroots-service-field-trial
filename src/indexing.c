@@ -130,7 +130,7 @@ static const char *GetFieldTrialIndexingServiceInformationUri (const Service *se
 
 static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
@@ -140,7 +140,7 @@ static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTr
 static bool RunCaching (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
-static ParameterSet *IsResourceForFieldTrialIndexingService (Service *service_p, Resource *resource_p, Handler *handler_p);
+static ParameterSet *IsResourceForFieldTrialIndexingService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
 static ServiceMetadata *GetFieldTrialIndexingServiceMetadata (Service *service_p);
 
@@ -679,7 +679,7 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 
 							if (status != OS_FAILED)
 								{
-									dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, "Cached Files", files_array_p);
+									dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, "Cached Files", files_array_p);
 
 									if (dest_record_p)
 										{
@@ -1515,7 +1515,7 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 }
 
 
-static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial indexing service parameters", "The parameters used for the Field Trial indexing service");
 
@@ -1592,7 +1592,7 @@ static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p,
 }
 
 
-static ParameterSet *IsResourceForFieldTrialIndexingService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
+static ParameterSet *IsResourceForFieldTrialIndexingService (Service * UNUSED_PARAM (service_p), DataResource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
 }

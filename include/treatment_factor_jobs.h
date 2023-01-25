@@ -68,7 +68,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const struct Study *active_study_p, const TreatmentFactor *active_tf_p, const bool empty_option_flag);

@@ -84,7 +84,7 @@ static const char *GetDFWFieldTrialSearchServiceAlias (const Service *service_p)
 
 static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -93,7 +93,7 @@ static void ReleaseDFWFieldTrialSearchServiceParameters (Service *service_p, Par
 
 static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
-static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service *service_p, Resource *resource_p, Handler *handler_p);
+static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
 static bool CloseDFWFieldTrialSearchService (Service *service_p);
 
@@ -267,7 +267,7 @@ static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p,
 
 
 
-static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial search service parameters", "The parameters used for the DFWFieldTrial search service");
 
@@ -736,7 +736,7 @@ static ServiceMetadata *GetDFWFieldTrialSearchServiceMetadata (Service * UNUSED_
 }
 
 
-static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
+static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service * UNUSED_PARAM (service_p), DataResource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
 }

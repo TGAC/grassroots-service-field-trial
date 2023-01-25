@@ -44,7 +44,7 @@ static bool AddStringArraysToJSON (json_t *treatment_factor_json_p, const char *
 
 
 
-bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p;

@@ -56,7 +56,7 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 
 
 
-bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
@@ -772,7 +772,7 @@ static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *tria
 				{
 					if (AddContext (trial_json_p))
 						{
-							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
+							json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, trial_json_p);
 
 							if (dest_record_p)
 								{
@@ -1027,7 +1027,7 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 
 
 
-FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p)
+FieldTrial *GetFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	FieldTrial *trial_p = NULL;
 

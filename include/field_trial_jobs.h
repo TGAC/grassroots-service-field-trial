@@ -61,7 +61,7 @@ extern "C"
 {
 #endif
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
@@ -93,7 +93,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJob (ServiceJob *job_p,
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialJSONForId (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromResource (Resource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, const FieldTrialServiceData *data_p);

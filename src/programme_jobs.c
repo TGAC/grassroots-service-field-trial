@@ -40,7 +40,7 @@ static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *progra
 static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, char **pi_name_ss, char **pi_email_ss, char **logo_ss, char **funder_ss, char **project_code_ss);
 
 
-bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -55,7 +55,7 @@ bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, R
 }
 
 
-bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
@@ -363,7 +363,7 @@ bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 											if (programme_json_p)
 												{
-													json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, programme_p -> pr_name_s, programme_json_p);
+													json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, programme_p -> pr_name_s, programme_json_p);
 
 													if (job_result_p)
 														{
@@ -422,7 +422,7 @@ bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 							if (programme_json_p)
 								{
-									json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, programme_p -> pr_name_s, programme_json_p);
+									json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, programme_p -> pr_name_s, programme_json_p);
 
 									if (job_result_p)
 										{
@@ -934,7 +934,7 @@ static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *progra
 {
 	bool success_flag = false;
 
-	json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, program_p -> pr_name_s, program_json_p);
+	json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, program_p -> pr_name_s, program_json_p);
 
 	if (dest_record_p)
 		{
@@ -1043,7 +1043,7 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 
 
 
-Programme *GetProgrammeFromResource (Resource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p)
+Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	Programme *program_p = NULL;
 

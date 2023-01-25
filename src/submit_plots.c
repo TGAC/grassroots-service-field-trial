@@ -42,7 +42,7 @@ static const char *GetPlotsSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetPlotsSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -150,7 +150,7 @@ static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (const Ser
 
 
 
-static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Plot submission service parameters", "The parameters used for the Plot submission service");
 

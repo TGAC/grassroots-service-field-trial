@@ -41,7 +41,7 @@ static const char *GetProgrammeSubmissionServiceAlias (const Service *service_p)
 
 static const char *GetProgrammeSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -49,7 +49,7 @@ static void ReleaseProgrammeSubmissionServiceParameters (Service *service_p, Par
 
 static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
-static ParameterSet *IsResourceForProgrammeSubmissionService (Service *service_p, Resource *resource_p, Handler *handler_p);
+static ParameterSet *IsResourceForProgrammeSubmissionService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
 static bool CloseProgrammeSubmissionService (Service *service_p);
 
@@ -146,7 +146,7 @@ static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const
 
 
 
-static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Programme submission service parameters", "The parameters used for the Programme submission service");
 
@@ -402,7 +402,7 @@ static ServiceMetadata *GetProgrammeSubmissionServiceMetadata (Service *service_
 
 
 
-static ParameterSet *IsResourceForProgrammeSubmissionService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
+static ParameterSet *IsResourceForProgrammeSubmissionService (Service * UNUSED_PARAM (service_p), DataResource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
 }

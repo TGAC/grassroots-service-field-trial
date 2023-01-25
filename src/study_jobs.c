@@ -192,7 +192,7 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
  */
 
 
-bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Resource *resource_p)
+bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, DataResource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -1491,7 +1491,7 @@ bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat f
 				{
 					if (AddContext (study_json_p))
 						{
-							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, study_json_p);
+							json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, study_json_p);
 
 							if (dest_record_p)
 								{
@@ -3335,7 +3335,7 @@ void FindAndAddStudyToServiceJob (const char *id_s, const ViewFormat format, Ser
 
 	if (study_json_p)
 		{
-			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_name_s, study_json_p);
+			json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_name_s, study_json_p);
 
 			if (dest_record_p)
 				{
@@ -3417,7 +3417,7 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 
 													if (AddContext (study_json_p))
 														{
-															json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
+															json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
 
 															if (dest_record_p)
 																{
@@ -3729,7 +3729,7 @@ static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceDa
 }
 
 
-Study *GetStudyFromResource (Resource *resource_p, const NamedParameterType study_param_type, FieldTrialServiceData *dfw_data_p)
+Study *GetStudyFromResource (DataResource *resource_p, const NamedParameterType study_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	Study *study_p = NULL;
 

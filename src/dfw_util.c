@@ -51,7 +51,7 @@ bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, Se
 
 	if (json_p)
 		{
-			json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, name_s, json_p);
+			json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, name_s, json_p);
 
 			if (dest_record_p)
 				{

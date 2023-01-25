@@ -22,7 +22,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionPhenotypeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionPhenotypesParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);

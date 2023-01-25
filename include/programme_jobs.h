@@ -71,10 +71,10 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Programme *active_program_p, const bool empty_option_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
@@ -95,7 +95,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchProgrammeParams (FieldTrialServic
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammeToServiceJob (ServiceJob *job_p, Programme *program_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeFromResource (Resource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeIndexingData (Service *service_p);

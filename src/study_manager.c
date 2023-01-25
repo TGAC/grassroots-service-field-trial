@@ -87,7 +87,7 @@ static const char *GetStudyManagerServiceAlias (const Service *service_p);
 
 static const char *GetStudyManagerServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetStudyManagerServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -211,7 +211,7 @@ static bool GetStudyManagerServiceParameterTypesForNamedParameters (const struct
 }
 
 
-static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Study manager service parameters", "The parameters used for the FieldTrial submission service");
 

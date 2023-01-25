@@ -39,7 +39,7 @@ static const char *GetDrillingSubmissionServiceDescription (Service *service_p);
 
 static const char *GetDrillingSubmissionServiceInformationUri (Service *service_p);
 
-static ParameterSet *GetDrillingSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetDrillingSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetDrillingSubmissionServiceParameterTypesForNamedParameters (struct Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -135,7 +135,7 @@ static bool GetDrillingSubmissionServiceParameterTypesForNamedParameters (struct
 
 
 
-static ParameterSet *GetDrillingSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetDrillingSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial Drilling submission service parameters", "The parameters used for the Field Trial Drilling submission service");
 

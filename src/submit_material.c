@@ -43,7 +43,7 @@ static const char *GetMaterialSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetMaterialSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetMaterialSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetMaterialSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetMaterialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -143,7 +143,7 @@ static bool GetMaterialSubmissionServiceParameterTypesForNamedParameters (const 
 
 
 
-static ParameterSet *GetMaterialSubmissionServiceParameters (Service *service_p, Resource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetMaterialSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 

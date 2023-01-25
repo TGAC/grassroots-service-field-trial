@@ -274,7 +274,7 @@ Treatment *GetTreatmentByURL (const char *term_url_s, const ViewFormat format, c
 
 
 
-bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionTreatmentParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	bool success_flag = false;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatments", false, data_p, param_set_p);
@@ -361,7 +361,7 @@ static bool AddTreatmentToServiceJobResult (ServiceJob *job_p, Treatment *treatm
 {
 	bool success_flag = false;
 
-	json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, treatment_p -> tr_ontology_term_p -> st_name_s, treatment_json_p);
+	json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, treatment_p -> tr_ontology_term_p -> st_name_s, treatment_json_p);
 
 	if (dest_record_p)
 		{

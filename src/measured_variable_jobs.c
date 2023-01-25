@@ -508,7 +508,7 @@ bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treat
 				{
 					if (AddContext (treatment_json_p))
 						{
-							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, treatment_json_p);
+							json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, treatment_json_p);
 
 							if (dest_record_p)
 								{

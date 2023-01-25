@@ -28,7 +28,7 @@ static const char *GetTreatmentSubmissionServiceAlias (const Service *service_p)
 
 static const char *GetTreatmentSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails *user_p);
+static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
 
 static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
@@ -36,7 +36,7 @@ static void ReleaseTreatmentSubmissionServiceParameters (Service *service_p, Par
 
 static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
 
-static ParameterSet *IsResourceForTreatmentSubmissionService (Service *service_p, Resource *resource_p, Handler *handler_p);
+static ParameterSet *IsResourceForTreatmentSubmissionService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
 static bool CloseTreatmentSubmissionService (Service *service_p);
 
@@ -133,7 +133,7 @@ static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const
 
 
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, Resource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Treatment submission service parameters", "The parameters used for the Treatment submission service");
 
@@ -389,7 +389,7 @@ static ServiceMetadata *GetTreatmentSubmissionServiceMetadata (Service *service_
 
 
 
-static ParameterSet *IsResourceForTreatmentSubmissionService (Service * UNUSED_PARAM (service_p), Resource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
+static ParameterSet *IsResourceForTreatmentSubmissionService (Service * UNUSED_PARAM (service_p), DataResource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
 }

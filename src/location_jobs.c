@@ -73,7 +73,7 @@ static Parameter *GetAndAddLocationTypeParameter (const char *active_loc_type_s,
 
 
 
-bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p, Resource *resource_p)
+bool AddSubmissionLocationParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
@@ -455,7 +455,7 @@ bool RunForSearchLocationParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 									if (location_p)
 										{
-											json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, location_p -> lo_address_p -> ad_name_s, db_result_p);
+											json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, location_p -> lo_address_p -> ad_name_s, db_result_p);
 
 											if (job_result_p)
 												{
@@ -526,7 +526,7 @@ bool RunForSearchLocationParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 									if (location_json_p)
 										{
-											json_t *job_result_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, location_p -> lo_address_p -> ad_name_s, location_json_p);
+											json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, location_p -> lo_address_p -> ad_name_s, location_json_p);
 
 											if (job_result_p)
 												{
@@ -947,7 +947,7 @@ bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const Vie
 				{
 					if (AddContext (location_json_p))
 						{
-							json_t *dest_record_p = GetResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, location_json_p);
+							json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, title_s, location_json_p);
 
 							if (dest_record_p)
 								{
@@ -975,7 +975,7 @@ bool AddLocationToServiceJob (ServiceJob *job_p, Location *location_p, const Vie
 }
 
 
-Location *GetLocationFromResource (Resource *resource_p, const NamedParameterType location_param_type, FieldTrialServiceData *dfw_data_p)
+Location *GetLocationFromResource (DataResource *resource_p, const NamedParameterType location_param_type, FieldTrialServiceData *dfw_data_p)
 {
 	Location *location_p = NULL;
 
