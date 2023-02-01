@@ -110,7 +110,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
 
 
 
@@ -128,7 +128,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsStandardRowGenotypeControl (const StandardR
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateStandardRow (StandardRow *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateStandardRow (StandardRow *row_p, const uint32 rack_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToStandardRow (StandardRow *row_p, TreatmentFactorValue *tf_value_p);

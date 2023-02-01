@@ -110,6 +110,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 											const uint32 *sowing_year_p, const uint32 *harvest_year_p,
 											const char *plan_changes_s, const char *physical_samples_collected_s, const char *data_not_included_s,
 											const char *photo_url_s, const char *image_collection_notes_s,
+											const char *gps_notes_s,
 											const FieldTrialServiceData *data_p)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
@@ -236,62 +237,75 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 
 																																																													if (CloneValidString (image_collection_notes_s, &copied_image_collection_notes_s))
 																																																														{
-																																																															Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																																																															char *copied_gps_notes_s = NULL;
 
-																																																															if (study_p)
+																																																															if (CloneValidString (gps_notes_s, &copied_gps_notes_s))
 																																																																{
-																																																																	study_p -> st_id_p = id_p;
-																																																																	study_p -> st_name_s = copied_name_s;
-																																																																	study_p -> st_data_url_s = copied_url_s;
-																																																																	study_p -> st_aspect_s = copied_aspect_s;
-																																																																	study_p -> st_slope_s = copied_slope_s;
-																																																																	study_p -> st_parent_p = parent_field_trial_p;
-																																																																	study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
-																																																																	study_p -> st_location_p = location_p;
-																																																																	study_p -> st_plots_p = plots_p;
-																																																																	study_p -> st_current_crop_p = current_crop_p;
-																																																																	study_p -> st_previous_crop_p = previous_crop_p;
-																																																																	study_p -> st_description_s = copied_description_s;
-																																																																	study_p -> st_growing_conditions_s = copied_growing_conditions_s;
-																																																																	study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
-																																																																	study_p -> st_design_s = copied_design_s;
+																																																																	Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-																																																																	study_p -> st_default_plot_width_p = copied_plot_width_p;
-																																																																	study_p -> st_default_plot_length_p = copied_plot_length_p;
-																																																																	study_p -> st_num_rows_p = copied_num_rows_p;
-																																																																	study_p -> st_num_columns_p = copied_num_cols_p;
-																																																																	study_p -> st_num_replicates_p = copied_num_replicates_p;
+																																																																	if (study_p)
+																																																																		{
+																																																																			study_p -> st_id_p = id_p;
+																																																																			study_p -> st_name_s = copied_name_s;
+																																																																			study_p -> st_data_url_s = copied_url_s;
+																																																																			study_p -> st_aspect_s = copied_aspect_s;
+																																																																			study_p -> st_slope_s = copied_slope_s;
+																																																																			study_p -> st_parent_p = parent_field_trial_p;
+																																																																			study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
+																																																																			study_p -> st_location_p = location_p;
+																																																																			study_p -> st_plots_p = plots_p;
+																																																																			study_p -> st_current_crop_p = current_crop_p;
+																																																																			study_p -> st_previous_crop_p = previous_crop_p;
+																																																																			study_p -> st_description_s = copied_description_s;
+																																																																			study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																																																																			study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																																																																			study_p -> st_design_s = copied_design_s;
 
-																																																																	study_p -> st_weather_link_s = copied_weather_s;
-																																																																	study_p -> st_shape_p = copied_shape_p;
+																																																																			study_p -> st_default_plot_width_p = copied_plot_width_p;
+																																																																			study_p -> st_default_plot_length_p = copied_plot_length_p;
+																																																																			study_p -> st_num_rows_p = copied_num_rows_p;
+																																																																			study_p -> st_num_columns_p = copied_num_cols_p;
+																																																																			study_p -> st_num_replicates_p = copied_num_replicates_p;
 
-																																																																	study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
-																																																																	study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
-																																																																	study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
-																																																																	study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
-																																																																	study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
-																																																																	study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
+																																																																			study_p -> st_weather_link_s = copied_weather_s;
+																																																																			study_p -> st_shape_p = copied_shape_p;
 
-																																																																	study_p -> st_treatments_p = treatments_p;
+																																																																			study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
+																																																																			study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
+																																																																			study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
+																																																																			study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
+																																																																			study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
+																																																																			study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
 
-																																																																	study_p -> st_curator_p = curator_p;
-																																																																	study_p -> st_contact_p = contact_p;
+																																																																			study_p -> st_treatments_p = treatments_p;
 
-																																																																	study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
-																																																																	study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
+																																																																			study_p -> st_curator_p = curator_p;
+																																																																			study_p -> st_contact_p = contact_p;
+
+																																																																			study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
+																																																																			study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
 
 
-																																																																	study_p -> st_plan_changes_s = copied_plan_changes_s;
-																																																																	study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
-																																																																	study_p -> st_data_not_included_s= copied_data_not_included_s;
+																																																																			study_p -> st_plan_changes_s = copied_plan_changes_s;
+																																																																			study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
+																																																																			study_p -> st_data_not_included_s= copied_data_not_included_s;
 
-																																																																	study_p -> st_photo_url_s = copied_photo_url_s;
-																																																																	study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
+																																																																			study_p -> st_photo_url_s = copied_photo_url_s;
+																																																																			study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
 
-																																																																	study_p -> st_phenotypes_p = stats_p;
+																																																																			study_p -> st_shape_notes_s = copied_gps_notes_s;
+																																																																			study_p -> st_phenotypes_p = stats_p;
 
-																																																																	return study_p;
-																																																																}
+																																																																			return study_p;
+																																																																		}
+
+																																																																	if (copied_gps_notes_s)
+																																																																		{
+																																																																			FreeCopiedString (copied_gps_notes_s);
+																																																																		}
+
+																																																																}		/* if (CloneValidString (gps_notes_s, &copied_gps_notes_s)) */
+
 
 																																																															if (copied_image_collection_notes_s)
 																																																																{
@@ -715,6 +729,12 @@ void FreeStudy (Study *study_p)
 	if (study_p -> st_image_collection_notes_s)
 		{
 			FreeCopiedString (study_p -> st_image_collection_notes_s);
+		}
+
+
+	if (study_p -> st_shape_notes_s)
+		{
+			FreeCopiedString (study_p -> st_shape_notes_s);
 		}
 
 	FreeMemory (study_p);
@@ -1263,6 +1283,8 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 													uint32 har = 0;
 
 													const char *weather_s = GetJSONString (json_p, ST_WEATHER_S);
+													const char *gps_notes_s = GetJSONString (json_p, ST_SHAPE_NOTES_S);
+
 
 													Person *curator_p = GetPersonFromCompoundJSON (json_p, ST_CURATOR_S, format, data_p);
 													Person *contact_p = GetPersonFromCompoundJSON (json_p, ST_CONTACT_S, format, data_p);
@@ -1328,6 +1350,7 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 																									 sowing_year_p, harvest_year_p,
 																									 plan_changes_s, physical_samples_collected_s, data_not_included_s,
 																									 photo_s, image_collection_notes_s,
+																									 gps_notes_s,
 																									 data_p);
 
 
@@ -1951,42 +1974,46 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																										{
 																											if (SetNonTrivialString (study_json_p, ST_IMAGE_COLLECTION_NOTE_S, study_p -> st_image_collection_notes_s, true))
 																												{
-																													if (AddValidAspectToJSON (study_p, study_json_p))
+																													if (SetNonTrivialString (study_json_p, ST_SHAPE_NOTES_S, study_p -> st_shape_notes_s, true))
 																														{
-																															if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
+																															if (AddValidAspectToJSON (study_p, study_json_p))
 																																{
-																																	if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+																																	if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
 																																		{
-																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
 																																				{
-																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+																																					if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
 																																						{
-																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
 																																								{
-																																									if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+																																									if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
 																																										{
-																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
 																																												{
-																																													if (AddTreatmentsToJSON (study_p, study_json_p, format))
+																																													if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
 																																														{
-																																															if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
+																																															if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																																{
-																																																	if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
+																																																	if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
 																																																		{
-																																																			if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
+																																																			if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
 																																																				{
-																																																					if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
+																																																					if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
 																																																						{
-																																																							if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
+																																																							if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																																								{
-																																																									if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
+																																																									if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
 																																																										{
-																																																											success_flag = true;
+																																																											if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
+																																																												{
+																																																													success_flag = true;
+																																																												}
 																																																										}
-																																																								}
-																																																							else
-																																																								{
-																																																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
+																																																									else
+																																																										{
+																																																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
+																																																										}
+
 																																																								}
 
 																																																						}
@@ -1995,9 +2022,9 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 
 																																																		}
 
-																																																}
+																																																}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
 
-																																														}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
+																																														}
 
 																																												}
 
@@ -2009,15 +2036,14 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 
 																																				}
 
+																																		}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
+																																	else
+																																		{
+																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
 																																		}
 
-																																}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
-																															else
-																																{
-																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
-																																}
-
-																														}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
+																																}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
+																														}		/* if (SetNonTrivialString (study_json_p, ST_SHAPE_NOTES_S, study_p -> st_shape_notes_s, true)) */
 
 																												}
 																										}

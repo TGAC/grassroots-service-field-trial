@@ -469,6 +469,7 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 
 	InsertLatexTabularRow (study_tex_f, "Image Collection Notes", study_p -> st_image_collection_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
 
+	InsertLatexTabularRow (study_tex_f, "Plots GPS Notes", study_p -> st_shape_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
 
 	InsertLatexTabularRow (study_tex_f, "Aspect", study_p -> st_aspect_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Slope", study_p -> st_slope_s, CS_FIRST_WORD_ONLY, buffer_p);

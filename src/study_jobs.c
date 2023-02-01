@@ -82,17 +82,17 @@ static NamedParameterType S_SEARCH_TRIAL_ID_S = { "Get all studies for this Fiel
 static const uint32 S_UNKNOWN_DIRECTION_INDEX = S_NUM_DIRECTIONS - 1;
 
 static const KeyValuePair S_DIRECTIONS_P [] =
-{
-	{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
-	{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
-	{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
-	{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
-	{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
-	{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
-	{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
-	{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
-	{ ST_UNKNOWN_DIRECTION_S, ST_UNKNOWN_DIRECTION_S},
-};
+		{
+				{ "North", "http://purl.obolibrary.org/obo/NCIT_C45849" },
+				{ "North-East", "http://purl.obolibrary.org/obo/NCIT_C45853" },
+				{ "East", "http://purl.obolibrary.org/obo/NCIT_C45851" },
+				{ "South-East", "http://purl.obolibrary.org/obo/NCIT_C45855" },
+				{ "South", "http://purl.obolibrary.org/obo/NCIT_C45850" },
+				{ "South-West", "http://purl.obolibrary.org/obo/NCIT_C45856" },
+				{ "West", "http://purl.obolibrary.org/obo/NCIT_C45852" },
+				{ "North-West", "http://purl.obolibrary.org/obo/NCIT_C45854" },
+				{ ST_UNKNOWN_DIRECTION_S, ST_UNKNOWN_DIRECTION_S},
+		};
 
 
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
@@ -247,9 +247,20 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 																		{
 																			if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Plots GPS", "The GeoJSON for the vertices of the plots layout", active_study_p ? active_study_p -> st_shape_p : NULL, PL_ALL)) != NULL)
 																				{
-																					success_flag = true;
-																				}
+																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_NOTES.npt_type, STUDY_SHAPE_NOTES.npt_name_s, "Plots GPS Notes", "Any notes relating to the GPS data of the plots", active_study_p ? active_study_p -> st_shape_notes_s : NULL, PL_ALL)) != NULL)
+																						{
+																							success_flag = true;
+																						}
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_SHAPE_NOTES.npt_name_s);
+																						}
 
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_SHAPE_DATA.npt_name_s);
+																				}
 
 																			if (AddTreatmentFactorParameters (params_p, active_study_p, dfw_data_p))
 																				{
@@ -277,7 +288,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 														}		/* if (SetUpCropsListParameter (dfw_data_p, param_p)) */
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_PREVIOUS_CROP.npt_name_s);;
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpCropsListParameter failed for \"%s\"", STUDY_PREVIOUS_CROP.npt_name_s);
 														}
 
 												}		/* if (param_p) */
@@ -353,172 +364,172 @@ json_t *GetOldStudyIndexingData (Service *service_p)
 					json_t *src_study_p;
 
 					json_array_foreach (src_studies_p, i, src_study_p)
-						{
-							bson_oid_t id;
+					{
+						bson_oid_t id;
 
-							if (AddDatatype (src_study_p, DFTD_STUDY))
-								{
-									if (GetMongoIdFromJSON (src_study_p, &id))
-										{
-											Crop *crop_p = NULL;
+						if (AddDatatype (src_study_p, DFTD_STUDY))
+							{
+								if (GetMongoIdFromJSON (src_study_p, &id))
+									{
+										Crop *crop_p = NULL;
 
-											/*
-											 * Add the phenotypes
-											 */
-											json_t *values_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
+										/*
+										 * Add the phenotypes
+										 */
+										json_t *values_p = GetStudyDistinctPhenotypesAsJSON (&id, dfw_data_p);
 
-											if (values_p)
-												{
-													if (json_object_set_new (src_study_p, "phenotypes", values_p) != 0)
+										if (values_p)
+											{
+												if (json_object_set_new (src_study_p, "phenotypes", values_p) != 0)
+													{
+														PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add phenotypes");
+														json_decref (values_p);
+													}
+											}
+
+										/*
+										 * Add the accessions
+										 */
+										values_p = GetStudyDistinctAccessionsAsJSON (&id, dfw_data_p);
+
+										if (values_p)
+											{
+												if (json_object_set_new (src_study_p, "accessions", values_p) != 0)
+													{
+														PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add accessions");
+														json_decref (values_p);
+													}
+											}
+
+
+										/*
+										 * Add the parent field trial
+										 */
+										if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
+											{
+												FieldTrial *trial_p = GetFieldTrialById (&id, VF_STORAGE, data_p);
+
+												json_object_del (src_study_p, ST_PARENT_FIELD_TRIAL_S);
+
+												if (trial_p)
+													{
+														json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, VF_CLIENT_MINIMAL, data_p);
+
+														if (trial_json_p)
+															{
+																json_object_del (trial_json_p, MONGO_ID_S);
+
+																if (json_object_set_new (src_study_p, ST_PARENT_FIELD_TRIAL_S, trial_json_p) == 0)
+																	{
+
+																	}
+																else
+																	{
+																		json_decref (trial_json_p);
+																	}
+															}
+
+														FreeFieldTrial (trial_p);
+													}		/* if (trial_p) */
+
+											}
+
+										/*
+										 * Add the location
+										 */
+										if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
+											{
+												Location *location_p = GetLocationById (&id, VF_STORAGE, data_p);
+
+												json_object_del (src_study_p, ST_LOCATION_ID_S);
+
+												if (location_p)
+													{
+														json_t *location_json_p = GetLocationAsJSON (location_p);
+
+														if (location_json_p)
+															{
+																json_object_del (location_json_p, MONGO_ID_S);
+
+																if (json_object_set_new (src_study_p, ST_LOCATION_S, location_json_p) == 0)
+																	{
+
+																	}
+																else
+																	{
+																		json_decref (location_json_p);
+																	}
+
+															}
+
+														FreeLocation (location_p);
+													}		/* if (location_p) */
+
+											}		/* */
+
+
+										/*
+										 * Add the current crop
+										 */
+										crop_p = GetStoredCropValue (src_study_p, ST_CURRENT_CROP_S, data_p);
+										if (crop_p)
+											{
+												SetJSONString (src_study_p, ST_CURRENT_CROP_S, crop_p -> cr_name_s);
+												FreeCrop (crop_p);
+											}
+
+										/*
+										 * Add the previous crop
+										 */
+										crop_p = GetStoredCropValue (src_study_p, ST_PREVIOUS_CROP_S, data_p);
+										if (crop_p)
+											{
+												SetJSONString (src_study_p, ST_PREVIOUS_CROP_S, crop_p -> cr_name_s);
+												FreeCrop (crop_p);
+											}
+
+										/*
+										 * Add the treatments
+										 */
+										values_p = json_object_get (src_study_p, ST_TREATMENTS_S);
+
+										if (values_p)
+											{
+												if (json_is_array (values_p))
+													{
+														json_t *treatment_factor_p;
+														size_t j;
+
+														json_array_foreach (values_p, j, treatment_factor_p)
 														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add phenotypes");
-															json_decref (values_p);
-														}
-												}
-
-											/*
-											 * Add the accessions
-											 */
-											values_p = GetStudyDistinctAccessionsAsJSON (&id, dfw_data_p);
-
-											if (values_p)
-												{
-													if (json_object_set_new (src_study_p, "accessions", values_p) != 0)
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, src_study_p, "Failed to add accessions");
-															json_decref (values_p);
-														}
-												}
-
-
-											/*
-											 * Add the parent field trial
-											 */
-											if (GetNamedIdFromJSON (src_study_p, ST_PARENT_FIELD_TRIAL_S, &id))
-												{
-													FieldTrial *trial_p = GetFieldTrialById (&id, VF_STORAGE, data_p);
-
-													json_object_del (src_study_p, ST_PARENT_FIELD_TRIAL_S);
-
-													if (trial_p)
-														{
-															json_t *trial_json_p = GetFieldTrialAsJSON (trial_p, VF_CLIENT_MINIMAL, data_p);
-
-															if (trial_json_p)
+															if (GetNamedIdFromJSON (treatment_factor_p, TF_TREATMENT_S, &id))
 																{
-																	json_object_del (trial_json_p, MONGO_ID_S);
+																	Treatment *treatment_p = GetTreatmentById (&id, VF_STORAGE, data_p);
 
-																	if (json_object_set_new (src_study_p, ST_PARENT_FIELD_TRIAL_S, trial_json_p) == 0)
+																	if (treatment_p)
 																		{
-
-																		}
-																	else
-																		{
-																			json_decref (trial_json_p);
-																		}
-																}
-
-															FreeFieldTrial (trial_p);
-														}		/* if (trial_p) */
-
-												}
-
-											/*
-											 * Add the location
-											 */
-											if (GetNamedIdFromJSON (src_study_p, ST_LOCATION_ID_S, &id))
-												{
-													Location *location_p = GetLocationById (&id, VF_STORAGE, data_p);
-
-													json_object_del (src_study_p, ST_LOCATION_ID_S);
-
-													if (location_p)
-														{
-															json_t *location_json_p = GetLocationAsJSON (location_p);
-
-															if (location_json_p)
-																{
-																	json_object_del (location_json_p, MONGO_ID_S);
-
-																	if (json_object_set_new (src_study_p, ST_LOCATION_S, location_json_p) == 0)
-																		{
-
-																		}
-																	else
-																		{
-																			json_decref (location_json_p);
-																		}
-
-																}
-
-															FreeLocation (location_p);
-														}		/* if (location_p) */
-
-												}		/* */
-
-
-											/*
-											 * Add the current crop
-											 */
-											crop_p = GetStoredCropValue (src_study_p, ST_CURRENT_CROP_S, data_p);
-											if (crop_p)
-												{
-													SetJSONString (src_study_p, ST_CURRENT_CROP_S, crop_p -> cr_name_s);
-													FreeCrop (crop_p);
-												}
-
-											/*
-											 * Add the previous crop
-											 */
-											crop_p = GetStoredCropValue (src_study_p, ST_PREVIOUS_CROP_S, data_p);
-											if (crop_p)
-												{
-													SetJSONString (src_study_p, ST_PREVIOUS_CROP_S, crop_p -> cr_name_s);
-													FreeCrop (crop_p);
-												}
-
-											/*
-											 * Add the treatments
-											 */
-											values_p = json_object_get (src_study_p, ST_TREATMENTS_S);
-
-											if (values_p)
-												{
-													if (json_is_array (values_p))
-														{
-															json_t *treatment_factor_p;
-															size_t j;
-
-															json_array_foreach (values_p, j, treatment_factor_p)
-																{
-																	if (GetNamedIdFromJSON (treatment_factor_p, TF_TREATMENT_S, &id))
-																		{
-																			Treatment *treatment_p = GetTreatmentById (&id, VF_STORAGE, data_p);
-
-																			if (treatment_p)
+																			if (AddTreatmentToJSON (treatment_p, treatment_factor_p))
 																				{
-																					if (AddTreatmentToJSON (treatment_p, treatment_factor_p))
-																						{
 
-																						}
+																				}
 
 
-																					FreeTreatment (treatment_p);
-																				}		/* if (treatment_p) */
+																			FreeTreatment (treatment_p);
+																		}		/* if (treatment_p) */
 
-																		}		/* if (GetNamedIdFromJSON (src_study_p, TFJ_TREATMENT_ID, &id)) */
+																}		/* if (GetNamedIdFromJSON (src_study_p, TFJ_TREATMENT_ID, &id)) */
 
-																}		/* json_array_foreach (values_p, j, treatment_factor_p) */
+														}		/* json_array_foreach (values_p, j, treatment_factor_p) */
 
-														}		/* if (json_is array (values_p)) */
+													}		/* if (json_is array (values_p)) */
 
-												}		/* if (values_p) */
+											}		/* if (values_p) */
 
-										}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
+									}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
 
-								}		/* if (AddDatatype (src_study_p, DFTD_STUDY)) */
+							}		/* if (AddDatatype (src_study_p, DFTD_STUDY)) */
 
-						}		/* json_array_foreach (src_studies_p, i, src_study_p) */
+					}		/* json_array_foreach (src_studies_p, i, src_study_p) */
 
 				}		/* if (json_is_array (src_studies_p)) */
 
@@ -619,16 +630,16 @@ bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *p
 bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	const NamedParameterType params [] =
-		{
-			STUDY_NUM_PLOT_ROWS ,
-			STUDY_NUM_PLOT_COLS,
-			STUDY_NUM_REPLICATES,
-			STUDY_PLOT_WIDTH,
-			STUDY_PLOT_LENGTH,
-			STUDY_SOWING_YEAR,
-			STUDY_HARVEST_YEAR,
-			NULL
-		};
+			{
+					STUDY_NUM_PLOT_ROWS ,
+					STUDY_NUM_PLOT_COLS,
+					STUDY_NUM_REPLICATES,
+					STUDY_PLOT_WIDTH,
+					STUDY_PLOT_LENGTH,
+					STUDY_SOWING_YEAR,
+					STUDY_HARVEST_YEAR,
+					NULL
+			};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
@@ -638,42 +649,43 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 	bool success_flag;
 
 	const NamedParameterType params [] =
-		{
-			STUDY_ID,
-			STUDY_NAME,
-			STUDY_LINK,
-			STUDY_FIELD_TRIALS_LIST,
-			STUDY_LOCATIONS_LIST,
-			STUDY_ASPECT,
-			STUDY_SLOPE,
-			STUDY_THIS_CROP,
-			STUDY_PREVIOUS_CROP,
-			STUDY_DESCRIPTION,
-			STUDY_DESIGN,
-			STUDY_GROWING_CONDITIONS,
-			STUDY_PHENOTYPE_GATHERING_NOTES,
-			STUDY_WEATHER_LINK,
-			STUDY_SHAPE_DATA,
-			STUDY_PLOT_ROWS_PER_BLOCK,
-			STUDY_PLOT_COLS_PER_BLOCK,
-			STUDY_PLOT_HGAP,
-			STUDY_PLOT_VGAP,
-			STUDY_PLOT_BLOCK_HGAP,
-			STUDY_PLOT_BLOCK_VGAP,
-			STUDY_CURATOR_NAME,
-			STUDY_CURATOR_EMAIL,
-			STUDY_CONTACT_NAME,
-			STUDY_CONTACT_EMAIL,
-			STUDY_SOWING_YEAR,
-			STUDY_HARVEST_YEAR,
-			STUDY_PLOT_BLOCK_VGAP,
-			STUDY_PLAN_CHANGES,
-			STUDY_DATA_NOT_INCLUDED,
-			STUDY_PHYSICAL_SAMPLES_COLLECTED,
-			STUDY_PHOTO,
-			STUDY_IMAGE_NOTES,
-			NULL
-		};
+			{
+					STUDY_ID,
+					STUDY_NAME,
+					STUDY_LINK,
+					STUDY_FIELD_TRIALS_LIST,
+					STUDY_LOCATIONS_LIST,
+					STUDY_ASPECT,
+					STUDY_SLOPE,
+					STUDY_THIS_CROP,
+					STUDY_PREVIOUS_CROP,
+					STUDY_DESCRIPTION,
+					STUDY_DESIGN,
+					STUDY_GROWING_CONDITIONS,
+					STUDY_PHENOTYPE_GATHERING_NOTES,
+					STUDY_WEATHER_LINK,
+					STUDY_SHAPE_DATA,
+					STUDY_PLOT_ROWS_PER_BLOCK,
+					STUDY_PLOT_COLS_PER_BLOCK,
+					STUDY_PLOT_HGAP,
+					STUDY_PLOT_VGAP,
+					STUDY_PLOT_BLOCK_HGAP,
+					STUDY_PLOT_BLOCK_VGAP,
+					STUDY_CURATOR_NAME,
+					STUDY_CURATOR_EMAIL,
+					STUDY_CONTACT_NAME,
+					STUDY_CONTACT_EMAIL,
+					STUDY_SOWING_YEAR,
+					STUDY_HARVEST_YEAR,
+					STUDY_PLOT_BLOCK_VGAP,
+					STUDY_PLAN_CHANGES,
+					STUDY_DATA_NOT_INCLUDED,
+					STUDY_PHYSICAL_SAMPLES_COLLECTED,
+					STUDY_PHOTO,
+					STUDY_IMAGE_NOTES,
+					STUDY_SHAPE_NOTES,
+					NULL
+			};
 
 	if (DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
 		{
@@ -743,16 +755,16 @@ Parameters
 bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	const NamedParameterType params [] =
-		{
-			STUDY_SEARCH_STUDIES,
-			STUDY_ID,
-			STUDY_GET_ALL_PLOTS,
-			STUDY_LOCATIONS_LIST,
-			STUDY_HARVEST_YEAR,
-			STUDY_SOWING_YEAR,
-			S_SEARCH_TRIAL_ID_S,
-			NULL
-		};
+			{
+					STUDY_SEARCH_STUDIES,
+					STUDY_ID,
+					STUDY_GET_ALL_PLOTS,
+					STUDY_LOCATIONS_LIST,
+					STUDY_HARVEST_YEAR,
+					STUDY_SOWING_YEAR,
+					S_SEARCH_TRIAL_ID_S,
+					NULL
+			};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
@@ -794,7 +806,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 																		{
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_HARVEST_YEAR.npt_name_s);
 																		}
-																}
+															}
 															else
 																{
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_SOWING_YEAR.npt_name_s);
@@ -1067,35 +1079,35 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 											if (got_crops_flag)
 												{
 													*id_ss = study_id_s;
-	/*
-													*name_ss = study_p -> st_name_s;
-													*soil_ss = study_p -> st_soil_type_s;
-													*link_ss = study_p -> st_data_url_s;
-													*slope_ss = study_p -> st_slope_s;
-													*aspect_ss = study_p -> st_aspect_s;
-*/
+													/*
+													 *name_ss = study_p -> st_name_s;
+													 *soil_ss = study_p -> st_soil_type_s;
+													 *link_ss = study_p -> st_data_url_s;
+													 *slope_ss = study_p -> st_slope_s;
+													 *aspect_ss = study_p -> st_aspect_s;
+													 */
 													*this_crop_ss = current_crop_id_s;
 													*previous_crop_ss = previous_crop_id_s;
 													*trial_ss = field_trial_id_s;
 													*location_ss = location_id_s;
-	/*
-													*description_ss = study_p -> st_description_s;
-													*design_ss = study_p -> st_design_s;
-													*growing_conditons_ss = study_p -> st_growing_conditions_s;
-													*phenotype_gathering_notes_ss = study_p -> st_phenotype_gathering_notes_s;
-													*sowing_time_pp = study_p -> st_sowing_date_p;
-													*harvest_time_pp = study_p -> st_harvest_date_p;
-													*ph_min_pp = study_p -> st_min_ph_p;
-													*ph_max_pp = study_p -> st_max_ph_p;
-													*weather_ss = study_p -> st_weather_link_s;
-													*shape_pp = study_p -> st_shape_p;
-													*plot_horizontal_gap_pp = study_p -> st_plot_horizontal_gap_p;
-													*plot_vertical_gap_pp = study_p -> st_plot_vertical_gap_p;
-													*plots_rows_per_block_pp = study_p -> st_plots_rows_per_block_p;
-													*plots_cols_per_block_pp = study_p -> st_plots_columns_per_block_p;
-													*plot_block_horizontal_gap_pp = study_p -> st_plot_block_horizontal_gap_p;
-													*plot_block_vertical_gap_pp = study_p -> st_plot_block_vertical_gap_p;
-*/
+													/*
+													 *description_ss = study_p -> st_description_s;
+													 *design_ss = study_p -> st_design_s;
+													 *growing_conditons_ss = study_p -> st_growing_conditions_s;
+													 *phenotype_gathering_notes_ss = study_p -> st_phenotype_gathering_notes_s;
+													 *sowing_time_pp = study_p -> st_sowing_date_p;
+													 *harvest_time_pp = study_p -> st_harvest_date_p;
+													 *ph_min_pp = study_p -> st_min_ph_p;
+													 *ph_max_pp = study_p -> st_max_ph_p;
+													 *weather_ss = study_p -> st_weather_link_s;
+													 *shape_pp = study_p -> st_shape_p;
+													 *plot_horizontal_gap_pp = study_p -> st_plot_horizontal_gap_p;
+													 *plot_vertical_gap_pp = study_p -> st_plot_vertical_gap_p;
+													 *plots_rows_per_block_pp = study_p -> st_plots_rows_per_block_p;
+													 *plots_cols_per_block_pp = study_p -> st_plots_columns_per_block_p;
+													 *plot_block_horizontal_gap_pp = study_p -> st_plot_block_horizontal_gap_p;
+													 *plot_block_vertical_gap_pp = study_p -> st_plot_block_vertical_gap_p;
+													 */
 													return true;
 
 												}		/* if (got_crops_flag) */
@@ -1284,6 +1296,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 																											const char *photo_s = NULL;
 																											const char *image_collection_notes_s = NULL;
+																											const char *gps_notes_s = NULL;
 
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
@@ -1312,6 +1325,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_WEATHER_LINK.npt_name_s, &weather_s);
 
 																											GetCurrentJSONParameterValueFromParameterSet (param_set_p, STUDY_SHAPE_DATA.npt_name_s, &shape_p);
+																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SHAPE_NOTES.npt_name_s, &gps_notes_s);
 
 																											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_HGAP.npt_name_s, &plot_horizontal_gap_p);
 																											GetCurrentDoubleParameterValueFromParameterSet (param_set_p, STUDY_PLOT_VGAP.npt_name_s, &plot_vertical_gap_p);
@@ -1338,6 +1352,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																																							 sowing_year_p, harvest_year_p,
 																																							 plan_changes_s, samples_collected_s, data_not_included_s,
 																																							 photo_s, image_collection_notes_s,
+																																							 gps_notes_s,
 																																							 data_p);
 
 																											if (study_p)
@@ -1716,47 +1731,47 @@ OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialS
 			size_t num_successes = 0;
 
 			json_array_foreach (all_studies_p, i, study_json_p)
-				{
-					Study *study_p = GetStudyFromJSON (study_json_p, VF_STORAGE, data_p);
+			{
+				Study *study_p = GetStudyFromJSON (study_json_p, VF_STORAGE, data_p);
 
-					if (study_p)
-						{
-							OperationStatus stats_status = GenerateStatisticsForStudy (study_p, job_p, data_p);
+				if (study_p)
+					{
+						OperationStatus stats_status = GenerateStatisticsForStudy (study_p, job_p, data_p);
 
-							FILE *stats_f = fopen ("/home/billy/Applications/grassroots/working_directory/field_trials/stats", "a");
-							if (stats_f)
-								{
-									char *id_s = GetBSONOidAsString (study_p -> st_id_p);
-									int64 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+						FILE *stats_f = fopen ("/home/billy/Applications/grassroots/working_directory/field_trials/stats", "a");
+						if (stats_f)
+							{
+								char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+								int64 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
 
-									fprintf (stats_f, "\"%s\" %s %ld\n", study_p -> st_name_s, id_s ? id_s : "_", num_plots);
+								fprintf (stats_f, "\"%s\" %s %ld\n", study_p -> st_name_s, id_s ? id_s : "_", num_plots);
 
-									if (id_s)
-										{
-											FreeBSONOidString (id_s);
-										}
+								if (id_s)
+									{
+										FreeBSONOidString (id_s);
+									}
 
-									fclose (stats_f);
-								}
+								fclose (stats_f);
+							}
 
 
-							if (stats_status == OS_SUCCEEDED)
-								{
-									++ num_successes;
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
-								}
+						if (stats_status == OS_SUCCEEDED)
+							{
+								++ num_successes;
+							}
+						else
+							{
+								PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+							}
 
-							FreeStudy (study_p);
-						}		/* if (study_p) */
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
-						}
+						FreeStudy (study_p);
+					}		/* if (study_p) */
+				else
+					{
+						PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
+					}
 
-				}		/* json_array_foreach (all_studies_p, i, study_json_p) */
+			}		/* json_array_foreach (all_studies_p, i, study_json_p) */
 
 
 			if (num_successes == num_studies)
@@ -2129,6 +2144,7 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 	 * previous crop
 	 * Link
 	 * Plots GPS
+	 * Plots GPS notes
 	 * Aspect
 	 * Slope
 	 * Horiz plot gap
@@ -2191,73 +2207,62 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																										{
 																											KEY_S = "weather";
 
-																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_weather_link_s, false))
+																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
 																												{
-																													KEY_S = "growing_conditions";
-
-																													if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
+																													if (AddCropAsFrictionlessData (study_p -> st_current_crop_p, study_fd_p, "crop"))
 																														{
-																															KEY_S = "phenotype_notes";
-
-																															if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_phenotype_gathering_notes_s, false))
+																															if (AddCropAsFrictionlessData (study_p -> st_previous_crop_p, study_fd_p, "previous_crop"))
 																																{
-																																	if (AddCropAsFrictionlessData (study_p -> st_current_crop_p, study_fd_p, "crop"))
+																																	KEY_S = "link";
+
+																																	if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_data_url_s, false))
 																																		{
-																																			if (AddCropAsFrictionlessData (study_p -> st_previous_crop_p, study_fd_p, "previous_crop"))
+																																			const json_t *shape_p = study_p -> st_shape_p;
+
+																																			if ((!shape_p) || (shape_p == json_null ()) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0))
 																																				{
-																																					KEY_S = "link";
+																																					KEY_S = "plots_gps_notes";
 
-																																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_data_url_s, false))
+																																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_shape_notes_s, false))
 																																						{
-																																							const json_t *shape_p = study_p -> st_shape_p;
+																																							KEY_S = "aspect";
 
-																																							if ((!shape_p) || (shape_p == json_null ()) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0))
+																																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_aspect_s, false))
 																																								{
-																																									KEY_S = "aspect";
+																																									KEY_S = "slope";
 
-																																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_aspect_s, false))
+																																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
 																																										{
-																																											KEY_S = "slope";
-
-																																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
+																																											if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
 																																												{
-																																													if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
+																																													if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
 																																														{
-																																															if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
+																																															if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
 																																																{
-																																																	if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
-																																																		{
-																																																			success_flag = true;
-																																																		}
-
+																																																	success_flag = true;
 																																																}
 
 																																														}
 
 																																												}
-																																										}
 
-																																								}		/* if ((! (study_p -> st_shape_p)) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0)) */
-																																							else
-																																								{
-																																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add the plots gps");
+																																										}
 																																								}
 																																						}
+
+
+
+																																				}		/* if ((! (study_p -> st_shape_p)) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0)) */
+																																			else
+																																				{
+																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add the plots gps");
 																																				}
-
 																																		}
-
-																																}		/* if (SetNonTrivialString (study_fd_p, key_S, study_p -> st_phenotype_gathering_notes_s, false)) */
-																															else
-																																{
-																																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_phenotype_gathering_notes_s);
 																																}
 
-																														}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false)) */
-																													else
-																														{
-																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_growing_conditions_s);
 																														}
+
+
 
 																												}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_weather_link_s, false)) */
 																											else
@@ -2619,14 +2624,14 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 	if (SetMongoToolCollection (service_data_p -> dftsd_mongo_p, service_data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
 			bson_t *command_p = BCON_NEW ("distinct",
-														 BCON_UTF8 (service_data_p -> dftsd_collection_ss [DFTD_PLOT]),
-														 "key",
-														 BCON_UTF8 (key_s),
-														 "query",
-														 "{",
-														 PL_PARENT_STUDY_S,
-														 BCON_OID (study_id_p),
-														 "}");
+																		BCON_UTF8 (service_data_p -> dftsd_collection_ss [DFTD_PLOT]),
+																		"key",
+																		BCON_UTF8 (key_s),
+																		"query",
+																		"{",
+																		PL_PARENT_STUDY_S,
+																		BCON_OID (study_id_p),
+																		"}");
 
 			if (command_p)
 				{
@@ -2656,22 +2661,22 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 															 */
 
 															json_array_foreach (oid_values_p, i, oid_value_p)
-																{
-																	const char *oid_s = GetJSONString (oid_value_p, "$oid");
+															{
+																const char *oid_s = GetJSONString (oid_value_p, "$oid");
 
-																	if (oid_s)
-																		{
-																			if (process_value_fn (oid_s, user_data_p, service_data_p))
-																				{
-																					++ num_successes;
-																				}
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
-																				}
-																		}		/* if (oid_s) */
+																if (oid_s)
+																	{
+																		if (process_value_fn (oid_s, user_data_p, service_data_p))
+																			{
+																				++ num_successes;
+																			}
+																		else
+																			{
+																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
+																			}
+																	}		/* if (oid_s) */
 
-																}		/* json_array_foreach (oids_p, i, oid_p) */
+															}		/* json_array_foreach (oids_p, i, oid_p) */
 
 
 															if (num_successes == size)
@@ -2751,14 +2756,14 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PLOT]))
 		{
 			bson_t *command_p = BCON_NEW ("distinct",
-														 BCON_UTF8 (data_p -> dftsd_collection_ss [DFTD_PLOT]),
-														 "key",
-														 BCON_UTF8 (key_s),
-														 "query",
-														 "{",
-														 PL_PARENT_STUDY_S,
-														 BCON_OID (study_id_p),
-														 "}");
+																		BCON_UTF8 (data_p -> dftsd_collection_ss [DFTD_PLOT]),
+																		"key",
+																		BCON_UTF8 (key_s),
+																		"query",
+																		"{",
+																		PL_PARENT_STUDY_S,
+																		BCON_OID (study_id_p),
+																		"}");
 
 			if (command_p)
 				{
@@ -2786,18 +2791,18 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 																	size_t i;
 
 																	json_array_foreach (oid_values_p, i, oid_value_p)
-																		{
-																			const char *oid_s = GetJSONString (oid_value_p, "$oid");
+																	{
+																		const char *oid_s = GetJSONString (oid_value_p, "$oid");
 
-																			if (oid_s)
-																				{
-																					if (!add_value_fn (oid_s, values_p, data_p))
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add data for\"%s\"", oid_s);
-																						}
-																				}		/* if (oid_s) */
+																		if (oid_s)
+																			{
+																				if (!add_value_fn (oid_s, values_p, data_p))
+																					{
+																						PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add data for\"%s\"", oid_s);
+																					}
+																			}		/* if (oid_s) */
 
-																		}		/* json_array_foreach (oids_p, i, oid_p) */
+																	}		/* json_array_foreach (oids_p, i, oid_p) */
 
 																}		/* if (phenotypes_p) */
 
@@ -4065,27 +4070,27 @@ TreatmentFactor *GetTreatmentFactorForStudyByUrl (const Study *study_p, const ch
 	TreatmentFactor *treatment_factor_p = NULL;
 	TreatmentFactorNode *node_p = (TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p);
 
-		while (node_p)
-			{
-				TreatmentFactor *tf_p = node_p -> tfn_p;
-				const char *url_s = GetTreatmentFactorUrl (tf_p);
+	while (node_p)
+		{
+			TreatmentFactor *tf_p = node_p -> tfn_p;
+			const char *url_s = GetTreatmentFactorUrl (tf_p);
 
-				if (strcmp (url_s, treatment_url_s) == 0)
-					{
-						treatment_factor_p = tf_p;
+			if (strcmp (url_s, treatment_url_s) == 0)
+				{
+					treatment_factor_p = tf_p;
 
-						/* force exit from loop */
-						node_p = NULL;
-					}
-				else
-					{
-						node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
-					}
+					/* force exit from loop */
+					node_p = NULL;
+				}
+			else
+				{
+					node_p = (TreatmentFactorNode *) (node_p -> tfn_node.ln_next_p);
+				}
 
-			}		/* while (node_p) */
+		}		/* while (node_p) */
 
-		return treatment_factor_p;
-	}
+	return treatment_factor_p;
+}
 
 
 

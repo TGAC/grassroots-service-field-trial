@@ -69,6 +69,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddRowFrictionlessDataDetails (const Row *row
 DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL ObservationNode *GetMatchingObservationNode (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void RemoveObservationNode (const StandardRow *row_p, ObservationNode *node_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddSingleTreatmentFactorValueToStandardRow  (StandardRow *row_p, const char *key_s, const char *value_s, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
 

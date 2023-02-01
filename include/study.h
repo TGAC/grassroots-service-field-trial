@@ -120,6 +120,8 @@ STUDY_PREFIX const char *ST_SHAPE_S STUDY_VAL ("shape_data");
 
 STUDY_PREFIX const char *ST_HAS_SHAPE_S STUDY_VAL ("has_shape_data");
 
+STUDY_PREFIX const char *ST_SHAPE_NOTES_S STUDY_VAL ("shape_data_notes");
+
 
 STUDY_PREFIX const char *ST_PLOT_H_GAP_S STUDY_VAL ("plot_horizontal_gap");
 
@@ -242,6 +244,10 @@ typedef struct Study
 	 */
 	json_t *st_shape_p;
 
+	/**
+	 * Any notes about the GeoJSON data.
+	 */
+	char *st_shape_notes_s;
 
 	double64 *st_plot_horizontal_gap_p;
 
@@ -309,6 +315,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char
 																										const uint32 *sowing_year_p, const uint32 *harvest_year_p,
 																										const char *plan_changes_s, const char *physical_samples_collected_s, const char *data_not_included_s,
 																										const char *photo_url_s, const char *image_collection_notes_s,
+																										const char *gps_notes_s,
 																										const FieldTrialServiceData *data_p);
 
 

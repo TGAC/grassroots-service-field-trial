@@ -175,9 +175,10 @@ static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unkno
 static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, bool *new_plot_flag_p, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p);
 
 
-static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const bool control_rep_flag, const uint32 row_index, FieldTrialServiceData *data_p);
+static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
-static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p);
+
+static StandardRow *CreateOrUpdateStandardRowFromJSON (ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p);
 
 
 /*
@@ -991,9 +992,9 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
+static StandardRow *CreateOrUpdateStandardRowFromJSON (ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
 {
-	StandardRow *sr_p= NULL;
+	StandardRow *sr_p = NULL;
 	GeneBank *gene_bank_p = NULL;
 	const char *gene_bank_s = GetJSONString (table_row_json_p, PL_GENE_BANK_S);
 
@@ -1054,11 +1055,21 @@ static StandardRow *CreateStandardRowFromJSON (ServiceJob *job_p, json_t *table_
 							if (success_flag)
 								{
 									const MEM_FLAG material_mem = MF_SHALLOW_COPY;
-									sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, replicate, material_p, material_mem, plot_p);
+
+									if (existing_row_p)
+										{
+											UpdateStandardRow (existing_row_p, rack_plotwise_index, control_rep_flag, replicate, material_p, material_mem);
+
+											sr_p = existing_row_p;
+										}
+									else
+										{
+											sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, control_rep_flag, replicate, material_p, material_mem, plot_p);
+										}
 
 									if (sr_p)
 										{
-											OperationStatus s = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, control_rep_flag, row_index, data_p);
+											OperationStatus s = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, row_index, data_p);
 
 											if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
 												{
@@ -1128,17 +1139,31 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 			if (plot_p)
 				{
+					bool success_flag = false;
 					Row *row_p = GetRowFromPlotByStudyIndex (plot_p, rack_studywise_index);
 
+					/*
+					 * Is it an existing row?
+					 */
 					if (row_p)
 						{
 							if (row_p -> ro_type == RT_STANDARD)
 								{
-									StandardRow *sr_p = (StandardRow *) row_p;
 									/*
 									 * update existing row
 									 */
-									//UpdateStandardRow (sr_p, rack_plotwise_index, material_p, material_mem, control_rep_flag, replicate, rt);
+									/* Assume a Standard Row */
+									StandardRow *sr_p = CreateOrUpdateStandardRowFromJSON (job_p, table_row_json_p, (StandardRow *) row_p, study_p, gru_gene_bank_p, unknown_cols_p, row_index, rack_studywise_index, plot_p, data_p);
+
+									if (sr_p)
+										{
+											row_p = & (sr_p -> sr_base);
+											success_flag = true;
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "CreateStandardRowFromJSON () failed");
+										}
 								}
 
 						}		/* if (row_p) */
@@ -1167,7 +1192,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 							else
 								{
 									/* Assume a Standard Row */
-									StandardRow *sr_p = CreateStandardRowFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, row_index, rack_studywise_index, plot_p, data_p);
+									StandardRow *sr_p = CreateOrUpdateStandardRowFromJSON (job_p, table_row_json_p, NULL, study_p, gru_gene_bank_p, unknown_cols_p, row_index, rack_studywise_index, plot_p, data_p);
 
 									if (sr_p)
 										{
@@ -1183,8 +1208,6 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 							if (row_p)
 								{
-
-									bool success_flag = false;
 
 									if (AddRowToPlot (plot_p, row_p))
 										{
@@ -1205,43 +1228,52 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 												{
 													success_flag = true;
 												}
-
-											if (success_flag)
-												{
-													if (SavePlot (plot_p, data_p))
-														{
-															add_status = OS_SUCCEEDED;
-														}
-													else
-														{
-															add_status = OS_FAILED;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
-														}
-
-												}
-										}
-									else
-										{
-											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
-											FreeRow (row_p);
-											row_p = NULL;
 										}
 
 								}
 							else
 								{
-									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
-
-									if (is_new_plot_flag)
-										{
-											AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add the plot to the study", row_index, NULL);
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AddPlotToStudy () failed");
-											FreePlot (plot_p);
-										}
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
+									FreeRow (row_p);
+									row_p = NULL;
 								}
+
+						}		/* if (row_p) else */
+
+
+					/*
+					 * Save the row
+					 */
+					if (success_flag)
+						{
+							if (SavePlot (plot_p, data_p))
+								{
+									add_status = OS_SUCCEEDED;
+								}
+							else
+								{
+									add_status = OS_FAILED;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save row");
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to save row", row_index, NULL);
+								}
+
 						}
 
+
+
+
+
+					if (!row_p)
+						{
+							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to create row", row_index, NULL);
+
+							if (is_new_plot_flag)
+								{
+									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add the plot to the study", row_index, NULL);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "AddPlotToStudy () failed");
+									FreePlot (plot_p);
+								}
+						}
 
 				}		/* if (plot_p) */
 			else
@@ -1268,7 +1300,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 
 
-static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const bool control_rep_flag, const uint32 row_index, FieldTrialServiceData *data_p)
+static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_SUCCEEDED;
 	size_t num_columns;
@@ -1367,10 +1399,6 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 				}
 
 		}		/* if ((num_columns = json_object_size (table_row_json_p)) > 0) */
-
-
-
-	SetStandardRowGenotypeControl (row_p, control_rep_flag);
 
 	if (num_columns == imported_columns)
 		{

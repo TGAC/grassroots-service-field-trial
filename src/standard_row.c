@@ -97,7 +97,7 @@ static StandardRow *AllocateEmptyStandardRow (void)
 }
 
 
-StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
+StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p)
 {
 	if (material_p != NULL)
 		{
@@ -125,7 +125,7 @@ StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, con
 											row_p -> sr_observations_p = observations_p;
 											row_p -> sr_treatment_factor_values_p = tf_values_p;
 											row_p -> sr_replicate_index = replicate;
-											row_p -> sr_replicate_control_flag = false;
+											row_p -> sr_replicate_control_flag = replicate_control_flag;
 
 											return row_p;
 										}
@@ -531,21 +531,23 @@ bool AddTreatmentFactorValueToStandardRow (StandardRow *row_p, TreatmentFactorVa
 }
 
 
-
-void UpdateStandardRow (StandardRow *row_p, const uint32 rack_plotwise_index, Material *material_p, MEM_FLAG material_mem, const bool control_rep_flag, const uint32 replicate, const RowType rt)
+void UpdateStandardRow (StandardRow *row_p, const uint32 rack_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem)
 {
-	if (row_p -> sr_rack_index != rack_plotwise_index)
+	if (row_p -> sr_rack_index != rack_index)
 		{
-			row_p -> sr_rack_index = rack_plotwise_index;
+			row_p -> sr_rack_index = rack_index;
 		}
 
-	if (row_p -> sr_material_p -> ma_id_p != material_p -> ma_id_p)
+	if (row_p -> sr_material_p)
 		{
-			if ((row_p -> sr_material_mem == MF_DEEP_COPY) || (row_p -> sr_material_mem == MF_SHALLOW_COPY))
+			if (row_p -> sr_material_p -> ma_id_p != material_p -> ma_id_p)
 				{
-					if (row_p -> sr_material_p)
+					if ((row_p -> sr_material_mem == MF_DEEP_COPY) || (row_p -> sr_material_mem == MF_SHALLOW_COPY))
 						{
-							FreeMaterial (row_p -> sr_material_p);
+							if (row_p -> sr_material_p)
+								{
+									FreeMaterial (row_p -> sr_material_p);
+								}
 						}
 				}
 
@@ -553,20 +555,18 @@ void UpdateStandardRow (StandardRow *row_p, const uint32 rack_plotwise_index, Ma
 			row_p -> sr_material_mem = material_mem;
 		}
 
-	if (control_rep_flag != IsStandardRowGenotypeControl (row_p))
+	if (replicate_control_flag != IsStandardRowGenotypeControl (row_p))
 		{
-			SetStandardRowGenotypeControl (row_p, control_rep_flag);
+			SetStandardRowGenotypeControl (row_p, replicate_control_flag);
 		}
 
-	if (!control_rep_flag)
+	if (!replicate_control_flag)
 		{
 			if (row_p -> sr_replicate_index != replicate)
 				{
 					row_p -> sr_replicate_index = replicate;
 				}
 		}
-
-	row_p -> sr_base.ro_type = rt;
 }
 
 

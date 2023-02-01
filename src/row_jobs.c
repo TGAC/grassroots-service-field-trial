@@ -426,6 +426,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 
 					if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
 						{
+							ObservationNode *observation_node_p = NULL;
 							Observation *observation_p = NULL;
 							bool free_measured_variable_flag = false;
 							const char *growth_stage_s = NULL;
@@ -434,50 +435,56 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 							Instrument *instrument_p = NULL;
 							const json_t *raw_value_p = NULL;
 							const json_t *corrected_value_p = NULL;
+							bool (*set_observation_value_fn) (Observation *observation_p, const json_t *value_p) = NULL;
+
 
 							if (corrected_value_flag)
 								{
 									corrected_value_p = value_p;
+									set_observation_value_fn = SetObservationCorrectedValueFromJSON;
 								}
 							else
 								{
 									raw_value_p = value_p;
+									set_observation_value_fn = SetObservationRawValueFromJSON;
 								}
 
-							observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+							observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
 
-							if (observation_p)
+							if (observation_node_p)
 								{
-									if (corrected_value_flag)
+									/*
+									 * Is the json value non-trivial?
+									 */
+									if (!IsJSONEmpty (value_p))
 										{
-											if (!SetObservationCorrectedValueFromString (observation_p, value_s))
+
+											if (set_observation_value_fn (observation_node_p -> on_observation_p, value_p))
+												{
+													status = OS_SUCCEEDED;
+												}
+											else
 												{
 													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
 													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationCorrectedValueFromString failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-													FreeObservation (observation_p);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservation%sValue failed for row \"%s\" and key \"%s\"", corrected_value_flag ? "Corrected" : "Raw", id_s, key_s);
+													//FreeObservation (observation_p);
 												}
-										}
+
+										}		/* if (!IsJSONEmpty (value_p)) */
 									else
 										{
-											if (!SetObservationRawValueFromString (observation_p, value_s))
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetObservationRawValueFromString failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-
-													FreeObservation (observation_p);
-												}
-
+											/*
+											 * We have an empty value so remove the existing observation
+											 */
+											RemoveObservationNode (row_p, observation_node_p);
 										}
 
 									free_measured_variable_flag = true;
 
-								}		/* if (observation_p) */
+								}		/* if (observation_node_p) */
 							else
 								{
 									bson_oid_t *observation_id_p = GetNewBSONOid ();
@@ -586,195 +593,193 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 
 
 
-OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
-{
-	OperationStatus status = OS_IDLE;
-
-	/*
-	 * ignore our column names
-	 */
-	if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
-		{
-			MeasuredVariable *measured_variable_p = NULL;
-			MEM_FLAG mv_mem = MF_ALREADY_FREED;
-			struct tm *start_date_p = NULL;
-			struct tm *end_date_p = NULL;
-			bool corrected_value_flag = false;
-			uint32 observation_index = OB_DEFAULT_INDEX;
-
-			status = GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &mv_mem, data_p);
-
-			if (status == OS_SUCCEEDED)
-				{
-					Observation *observation_p = NULL;
-					bool free_measured_variable_flag = false;
-					const char *growth_stage_s = NULL;
-					const char *method_s = NULL;
-					ObservationNature nature = ON_ROW;
-					Instrument *instrument_p = NULL;
-					const json_t *raw_value_p = NULL;
-					const json_t *corrected_value_p = NULL;
-
-
-					/* reset status */
-					status = OS_FAILED;
-
-					if (corrected_value_flag)
-						{
-							corrected_value_p = value_p;
-						}
-					else
-						{
-							raw_value_p = value_p;
-						}
-
-					observation_p = GetMatchingObservation (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
-
-					if (observation_p)
-						{
-							if (corrected_value_flag)
-								{
-									if (SetObservationCorrectedValueFromJSON (observation_p, value_p))
-										{
-											status = OS_SUCCEEDED;
-										}
-									else
-										{
-											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-											bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationCorrectedValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
-											FreeObservation (observation_p);
-										}
-								}
-							else
-								{
-									if (SetObservationRawValueFromJSON (observation_p, value_p))
-										{
-											status = OS_SUCCEEDED;
-										}
-									else
-										{
-											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-											bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservationRawValue failed for row \"%s\" and key \"%s\"", id_s, key_s);
-											FreeObservation (observation_p);
-										}
-
-								}
-
-							free_measured_variable_flag = true;
-						}		/* if (observation_p) */
-					else
-						{
-
-							/*
-							 * Are the json values non-trivial?
-							 */
-							if (! ((IsJSONEmpty (raw_value_p)) && (IsJSONEmpty (corrected_value_p))))
-								{
-									bson_oid_t *observation_id_p = GetNewBSONOid ();
-
-									if (observation_id_p)
-										{
-											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
-											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
-
-											if (obs_type != OT_NUM_TYPES)
-												{
-													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetObservationTypeForScaleClass () failed for \"%s\" and variable \"%s\"", class_p -> sc_name_s, GetMeasuredVariableName (measured_variable_p));
-												}
-
-
-											if (observation_p)
-												{
-													if (AddObservationToStandardRow (row_p, observation_p))
-														{
-															status = OS_SUCCEEDED;
-														}
-													else
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add observed measured variable", row_index, key_s);
-
-															FreeObservation (observation_p);
-														}
-
-												}		/* if (observation_p) */
-											else
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
-													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Invalid value", row_index, key_s);
-
-													free_measured_variable_flag = true;
-												}
-
-										}		/* if (observation_id_p) */
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation id for row number " UINT32_FMT " and key \"%s\"", row_index, key_s);
-										}
-								}		/* if (! ((IsJSONEmpty (raw_value_p)) && (IsJSONEmpty (corrected_value_p)))) */
-							else
-								{
-									/*
-									 * A new Observation but with no value e.g. empty row-column entry in the
-									 * spreadsheet.
-									 */
-									status = OS_SUCCEEDED;
-								}
-						}
-
-
-
-					if (start_date_p)
-						{
-							FreeTime (start_date_p);
-							start_date_p = NULL;
-						}
-
-					if (end_date_p)
-						{
-							FreeTime (end_date_p);
-							end_date_p = NULL;
-						}
-
-					/*
-					 * If the Observation failed to be allocated then, we need to free the
-					 * Measured Variable as FreeObservation () would normally take care of
-					 * that when the
-					 */
-					if (free_measured_variable_flag && measured_variable_p)
-						{
-							if ((mv_mem == MF_SHALLOW_COPY) || (mv_mem == MF_DEEP_COPY))
-								{
-									FreeMeasuredVariable (measured_variable_p);
-									measured_variable_p = NULL;
-								}
-						}
-
-				}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
-
-
-		}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
-
-	return status;
-}
+//OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+//{
+//	OperationStatus status = OS_IDLE;
+//
+//	/*
+//	 * ignore our column names
+//	 */
+//	if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0))
+//		{
+//			MeasuredVariable *measured_variable_p = NULL;
+//			MEM_FLAG mv_mem = MF_ALREADY_FREED;
+//			struct tm *start_date_p = NULL;
+//			struct tm *end_date_p = NULL;
+//			bool corrected_value_flag = false;
+//			uint32 observation_index = OB_DEFAULT_INDEX;
+//
+//			status = GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &mv_mem, data_p);
+//
+//			if (status == OS_SUCCEEDED)
+//				{
+//					ObservationNode *observation_node_p = NULL;
+//					Observation *observation_p = NULL;
+//					bool free_measured_variable_flag = false;
+//					const char *growth_stage_s = NULL;
+//					const char *method_s = NULL;
+//					ObservationNature nature = ON_ROW;
+//					Instrument *instrument_p = NULL;
+//					const json_t *raw_value_p = NULL;
+//					const json_t *corrected_value_p = NULL;
+//					bool (*set_observation_value_fn) (Observation *observation_p, const json_t *value_p) = NULL;
+//
+//
+//					/* reset status */
+//					status = OS_FAILED;
+//
+//					if (corrected_value_flag)
+//						{
+//							corrected_value_p = value_p;
+//							set_observation_value_fn = SetObservationCorrectedValueFromJSON;
+//						}
+//					else
+//						{
+//							raw_value_p = value_p;
+//							set_observation_value_fn = SetObservationRawValueFromJSON;
+//						}
+//
+//					observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+//
+//					if (observation_node_p)
+//						{
+//							/*
+//							 * Is the json value non-trivial?
+//							 */
+//							if (!IsJSONEmpty (value_p))
+//								{
+//
+//									if (set_observation_value_fn (observation_p, value_p))
+//										{
+//											status = OS_SUCCEEDED;
+//										}
+//									else
+//										{
+//											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+//
+//											bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+//
+//											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservation%sValue failed for row \"%s\" and key \"%s\"", corrected_value_flag ? "Corrected" : "Raw", id_s, key_s);
+//											//FreeObservation (observation_p);
+//										}
+//
+//								}		/* if (!IsJSONEmpty (value_p)) */
+//							else
+//								{
+//									/*
+//									 * We have an empty value so remove the existing observation
+//									 */
+//									RemoveObservationNode (row_p, observation_node_p);
+//								}
+//
+//							free_measured_variable_flag = true;
+//						}		/* if (observation_node_p) */
+//					else
+//						{
+//							/*
+//							 * Are the json values non-trivial?
+//							 */
+//							if (! ((IsJSONEmpty (raw_value_p)) && (IsJSONEmpty (corrected_value_p))))
+//								{
+//									bson_oid_t *observation_id_p = GetNewBSONOid ();
+//
+//									if (observation_id_p)
+//										{
+//											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+//											ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+//
+//											if (obs_type != OT_NUM_TYPES)
+//												{
+//													observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, mv_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
+//												}
+//											else
+//												{
+//													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetObservationTypeForScaleClass () failed for \"%s\" and variable \"%s\"", class_p -> sc_name_s, GetMeasuredVariableName (measured_variable_p));
+//												}
+//
+//
+//											if (observation_p)
+//												{
+//													if (AddObservationToStandardRow (row_p, observation_p))
+//														{
+//															status = OS_SUCCEEDED;
+//														}
+//													else
+//														{
+//															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+//
+//															bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+//
+//															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+//															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add observed measured variable", row_index, key_s);
+//
+//															FreeObservation (observation_p);
+//														}
+//
+//												}		/* if (observation_p) */
+//											else
+//												{
+//													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+//
+//													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+//
+//													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row id \"%s\" and spreadsheet row " UINT32_FMT " and column \"%s\"", id_s, row_index, key_s);
+//													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Invalid value", row_index, key_s);
+//
+//													free_measured_variable_flag = true;
+//												}
+//
+//										}		/* if (observation_id_p) */
+//									else
+//										{
+//											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation id for row number " UINT32_FMT " and key \"%s\"", row_index, key_s);
+//										}
+//								}		/* if (! ((IsJSONEmpty (raw_value_p)) && (IsJSONEmpty (corrected_value_p)))) */
+//							else
+//								{
+//									/*
+//									 * A new Observation but with no value e.g. empty row-column entry in the
+//									 * spreadsheet.
+//									 */
+//									status = OS_SUCCEEDED;
+//								}
+//						}
+//
+//
+//
+//					if (start_date_p)
+//						{
+//							FreeTime (start_date_p);
+//							start_date_p = NULL;
+//						}
+//
+//					if (end_date_p)
+//						{
+//							FreeTime (end_date_p);
+//							end_date_p = NULL;
+//						}
+//
+//					/*
+//					 * If the Observation failed to be allocated then, we need to free the
+//					 * Measured Variable as FreeObservation () would normally take care of
+//					 * that when the
+//					 */
+//					if (free_measured_variable_flag && measured_variable_p)
+//						{
+//							if ((mv_mem == MF_SHALLOW_COPY) || (mv_mem == MF_DEEP_COPY))
+//								{
+//									FreeMeasuredVariable (measured_variable_p);
+//									measured_variable_p = NULL;
+//								}
+//						}
+//
+//				}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
+//
+//
+//		}		/* if ((strcmp (key_s, S_PLOT_INDEX_S) != 0) && (strcmp (key_s, S_RACK_S) != 0)) */
+//
+//	return status;
+//}
 
 
 
@@ -852,8 +857,14 @@ OperationStatus AddSingleTreatmentFactorValueToStandardRow  (StandardRow *row_p,
 }
 
 
+void RemoveObservationNode (const StandardRow *row_p, ObservationNode *node_p)
+{
+	LinkedListRemove (row_p -> sr_observations_p, & (node_p -> on_node));
+	FreeObservationNode (node_p);
+}
 
-Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
+
+ObservationNode *GetMatchingObservationNode (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
 {
 	ObservationNode *node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
 
@@ -863,12 +874,25 @@ Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVar
 
 			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p, index_p))
 				{
-					return existing_observation_p;
+					return node_p;
 				}
 			else
 				{
 					node_p = (ObservationNode *) (node_p -> on_node.ln_next_p);
 				}
+		}
+
+	return NULL;
+}
+
+
+Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
+{
+	ObservationNode *node_p = GetMatchingObservationNode (row_p, variable_p, start_date_p, end_date_p, index_p);
+
+	if (node_p)
+		{
+			return (node_p -> on_observation_p);
 		}
 
 	return NULL;
