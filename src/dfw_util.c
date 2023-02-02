@@ -999,7 +999,7 @@ char *GetBackupFilename (const char *id_s, const FieldTrialServiceData *data_p)
 	char *filename_s = NULL;
 	struct tm current_time;
 
-	if (GetCurrentTime (&current_time))
+	if (GetPresentTime (&current_time))
 		{
 			/*
 			 * Use '-' as the delimiter as the default one ':'
