@@ -208,7 +208,7 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 				{
 					if (PopulateRowFromJSON (& (row_p -> sr_base), plot_p, row_json_p, format, data_p))
 						{
-							if ((format == VF_CLIENT_FULL) || (format == VF_INDEXING))
+							if (format != VF_CLIENT_MINIMAL)
 								{
 									/*
 									 * If we haven't already got the material, get it!
@@ -350,13 +350,13 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get row's material for plot \"%s\" at [" UINT32_FMT ", " UINT32_FMT "]", id_s, plot_p -> pl_row_index, plot_p -> pl_column_index);
 										}
 
-								}		/* end of normal row */
+								}		/* if (format == VF_CLIENT_FULL) */
 
-						}		/* if (format == VF_CLIENT_FULL) */
+						}		/* if (PopulateRowFromJSON (& (row_p -> sr_base), plot_p, row_json_p, format, data_p)) */
 
-				}		/* if (PopulateRowFromJSON (& (row_p -> sr_base), plot_p, row_json_p, format, data_p)) */
+				}		/* if (row_p) */
 
-		}		/* if (row_p) */
+		}		/* if (plot_p) */
 
 
 
