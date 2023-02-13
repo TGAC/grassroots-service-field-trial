@@ -199,6 +199,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByStudyIndex (Plot *plot
 DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByRackIndex (Plot *plot_p, const uint32 rack_index);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIdString (const char *plot_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

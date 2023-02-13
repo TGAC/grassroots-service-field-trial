@@ -127,10 +127,6 @@ static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const FieldTrialSe
 
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
 
-
-static const char *GetStudyDefaultValueFromJSON (const char *study_id_param_s, const json_t *params_json_p);
-
-
 static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss);
 
 
@@ -630,16 +626,16 @@ bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *p
 bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	const NamedParameterType params [] =
-			{
-					STUDY_NUM_PLOT_ROWS ,
-					STUDY_NUM_PLOT_COLS,
-					STUDY_NUM_REPLICATES,
-					STUDY_PLOT_WIDTH,
-					STUDY_PLOT_LENGTH,
-					STUDY_SOWING_YEAR,
-					STUDY_HARVEST_YEAR,
-					NULL
-			};
+		{
+			STUDY_NUM_PLOT_ROWS ,
+			STUDY_NUM_PLOT_COLS,
+			STUDY_NUM_REPLICATES,
+			STUDY_PLOT_WIDTH,
+			STUDY_PLOT_LENGTH,
+			STUDY_SOWING_YEAR,
+			STUDY_HARVEST_YEAR,
+			NULL
+		};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
@@ -986,44 +982,6 @@ bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param
 /*
  * STATIC DEFINITIONS
  */
-
-
-static const char *GetStudyDefaultValueFromJSON (const char *study_id_param_s, const json_t *params_json_p)
-{
-	const char *study_id_s;
-
-	if (params_json_p)
-		{
-			const size_t num_entries = json_array_size (params_json_p);
-			size_t i;
-
-			for (i = 0; i < num_entries; ++ i)
-				{
-					const json_t *param_json_p = json_array_get (params_json_p, i);
-					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
-
-					if (name_s)
-						{
-							if (strcmp (name_s, study_id_param_s) == 0)
-								{
-									study_id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
-
-									if (!study_id_s)
-										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, study_id_param_s);
-										}
-
-									/* force exit from loop */
-									i = num_entries;
-								}
-						}		/* if (name_s) */
-
-				}		/* for (i = 0; i < num_entries; ++ i) */
-
-		}		/* if (params_json_p) */
-
-	return study_id_s;
-}
 
 
 
@@ -3751,7 +3709,7 @@ Study *GetStudyFromResource (DataResource *resource_p, const NamedParameterType 
 
 					if (params_json_p)
 						{
-							const char *study_id_s = GetStudyDefaultValueFromJSON (study_param_type.npt_name_s, params_json_p);
+							const char *study_id_s = GetStringDefaultValueFromJSON (study_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing study id?

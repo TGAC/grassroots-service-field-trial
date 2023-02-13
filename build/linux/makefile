@@ -69,6 +69,7 @@ SRCS 	= \
 	dfw_field_trial_service_data.c \
 	dfw_util.c \
 	discard_row.c \
+	edit_plot.c \
 	field_trial.c \
 	field_trial_jobs.c \
 	field_trial_mongodb.c \

@@ -36,6 +36,7 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFo
 
 static bool SetValidPlotImage (const Plot *plot_p, json_t *plot_json_p);
 
+static void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 
@@ -824,6 +825,20 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, cons
 	return success_flag;
 }
 
+
+
+Plot *GetPlotByIdString (const char *plot_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Plot *plot_p = GetDFWObjectByIdString (plot_id_s, DFTD_PLOT, GetPlotCallback, format, data_p);
+
+	return plot_p;
+}
+
+
+static void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	return GetPlotFromJSON (json_p, NULL, format, data_p);
+}
 
 
 

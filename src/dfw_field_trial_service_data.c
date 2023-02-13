@@ -70,7 +70,7 @@ static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 };
 
 
-static MeasuredVariableNode *GetCachedMeasuredVariableNodeByName (FieldTrialServiceData *data_p, const char *name_s);
+static MeasuredVariableNode *GetCachedMeasuredVariableNodeByName (const FieldTrialServiceData *data_p, const char *name_s);
 
 
 
@@ -439,7 +439,7 @@ bool RemoveCachedMeasuredVariableByName (FieldTrialServiceData *data_p, const ch
 
 
 
-static MeasuredVariableNode *GetCachedMeasuredVariableNodeByName (FieldTrialServiceData *data_p, const char *name_s)
+static MeasuredVariableNode *GetCachedMeasuredVariableNodeByName (const FieldTrialServiceData *data_p, const char *name_s)
 {
 	if (data_p -> dftsd_measured_variables_cache_p)
 		{

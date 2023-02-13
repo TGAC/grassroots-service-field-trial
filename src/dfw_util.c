@@ -1038,6 +1038,45 @@ char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *da
 
 
 
+const char *GetStringDefaultValueFromJSON (const char *param_s, const json_t *params_json_p)
+{
+	const char *value_s;
+
+	if (params_json_p)
+		{
+			const size_t num_entries = json_array_size (params_json_p);
+			size_t i;
+
+			for (i = 0; i < num_entries; ++ i)
+				{
+					const json_t *param_json_p = json_array_get (params_json_p, i);
+					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+					if (name_s)
+						{
+							if (strcmp (name_s, param_s) == 0)
+								{
+									value_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
+
+									if (!value_s)
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, param_s);
+										}
+
+									/* force exit from loop */
+									i = num_entries;
+								}
+						}		/* if (name_s) */
+
+				}		/* for (i = 0; i < num_entries; ++ i) */
+
+		}		/* if (params_json_p) */
+
+	return value_s;
+}
+
+
+
 bool SetFieldTrialServiceJobURL (ServiceJob *job_p, const char * const url_prefix_s, const char * const id_s)
 {
 	bool success_flag = false;

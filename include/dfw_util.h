@@ -113,6 +113,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetPlotsUploadsFilename (const char *id_s, c
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetFieldTrialServiceJobURL (ServiceJob *job_p, const char * const url_prefix_s, const char * const id_s);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetStringDefaultValueFromJSON (const char *param_s, const json_t *params_json_p);
+
+
 #ifdef __cplusplus
 }
 #endif

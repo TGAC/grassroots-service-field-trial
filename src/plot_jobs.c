@@ -375,23 +375,20 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	bool success_flag = false;
 
-	if (strcmp (param_name_s, S_STUDIES_LIST.npt_name_s) == 0)
+	const NamedParameterType params [] =
 		{
-			*pt_p = S_STUDIES_LIST.npt_type;
-		}
-	else if (strcmp (param_name_s, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
+			S_STUDIES_LIST ,
+			S_PLOT_TABLE_COLUMN_DELIMITER,
+			PL_PLOT_TABLE,
+			S_AMEND,
+			NULL
+		};
+
+	if (DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
 		{
-			*pt_p = S_PLOT_TABLE_COLUMN_DELIMITER.npt_type;
-		}
-	else if (strcmp (param_name_s, PL_PLOT_TABLE.npt_name_s) == 0)
-		{
-			*pt_p = PL_PLOT_TABLE.npt_type;
-		}
-	else if (strcmp (param_name_s, S_AMEND.npt_name_s) == 0)
-		{
-			*pt_p = S_AMEND.npt_type;
+			success_flag = true;
 		}
 	else
 		{
