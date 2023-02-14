@@ -47,7 +47,13 @@ static NamedParameterType S_MEASURED_VARIABLE_ID  = { "PL Measured Variable Id",
 
 static NamedParameterType S_PHENOTYPE_VALUE  = { "PL Phenotype Value", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_DATE  = { "PL Phenotype Date", PT_TIME };
+static NamedParameterType S_PHENOTYPE_START_DATE  = { "PL Phenotype Start Date", PT_TIME };
+
+static NamedParameterType S_PHENOTYPE_END_DATE  = { "PL Phenotype Start Date", PT_TIME };
+
+static NamedParameterType S_PHENOTYPE_CORRECTED  = { "PL Phenotype Corrected", PT_BOOLEAN };
+
+
 
 static NamedParameterType S_STUDY_NAME  = { "PL Study Name", PT_STRING };
 

@@ -487,6 +487,8 @@ void FreeObservationNode (ListItem *node_p)
 }
 
 
+
+
 json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat format)
 {
 	json_t *observation_json_p = json_object ();
