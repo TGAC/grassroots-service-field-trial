@@ -73,6 +73,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddIntegerObservationCorrectedValueToJSON (co
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddIntegerObservationValuesToJSON (const Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetIntegerObservationRawValueAsString (IntegerObservation *observation_p, char **value_ss, bool *free_flag_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetIntegerObservationCorrectedValueAsString (IntegerObservation *observation_p, char **value_ss, bool *free_flag_p);
+
+
 #ifdef __cplusplus
 }
 #endif

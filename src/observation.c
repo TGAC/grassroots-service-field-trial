@@ -82,7 +82,8 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 																	void (*clear_fn) (Observation *observation_p),
 																	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
 																	bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),
-																	bool (*set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s))
+																	bool (*set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s),
+																	bool (*get_value_as_string_fn) (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p))
 {
 	struct tm *copied_start_date_p = NULL;
 
@@ -124,6 +125,7 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 									observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
 									observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
 									observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
+									observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
 
 									return true;
 

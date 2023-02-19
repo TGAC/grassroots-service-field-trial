@@ -18,6 +18,7 @@ static bool SetStringObservationValueFromString (Observation *observation_p, Obs
 
 static bool SetStringObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
 
+static bool GetStringObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
 StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char * const raw_value_s, const char * const corrected_value_s,
@@ -38,7 +39,8 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 							memset (observation_p, 0, sizeof (StringObservation));
 
 							if (InitObservation (& (observation_p -> so_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_STRING,
-																	 ClearStringObservation, AddStringObservationValuesToJSON, SetStringObservationValueFromJSON, SetStringObservationValueFromString))
+																	 ClearStringObservation, AddStringObservationValuesToJSON, SetStringObservationValueFromJSON,
+																	 SetStringObservationValueFromString, GetStringObservationValueAsString))
 								{
 									observation_p -> so_raw_value_s = copied_raw_value_s;
 									observation_p -> so_corrected_value_s = copied_corrected_value_s;
@@ -75,11 +77,13 @@ void ClearStringObservation (Observation *observation_p)
 	if (string_obs_p -> so_raw_value_s)
 		{
 			FreeCopiedString (string_obs_p -> so_raw_value_s);
+			string_obs_p -> so_raw_value_s = NULL;
 		}
 
 	if (string_obs_p -> so_corrected_value_s)
 		{
 			FreeCopiedString (string_obs_p -> so_corrected_value_s);
+			string_obs_p -> so_corrected_value_s = NULL;
 		}
 }
 
@@ -167,6 +171,34 @@ static bool SetStringObservationValueFromString (Observation *observation_p, Obs
 		}
 
 	return success_flag;
+}
+
+
+static bool GetStringObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+{
+	bool success_flag = false;
+	StringObservation *string_obs_p = (StringObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				*value_ss = string_obs_p -> so_raw_value_s;
+				*free_value_flag_p = false;
+				success_flag = true;
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				*value_ss = string_obs_p -> so_corrected_value_s;
+				*free_value_flag_p = false;
+				success_flag = true;
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+
 }
 
 

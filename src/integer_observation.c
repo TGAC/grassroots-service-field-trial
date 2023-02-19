@@ -23,6 +23,9 @@ static bool SetIntegerObservationValueFromString (Observation *observation_p, Ob
 
 static bool SetIntegerObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
 
+static bool GetValueAsString (const int32 *value_p, char **value_ss, bool *free_flag_p);
+
+static bool GetIntegerValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
 IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const int32 *raw_value_p, const int32 *corrected_value_p,
@@ -43,7 +46,8 @@ IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct t
 							memset (observation_p, 0, sizeof (IntegerObservation));
 
 							if (InitObservation (& (observation_p -> io_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, OT_INTEGER,
-																	 ClearIntegerObservation, AddIntegerObservationValuesToJSON, SetIntegerObservationValueFromJSON, SetIntegerObservationValueFromString))
+																	 ClearIntegerObservation, AddIntegerObservationValuesToJSON, SetIntegerObservationValueFromJSON, SetIntegerObservationValueFromString,
+																	 GetIntegerValueAsString))
 								{
 									observation_p -> io_raw_value_p = copied_raw_value_p;
 									observation_p -> io_corrected_value_p = copied_corrected_value_p;
@@ -80,11 +84,14 @@ void ClearIntegerObservation (Observation *observation_p)
 	if (int_obs_p -> io_raw_value_p)
 		{
 			FreeMemory (int_obs_p -> io_raw_value_p);
+			int_obs_p -> io_raw_value_p = NULL;
+
 		}
 
 	if (int_obs_p -> io_corrected_value_p)
 		{
 			FreeMemory (int_obs_p -> io_corrected_value_p);
+			int_obs_p -> io_corrected_value_p = NULL;
 		}
 }
 
@@ -206,6 +213,21 @@ bool SetIntegerObservationCorrectedValueFromJSON (IntegerObservation *observatio
 	return SetValueFromJSON (& (observation_p -> io_raw_value_p), value_p);
 }
 
+
+
+bool GetIntegerObservationRawValueAsString (IntegerObservation *observation_p, char **value_ss, bool *free_flag_p)
+{
+	return GetValueAsString (& (observation_p -> io_raw_value_p), value_ss, free_flag_p);
+}
+
+
+bool GetIntegerObservationCorrectedValueAsString (IntegerObservation *observation_p, char **value_ss, bool *free_flag_p)
+{
+	return GetValueAsString (& (observation_p -> io_corrected_value_p), value_ss, free_flag_p);
+}
+
+
+
 /*
  * STATIC DEFINITIONS
  */
@@ -303,6 +325,37 @@ static bool SetValueFromString (int32 **store_pp, const char *value_s)
 }
 
 
+static bool GetValueAsString (const int32 *value_p, char **value_ss, bool *free_flag_p)
+{
+	bool success_flag = false;
+
+	if (value_p)
+		{
+			char *value_s = ConvertIntegerToString (*value_p);
+
+			if (value_s)
+				{
+					*value_ss = value_s;
+					*free_flag_p = true;
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing value " INT32_FMT, *value_p);
+				}
+
+		}
+	else
+		{
+			*value_ss = NULL;
+			*free_flag_p = false;
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
 static bool SetValueFromJSON (int32 **store_pp, const json_t *value_p)
 {
 	bool success_flag = false;
@@ -376,4 +429,29 @@ static bool AddIntegerValueToJSON (json_t *json_p, const char *key_s, const int3
 
 	return success_flag;
 }
+
+
+static bool GetIntegerValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+{
+	bool success_flag = false;
+	IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = GetIntegerObservationRawValueAsString (int_obs_p, value_ss, free_value_flag_p);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = GetIntegerObservationCorrectedValueAsString (int_obs_p, value_ss, free_value_flag_p);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+
+}
+
 

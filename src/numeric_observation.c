@@ -23,6 +23,10 @@ static bool SetNumericObservationValueFromString (Observation *observation_p, Ob
 
 static bool SetNumericObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
 
+static bool GetValueAsString (const double64 *value_p, char **value_ss, bool *free_flag_p);
+
+static bool GetNumericObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
+
 
 NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
 	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p)
@@ -45,7 +49,8 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 																	 ClearNumericObservation,
 																	 AddNumericObservationValuesToJSON,
 																	 SetNumericObservationValueFromJSON,
-																	 SetNumericObservationValueFromString))
+																	 SetNumericObservationValueFromString,
+																	 GetNumericObservationValueAsString))
 								{
 									observation_p -> no_raw_value_p = copied_raw_value_p;
 									observation_p -> no_corrected_value_p = copied_corrected_value_p;
@@ -84,11 +89,13 @@ void ClearNumericObservation (Observation *observation_p)
 	if (numeric_obs_p -> no_raw_value_p)
 		{
 			FreeMemory (numeric_obs_p -> no_raw_value_p);
+			numeric_obs_p -> no_raw_value_p = NULL;
 		}
 
 	if (numeric_obs_p -> no_corrected_value_p)
 		{
 			FreeMemory (numeric_obs_p -> no_corrected_value_p);
+			numeric_obs_p -> no_corrected_value_p = NULL;
 		}
 }
 
@@ -148,6 +155,18 @@ bool SetNumericObservationRawValueFromJSON (NumericObservation *observation_p, c
 bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observation_p, const json_t *value_p)
 {
 	return SetValueFromJSON (& (observation_p -> no_raw_value_p), value_p);
+}
+
+
+bool GetNumericObservationRawValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
+{
+	return GetValueAsString (& (observation_p -> no_raw_value_p), value_ss, free_flag_p);
+}
+
+
+bool GetNumericObservationCorrectedValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
+{
+	return GetValueAsString (& (observation_p -> no_corrected_value_p), value_ss, free_flag_p);
 }
 
 
@@ -380,5 +399,61 @@ static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const doub
 
 	return success_flag;
 }
+
+
+static bool GetNumericObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+{
+	bool success_flag = false;
+	NumericObservation *num_obs_p = (NumericObservation *) observation_p;
+
+	switch (ovt)
+		{
+			case OVT_RAW_VALUE:
+				success_flag = GetNumericObservationRawValueAsString (num_obs_p, value_ss, free_value_flag_p);
+				break;
+
+			case OVT_CORRECTED_VALUE:
+				success_flag = GetNumericObservationCorrectedValueAsString (num_obs_p, value_ss, free_value_flag_p);
+				break;
+
+			default:
+				break;
+		}
+
+	return success_flag;
+
+}
+
+
+static bool GetValueAsString (const double64 *value_p, char **value_ss, bool *free_flag_p)
+{
+	bool success_flag = false;
+
+	if (value_p)
+		{
+			char *value_s = ConvertDoubleToString (*value_p);
+
+			if (value_s)
+				{
+					*value_ss = value_s;
+					*free_flag_p = true;
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate memory for storing value " INT32_FMT, *value_p);
+				}
+
+		}
+	else
+		{
+			*value_ss = NULL;
+			*free_flag_p = false;
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
 
 
