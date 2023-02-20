@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include <bson.h>
+#include <bson/bson.h>
 
 #include "dfw_field_trial_service_data.h"
 #include "instrument.h"

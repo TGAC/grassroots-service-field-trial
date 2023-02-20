@@ -1882,7 +1882,7 @@ bool SaveStudyAsFrictionlessData (Study *study_p, FieldTrialServiceData *data_p)
 																								}
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "json_dump_file () failed for study fd \"%s\" to file \%s\"", study_p -> st_name_s, full_study_filename_s);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, data_package_p, "json_dump_file () failed for study fd \"%s\" to file \"%s\"", study_p -> st_name_s, full_study_filename_s);
 																								}
 
 

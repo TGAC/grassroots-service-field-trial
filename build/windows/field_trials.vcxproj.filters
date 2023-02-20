@@ -15,211 +15,187 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\blank_row.c">
+    <ClCompile Include="..\..\src\blank_row.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\crop.c">
+    <ClCompile Include="..\..\src\crop.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\crop_jobs.c">
+    <ClCompile Include="..\..\src\crop_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\crop_ontology_tool.c">
+    <ClCompile Include="..\..\src\crop_ontology_tool.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\dfw_field_trial_service.c">
+    <ClCompile Include="..\..\src\dfw_field_trial_service.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\dfw_field_trial_service_data.c">
+    <ClCompile Include="..\..\src\dfw_field_trial_service_data.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\dfw_util.c">
+    <ClCompile Include="..\..\src\dfw_util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\discard_row.c">
+    <ClCompile Include="..\..\src\discard_row.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\field_trial.c">
+    <ClCompile Include="..\..\src\field_trial.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\field_trial_jobs.c">
+    <ClCompile Include="..\..\src\field_trial_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\field_trial_mongodb.c">
+    <ClCompile Include="..\..\src\field_trial_mongodb.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\gene_bank.c">
+    <ClCompile Include="..\..\src\gene_bank.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\gene_bank_jobs.c">
+    <ClCompile Include="..\..\src\gene_bank_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\handbook_generator.c">
+    <ClCompile Include="..\..\src\handbook_generator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\image_util.c">
+    <ClCompile Include="..\..\src\image_util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\importer.c">
+    <ClCompile Include="..\..\src\indexing.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\indexing.c">
+    <ClCompile Include="..\..\src\instrument.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\instrument.c">
+    <ClCompile Include="..\..\src\integer_observation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\integer_observation.c">
+    <ClCompile Include="..\..\src\json_processor.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\json_processor.c">
+    <ClCompile Include="..\..\src\location.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\location.c">
+    <ClCompile Include="..\..\src\location_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\location_jobs.c">
+    <ClCompile Include="..\..\src\material.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\material.c">
+    <ClCompile Include="..\..\src\material_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\material_jobs.c">
+    <ClCompile Include="..\..\src\measured_variable.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\measured_variable.c">
+    <ClCompile Include="..\..\src\measured_variable_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\measured_variable_jobs.c">
+    <ClCompile Include="..\..\src\numeric_observation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\merge_plot_row_collections.c">
+    <ClCompile Include="..\..\src\observation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\mongo_scale_class_processor.c">
+    <ClCompile Include="..\..\src\person.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\nominal_scale_class.c">
+    <ClCompile Include="..\..\src\phenotype_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\numeric_observation.c">
+    <ClCompile Include="..\..\src\phenotype_statistics.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\observation.c">
+    <ClCompile Include="..\..\src\plot.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\person.c">
+    <ClCompile Include="..\..\src\plots_cache.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\phenotype_jobs.c">
+    <ClCompile Include="..\..\src\plot_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\phenotype_statistics.c">
+    <ClCompile Include="..\..\src\programme.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\plot.c">
+    <ClCompile Include="..\..\src\programme_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\plot_jobs.c">
+    <ClCompile Include="..\..\src\row.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\plots_cache.c">
+    <ClCompile Include="..\..\src\row_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\programme.c">
+    <ClCompile Include="..\..\src\row_processor.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\programme_jobs.c">
+    <ClCompile Include="..\..\src\search_service.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\row.c">
+    <ClCompile Include="..\..\src\standard_row.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\row_jobs.c">
+    <ClCompile Include="..\..\src\string_observation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\row_processor.c">
+    <ClCompile Include="..\..\src\study.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\search_service.c">
+    <ClCompile Include="..\..\src\study_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\standard_row.c">
+    <ClCompile Include="..\..\src\study_manager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\string_observation.c">
+    <ClCompile Include="..\..\src\submit_crop.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\study.c">
+    <ClCompile Include="..\..\src\submit_field_trial.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\study_germplasms.c">
+    <ClCompile Include="..\..\src\submit_gene_bank.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\study_jobs.c">
+    <ClCompile Include="..\..\src\submit_location.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\study_manager.c">
+    <ClCompile Include="..\..\src\submit_material.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_crop.c">
+    <ClCompile Include="..\..\src\submit_measured_variables.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_drilling.c">
+    <ClCompile Include="..\..\src\submit_plots.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_field_trial.c">
+    <ClCompile Include="..\..\src\submit_program.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_gene_bank.c">
+    <ClCompile Include="..\..\src\submit_study.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_location.c">
+    <ClCompile Include="..\..\src\submit_treatment.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_material.c">
+    <ClCompile Include="..\..\src\submit_treatment_factor.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_measured_variables.c">
+    <ClCompile Include="..\..\src\time_observation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_plots.c">
+    <ClCompile Include="..\..\src\treatment.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_program.c">
+    <ClCompile Include="..\..\src\treatment_factor.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_study.c">
+    <ClCompile Include="..\..\src\treatment_factor_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_treatment.c">
+    <ClCompile Include="..\..\src\treatment_factor_value.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\submit_treatment_factor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\time_observation.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\treatment.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\treatment_factor.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\treatment_factor_jobs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\treatment_factor_value.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\treatment_jobs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\treatment_sanitiser.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\url_setter.c">
+    <ClCompile Include="..\..\src\treatment_jobs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -338,10 +314,10 @@
     <ClInclude Include="..\..\..\include\plot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\plot_jobs.h">
+    <ClInclude Include="..\..\..\include\plots_cache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\plots_cache.h">
+    <ClInclude Include="..\..\..\include\plot_jobs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\programme.h">

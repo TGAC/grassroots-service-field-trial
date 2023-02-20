@@ -114,7 +114,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *AllocateStandardRow (bson_oid_t *id_p
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetStandardRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const struct Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *GetStandardRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const struct Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 //DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveRow (Row *row_p, const FieldTrialServiceData *data_p, bool insert_flag);
 

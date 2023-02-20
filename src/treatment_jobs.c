@@ -310,13 +310,13 @@ bool RunForSubmissionTreatmentParams (FieldTrialServiceData *data_p, ParameterSe
 				}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, TR_DESCRIPTION.npt_name_s, &description_s)) */
 			else
 				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", TR_DESCRIPTION.npt_name_s);
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", TR_DESCRIPTION.npt_name_s);
 				}
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, TR_NAME.npt_name_s, &name_s)) */
 	else
 		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", TR_NAME.npt_name_s);
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", TR_NAME.npt_name_s);
 		}
 
 	return job_done_flag;

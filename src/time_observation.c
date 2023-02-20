@@ -219,13 +219,13 @@ bool SetTimeObservationCorrectedValueFromJSON (TimeObservation *observation_p, c
 
 bool GetTimeObservationRawValueAsString (TimeObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
-	return GetValueAsString (& (observation_p -> to_raw_value_p), value_ss, free_flag_p);
+	return GetValueAsString (observation_p -> to_raw_value_p, value_ss, free_flag_p);
 }
 
 
 bool GetTimeObservationCorrectedValueAsString (TimeObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
-	return GetValueAsString (& (observation_p -> to_corrected_value_p), value_ss, free_flag_p);
+	return GetValueAsString (observation_p -> to_corrected_value_p, value_ss, free_flag_p);
 }
 
 

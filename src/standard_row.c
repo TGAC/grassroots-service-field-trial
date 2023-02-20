@@ -134,14 +134,14 @@ StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, con
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 								}
 
 							FreeLinkedList (tf_values_p);
 						}		/* if (tf_values_p) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate treatment factors list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate treatment factors list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 						}
 
 
@@ -149,12 +149,12 @@ StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, con
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observations list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observations list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 				}
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No valid material for row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index, index);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No valid material for row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 		}
 
 	return NULL;
@@ -180,7 +180,7 @@ void ClearStandardRow (Row *row_p)
 
 
 
-Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
+StandardRow *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	StandardRow *row_p = NULL;
 	Material *material_to_use_p = material_p;
@@ -368,7 +368,7 @@ Row *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *m
 					FreeMaterial (material_to_use_p);
 				}
 
-			return (& (row_p -> sr_base));
+			return row_p;
 		}
 	else
 		{

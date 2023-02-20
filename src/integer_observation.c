@@ -217,13 +217,13 @@ bool SetIntegerObservationCorrectedValueFromJSON (IntegerObservation *observatio
 
 bool GetIntegerObservationRawValueAsString (IntegerObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
-	return GetValueAsString (& (observation_p -> io_raw_value_p), value_ss, free_flag_p);
+	return GetValueAsString (observation_p -> io_raw_value_p, value_ss, free_flag_p);
 }
 
 
 bool GetIntegerObservationCorrectedValueAsString (IntegerObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
-	return GetValueAsString (& (observation_p -> io_corrected_value_p), value_ss, free_flag_p);
+	return GetValueAsString (observation_p -> io_corrected_value_p, value_ss, free_flag_p);
 }
 
 

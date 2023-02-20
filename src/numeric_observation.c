@@ -160,13 +160,13 @@ bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observatio
 
 bool GetNumericObservationRawValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
-	return GetValueAsString (& (observation_p -> no_raw_value_p), value_ss, free_flag_p);
+	return GetValueAsString (observation_p -> no_raw_value_p, value_ss, free_flag_p);
 }
 
 
 bool GetNumericObservationCorrectedValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
-	return GetValueAsString (& (observation_p -> no_corrected_value_p), value_ss, free_flag_p);
+	return GetValueAsString (observation_p -> no_corrected_value_p, value_ss, free_flag_p);
 }
 
 

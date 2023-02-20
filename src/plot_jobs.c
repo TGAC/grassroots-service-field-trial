@@ -338,7 +338,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 								}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", PL_PLOT_TABLE.npt_name_s);
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", PL_PLOT_TABLE.npt_name_s);
 								}
 
 
@@ -358,14 +358,14 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 						}		/* if (study_p) */
 					else
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \"%s\"", study_id_s);
 						}
 				}		/* if (!IsStringEmpty (study_id_s)) */
 
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 	else
 		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", S_STUDIES_LIST.npt_name_s);
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", S_STUDIES_LIST.npt_name_s);
 		}
 
 	return job_done_flag;
@@ -1111,7 +1111,7 @@ static StandardRow *CreateOrUpdateStandardRowFromJSON (ServiceJob *job_p, json_t
 	else
 		{
 			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Unknown Gene Bank", row_index, PL_GENE_BANK_S);
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \%s\"", gene_bank_s);
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get gene bank \"%s\"", gene_bank_s);
 		}
 
 	return sr_p;

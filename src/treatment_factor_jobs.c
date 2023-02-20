@@ -308,7 +308,7 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 						}		/* if (study_p) */
 					else
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \%s\"", study_id_s);
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get parent study for plots with id \"%s\"", study_id_s);
 						}
 
 				}		/* if (!IsStringEmpty (study_id_s)) */
@@ -316,7 +316,7 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 		}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_STUDIES_LIST.npt_name_s, &parent_study_value)) */
 	else
 		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \%s\"", TFJ_STUDY_ID.npt_name_s);
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", TFJ_STUDY_ID.npt_name_s);
 		}
 
 	return job_done_flag;

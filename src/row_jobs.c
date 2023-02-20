@@ -860,7 +860,7 @@ OperationStatus AddSingleTreatmentFactorValueToStandardRow  (StandardRow *row_p,
 void RemoveObservationNode (const StandardRow *row_p, ObservationNode *node_p)
 {
 	LinkedListRemove (row_p -> sr_observations_p, & (node_p -> on_node));
-	FreeObservationNode (node_p);
+	FreeObservationNode (& (node_p -> on_node));
 }
 
 

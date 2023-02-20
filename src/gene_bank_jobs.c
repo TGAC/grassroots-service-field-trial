@@ -68,24 +68,24 @@ bool AddSubmissionGeneBankParams (ServiceData *data_p, ParameterSet *param_set_p
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \%s\"", S_ADD_GENE_BANK.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \"%s\"", S_ADD_GENE_BANK.npt_name_s);
 										}
 
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \%s\"", S_GENE_BANK_API_URL.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \"%s\"", S_GENE_BANK_API_URL.npt_name_s);
 								}
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \%s\"", S_GENE_BANK_URL.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \"%s\"", S_GENE_BANK_URL.npt_name_s);
 						}
 
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \%s\"", S_GENE_BANK_NAME.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param \"%s\"", S_GENE_BANK_NAME.npt_name_s);
 				}
 
 		}		/* if (group_p) */

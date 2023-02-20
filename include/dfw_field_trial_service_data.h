@@ -33,7 +33,7 @@
 
 #include "service.h"
 #include "mongodb_tool.h"
-#include "sqlite_tool.h"
+//#include "sqlite_tool.h"
 
 typedef enum
 {

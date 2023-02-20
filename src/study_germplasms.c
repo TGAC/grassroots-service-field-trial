@@ -7,7 +7,7 @@
 
 #include "streams.h"
 #include "string_utils.h"
-
+#include "material.h"
 
 
 Material *AllocateMaterial (bson_oid_t *id_p, const char *accession_s, const char *species_s, const char *type_s, const char *selection_reason_s, const char *generation_s, const char *supplier_s, const char *source_s, const char *germplasm_origin_s, const char *treatment_s, bool gru_flag, bool cleaned_flag, uint32 tgw, const Study *area_p, const bson_oid_t *gene_bank_id_p, const FieldTrialServiceData *data_p)
