@@ -175,6 +175,7 @@
     <ClCompile Include="..\..\src\dfw_field_trial_service_data.c" />
     <ClCompile Include="..\..\src\dfw_util.c" />
     <ClCompile Include="..\..\src\discard_row.c" />
+    <ClCompile Include="..\..\src\edit_plot.c" />
     <ClCompile Include="..\..\src\field_trial.c" />
     <ClCompile Include="..\..\src\field_trial_jobs.c" />
     <ClCompile Include="..\..\src\field_trial_mongodb.c" />
@@ -300,6 +301,7 @@
     <ClInclude Include="..\..\..\include\treatment_factor_jobs.h" />
     <ClInclude Include="..\..\..\include\treatment_factor_value.h" />
     <ClInclude Include="..\..\..\include\treatment_jobs.h" />
+    <ClInclude Include="..\..\include\edit_plot.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

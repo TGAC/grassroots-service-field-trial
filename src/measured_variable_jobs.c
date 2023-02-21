@@ -23,6 +23,7 @@
 #define ALLOCATE_MEASURED_VARIABLE_CONSTANTS (1)
 #include "measured_variable_jobs.h"
 #include "string_utils.h"
+#include "math_utils.h"
 #include "crop_ontology_tool.h"
 #include "dfw_util.h"
 #include "io_utils.h"
@@ -892,7 +893,7 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 static char *GetRowAsString (const int32 row)
 {
 	char *row_s = NULL;
-	char *num_s = GetUnsignedIntAsString (row);
+	char *num_s = ConvertIntegerToString (row);
 
 	if (num_s)
 		{

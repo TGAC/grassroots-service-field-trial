@@ -25,6 +25,8 @@
 
 #include "audit.h"
 
+#include "time_util.h"
+
 #include "plot.h"
 #include "row.h"
 
@@ -49,13 +51,14 @@ static NamedParameterType S_PLOT_ID = { "PL Id", PT_STRING };
 
 static NamedParameterType S_MEASURED_VARIABLE_NAME  = { "PL Measured Variable Name", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_VALUE  = { "PL Phenotype Value", PT_STRING };
+static NamedParameterType S_PHENOTYPE_RAW_VALUE  = { "PL Phenotype Raw Value", PT_STRING };
+
+static NamedParameterType S_PHENOTYPE_CORRECTED_VALUE = { "PL Phenotype Corrected Value", PT_STRING };
 
 static NamedParameterType S_PHENOTYPE_START_DATE  = { "PL Phenotype Start Date", PT_TIME };
 
 static NamedParameterType S_PHENOTYPE_END_DATE  = { "PL Phenotype Start Date", PT_TIME };
 
-static NamedParameterType S_PHENOTYPE_CORRECTED  = { "PL Phenotype Corrected", PT_BOOLEAN };
 
 
 
@@ -115,10 +118,10 @@ static bool AddBooleanToJSONArray (json_t *array_p, const bool corrected_flag);
 
 static bool AddStringPhenotypeValueToJSON (json_t *array_p, Observation *observation_p, ObservationValueType ovt);
 
-static bool PopulateExistingValuesInJSON (Row *active_row_p, json_t **existing_mv_names_pp, json_t **existing_phenotype_values_pp,
-																					json_t **existing_phenotype_start_dates_pp, json_t **existing_phenotype_end_dates_pp,
-																					json_t **existing_phenotype_corrected_pp);
 
+static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names_sss, char ***existing_phenotype_raw_values_sss,
+																					char ***existing_phenotype_corrected_values_sss,
+																					struct tm ***existing_phenotype_start_dates_ppp, struct tm ***existing_phenotype_end_dates_ppp);
 /*
  * API definitions
  */
@@ -760,9 +763,9 @@ static bool AddStringToJSONArray (json_t *array_p, const char *value_s)
 }
 
 
-static bool PopulateExistingValuesInJSON (Row *active_row_p, json_t **existing_mv_names_pp, json_t **existing_phenotype_values_pp,
-																					json_t **existing_phenotype_start_dates_pp, json_t **existing_phenotype_end_dates_pp,
-																					json_t **existing_phenotype_corrected_pp)
+static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names_sss, char ***existing_phenotype_raw_values_sss,
+																					char ***existing_phenotype_corrected_values_sss,
+																					struct tm ***existing_phenotype_start_dates_ppp, struct tm ***existing_phenotype_end_dates_ppp)
 {
 	bool success_flag = false;
 
@@ -901,14 +904,14 @@ static bool AddPhenotypeParameters (Plot *active_plot_p, const char *child_group
 	bool success_flag = false;
 	Row *active_row_p;
 
-	json_t *existing_mv_names_p;
+	char **existing_mv_names_p;
 	json_t *existing_phenotype_values_p;
 	json_t *existing_phenotype_start_dates_p;
 	json_t *existing_phenotype_end_dates_p;
 	json_t *existing_phenotype_corrected_p;
 
 
-	if (PopulateExistingValuesInJSON (active_row_p, &existing_mv_names_p, &existing_phenotype_values_p,
+	if (PopulateExistingValues (active_row_p, &existing_mv_names_p, &existing_phenotype_values_p,
 																		&existing_phenotype_start_dates_p, &existing_phenotype_end_dates_p,
 																		&existing_phenotype_corrected_p))
 		{

@@ -565,11 +565,11 @@ static void GetCacheList (ServiceJob *job_p, const bool full_path_flag, const Fi
 
 															if (SetJSONString (file_p, CONTEXT_PREFIX_SCHEMA_ORG_S "name", filename_s))
 																{
-																	struct tm timestamp;
+																	struct tm *timestamp_p = localtime (& (info.fi_last_modified));
 
-																	if (localtime_r (& (info.fi_last_modified), &timestamp))
+																	if (timestamp_p)
 																		{
-																			char *time_s = GetTimeAsString (&timestamp, true, NULL);
+																			char *time_s = GetTimeAsString (timestamp_p, true, NULL);
 
 																			if (time_s)
 																				{
