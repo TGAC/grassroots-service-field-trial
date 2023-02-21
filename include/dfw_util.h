@@ -34,10 +34,18 @@ extern "C"
 #endif
 
 
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL	void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL	void *GetDFWObjectByNamedId (const bson_oid_t *id_p, DFWFieldTrialData collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void *GetDFWObjectByNamedIdString (const char *object_id_s, DFWFieldTrialData collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyValidDate (const struct tm *src_p, struct tm **dest_pp);

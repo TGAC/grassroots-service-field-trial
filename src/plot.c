@@ -36,7 +36,6 @@ static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFo
 
 static bool SetValidPlotImage (const Plot *plot_p, json_t *plot_json_p);
 
-static void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 
@@ -835,7 +834,7 @@ Plot *GetPlotByIdString (const char *plot_id_s, const ViewFormat format, const F
 }
 
 
-static void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	return GetPlotFromJSON (json_p, NULL, format, data_p);
 }

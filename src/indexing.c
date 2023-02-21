@@ -33,6 +33,8 @@
 #include "programme_jobs.h"
 #include "treatment_jobs.h"
 #include "audit.h"
+#include "row_jobs.h"
+
 
 #include "boolean_parameter.h"
 #include "json_parameter.h"
@@ -1872,6 +1874,9 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 				{
 					if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], PL_PARENT_STUDY_S, false, false))
 						{
+							uint32 i = 0;
+							const uint32 num_keys = 2;
+
 							/* Measured Variables */
 							char *key_s = GetMeasuredVariablesNameKey ();
 
@@ -1879,13 +1884,26 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 								{
 									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], key_s, true, false))
 										{
-											status = OS_SUCCEEDED;
+											++ i;
 										}
 
 									FreeMeasuredVariablesNameKey (key_s);
 								}
 
+							/* Rows */
+							key_s = GetRowsNameKey ();
 
+							if (key_s)
+								{
+									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], key_s, true, false))
+										{
+											++ i;
+										}
+
+									FreeRowsNameKey (key_s);
+								}
+
+							status = (i == num_keys) ? OS_SUCCEEDED : OS_PARTIALLY_SUCCEEDED;
 						}
 				}
 

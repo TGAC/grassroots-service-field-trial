@@ -234,6 +234,10 @@ json_t *GetRowAsJSON (const Row *row_p, const ViewFormat format, JSONProcessor *
 }
 
 
+
+
+
+
 Row *GetRowFromJSON (const json_t *row_json_p, Plot *plot_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Row *row_p = NULL;

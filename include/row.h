@@ -198,6 +198,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void SetRowCallbackFunctions (Row *row_p,
 																														bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s));
 
 
+
+
 #ifdef __cplusplus
 }
 #endif

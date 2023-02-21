@@ -259,8 +259,7 @@ char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialSe
 }
 
 
-
-void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetDFWObjectByNamedId (const bson_oid_t *id_p, DFWFieldTrialData collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -274,7 +273,7 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 
 			if (query_p)
 				{
-					if (BSON_APPEND_OID (query_p, MONGO_ID_S, id_p))
+					if (BSON_APPEND_OID (query_p, id_key_s, id_p))
 						{
 							json_t *results_p = NULL;
 
@@ -346,7 +345,13 @@ void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_typ
 }
 
 
-void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	return GetDFWObjectByNamedId (id_p, collection_type, MONGO_ID_S, get_obj_from_json_fn, format, data_p);
+}
+
+
+void *GetDFWObjectByNamedIdString (const char *object_id_s, DFWFieldTrialData collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 
@@ -356,7 +361,7 @@ void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collect
 
 			bson_oid_init_from_string (&oid, object_id_s);
 
-			result_p = GetDFWObjectById (&oid, collection_type, get_obj_from_json_fn, format, data_p);
+			result_p = GetDFWObjectByNamedId (&oid, collection_type, id_key_s, get_obj_from_json_fn, format, data_p);
 		}		/* if (bson_oid_is_valid (field_trial_id_s, strlen (object_id_s))) */
 	else
 		{
@@ -364,6 +369,12 @@ void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collect
 		}
 
 	return result_p;
+}
+
+
+void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	return GetDFWObjectByNamedIdString (object_id_s, collection_type, MONGO_ID_S, get_obj_from_json_fn, format, data_p);
 }
 
 

@@ -202,6 +202,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL struct Row *GetRowFromPlotByRackIndex (Plot *plot_
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByIdString (const char *plot_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
 #ifdef __cplusplus
 }
 #endif

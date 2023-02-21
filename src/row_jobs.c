@@ -20,7 +20,7 @@
  *      Author: billy
  */
 
-
+#include "dfw_util.h"
 #include "measured_variable_jobs.h"
 #include "row_jobs.h"
 #include "plot_jobs.h"
@@ -1078,6 +1078,73 @@ bool GetBlankValueFromSubmissionJSON (const json_t *row_json_p)
 	return false;
 }
 
+
+char *GetRowsNameKey (void)
+{
+	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", MONGO_ID_S, NULL);
+
+	if (key_s)
+		{
+			return key_s;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "ConcatenateVarargsStrings () failed for \"%s\", \".\" and \"%s\"", PL_ROWS_S, MONGO_ID_S);
+		}
+
+	return NULL;
+}
+
+
+void FreeRowsNameKey (char *key_s)
+{
+	FreeCopiedString (key_s);
+}
+
+
+Row *GetRowByIdString (const char *row_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Row *found_row_p = NULL;
+	char *row_key_s = GetRowsNameKey ();
+
+	if (row_key_s)
+		{
+			bson_oid_t *row_id_p = GetBSONOidFromString (row_id_s);
+
+			if (row_id_p)
+				{
+					Plot *parent_plot_p = GetDFWObjectByNamedIdString (row_id_s, DFTD_PLOT, row_key_s, GetPlotCallback, format, data_p);
+
+					if (parent_plot_p)
+						{
+							RowNode *row_node_p = (RowNode *) (parent_plot_p -> pl_rows_p -> ll_head_p);
+
+							while (row_node_p)
+								{
+									Row *r_p = row_node_p -> rn_row_p;
+
+									if (bson_oid_equal (row_id_p, r_p -> ro_id_p))
+										{
+											found_row_p = r_p;
+											row_node_p = NULL;		/* force exit from loop */
+										}
+									else
+										{
+											row_node_p = (RowNode *) (row_node_p -> rn_node.ln_next_p);
+										}
+								}
+
+						}
+
+					FreeBSONOid (row_id_p);
+				}
+
+
+			FreeRowsNameKey (row_key_s);
+		}		/* if (row_key_s) */
+
+	return found_row_p;
+}
 
 
 

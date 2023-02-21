@@ -83,6 +83,14 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetDiscardValueFromSubmissionJSON (const json
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetBlankValueFromSubmissionJSON (const json_t *row_json_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Row *GetRowByIdString (const char *row_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetRowsNameKey (void);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowsNameKey (char *key_s);
+
 #ifdef __cplusplus
 }
 #endif
