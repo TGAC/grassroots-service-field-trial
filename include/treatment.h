@@ -44,8 +44,10 @@ struct Treatment
 	SchemaTerm *tr_ontology_term_p;
 
 	char **tr_parent_names_ss;
+	size_t tr_num_parents;
 
 	char **tr_synonyms_ss;
+	size_t tr_num_synonyms;
 };
 
 
@@ -86,7 +88,7 @@ typedef struct TreatmentNode
 
 TREATMENT_PREFIX const char *TR_NAME_S TREATMENT_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 TREATMENT_PREFIX const char *TR_TERM_S TREATMENT_VAL ("term");
-TREATMENT_PREFIX const char *TR_PARENTS_S TREATMENT_VAL ("parents");
+TREATMENT_PREFIX const char *TR_PARENTS_S TREATMENT_VAL ("parent_name");
 TREATMENT_PREFIX const char *TR_SYNONYMS_S TREATMENT_VAL ("synonyms");
 
 
@@ -97,7 +99,8 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const bool copy_parents_flag, char **synonyms_ss, const bool copy_synonyms_flag, bson_oid_t *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const size_t num_parents, const bool copy_parents_flag, char **synonyms_ss, const size_t num_synonyms, const bool copy_synonyms_flag, bson_oid_t *id_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatment (Treatment *treatment_p);
 

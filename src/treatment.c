@@ -29,15 +29,16 @@
 #include "dfw_util.h"
 
 
-static char **GetStringsFromJSON (const json_t *treatment_json_p, const char *key_s);
+static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *key_s, size_t *num_values_p);
 
-static char **CopyArrayOfStrings (char **src_ss);
 
 static bool AddStringsToJSON (const char *key_s,  char **values_ss, json_t *json_p);
 
 
+static char **CopyArrayOfStrings (char **src_ss, const size_t num_values);
 
-Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const bool copy_parents_flag, char **synonyms_ss, const bool copy_synonyms_flag, bson_oid_t *id_p)
+
+Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const size_t num_parents, const bool copy_parents_flag, char **synonyms_ss, const size_t num_synonyms, const bool copy_synonyms_flag, bson_oid_t *id_p)
 {
 	Treatment *treatment_p = (Treatment *) AllocMemory (sizeof (Treatment));
 
@@ -48,7 +49,7 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 
 			if (parent_names_ss && copy_parents_flag)
 				{
-					copied_parents_ss = CopyArrayOfStrings (parent_names_ss);
+					copied_parents_ss = CopyStringsArray (parent_names_ss, num_parents);
 
 					if (!copied_parents_ss)
 						{
@@ -67,7 +68,7 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 
 					if (synonyms_ss && copy_synonyms_flag)
 						{
-							copied_synonyms_ss = CopyArrayOfStrings (synonyms_ss);
+							copied_synonyms_ss = CopyArrayOfStrings (synonyms_ss, num_synonyms);
 
 							if (!copied_synonyms_ss)
 								{
@@ -84,7 +85,9 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 							treatment_p -> tr_ontology_term_p = term_p;
 							treatment_p -> tr_id_p = id_p;
 							treatment_p -> tr_parent_names_ss = copied_parents_ss;
+							treatment_p -> tr_num_parents = num_parents;
 							treatment_p -> tr_synonyms_ss = copied_synonyms_ss;
+							treatment_p -> tr_num_synonyms = num_synonyms;
 
 							return treatment_p;
 						}
@@ -93,7 +96,7 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 
 			if (copied_parents_ss && copy_parents_flag)
 				{
-					FreeStringArray (copied_parents_ss);
+					FreeStringArray (copied_parents_ss, num_parents);
 				}
 
 			FreeMemory (treatment_p);
@@ -109,13 +112,13 @@ void FreeTreatment (Treatment *treatment_p)
 
 	if (treatment_p -> tr_parent_names_ss)
 		{
-			FreeStringArray (treatment_p -> tr_parent_names_ss);
+			FreeStringArray (treatment_p -> tr_parent_names_ss, treatment_p -> tr_num_parents);
 		}
 
 
 	if (treatment_p -> tr_synonyms_ss)
 		{
-			FreeStringArray (treatment_p -> tr_synonyms_ss);
+			FreeStringArray (treatment_p -> tr_synonyms_ss, treatment_p -> tr_num_synonyms);
 		}
 
 	FreeBSONOid (treatment_p -> tr_id_p);
@@ -269,9 +272,12 @@ Treatment *GetTreatmentFromJSON (const json_t *treatment_json_p)
 
 					if (term_p)
 						{
-							char **parents_ss = GetStringsFromJSON (treatment_json_p, TR_PARENTS_S);
-							char **synonyms_ss = GetStringsFromJSON (treatment_json_p, TR_SYNONYMS_S);
-							Treatment *tr_p = AllocateTreatment (term_p, parents_ss, false, synonyms_ss, false, id_p);
+							size_t num_parents = 0;
+							size_t num_synonyms = 0;
+
+							char **parents_ss = GetStringsFromJSON (treatment_json_p, TR_PARENTS_S, &num_parents);
+							char **synonyms_ss = GetStringsFromJSON (treatment_json_p, TR_SYNONYMS_S, &num_synonyms);
+							Treatment *tr_p = AllocateTreatment (term_p, parents_ss, num_parents, false, synonyms_ss, num_synonyms, false, id_p);
 
 							if (tr_p)
 								{
@@ -280,12 +286,12 @@ Treatment *GetTreatmentFromJSON (const json_t *treatment_json_p)
 
 							if (parents_ss)
 								{
-									FreeStringArray (parents_ss);
+									FreeStringArray (parents_ss, num_parents);
 								}		/* if (parents_ss) */
 
 							if (synonyms_ss)
 								{
-									FreeStringArray (synonyms_ss);
+									FreeStringArray (synonyms_ss, num_synonyms);
 								}		/* if (synonyms_ss) */
 
 
@@ -383,7 +389,7 @@ static bool AddStringsToJSON (const char *key_s, char **values_ss, json_t *json_
 }
 
 
-static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *key_s)
+static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *key_s, size_t *num_values_p)
 {
 	json_t *json_p = json_object_get (treatment_json_p, key_s);
 
@@ -392,7 +398,7 @@ static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *k
 			if (json_is_array (json_p))
 				{
 					const size_t size = json_array_size (json_p);
-					char **values_ss = (char **) AllocMemoryArray (size + 1, sizeof (char *));
+					char **values_ss = (char **) AllocMemoryArray (size, sizeof (char *));
 
 					if (values_ss)
 						{
@@ -409,11 +415,7 @@ static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *k
 										{
 											*value_ss = EasyCopyToNewString (src_s);
 
-											if (*value_ss)
-												{
-													++ value_ss;
-												}
-											else
+											if (! (*value_ss))
 												{
 													size_t j = 0;
 
@@ -426,11 +428,13 @@ static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *k
 												}
 										}
 
+									++ value_ss;
 									++ i;
 								}
 
 							if (success_flag)
 								{
+									*num_values_p = size;
 									return values_ss;
 								}
 
@@ -448,27 +452,14 @@ static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *k
 
 
 
-static char **CopyArrayOfStrings (char **src_ss)
+static char **CopyArrayOfStrings (char **src_ss, const size_t num_values)
 {
 	size_t i = 0;
 	size_t size = 0;
 	char **array_ss = NULL;
 	char **value_ss = src_ss;
 
-	while (*value_ss)
-		{
-			if (*value_ss)
-				{
-					++ value_ss;
-					++ i;
-				}
-			else
-				{
-					size = i;
-				}
-		}
-
-	array_ss = (char **) AllocMemoryArray (size + 1, sizeof (char *));
+	array_ss = (char **) AllocMemoryArray (size, sizeof (char *));
 
 	if (array_ss)
 		{
@@ -505,6 +496,11 @@ static char **CopyArrayOfStrings (char **src_ss)
 				}
 		}
 
-	return array_ss;
+	if (array_ss)
+		{
+			return array_ss;
+		}
+
+	return NULL;
 }
 

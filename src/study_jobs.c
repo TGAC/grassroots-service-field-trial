@@ -4384,7 +4384,7 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 
 			if (num_treatments > 1)
 				{
-					const char **values_ss = (const char **) AllocMemoryArray (num_treatments + 1, sizeof (const char *));
+					const char **values_ss = (const char **) AllocMemoryArray (num_treatments, sizeof (const char *));
 
 					if (values_ss)
 						{
@@ -4433,7 +4433,7 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 											*value_ss = NULL;
 
 											tf_json_p = factors_array_p;
-											name_param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_name_s, tf_name_display_name_s, tf_name_description_s, values_ss, PL_ALL);
+											name_param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_name_s, tf_name_display_name_s, tf_name_description_s, values_ss, num_treatments, PL_ALL);
 										}		/* if (success_flag) */
 
 								}		/* if (factors_array_p) */

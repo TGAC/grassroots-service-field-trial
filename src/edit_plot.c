@@ -1033,8 +1033,6 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 
 	if (child_group_p)
 		{
-			Parameter *param_p = NULL;
-
 			if (active_row_p)
 				{
 					PopulateExistingValues (active_row_p, &existing_mv_names_ss,
@@ -1044,50 +1042,67 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 				}
 
 
-			param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", existing_mv_names_ss, num_entries, PL_ALL);
-
-			if (param_p)
+			if (num_entries > 1)
 				{
-					child_group_p -> pg_repeatable_param_p = param_p;
+					Parameter *param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", existing_mv_names_ss, num_entries, PL_ALL);
 
-					if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, "Phenotype Raw Value", "The observed phenotypic value", existing_phenotype_raw_values_ss, num_entries, PL_ALL)) != NULL)
+					if (param_p)
 						{
-							if ((param_p = EasyCreateAndAddTimeArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_START_DATE.npt_name_s, "Start Date", "The date when the observation happened/started", existing_phenotype_start_dates_pp, num_entries, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, "Phenotype Raw Value", "The observed phenotypic value", existing_phenotype_raw_values_ss, num_entries, PL_ALL)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddTimeArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_END_DATE.npt_name_s, "End Date", "The date when the observation finished if it differs from the start date", existing_phenotype_end_dates_pp, num_entries, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, "Phenotype Corrected Value", "Tick this to specify if this Phenotypic value is a correction of a previous raw value", existing_phenotype_corrected_values_ss, num_entries, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, "Phenotype Corrected Value", "Tick this to specify if this Phenotypic value is a correction of a previous raw value", existing_phenotype_corrected_values_ss, num_entries, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddTimeArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_START_DATE.npt_name_s, "Start Date", "The date when the observation happened/started", existing_phenotype_start_dates_pp, num_entries, PL_ALL)) != NULL)
 												{
-													success_flag = true;
+													if ((param_p = EasyCreateAndAddTimeArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_END_DATE.npt_name_s, "End Date", "The date when the observation finished if it differs from the start date", existing_phenotype_end_dates_pp, num_entries, PL_ALL)) != NULL)
+														{
+															success_flag = true;
+														}
 												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PHENOTYPE_CORRECTED_VALUE.npt_name_s);
-												}
-
 										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PHENOTYPE_END_DATE.npt_name_s);
-										}
-
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PHENOTYPE_START_DATE.npt_name_s);
 								}
 
+
 						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PHENOTYPE_RAW_VALUE.npt_name_s);
-						}
+
 
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_MEASURED_VARIABLE_NAME.npt_name_s);
+					Parameter *param_p;
+					char *mv_s = NULL;
+					char *raw_s = NULL;
+					char *corrected_s = NULL;
+					struct tm *start_p = NULL;
+					struct tm *end_p = NULL;
+
+					if (num_entries == 1)
+						{
+							mv_s = *existing_mv_names_ss;
+							raw_s = *existing_phenotype_raw_values_ss;
+							corrected_s = *existing_phenotype_corrected_values_ss;
+							start_p = *existing_phenotype_start_dates_pp;
+							end_p = *existing_phenotype_end_dates_pp;
+						}
+
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_type, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", mv_s, PL_ALL)) != NULL)
+						{
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_RAW_VALUE.npt_type, S_PHENOTYPE_RAW_VALUE.npt_name_s, "Phenotype Raw Value", "The observed phenotypic raw value", raw_s, PL_ALL)) != NULL)
+								{
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_CORRECTED_VALUE.npt_type, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, "Phenotype Corrected Value", "A correction of a previous raw value", corrected_s, PL_ALL)) != NULL)
+										{
+											if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_START_DATE.npt_name_s, "Start Date", "The date when the observation happened/started", start_p, PL_ALL)) != NULL)
+												{
+													if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_END_DATE.npt_name_s, "End Date", "The date when the observation finished if it differs from the start date", end_p, PL_ALL)) != NULL)
+														{
+															success_flag = true;
+														}
+												}
+										}
+								}
+						}
 				}
+
 
 		}		/* if (child_group_p) */
 	else
@@ -1099,3 +1114,4 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 
 	return success_flag;
 }
+

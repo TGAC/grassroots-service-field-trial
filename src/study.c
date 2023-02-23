@@ -537,11 +537,6 @@ void FreeStudy (Study *study_p)
 			FreeBSONOid (study_p -> st_id_p);
 		}
 
-	if (study_p -> st_name_s)
-		{
-			FreeCopiedString (study_p -> st_name_s);
-		}
-
 	if (study_p -> st_description_s)
 		{
 			FreeCopiedString (study_p -> st_description_s);
@@ -736,6 +731,12 @@ void FreeStudy (Study *study_p)
 		{
 			FreeCopiedString (study_p -> st_shape_notes_s);
 		}
+
+	if (study_p -> st_name_s)
+		{
+			FreeCopiedString (study_p -> st_name_s);
+		}
+
 
 	FreeMemory (study_p);
 }
