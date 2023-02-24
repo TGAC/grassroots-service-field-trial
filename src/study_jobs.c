@@ -4466,11 +4466,12 @@ static bool AddTreatmentFactorParameters (ParameterSet *params_p, const Study *s
 
 			if (name_param_p)
 				{
-					group_p -> pg_repeatable_param_p = name_param_p;
-
-					if ((name_param_p = GetTreatmentFactorTableParameter (params_p, group_p, tf_json_p, data_p)) != NULL)
+					if (AddRepeatableParameterGroupLabelParam (group_p, name_param_p))
 						{
-							return true;
+							if ((name_param_p = GetTreatmentFactorTableParameter (params_p, group_p, tf_json_p, data_p)) != NULL)
+								{
+									return true;
+								}
 						}
 				}
 

@@ -24,10 +24,10 @@ static const char *S_ROW_TYPES_SS [] = { "Standard", "Discard", "Blank" };
 
 
 Row *AllocateBaseRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt,
-													void (*clear_fn) (Row *row_p),
-													bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
-													bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
-													bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
+											void (*clear_fn) (Row *row_p),
+											bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+											bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
+											bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
 {
 	Row *row_p = (Row *) AllocMemory (sizeof (Row));
 
@@ -46,10 +46,10 @@ Row *AllocateBaseRow (bson_oid_t *id_p, const uint32 study_index, Plot *parent_p
 
 
 bool InitRow (Row *row_p, bson_oid_t *id_p, const uint32 study_index, Plot *parent_plot_p, RowType rt,
-									void (*clear_fn) (Row *row_p),
-									bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
-									bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
-									bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
+							void (*clear_fn) (Row *row_p),
+							bool (*add_to_json_fn) (const Row *row_p, json_t *row_json_p, const ViewFormat format, const FieldTrialServiceData *data_p),
+							bool (*add_from_json_fn) (Row *row_p, const json_t *row_json_p, const FieldTrialServiceData *data_p),
+							bool (*add_to_fd_fn) (const Row *row_p, json_t *row_fd_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s))
 
 {
 	if (!id_p)
@@ -114,12 +114,12 @@ bool AddRowToJSON (const Row *row_p, json_t *row_json_p, const ViewFormat format
 
 	if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index))
 		{
-			/*
-			 * We only need to store the parent plot id if the JSON is for the backend
-			 */
-			if (format == VF_STORAGE)
+			if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
 				{
-					if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p))
+					/*
+					 * We only need to store the parent plot id if the JSON is for the backend
+					 */
+					if (format == VF_STORAGE)
 						{
 							if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S))
 								{
@@ -151,7 +151,7 @@ bool AddRowToJSON (const Row *row_p, json_t *row_json_p, const ViewFormat format
 											else
 												{
 													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetRowTypeAsString () failed for row " UINT32_FMT " in study \"%s\" with type %d",
-																				 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s, row_p -> ro_type);
+																			 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s, row_p -> ro_type);
 												}
 
 										}		/* if (AddNamedCompoundIdToJSON (row_json_p, row_p -> ro_plot_p -> pl_id_p, RO_PLOT_ID_S)) */
@@ -168,27 +168,27 @@ bool AddRowToJSON (const Row *row_p, json_t *row_json_p, const ViewFormat format
 																		 row_p -> ro_by_study_index, row_p -> ro_plot_p -> pl_parent_p -> st_name_s);
 								}
 
-						}		/* if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p)) */
+
+						}		/* if (format == VF_STORAGE) */
 					else
 						{
-							char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
-
-							if (id_s)
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
-									FreeBSONOidString (id_s);
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to row add compound id");
-								}
+							success_flag = true;
 						}
 
-
-				}		/* if (format == VF_STORAGE) */
+				}		/* if (AddCompoundIdToJSON (row_json_p, row_p -> ro_id_p)) */
 			else
 				{
-					success_flag = true;
+					char *id_s = GetBSONOidAsString (row_p -> ro_id_p);
+
+					if (id_s)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to add row compound id \"%s\"", id_s);
+							FreeBSONOidString (id_s);
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to row add compound id");
+						}
 				}
 
 		}		/* if (SetJSONInteger (row_json_p, RO_STUDY_INDEX_S, row_p -> ro_by_study_index)) */
@@ -254,43 +254,43 @@ Row *GetRowFromJSON (const json_t *row_json_p, Plot *plot_p, const Study *study_
 		}		/* if (type_s) */
 
 	switch (rt)
-		{
-			case RT_STANDARD:
-				{
-					StandardRow *sr_p = GetStandardRowFromJSON (row_json_p, plot_p, NULL, study_p, format, data_p);
+	{
+		case RT_STANDARD:
+			{
+				StandardRow *sr_p = GetStandardRowFromJSON (row_json_p, plot_p, NULL, study_p, format, data_p);
 
-					if (sr_p)
-						{
-							row_p = & (sr_p -> sr_base);
-						}
-				}
-				break;
+				if (sr_p)
+					{
+						row_p = & (sr_p -> sr_base);
+					}
+			}
+			break;
 
-			case RT_BLANK:
-				{
-					BlankRow *br_p = GetBlankRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
+		case RT_BLANK:
+			{
+				BlankRow *br_p = GetBlankRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
 
-					if (br_p)
-						{
-							row_p = & (br_p -> br_base);
-						}
-				}
-				break;
+				if (br_p)
+					{
+						row_p = & (br_p -> br_base);
+					}
+			}
+			break;
 
-			case RT_DISCARD:
-				{
-					DiscardRow *dr_p = GetDiscardRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
+		case RT_DISCARD:
+			{
+				DiscardRow *dr_p = GetDiscardRowFromJSON (row_json_p, plot_p, study_p, format, data_p);
 
-					if (dr_p)
-						{
-							row_p = & (dr_p -> dr_base);
-						}
-				}
-				break;
+				if (dr_p)
+					{
+						row_p = & (dr_p -> dr_base);
+					}
+			}
+			break;
 
-			default:
-				break;
-		}		/* switch (rt) */
+		default:
+			break;
+	}		/* switch (rt) */
 
 
 	return row_p;

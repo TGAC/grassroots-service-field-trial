@@ -470,9 +470,6 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 															const char *child_group_name_s = "Phenotypes";
 															param_p -> pa_read_only_flag = true;
 
-
-															param_p -> pa_read_only_flag = true;
-
 															if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
 																{
 																	success_flag = true;
@@ -1033,6 +1030,8 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 
 	if (child_group_p)
 		{
+			Parameter *mv_name_p;
+
 			if (active_row_p)
 				{
 					PopulateExistingValues (active_row_p, &existing_mv_names_ss,
@@ -1044,10 +1043,12 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 
 			if (num_entries > 1)
 				{
-					Parameter *param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", existing_mv_names_ss, num_entries, PL_ALL);
+					mv_name_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", existing_mv_names_ss, num_entries, PL_ALL);
 
-					if (param_p)
+					if (mv_name_p)
 						{
+							Parameter *param_p;
+
 							if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, "Phenotype Raw Value", "The observed phenotypic value", existing_phenotype_raw_values_ss, num_entries, PL_ALL)) != NULL)
 								{
 									if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, "Phenotype Corrected Value", "Tick this to specify if this Phenotypic value is a correction of a previous raw value", existing_phenotype_corrected_values_ss, num_entries, PL_ALL)) != NULL)
@@ -1085,7 +1086,7 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 							end_p = *existing_phenotype_end_dates_pp;
 						}
 
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_type, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", mv_s, PL_ALL)) != NULL)
+					if ((mv_name_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_type, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", mv_s, PL_ALL)) != NULL)
 						{
 							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_RAW_VALUE.npt_type, S_PHENOTYPE_RAW_VALUE.npt_name_s, "Phenotype Raw Value", "The observed phenotypic raw value", raw_s, PL_ALL)) != NULL)
 								{
@@ -1103,6 +1104,11 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 						}
 				}
 
+
+			if (!AddRepeatableParameterGroupLabelParam (child_group_p, mv_name_p))
+				{
+
+				}
 
 		}		/* if (child_group_p) */
 	else
