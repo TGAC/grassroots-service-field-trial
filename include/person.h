@@ -53,6 +53,11 @@ typedef struct Person
 
 	char *pe_email_s;
 
+	char *pe_affiliation_s;
+
+	char *pe_role_s;
+
+	char *pe_orcid_s;
 } Person;
 
 
@@ -60,6 +65,11 @@ PERSON_PREFIX const char *PE_NAME_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG
 
 PERSON_PREFIX const char *PE_EMAIL_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "email");
 
+PERSON_PREFIX const char *PE_AFFILATION_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "affiliation");
+
+PERSON_PREFIX const char *PE_ROLE_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "roleName");
+
+PERSON_PREFIX const char *PE_ORCID_S PERSON_VAL ("orcid");
 
 #ifdef __cplusplus
 extern "C"
@@ -67,11 +77,13 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Person *AllocatePerson (const char *name_s, const char *email_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Person *AllocatePerson (const char *name_s, const char *email_s, const char *role_s, const char *affiliaion_s, const char *orcid_s);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL void InitPerson (Person *person_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePerson (Person *person_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearPerson (Person *person_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPersonAsJSON (const Person * const person_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 

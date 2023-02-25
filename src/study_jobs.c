@@ -161,7 +161,8 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 static void ReportTreatmentFactorError (Study *study_p, const char *name_s, const json_t *levels_p, ServiceJob *job_p);
 
 
-static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s);
+static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s,
+																		 const char *role_param_s, const char *affilation_param_s, const char *orcid_param_s);
 
 
 static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p, const FieldTrialServiceData *data_p);
@@ -1219,11 +1220,13 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																						{
 																							Person *curator_p = NULL;
 
-																							if (GetPersonFromParameters (&curator_p, param_set_p, STUDY_CURATOR_NAME.npt_name_s, STUDY_CURATOR_EMAIL.npt_name_s))
+																							if (GetPersonFromParameters (&curator_p, param_set_p, STUDY_CURATOR_NAME.npt_name_s, STUDY_CURATOR_EMAIL.npt_name_s,
+																																					 NULL, NULL, NULL))
 																								{
 																									Person *contact_p = NULL;
 
-																									if (GetPersonFromParameters (&contact_p, param_set_p, STUDY_CONTACT_NAME.npt_name_s, STUDY_CONTACT_EMAIL.npt_name_s))
+																									if (GetPersonFromParameters (&contact_p, param_set_p, STUDY_CONTACT_NAME.npt_name_s, STUDY_CONTACT_EMAIL.npt_name_s,
+																										 NULL, NULL, NULL))
 																										{
 																											Study *study_p = NULL;
 																											const char *aspect_s = NULL;
@@ -4558,18 +4561,25 @@ static void ReportTreatmentFactorError (Study *study_p, const char *name_s, cons
 }
 
 
-static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s)
+static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s,
+																		 const char *role_param_s, const char *affilation_param_s, const char *orcid_param_s)
 {
+	bool success_flag = true;
 	const char *name_s = NULL;
 	const char *email_s = NULL;
-	bool success_flag = true;
+	const char *role_s = NULL;
+	const char *affilation_s = NULL;
+	const char *orcid_s = NULL;
 
 	GetCurrentStringParameterValueFromParameterSet (param_set_p, name_param_s, &name_s);
 	GetCurrentStringParameterValueFromParameterSet (param_set_p, email_param_s, &email_s);
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, role_param_s, &role_s);
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, affilation_param_s, &affilation_s);
+	GetCurrentStringParameterValueFromParameterSet (param_set_p, orcid_param_s, &orcid_s);
 
 	if ((!IsStringEmpty (name_s)) || (!IsStringEmpty (email_s)))
 		{
-			Person *person_p = AllocatePerson (name_s, email_s);
+			Person *person_p = AllocatePerson (name_s, email_s, role_s, affilation_s, orcid_s);
 
 			if (person_p)
 				{

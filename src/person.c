@@ -25,7 +25,7 @@
 #include "dfw_util.h"
 
 
-Person *AllocatePerson (const char *name_s, const char *email_s)
+Person *AllocatePerson (const char *name_s, const char *email_s, const char *role_s, const char *affiliation_s, const char *orcid_s)
 {
 	char *copied_name_s = NULL;
 
@@ -35,34 +35,100 @@ Person *AllocatePerson (const char *name_s, const char *email_s)
 
 			if (CloneValidString (email_s, &copied_email_s))
 				{
-					Person *person_p = (Person *) AllocMemory (sizeof (Person));
+					char *copied_role_s = NULL;
 
-					if (person_p)
+					if (CloneValidString (role_s, &copied_role_s))
 						{
-							person_p -> pe_name_s = copied_name_s;
-							person_p -> pe_email_s = copied_email_s;
+							char *copied_affiliation_s = NULL;
 
-							return person_p;
+							if (CloneValidString (affiliation_s, &copied_affiliation_s))
+								{
+									char *copied_orcid_s = NULL;
+
+									if (CloneValidString (orcid_s, &copied_orcid_s))
+										{
+											Person *person_p = (Person *) AllocMemory (sizeof (Person));
+
+											if (person_p)
+												{
+													person_p -> pe_name_s = copied_name_s;
+													person_p -> pe_email_s = copied_email_s;
+													person_p -> pe_role_s = copied_role_s;
+													person_p -> pe_affiliation_s = copied_affiliation_s;
+													person_p -> pe_orcid_s = copied_orcid_s;
+
+													return person_p;
+												}
+
+											if (copied_orcid_s)
+												{
+													FreeCopiedString (copied_orcid_s);
+												}
+
+										}		/* if (CloneValidString (orcid_s, &copied_orcid_s)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy orcid \"%s\"", orcid_s);
+										}
+
+									if (copied_affiliation_s)
+										{
+											FreeCopiedString (copied_affiliation_s);
+										}
+
+								}		/* if (CloneValidString (affiliation_s, &copied_affiliation_s)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy affiliation \"%s\"", affiliation_s);
+								}
+
+							if (copied_role_s)
+								{
+									FreeCopiedString (copied_role_s);
+								}
+
+						}		/* if (CloneValidString (role_s, &copied_role_s)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy role \"%s\"", role_s);
 						}
 
 					if (copied_email_s)
 						{
 							FreeCopiedString (copied_email_s);
 						}
-				}
 
+				}		/* if (CloneValidString (email_s, &copied_email_s)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy email \"%s\"", email_s);
+				}
 
 			if (copied_name_s)
 				{
 					FreeCopiedString (copied_name_s);
 				}
 		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy name \"%s\"", name_s);
+		}
 
 	return NULL;
 }
 
 
-void FreePerson (Person *person_p)
+void InitPerson (Person *person_p)
+{
+	person_p -> pe_name_s = NULL;
+	person_p -> pe_name_s = NULL;
+	person_p -> pe_role_s = NULL;
+	person_p -> pe_affiliation_s = NULL;
+	person_p -> pe_orcid_s = NULL;
+}
+
+
+void ClearPerson (Person *person_p)
 {
 	if (person_p -> pe_name_s)
 		{
@@ -74,8 +140,27 @@ void FreePerson (Person *person_p)
 			FreeCopiedString (person_p -> pe_email_s);
 		}
 
-	FreeMemory (person_p);
+	if (person_p -> pe_role_s)
+		{
+			FreeCopiedString (person_p -> pe_role_s);
+		}
 
+	if (person_p -> pe_affiliation_s)
+		{
+			FreeCopiedString (person_p -> pe_affiliation_s);
+		}
+
+	if (person_p -> pe_orcid_s)
+		{
+			FreeCopiedString (person_p -> pe_orcid_s);
+		}
+}
+
+
+void FreePerson (Person *person_p)
+{
+	ClearPerson (person_p);
+	FreeMemory (person_p);
 }
 
 
@@ -132,11 +217,44 @@ json_t *GetPersonAsJSON (const Person * const person_p, const ViewFormat format,
 				{
 					if (SetNonTrivialString (person_json_p, PE_EMAIL_S, person_p -> pe_email_s, true))
 						{
-							if (SetJSONString (person_json_p, INDEXING_TYPE_S, CONTEXT_PREFIX_SCHEMA_ORG_S "Person"))
+							if (SetNonTrivialString (person_json_p, PE_ROLE_S, person_p -> pe_role_s, true))
 								{
-									return person_json_p;
+									if (SetNonTrivialString (person_json_p, PE_AFFILATION_S, person_p -> pe_affiliation_s, true))
+										{
+											if (SetNonTrivialString (person_json_p, PE_ORCID_S, person_p -> pe_orcid_s, true))
+												{
+													if (SetJSONString (person_json_p, INDEXING_TYPE_S, CONTEXT_PREFIX_SCHEMA_ORG_S "Person"))
+														{
+															return person_json_p;
+														}
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", INDEXING_TYPE_S, CONTEXT_PREFIX_SCHEMA_ORG_S "Person");
+														}
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", PE_ORCID_S, person_p -> pe_orcid_s);
+												}
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", PE_AFFILATION_S, person_p -> pe_affiliation_s);
+										}
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", PE_ROLE_S, person_p -> pe_role_s);
 								}
 						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", PE_EMAIL_S, person_p -> pe_email_s);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", PE_NAME_S, person_p -> pe_name_s);
 				}
 
 			json_decref (person_json_p);
@@ -152,8 +270,11 @@ Person *GetPersonFromJSON (const json_t *json_p, const ViewFormat format, const 
 {
 	const char *name_s = GetJSONString (json_p, PE_NAME_S);
 	const char *email_s = GetJSONString (json_p, PE_EMAIL_S);
+	const char *role_s = GetJSONString (json_p, PE_ROLE_S);
+	const char *affiliation_s = GetJSONString (json_p, PE_AFFILATION_S);
+	const char *orcid_s = GetJSONString (json_p, PE_ORCID_S);
 
-	Person *person_p = AllocatePerson (name_s, email_s);
+	Person *person_p = AllocatePerson (name_s, email_s, role_s, affiliation_s, orcid_s);
 
 	return person_p;
 }
