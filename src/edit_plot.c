@@ -49,27 +49,27 @@
  */
 
 
-static NamedParameterType S_ROW_ID = { "PL Id", PT_STRING };
+static NamedParameterType S_ROW_ID = { "RO Id", PT_STRING };
 
-static NamedParameterType S_MEASURED_VARIABLE_NAME  = { "PL Measured Variable Name", PT_STRING };
+static NamedParameterType S_MEASURED_VARIABLE_NAME  = { "RO Measured Variable Name", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_RAW_VALUE  = { "PL Phenotype Raw Value", PT_STRING };
+static NamedParameterType S_PHENOTYPE_RAW_VALUE  = { "RO Phenotype Raw Value", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_CORRECTED_VALUE = { "PL Phenotype Corrected Value", PT_STRING };
+static NamedParameterType S_PHENOTYPE_CORRECTED_VALUE = { "RO Phenotype Corrected Value", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_START_DATE  = { "PL Phenotype Start Date", PT_TIME };
+static NamedParameterType S_PHENOTYPE_START_DATE  = { "RO Phenotype Start Date", PT_TIME };
 
-static NamedParameterType S_PHENOTYPE_END_DATE  = { "PL Phenotype End Date", PT_TIME };
-
-
+static NamedParameterType S_PHENOTYPE_END_DATE  = { "RO Phenotype End Date", PT_TIME };
 
 
-static NamedParameterType S_STUDY_NAME  = { "PL Study Name", PT_STRING };
-
-static NamedParameterType S_STUDY_ID  = { "PL Study Id", PT_STRING };
 
 
-static NamedParameterType S_STUDY_INDEX  = { "PL Study Index", PT_UNSIGNED_INT };
+static NamedParameterType S_STUDY_NAME  = { "RO Study Name", PT_STRING };
+
+static NamedParameterType S_STUDY_ID  = { "RO Study Id", PT_STRING };
+
+
+static NamedParameterType S_STUDY_INDEX  = { "RO Study Index", PT_UNSIGNED_INT };
 
 static NamedParameterType S_ROW_INDEX  = { "PL Row Index", PT_UNSIGNED_INT };
 
