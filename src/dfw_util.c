@@ -1051,7 +1051,7 @@ char *GetPlotsUploadsFilename (const char *id_s, const FieldTrialServiceData *da
 
 const char *GetStringDefaultValueFromJSON (const char *param_s, const json_t *params_json_p)
 {
-	const char *value_s;
+	const char *value_s = NULL;
 
 	if (params_json_p)
 		{

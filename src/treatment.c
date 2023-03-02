@@ -27,6 +27,7 @@
 #include "streams.h"
 #include "jansson.h"
 #include "dfw_util.h"
+#include "string_array_parameter.h"
 
 
 static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *key_s, size_t *num_values_p);
@@ -49,7 +50,7 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 
 			if (parent_names_ss && copy_parents_flag)
 				{
-					copied_parents_ss = CopyStringsArray (parent_names_ss, num_parents);
+					copied_parents_ss = CopyStringArray (parent_names_ss, num_parents);
 
 					if (!copied_parents_ss)
 						{

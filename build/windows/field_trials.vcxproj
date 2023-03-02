@@ -112,6 +112,9 @@
       <AdditionalDependencies>$(CURL_LIB_NAME);$(JANSSON_LIB_NAME);$(LIBEXIF_LIB_NAME);$(BSON_LIB_NAME);$(GRASSROOTS_LUCENE_LIB_NAME);$(GRASSROOTS_UTIL_LIB_NAME);$(GRASSROOTS_MONGODB_LIB_NAME);$(GRASSROOTS_SERVICES_LIB_NAME);$(GRASSROOTS_SERVER_LIB_NAME);$(GRASSROOTS_FRICTIONLESS_LIB_NAME);$(GRASSROOTS_NETWORK_LIB_NAME);$(GRASSROOTS_GEOCODER_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DIR_CURL_LIB);$(DIR_GRASSROOTS_SERVER_LIB);$(DIR_GRASSROOTS_SERVICES_LIB);$(DIR_GRASSROOTS_NETWORK_LIB);$(DIR_GRASSROOTS_LUCENE_LIB);$(DIR_GRASSROOTS_MONGODB_LIB);$(DIR_GRASSROOTS_UTIL_LIB);$(DIR_BSON_LIB);$(DIR_LIBEXIF_LIB);$(DIR_JANSSON_LIB);$(DIR_GRASSROOTS_FRICTIONLESS_LIB);$(DIR_GRASSROOTS_GEOCODER_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt) $(DIR_GRASSROOTS_INSTALL)\services\$(Platform)\$(Configuration)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -131,6 +134,9 @@
       <AdditionalDependencies>$(CURL_LIB_NAME);$(JANSSON_LIB_NAME);$(LIBEXIF_LIB_NAME);$(BSON_LIB_NAME);$(GRASSROOTS_LUCENE_LIB_NAME);$(GRASSROOTS_UTIL_LIB_NAME);$(GRASSROOTS_MONGODB_LIB_NAME);$(GRASSROOTS_SERVICES_LIB_NAME);$(GRASSROOTS_SERVER_LIB_NAME);$(GRASSROOTS_FRICTIONLESS_LIB_NAME);$(GRASSROOTS_NETWORK_LIB_NAME);$(GRASSROOTS_GEOCODER_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DIR_CURL_LIB);$(DIR_GRASSROOTS_SERVER_LIB);$(DIR_GRASSROOTS_SERVICES_LIB);$(DIR_GRASSROOTS_NETWORK_LIB);$(DIR_GRASSROOTS_LUCENE_LIB);$(DIR_GRASSROOTS_MONGODB_LIB);$(DIR_GRASSROOTS_UTIL_LIB);$(DIR_BSON_LIB);$(DIR_LIBEXIF_LIB);$(DIR_JANSSON_LIB);$(DIR_GRASSROOTS_FRICTIONLESS_LIB);$(DIR_GRASSROOTS_GEOCODER_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt) $(DIR_GRASSROOTS_INSTALL)\services\$(Platform)\$(Configuration)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -146,6 +152,9 @@
       <AdditionalDependencies>$(CURL_LIB_NAME);$(JANSSON_LIB_NAME);$(LIBEXIF_LIB_NAME);$(BSON_LIB_NAME);$(GRASSROOTS_LUCENE_LIB_NAME);$(GRASSROOTS_UTIL_LIB_NAME);$(GRASSROOTS_MONGODB_LIB_NAME);$(GRASSROOTS_SERVICES_LIB_NAME);$(GRASSROOTS_SERVER_LIB_NAME);$(GRASSROOTS_FRICTIONLESS_LIB_NAME);$(GRASSROOTS_NETWORK_LIB_NAME);$(GRASSROOTS_GEOCODER_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DIR_CURL_LIB);$(DIR_GRASSROOTS_SERVER_LIB);$(DIR_GRASSROOTS_SERVICES_LIB);$(DIR_GRASSROOTS_NETWORK_LIB);$(DIR_GRASSROOTS_LUCENE_LIB);$(DIR_GRASSROOTS_MONGODB_LIB);$(DIR_GRASSROOTS_UTIL_LIB);$(DIR_BSON_LIB);$(DIR_LIBEXIF_LIB);$(DIR_JANSSON_LIB);$(DIR_GRASSROOTS_FRICTIONLESS_LIB);$(DIR_GRASSROOTS_GEOCODER_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt) $(DIR_GRASSROOTS_INSTALL)\services\$(Platform)\$(Configuration)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -165,6 +174,9 @@
       <AdditionalDependencies>$(CURL_LIB_NAME);$(JANSSON_LIB_NAME);$(LIBEXIF_LIB_NAME);$(BSON_LIB_NAME);$(GRASSROOTS_LUCENE_LIB_NAME);$(GRASSROOTS_UTIL_LIB_NAME);$(GRASSROOTS_MONGODB_LIB_NAME);$(GRASSROOTS_SERVICES_LIB_NAME);$(GRASSROOTS_SERVER_LIB_NAME);$(GRASSROOTS_FRICTIONLESS_LIB_NAME);$(GRASSROOTS_NETWORK_LIB_NAME);$(GRASSROOTS_GEOCODER_LIB_NAME);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DIR_CURL_LIB);$(DIR_GRASSROOTS_SERVER_LIB);$(DIR_GRASSROOTS_SERVICES_LIB);$(DIR_GRASSROOTS_NETWORK_LIB);$(DIR_GRASSROOTS_LUCENE_LIB);$(DIR_GRASSROOTS_MONGODB_LIB);$(DIR_GRASSROOTS_UTIL_LIB);$(DIR_BSON_LIB);$(DIR_LIBEXIF_LIB);$(DIR_JANSSON_LIB);$(DIR_GRASSROOTS_FRICTIONLESS_LIB);$(DIR_GRASSROOTS_GEOCODER_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt) $(DIR_GRASSROOTS_INSTALL)\services\$(Platform)\$(Configuration)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\blank_row.c" />
