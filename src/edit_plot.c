@@ -77,6 +77,7 @@ static NamedParameterType S_COL_INDEX  = { "PL Col Index", PT_UNSIGNED_INT };
 
 static NamedParameterType S_RACK_INDEX  = { "PL Rack", PT_UNSIGNED_INT };
 
+static NamedParameterType S_NOTES  = { "PL Notes", PT_LARGE_STRING };
 
 
 static const char *GetPlotEditingServiceName (const Service *service_p);
@@ -233,6 +234,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 			S_STUDY_INDEX,
 			S_ROW_INDEX,
 			S_COL_INDEX,
+			S_NOTES,
 			NULL
 		};
 
@@ -304,7 +306,7 @@ static ServiceJobSet *RunPlotEditingService (Service *service_p, ParameterSet *p
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			//if (!RunForEditPlotParams (data_p, param_set_p, job_p))
+			if (!RunForEditPlotParams (data_p, param_set_p, job_p))
 				{
 
 				}		/* if (!RunForEditingPlotParams (data_p, param_set_p, job_p)) */
@@ -429,25 +431,28 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 					uint32 *study_index_p = NULL;
 					uint32 *row_index_p = NULL;
 					uint32 *column_index_p = NULL;
+					const char *notes_s = NULL;
 
 					if (active_row_p)
 						{
-							 if (active_row_p -> ro_study_p)
-								 {
-										study_name_s = active_row_p -> ro_study_p -> st_name_s;
-										study_id_s = GetBSONOidAsString (active_row_p -> ro_study_p -> st_id_p);
-								 }
+							Plot *plot_p = active_row_p -> ro_plot_p;
 
-							 if (active_row_p -> ro_plot_p)
-								 {
-									 row_index_p = & (active_row_p -> ro_plot_p -> pl_row_index);
-									 column_index_p = & (active_row_p -> ro_plot_p -> pl_column_index);
-								 }
+							if (active_row_p -> ro_study_p)
+								{
+									study_name_s = active_row_p -> ro_study_p -> st_name_s;
+									study_id_s = GetBSONOidAsString (active_row_p -> ro_study_p -> st_id_p);
+								}
 
-							 study_index_p = & (active_row_p -> ro_by_study_index);
+							if (plot_p)
+								{
+									row_index_p = & (plot_p -> pl_row_index);
+									column_index_p = & (plot_p -> pl_column_index);
+									notes_s = plot_p -> pl_comment_s;
+								}
+
+								study_index_p = & (active_row_p -> ro_by_study_index);
+
 						}
-
-
 
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDY_NAME.npt_type, S_STUDY_NAME.npt_name_s, "Study", "The Study that contains this plot", study_name_s, PL_ALL)) != NULL)
 						{
@@ -467,17 +472,27 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 
 													if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_COL_INDEX.npt_name_s, "Column", "The column of this plot within the Study", column_index_p, PL_ALL)) != NULL)
 														{
-															const char *child_group_name_s = "Phenotypes";
 															param_p -> pa_read_only_flag = true;
 
-															if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
 																{
-																	success_flag = true;
-																}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																	const char *child_group_name_s = "Phenotypes";
+
+																	if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+																		{
+																			success_flag = true;
+																		}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																		}
+
+																}		/* */
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NOTES.npt_name_s);
 																}
+
 
 
 														}
