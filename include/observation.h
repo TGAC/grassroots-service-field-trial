@@ -93,6 +93,13 @@ typedef struct Observation
 
 	char *ob_method_s;
 
+
+	/**
+	 * Any notes about this observation
+	 */
+	char *ob_notes_s;
+
+
 	ObservationNature ob_nature;
 
 	/**
@@ -174,6 +181,7 @@ OBSERVATION_PREFIX const char *OB_INDEX_S OBSERVATION_VAL ("index");
 
 OBSERVATION_PREFIX const char *OB_TYPE_S OBSERVATION_VAL ("value_type");
 
+OBSERVATION_PREFIX const char *OB_NOTES_S OBSERVATION_VAL ("notes");
 
 OBSERVATION_PREFIX const uint32 OB_DEFAULT_INDEX OBSERVATION_VAL (1);
 
@@ -186,11 +194,11 @@ extern "C"
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type);
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const ObservationType obs_type,
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
 	void (*clear_fn) (Observation *observation_p),
 	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
 	bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),

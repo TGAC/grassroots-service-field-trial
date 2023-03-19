@@ -426,125 +426,12 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 
 					if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
 						{
-							ObservationNode *observation_node_p = NULL;
-							Observation *observation_p = NULL;
 							bool free_measured_variable_flag = false;
-							const char *growth_stage_s = NULL;
-							const char *method_s = NULL;
-							ObservationNature nature = ON_ROW;
-							Instrument *instrument_p = NULL;
-							const json_t *raw_value_p = NULL;
-							const json_t *corrected_value_p = NULL;
-							bool (*set_observation_value_fn) (Observation *observation_p, const json_t *value_p) = NULL;
+
+							status = AddObservationValueToStandardRowByParts (row_p, measured_variable_p, start_date_p, end_date_p,
+																																 key_s, value_p, corrected_value_flag, &free_measured_variable_flag);
 
 
-							if (corrected_value_flag)
-								{
-									corrected_value_p = value_p;
-									set_observation_value_fn = SetObservationCorrectedValueFromJSON;
-								}
-							else
-								{
-									raw_value_p = value_p;
-									set_observation_value_fn = SetObservationRawValueFromJSON;
-								}
-
-							observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
-
-							if (observation_node_p)
-								{
-									/*
-									 * Is the json value non-trivial?
-									 */
-									if (!IsJSONEmpty (value_p))
-										{
-
-											if (set_observation_value_fn (observation_node_p -> on_observation_p, value_p))
-												{
-													status = OS_SUCCEEDED;
-												}
-											else
-												{
-													char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-													bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservation%sValue failed for row \"%s\" and key \"%s\"", corrected_value_flag ? "Corrected" : "Raw", id_s, key_s);
-													//FreeObservation (observation_p);
-												}
-
-										}		/* if (!IsJSONEmpty (value_p)) */
-									else
-										{
-											/*
-											 * We have an empty value so remove the existing observation
-											 */
-											RemoveObservationNode (row_p, observation_node_p);
-										}
-
-									free_measured_variable_flag = true;
-
-								}		/* if (observation_node_p) */
-							else
-								{
-									bson_oid_t *observation_id_p = GetNewBSONOid ();
-
-									if (observation_id_p)
-										{
-											const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
-
-											if (class_p)
-												{
-													ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
-
-													if (obs_type != OT_NUM_TYPES)
-														{
-															observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, obs_type);
-														}
-
-													if (observation_p)
-														{
-															if (AddObservationToStandardRow (row_p, observation_p))
-																{
-																	status = OS_SUCCEEDED;
-																}
-															else
-																{
-																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																	bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-
-																	FreeObservation (observation_p);
-																}
-
-														}		/* if (observation_p) */
-													else
-														{
-															char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-															bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
-
-
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
-
-															free_measured_variable_flag = true;
-														}
-
-												}		/* if (class_p) */
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Scale Class for Measured Variable \"%s\"", GetMeasuredVariableName (measured_variable_p));
-													free_measured_variable_flag = true;
-												}
-
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation for \"%s\" with value \"%s\"", key_s, value_s);
-										}
-								}
 
 							if (start_date_p)
 								{
@@ -571,7 +458,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 											measured_variable_p = NULL;
 										}
 								}
-						}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, data_p)) */
+						}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p)) */
 
 				}		/* if ((!IsStringEmpty (raw_value_s)) */
 			else
@@ -591,6 +478,138 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 }
 
 
+OperationStatus AddObservationValueToStandardRowByParts (StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
+											const char *key_s, const json_t *value_p, const bool corrected_value_flag, bool *free_measured_variable_flag_p)
+{
+	OperationStatus status = OS_FAILED;
+	ObservationNode *observation_node_p = NULL;
+	Observation *observation_p = NULL;
+	const char *growth_stage_s = NULL;
+	const char *method_s = NULL;
+	const char *notes_s = NULL;
+	const char *value_s = NULL;
+	ObservationNature nature = ON_ROW;
+	Instrument *instrument_p = NULL;
+	const json_t *raw_value_p = NULL;
+	const json_t *corrected_value_p = NULL;
+	bool (*set_observation_value_fn) (Observation *observation_p, const json_t *value_p) = NULL;
+	uint32 observation_index = 1;
+
+	if (json_is_string (value_p))
+		{
+			value_s = json_string_value (value_p);
+		}
+
+	if (corrected_value_flag)
+		{
+			corrected_value_p = value_p;
+			set_observation_value_fn = SetObservationCorrectedValueFromJSON;
+		}
+	else
+		{
+			raw_value_p = value_p;
+			set_observation_value_fn = SetObservationRawValueFromJSON;
+		}
+
+	observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+
+	if (observation_node_p)
+		{
+			/*
+			 * Is the json value non-trivial?
+			 */
+			if (!IsJSONEmpty (value_p))
+				{
+
+					if (set_observation_value_fn (observation_node_p -> on_observation_p, value_p))
+						{
+							status = OS_SUCCEEDED;
+						}
+					else
+						{
+							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+							bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, value_p, "SetObservation%sValue failed for row \"%s\" and key \"%s\"", corrected_value_flag ? "Corrected" : "Raw", id_s, key_s);
+							//FreeObservation (observation_p);
+						}
+
+				}		/* if (!IsJSONEmpty (value_p)) */
+			else
+				{
+					/*
+					 * We have an empty value so remove the existing observation
+					 */
+					RemoveObservationNode (row_p, observation_node_p);
+				}
+
+			*free_measured_variable_flag_p = true;
+
+		}		/* if (observation_node_p) */
+	else
+		{
+			bson_oid_t *observation_id_p = GetNewBSONOid ();
+
+			if (observation_id_p)
+				{
+					const ScaleClass *class_p = GetMeasuredVariableScaleClass (measured_variable_p);
+
+					if (class_p)
+						{
+							ObservationType obs_type = GetObservationTypeForScaleClass (class_p);
+
+							if (obs_type != OT_NUM_TYPES)
+								{
+									observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, notes_s, obs_type);
+								}
+
+							if (observation_p)
+								{
+									if (AddObservationToStandardRow (row_p, observation_p))
+										{
+											status = OS_SUCCEEDED;
+										}
+									else
+										{
+											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+											bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationToStandardRow failed for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+
+											FreeObservation (observation_p);
+										}
+
+								}		/* if (observation_p) */
+							else
+								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
+
+
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Observation for row \"%s\" and key \"%s\" with value \"%s\"", id_s, key_s, value_s);
+
+									*free_measured_variable_flag_p = true;
+								}
+
+						}		/* if (class_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Scale Class for Measured Variable \"%s\"", GetMeasuredVariableName (measured_variable_p));
+							*free_measured_variable_flag_p = true;
+						}
+
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observation for \"%s\" with value \"%s\"", key_s, value_s);
+				}
+		}
+
+	return status;
+}
 
 
 //OperationStatus AddObservationValuesToStandardRow (StandardRow *row_p, const char *key_s, const json_t *value_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)

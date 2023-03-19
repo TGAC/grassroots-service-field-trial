@@ -61,6 +61,7 @@ static NamedParameterType S_PHENOTYPE_START_DATE  = { "RO Phenotype Start Date",
 
 static NamedParameterType S_PHENOTYPE_END_DATE  = { "RO Phenotype End Date", PT_TIME };
 
+static NamedParameterType S_OBSERVATION_NOTES  = { "RO Observation Notes", PT_LARGE_STRING };
 
 
 
@@ -131,7 +132,18 @@ static bool AddStringPhenotypeValueToJSON (json_t *array_p, Observation *observa
 static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names_sss, char ***existing_phenotype_raw_values_sss,
 																					char ***existing_phenotype_corrected_values_sss,
 																					struct tm ***existing_phenotype_start_dates_ppp, struct tm ***existing_phenotype_end_dates_ppp,
+																					char ***existing_observation_notes_sss,
 																					uint32 *num_entries_p);
+
+static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+static const char **GetStringArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p);
+
+static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p);
+
+
+static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
+
 /*
  * API definitions
  */
@@ -229,6 +241,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 			S_PHENOTYPE_START_DATE,
 			S_PHENOTYPE_END_DATE,
 			S_PHENOTYPE_CORRECTED_VALUE,
+			S_OBSERVATION_NOTES,
 			S_STUDY_NAME,
 			S_STUDY_ID,
 			S_STUDY_INDEX,
@@ -316,6 +329,175 @@ static ServiceJobSet *RunPlotEditingService (Service *service_p, ParameterSet *p
 		}		/* if (service_p -> se_jobs_p) */
 
 	return service_p -> se_jobs_p;
+}
+
+
+static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool success_flag = false;
+	const char *row_id_s = NULL;
+	OperationStatus status = OS_FAILED;
+
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_ROW_ID.npt_name_s, &row_id_s))
+		{
+			Row *active_row_p = GetRowByIdString (row_id_s, VF_CLIENT_FULL, data_p);
+
+			if (active_row_p)
+				{
+					const char *plot_notes_s = NULL;
+
+					GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NOTES.npt_name_s, &plot_notes_s);
+
+					ProcessObservations (active_row_p, job_p, param_set_p, data_p);
+
+					status = OS_SUCCEEDED;
+				}		/* if (active_row_p) */
+
+		}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_ROW_ID.npt_name_s, &row_id_s)) */
+	else
+		{
+			status = OS_IDLE;
+		}
+
+	SetServiceJobStatus (job_p, status);
+
+	return success_flag;
+}
+
+
+static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
+{
+	size_t num_mv_entries;
+	const char **mvs_ss = GetStringArrayValuesForParameter (param_set_p, S_MEASURED_VARIABLE_NAME.npt_name_s, &num_mv_entries);
+
+	if (mvs_ss)
+		{
+			size_t num_raw_entries;
+			const char **raw_values_ss = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, &num_raw_entries);
+
+			if (raw_values_ss)
+				{
+					size_t num_corrected_entries;
+					const char **corrected_values_ss = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, &num_corrected_entries);
+
+					if (corrected_values_ss)
+						{
+							size_t num_start_dates;
+							const struct tm **start_dates_pp = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_START_DATE.npt_name_s, &num_start_dates);
+
+							if (start_dates_pp)
+								{
+									size_t num_end_dates;
+									const struct tm **end_dates_pp = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_END_DATE.npt_name_s, &num_end_dates);
+
+									if (end_dates_pp)
+										{
+											size_t num_notes;
+											const char **notes_ss = GetStringArrayValuesForParameter (param_set_p, S_OBSERVATION_NOTES.npt_name_s, &num_notes);
+
+											if (notes_ss)
+												{
+													if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes)
+														{
+															size_t i;
+															const char **mv_ss = mvs_ss;
+															const char **raw_value_ss = raw_values_ss;
+															const char **corrected_value_ss = corrected_values_ss;
+															const char **note_ss = notes_ss;
+															struct tm **start_date_pp = start_dates_pp;
+															struct tm **end_date_pp = end_dates_pp;
+															bool corrected_value_flag = false;
+															const char *key_s = "";
+															MEM_FLAG mv_mem = MF_ALREADY_FREED;
+
+															for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
+																{
+																	MeasuredVariable *mv_p = GetMeasuredVariableByVariableName (*mv_ss, &mv_mem, data_p);
+
+																	if (mv_p)
+																		{
+																			json_t *raw_value_p = NULL;
+																			json_t *corrected_value_p = NULL;
+
+																			if (*raw_value_ss)
+																				{
+																					raw_value_p = json_string (*raw_value_ss);
+																					corrected_value_flag = false;
+																				}
+																			else if (*corrected_value_ss)
+																				{
+																					corrected_value_p = json_string (*corrected_value_ss);
+																					corrected_value_flag = true;
+																				}
+
+
+																			bool free_measured_variable_flag = false;
+																			OperationStatus status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
+																														key_s, raw_value_p ? raw_value_p : corrected_value_p, corrected_value_flag, &free_measured_variable_flag);
+
+
+
+																			if ((mv_mem == MF_DEEP_COPY) || ((mv_mem == MF_SHALLOW_COPY)))
+																				{
+																					FreeMeasuredVariable (mv_p);
+																				}
+																		}
+
+																}
+
+														}
+												}
+
+										}
+
+								}
+
+						}
+
+				}
+
+		}		/* if (mvs_ss) */
+
+}
+
+
+static const char **GetStringArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p)
+{
+	const char **values_ss = NULL;
+	Parameter *param_p = GetParameterFromParameterSetByName (param_set_p, param_s);
+
+	if (param_p)
+		{
+			if (IsStringArrayParameter (param_p))
+				{
+					StringArrayParameter *sa_param_p = (StringArrayParameter *) param_p;
+
+					values_ss = GetStringArrayParameterCurrentValues (sa_param_p);
+					*num_entries_p = GetNumberOfStringArrayCurrentParameterValues (sa_param_p);
+				}
+		}
+
+	return values_ss;
+}
+
+
+static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p)
+{
+	const struct tm **values_pp = NULL;
+	Parameter *param_p = GetParameterFromParameterSetByName (param_set_p, param_s);
+
+	if (param_p)
+		{
+			if (IsTimeArrayParameter (param_p))
+				{
+					TimeArrayParameter *ta_param_p = (TimeArrayParameter *) param_p;
+
+					values_pp = GetTimeArrayParameterCurrentValues (ta_param_p);
+					*num_entries_p = GetNumberOfStringArrayCurrentParameterValues (ta_param_p);
+				}
+		}
+
+	return values_pp;
 }
 
 
@@ -884,6 +1066,7 @@ static bool AddStringValueToArray (const Observation *observation_p, Observation
 static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names_sss, char ***existing_phenotype_raw_values_sss,
 																					char ***existing_phenotype_corrected_values_sss,
 																					struct tm ***existing_phenotype_start_dates_ppp, struct tm ***existing_phenotype_end_dates_ppp,
+																					char ***existing_observation_notes_sss,
 																					uint32 *num_entries_p)
 {
 	bool success_flag = false;
@@ -915,74 +1098,90 @@ static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names
 
 														if (existing_phenotype_corrected_values_ss)
 															{
-																ObservationNode *obs_node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
-																char **existing_mv_name_ss = existing_mv_names_ss;
-																char **existing_phenotype_raw_value_ss = existing_phenotype_raw_values_ss;
-																struct tm **existing_phenotype_start_date_pp = existing_phenotype_start_dates_pp;
-																struct tm **existing_phenotype_end_date_pp = existing_phenotype_end_dates_pp;
-																char **existing_phenotype_corrected_value_ss = existing_phenotype_corrected_values_ss;
+																char **existing_notes_ss = (char **) AllocMemoryArray (num_entries, sizeof (char *));
 
-																success_flag = true;
-
-																while (obs_node_p && success_flag)
+																if (existing_notes_ss)
 																	{
-																		Observation *observation_p = obs_node_p -> on_observation_p;
+																		ObservationNode *obs_node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
+																		char **existing_mv_name_ss = existing_mv_names_ss;
+																		char **existing_phenotype_raw_value_ss = existing_phenotype_raw_values_ss;
+																		struct tm **existing_phenotype_start_date_pp = existing_phenotype_start_dates_pp;
+																		struct tm **existing_phenotype_end_date_pp = existing_phenotype_end_dates_pp;
+																		char **existing_phenotype_corrected_value_ss = existing_phenotype_corrected_values_ss;
+																		char **existing_note_ss = existing_notes_ss;
 
-																		const char *mv_s = GetMeasuredVariableName (observation_p -> ob_phenotype_p);
+																		success_flag = true;
 
-																		char *copied_mv_s = EasyCopyToNewString (mv_s);
-
-																		if (copied_mv_s)
+																		while (obs_node_p && success_flag)
 																			{
-																				*existing_mv_name_ss = copied_mv_s;
-																				*existing_phenotype_start_date_pp = observation_p -> ob_start_date_p;
-																				*existing_phenotype_end_date_pp = observation_p -> ob_end_date_p;
+																				Observation *observation_p = obs_node_p -> on_observation_p;
 
-																				if (AddStringValueToArray (observation_p, OVT_RAW_VALUE, existing_phenotype_raw_value_ss))
+																				const char *mv_s = GetMeasuredVariableName (observation_p -> ob_phenotype_p);
+
+																				char *copied_mv_s = EasyCopyToNewString (mv_s);
+
+																				if (copied_mv_s)
 																					{
-																						if (AddStringValueToArray (observation_p, OVT_CORRECTED_VALUE, existing_phenotype_corrected_value_ss))
-																							{
-																								obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
+																						*existing_mv_name_ss = copied_mv_s;
+																						*existing_phenotype_start_date_pp = observation_p -> ob_start_date_p;
+																						*existing_phenotype_end_date_pp = observation_p -> ob_end_date_p;
 
-																								++ existing_mv_name_ss;
-																								++ existing_phenotype_start_date_pp;
-																								++ existing_phenotype_end_date_pp;
-																								++ existing_phenotype_raw_value_ss;
-																								++ existing_phenotype_corrected_value_ss;
+																						if (AddStringValueToArray (observation_p, OVT_RAW_VALUE, existing_phenotype_raw_value_ss))
+																							{
+																								if (AddStringValueToArray (observation_p, OVT_CORRECTED_VALUE, existing_phenotype_corrected_value_ss))
+																									{
+																										obs_node_p = (ObservationNode *) (obs_node_p -> on_node.ln_next_p);
+
+																										++ existing_mv_name_ss;
+																										++ existing_phenotype_start_date_pp;
+																										++ existing_phenotype_end_date_pp;
+																										++ existing_phenotype_raw_value_ss;
+																										++ existing_phenotype_corrected_value_ss;
+																										++ existing_note_ss;
+																									}
+																								else
+																									{
+																										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStringValueToArray () failed for corrected value");
+																										success_flag = false;
+																									}
+
 																							}
 																						else
 																							{
-																								PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStringValueToArray () failed for corrected value");
+																								PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStringValueToArray () failed for raw value");
 																								success_flag = false;
 																							}
-
 																					}
 																				else
 																					{
-																						PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStringValueToArray () failed for raw value");
+																						PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "EasyCopyToNewString () failed for \"%s\"", mv_s);
 																						success_flag = false;
 																					}
-																			}
-																		else
+
+
+																			}		/* while (obs_node_p && loop_flag) */
+
+																		if (success_flag)
 																			{
-																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "EasyCopyToNewString () failed for \"%s\"", mv_s);
-																				success_flag = false;
-																			}
+																				*existing_mv_names_sss = existing_mv_names_ss;
+																				*existing_phenotype_raw_values_sss = existing_phenotype_raw_values_ss;
+																				*existing_phenotype_start_dates_ppp = existing_phenotype_start_dates_pp;
+																				*existing_phenotype_end_dates_ppp = existing_phenotype_end_dates_pp;
+																				*existing_phenotype_corrected_values_sss = existing_phenotype_corrected_values_ss;
+																				*existing_observation_notes_sss = existing_notes_ss;
+
+																				*num_entries_p = num_entries;
+																				return true;
+																			}		/* if (success_flag) */
 
 
-																	}		/* while (obs_node_p && loop_flag) */
-
-																if (success_flag)
+																		FreeMemory (existing_notes_ss);
+																	}		/* if (existing_notes_ss) */
+																else
 																	{
-																		*existing_mv_names_sss = existing_mv_names_ss;
-																		*existing_phenotype_raw_values_sss = existing_phenotype_raw_values_ss;
-																		*existing_phenotype_start_dates_ppp = existing_phenotype_start_dates_pp;
-																		*existing_phenotype_end_dates_ppp = existing_phenotype_end_dates_pp;
-																		*existing_phenotype_corrected_values_sss = existing_phenotype_corrected_values_ss;
+																		PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate existing_phenotype_notes");
+																	}
 
-																		*num_entries_p = num_entries;
-																		return true;
-																	}		/* if (success_flag) */
 
 																FreeMemory (existing_phenotype_corrected_values_ss);
 															}		/* if (existing_phenotype_corrected_p) */
@@ -1040,6 +1239,7 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 	struct tm **existing_phenotype_start_dates_pp = NULL;
 	struct tm **existing_phenotype_end_dates_pp = NULL;
 	char **existing_phenotype_corrected_values_ss = NULL;
+	char **existing_observation_notes_ss = NULL;
 	uint32 num_entries = 0;
 	ParameterGroup *child_group_p = CreateAndAddParameterGroupChild (parent_group_p, child_group_name_s, true, false);
 
@@ -1052,6 +1252,7 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 					PopulateExistingValues (active_row_p, &existing_mv_names_ss,
 																			&existing_phenotype_raw_values_ss, &existing_phenotype_corrected_values_ss,
 																			&existing_phenotype_start_dates_pp, &existing_phenotype_end_dates_pp,
+																			&existing_observation_notes_ss,
 																			&num_entries);
 				}
 
@@ -1072,7 +1273,10 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 												{
 													if ((param_p = EasyCreateAndAddTimeArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_END_DATE.npt_name_s, "End Date", "The date when the observation finished if it differs from the start date", existing_phenotype_end_dates_pp, num_entries, PL_ALL)) != NULL)
 														{
-															success_flag = true;
+															if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, child_group_p, S_OBSERVATION_NOTES.npt_name_s, "Observation notes", "Any notes about this Phenotypic observation", existing_observation_notes_ss, num_entries, PL_ALL)) != NULL)
+																{
+																	success_flag = true;
+																}
 														}
 												}
 										}
@@ -1091,6 +1295,7 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 					char *corrected_s = NULL;
 					struct tm *start_p = NULL;
 					struct tm *end_p = NULL;
+					char *notes_s = NULL;
 
 					if (num_entries == 1)
 						{
@@ -1099,6 +1304,7 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 							corrected_s = *existing_phenotype_corrected_values_ss;
 							start_p = *existing_phenotype_start_dates_pp;
 							end_p = *existing_phenotype_end_dates_pp;
+							notes_s = *existing_observation_notes_ss;
 						}
 
 					if ((mv_name_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_MEASURED_VARIABLE_NAME.npt_type, S_MEASURED_VARIABLE_NAME.npt_name_s, "Measured Variable Name", "The Name of the Measured Variable to add a phenotype for", mv_s, PL_ALL)) != NULL)
@@ -1111,7 +1317,10 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 												{
 													if ((param_p = EasyCreateAndAddTimeParameterToParameterSet (data_p, param_set_p, child_group_p, S_PHENOTYPE_END_DATE.npt_name_s, "End Date", "The date when the observation finished if it differs from the start date", end_p, PL_ALL)) != NULL)
 														{
-															success_flag = true;
+															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, child_group_p, S_OBSERVATION_NOTES.npt_type, S_OBSERVATION_NOTES.npt_name_s, "Observation notes", "Any notes about this Phenotypic observation", notes_s, PL_ALL)) != NULL)
+																{
+																	success_flag = true;
+																}
 														}
 												}
 										}

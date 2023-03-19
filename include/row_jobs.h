@@ -91,6 +91,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetRowsNameKey (void);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowsNameKey (char *key_s);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRowByParts (StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
+											const char *key_s, const json_t *value_p, const bool corrected_value_flag, bool *free_measured_variable_flag_p);
+
+
 #ifdef __cplusplus
 }
 #endif
