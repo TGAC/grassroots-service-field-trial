@@ -183,6 +183,11 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 
 static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_p, const FieldTrialServiceData *service_data_p);
 
+static bool AddCuratorSubmissionParams (const Person *curator_p, ParameterSet *params_p, ServiceData *data_p);
+
+static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *params_p, ServiceData *data_p);
+
+
 
 /*
  * API DEFINITIONS
@@ -670,8 +675,14 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 					STUDY_PLOT_BLOCK_VGAP,
 					STUDY_CURATOR_NAME,
 					STUDY_CURATOR_EMAIL,
+					STUDY_CURATOR_ROLE,
+					STUDY_CURATOR_AFFILATION,
+					STUDY_CURATOR_ORCID,
 					STUDY_CONTACT_NAME,
 					STUDY_CONTACT_EMAIL,
+					STUDY_CONTACT_ROLE,
+					STUDY_CONTACT_AFFILATION,
+					STUDY_CONTACT_ORCID,
 					STUDY_SOWING_YEAR,
 					STUDY_HARVEST_YEAR,
 					STUDY_PLOT_BLOCK_VGAP,
@@ -1221,12 +1232,14 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																							Person *curator_p = NULL;
 
 																							if (GetPersonFromParameters (&curator_p, param_set_p, STUDY_CURATOR_NAME.npt_name_s, STUDY_CURATOR_EMAIL.npt_name_s,
-																																					 NULL, NULL, NULL))
+																																					 STUDY_CURATOR_ROLE.npt_name_s, STUDY_CURATOR_AFFILATION.npt_name_s,
+																																					 STUDY_CURATOR_ORCID.npt_name_s))
 																								{
 																									Person *contact_p = NULL;
 
 																									if (GetPersonFromParameters (&contact_p, param_set_p, STUDY_CONTACT_NAME.npt_name_s, STUDY_CONTACT_EMAIL.npt_name_s,
-																										 NULL, NULL, NULL))
+																																							 STUDY_CONTACT_ROLE.npt_name_s, STUDY_CONTACT_AFFILATION.npt_name_s,
+																																							 STUDY_CONTACT_ORCID.npt_name_s))
 																										{
 																											Study *study_p = NULL;
 																											const char *aspect_s = NULL;
@@ -4153,6 +4166,101 @@ static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params
 }
 
 
+static bool AddCuratorSubmissionParams (const Person *curator_p, ParameterSet *params_p, ServiceData *data_p)
+{
+	bool success_flag = false;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Curator", false, data_p, params_p);
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_NAME.npt_type, STUDY_CURATOR_NAME.npt_name_s, "Curator name", "The name of the data curator for this Study", curator_p ? curator_p -> pe_name_s : NULL, PL_ALL);
+
+	if (param_p)
+		{
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_EMAIL.npt_type, STUDY_CURATOR_EMAIL.npt_name_s, "Curator email", "The email of the data curator for this Study", curator_p ? curator_p -> pe_email_s : NULL, PL_ALL)) != NULL)
+				{
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_ROLE.npt_type, STUDY_CURATOR_ROLE.npt_name_s, "Curator role", "The role of the data curator for this Study", curator_p ? curator_p -> pe_role_s : NULL, PL_ALL)) != NULL)
+						{
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_AFFILATION.npt_type, STUDY_CURATOR_AFFILATION.npt_name_s, "Curator affiliation", "The affiliation of the data curator for this Study", curator_p ? curator_p -> pe_affiliation_s : NULL, PL_ALL)) != NULL)
+								{
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_ORCID.npt_type, STUDY_CURATOR_ORCID.npt_name_s, "Curator OrCID", "The OrCID of the data curator for this Study", curator_p ? curator_p -> pe_role_s : NULL, PL_ALL)) != NULL)
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_ORCID.npt_name_s);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_AFFILATION.npt_name_s);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_ROLE.npt_name_s);
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_EMAIL.npt_name_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_NAME.npt_name_s);
+		}
+
+	return success_flag;
+}
+
+
+static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *params_p, ServiceData *data_p)
+{
+	bool success_flag = false;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Contact", false, data_p, params_p);
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_NAME.npt_type, STUDY_CONTACT_NAME.npt_name_s, "Contact name", "The name of the contact for this Study", contact_p ? contact_p -> pe_name_s : NULL, PL_ALL);
+
+	if (param_p)
+		{
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_EMAIL.npt_type, STUDY_CONTACT_EMAIL.npt_name_s, "Contact email", "The email of the contact for this Study", contact_p ? contact_p -> pe_email_s : NULL, PL_ALL)) != NULL)
+				{
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_ROLE.npt_type, STUDY_CONTACT_ROLE.npt_name_s, "Contact role", "The role of the contact for this Study", contact_p ? contact_p -> pe_role_s : NULL, PL_ALL)) != NULL)
+						{
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_AFFILATION.npt_type, STUDY_CONTACT_AFFILATION.npt_name_s, "Contact affiliation", "The affiliation of the contact for this Study", contact_p ? contact_p -> pe_affiliation_s : NULL, PL_ALL)) != NULL)
+								{
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_ORCID.npt_type, STUDY_CONTACT_ORCID.npt_name_s, "Contact OrCID", "The OrCID of the contact for this Study", contact_p ? contact_p -> pe_role_s : NULL, PL_ALL)) != NULL)
+										{
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_ORCID.npt_name_s);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_AFFILATION.npt_name_s);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_ROLE.npt_name_s);
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_EMAIL.npt_name_s);
+				}
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_NAME.npt_name_s);
+		}
+
+	return success_flag;
+}
+
+
+
 static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *id_s, const char *trial_s, const char *location_s, ParameterSet *params_p, ParameterGroup *group_p, ServiceData *data_p)
 {
 	bool success_flag = false;
@@ -4199,117 +4307,99 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 																					contact_p = active_study_p -> st_contact_p;
 																				}
 
-																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_NAME.npt_type, STUDY_CURATOR_NAME.npt_name_s, "Curator name", "The name of the data curator for this Study", curator_p ? curator_p -> pe_name_s : NULL, PL_ALL)) != NULL)
+																			if (AddCuratorSubmissionParams (curator_p, params_p, data_p))
 																				{
-																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_EMAIL.npt_type, STUDY_CURATOR_EMAIL.npt_name_s, "Curator email", "The email of the data curator for this Study", curator_p ? curator_p -> pe_email_s : NULL, PL_ALL)) != NULL)
+																					if (AddContactSubmissionParams (contact_p, params_p, data_p))
 																						{
-																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_NAME.npt_type, STUDY_CONTACT_NAME.npt_name_s, "Contact name", "The name of the contact for this Study", contact_p ? contact_p -> pe_name_s : NULL, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the Study", active_study_p ? active_study_p -> st_description_s : NULL, PL_ALL)) != NULL)
 																								{
-																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_EMAIL.npt_type, STUDY_CONTACT_EMAIL.npt_name_s, "Contact email", "The email of the contact for this Study", contact_p ? contact_p -> pe_email_s : NULL, PL_ALL)) != NULL)
+																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", active_study_p ? active_study_p -> st_design_s : NULL, PL_ALL)) != NULL)
 																										{
-																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the Study", active_study_p ? active_study_p -> st_description_s : NULL, PL_ALL)) != NULL)
+																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_GROWING_CONDITIONS.npt_type, STUDY_GROWING_CONDITIONS.npt_name_s, "Growing conditions", "Information about the Growing conditions", active_study_p ? active_study_p -> st_growing_conditions_s : NULL, PL_ALL)) != NULL)
 																												{
-																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", active_study_p ? active_study_p -> st_design_s : NULL, PL_ALL)) != NULL)
+																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype gathering notes", "Notes on how the Phenotype information was gathered", active_study_p ? active_study_p -> st_phenotype_gathering_notes_s : NULL, PL_ALL)) != NULL)
 																														{
-																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_GROWING_CONDITIONS.npt_type, STUDY_GROWING_CONDITIONS.npt_name_s, "Growing conditions", "Information about the Growing conditions", active_study_p ? active_study_p -> st_growing_conditions_s : NULL, PL_ALL)) != NULL)
+																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", active_study_p ? active_study_p -> st_weather_link_s : NULL, PL_ALL)) != NULL)
 																																{
-																																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype gathering notes", "Notes on how the Phenotype information was gathered", active_study_p ? active_study_p -> st_phenotype_gathering_notes_s : NULL, PL_ALL)) != NULL)
+																																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PLAN_CHANGES.npt_type, STUDY_PLAN_CHANGES.npt_name_s, "Field plan changes", "Changes to the Study field experiment plan.", active_study_p ? active_study_p -> st_plan_changes_s : NULL, PL_ALL)) != NULL)
 																																		{
-																																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", active_study_p ? active_study_p -> st_weather_link_s : NULL, PL_ALL)) != NULL)
+																																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DATA_NOT_INCLUDED.npt_type, STUDY_DATA_NOT_INCLUDED.npt_name_s, "Data not included", "Data collected but not currently stored within the Grassroots Field Trial system", active_study_p ? active_study_p -> st_data_not_included_s : NULL, PL_ALL)) != NULL)
 																																				{
-																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PLAN_CHANGES.npt_type, STUDY_PLAN_CHANGES.npt_name_s, "Field plan changes", "Changes to the Study field experiment plan.", active_study_p ? active_study_p -> st_plan_changes_s : NULL, PL_ALL)) != NULL)
+																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_type, STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_name_s, "Physical samples collected", "Details about plant, soil or other samples collected",  active_study_p ? active_study_p -> st_physical_samples_collected_s : NULL, PL_ALL)) != NULL)
 																																						{
-																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DATA_NOT_INCLUDED.npt_type, STUDY_DATA_NOT_INCLUDED.npt_name_s, "Data not included", "Data collected but not currently stored within the Grassroots Field Trial system", active_study_p ? active_study_p -> st_data_not_included_s : NULL, PL_ALL)) != NULL)
+																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHOTO.npt_type, STUDY_PHOTO.npt_name_s, "Photo", "The web address of a photo or image to represent the study", active_study_p ? active_study_p -> st_photo_url_s : NULL, PL_ALL)) != NULL)
 																																								{
-																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_type, STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_name_s, "Physical samples collected", "Details about plant, soil or other samples collected",  active_study_p ? active_study_p -> st_physical_samples_collected_s : NULL, PL_ALL)) != NULL)
+																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_IMAGE_NOTES.npt_type, STUDY_IMAGE_NOTES.npt_name_s, "Image collection notes", "Details about any images collected",  active_study_p ? active_study_p -> st_image_collection_notes_s : NULL, PL_ALL)) != NULL)
 																																										{
-																																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHOTO.npt_type, STUDY_PHOTO.npt_name_s, "Photo", "The web address of a photo or image to represent the study", active_study_p ? active_study_p -> st_photo_url_s : NULL, PL_ALL)) != NULL)
-																																												{
-																																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_IMAGE_NOTES.npt_type, STUDY_IMAGE_NOTES.npt_name_s, "Image collection notes", "Details about any images collected",  active_study_p ? active_study_p -> st_image_collection_notes_s : NULL, PL_ALL)) != NULL)
-																																														{
-																																															success_flag = true;
-																																														}
-																																													else
-																																														{
-																																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_IMAGE_NOTES.npt_name_s);
-																																														}
-																																												}
-																																											else
-																																												{
-																																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PHOTO.npt_name_s);
-																																												}
+																																											success_flag = true;
 																																										}
 																																									else
 																																										{
-																																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_name_s);
+																																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_IMAGE_NOTES.npt_name_s);
 																																										}
 																																								}
 																																							else
 																																								{
-																																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_DATA_NOT_INCLUDED.npt_name_s);
+																																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PHOTO.npt_name_s);
 																																								}
 																																						}
 																																					else
 																																						{
-																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLAN_CHANGES.npt_name_s);
+																																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_name_s);
 																																						}
-
-																																				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", weather_s, PL_ALL)) != NULL) */
+																																				}
 																																			else
 																																				{
-																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_WEATHER_LINK.npt_name_s);
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_DATA_NOT_INCLUDED.npt_name_s);
 																																				}
-
-
-																																		}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype Gathering", "NOtes on hoe the Phenotype information was gathered", def, PL_ALL)) != NULL) */
+																																		}
 																																	else
 																																		{
-																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_GROWING_CONDITIONS.npt_name_s);
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_PLAN_CHANGES.npt_name_s);
 																																		}
 
-																																}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_GROWING_CONDITIONS.npt_type, STUDY_GROWING_CONDITIONS.npt_name_s, "Growing Conditions", "Information about the Growing conditions", def, PL_ALL)) != NULL) */
+																																}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_WEATHER_LINK.npt_type, STUDY_WEATHER_LINK.npt_name_s, "Weather", "Link out to the weather data for this study", weather_s, PL_ALL)) != NULL) */
 																															else
 																																{
-																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_GROWING_CONDITIONS.npt_name_s);
+																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_WEATHER_LINK.npt_name_s);
 																																}
 
-																														}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", def, PL_ALL)) != NULL) */
+
+																														}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_PHENOTYPE_GATHERING_NOTES.npt_type, STUDY_PHENOTYPE_GATHERING_NOTES.npt_name_s, "Phenotype Gathering", "NOtes on hoe the Phenotype information was gathered", def, PL_ALL)) != NULL) */
 																													else
 																														{
-																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_DESIGN.npt_name_s);
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_GROWING_CONDITIONS.npt_name_s);
 																														}
 
-																												}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NOTES.npt_type, STUDY_NOTES.npt_name_s, "Notes", "Any additional information about the study", def, PL_ALL)) != NULL) */
+																												}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_GROWING_CONDITIONS.npt_type, STUDY_GROWING_CONDITIONS.npt_name_s, "Growing Conditions", "Information about the Growing conditions", def, PL_ALL)) != NULL) */
 																											else
 																												{
-																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_DESCRIPTION.npt_name_s);
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_GROWING_CONDITIONS.npt_name_s);
 																												}
 
-
-																										}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CONTACT_EMAIL.npt_type, STUDY_CONTACT_EMAIL.npt_name_s, "Curator name", "The name of the data curator for this Study", location_s, PL_ALL)) != NULL) */
+																										}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", def, PL_ALL)) != NULL) */
 																									else
 																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_EMAIL.npt_name_s);
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_DESIGN.npt_name_s);
 																										}
 
-																								}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_NAME.npt_type, STUDY_CURATOR_NAME.npt_name_s, "Curator name", "The name of the data curator for this Study", location_s, PL_ALL)) != NULL) */
+																								}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, STUDY_NOTES.npt_type, STUDY_NOTES.npt_name_s, "Notes", "Any additional information about the study", def, PL_ALL)) != NULL) */
 																							else
 																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CONTACT_NAME.npt_name_s);
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_DESCRIPTION.npt_name_s);
 																								}
 
-																						}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_EMAIL.npt_type, STUDY_CURATOR_EMAIL.npt_name_s, "Curator email", "The email of the data curator for this Study", location_s, PL_ALL)) != NULL) */
+																						}		/* if (AddContactSubmissionParams (contact_p, params_p, data_p)) */
 																					else
 																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_EMAIL.npt_name_s);
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddContactSubmissionParams () failed");
 																						}
 
-																				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_CURATOR_NAME.npt_type, STUDY_CURATOR_NAME.npt_name_s, "Curator name", "The name of the data curator for this Study", location_s, PL_ALL)) != NULL) */
+																				}		/* if (AddCuratorSubmissionParams (curator_p, params_p, data_p)) */
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_CURATOR_NAME.npt_name_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCuratorSubmissionParams () failed");
 																				}
-
 
 																		}
 																	else
