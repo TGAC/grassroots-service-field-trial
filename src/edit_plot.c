@@ -43,6 +43,8 @@
 
 #include "observation.h"
 #include "standard_row.h"
+#include "measured_variable_jobs.h"
+
 
 /*
  * Static declarations
@@ -142,7 +144,7 @@ static const char **GetStringArrayValuesForParameter (ParameterSet *param_set_p,
 static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p);
 
 
-static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
+static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
 /*
  * API definitions
@@ -201,19 +203,19 @@ Service *GetPlotEditingService (GrassrootsServer *grassroots_p)
 
 static const char *GetPlotEditingServiceName (const Service * UNUSED_PARAM (service_p))
 {
-	return "Edit Field Trial Plot";
+	return "Edit Field Trial Rack";
 }
 
 
 static const char *GetPlotEditingServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "A service to edit an individual field trial plot.";
+	return "A service to edit an individual field trial rack.";
 }
 
 
 static const char *GetPlotEditingServiceAlias (const Service * UNUSED_PARAM (service_p))
 {
-	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "edit_plot";
+	return DFT_GROUP_ALIAS_PREFIX_S SERVICE_GROUP_ALIAS_SEPARATOR "edit_rack";
 }
 
 
@@ -223,7 +225,7 @@ static const char *GetPlotEditingServiceInformationUri (const Service *service_p
 
 	if (!url_s)
 		{
-			url_s = "https://grassroots.tools/docs/user/services/field_trial/edit_plot.md";
+			url_s = "https://grassroots.tools/docs/user/services/field_trial/edit_rack.md";
 		}
 
 	return url_s;
@@ -247,6 +249,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 			S_STUDY_INDEX,
 			S_ROW_INDEX,
 			S_COL_INDEX,
+			S_RACK_INDEX,
 			S_NOTES,
 			NULL
 		};
@@ -345,13 +348,39 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 			if (active_row_p)
 				{
 					const char *plot_notes_s = NULL;
+					OperationStatus obs_status = ProcessObservations (active_row_p, job_p, param_set_p, data_p);
 
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NOTES.npt_name_s, &plot_notes_s);
 
-					ProcessObservations (active_row_p, job_p, param_set_p, data_p);
+					if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
+						{
+							if (SavePlot (active_row_p -> ro_plot_p, data_p))
+								{
+									status = OS_SUCCEEDED;
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ProcessObservations () failed");
+						}
 
-					status = OS_SUCCEEDED;
 				}		/* if (active_row_p) */
+			else
+				{
+					char *error_s = ConcatenateVarargsStrings ("Failed to find row with id \"", row_id_s, "\"", NULL);
+
+					if (error_s)
+						{
+							AddParameterErrorMessageToServiceJob (job_p, S_ROW_ID.npt_name_s, S_ROW_ID.npt_type, error_s);
+							FreeCopiedString (error_s);
+						}
+					else
+						{
+							AddParameterErrorMessageToServiceJob (job_p, S_ROW_ID.npt_name_s, S_ROW_ID.npt_type, "Failed to find matching row");
+						}
+
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to find row with id \"%s\"", row_id_s);
+				}
 
 		}		/* if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_ROW_ID.npt_name_s, &row_id_s)) */
 	else
@@ -365,8 +394,9 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 }
 
 
-static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
+static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	size_t num_mv_entries;
 	const char **mvs_ss = GetStringArrayValuesForParameter (param_set_p, S_MEASURED_VARIABLE_NAME.npt_name_s, &num_mv_entries);
 
@@ -383,12 +413,12 @@ static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, Paramete
 					if (corrected_values_ss)
 						{
 							size_t num_start_dates;
-							const struct tm **start_dates_pp = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_START_DATE.npt_name_s, &num_start_dates);
+							const struct tm **start_dates_pp = GetTimeArrayValuesForParameter (param_set_p, S_PHENOTYPE_START_DATE.npt_name_s, &num_start_dates);
 
 							if (start_dates_pp)
 								{
 									size_t num_end_dates;
-									const struct tm **end_dates_pp = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_END_DATE.npt_name_s, &num_end_dates);
+									const struct tm **end_dates_pp = GetTimeArrayValuesForParameter (param_set_p, S_PHENOTYPE_END_DATE.npt_name_s, &num_end_dates);
 
 									if (end_dates_pp)
 										{
@@ -399,13 +429,14 @@ static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, Paramete
 												{
 													if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes)
 														{
+															size_t num_successes = 0;
 															size_t i;
 															const char **mv_ss = mvs_ss;
 															const char **raw_value_ss = raw_values_ss;
 															const char **corrected_value_ss = corrected_values_ss;
 															const char **note_ss = notes_ss;
-															struct tm **start_date_pp = start_dates_pp;
-															struct tm **end_date_pp = end_dates_pp;
+															const struct tm **start_date_pp = start_dates_pp;
+															const struct tm **end_date_pp = end_dates_pp;
 															bool corrected_value_flag = false;
 															const char *key_s = "";
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
@@ -432,9 +463,13 @@ static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, Paramete
 
 
 																			bool free_measured_variable_flag = false;
-																			OperationStatus status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
+																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
 																														key_s, raw_value_p ? raw_value_p : corrected_value_p, corrected_value_flag, &free_measured_variable_flag);
 
+																			if ((obs_status == OS_SUCCEEDED) || ((obs_status == OS_PARTIALLY_SUCCEEDED)))
+																				{
+																					++ num_successes;
+																				}
 
 
 																			if ((mv_mem == MF_DEEP_COPY) || ((mv_mem == MF_SHALLOW_COPY)))
@@ -443,6 +478,15 @@ static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, Paramete
 																				}
 																		}
 
+																}
+
+															if (num_successes == num_mv_entries)
+																{
+																	status = OS_SUCCEEDED;
+																}
+															else if (num_successes > 0)
+																{
+																	status = OS_PARTIALLY_SUCCEEDED;
 																}
 
 														}
@@ -458,6 +502,7 @@ static void ProcessObservations (StandardRow *row_p, ServiceJob *job_p, Paramete
 
 		}		/* if (mvs_ss) */
 
+	return status;
 }
 
 
@@ -613,6 +658,7 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 					uint32 *study_index_p = NULL;
 					uint32 *row_index_p = NULL;
 					uint32 *column_index_p = NULL;
+					uint32 *rack_index_p = NULL;
 					const char *notes_s = NULL;
 
 					if (active_row_p)
@@ -623,6 +669,13 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 								{
 									study_name_s = active_row_p -> ro_study_p -> st_name_s;
 									study_id_s = GetBSONOidAsString (active_row_p -> ro_study_p -> st_id_p);
+
+									if (active_row_p -> ro_type == RT_STANDARD)
+										{
+											StandardRow *sr_p = (StandardRow *) (active_row_p);
+
+											rack_index_p = & (sr_p -> sr_rack_index);
+										}
 								}
 
 							if (plot_p)
@@ -656,25 +709,36 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 														{
 															param_p -> pa_read_only_flag = true;
 
-															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
-																{
-																	const char *child_group_name_s = "Phenotypes";
 
-																	if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+															if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_RACK_INDEX.npt_name_s, "Rack", "The rack index of this rack within the Study", rack_index_p, PL_ALL)) != NULL)
+																{
+																	param_p -> pa_read_only_flag = true;
+
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
 																		{
-																			success_flag = true;
-																		}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																			const char *child_group_name_s = "Phenotypes";
+
+																			if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+																				{
+																					success_flag = true;
+																				}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																				}
+
+																		}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL) */
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NOTES.npt_name_s);
 																		}
 
-																}		/* */
+
+																}		/* if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_RACK_INDEX.npt_name_s, "Rack", "The rack index of this rack within the Study", rack_index_p, PL_ALL)) != NULL)*/
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NOTES.npt_name_s);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_RACK_INDEX.npt_name_s);
 																}
-
 
 
 														}

@@ -121,7 +121,7 @@ Person *AllocatePerson (const char *name_s, const char *email_s, const char *rol
 void InitPerson (Person *person_p)
 {
 	person_p -> pe_name_s = NULL;
-	person_p -> pe_name_s = NULL;
+	person_p -> pe_email_s = NULL;
 	person_p -> pe_role_s = NULL;
 	person_p -> pe_affiliation_s = NULL;
 	person_p -> pe_orcid_s = NULL;
