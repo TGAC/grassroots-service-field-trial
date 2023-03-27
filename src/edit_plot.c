@@ -146,6 +146,12 @@ static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set
 
 static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
 
+static bool GetObservationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+static bool IsObservationParameter (const char * const param_name_s);
+
+static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
+
 /*
  * API definitions
  */
@@ -183,6 +189,8 @@ Service *GetPlotEditingService (GrassrootsServer *grassroots_p)
 
 							if (ConfigureFieldTrialService (data_p, grassroots_p))
 								{
+									service_p -> se_custom_parameter_decoder_fn = CreatePlotEditorParameterFromJSON;
+
 									return service_p;
 								}
 
@@ -235,26 +243,28 @@ static const char *GetPlotEditingServiceInformationUri (const Service *service_p
 
 static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	const NamedParameterType params [] =
-		{
-			S_ROW_ID,
-			S_MEASURED_VARIABLE_NAME,
-			S_PHENOTYPE_RAW_VALUE,
-			S_PHENOTYPE_START_DATE,
-			S_PHENOTYPE_END_DATE,
-			S_PHENOTYPE_CORRECTED_VALUE,
-			S_OBSERVATION_NOTES,
-			S_STUDY_NAME,
-			S_STUDY_ID,
-			S_STUDY_INDEX,
-			S_ROW_INDEX,
-			S_COL_INDEX,
-			S_RACK_INDEX,
-			S_NOTES,
-			NULL
-		};
+	bool b = GetObservationParameterTypeForNamedParameter (param_name_s, pt_p);
 
-	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
+	if (!b)
+		{
+			const NamedParameterType params [] =
+				{
+					S_ROW_ID,
+					S_STUDY_NAME,
+					S_STUDY_ID,
+					S_STUDY_INDEX,
+					S_ROW_INDEX,
+					S_COL_INDEX,
+					S_RACK_INDEX,
+					S_NOTES,
+					NULL
+				};
+
+			b = DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
+		}
+
+
+	return b;
 }
 
 
@@ -347,23 +357,25 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 			if (active_row_p)
 				{
-					const char *plot_notes_s = NULL;
-					OperationStatus obs_status = ProcessObservations (active_row_p, job_p, param_set_p, data_p);
-
-					GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NOTES.npt_name_s, &plot_notes_s);
-
-					if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
+					if (active_row_p -> ro_type == RT_STANDARD)
 						{
-							if (SavePlot (active_row_p -> ro_plot_p, data_p))
+							const char *plot_notes_s = NULL;
+							OperationStatus obs_status = ProcessObservations ((StandardRow *) active_row_p, job_p, param_set_p, data_p);
+
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NOTES.npt_name_s, &plot_notes_s);
+
+							if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
 								{
-									status = OS_SUCCEEDED;
+									if (SavePlot (active_row_p -> ro_plot_p, data_p))
+										{
+											status = OS_SUCCEEDED;
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ProcessObservations () failed");
 								}
 						}
-					else
-						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ProcessObservations () failed");
-						}
-
 				}		/* if (active_row_p) */
 			else
 				{
@@ -538,7 +550,7 @@ static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set
 					TimeArrayParameter *ta_param_p = (TimeArrayParameter *) param_p;
 
 					values_pp = GetTimeArrayParameterCurrentValues (ta_param_p);
-					*num_entries_p = GetNumberOfStringArrayCurrentParameterValues (ta_param_p);
+					*num_entries_p = GetNumberOfTimeArrayCurrentParameterValues (ta_param_p);
 				}
 		}
 
@@ -1409,3 +1421,124 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 	return success_flag;
 }
 
+
+
+
+static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag)
+{
+	Parameter *param_p = NULL;
+	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+	bool done_flag = false;
+
+	if (IsObservationParameter (name_s))
+		{
+			json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
+			const char *param_name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+
+			if (param_name_s)
+				{
+					ParameterType pt = PT_NUM_TYPES;
+
+					if (strcmp (param_name_s, S_MEASURED_VARIABLE_NAME.npt_name_s) == 0)
+						{
+							pt = S_MEASURED_VARIABLE_NAME.npt_type;
+						}
+					else if (strcmp (param_name_s, S_PHENOTYPE_RAW_VALUE.npt_name_s) == 0)
+						{
+							pt = S_PHENOTYPE_RAW_VALUE.npt_type;
+						} 
+					else if (strcmp (param_name_s, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s) == 0)
+						{
+							pt = S_PHENOTYPE_CORRECTED_VALUE.npt_type;
+						} 
+					else if (strcmp (param_name_s, S_OBSERVATION_NOTES.npt_name_s) == 0)
+						{
+							pt = S_OBSERVATION_NOTES.npt_type;
+						}	 
+
+					if (pt != PT_NUM_TYPES)
+						{
+							if (current_value_p && (json_is_array (current_value_p)))
+								{
+									ParameterType pt = PT_STRING_ARRAY;
+									StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+									if (string_array_param_p)
+										{
+											param_p = & (string_array_param_p -> sap_base_param);
+										}
+								}
+							else
+								{
+									StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+									if (string_param_p)
+										{
+											param_p = & (string_param_p -> sp_base_param);
+										}
+								}
+						}
+					else if ((strcmp (param_name_s, S_PHENOTYPE_START_DATE.npt_name_s) == 0) ||
+									(strcmp (param_name_s, S_PHENOTYPE_END_DATE.npt_name_s) == 0))
+						{
+							if (current_value_p && (json_is_array (current_value_p)))
+								{
+									TimeArrayParameter *time_array_param_p = AllocateTimeArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+									if (time_array_param_p)
+									{
+										param_p = & (time_array_param_p -> tap_base_param);
+									}
+							}						
+						else
+							{
+								TimeParameter *time_param_p  = AllocateTimeParameterFromJSON (param_json_p, service_p, concise_flag);
+
+								if (time_param_p)
+									{
+										param_p = & (time_param_p -> tp_base_param);
+									}
+							}
+
+						}
+				}		/* if (param_name_s) */
+
+		}
+
+	if (!param_p)
+		{
+			param_p = CreateParameterFromJSON (param_json_p, service_p, concise_flag);
+		}
+
+	return param_p;
+}
+
+
+
+static bool IsObservationParameter (const char * const param_name_s)
+{
+	ParameterType pt;
+
+	return GetObservationParameterTypeForNamedParameter (param_name_s, &pt);
+}
+
+
+static bool GetObservationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	bool success_flag;
+
+
+	const NamedParameterType params [] =
+	{
+		S_MEASURED_VARIABLE_NAME,
+		S_PHENOTYPE_RAW_VALUE,
+		S_PHENOTYPE_START_DATE,
+		S_PHENOTYPE_END_DATE,
+		S_PHENOTYPE_CORRECTED_VALUE,
+		S_OBSERVATION_NOTES,
+		NULL
+	};
+
+
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
+}

@@ -158,9 +158,9 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 							fputs ("\\newlength{\\imgwidth}\n\n", study_tex_f);
 
 							fputs ("\\newcommand\\scalegraphics[1]{\\%%\n", study_tex_f);
-							fputs ("\t\\settowidth{\\imgwidth}{\\includegraphics{#1}}\%%\n", study_tex_f);
-							fputs ("\t\\setlength{\\imgwidth}{\\minof{\\imgwidth}{\\textwidth}}\%%\n", study_tex_f);
-							fputs ("\t\\includegraphics[width=\\imgwidth,keepaspectratio]{#1}\%%\n}\n", study_tex_f);
+							fputs ("\t\\settowidth{\\imgwidth}{\\includegraphics{#1}}\%\%\n", study_tex_f);
+							fputs ("\t\\setlength{\\imgwidth}{\\minof{\\imgwidth}{\\textwidth}}\%\%\n", study_tex_f);
+							fputs ("\t\\includegraphics[width=\\imgwidth,keepaspectratio]{#1}\%\%\n}\n", study_tex_f);
 
 
 
