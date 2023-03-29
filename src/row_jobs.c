@@ -429,7 +429,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 							bool free_measured_variable_flag = false;
 
 							status = AddObservationValueToStandardRowByParts (row_p, measured_variable_p, start_date_p, end_date_p,
-																																 key_s, value_p, corrected_value_flag, &free_measured_variable_flag);
+																																 key_s, value_p, corrected_value_flag, observation_index, &free_measured_variable_flag);
 
 
 
@@ -479,7 +479,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 
 
 OperationStatus AddObservationValueToStandardRowByParts (StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
-											const char *key_s, const json_t *value_p, const bool corrected_value_flag, bool *free_measured_variable_flag_p)
+											const char *key_s, const json_t *value_p, const bool corrected_value_flag, const uint32 observation_index, bool *free_measured_variable_flag_p)
 {
 	OperationStatus status = OS_FAILED;
 	ObservationNode *observation_node_p = NULL;
@@ -493,7 +493,6 @@ OperationStatus AddObservationValueToStandardRowByParts (StandardRow *row_p, Mea
 	const json_t *raw_value_p = NULL;
 	const json_t *corrected_value_p = NULL;
 	bool (*set_observation_value_fn) (Observation *observation_p, const json_t *value_p) = NULL;
-	uint32 observation_index = 1;
 
 	if (json_is_string (value_p))
 		{

@@ -452,6 +452,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															bool corrected_value_flag = false;
 															const char *key_s = "";
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
+															uint32 observation_index = 1;
 
 															for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
 																{
@@ -476,7 +477,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 
 																			bool free_measured_variable_flag = false;
 																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
-																														key_s, raw_value_p ? raw_value_p : corrected_value_p, corrected_value_flag, &free_measured_variable_flag);
+																														key_s, raw_value_p ? raw_value_p : corrected_value_p, corrected_value_flag, observation_index, &free_measured_variable_flag);
 
 																			if ((obs_status == OS_SUCCEEDED) || ((obs_status == OS_PARTIALLY_SUCCEEDED)))
 																				{
