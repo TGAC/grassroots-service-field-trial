@@ -53,17 +53,17 @@
 
 static NamedParameterType S_ROW_ID = { "RO Id", PT_STRING };
 
-static NamedParameterType S_MEASURED_VARIABLE_NAME  = { "RO Measured Variable Name", PT_STRING_ARRAY };
+static NamedParameterType S_MEASURED_VARIABLE_NAME  = { "RO Measured Variable Name", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_RAW_VALUE  = { "RO Phenotype Raw Value", PT_STRING_ARRAY };
+static NamedParameterType S_PHENOTYPE_RAW_VALUE  = { "RO Phenotype Raw Value", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_CORRECTED_VALUE = { "RO Phenotype Corrected Value", PT_STRING_ARRAY };
+static NamedParameterType S_PHENOTYPE_CORRECTED_VALUE = { "RO Phenotype Corrected Value", PT_STRING };
 
-static NamedParameterType S_PHENOTYPE_START_DATE  = { "RO Phenotype Start Date", PT_TIME_ARRAY };
+static NamedParameterType S_PHENOTYPE_START_DATE  = { "RO Phenotype Start Date", PT_TIME };
 
-static NamedParameterType S_PHENOTYPE_END_DATE  = { "RO Phenotype End Date", PT_TIME_ARRAY };
+static NamedParameterType S_PHENOTYPE_END_DATE  = { "RO Phenotype End Date", PT_TIME };
 
-static NamedParameterType S_OBSERVATION_NOTES  = { "RO Observation Notes", PT_STRING_ARRAY };
+static NamedParameterType S_OBSERVATION_NOTES  = { "RO Observation Notes", PT_STRING };
 
 
 

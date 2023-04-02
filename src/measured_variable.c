@@ -494,20 +494,45 @@ MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *phenotype_id_p, con
 
 											if (!treatment_p)
 												{
-
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMeasuredVariableFromJSON () failed");
 												}		/* if (!treatment_p) */
 
 										}		/* if (num_results == 1) */
+									else if (num_results == 0)
+										{
+											PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, "No results");
+										}
+									else
+										{
+											PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, SIZET_FMT " results", num_results);
+										}
 
 								}		/* if (json_is_array (results_p)) */
+							else
+								{
+									PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, "Results is not an array");
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results is not an array");
+								}
 
 							json_decref (results_p);
 						}		/* if (results_p) */
+					else
+						{
+							PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, "No Results");
+						}
 
 					bson_destroy (query_p);
 				}		/* if (query_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query");
+				}
 
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PHENOTYPE])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetMongoToolCollection () to phenotypes failed");
+		}
 
 	return treatment_p;
 }
