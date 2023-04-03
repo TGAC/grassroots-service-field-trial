@@ -1042,7 +1042,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
-	service_p -> se_jobs_p = AllocateSimpleServiceJobSet (service_p, NULL, "DFWFieldTrial");
+	service_p->se_jobs_p = AllocateSimpleServiceJobSet (service_p, "RunFieldTrialIndexingService", "DFWFieldTrial");
 
 	if (service_p -> se_jobs_p)
 		{
