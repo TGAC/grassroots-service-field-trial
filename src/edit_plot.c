@@ -65,6 +65,7 @@ static NamedParameterType S_PHENOTYPE_END_DATE  = { "RO Phenotype End Date", PT_
 
 static NamedParameterType S_OBSERVATION_NOTES  = { "RO Observation Notes", PT_STRING };
 
+static NamedParameterType S_APPEND_OBSERVATIONS  = { "RO Append Observations", PT_BOOLEAN };
 
 
 static NamedParameterType S_STUDY_NAME  = { "RO Study Name", PT_STRING };
@@ -257,6 +258,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 					S_COL_INDEX,
 					S_RACK_INDEX,
 					S_NOTES,
+					S_APPEND_OBSERVATIONS,
 					NULL
 				};
 
@@ -360,7 +362,17 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 					if (active_row_p -> ro_type == RT_STANDARD)
 						{
 							const char *plot_notes_s = NULL;
-							OperationStatus obs_status = ProcessObservations ((StandardRow *) active_row_p, job_p, param_set_p, data_p);
+							bool append_flag = true;
+							OperationStatus obs_status = OS_IDLE;
+
+							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND_OBSERVATIONS.npt_name_s, &append_flag);
+
+							if (!append_flag)
+								{
+									/* remove existing obsevations */
+								}
+
+							obs_status = ProcessObservations ((StandardRow *) active_row_p, job_p, param_set_p, data_p);
 
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NOTES.npt_name_s, &plot_notes_s);
 
@@ -729,15 +741,26 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 
 																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
 																		{
-																			const char *child_group_name_s = "Phenotypes";
+																			bool append_flag = true;
 
-																			if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND_OBSERVATIONS.npt_name_s, "Append observations", "Append to existing observations. Setting this to false, will clear any existing observations when you submit.",
+																																																		 append_flag, PL_ALL)) != NULL)
 																				{
-																					success_flag = true;
-																				}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																					const char *child_group_name_s = "Phenotypes";
+
+																					if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+																						{
+																							success_flag = true;
+																						}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																						}
+
+																				}
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_APPEND_OBSERVATIONS.npt_name_s);
 																				}
 
 																		}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL) */
