@@ -86,7 +86,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionPlotParams (FieldTrialService
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *area_p, const ViewFormat format, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowColumnRack (const uint32 row, const uint32 column, const uint32 rack, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);

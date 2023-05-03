@@ -1421,14 +1421,14 @@ static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, St
 	int32 row = -1;
 	int32 column = -1;
 	int32 study_index = -1;
+	int32 rack = -1;
 
-
-	if (CheckPlotRequirements (plots_cache_p, table_row_json_p, row_index, job_p, &row, &column, &study_index))
+	if (CheckPlotRequirements (plots_cache_p, table_row_json_p, row_index, job_p, &row, &column, &study_index, &rack))
 		{
 			/*
 			 * does the plot already exist?
 			 */
-			plot_p = GetPlotByRowAndColumn (row, column, study_p, VF_STORAGE, data_p);
+			plot_p = GetPlotByRowColumnRack (row, column, rack, study_p, VF_STORAGE, data_p);
 
 			if (plot_p)
 				{
@@ -1661,10 +1661,10 @@ Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const ViewFormat format, Fi
 }
 
 
-Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
+Plot *GetPlotByRowColumnRack (const uint32 row, const uint32 column, const uint32 rack, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {
 	Plot *plot_p = NULL;
-	bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
+	bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_RACK_TITLE_S, BCON_INT32 (rack), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
 
 	if (query_p)
 		{
