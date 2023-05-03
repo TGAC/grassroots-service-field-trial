@@ -35,7 +35,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL PlotsCache *AllocatePlotsCache (void);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlotsCache (PlotsCache *plots_cache_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_json_p, const size_t row_index, ServiceJob *job_p, int32 *row_p, int32 *column_p, int32 *index_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_json_p, const size_t row_index, ServiceJob *job_p, int32 *row_p, int32 *column_p, int32 *index_p, int32 *rack_p);
 
 
 #ifdef __cplusplus

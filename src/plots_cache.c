@@ -55,7 +55,7 @@ void FreePlotsCache (PlotsCache *plots_cache_p)
 }
 
 
-bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_json_p, const size_t row_index, ServiceJob *job_p, int32 *row_p, int32 *column_p, int32 *index_p)
+bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_json_p, const size_t row_index, ServiceJob *job_p, int32 *row_p, int32 *column_p, int32 *index_p, int32 *rack_p)
 {
 	bool success_flag = false;
 	const char *row_s = GetJSONString (table_row_json_p, PL_ROW_TITLE_S);
@@ -67,9 +67,18 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 			if (column_s)
 				{
 					const char * const sep_s = " - ";
-					char *row_and_column_s = ConcatenateVarargsStrings (row_s, sep_s, column_s, NULL);
+					const char *rack_s = GetJSONString (table_row_json_p, PL_RACK_TITLE_S);
+					char *row_and_column_s = NULL;
 
-					if (row_and_column_s)
+					if (!rack_s)
+						{
+							rack_s = "1";
+						}
+
+
+					char *row_and_column_and_rack_s = ConcatenateVarargsStrings (row_s, sep_s, column_s, sep_s, rack_s, NULL);
+
+					if (row_and_column_and_rack_s)
 						{
 							const char *index_s = GetJSONString (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
 
@@ -80,7 +89,7 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 
 									if (res == 0)
 										{
-											res = IsCachedEntry (plots_cache_p -> pc_grid_cache_p, row_and_column_s, row_index, &matched_row);
+											res = IsCachedEntry (plots_cache_p -> pc_grid_cache_p, row_and_column_and_rack_s, row_index, &matched_row);
 
 											if (res == 0)
 												{
@@ -90,18 +99,27 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 																{
 																	if (GetValidInteger (&index_s, index_p))
 																		{
-																			success_flag = true;
+																			if (GetValidInteger (&rack_s, rack_p))
+																				{
+																					success_flag = true;
+																				}		/* if (GetValidInteger (&index_s, index_p)) */
+																			else
+																				{
+																					AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get rack as a number", row_index, PL_RACK_TITLE_S);
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", rack_s, PL_RACK_TITLE_S);
+																				}
+
 																		}		/* if (GetValidInteger (&index_s, index_p)) */
 																	else
 																		{
-																			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row as a number", row_index, PL_INDEX_TABLE_TITLE_S);
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", column_s, PL_INDEX_TABLE_TITLE_S);
+																			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get index as a number", row_index, PL_INDEX_TABLE_TITLE_S);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", index_s, PL_INDEX_TABLE_TITLE_S);
 																		}
 
 																}		/* if (GetValidInteger (&column_s, column_p)) */
 															else
 																{
-																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get row as a number", row_index, PL_COLUMN_TITLE_S);
+																	AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get column as a number", row_index, PL_COLUMN_TITLE_S);
 																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\" as a number from \"%s\"", column_s, PL_COLUMN_TITLE_S);
 																}
 
@@ -120,7 +138,7 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 
 													if (matched_row_s)
 														{
-															char *full_error_s = ConcatenateVarargsStrings ("Row and column values are duplicates of row ", matched_row_s, " in the spreadsheet", NULL);
+															char *full_error_s = ConcatenateVarargsStrings ("Row, column and rack values are duplicates of row ", matched_row_s, " in the spreadsheet", NULL);
 
 															if (full_error_s)
 																{
@@ -135,10 +153,10 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 
 													if (!done_error_flag)
 														{
-															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Row and column are duplicates of another row in the spreadsheet", row_index, PL_ROW_TITLE_S);
+															AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Row, column and rack are duplicates of another row in the spreadsheet", row_index, PL_ROW_TITLE_S);
 														}
 
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Row \"%s\" and column \"%s\" on row " SIZET_FMT " are duplicates of row " SIZET_FMT " in the spreadsheet", row_s, column_s, row_index, matched_row, PL_ROW_TITLE_S);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Row \"%s\", column \"%s\" and rack \"%s\" on row " SIZET_FMT " are duplicates of row " SIZET_FMT " in the spreadsheet", row_s, column_s, rack_s, row_index, matched_row, PL_ROW_TITLE_S);
 												}		/* else if (res == 1) */
 											else if (res == -1)
 												{

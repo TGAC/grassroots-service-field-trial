@@ -744,7 +744,7 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 																			bool append_flag = true;
 
 																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND_OBSERVATIONS.npt_name_s, "Append observations", "Append to existing observations. Setting this to false, will clear any existing observations when you submit.",
-																																																		 append_flag, PL_ALL)) != NULL)
+																																																		 &append_flag, PL_ALL)) != NULL)
 																				{
 																					const char *child_group_name_s = "Phenotypes";
 

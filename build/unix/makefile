@@ -1,10 +1,11 @@
 NAME 		:= dfw_field_trial_service
-DIR_BUILD :=  $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-DIR_SRC := $(realpath $(DIR_BUILD)/../../src)
-DIR_INCLUDE :=$(realpath $(DIR_BUILD)/../../include)
+DIR_BUILD :=  $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/$(PLATFORM))
+DIR_SRC := $(realpath $(DIR_BUILD)/../../../src)
+DIR_INCLUDE := $(realpath $(DIR_BUILD)/../../../include)
 
 ifeq ($(DIR_BUILD_CONFIG),)
-export DIR_BUILD_CONFIG := $(realpath $(DIR_BUILD)/../../../../build-config/linux)
+export DIR_BUILD_CONFIG = $(realpath $(DIR_BUILD)/../../../../../build-config/unix/)
+#export DIR_BUILD_CONFIG = /Users/tyrrells/Projects/grassroots/build-config/unix/
 endif
 
 include $(DIR_BUILD_CONFIG)/project.properties
@@ -132,7 +133,6 @@ LIB_LDFLAGS = 	\
 	-L$(DIR_GRASSROOTS_UUID_LIB) -l$(GRASSROOTS_UUID_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_SERVICES_LIB) -l$(GRASSROOTS_SERVICES_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_SERVER_LIB) -l$(GRASSROOTS_SERVER_LIB_NAME) \
-	-L$(DIR_GRASSROOTS_PARAMS_LIB) -l$(GRASSROOTS_PARAMS_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_MONGODB_LIB) -l$(GRASSROOTS_MONGODB_LIB_NAME)  \
 	-L$(DIR_GRASSROOTS_SQLITE_LIB) -l$(GRASSROOTS_SQLITE_LIB_NAME)  \
 	-L$(DIR_GRASSROOTS_GEOCODER_LIB) -l$(GRASSROOTS_GEOCODER_LIB_NAME) \
