@@ -1510,19 +1510,19 @@ static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, 
 									TimeArrayParameter *time_array_param_p = AllocateTimeArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
 
 									if (time_array_param_p)
-									{
-										param_p = & (time_array_param_p -> tap_base_param);
-									}
-							}						
-						else
-							{
-								TimeParameter *time_param_p  = AllocateTimeParameterFromJSON (param_json_p, service_p, concise_flag);
+										{
+											param_p = & (time_array_param_p -> tap_base_param);
+										}
+								}
+							else
+								{
+									TimeParameter *time_param_p  = AllocateTimeParameterFromJSON (param_json_p, service_p, concise_flag);
 
-								if (time_param_p)
-									{
-										param_p = & (time_param_p -> tp_base_param);
-									}
-							}
+									if (time_param_p)
+										{
+											param_p = & (time_param_p -> tp_base_param);
+										}
+								}
 
 						}
 				}		/* if (param_name_s) */
