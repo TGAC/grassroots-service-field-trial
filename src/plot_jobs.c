@@ -1205,7 +1205,6 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 							if (row_p)
 								{
-
 									if (AddRowToPlot (plot_p, row_p))
 										{
 											if (is_new_plot_flag)
@@ -1227,12 +1226,10 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 												}
 										}
 
-								}
+								}		/* if (row_p) */
 							else
 								{
 									AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to add row", row_index, NULL);
-									FreeRow (row_p);
-									row_p = NULL;
 								}
 
 						}		/* if (row_p) else */
