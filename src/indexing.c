@@ -1853,7 +1853,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 	OperationStatus status = OS_FAILED;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
-	const char *keys_array_ss [4];
+	const char *keys_array_ss [5];
 	const char **keys_ss = keys_array_ss;
 
 	keys_array_ss [0] = MA_ACCESSION_S;
@@ -1867,6 +1867,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 			keys_array_ss [0] = PL_PARENT_STUDY_S;
 			keys_array_ss [1] = PL_ROW_INDEX_S;
 			keys_array_ss [2] = PL_COLUMN_INDEX_S;
+			keys_array_ss [3] = SR_RACK_INDEX_S;
 			keys_array_ss [3] = NULL;
 
 			/* Plots */
