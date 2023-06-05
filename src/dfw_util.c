@@ -305,7 +305,7 @@ void *GetDFWObjectByNamedId (const bson_oid_t *id_p, DFWFieldTrialData collectio
 												}		/* if (num_results == 1) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "" SIZET_FMT " results when searching for object_id_s with id \"%s\"", num_results, id_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, SIZET_FMT " results when searching for object_id_s with id \"%s\"", num_results, id_s);
 												}
 
 										}		/* if (json_is_array (results_p) */

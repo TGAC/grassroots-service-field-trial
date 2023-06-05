@@ -640,8 +640,9 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const V
 
 															if (rows_array_p)
 																{
-																	if (GetPlotRows (plot_p, rows_array_p, parent_study_p, format, data_p))
+																	if (!GetPlotRows (plot_p, rows_array_p, parent_study_p, format, data_p))
 																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "GetPlotRows () failed for format %d in study \"%s\"", format, parent_study_p ? parent_study_p : "NULL");
 
 																		}
 																}
@@ -804,11 +805,23 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, cons
 								}
 							else
 								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (plot_p -> pl_id_p, id_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddRowToPlot () failed for plot with id \"%s\"", id_s);
+
 									FreeRow (row_p);
 								}
 
 						}		/* if (row_p) */
+					else
+						{
+							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
+							bson_oid_to_string (plot_p -> pl_id_p, id_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get row from json for plot with id \"%s\"", id_s);
+						}	
+						
 				}		/* json_array_foreach (results_p, i, entry_p) */
 
 		}		/* if (num_results > 0) */
