@@ -824,7 +824,19 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 
 	if (active_row_p)
 		{
-			FreeRow (active_row_p);
+			Plot *plot_p = active_row_p -> ro_plot_p;
+			Study *study_p = active_row_p -> ro_study_p;
+
+			if (plot_p)
+				{
+					FreePlot (plot_p);
+				}
+
+			if (study_p)
+				{
+					FreeStudy (study_p);
+				}
+
 		}
 
 	return success_flag;
@@ -1441,6 +1453,36 @@ static bool AddPhenotypeParameters (Row *active_row_p, const char *child_group_n
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create child parameter group \"%s\"", child_group_name_s);
 		}
 
+
+	if (existing_mv_names_ss)
+		{
+			FreeStringArray (existing_mv_names_ss, num_entries);
+		}
+
+	if (existing_phenotype_raw_values_ss)
+		{
+			FreeStringArray (existing_phenotype_raw_values_ss, num_entries);
+		}
+
+	if (existing_phenotype_start_dates_pp)
+		{
+			FreeMemory (existing_phenotype_start_dates_pp);
+		}
+
+	if (existing_phenotype_end_dates_pp)
+		{
+			FreeMemory (existing_phenotype_end_dates_pp);
+		}
+
+	if (existing_phenotype_corrected_values_ss)
+		{
+			FreeStringArray (existing_phenotype_corrected_values_ss, num_entries);
+		}
+
+	if (existing_observation_notes_ss)
+		{
+			FreeStringArray (existing_observation_notes_ss, num_entries);
+		}
 
 
 	return success_flag;

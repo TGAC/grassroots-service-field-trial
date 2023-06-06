@@ -617,19 +617,37 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const V
 																	if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_STUDY_S, parent_study_id_p))
 																		{
 																			parent_study_p = GetStudyById (parent_study_id_p, VF_CLIENT_MINIMAL, data_p);
+
+																			if (!parent_study_p)
+																				{
+																					char *parent_study_id_s = GetBSONOidAsString (parent_study_id_p);
+
+																					if (parent_study_id_s)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get parent study with id \"%s\"", parent_study_id_s);
+
+																							FreeBSONOidString (parent_study_id_s);
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get parent study");
+																						}
+																				}
+
 																		}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
 																	else
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_STUDY_S);
 																		}
 
-																}		/* if (parent_area_id_p) */
+																	FreeBSONOid (parent_study_id_p);
+																}		/* if (parent_study_id_p) */
 															else
 																{
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_STUDY_S);
 																}
 
-														}		/* if (!parent_area_p) */
+														}		/* if (!parent_study_p) */
 
 													plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatments_s, comment_s, image_s, thumbnail_s,
 																								 sowing_order_p, walking_order_p, parent_study_p);
