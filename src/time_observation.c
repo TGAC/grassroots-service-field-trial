@@ -214,7 +214,7 @@ bool SetTimeObservationRawValueFromJSON (TimeObservation *observation_p, const j
 
 bool SetTimeObservationCorrectedValueFromJSON (TimeObservation *observation_p, const json_t *value_p)
 {
-	return SetValueFromJSON (& (observation_p -> to_raw_value_p), value_p);
+	return SetValueFromJSON (& (observation_p -> to_corrected_value_p), value_p);
 }
 
 
