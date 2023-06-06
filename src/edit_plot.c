@@ -1150,6 +1150,7 @@ static bool AddStringValueToArray (const Observation *observation_p, Observation
 				}
 			else
 				{
+					*value_ss = NULL;
 					success_flag = true;
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "observation value is NULL");
 				}
