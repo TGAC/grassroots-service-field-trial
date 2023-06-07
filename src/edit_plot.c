@@ -149,8 +149,6 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 
 static bool GetObservationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
-static bool IsObservationParameter (const char * const param_name_s);
-
 static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
 
 /*
@@ -495,12 +493,23 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																				{
 																					++ num_successes;
 																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationValueToStandardRowByParts () failed for " UINT32_FMT 
+																											" in study \"%s\" with raw value \"%s\", corrected value \"%s\", corrected flag %d, obervation index " UINT32_FMT, 
+																											row_p -> sr_base.ro_by_study_index, row_p -> sr_base.ro_study_p -> st_name_s, *raw_value_ss, *corrected_value_ss, 
+																											corrected_value_p, observation_index);																							
+																				}
 
 
 																			if ((mv_mem == MF_DEEP_COPY) || ((mv_mem == MF_SHALLOW_COPY)))
 																				{
 																					FreeMeasuredVariable (mv_p);
 																				}
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariableByVariableName () failed for \"%s\"", *mv_ss);		
 																		}
 
 																}
@@ -514,19 +523,45 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																	status = OS_PARTIALLY_SUCCEEDED;
 																}
 
-														}
+														}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "differing array lengths: num_mv_entries " SIZET_FMT " num_raw_entries " SIZET_FMT 
+																					" num_corrected_entries " SIZET_FMT " num_start_dates " SIZET_FMT " num_end_dates " SIZET_FMT
+																					" num_notes " SIZET_FMT, num_mv_entries, num_raw_entries, num_corrected_entries, num_start_dates, num_end_dates, num_notes);	
+														}																													
 												}
-
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_OBSERVATION_NOTES.npt_name_s);		
+												}
 										}
-
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_END_DATE.npt_name_s);		
+										}
 								}
-
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_START_DATE.npt_name_s);		
+								}
 						}
-
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_CORRECTED_VALUE.npt_name_s);		
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_RAW_VALUE.npt_name_s);		
 				}
 
 		}		/* if (mvs_ss) */
-
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_MEASURED_VARIABLE_NAME.npt_name_s);		
+		}
+		
 	return status;
 }
 
@@ -545,6 +580,23 @@ static const char **GetStringArrayValuesForParameter (ParameterSet *param_set_p,
 					values_ss = GetStringArrayParameterCurrentValues (sa_param_p);
 					*num_entries_p = GetNumberOfStringArrayCurrentParameterValues (sa_param_p);
 				}
+			else if (IsStringParameter (param_p))
+				{
+					StringParameter *st_param_p = (StringParameter *) param_p;
+					const char *value_s = GetStringParameterCurrentValue (st_param_p);
+
+					values_ss = &value_s;
+					*num_entries_p = 1;									
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown ParameterType for \"%s\" %d", param_s, param_p -> pa_type);
+				}
+	
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Parameter named \"%s\"", param_s);
 		}
 
 	return values_ss;
@@ -565,6 +617,23 @@ static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set
 					values_pp = GetTimeArrayParameterCurrentValues (ta_param_p);
 					*num_entries_p = GetNumberOfTimeArrayCurrentParameterValues (ta_param_p);
 				}
+			else if (IsTimeParameter (param_p))
+				{
+					TimeParameter *ti_param_p = (TimeParameter *) param_p;
+					const struct tm *value_p = GetTimeParameterCurrentValue (ti_param_p);
+					
+					values_pp = &value_p;
+					*num_entries_p = 1;									
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown ParameterType for \"%s\" %d", param_s, param_p -> pa_type);
+				}
+	
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Parameter named \"%s\"", param_s);
 		}
 
 	return values_pp;
@@ -1496,80 +1565,92 @@ static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, 
 	Parameter *param_p = NULL;
 	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
 	bool done_flag = false;
+	ParameterType pt = PT_NUM_TYPES;
 
-	if (IsObservationParameter (name_s))
+	if (GetObservationParameterTypeForNamedParameter (name_s, &pt))
 		{
-			json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
-			const char *param_name_s = GetJSONString (param_json_p, PARAM_NAME_S);
-
-			if (param_name_s)
+			if (pt != PT_NUM_TYPES)
 				{
-					ParameterType pt = PT_NUM_TYPES;
+					json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
 
-					if (strcmp (param_name_s, S_MEASURED_VARIABLE_NAME.npt_name_s) == 0)
+					if (current_value_p)
 						{
-							pt = S_MEASURED_VARIABLE_NAME.npt_type;
-						}
-					else if (strcmp (param_name_s, S_PHENOTYPE_RAW_VALUE.npt_name_s) == 0)
-						{
-							pt = S_PHENOTYPE_RAW_VALUE.npt_type;
-						} 
-					else if (strcmp (param_name_s, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s) == 0)
-						{
-							pt = S_PHENOTYPE_CORRECTED_VALUE.npt_type;
-						} 
-					else if (strcmp (param_name_s, S_OBSERVATION_NOTES.npt_name_s) == 0)
-						{
-							pt = S_OBSERVATION_NOTES.npt_type;
-						}	 
-
-					if (pt != PT_NUM_TYPES)
-						{
-							if (current_value_p && (json_is_array (current_value_p)))
+							if (json_is_array (current_value_p))
 								{
-									ParameterType pt = PT_STRING_ARRAY;
-									StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
-
-									if (string_array_param_p)
+									switch (pt)
 										{
-											param_p = & (string_array_param_p -> sap_base_param);
-										}
-								}
+											case PT_STRING:
+												{
+													StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+													if (string_array_param_p)
+														{
+															param_p = & (string_array_param_p -> sap_base_param);
+														}
+												}
+											break;
+											
+											case PT_TIME:
+												{
+													TimeArrayParameter *time_array_param_p = AllocateTimeArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+													if (time_array_param_p)
+														{
+															param_p = & (time_array_param_p -> tap_base_param);
+														}
+												}
+											break;
+											
+											default:
+												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+												break;
+										}		/* switch (pt) */
+																		
+								}		/* if (json_is_array (current_value_p)) */
 							else
 								{
-									StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
-
-									if (string_param_p)
+									switch (pt)
 										{
-											param_p = & (string_param_p -> sp_base_param);
-										}
-								}
-						}
-					else if ((strcmp (param_name_s, S_PHENOTYPE_START_DATE.npt_name_s) == 0) ||
-									(strcmp (param_name_s, S_PHENOTYPE_END_DATE.npt_name_s) == 0))
-						{
-							if (current_value_p && (json_is_array (current_value_p)))
-								{
-									TimeArrayParameter *time_array_param_p = AllocateTimeArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+											case PT_STRING:
+												{
+													StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
 
-									if (time_array_param_p)
-										{
-											param_p = & (time_array_param_p -> tap_base_param);
-										}
-								}
-							else
-								{
-									TimeParameter *time_param_p  = AllocateTimeParameterFromJSON (param_json_p, service_p, concise_flag);
+													if (string_param_p)
+														{
+															param_p = & (string_param_p -> sp_base_param);
+														}
+												}
+											break;
+											
+											case PT_TIME:
+												{
+													TimeParameter *time_param_p  = AllocateTimeParameterFromJSON (param_json_p, service_p, concise_flag);
 
-									if (time_param_p)
-										{
-											param_p = & (time_param_p -> tp_base_param);
-										}
-								}
+													if (time_param_p)
+														{
+															param_p = & (time_param_p -> tp_base_param);
+														}
+												}
+											break;
+											
+											default:
+												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+												break;
+										}		/* switch (pt) */									
+								
+								}		/* /* if (json_is_array (current_value_p)) */ 							
+							
+						}		/* if (current_value_p) */
 
-						}
-				}		/* if (param_name_s) */
+				}		/* if (pt != PT_NUM_TYPES) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+				}
 
+		}		/* if (GetObservationParameterTypeForNamedParameter (name_s, &pt)) */
+	else
+		{
 		}
 
 	if (!param_p)
@@ -1582,19 +1663,10 @@ static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, 
 
 
 
-static bool IsObservationParameter (const char * const param_name_s)
-{
-	ParameterType pt;
-
-	return GetObservationParameterTypeForNamedParameter (param_name_s, &pt);
-}
 
 
 static bool GetObservationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag;
-
-
 	const NamedParameterType params [] =
 	{
 		S_MEASURED_VARIABLE_NAME,
