@@ -1581,7 +1581,7 @@ static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, 
 										{
 											case PT_STRING:
 												{
-													StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+													StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, NULL);
 
 													if (string_array_param_p)
 														{
@@ -1592,7 +1592,7 @@ static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, 
 											
 											case PT_TIME:
 												{
-													TimeArrayParameter *time_array_param_p = AllocateTimeArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+													TimeArrayParameter *time_array_param_p = AllocateTimeArrayParameterFromJSON (param_json_p, service_p, concise_flag, NULL);
 
 													if (time_array_param_p)
 														{
