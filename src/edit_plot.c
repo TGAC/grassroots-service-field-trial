@@ -476,18 +476,17 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																			if (*raw_value_ss)
 																				{
 																					raw_value_p = json_string (*raw_value_ss);
-																					corrected_value_flag = false;
 																				}
-																			else if (*corrected_value_ss)
+
+																			if (*corrected_value_ss)
 																				{
 																					corrected_value_p = json_string (*corrected_value_ss);
-																					corrected_value_flag = true;
 																				}
 
 
 																			bool free_measured_variable_flag = false;
 																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
-																														key_s, raw_value_p ? raw_value_p : corrected_value_p, corrected_value_flag, observation_index, &free_measured_variable_flag);
+																														key_s, raw_value_p, corrected_value_p, observation_index, &free_measured_variable_flag);
 
 																			if ((obs_status == OS_SUCCEEDED) || ((obs_status == OS_PARTIALLY_SUCCEEDED)))
 																				{
@@ -504,7 +503,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 
 																			if ((mv_mem == MF_DEEP_COPY) || ((mv_mem == MF_SHALLOW_COPY)))
 																				{
-																					FreeMeasuredVariable (mv_p);
+																					//FreeMeasuredVariable (mv_p);
 																				}
 																		}
 																	else
