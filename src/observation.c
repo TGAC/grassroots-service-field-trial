@@ -102,7 +102,7 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 								{
 									char *copied_notes_s = NULL;
 
-									if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL))
+									if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
 										{
 											observation_p -> ob_id_p = id_p;
 											observation_p -> ob_phenotype_p = phenotype_p;

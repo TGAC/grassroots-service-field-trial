@@ -440,7 +440,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 								}
 								
 							status = AddObservationValueToStandardRowByParts (row_p, measured_variable_p, start_date_p, end_date_p,
-																																 key_s, raw_value_p, corrected_value_p, observation_index, &free_measured_variable_flag);
+																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag);
 
 
 
@@ -490,19 +490,15 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const char
 
 
 OperationStatus AddObservationValueToStandardRowByParts (StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
-											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const uint32 observation_index, bool *free_measured_variable_flag_p)
+											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *notes_s, const uint32 observation_index, bool *free_measured_variable_flag_p)
 {
 	OperationStatus status = OS_FAILED;
-	ObservationNode *observation_node_p = NULL;
 	Observation *observation_p = NULL;
 	const char *growth_stage_s = NULL;
 	const char *method_s = NULL;
-	const char *notes_s = NULL;
 	ObservationNature nature = ON_ROW;
 	Instrument *instrument_p = NULL;
-	bool (*set_observation_value_fn) (Observation *observation_p, const json_t *value_p) = NULL;
-
-	observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+	ObservationNode *observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
 
 	if (observation_node_p)
 		{
@@ -559,6 +555,42 @@ OperationStatus AddObservationValueToStandardRowByParts (StandardRow *row_p, Mea
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, corrected_value_p, "SetObservationCorrectedValueFromJSON () failed for row \"%s\" and key \"%s\"", id_s, key_s);						
 								}
 						}			
+
+					if (notes_s)
+						{
+							++ num_values;
+
+							if (IsStringEmpty (notes_s))
+								{
+									if (observation_p -> ob_notes_s)
+										{
+											FreeCopiedString (observation_p -> ob_notes_s);
+											observation_p -> ob_notes_s = NULL;
+										}
+
+									++ count;
+								}
+							else
+								{
+									char *copied_notes_s = EasyCopyToNewString (notes_s);
+
+									if (copied_notes_s)
+										{
+											if (observation_p -> ob_notes_s)
+												{
+													FreeCopiedString (observation_p -> ob_notes_s);
+													observation_p -> ob_notes_s = copied_notes_s;
+
+													++ count;
+												}
+
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy observation note \"%s\"", notes_s);
+										}
+								}
+						}
 
 					if (count == num_values)
 						{
