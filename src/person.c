@@ -279,3 +279,31 @@ Person *GetPersonFromJSON (const json_t *json_p, const ViewFormat format, const 
 	return person_p;
 }
 
+
+PersonNode *AllocatePersonNode (Person *person_p)
+{
+	PersonNode *node_p = (PersonNode *) AllocMemory (sizeof (PersonNode));
+	
+	if (node_p)
+		{
+			InitListItem (& (node_p -> pn_node));
+			node_p -> pn_person_p = person_p;
+			
+			return node_p;
+		}
+	else
+		{
+		
+		}
+		
+	return NULL;
+}
+
+
+void FreePersonNode (PersonNode *person_node_p)
+{
+	FreePerson (person_node_p -> pn_person_p);
+	FreeMemory (person_node_p);
+}
+
+

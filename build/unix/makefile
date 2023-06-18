@@ -90,6 +90,7 @@ SRCS 	= \
 	numeric_observation.c \
 	observation.c \
 	person.c \
+	person_jobs.c \
 	phenotype_jobs.c \
 	phenotype_statistics.c \
 	plot.c \
