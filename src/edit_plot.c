@@ -486,7 +486,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 
 																			bool free_measured_variable_flag = false;
 																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
-																														key_s, raw_value_p, corrected_value_p, observation_index, &free_measured_variable_flag);
+																														key_s, raw_value_p, corrected_value_p, *note_ss, observation_index, &free_measured_variable_flag);
 
 																			if ((obs_status == OS_SUCCEEDED) || ((obs_status == OS_PARTIALLY_SUCCEEDED)))
 																				{
