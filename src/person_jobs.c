@@ -1,23 +1,24 @@
+
+#define ALLOCATE_PERSON_JOB_TAGS (1)
 #include "person_jobs.h"
 
+#include "string_parameter.h"
 
 static bool CopyAndAddStringValue (const char * const src_s, char **dest_ss);
+static bool PopulateValues (LinkedList *existing_people_p, char ***existing_names_sss, char ***existing_emails_sss, char ***existing_roles_sss,
+													char ***existing_affiliations_sss, char ***existing_orcids_sss);
 
 
-bool AddPersonParameters (ParameterSet *params_p, ParameterGroup *group_p, LinkedList *existing_people_p, FieldTrialServiceData *data_p)
+bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s, LinkedList *existing_people_p, FieldTrialServiceData *ft_data_p)
 {
 	bool success_flag = false;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Treatment Factors", true, & (data_p -> dftsd_base_data), params_p);
+	ServiceData *data_p = & (ft_data_p -> dftsd_base_data);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet (group_s, true, data_p, param_set_p);
 
 	if (group_p)
 		{
-			Parameter *name_param_p = NULL;
-			Parameter *values_param_p = NULL;
-			const char * const tf_name_display_name_s = "Treatment name";
-			const char * const tf_name_description_s = "The name of the treatment";
 			size_t num_people = 0;
-			json_t *tf_json_p = NULL;
-
+			
 			if (existing_people_p)
 				{
 					num_people = existing_people_p -> ll_size;
@@ -25,33 +26,52 @@ bool AddPersonParameters (ParameterSet *params_p, ParameterGroup *group_p, Linke
 
 			if (num_people > 1)
 				{
-					const char **names_ss = NULL;
-					const char **emails_ss = NULL;
-					const char **roles_ss = NULL;
-					const char **affiliations_ss = NULL;
-					const char **orcids_ss = NULL;
+					 char **names_ss = NULL;
+					 char **emails_ss = NULL;
+					 char **roles_ss = NULL;
+					 char **affiliations_ss = NULL;
+					 char **orcids_ss = NULL;
 				
 					if (PopulateValues (existing_people_p, &names_ss, &emails_ss, &roles_ss, &affiliations_ss, &orcids_ss))
 						{
 							
 						}		/* if (PopulateValues (existing_people_p, &names_ss, &emails_ss, &roles_ss, &affiliations_ss, &orcids_ss)) */
 
-				}		/* if (num_treatments > 1) */
+				}		/* if (num_people > 1) */
 			else
 				{
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PERSON_NAME.npt_type, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", pi.pe_name_s, PL_ALL)) != NULL)
+					Parameter *param_p = NULL;
+					char *name_s = NULL;
+					char *email_s = NULL;
+					char *role_s = NULL;
+					char *affiliation_s = NULL;
+					char *orcid_s = NULL;
+					
+					if (num_people == 1)
+						{
+							Person *person_p = ((PersonNode *) (existing_people_p -> ll_head_p)) -> pn_person_p;
+							
+							name_s = person_p -> pe_name_s;
+							email_s = person_p -> pe_email_s;
+							role_s = person_p -> pe_role_s;
+							affiliation_s = person_p -> pe_affiliation_s;
+							orcid_s = person_p -> pe_orcid_s;
+						}
+					
+	
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_type, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", name_s, PL_ALL)) != NULL)
 						{
 							param_p -> pa_required_flag = true;
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PERSON_EMAIL.npt_type, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person's lead", pi.pe_email_s, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_EMAIL.npt_type, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person", email_s, PL_ALL)) != NULL)
 								{
 									param_p -> pa_required_flag = true;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PERSON_ROLE.npt_type, PERSON_ROLE.npt_name_s, "Person Role", "The role of the Person's lead", pi.pe_role_s, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ROLE.npt_type, PERSON_ROLE.npt_name_s, "Person Role", "The role of the Person", role_s, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PERSON_AFFILATION.npt_type, PERSON_AFFILATION.npt_name_s, "Person Affiliation", "The affiliation of the Person's lead", pi.pe_affiliation_s, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_AFFILATION.npt_type, PERSON_AFFILATION.npt_name_s, "Person Affiliation", "The affiliation of the Person", affiliation_s, PL_ALL)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PERSON_ORCID.npt_type, PERSON_ORCID.npt_name_s, "Person OrCID", "The OrCID of the Person's lead", pi.pe_orcid_s, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ORCID.npt_type, PERSON_ORCID.npt_name_s, "Person OrCID", "The OrCID of the Person", orcid_s, PL_ALL)) != NULL)
 														{			
 															success_flag = true; 
 														}
@@ -87,7 +107,8 @@ bool AddPersonParameters (ParameterSet *params_p, ParameterGroup *group_p, Linke
 }
 
 
-static bool PopulateValues (LinkedList *existing_people_p)
+static bool PopulateValues (LinkedList *existing_people_p, char ***existing_names_sss, char ***existing_emails_sss, char ***existing_roles_sss,
+													char ***existing_affiliations_sss, char ***existing_orcids_sss)
 {
 	const uint32 num_entries = existing_people_p -> ll_size;
 
@@ -119,8 +140,7 @@ static bool PopulateValues (LinkedList *existing_people_p)
 														char **existing_role_ss = existing_roles_ss;
 														char **existing_affiliation_ss = existing_affiliations_ss;
 														char **existing_orcid_ss = existing_orcids_ss;
-													
-														success_flag = true;
+														bool success_flag = true;
 
 														while (person_node_p && success_flag)
 															{
@@ -187,8 +207,7 @@ static bool PopulateValues (LinkedList *existing_people_p)
 																*existing_roles_sss = existing_roles_ss;
 																*existing_affiliations_sss = existing_affiliations_ss;
 																*existing_orcids_sss = existing_orcids_ss;
-
-																*num_entries_p = num_entries;
+																
 																return true;
 															}		/* if (success_flag) */
 
@@ -220,7 +239,7 @@ static bool PopulateValues (LinkedList *existing_people_p)
 								PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate existing_emails_ss");
 							}
 
-					FreeMemory (existing_mv_names_ss);
+					FreeMemory (existing_names_ss);
 				}		/* if (existing_mv_names_p) */
 			else
 				{

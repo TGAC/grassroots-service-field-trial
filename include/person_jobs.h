@@ -33,6 +33,18 @@
 #include "linked_list.h"
 
 
+
+#ifdef ALLOCATE_PERSON_JOB_TAGS
+	#define PERSON_JOB_PREFIX DFW_FIELD_TRIAL_SERVICE_LOCAL
+	#define PERSON_JOB_VAL(x)	= x
+	#define PERSON_JOB_STRUCT_VAL(x,y)	= {x, y}
+#else
+	#define PERSON_JOB_PREFIX extern
+	#define PERSON_JOB_VAL(x)
+	#define PERSON_JOB_STRUCT_VAL(x,y)
+#endif
+
+
 PERSON_JOB_PREFIX NamedParameterType PERSON_NAME PERSON_JOB_STRUCT_VAL("PE Name", PT_STRING);
 PERSON_JOB_PREFIX NamedParameterType PERSON_EMAIL PERSON_JOB_STRUCT_VAL("PE Email", PT_STRING);
 PERSON_JOB_PREFIX NamedParameterType PERSON_ROLE PERSON_JOB_STRUCT_VAL("PE Role", PT_STRING);
@@ -46,7 +58,7 @@ extern "C"
 #endif
 
 
-bool AddPersonParameters (ParameterSet *params_p, ParameterGroup *group_p, LinkedList *existing_people_p, FieldTrialServiceData *data_p);
+bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s, LinkedList *existing_people_p, FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus
@@ -54,4 +66,4 @@ bool AddPersonParameters (ParameterSet *params_p, ParameterGroup *group_p, Linke
 #endif
 
 
-#endif /* SERVICES_FIELD_TRIALS_INCLUDE_PERSON_H_ */
+#endif /* SERVICES_FIELD_TRIALS_INCLUDE_PERSON_JOBS_H_ */
