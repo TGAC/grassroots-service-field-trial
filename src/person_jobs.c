@@ -3,6 +3,7 @@
 #include "person_jobs.h"
 
 #include "string_parameter.h"
+#include "string_array_parameter.h"
 
 static bool CopyAndAddStringValue (const char * const src_s, char **dest_ss);
 static bool PopulateValues (LinkedList *existing_people_p, char ***existing_names_sss, char ***existing_emails_sss, char ***existing_roles_sss,
@@ -18,6 +19,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 	if (group_p)
 		{
 			size_t num_people = 0;
+			Parameter *param_p = NULL;
 			
 			if (existing_people_p)
 				{
@@ -33,14 +35,53 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 					 char **orcids_ss = NULL;
 				
 					if (PopulateValues (existing_people_p, &names_ss, &emails_ss, &roles_ss, &affiliations_ss, &orcids_ss))
-						{
-							
+						{							
+							if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", names_ss, num_people, PL_ALL)) != NULL)
+								{
+									param_p -> pa_required_flag = true;
+
+									if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person", emails_ss, num_people, PL_ALL)) != NULL)
+										{
+											param_p -> pa_required_flag = true;
+
+											if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ROLE.npt_name_s, "Person Role", "The role of the Person", roles_ss, num_people, PL_ALL)) != NULL)
+												{
+													if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_AFFILATION.npt_name_s, "Person Affiliation", "The affiliation of the Person", affiliations_ss, num_people, PL_ALL)) != NULL)
+														{
+															if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ORCID.npt_name_s, "Person OrCID", "The OrCID of the Person", orcids_ss, num_people, PL_ALL)) != NULL)
+																{			
+																	success_flag = true; 
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_ORCID.npt_name_s);
+																}
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_AFFILATION.npt_name_s);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_ROLE.npt_name_s);
+												}
+
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_EMAIL.npt_name_s);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_NAME.npt_name_s);
+								}							
 						}		/* if (PopulateValues (existing_people_p, &names_ss, &emails_ss, &roles_ss, &affiliations_ss, &orcids_ss)) */
 
 				}		/* if (num_people > 1) */
 			else
 				{
-					Parameter *param_p = NULL;
 					char *name_s = NULL;
 					char *email_s = NULL;
 					char *role_s = NULL;
