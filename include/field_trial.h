@@ -76,6 +76,13 @@ typedef struct FieldTrial
 	 */
 	LinkedList *ft_studies_p;
 
+
+	/**
+	 * A LinkedList of PersonNodes for each 
+	 * of the PI and Co-I people on this trial
+	 */
+	LinkedList *ft_people_p;
+
 } FieldTrial;
 
 
@@ -126,6 +133,8 @@ FIELD_TRIAL_PREFIX const char *FT_TEAM_S FIELD_TRIAL_VAL ("team");
 FIELD_TRIAL_PREFIX const char *FT_ID_S FIELD_TRIAL_VAL ("_id");
 
 FIELD_TRIAL_PREFIX const char *FT_STUDIES_S FIELD_TRIAL_VAL ("studies");
+
+FIELD_TRIAL_PREFIX const char *FT_PEOPLE_S FIELD_TRIAL_VAL ("people");
 
 FIELD_TRIAL_PREFIX const char *FT_PARENT_PROGRAM_S FIELD_TRIAL_VAL ("parent_program");
 
@@ -178,6 +187,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFieldTrialAsString (const FieldTrial *tri
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPeopleToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetFieldTrialsByName (const char * const trial_s, const FieldTrialServiceData *data_p);

@@ -20,6 +20,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 		{
 			size_t num_people = 0;
 			Parameter *param_p = NULL;
+			Parameter *name_param_p = NULL;
 			
 			if (existing_people_p)
 				{
@@ -36,9 +37,9 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 				
 					if (PopulateValues (existing_people_p, &names_ss, &emails_ss, &roles_ss, &affiliations_ss, &orcids_ss))
 						{							
-							if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", names_ss, num_people, PL_ALL)) != NULL)
+							if ((name_param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", names_ss, num_people, PL_ALL)) != NULL)
 								{
-									param_p -> pa_required_flag = true;
+									name_param_p -> pa_required_flag = true;
 
 									if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person", emails_ss, num_people, PL_ALL)) != NULL)
 										{
@@ -100,9 +101,9 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 						}
 					
 	
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_type, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", name_s, PL_ALL)) != NULL)
+					if ((name_param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_type, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", name_s, PL_ALL)) != NULL)
 						{
-							param_p -> pa_required_flag = true;
+							name_param_p -> pa_required_flag = true;
 
 							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_EMAIL.npt_type, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person", email_s, PL_ALL)) != NULL)
 								{
@@ -142,7 +143,18 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_NAME.npt_name_s);
 						}
 				}
+
+			if (success_flag)
+				{			
+					if (!AddRepeatableParameterGroupLabelParam (group_p, name_param_p))
+						{
+
+						}
+
+				}
 		}
+
+
 
 	return success_flag;
 }

@@ -109,7 +109,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Person *GetPersonFromCompoundJSON (const json_t *j
 DFW_FIELD_TRIAL_SERVICE_LOCAL PersonNode *AllocatePersonNode (Person *person_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePersonNode (PersonNode *person_node_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePersonNode (ListItem *person_node_p);
 
 #ifdef __cplusplus
 }
