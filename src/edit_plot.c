@@ -463,6 +463,8 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															const char *key_s = "";
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
 															uint32 observation_index = 1;
+															Study *study_p = row_p -> sr_base.ro_study_p;
+															uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
 
 															for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
 																{
@@ -488,7 +490,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (row_p, mv_p, *start_date_pp, *end_date_pp,
 																														key_s, raw_value_p, corrected_value_p, *note_ss, observation_index, &free_measured_variable_flag);
 
-																			if ((obs_status == OS_SUCCEEDED) || ((obs_status == OS_PARTIALLY_SUCCEEDED)))
+																			if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
 																				{
 																					++ num_successes;
 																				}
@@ -501,10 +503,40 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																				}
 
 
-																			if ((mv_mem == MF_DEEP_COPY) || ((mv_mem == MF_SHALLOW_COPY)))
+																			if ((mv_mem == MF_DEEP_COPY) || (mv_mem == MF_SHALLOW_COPY))
 																				{
 																					//FreeMeasuredVariable (mv_p);
 																				}
+
+																			/* check if the measured variable needs to be added to those referenced by the study */
+																			if (study_p -> st_phenotypes_p)
+																				{
+																					const char *mv_s = GetMeasuredVariableName (mv_p);
+																					MeasuredVariableNode *node_p = study_p -> st_phenotypes_p -> ll_head_p;
+																					bool new_mv_flag = true;
+
+																					while (node_p && new_mv_flag)
+																						{
+																							const char *name_s = GetMeasuredVariableName (node_p -> mvn_measured_variable_p);
+
+																							if (name_s)
+																								{
+																									if (strcmp (mv_s, name_s) == 0)
+																										{
+																											new_mv_flag = false;
+																										}
+
+																								}
+
+																							node_p = (MeasuredVariableNode *) (node_p -> mvn_node.ln_next_p);
+																						}
+
+																					if (new_mv_flag)
+																						{
+
+																						}
+																				}		/* if (study_p -> st_phenotypes_p) */
+
 																		}
 																	else
 																		{
@@ -521,6 +553,9 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																{
 																	status = OS_PARTIALLY_SUCCEEDED;
 																}
+
+
+
 
 														}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
 													else
