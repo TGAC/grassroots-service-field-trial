@@ -173,7 +173,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 	bson_oid_t *trial_id_p = NULL;
 	const char *programme_id_s = NULL;
 	Programme *programme_p = NULL;
-
+	
 	/*
 	 * Get the existing study id if specified
 	 */

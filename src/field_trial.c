@@ -771,6 +771,21 @@ bool AddFieldTrialStudy (FieldTrial *trial_p, Study *study_p, MEM_FLAG mf)
 }
 
 
+bool AddFieldTrialPerson (FieldTrial *trial_p, Person *person_p, MEM_FLAG mf)
+{
+	bool success_flag = false;
+	PersonNode *node_p = AllocatePersonNode (person_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (trial_p -> ft_people_p, & (node_p -> pn_node));
+			success_flag  = true;
+		}
+
+	return success_flag;
+}
+
+
 
 bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
@@ -845,7 +860,16 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 
 char *GetFieldTrialAsString (const FieldTrial *trial_p)
 {
-	char *trial_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+	char *trial_s = NULL;
+	
+	if (trial_p -> ft_team_s)
+		{
+			trial_s = EasyCopyToNewString (trial_p -> ft_name_s);
+		}
+	else
+		{
+			trial_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+		}
 
 	return trial_s;
 }

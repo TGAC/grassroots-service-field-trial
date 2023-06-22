@@ -36,6 +36,7 @@
 
 #include "typedefs.h"
 #include "linked_list.h"
+#include "person.h"
 
 /* forward declarations */
 struct Study;
@@ -172,6 +173,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *GetUniqueFieldTrialBySearchString (con
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialStudy (FieldTrial *trial_p, struct Study *study_p, MEM_FLAG mf);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialPerson (FieldTrial *trial_p, Person *person_p, MEM_FLAG mf);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceData *data_p);

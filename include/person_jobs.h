@@ -31,7 +31,7 @@
 #include "parameter_set.h"
 #include "parameter_group.h"
 #include "linked_list.h"
-
+#include "operation.h"
 
 
 #ifdef ALLOCATE_PERSON_JOB_TAGS
@@ -48,7 +48,7 @@
 PERSON_JOB_PREFIX NamedParameterType PERSON_NAME PERSON_JOB_STRUCT_VAL("PE Name", PT_STRING);
 PERSON_JOB_PREFIX NamedParameterType PERSON_EMAIL PERSON_JOB_STRUCT_VAL("PE Email", PT_STRING);
 PERSON_JOB_PREFIX NamedParameterType PERSON_ROLE PERSON_JOB_STRUCT_VAL("PE Role", PT_STRING);
-PERSON_JOB_PREFIX NamedParameterType PERSON_AFFILATION PERSON_JOB_STRUCT_VAL("PE Affiliation", PT_STRING);
+PERSON_JOB_PREFIX NamedParameterType PERSON_AFFILIATION PERSON_JOB_STRUCT_VAL("PE Affiliation", PT_STRING);
 PERSON_JOB_PREFIX NamedParameterType PERSON_ORCID PERSON_JOB_STRUCT_VAL("PE Orcid", PT_STRING);
 
 
@@ -58,7 +58,13 @@ extern "C"
 #endif
 
 
-bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s, LinkedList *existing_people_p, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s, LinkedList *existing_people_p, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPersonParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, bool (*process_person_fn) (Person *person_p, void *user_data_p), void *user_data_p, FieldTrialServiceData *ft_service_data_p);
 
 
 #ifdef __cplusplus
