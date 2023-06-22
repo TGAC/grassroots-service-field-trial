@@ -29,7 +29,7 @@
 #include "dfw_util.h"
 #include "programme_jobs.h"
 #include "boolean_parameter.h"
-
+#include "person_jobs.h"
 #include "frictionless_data_util.h"
 
 /*
@@ -67,6 +67,8 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 	const char *team_s = NULL;
 	FieldTrial *active_trial_p = GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, dfw_data_p);
 	bool defaults_flag = false;
+	LinkedList *existing_people_p = NULL;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, data_p, param_set_p);
 
 	if (active_trial_p)
 		{
@@ -86,7 +88,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	if (defaults_flag)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
 				{
 					if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
 						{
@@ -99,11 +101,11 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 							 */
 							param_p -> pa_refresh_service_flag = true;
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
 								{
 									param_p -> pa_required_flag = true;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Programme", "The Programme that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Programme", "The Programme that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
 										{
 											Programme *programme_p = NULL;
 
@@ -114,9 +116,17 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 											if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, programme_p, false))
 												{
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 														{
-															success_flag = true;
+															if (AddMultiplePeopleParameters (param_set_p, "Investigators", existing_people_p, data_p))
+																{
+																	success_flag = true;																	
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", name_s ? name_s : "NULL");
+																}
+																	
 														}
 													else
 														{
@@ -163,7 +173,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 	bson_oid_t *trial_id_p = NULL;
 	const char *programme_id_s = NULL;
 	Programme *programme_p = NULL;
-
+	
 	/*
 	 * Get the existing study id if specified
 	 */

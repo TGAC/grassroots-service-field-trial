@@ -300,8 +300,10 @@ PersonNode *AllocatePersonNode (Person *person_p)
 }
 
 
-void FreePersonNode (PersonNode *person_node_p)
+void FreePersonNode (ListItem *node_p)
 {
+	PersonNode *person_node_p = (PersonNode *) node_p;
+	
 	FreePerson (person_node_p -> pn_person_p);
 	FreeMemory (person_node_p);
 }

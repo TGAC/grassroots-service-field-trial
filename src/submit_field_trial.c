@@ -26,6 +26,10 @@
 #include "audit.h"
 
 #include "field_trial_jobs.h"
+#include "person_jobs.h"
+#include "string_parameter.h"
+#include "string_array_parameter.h"
+
 
 /*
  * Static declarations
@@ -54,6 +58,9 @@ static ParameterSet *IsResourceForFieldTrialSubmissionService (Service *service_
 static bool CloseFieldTrialSubmissionService (Service *service_p);
 
 static ServiceMetadata *GetFieldTrialSubmissionServiceMetadata (Service *service_p);
+
+
+static Parameter *CreateSubmitTrialParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
 
 
 /*
@@ -93,6 +100,8 @@ Service *GetFieldTrialSubmissionService (GrassrootsServer *grassroots_p)
 
 							if (ConfigureFieldTrialService (data_p, grassroots_p))
 								{
+									service_p -> se_custom_parameter_decoder_fn = CreateSubmitTrialParameterFromJSON;
+									
 									return service_p;
 								}
 
@@ -406,4 +415,84 @@ static ServiceMetadata *GetFieldTrialSubmissionServiceMetadata (Service *service
 static ParameterSet *IsResourceForFieldTrialSubmissionService (Service * UNUSED_PARAM (service_p), DataResource * UNUSED_PARAM (resource_p), Handler * UNUSED_PARAM (handler_p))
 {
 	return NULL;
+}
+
+
+static Parameter *CreateSubmitTrialParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag)
+{
+	Parameter *param_p = NULL;
+	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
+	bool done_flag = false;
+	ParameterType pt = PT_NUM_TYPES;
+
+	if (GetPersonParameterTypeForNamedParameter (name_s, &pt))
+		{
+			if (pt != PT_NUM_TYPES)
+				{
+					json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
+
+					if (current_value_p)
+						{
+							if (json_is_array (current_value_p))
+								{
+									switch (pt)
+										{
+											case PT_STRING:
+												{
+													StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, NULL);
+
+													if (string_array_param_p)
+														{
+															param_p = & (string_array_param_p -> sap_base_param);
+														}
+												}
+											break;
+																						
+											default:
+												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+												break;
+										}		/* switch (pt) */
+																		
+								}		/* if (json_is_array (current_value_p)) */
+							else
+								{
+									switch (pt)
+										{
+											case PT_STRING:
+												{
+													StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+													if (string_param_p)
+														{
+															param_p = & (string_param_p -> sp_base_param);
+														}
+												}
+											break;
+																						
+											default:
+												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+												break;
+										}		/* switch (pt) */									
+								
+								}		/* /* if (json_is_array (current_value_p)) */ 							
+							
+						}		/* if (current_value_p) */
+
+				}		/* if (pt != PT_NUM_TYPES) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+				}
+
+		}		/* if (GetPersonParameterTypeForNamedParameter (name_s, &pt)) */
+	else
+		{
+		}
+
+	if (!param_p)
+		{
+			param_p = CreateParameterFromJSON (param_json_p, service_p, concise_flag);
+		}
+
+	return param_p;
 }

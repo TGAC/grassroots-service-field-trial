@@ -20,6 +20,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 		{
 			size_t num_people = 0;
 			Parameter *param_p = NULL;
+			Parameter *name_param_p = NULL;
 			
 			if (existing_people_p)
 				{
@@ -36,9 +37,9 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 				
 					if (PopulateValues (existing_people_p, &names_ss, &emails_ss, &roles_ss, &affiliations_ss, &orcids_ss))
 						{							
-							if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", names_ss, num_people, PL_ALL)) != NULL)
+							if ((name_param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", names_ss, num_people, PL_ALL)) != NULL)
 								{
-									param_p -> pa_required_flag = true;
+									name_param_p -> pa_required_flag = true;
 
 									if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person", emails_ss, num_people, PL_ALL)) != NULL)
 										{
@@ -46,7 +47,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 
 											if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ROLE.npt_name_s, "Person Role", "The role of the Person", roles_ss, num_people, PL_ALL)) != NULL)
 												{
-													if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_AFFILATION.npt_name_s, "Person Affiliation", "The affiliation of the Person", affiliations_ss, num_people, PL_ALL)) != NULL)
+													if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_AFFILIATION.npt_name_s, "Person Affiliation", "The affiliation of the Person", affiliations_ss, num_people, PL_ALL)) != NULL)
 														{
 															if ((param_p = EasyCreateAndAddStringArrayParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ORCID.npt_name_s, "Person OrCID", "The OrCID of the Person", orcids_ss, num_people, PL_ALL)) != NULL)
 																{			
@@ -59,7 +60,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_AFFILATION.npt_name_s);
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_AFFILIATION.npt_name_s);
 														}
 												}
 											else
@@ -100,9 +101,9 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 						}
 					
 	
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_type, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", name_s, PL_ALL)) != NULL)
+					if ((name_param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_NAME.npt_type, PERSON_NAME.npt_name_s, "Person Name", "The name of the Person", name_s, PL_ALL)) != NULL)
 						{
-							param_p -> pa_required_flag = true;
+							name_param_p -> pa_required_flag = true;
 
 							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_EMAIL.npt_type, PERSON_EMAIL.npt_name_s, "Person Email", "The email address of the Person", email_s, PL_ALL)) != NULL)
 								{
@@ -110,7 +111,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ROLE.npt_type, PERSON_ROLE.npt_name_s, "Person Role", "The role of the Person", role_s, PL_ALL)) != NULL)
 										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_AFFILATION.npt_type, PERSON_AFFILATION.npt_name_s, "Person Affiliation", "The affiliation of the Person", affiliation_s, PL_ALL)) != NULL)
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_AFFILIATION.npt_type, PERSON_AFFILIATION.npt_name_s, "Person Affiliation", "The affiliation of the Person", affiliation_s, PL_ALL)) != NULL)
 												{
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PERSON_ORCID.npt_type, PERSON_ORCID.npt_name_s, "Person OrCID", "The OrCID of the Person", orcid_s, PL_ALL)) != NULL)
 														{			
@@ -123,7 +124,7 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_AFFILATION.npt_name_s);
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_AFFILIATION.npt_name_s);
 												}
 										}
 									else
@@ -142,9 +143,148 @@ bool AddMultiplePeopleParameters (ParameterSet *param_set_p, const char *group_s
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PERSON_NAME.npt_name_s);
 						}
 				}
+
+			if (success_flag)
+				{			
+					if (!AddRepeatableParameterGroupLabelParam (group_p, name_param_p))
+						{
+
+						}
+
+				}
 		}
 
+
+
 	return success_flag;
+}
+
+
+
+bool GetPersonParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	const NamedParameterType params [] =
+	{
+		PERSON_NAME,
+		PERSON_EMAIL,
+		PERSON_ROLE,
+		PERSON_AFFILIATION,
+		PERSON_ORCID,
+		NULL
+	};
+
+
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
+}
+
+
+OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, bool (*process_person_fn) (Person *person_p, void *user_data_p), void *user_data_p, FieldTrialServiceData *ft_service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+	size_t num_names;
+	const char **names_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_NAME.npt_name_s, &num_names);
+
+	if (names_ss)
+		{
+			size_t num_emails;
+			const char **emails_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_EMAIL.npt_name_s, &num_emails);
+
+			if (emails_ss)
+				{
+					size_t num_roles;
+					const char **roles_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_ROLE.npt_name_s, &num_roles);
+
+					if (roles_ss)
+						{
+							size_t num_affiliations;
+							const char **affiliations_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_AFFILIATION.npt_name_s, &num_affiliations);
+
+							if (affiliations_ss)
+								{
+									size_t num_orcids;
+									const char **orcids_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_ORCID.npt_name_s, &num_orcids);
+
+									if (orcids_ss)
+										{
+											if (num_names == num_emails == num_roles == num_affiliations == num_orcids)
+												{
+													size_t num_successes = 0;
+													size_t i;
+													const char **name_ss = names_ss;
+													const char **email_ss = emails_ss;
+													const char **role_ss = roles_ss;
+													const char **affiliation_ss = affiliations_ss;
+													const char **orcid_ss = orcids_ss;
+
+													for (i = 0; i < num_names; ++ i, ++ name_ss, ++ email_ss, ++ role_ss, ++ affiliation_ss, ++ orcid_ss)
+														{
+															Person *person_p = AllocatePerson (*name_ss, *email_ss, *role_ss, *affiliation_ss, *orcid_ss);
+
+															if (person_p)
+																{
+																	if (process_person_fn (person_p, user_data_p))
+																		{
+																			++ num_successes;
+																		}
+																	else
+																		{																																					
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialPerson () failed for for \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);	 
+																			FreePerson (person_p);
+																		}
+
+
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocatePerson () failed for \"%s\"", *name_ss, *email_ss);		
+																}
+
+														}
+
+													if (num_successes == num_names)
+														{
+															status = OS_SUCCEEDED;
+														}
+													else if (num_successes > 0)
+														{
+															status = OS_PARTIALLY_SUCCEEDED;
+														}
+
+												}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "differing array lengths: num_names " SIZET_FMT " num_emails " SIZET_FMT 
+																			" num_roles " SIZET_FMT " num_affiliations " SIZET_FMT " num_orcids " SIZET_FMT, 
+																			num_names, num_emails, num_roles, num_affiliations, num_orcids);	
+												}																													
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_ORCID.npt_name_s);		
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_AFFILIATION.npt_name_s);		
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_ROLE.npt_name_s);		
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_EMAIL.npt_name_s);		
+				}
+
+		}		/* if (mvs_ss) */
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_NAME.npt_name_s);		
+		}
+		
+	return status;
 }
 
 
@@ -286,9 +426,13 @@ static bool PopulateValues (LinkedList *existing_people_p, char ***existing_name
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate existing_mv_names_p");
 				}
-
-
 		}
+	else
+		{
+			return true;
+		}
+		
+	return false;
 }
 
 

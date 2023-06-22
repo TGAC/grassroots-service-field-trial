@@ -140,7 +140,6 @@ static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names
 
 static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
-static const char **GetStringArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p);
 
 static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p);
 
@@ -600,41 +599,6 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 }
 
 
-static const char **GetStringArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p)
-{
-	const char **values_ss = NULL;
-	Parameter *param_p = GetParameterFromParameterSetByName (param_set_p, param_s);
-
-	if (param_p)
-		{
-			if (IsStringArrayParameter (param_p))
-				{
-					StringArrayParameter *sa_param_p = (StringArrayParameter *) param_p;
-
-					values_ss = GetStringArrayParameterCurrentValues (sa_param_p);
-					*num_entries_p = GetNumberOfStringArrayCurrentParameterValues (sa_param_p);
-				}
-			else if (IsStringParameter (param_p))
-				{
-					StringParameter *st_param_p = (StringParameter *) param_p;
-					const char *value_s = GetStringParameterCurrentValue (st_param_p);
-
-					values_ss = &value_s;
-					*num_entries_p = 1;									
-				}
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Unknown ParameterType for \"%s\" %d", param_s, param_p -> pa_type);
-				}
-	
-		}
-	else
-		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No Parameter named \"%s\"", param_s);
-		}
-
-	return values_ss;
-}
 
 
 static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p)
