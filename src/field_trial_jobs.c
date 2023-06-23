@@ -44,16 +44,18 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p);
+static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, LinkedList *people_p, FieldTrialServiceData *data_p);
 
 
 
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
+static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp);
 
-static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
+static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp);
 
+
+static bool ProcessPersonForFieldTrial (Person *person_p, void *user_data_p);
 
 
 bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
@@ -72,14 +74,14 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 
 	if (active_trial_p)
 		{
-			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s))
+			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p))
 				{
 					defaults_flag = true;
 				}
 		}
 	else
 		{
-			if (SetUpDefaults (&id_s, &programme_id_s, &name_s, &team_s))
+			if (SetUpDefaults (&id_s, &programme_id_s, &name_s, &team_s, &existing_people_p))
 				{
 					defaults_flag = true;
 				}
@@ -242,11 +244,58 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 			if (!IsStringEmpty (name_s))
 				{
+					FieldTrial *trial_p = NULL;
+
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-					if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, programme_p, data_p))
+					trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, trial_id_p);
+
+					if (trial_p)
 						{
-							char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
+							OperationStatus people_status = ProcessPeople (job_p, param_set_p, ProcessPersonForFieldTrial, trial_p, data_p);
+
+							if ((people_status == OS_SUCCEEDED) || (people_status == OS_PARTIALLY_SUCCEEDED))
+								{
+									if (!SaveFieldTrial (trial_p, job_p, data_p))
+										{
+											char *error_s = ConcatenateVarargsStrings ("Failed to save trial with name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
+
+											if (error_s)
+												{
+													AddGeneralErrorMessageToServiceJob (job_p, error_s);
+													FreeCopiedString (error_s);
+												}
+											else
+												{
+													AddGeneralErrorMessageToServiceJob (job_p, "Failed to save Field Trial");
+												}
+
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
+										}
+								}
+							else
+								{
+									char *error_s = ConcatenateVarargsStrings ("Failed to add people for trial with name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
+
+									if (error_s)
+										{
+											AddGeneralErrorMessageToServiceJob (job_p, error_s);
+											FreeCopiedString (error_s);
+										}
+									else
+										{
+											AddGeneralErrorMessageToServiceJob (job_p, "Failed to add people for Field Trial");
+										}
+
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add people for trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
+
+								}
+
+							FreeFieldTrial (trial_p);
+						}		/* if (trial_p) */
+					else
+						{
+							char *error_s = ConcatenateVarargsStrings ("Failed to create trial with name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
 
 							if (error_s)
 								{
@@ -255,10 +304,10 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 								}
 							else
 								{
-									AddGeneralErrorMessageToServiceJob (job_p, "Failed to add Field Trial");
+									AddGeneralErrorMessageToServiceJob (job_p, "Failed to create Field Trial");
 								}
 
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
 						}
 
 				}		/* if (!IsStringEmpty (name_s)) */
@@ -744,12 +793,17 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 }
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p)
+static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, LinkedList *people_p, FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, id_p);
 
 	if (trial_p)
 		{
+			if (people_p)
+				{
+
+				}
+
 			SaveFieldTrial (trial_p, job_p, data_p);
 			FreeFieldTrial (trial_p);
 		}
@@ -987,7 +1041,7 @@ bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_
 
 
 
-static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss)
+static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp)
 {
 	bool success_flag = true;
 
@@ -995,13 +1049,14 @@ static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name
 	*program_id_ss = (char *) S_EMPTY_LIST_OPTION_S;
 	*name_ss = NULL;
 	*team_ss = NULL;
+	*existing_people_pp = NULL;
 
 	return success_flag;
 }
 
 
 
-static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss)
+static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp)
 {
 	char *trial_id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
@@ -1024,6 +1079,7 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 			*program_id_ss = program_id_s;
 			*name_ss = trial_p -> ft_name_s;
 			*team_ss = trial_p -> ft_team_s;
+			*existing_people_pp = trial_p -> ft_people_p;
 
 			return true;
 		}		/* if (trial_id_s) */
@@ -1084,5 +1140,13 @@ FieldTrial *GetFieldTrialFromResource (DataResource *resource_p, const NamedPara
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
 	return trial_p;
+}
+
+
+static bool ProcessPersonForFieldTrial (Person *person_p, void *user_data_p)
+{
+	FieldTrial *trial_p = (FieldTrial *) user_data_p;
+
+	return AddFieldTrialPerson (trial_p, person_p, MF_SHALLOW_COPY);
 }
 

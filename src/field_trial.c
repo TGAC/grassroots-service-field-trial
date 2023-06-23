@@ -507,9 +507,60 @@ bool AddPeopleToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const
 }
 
 
+static OperationStatus AddPeopleFromFieldTrialJSON (FieldTrial *trial_p, const json_t *trial_json_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	const json_t *people_json_p = json_object_get (trial_json_p, FT_PEOPLE_S);
+
+	if (people_json_p)
+		{
+			if (json_is_array (people_json_p))
+				{
+					size_t i = 0;
+					size_t num_people = json_array_size (people_json_p);
+
+					for (i = 0; i < num_people; ++ i)
+						{
+							const json_t *person_json_p = json_array_get (people_json_p, i);
+							Person *person_p = GetPersonFromJSON (person_json_p, VF_STORAGE, data_p);
+
+							if (person_p)
+								{
+									if (!AddFieldTrialPerson (trial_p, person_p, MF_SHALLOW_COPY))
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add person \"%s\" to trial \"%s\"", person_p -> pe_name_s, trial_p -> ft_name_s);
+											FreePerson (person_p);;
+										}
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "GetPersonFromJSONN () failed in trial \"%s\"", trial_p -> ft_name_s);
+								}
+						}
+
+					if (num_people == trial_p -> ft_people_p -> ll_size)
+						{
+							status = OS_SUCCEEDED;
+						}
+					else if (trial_p -> ft_people_p -> ll_size > 0)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "%s is not an array", FT_PEOPLE_S);
+				}
 
 
+		}		/* if (people_json_p) */
+	else
+		{
+			status = OS_SUCCEEDED;
+		}
 
+	return status;
+}
 
 
 FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
@@ -558,6 +609,11 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 									if (success_flag)
 										{
 											trial_p = AllocateFieldTrial (name_s, team_s, program_p, MF_SHALLOW_COPY, id_p);
+
+											if (trial_p)
+												{
+													AddPeopleFromFieldTrialJSON (trial_p, json_p, data_p);
+												}
 										}
 
 

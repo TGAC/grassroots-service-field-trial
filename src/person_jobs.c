@@ -206,7 +206,7 @@ OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, boo
 
 									if (orcids_ss)
 										{
-											if (num_names == num_emails == num_roles == num_affiliations == num_orcids)
+											if ((num_names == num_emails) && (num_roles == num_affiliations) && (num_orcids == num_names) && (num_names == num_roles))
 												{
 													size_t num_successes = 0;
 													size_t i;
@@ -447,6 +447,11 @@ static bool CopyAndAddStringValue (const char * const src_s, char **dest_ss)
 			if (copied_value_s)
 				{
 					*dest_ss = copied_value_s;
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy \"%s\"", src_s);
 				}
 		}
 	else
