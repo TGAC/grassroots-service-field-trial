@@ -364,31 +364,26 @@ json_t *GetFieldTrialIndexingData (Service *service_p)
 
 bool GetSubmissionFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	bool success_flag = false;
 
-	if (strcmp (param_name_s, FIELD_TRIAL_NAME.npt_name_s) == 0)
+
+	const NamedParameterType params [] =
 		{
-			*pt_p = FIELD_TRIAL_NAME.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_TEAM.npt_name_s) == 0)
+			FIELD_TRIAL_NAME,
+			FIELD_TRIAL_TEAM,
+			FIELD_TRIAL_ID,
+			FIELD_TRIAL_ADD,
+			FIELD_TRIAL_PARENT_ID,
+			NULL
+		};
+
+	if (DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
 		{
-			*pt_p = FIELD_TRIAL_TEAM.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_ID.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_ID.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_ADD.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_ADD.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_PARENT_ID.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_PARENT_ID.npt_type;
+			success_flag = true;
 		}
 	else
 		{
-			success_flag = false;
+			success_flag = GetPersonParameterTypeForNamedParameter (param_name_s, &pt);
 		}
 
 	return success_flag;

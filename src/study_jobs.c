@@ -127,6 +127,7 @@ static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const FieldTrialSe
 
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
 
+
 static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss);
 
 
@@ -186,7 +187,6 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 static bool AddCuratorSubmissionParams (const Person *curator_p, ParameterSet *params_p, ServiceData *data_p);
 
 static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *params_p, ServiceData *data_p);
-
 
 
 /*
@@ -251,7 +251,14 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 																				{
 																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_NOTES.npt_type, STUDY_SHAPE_NOTES.npt_name_s, "Plots GPS Notes", "Any notes relating to the GPS data of the plots", active_study_p ? active_study_p -> st_shape_notes_s : NULL, PL_ALL)) != NULL)
 																						{
-																							success_flag = true;
+																							if (AddMultiplePeopleParameters (params_p, "Contributors", active_study_p ? active_study_p -> st_contributors_p : NULL, data_p))
+																								{
+																									success_flag = true;
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", active_study_p ? active_study_p -> st_name_s : "NULL");
+																								}
 																						}
 																					else
 																						{
@@ -699,9 +706,13 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		{
 			success_flag = true;
 		}
+	else if (GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (param_name_s, pt_p))
+		{
+			success_flag = true;
+		}
 	else
 		{
-			success_flag = GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (param_name_s, pt_p);
+			success_flag = GetPersonParameterTypeForNamedParameter (param_name_s, pt_p);
 		}
 
 	return success_flag;
@@ -1078,6 +1089,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 													 *plot_block_horizontal_gap_pp = study_p -> st_plot_block_horizontal_gap_p;
 													 *plot_block_vertical_gap_pp = study_p -> st_plot_block_vertical_gap_p;
 													 */
+
 													return true;
 
 												}		/* if (got_crops_flag) */
@@ -4683,3 +4695,6 @@ static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set
 
 	return success_flag;
 }
+
+
+

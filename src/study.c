@@ -241,63 +241,78 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 
 																																																															if (CloneValidString (gps_notes_s, &copied_gps_notes_s))
 																																																																{
-																																																																	Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																																																																	LinkedList *contributors_p = AllocateLinkedList (FreePersonNode);
 
-																																																																	if (study_p)
+																																																																	if (contributors_p)
 																																																																		{
-																																																																			study_p -> st_id_p = id_p;
-																																																																			study_p -> st_name_s = copied_name_s;
-																																																																			study_p -> st_data_url_s = copied_url_s;
-																																																																			study_p -> st_aspect_s = copied_aspect_s;
-																																																																			study_p -> st_slope_s = copied_slope_s;
-																																																																			study_p -> st_parent_p = parent_field_trial_p;
-																																																																			study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
-																																																																			study_p -> st_location_p = location_p;
-																																																																			study_p -> st_plots_p = plots_p;
-																																																																			study_p -> st_current_crop_p = current_crop_p;
-																																																																			study_p -> st_previous_crop_p = previous_crop_p;
-																																																																			study_p -> st_description_s = copied_description_s;
-																																																																			study_p -> st_growing_conditions_s = copied_growing_conditions_s;
-																																																																			study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
-																																																																			study_p -> st_design_s = copied_design_s;
+																																																																			Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-																																																																			study_p -> st_default_plot_width_p = copied_plot_width_p;
-																																																																			study_p -> st_default_plot_length_p = copied_plot_length_p;
-																																																																			study_p -> st_num_rows_p = copied_num_rows_p;
-																																																																			study_p -> st_num_columns_p = copied_num_cols_p;
-																																																																			study_p -> st_num_replicates_p = copied_num_replicates_p;
+																																																																			if (study_p)
+																																																																				{
+																																																																					study_p -> st_id_p = id_p;
+																																																																					study_p -> st_name_s = copied_name_s;
+																																																																					study_p -> st_data_url_s = copied_url_s;
+																																																																					study_p -> st_aspect_s = copied_aspect_s;
+																																																																					study_p -> st_slope_s = copied_slope_s;
+																																																																					study_p -> st_parent_p = parent_field_trial_p;
+																																																																					study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
+																																																																					study_p -> st_location_p = location_p;
+																																																																					study_p -> st_plots_p = plots_p;
+																																																																					study_p -> st_current_crop_p = current_crop_p;
+																																																																					study_p -> st_previous_crop_p = previous_crop_p;
+																																																																					study_p -> st_description_s = copied_description_s;
+																																																																					study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																																																																					study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																																																																					study_p -> st_design_s = copied_design_s;
 
-																																																																			study_p -> st_weather_link_s = copied_weather_s;
-																																																																			study_p -> st_shape_p = copied_shape_p;
+																																																																					study_p -> st_default_plot_width_p = copied_plot_width_p;
+																																																																					study_p -> st_default_plot_length_p = copied_plot_length_p;
+																																																																					study_p -> st_num_rows_p = copied_num_rows_p;
+																																																																					study_p -> st_num_columns_p = copied_num_cols_p;
+																																																																					study_p -> st_num_replicates_p = copied_num_replicates_p;
 
-																																																																			study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
-																																																																			study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
-																																																																			study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
-																																																																			study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
-																																																																			study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
-																																																																			study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
+																																																																					study_p -> st_weather_link_s = copied_weather_s;
+																																																																					study_p -> st_shape_p = copied_shape_p;
 
-																																																																			study_p -> st_treatments_p = treatments_p;
+																																																																					study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
+																																																																					study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
+																																																																					study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
+																																																																					study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
+																																																																					study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
+																																																																					study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
 
-																																																																			study_p -> st_curator_p = curator_p;
-																																																																			study_p -> st_contact_p = contact_p;
+																																																																					study_p -> st_treatments_p = treatments_p;
 
-																																																																			study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
-																																																																			study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
+																																																																					study_p -> st_curator_p = curator_p;
+																																																																					study_p -> st_contact_p = contact_p;
+
+																																																																					study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
+																																																																					study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
 
 
-																																																																			study_p -> st_plan_changes_s = copied_plan_changes_s;
-																																																																			study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
-																																																																			study_p -> st_data_not_included_s= copied_data_not_included_s;
+																																																																					study_p -> st_plan_changes_s = copied_plan_changes_s;
+																																																																					study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
+																																																																					study_p -> st_data_not_included_s= copied_data_not_included_s;
 
-																																																																			study_p -> st_photo_url_s = copied_photo_url_s;
-																																																																			study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
+																																																																					study_p -> st_photo_url_s = copied_photo_url_s;
+																																																																					study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
 
-																																																																			study_p -> st_shape_notes_s = copied_gps_notes_s;
-																																																																			study_p -> st_phenotypes_p = stats_p;
+																																																																					study_p -> st_shape_notes_s = copied_gps_notes_s;
+																																																																					study_p -> st_phenotypes_p = stats_p;
 
-																																																																			return study_p;
+																																																																					study_p -> st_contributors_p = contributors_p;
+																																																																					return study_p;
+																																																																				}
+
+																																																																			FreeLinkedList (contributors_p);
+																																																																		}		/* if (contributors_p) */
+																																																																	else
+																																																																		{
+																																																																			PrintErrors (STM_LEVEL_SERVERE, __FILE__, __LINE__, "Failed to allocate Contributors list");
+
 																																																																		}
+
+
 
 																																																																	if (copied_gps_notes_s)
 																																																																		{
@@ -735,6 +750,11 @@ void FreeStudy (Study *study_p)
 	if (study_p -> st_name_s)
 		{
 			FreeCopiedString (study_p -> st_name_s);
+		}
+
+	if (study_p -> st_contributors_p)
+		{
+			FreeLinkedList (study_p -> st_contributors_p);
 		}
 
 

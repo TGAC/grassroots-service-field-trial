@@ -278,6 +278,12 @@ typedef struct Study
 
 	LinkedList *st_phenotypes_p;
 
+	/**
+	 * A LinkedList of PersonNodes of people who have contributed
+	 * to this Study.
+	 */
+	LinkedList **st_contributors_p;
+
 } Study;
 
 

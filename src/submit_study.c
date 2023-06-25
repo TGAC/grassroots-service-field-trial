@@ -415,6 +415,7 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 	Parameter *param_p = NULL;
 	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
 	bool done_flag = false;
+	ParameterType pt = PT_NUM_TYPES;
 
 	if (IsTreatmentFactorParameter (name_s))
 		{
@@ -461,6 +462,67 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 				}		/* if (param_name_s) */
 
 		}
+	else if (GetPersonParameterTypeForNamedParameter (name_s, &pt))
+		{
+			if (pt != PT_NUM_TYPES)
+				{
+					json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
+
+					if (current_value_p)
+						{
+							if (json_is_array (current_value_p))
+								{
+									switch (pt)
+										{
+											case PT_STRING:
+												{
+													StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, NULL);
+
+													if (string_array_param_p)
+														{
+															param_p = & (string_array_param_p -> sap_base_param);
+														}
+												}
+											break;
+
+											default:
+												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+												break;
+										}		/* switch (pt) */
+
+								}		/* if (json_is_array (current_value_p)) */
+							else
+								{
+									switch (pt)
+										{
+											case PT_STRING:
+												{
+													StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+													if (string_param_p)
+														{
+															param_p = & (string_param_p -> sp_base_param);
+														}
+												}
+											break;
+
+											default:
+												PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+												break;
+										}		/* switch (pt) */
+
+								}		/* /* if (json_is_array (current_value_p)) */
+
+						}		/* if (current_value_p) */
+
+				}		/* if (pt != PT_NUM_TYPES) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, param_json_p, "Unknown ParameterType %u", pt);
+				}
+
+		}		/* if (GetPersonParameterTypeForNamedParameter (name_s, &pt)) */
+
 
 	if (!param_p)
 		{
