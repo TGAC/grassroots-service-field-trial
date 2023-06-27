@@ -27,6 +27,7 @@
 
 #include "study_jobs.h"
 #include "treatment_factor_jobs.h"
+#include "person_jobs.h"
 
 #include "string_array_parameter.h"
 #include "json_parameter.h"

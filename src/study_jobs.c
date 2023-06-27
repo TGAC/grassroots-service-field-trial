@@ -58,6 +58,7 @@
 #include "lucene_tool.h"
 #include "statistics.h"
 #include "phenotype_statistics.h"
+#include "person_jobs.h"
 
 
 typedef struct

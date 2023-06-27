@@ -288,6 +288,133 @@ OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, boo
 }
 
 
+bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *json_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = true;
+
+	if (people_p -> ll_size > 0)
+		{
+			json_t *people_json_p = json_array ();
+
+			if (people_json_p)
+				{
+					PersonNode *node_p = (PersonNode *) (people_p -> ll_head_p);
+					bool ok_flag = true;
+
+					while (node_p && ok_flag)
+						{
+							json_t *person_json_p = GetPersonAsJSON (node_p -> pn_person_p, format, data_p);
+
+							if (person_json_p)
+								{
+									if (json_array_append_new (people_json_p, person_json_p) == 0)
+										{
+											node_p = (PersonNode *) (node_p -> pn_node.ln_next_p);
+										}
+									else
+										{
+											ok_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add Person json to array");
+											json_decref (person_json_p);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Person json for person \"%s\"", node_p -> pn_person_p -> pe_name_s);
+								}
+						}		/* while (node_p && success_flag) */
+
+					if (ok_flag)
+						{
+							if (json_object_set_new (json_p, key_s, people_json_p) == 0)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, people_json_p, "Failed to add people json for \"%s\"", key_s);
+
+									json_decref (people_json_p);
+								}
+						}
+
+				}		/* if (people_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate people json object for \"%s\"", key_s);
+				}
+
+		}		/* if (trial_p -> ft_studies_p -> ll_size > 0) */
+	else
+		{
+			/* nothing to add */
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_person_fn) (Person *person_p, void *user_data_p, MEM_FLAG *mem_p), void *user_data_p, FieldTrialServiceData *service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+	
+	if (json_is_array (people_json_p))
+		{
+			size_t i = 0;
+			size_t num_people = json_array_size (people_json_p);
+			size_t num_added = 0;
+			
+			for (i = 0; i < num_people; ++ i)
+				{
+					const json_t *person_json_p = json_array_get (people_json_p, i);
+					Person *person_p = GetPersonFromJSON (person_json_p, VF_STORAGE, service_data_p);
+
+					if (person_p)
+						{
+							MEM_FLAG mf = MF_ALREADY_FREED;
+							
+							if (add_person_fn (user_data_p, person_p, &mf))
+								{
+									if ((mf == MF_DEEP_COPY) || (mf == MF_ALREADY_FREED))
+										{
+											FreePerson (person_p);
+										}									
+								
+									++ num_added;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add person \"%s\"", person_p -> pe_name_s);
+									FreePerson (person_p);
+								}
+								
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "GetPersonFromJSON () failed");
+						}
+				}
+
+			if (num_added == num_people)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_added > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+		}
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, people_json_p, "Not an array");
+		}
+
+	return status;
+}
+
+
+
 static bool PopulateValues (LinkedList *existing_people_p, char ***existing_names_sss, char ***existing_emails_sss, char ***existing_roles_sss,
 													char ***existing_affiliations_sss, char ***existing_orcids_sss)
 {

@@ -282,7 +282,7 @@ typedef struct Study
 	 * A LinkedList of PersonNodes of people who have contributed
 	 * to this Study.
 	 */
-	LinkedList **st_contributors_p;
+	LinkedList *st_contributors_p;
 
 } Study;
 

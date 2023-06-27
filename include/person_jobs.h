@@ -67,6 +67,12 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPersonParameterTypeForNamedParameter (cons
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, bool (*process_person_fn) (Person *person_p, void *user_data_p), void *user_data_p, FieldTrialServiceData *ft_service_data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *json_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_person_fn) (Person *person_p, void *user_data_p, MEM_FLAG *mem_p), void *user_data_p, FieldTrialServiceData *service_data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

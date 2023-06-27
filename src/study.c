@@ -308,7 +308,7 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 																																																																		}		/* if (contributors_p) */
 																																																																	else
 																																																																		{
-																																																																			PrintErrors (STM_LEVEL_SERVERE, __FILE__, __LINE__, "Failed to allocate Contributors list");
+																																																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Contributors list");
 
 																																																																		}
 
@@ -2394,66 +2394,87 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 }
 
 
-static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+
+
+static bool AddContributorsToStudy (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
 	/*
-	 * Are there any phenotypes?
+	 * Are there any contributors?
 	 */
-	if ((study_p -> st_phenotypes_p) && (study_p -> st_phenotypes_p -> ll_size > 0))
+	if ((study_p -> st_contributors_p) && (study_p -> st_contributors_p -> ll_size > 0))
 		{
-			json_t *phenotypes_p = json_object ();
+			json_t *accessions_p = json_object ();
 
-			if (phenotypes_p)
+			if (accessions_p)
 				{
-					bool b = true;
-					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
-					uint32 i = 0;
+					PersonNode *person_node_p = (PersonNode *) (study_p -> st_contributors_p -> ll_head_p);
+
+					success_flag = true;
 
 					/*
-					 * Keep looping and adding the phenotypes
+					 * add the people
 					 */
-					while (node_p && b)
+					while (person_node_p && success_flag)
 						{
-							if (AddPhenotypeStatisticsNodeAsJSON (node_p, phenotypes_p, format, data_p))
-								{
-									node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
-									++ i;
-								}
-							else
-								{
-									b = false;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddPhenotypeStatisticsNodeAsJSON () failed for \"%s\" for study \"%s\"", node_p -> psn_measured_variable_name_s, study_p -> st_name_s);
-								}
+							Person *person_p = person_node_p -> pn_person_p;
 
-						}		/* while (node_p && b) */
+							
 
-					/*
-					 * Did we process all of the phenotypes?
-					 */
-					if (i == study_p -> st_phenotypes_p -> ll_size)
+						
+
+							person_node_p = (PlotNode *) (person_node_p -> pn_node.ln_next_p);
+						}		/* while (person_node_p && success_flag) */
+
+					if (success_flag)
 						{
-							if (json_object_set_new (study_json_p, ST_PHENOTYPES_S, phenotypes_p) == 0)
+							json_t *accessions_array_p = json_array ();
+
+							if (accessions_array_p)
 								{
-									success_flag = true;
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics for \"%s\" for study \"%s\"", ST_PHENOTYPE_STATISTICS_S, study_p -> st_name_s);
-								}
+									/*
+									 * Transform the accession table into an array
+									 */
+									const char *key_s;
+									json_t *value_p;
+
+									json_object_foreach (accessions_p, key_s, value_p)
+										{
+											json_t *accession_p = json_string (key_s);
+
+											if (accession_p)
+												{
+													if (json_array_append_new (accessions_array_p, accession_p) != 0)
+														{
+															success_flag = false;
+															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to add \"%s\" to accessions array", key_s);
+														}
+												}
+
+										}		/*while (iterator_p && success_flag) */
+
+									if (success_flag)
+										{
+											if (json_object_set_new (study_json_p, ST_ACCESSIONS_S, accessions_array_p) != 0)
+												{
+													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, accessions_array_p, "Failed to accessions array to study");
+												}
+										}
+
+
+									if (!success_flag)
+										{
+											json_decref (accessions_array_p);
+										}
+
+								}		/* if (accessions_array_p) */
+
 						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_p, "phenotypes has " UINT32_FMT " entries instead of " UINT32_FMT "  for study \"%s\"", i, study_p -> st_phenotypes_p -> ll_size, study_p -> st_name_s);
-						}
 
-					if (!success_flag)
-						{
-							json_decref (phenotypes_p);
-						}
-
-				}		/* if (phenotypes_p) */
+					json_decref (accessions_p);
+				}		/* if (accessions_p) */
 			else
 				{
 					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to create phenotypes object for \"%s\"", study_p -> st_name_s);
@@ -2468,6 +2489,7 @@ static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, con
 
 	return success_flag;
 }
+
 
 
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *service_data_p)
@@ -2506,6 +2528,7 @@ static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, c
 
 	return success_flag;
 }
+
 
 
 

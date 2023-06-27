@@ -120,7 +120,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 												{
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 														{
-															if (AddMultiplePeopleParameters (param_set_p, "Investigators", existing_people_p, data_p))
+															if (AddMultiplePeopleParameters (param_set_p, "Investigators", existing_people_p, dfw_data_p))
 																{
 																	success_flag = true;																	
 																}
@@ -383,7 +383,7 @@ bool GetSubmissionFieldTrialParameterTypeForNamedParameter (const char *param_na
 		}
 	else
 		{
-			success_flag = GetPersonParameterTypeForNamedParameter (param_name_s, &pt);
+			success_flag = GetPersonParameterTypeForNamedParameter (param_name_s, pt_p);
 		}
 
 	return success_flag;

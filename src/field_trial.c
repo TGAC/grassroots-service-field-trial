@@ -33,6 +33,9 @@
 #include "indexing.h"
 #include "json_processor.h"
 #include "programme.h"
+#include "person_jobs.h"
+
+static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *mem_p);
 
 
 
@@ -281,7 +284,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, Field
 								{
 									bool success_flag = false;
 									
-									if (AddPeopleToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+									if (AddPeopleToJSON (trial_p -> ft_people_p, FT_PEOPLE_S, trial_json_p, format, data_p))
 										{
 
 											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
@@ -433,136 +436,6 @@ bool AddStudiesToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, cons
 }
 
 
-
-bool AddPeopleToFieldTrialJSON (FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p)
-{
-	bool success_flag = true;
-
-	if (trial_p -> ft_people_p -> ll_size > 0)
-		{
-			json_t *people_p = json_array ();
-
-			if (people_p)
-				{
-					PersonNode *node_p = (PersonNode *) (trial_p -> ft_people_p -> ll_head_p);
-					bool ok_flag = true;
-
-					while (node_p && ok_flag)
-						{
-							json_t *person_p = GetPersonAsJSON (node_p -> pn_person_p, format, data_p);
-
-							if (person_p)
-								{
-									if (json_array_append_new (people_p, person_p) == 0)
-										{
-											node_p = (PersonNode *) (node_p -> pn_node.ln_next_p);
-										}
-									else
-										{
-											ok_flag = false;
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_p, "Failed to add Person json to array for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
-											json_decref (person_p);
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Person json for person \"%s\"", node_p -> pn_person_p -> pe_name_s);
-								}
-						}		/* while (node_p && success_flag) */
-
-					if (ok_flag)
-						{
-							if (json_object_set_new (trial_json_p, FT_PEOPLE_S, people_p) == 0)
-								{
-									success_flag = true;
-								}
-							else
-								{
-									char buffer_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-									ok_flag = false;
-
-									bson_oid_to_string (trial_p -> ft_id_p, buffer_s);
-
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, people_p, "Failed to add People json to trial \"%s\"", buffer_s);
-
-									json_decref (people_p);
-								}
-						}
-
-				}		/* if (exp_areas_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Studies json object for field trial \"%s\" - \"%s\"", trial_p -> ft_team_s, trial_p -> ft_name_s);
-				}
-
-		}		/* if (trial_p -> ft_studies_p -> ll_size > 0) */
-	else
-		{
-			/* nothing to add */
-			success_flag = true;
-		}
-
-	return success_flag;
-}
-
-
-static OperationStatus AddPeopleFromFieldTrialJSON (FieldTrial *trial_p, const json_t *trial_json_p, FieldTrialServiceData *data_p)
-{
-	OperationStatus status = OS_FAILED;
-	const json_t *people_json_p = json_object_get (trial_json_p, FT_PEOPLE_S);
-
-	if (people_json_p)
-		{
-			if (json_is_array (people_json_p))
-				{
-					size_t i = 0;
-					size_t num_people = json_array_size (people_json_p);
-
-					for (i = 0; i < num_people; ++ i)
-						{
-							const json_t *person_json_p = json_array_get (people_json_p, i);
-							Person *person_p = GetPersonFromJSON (person_json_p, VF_STORAGE, data_p);
-
-							if (person_p)
-								{
-									if (!AddFieldTrialPerson (trial_p, person_p, MF_SHALLOW_COPY))
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add person \"%s\" to trial \"%s\"", person_p -> pe_name_s, trial_p -> ft_name_s);
-											FreePerson (person_p);;
-										}
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "GetPersonFromJSONN () failed in trial \"%s\"", trial_p -> ft_name_s);
-								}
-						}
-
-					if (num_people == trial_p -> ft_people_p -> ll_size)
-						{
-							status = OS_SUCCEEDED;
-						}
-					else if (trial_p -> ft_people_p -> ll_size > 0)
-						{
-							status = OS_PARTIALLY_SUCCEEDED;
-						}
-				}
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "%s is not an array", FT_PEOPLE_S);
-				}
-
-
-		}		/* if (people_json_p) */
-	else
-		{
-			status = OS_SUCCEEDED;
-		}
-
-	return status;
-}
-
-
 FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	FieldTrial *trial_p = NULL;
@@ -612,7 +485,13 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 
 											if (trial_p)
 												{
-													AddPeopleFromFieldTrialJSON (trial_p, json_p, data_p);
+													const json_t *people_json_p = json_object_get (json_p, FT_PEOPLE_S);
+													
+													if (people_json_p)
+														{
+															AddPeopleFromJSON (people_json_p, AddPersonFromJSON, trial_p, data_p);
+														}
+
 												}
 										}
 
@@ -918,15 +797,36 @@ char *GetFieldTrialAsString (const FieldTrial *trial_p)
 {
 	char *trial_s = NULL;
 	
-	if (trial_p -> ft_team_s)
+	if (! (trial_p -> ft_team_s))
 		{
 			trial_s = EasyCopyToNewString (trial_p -> ft_name_s);
 		}
 	else
 		{
 			trial_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
+			
+			if (!trial_s)
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get trial as string: team \"%s\", name \"%s\"", 
+											(trial_p -> ft_team_s != NULL) ? trial_p -> ft_team_s : "NULL",
+											(trial_p -> ft_name_s != NULL) ? trial_p -> ft_name_s : "NULL");
+				}
 		}
+	
 
 	return trial_s;
 }
 
+static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *mem_p)
+{
+	bool success_flag = false;
+	FieldTrial *trial_p = (FieldTrial *) user_data_p;
+	MEM_FLAG mf = MF_SHALLOW_COPY;
+	
+	if (AddFieldTrialPerson (trial_p, person_p, mf))
+		{
+			*mem_p = mf;
+		}
+		
+	return success_flag;
+}
