@@ -415,7 +415,6 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 {
 	Parameter *param_p = NULL;
 	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
-	bool done_flag = false;
 	ParameterType pt = PT_NUM_TYPES;
 
 	if (IsTreatmentFactorParameter (name_s))
@@ -431,7 +430,7 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 								{
 									if (json_is_array (current_value_p))
 										{
-											ParameterType pt = PT_STRING_ARRAY;
+											pt = PT_STRING_ARRAY;
 											StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
 
 											if (string_array_param_p)
@@ -512,7 +511,7 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 												break;
 										}		/* switch (pt) */
 
-								}		/* /* if (json_is_array (current_value_p)) */
+								}		/* if (json_is_array (current_value_p)) */
 
 						}		/* if (current_value_p) */
 
