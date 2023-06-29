@@ -170,7 +170,7 @@ bool GetPersonParameterTypeForNamedParameter (const char *param_name_s, Paramete
 		PERSON_ROLE,
 		PERSON_AFFILIATION,
 		PERSON_ORCID,
-		NULL
+		{ NULL }
 	};
 
 
@@ -374,7 +374,7 @@ OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_perso
 						{
 							MEM_FLAG mf = MF_ALREADY_FREED;
 							
-							if (add_person_fn (user_data_p, person_p, &mf))
+							if (add_person_fn (person_p, user_data_p, &mf))
 								{
 									if ((mf == MF_DEEP_COPY) || (mf == MF_ALREADY_FREED))
 										{
