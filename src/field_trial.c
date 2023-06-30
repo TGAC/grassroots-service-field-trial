@@ -826,6 +826,7 @@ static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *me
 	if (AddFieldTrialPerson (trial_p, person_p, mf))
 		{
 			*mem_p = mf;
+			success_flag = true;
 		}
 		
 	return success_flag;
