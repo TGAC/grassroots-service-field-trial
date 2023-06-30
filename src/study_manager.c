@@ -69,7 +69,7 @@ static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SM Remove Study Plots", PT_B
 static NamedParameterType S_GENERATE_HANDBOOK = { "SM Generate Handbook", PT_BOOLEAN };
 
 
-static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SM Generate Phenotypes", PT_BOOLEAN };
+static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SM Generate Phenotypes", PT_LARGE_STRING };
 
 static NamedParameterType S_INDEXER = { "SM indexer", PT_STRING };
 
@@ -259,7 +259,7 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataR
 																{
 																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate a handbook for a Study ", &b, PL_ALL)) != NULL)
 																		{
-																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_type, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
 																				{
 																					if (SetUpIndexingParameter (params_p, group_p, data_p))
 																						{
@@ -389,6 +389,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 			if (param_set_p)
 				{
 					const char *id_s = NULL;
+					const char *phenotypes_s = NULL;
 
 					LogParameterSet (param_set_p, job_p);
 
@@ -514,25 +515,35 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												}
 										}
 
-									run_flag = false;
-									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &run_flag_p))
+									if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &phenotypes_s))
 										{
-											if ((run_flag_p != NULL) && (*run_flag_p == true))
+											if (!IsStringEmpty (phenotypes_s))
 												{
-													OperationStatus s = OS_FAILED;
-
-													if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+													/* do all phenotypes? */
+													if (strcmp (phenotypes_s, "*") == 0)
 														{
-															s = OS_SUCCEEDED;
+															OperationStatus s = OS_FAILED;
+
+															if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+																{
+																	s = OS_SUCCEEDED;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+																}
+
+
+															MergeServiceJobStatus (job_p, s);
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+															/* Get the list of phenotypes tp regenerate */
 														}
 
 
-													MergeServiceJobStatus (job_p, s);
-												}
+												}		/* if (!IsStringEmpty (phenotypes_s)) */
+
 										}
 
 

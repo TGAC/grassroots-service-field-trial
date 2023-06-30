@@ -170,7 +170,7 @@ bool GetPersonParameterTypeForNamedParameter (const char *param_name_s, Paramete
 		PERSON_ROLE,
 		PERSON_AFFILIATION,
 		PERSON_ORCID,
-		NULL
+		{ NULL }
 	};
 
 
@@ -288,7 +288,7 @@ OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, boo
 }
 
 
-bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *json_p, const ViewFormat format, FieldTrialServiceData *data_p)
+bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
 
@@ -355,7 +355,7 @@ bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *js
 }
 
 
-OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_person_fn) (Person *person_p, void *user_data_p, MEM_FLAG *mem_p), void *user_data_p, FieldTrialServiceData *service_data_p)
+OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_person_fn) (Person *person_p, void *user_data_p, MEM_FLAG *mem_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
 	
@@ -374,7 +374,7 @@ OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_perso
 						{
 							MEM_FLAG mf = MF_ALREADY_FREED;
 							
-							if (add_person_fn (user_data_p, person_p, &mf))
+							if (add_person_fn (person_p, user_data_p, &mf))
 								{
 									if ((mf == MF_DEEP_COPY) || (mf == MF_ALREADY_FREED))
 										{

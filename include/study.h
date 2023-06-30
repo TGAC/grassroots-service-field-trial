@@ -68,6 +68,9 @@ STUDY_PREFIX const char *ST_CONTACT_S STUDY_VAL ("contact");
 STUDY_PREFIX const char *ST_CURATOR_S STUDY_VAL ("curator");
 
 
+STUDY_PREFIX const char *ST_CONTRIBUTORS_S STUDY_VAL ("contributors");
+
+
 STUDY_PREFIX const char *ST_ASPECT_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_NCI_THESAUSUS_ONTOLOGY_S, "C42677");
 
 STUDY_PREFIX const char *ST_SLOPE_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_ENVIRONMENT_ONTOLOGY_S, "00002000");
@@ -354,6 +357,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *
 DFW_FIELD_TRIAL_SERVICE_LOCAL int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, const char *job_name_s, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudyContributor (Study *study_p, Person *person_p, MEM_FLAG mf);
 
 
 #ifdef __cplusplus
