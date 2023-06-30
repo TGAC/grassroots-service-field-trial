@@ -91,6 +91,8 @@ static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint3
 
 static void DetachStudyFromParent (Study *study_p);
 
+static bool AddCommonPlotValuesToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
 
 /*
  * API FUNCTIONS
@@ -1999,52 +2001,28 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																														{
 																															if (AddValidAspectToJSON (study_p, study_json_p))
 																																{
-																																	if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
+																																	if (AddCommonPlotValuesToJSON (study_p, study_json_p, format, data_p))
 																																		{
-																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+																																			if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																				{
-																																					if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
 																																						{
-																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
 																																								{
-																																									if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+																																									if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
 																																										{
-																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+																																											if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																												{
-																																													if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+																																													if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
 																																														{
-																																															if (AddTreatmentsToJSON (study_p, study_json_p, format))
+																																															if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
 																																																{
-																																																	if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
-																																																		{
-																																																			if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
-																																																				{
-																																																					if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
-																																																						{
-																																																							if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
-																																																								{
-																																																									if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
-																																																										{
-																																																											if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
-																																																												{
-																																																													success_flag = true;
-																																																												}
-																																																										}
-																																																									else
-																																																										{
-																																																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
-																																																										}
-
-																																																								}
-
-																																																						}
-
-																																																				}
-
-																																																		}
-
-																																																}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
-
+																																																	success_flag = true;
+																																																}
+																																														}
+																																													else
+																																														{
+																																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
 																																														}
 
 																																												}
@@ -2055,13 +2033,10 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 
 																																						}
 
-																																				}
+																																				}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
 
-																																		}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
-																																	else
-																																		{
-																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
-																																		}
+																																		}		/* if (AddCommonPlotValuesToJSON (study_p, study_json_p, format, data_p)) */
+
 
 																																}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
 																														}		/* if (SetNonTrivialString (study_json_p, ST_SHAPE_NOTES_S, study_p -> st_shape_notes_s, true)) */
@@ -2099,6 +2074,46 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 	return success_flag;
 }
 
+
+static bool AddCommonPlotValuesToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
+		{
+			if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+				{
+					if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+						{
+							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+								{
+									if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+										{
+											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+												{
+													if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+														{
+															success_flag = true;
+														}
+
+												}
+
+										}
+
+								}
+
+						}
+
+				}
+
+		}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
+		}
+
+	return success_flag;
+}
 
 
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p)
