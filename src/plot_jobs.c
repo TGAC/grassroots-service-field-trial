@@ -1331,7 +1331,7 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 							/*
 							 * Is it an observation?
 							 */
-							add_status = AddObservationValueToStandardRow (row_p, key_s, value_p, job_p, row_index, data_p);
+							add_status = AddObservationValueToStandardRow (row_p, NULL, key_s, value_p, job_p, row_index, data_p);
 
 							if (add_status == OS_SUCCEEDED)
 								{
