@@ -19,7 +19,10 @@
  *  Created on: 28 Oct 2018
  *      Author: billy
  */
-
+#include "row_jobs.h"
+#include "plot_jobs.h"
+#include "measured_variable_jobs.h"
+#include "dfw_util.h"
 #include "string_utils.h"
 #include "study_jobs.h"
 #include "math_utils.h"
@@ -399,7 +402,7 @@ OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stats_json_p, Study
 
 
 
-OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint32 *row_index_p, const char *key_s, const json_t *value_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
+OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint32 row_index, const char *key_s, const json_t *value_p, ServiceJob *job_p,  FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 
@@ -435,7 +438,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 									raw_value_p = value_p;
 								}
 								
-							status = AddObservationValueToStandardRowByParts (job_p, row_index, row_p, measured_variable_p, start_date_p, end_date_p,
+							status = AddObservationValueToStandardRowByParts (job_p, &row_index, row_p, measured_variable_p, start_date_p, end_date_p,
 																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag);
 
 
@@ -485,7 +488,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 }
 
 
-OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, const uint32 row_index, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
+OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, const uint32 *row_index_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
 											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *notes_s, const uint32 observation_index, bool *free_measured_variable_flag_p)
 {
 	OperationStatus status = OS_FAILED;
@@ -628,8 +631,8 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, cons
 									else
 										{
 											char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-											const char *raw_value_s = NULL;
-											const char *corrected_value_s = NULL;
+											char *raw_value_s = NULL;
+											char *corrected_value_s = NULL;
 											
 											if (raw_value_p)
 												{
@@ -666,8 +669,8 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, cons
 
 									bson_oid_to_string (row_p -> sr_base.ro_id_p, id_s);
 
-									const char *raw_value_s = NULL;
-									const char *corrected_value_s = NULL;
+									char *raw_value_s = NULL;
+									char *corrected_value_s = NULL;
 									
 									if (raw_value_p)
 										{
@@ -709,8 +712,8 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, cons
 				}
 			else
 				{
-					const char *raw_value_s = NULL;
-					const char *corrected_value_s = NULL;
+					char *raw_value_s = NULL;
+					char *corrected_value_s = NULL;
 					
 					if (raw_value_p)
 						{

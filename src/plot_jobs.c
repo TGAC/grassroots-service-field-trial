@@ -169,6 +169,7 @@ static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTria
 
 static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p);
 
+
 static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unknown_cols_p);
 
 
@@ -383,7 +384,7 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 			S_PLOT_TABLE_COLUMN_DELIMITER,
 			PL_PLOT_TABLE,
 			S_AMEND,
-			NULL
+			{ NULL }
 		};
 
 	if (DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
@@ -1042,6 +1043,7 @@ static StandardRow *CreateOrUpdateStandardRowFromJSON (ServiceJob *job_p, json_t
 												{
 													success_flag = false;
 													PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "Failed to get replicate as a number from \"%s\"", rep_s);
+													
 													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to get replicate as a number", row_index, PL_REPLICATE_TITLE_S);
 												}
 
@@ -1075,8 +1077,9 @@ static StandardRow *CreateOrUpdateStandardRowFromJSON (ServiceJob *job_p, json_t
 											else
 												{
 													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "ProcessStandardRow () failed");
+													
 													AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to process row", row_index, NULL);
-
+													
 													FreeRow (& (sr_p -> sr_base));
 													sr_p = NULL;
 												}
@@ -1331,7 +1334,7 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 							/*
 							 * Is it an observation?
 							 */
-							add_status = AddObservationValueToStandardRow (row_p, NULL, key_s, value_p, job_p, row_index, data_p);
+							add_status = AddObservationValueToStandardRow (row_p, &row_index, key_s, value_p, job_p, data_p);
 
 							if (add_status == OS_SUCCEEDED)
 								{
@@ -1491,7 +1494,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 											 */
 											if (json_object_size (table_row_json_p) > 0)
 												{
-													OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i, plots_cache_p, data_p);
+													OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, &i, plots_cache_p, data_p);
 
 													switch (add_status)
 														{

@@ -50,7 +50,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetAllRowsContainingMaterial (Material
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint32 *row_index_p, const char *key_s, const json_t *value_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint32 row_index, const char *key_s, const json_t *value_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_t *plot_json_p, Study *study_p, FieldTrialServiceData *data_p);
@@ -92,7 +92,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetRowsNameKey (void);
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowsNameKey (char *key_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRowByParts ServiceJob *job_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, const uint32 *row_index_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
 											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *note_s, const uint32 observation_index, bool *free_measured_variable_flag_p);
 
 #ifdef __cplusplus

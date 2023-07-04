@@ -256,7 +256,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 					S_RACK_INDEX,
 					S_NOTES,
 					S_APPEND_OBSERVATIONS,
-					NULL
+					{ NULL }
 				};
 
 			b = DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
@@ -360,9 +360,10 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 						{
 							const char *plot_notes_s = NULL;
 							bool append_flag = true;
+							bool *append_flag_p = &append_flag;
 							OperationStatus obs_status = OS_IDLE;
 
-							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND_OBSERVATIONS.npt_name_s, &append_flag);
+							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND_OBSERVATIONS.npt_name_s, &append_flag_p);
 
 							if (!append_flag)
 								{
@@ -486,7 +487,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 
 
 																			bool free_measured_variable_flag = false;
-																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, *start_date_pp, *end_date_pp,
+																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (job_p, NULL, row_p, mv_p, *start_date_pp, *end_date_pp,
 																														key_s, raw_value_p, corrected_value_p, *note_ss, observation_index, &free_measured_variable_flag);
 
 																			if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
@@ -511,7 +512,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																			if (study_p -> st_phenotypes_p)
 																				{
 																					const char *mv_s = GetMeasuredVariableName (mv_p);
-																					MeasuredVariableNode *node_p = study_p -> st_phenotypes_p -> ll_head_p;
+																					MeasuredVariableNode *node_p = (MeasuredVariableNode *) (study_p -> st_phenotypes_p -> ll_head_p);
 																					bool new_mv_flag = true;
 
 																					while (node_p && new_mv_flag)
@@ -1636,7 +1637,7 @@ static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, 
 												break;
 										}		/* switch (pt) */									
 								
-								}		/* /* if (json_is_array (current_value_p)) */ 							
+								}		/* if (json_is_array (current_value_p)) */ 							
 							
 						}		/* if (current_value_p) */
 
@@ -1673,7 +1674,7 @@ static bool GetObservationParameterTypeForNamedParameter (const char *param_name
 		S_PHENOTYPE_END_DATE,
 		S_PHENOTYPE_CORRECTED_VALUE,
 		S_OBSERVATION_NOTES,
-		NULL
+		{ NULL }
 	};
 
 

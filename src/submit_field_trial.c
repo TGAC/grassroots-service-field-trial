@@ -474,7 +474,7 @@ static Parameter *CreateSubmitTrialParameterFromJSON (struct Service *service_p,
 												break;
 										}		/* switch (pt) */									
 								
-								}		/* /* if (json_is_array (current_value_p)) */ 							
+								}		/* if (json_is_array (current_value_p)) */ 							
 							
 						}		/* if (current_value_p) */
 
