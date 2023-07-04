@@ -92,8 +92,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetRowsNameKey (void);
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeRowsNameKey (char *key_s);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, const uint32 *row_index_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
-											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *note_s, const uint32 observation_index, bool *free_measured_variable_flag_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
+											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *notes_s, const uint32 observation_index, bool *free_measured_variable_flag_p,
+											void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p), void *user_data_p);
 
 #ifdef __cplusplus
 }

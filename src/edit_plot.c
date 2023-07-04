@@ -81,7 +81,7 @@ static NamedParameterType S_COL_INDEX  = { "PL Col Index", PT_UNSIGNED_INT };
 
 static NamedParameterType S_RACK_INDEX  = { "PL Rack", PT_UNSIGNED_INT };
 
-static NamedParameterType S_NOTES  = { "PL Notes", PT_LARGE_STRING };
+static NamedParameterType S_RACK_NOTES  = { "PL Notes", PT_LARGE_STRING };
 
 
 static const char *GetPlotEditingServiceName (const Service *service_p);
@@ -149,6 +149,9 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 static bool GetObservationParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
+
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p);
+
 
 /*
  * API definitions
@@ -254,7 +257,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 					S_ROW_INDEX,
 					S_COL_INDEX,
 					S_RACK_INDEX,
-					S_NOTES,
+					S_RACK_NOTES,
 					S_APPEND_OBSERVATIONS,
 					{ NULL }
 				};
@@ -372,7 +375,7 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 							obs_status = ProcessObservations ((StandardRow *) active_row_p, job_p, param_set_p, data_p);
 
-							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_NOTES.npt_name_s, &plot_notes_s);
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_RACK_NOTES.npt_name_s, &plot_notes_s);
 
 							if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
 								{
@@ -459,7 +462,6 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															const char **note_ss = notes_ss;
 															const struct tm **start_date_pp = start_dates_pp;
 															const struct tm **end_date_pp = end_dates_pp;
-															bool corrected_value_flag = false;
 															const char *key_s = "";
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
 															uint32 observation_index = 1;
@@ -487,8 +489,9 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 
 
 																			bool free_measured_variable_flag = false;
-																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (job_p, NULL, row_p, mv_p, *start_date_pp, *end_date_pp,
-																														key_s, raw_value_p, corrected_value_p, *note_ss, observation_index, &free_measured_variable_flag);
+																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, *start_date_pp, *end_date_pp,
+																														key_s, raw_value_p, corrected_value_p, *note_ss, observation_index, &free_measured_variable_flag,
+																														SetObservationError, NULL);
 
 																			if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
 																				{
@@ -594,6 +597,26 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 }
 
 
+
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p)
+{
+	if (strcmp (observation_field_s, OB_RAW_VALUE_S) == 0)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, S_PHENOTYPE_RAW_VALUE.npt_type, "Failed to set raw value for Observation");
+		}
+	else if (strcmp (observation_field_s, OB_CORRECTED_VALUE_S) == 0)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, S_PHENOTYPE_CORRECTED_VALUE.npt_type, "Failed to set corrected value for Observation");
+		}
+	else if (strcmp (observation_field_s, OB_NOTES_S) == 0)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, S_OBSERVATION_NOTES.npt_name_s, S_OBSERVATION_NOTES.npt_type, "Failed to set notes for Observation");
+		}
+	else
+		{
+			AddGeneralErrorMessageToServiceJob (job_p, "Failed to process Observation");
+		}
+}
 
 
 static const struct tm **GetTimeArrayValuesForParameter (ParameterSet *param_set_p, const char *param_s, size_t *num_entries_p)
@@ -801,7 +824,7 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 																{
 																	param_p -> pa_read_only_flag = true;
 
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_RACK_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
 																		{
 																			bool append_flag = true;
 
@@ -828,7 +851,7 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 																		}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL) */
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NOTES.npt_name_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_RACK_NOTES.npt_name_s);
 																		}
 
 
