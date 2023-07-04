@@ -660,7 +660,7 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const V
 																{
 																	if (!GetPlotRows (plot_p, rows_array_p, parent_study_p, format, data_p))
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "GetPlotRows () failed for format %d in study \"%s\"", format, parent_study_p ? parent_study_p : "NULL");
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "GetPlotRows () failed for format %d in study \"%s\"", format, parent_study_p ? parent_study_p -> st_name_s : "NULL");
 
 																		}
 																}

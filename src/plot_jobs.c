@@ -1494,7 +1494,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 											 */
 											if (json_object_size (table_row_json_p) > 0)
 												{
-													OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, &i, plots_cache_p, data_p);
+													OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i, plots_cache_p, data_p);
 
 													switch (add_status)
 														{

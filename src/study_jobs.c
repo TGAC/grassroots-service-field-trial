@@ -252,7 +252,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 																				{
 																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_NOTES.npt_type, STUDY_SHAPE_NOTES.npt_name_s, "Plots GPS Notes", "Any notes relating to the GPS data of the plots", active_study_p ? active_study_p -> st_shape_notes_s : NULL, PL_ALL)) != NULL)
 																						{
-																							if (AddMultiplePeopleParameters (params_p, "Contributors", active_study_p ? active_study_p -> st_contributors_p : NULL, data_p))
+																							if (AddMultiplePeopleParameters (params_p, "Contributors", active_study_p ? active_study_p -> st_contributors_p : NULL, dfw_data_p))
 																								{
 																									success_flag = true;
 																								}

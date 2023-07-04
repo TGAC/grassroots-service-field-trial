@@ -44,7 +44,7 @@
 #include "observation.h"
 #include "standard_row.h"
 #include "measured_variable_jobs.h"
-
+#include "phenotype_statistics.h"
 
 /*
  * Static declarations
@@ -512,23 +512,17 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																			if (study_p -> st_phenotypes_p)
 																				{
 																					const char *mv_s = GetMeasuredVariableName (mv_p);
-																					MeasuredVariableNode *node_p = (MeasuredVariableNode *) (study_p -> st_phenotypes_p -> ll_head_p);
+																					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
 																					bool new_mv_flag = true;
 
 																					while (node_p && new_mv_flag)
 																						{
-																							const char *name_s = GetMeasuredVariableName (node_p -> mvn_measured_variable_p);
-
-																							if (name_s)
+																							if (strcmp (mv_s, node_p -> psn_measured_variable_name_s) == 0)
 																								{
-																									if (strcmp (mv_s, name_s) == 0)
-																										{
-																											new_mv_flag = false;
-																										}
-
+																									new_mv_flag = false;
 																								}
 
-																							node_p = (MeasuredVariableNode *) (node_p -> mvn_node.ln_next_p);
+																							node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
 																						}
 
 																					if (new_mv_flag)
