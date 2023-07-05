@@ -175,8 +175,24 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 }
 
 
-Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type)
+
+
+
+Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
+																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
+																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type)
+{
+	return AllocateObservationWithErrorHandler (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s,
+																							method_s, instrument_p, nature, index_p, notes_s, obs_type, NULL, NULL, NULL);
+}
+
+Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
+																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
+																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
+																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p),
+																	ServiceJob *job_p, void *user_data_p)
 {
 	Observation *observation_p = NULL;
 	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
@@ -205,6 +221,10 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												{
 													raw_p = &raw_value;
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (raw_value_p));
+												}
 										}
 									else
 										{
@@ -224,6 +244,10 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 											if (GetRealValueFromJSONString (corrected_value_p, &corrected_value))
 												{
 													corrected_p = &corrected_value;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (corrected_value_p));
 												}
 										}
 									else
@@ -268,6 +292,11 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												{
 													raw_p = &raw_value;
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
+												}
+
 										}
 									else
 										{
@@ -289,6 +318,10 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 											if (GetValidInteger (&value_s, &corrected_value))
 												{
 													corrected_p = &corrected_value;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
 												}
 										}
 									else
@@ -352,6 +385,7 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 									if (!raw_time_p)
 										{
 											success_flag = false;
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", raw_value_s);
 										}
 								}
 
@@ -360,11 +394,12 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 									if (json_is_string (corrected_value_p))
 										{
 											const char *corrected_value_s = json_string_value (corrected_value_p);
-											corrected_value_p = GetTimeFromString (corrected_value_s);
+											corrected_time_p = GetTimeFromString (corrected_value_s);
 
 											if (!corrected_time_p)
 												{
 													success_flag = false;
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", corrected_value_s);
 												}
 										}
 								}
@@ -780,16 +815,20 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 
 																	if (obs_type != OT_NUM_TYPES)
 																		{
+																			char *error_s = NULL;
 																			GetObservationNatureFromJSON (&nature, observation_json_p);
 
-																			observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index, notes_s, class_p -> sc_type);
+																			observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s,
+																																					 instrument_p, nature, &index, notes_s, class_p -> sc_type);
+
+																			if (!observation_p)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
+																				}
 																		}
 																}
 
-															if (!observation_p)
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
-																}
+
 														}		/* if (! ((IsStringEmpty (raw_value_s)) && (IsStringEmpty (corrected_value_s)))) */
 													else
 														{

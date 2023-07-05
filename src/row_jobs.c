@@ -60,7 +60,7 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s);
 
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p);
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p);
 
 
 /*
@@ -441,8 +441,8 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 									raw_value_p = value_p;
 								}
 								
-							status = AddObservationValueToStandardRowByParts (job_p, &row_index, row_p, measured_variable_p, start_date_p, end_date_p,
-																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag);
+							status = AddObservationValueToStandardRowByParts (job_p, row_p, measured_variable_p, start_date_p, end_date_p,
+																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag, SetObservationError, &row_index);
 
 
 
@@ -493,7 +493,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 
 OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
 											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *notes_s, const uint32 observation_index, bool *free_measured_variable_flag_p,
-											void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p), void *user_data_p)
+											void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p), void *user_data_p)
 {
 	OperationStatus status = OS_FAILED;
 	Observation *observation_p = NULL;
@@ -541,7 +541,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 									if (on_error_callback_fn)
 										{
-											on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+											on_error_callback_fn (job_p, OB_RAW_VALUE_S, key_s, raw_value_p, user_data_p);
 										}
 								}
 						}
@@ -564,7 +564,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 									if (on_error_callback_fn)
 										{
-											on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+											on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, key_s, corrected_value_p, user_data_p);
 										}
 
 								}
@@ -605,7 +605,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 											if (on_error_callback_fn)
 												{
-													on_error_callback_fn (job_p, OB_NOTES_S, notes_s, user_data_p);
+													on_error_callback_fn (job_p, OB_NOTES_S, key_s, notes_s, user_data_p);
 												}
 
 										}
@@ -640,7 +640,8 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 							if (obs_type != OT_NUM_TYPES)
 								{
-									observation_p = AllocateObservation (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &observation_index, notes_s, obs_type);
+									observation_p = AllocateObservationWithErrorHandler (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature,
+																											 &observation_index, notes_s, obs_type, on_error_callback_fn, job_p, user_data_p);
 								}
 
 							if (observation_p)
@@ -1481,22 +1482,21 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 }
 
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p)
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p)
 {
 	const uint32 *row_index_p = (const uint32 *) user_data_p;
 
 	if (strcmp (observation_field_s, OB_RAW_VALUE_S) == 0)
 		{
-			AddTabularParameterErrorMessageToServiceJob (job_p, param_s, param_type, value_s, *row_index_p, column_s)
-			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, S_PHENOTYPE_RAW_VALUE.npt_type, "Failed to set raw value for Observation");
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set raw value for Observation", *row_index_p, key_s);
 		}
 	else if (strcmp (observation_field_s, OB_CORRECTED_VALUE_S) == 0)
 		{
-			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, S_PHENOTYPE_CORRECTED_VALUE.npt_type, "Failed to set corrected value for Observation");
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set corrected value for Observation", *row_index_p, key_s);
 		}
 	else if (strcmp (observation_field_s, OB_NOTES_S) == 0)
 		{
-			AddParameterErrorMessageToServiceJob (job_p, S_OBSERVATION_NOTES.npt_name_s, S_OBSERVATION_NOTES.npt_type, "Failed to set notes for Observation");
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set notes for Observation", *row_index_p, key_s);
 		}
 	else
 		{
@@ -1504,6 +1504,38 @@ static void SetObservationError (ServiceJob *job_p, const char * const observati
 		}
 }
 
+
+static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_p, const char * const key_s, const json_t *value_p, const char * const message_s)
+{
+	bool done_error_message_flag = false;
+	const json_t *json_value_p = (const json_t *) value_p;
+
+	if (json_value_p)
+		{
+			char *value_s = json_dumps (json_value_p, 0);
+
+			if (value_s)
+				{
+					char *error_s = ConcatenateVarargsStrings (message_s, " \"", value_s, "\"", NULL);
+
+					if (error_s)
+						{
+							AddParameterErrorMessageToServiceJob (job_p, param_p -> npt_name_s, param_p -> npt_type, error_s);
+							FreeCopiedString (error_s);
+							done_error_message_flag = true;
+						}
+
+					free (value_s);
+				}
+
+		}
+
+	if (!done_error_message_flag)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, param_p -> npt_name_s, param_p -> npt_type, message_s);
+		}
+
+}
 
 static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s)
 {

@@ -150,8 +150,10 @@ static bool GetObservationParameterTypeForNamedParameter (const char *param_name
 
 static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p);
 
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p);
+
+static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_p, const char * const key_s, const json_t *value_p, const char * const message_s);
 
 /*
  * API definitions
@@ -465,7 +467,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															const char *key_s = "";
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
 															uint32 observation_index = 1;
-															Study *study_p = row_p -> sr_base.ro_study_p;
+															const Study *study_p = row_p -> sr_base.ro_study_p;
 															uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
 
 															for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
@@ -597,20 +599,52 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 }
 
 
+static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_p, const char * const key_s, const json_t *value_p, const char * const message_s)
+{
+	bool done_error_message_flag = false;
+	const json_t *json_value_p = (const json_t *) value_p;
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, void *value_p, void *user_data_p)
+	if (json_value_p)
+		{
+			char *value_s = json_dumps (json_value_p, 0);
+
+			if (value_s)
+				{
+					char *error_s = ConcatenateVarargsStrings (message_s, " \"", value_s, "\"", NULL);
+
+					if (error_s)
+						{
+							AddParameterErrorMessageToServiceJob (job_p, param_p -> npt_name_s, param_p -> npt_type, error_s);
+							FreeCopiedString (error_s);
+							done_error_message_flag = true;
+						}
+
+					free (value_s);
+				}
+
+		}
+
+	if (!done_error_message_flag)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, param_p -> npt_name_s, param_p -> npt_type, message_s);
+		}
+
+}
+
+
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void * UNUSED_PARAM (user_data_p))
 {
 	if (strcmp (observation_field_s, OB_RAW_VALUE_S) == 0)
 		{
-			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, S_PHENOTYPE_RAW_VALUE.npt_type, "Failed to set raw value for Observation");
+			ReportJSONError (job_p, &S_PHENOTYPE_RAW_VALUE, key_s, (const json_t *) value_p, "Failed to set raw value for Observation");
 		}
 	else if (strcmp (observation_field_s, OB_CORRECTED_VALUE_S) == 0)
 		{
-			AddParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, S_PHENOTYPE_CORRECTED_VALUE.npt_type, "Failed to set corrected value for Observation");
+			ReportJSONError (job_p, &S_PHENOTYPE_CORRECTED_VALUE, key_s, (const json_t *) value_p, "Failed to set corrected value for Observation");
 		}
 	else if (strcmp (observation_field_s, OB_NOTES_S) == 0)
 		{
-			AddParameterErrorMessageToServiceJob (job_p, S_OBSERVATION_NOTES.npt_name_s, S_OBSERVATION_NOTES.npt_type, "Failed to set notes for Observation");
+			ReportJSONError (job_p, &S_OBSERVATION_NOTES, key_s, (const json_t *) value_p, "Failed to set notes for Observation");
 		}
 	else
 		{
