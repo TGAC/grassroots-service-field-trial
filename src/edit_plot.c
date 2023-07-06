@@ -151,9 +151,9 @@ static bool GetObservationParameterTypeForNamedParameter (const char *param_name
 static Parameter *CreatePlotEditorParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
 
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p);
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p);
 
-static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_p, const char * const key_s, const json_t *value_p, const char * const message_s);
+static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_p, const char * const observation_field_s, const json_t *value_p, const char * const message_s);
 
 /*
  * API definitions
@@ -632,19 +632,19 @@ static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_
 }
 
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void * UNUSED_PARAM (user_data_p))
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void * UNUSED_PARAM (user_data_p))
 {
 	if (strcmp (observation_field_s, OB_RAW_VALUE_S) == 0)
 		{
-			ReportJSONError (job_p, &S_PHENOTYPE_RAW_VALUE, key_s, (const json_t *) value_p, "Failed to set raw value for Observation");
+			ReportJSONError (job_p, &S_PHENOTYPE_RAW_VALUE, observation_field_s, (const json_t *) value_p, "Failed to set raw value for Observation");
 		}
 	else if (strcmp (observation_field_s, OB_CORRECTED_VALUE_S) == 0)
 		{
-			ReportJSONError (job_p, &S_PHENOTYPE_CORRECTED_VALUE, key_s, (const json_t *) value_p, "Failed to set corrected value for Observation");
+			ReportJSONError (job_p, &S_PHENOTYPE_CORRECTED_VALUE, observation_field_s, (const json_t *) value_p, "Failed to set corrected value for Observation");
 		}
 	else if (strcmp (observation_field_s, OB_NOTES_S) == 0)
 		{
-			ReportJSONError (job_p, &S_OBSERVATION_NOTES, key_s, (const json_t *) value_p, "Failed to set notes for Observation");
+			ReportJSONError (job_p, &S_OBSERVATION_NOTES, observation_field_s, (const json_t *) value_p, "Failed to set notes for Observation");
 		}
 	else
 		{

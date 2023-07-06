@@ -191,7 +191,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
 																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
-																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p),
+																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p),
 																	ServiceJob *job_p, void *user_data_p)
 {
 	Observation *observation_p = NULL;
@@ -223,12 +223,24 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 												}
 											else
 												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (raw_value_p));
+													const char *value_s = json_string_value (raw_value_p);
+													
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", value_s);
+
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+														}	
 												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json Numeric type: %d", json_typeof (raw_value_p));
+
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+												}	
 										}
 								}
 
@@ -248,11 +260,21 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 											else
 												{
 													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (corrected_value_p));
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+														}	
 												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+												}	
 										}
 
 								}
@@ -295,12 +317,22 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 											else
 												{
 													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+														}	
 												}
 
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+												}	
 										}
 								}
 
@@ -322,11 +354,21 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 											else
 												{
 													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+														}	
 												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+												}	
 										}
 
 								}
@@ -386,6 +428,11 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 										{
 											success_flag = false;
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", raw_value_s);
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+												}	
 										}
 								}
 
@@ -400,6 +447,11 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 												{
 													success_flag = false;
 													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", corrected_value_s);
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+														}				
 												}
 										}
 								}

@@ -47,6 +47,12 @@ static const char * const S_RACK_S = "Rack";
 static const char * const S_PLOT_INDEX_S = "Plot index";
 
 
+typedef struct 
+{
+	uint32 oe_row;
+	const char *oe_column_s;
+} ObservationError;
+
 
 /**
  * Extract the Observation metadata from the column heading
@@ -60,7 +66,7 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s);
 
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p);
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p);
 
 
 /*
@@ -431,6 +437,10 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 							bool free_measured_variable_flag = false;
 							const json_t *raw_value_p = NULL;
 							const json_t *corrected_value_p = NULL;
+							ObservationError error_obj;
+							
+							error_obj.oe_row = row_index;
+							error_obj.oe_column_s = key_s;
 
 							if (corrected_value_flag)
 								{
@@ -442,7 +452,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 								}
 								
 							status = AddObservationValueToStandardRowByParts (job_p, row_p, measured_variable_p, start_date_p, end_date_p,
-																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag, SetObservationError, &row_index);
+																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag, SetObservationError, &error_obj);
 
 
 
@@ -493,7 +503,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 
 OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
 											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *notes_s, const uint32 observation_index, bool *free_measured_variable_flag_p,
-											void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p), void *user_data_p)
+											void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p), void *user_data_p)
 {
 	OperationStatus status = OS_FAILED;
 	Observation *observation_p = NULL;
@@ -541,7 +551,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 									if (on_error_callback_fn)
 										{
-											on_error_callback_fn (job_p, OB_RAW_VALUE_S, key_s, raw_value_p, user_data_p);
+											on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
 										}
 								}
 						}
@@ -564,7 +574,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 									if (on_error_callback_fn)
 										{
-											on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, key_s, corrected_value_p, user_data_p);
+											on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
 										}
 
 								}
@@ -605,7 +615,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 											if (on_error_callback_fn)
 												{
-													on_error_callback_fn (job_p, OB_NOTES_S, key_s, notes_s, user_data_p);
+													on_error_callback_fn (job_p, OB_NOTES_S, notes_s, user_data_p);
 												}
 
 										}
@@ -1482,21 +1492,22 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 }
 
 
-static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p)
+static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p)
 {
-	const uint32 *row_index_p = (const uint32 *) user_data_p;
+	const ObservationError *error_obj_p = (const ObservationError *) user_data_p;
+
 
 	if (strcmp (observation_field_s, OB_RAW_VALUE_S) == 0)
 		{
-			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set raw value for Observation", *row_index_p, key_s);
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set raw value for Observation", error_obj_p -> oe_row, error_obj_p -> oe_column_s);
 		}
 	else if (strcmp (observation_field_s, OB_CORRECTED_VALUE_S) == 0)
 		{
-			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set corrected value for Observation", *row_index_p, key_s);
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set corrected value for Observation", error_obj_p -> oe_row, error_obj_p -> oe_column_s);
 		}
 	else if (strcmp (observation_field_s, OB_NOTES_S) == 0)
 		{
-			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set notes for Observation", *row_index_p, key_s);
+			AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Failed to set notes for Observation", error_obj_p -> oe_row, error_obj_p -> oe_column_s);
 		}
 	else
 		{

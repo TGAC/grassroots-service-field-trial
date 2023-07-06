@@ -202,7 +202,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Observation *AllocateObservationWithErrorHandler (
 																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
 																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
-																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const char * const key_s, const void *value_p, void *user_data_p),
+																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p),
 																	ServiceJob *job_p, void *user_data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
