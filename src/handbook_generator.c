@@ -77,6 +77,7 @@ static bool InsertLine (FILE *study_tex_f);
 
 static bool InsertPhenotypeHeatmap (FILE *study_tex_f, const char * const study_uuid_s, char * const variable_name_s, const FieldTrialServiceData *data_p);
 
+static bool PrintPeople (FILE *study_tex_f, const char * const heading_s, const LinkedList * const people_p, const char * const name_s);
 
 
 
@@ -461,6 +462,8 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertPersonAsLatexTabularRow (study_tex_f, "Contact", study_p -> st_contact_p);
 	InsertPersonAsLatexTabularRow (study_tex_f, "Curator", study_p -> st_curator_p);
 
+	PrintPeople (study_tex_f, "Contributors", study_p -> st_contributors_p, study_p -> st_name_s);
+
 	InsertLatexTabularRow (study_tex_f, "Phenotype Gathering Notes", study_p -> st_phenotype_gathering_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Physical Samples Collected", study_p -> st_physical_samples_collected_s, CS_FIRST_WORD_ONLY, buffer_p);
 
@@ -798,9 +801,12 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 						{
 							if (InsertLatexTabularRow (study_tex_f, "Team", trial_p -> ft_team_s, CS_FIRST_WORD_ONLY, buffer_p))
 								{
-									if (fputs ("\\end{tabularx}\n", study_tex_f) > 0)
+									if (PrintPeople (study_tex_f, "Contributors", trial_p -> ft_people_p, trial_p -> ft_name_s))
 										{
-											return true;
+											if (fputs ("\\end{tabularx}\n", study_tex_f) > 0)
+												{
+													return true;
+												}										
 										}
 								}
 						}
@@ -808,6 +814,47 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 		}
 
 	return false;
+}
+
+
+static bool PrintPeople (FILE *study_tex_f, const char * const heading_s, const LinkedList * const people_p, const char * const name_s)
+{
+	bool success_flag = true;
+	
+	if (heading_s)
+		{
+			if (fprintf (study_tex_f, "\\subsection* {\%s}\n", heading_s) <= 0)			
+				{
+					success_flag = false;
+				}
+		}
+	
+	if (success_flag)
+		{
+			if (people_p)
+				{
+					PersonNode *node_p = (PersonNode *) (people_p -> ll_head_p);
+					
+					while (node_p && success_flag)
+						{
+							if (InsertPersonAsLatexTabularRow (study_tex_f, "Principal Investigator", node_p -> pn_person_p))
+								{
+									node_p = (PersonNode *) (node_p -> pn_node.ln_next_p);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add \"%s\" to the handbook for the \"%s\" trial", 
+															node_p -> pn_person_p -> pe_name_s, name_s);
+															
+									success_flag = false;
+								}
+						}
+					
+				}	
+			
+		}
+
+	return success_flag;
 }
 
 
