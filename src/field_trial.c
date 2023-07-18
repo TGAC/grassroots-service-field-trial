@@ -286,39 +286,43 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, Field
 									
 									if (AddPeopleToJSON (trial_p -> ft_people_p, FT_PEOPLE_S, trial_json_p, format, data_p))
 										{
-
 											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
 												{
-													if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
-														{																									
-															if (trial_p -> ft_parent_p)
-																{
-																	json_t *program_p = GetProgrammeAsJSON (trial_p -> ft_parent_p, format, data_p);
+													if (trial_p -> ft_parent_p)
+														{
+															json_t *program_p = GetProgrammeAsJSON (trial_p -> ft_parent_p, format, data_p);
 
-																	if (program_p)
+															if (program_p)
+																{
+																	if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0)
 																		{
-																			if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0)
-																				{
-																					success_flag = true;
-																				}		/* if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add program \"%s\" to json", trial_p -> ft_parent_p -> pr_name_s);
-																					json_decref (program_p);
-																				}
-																		}		/* if (program_p) */
+																			success_flag = true;
+																		}		/* if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0) */
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to get json for program \"%s\" in format %d", trial_p -> ft_parent_p -> pr_name_s, format);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add program \"%s\" to json", trial_p -> ft_parent_p -> pr_name_s);
+																			json_decref (program_p);
 																		}
-
-																}		/* if (trial_p -> ft_parent_p) */
+																}		/* if (program_p) */
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_name_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to get json for program \"%s\" in format %d", trial_p -> ft_parent_p -> pr_name_s, format);
 																}
-																
-														}		/* if (AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
+
+														}		/* if (trial_p -> ft_parent_p) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_name_s);
+														}
+													
+													if (format == VF_CLIENT_FULL)
+														{
+															if (!AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+																{																										
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStudiesToFieldTrialJSON () failed for trial \"%s\"", trial_p -> ft_name_s);
+																	success_flag = false;
+																}		/* if (!AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
+														}
 												}
 											else if (format == VF_STORAGE)
 												{

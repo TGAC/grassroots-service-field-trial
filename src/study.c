@@ -1842,22 +1842,13 @@ static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, con
 {
 	if (study_p -> st_parent_p)
 		{
-			json_t *field_trial_json_p = json_object ();
+			json_t *field_trial_json_p = GetFieldTrialAsJSON (study_p -> st_parent_p, VF_CLIENT_MINIMAL, data_p);
 
 			if (field_trial_json_p)
 				{
-					if (AddCompoundIdToJSON (field_trial_json_p, study_p -> st_parent_p -> ft_id_p))
+					if (json_object_set_new (study_json_p, ST_PARENT_FIELD_TRIAL_S, field_trial_json_p) == 0)
 						{
-							if (SetJSONString (field_trial_json_p, FT_NAME_S, study_p -> st_parent_p -> ft_name_s))
-								{
-									if (SetJSONString (field_trial_json_p, FT_TEAM_S, study_p -> st_parent_p -> ft_team_s))
-										{
-											if (json_object_set_new (study_json_p, ST_PARENT_FIELD_TRIAL_S, field_trial_json_p) == 0)
-												{
-													return true;
-												}
-										}
-								}
+							return true;
 						}
 
 					json_decref (field_trial_json_p);

@@ -1904,7 +1904,7 @@ static json_t *GeneratePlotsTemplate (const Study *study_p)
 
 							if (row_json_p)
 								{
-									if (!json_array_append_new (plots_p, row_json_p) == 0)
+									if (json_array_append_new (plots_p, row_json_p) != 0)
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add plot template for [ " UINT32_FMT ", " UINT32_FMT " ]", i, j);
 											json_decref (row_json_p);

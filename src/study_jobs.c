@@ -190,6 +190,9 @@ static bool AddCuratorSubmissionParams (const Person *curator_p, ParameterSet *p
 static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *params_p, ServiceData *data_p);
 
 
+static bool ProcessPersonForStudy (Person *person_p, void *user_data_p);
+
+
 /*
  * API DEFINITIONS
  */
@@ -1347,11 +1350,16 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 																													if (AddTreatmentFactorsToStudy (study_p, treatment_names_p, treatment_levels_p, num_treatment_levels, job_p, data_p))
 																														{
-																															status = SaveStudy (study_p, job_p, data_p, NULL);
+																															status = ProcessPeople (job_p, param_set_p, ProcessPersonForStudy, study_p, data_p);
 
-																															if (status == OS_FAILED)
+																															if (status == OS_SUCCEEDED)
 																																{
-																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																																	status = SaveStudy (study_p, job_p, data_p, NULL);
+
+																																	if (status == OS_FAILED)
+																																		{
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																																		}
 																																}
 
 																														}
@@ -4661,6 +4669,14 @@ static void ReportTreatmentFactorError (Study *study_p, const char *name_s, cons
 		{
 			FreeCopiedString (error_s);
 		}
+}
+
+
+static bool ProcessPersonForStudy (Person *person_p, void *user_data_p)
+{
+	Study *study_p = (Study *) user_data_p;
+
+	return AddStudyContributor (study_p, person_p, MF_SHALLOW_COPY);
 }
 
 
