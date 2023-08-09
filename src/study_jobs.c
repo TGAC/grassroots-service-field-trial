@@ -2234,9 +2234,18 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																																														{
 																																															if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
 																																																{
-																																																	success_flag = true;
-																																																}
+																																																	const char * const PEOPLE_S = "contributors";
 
+																																																	if (AddPeopleToFrictionlessData (study_p -> st_contributors_p, PEOPLE_S, study_fd_p))
+																																																		{
+																																																			success_flag = true;
+																																																		}
+																																																	else
+																																																		{
+																																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\" for \"%s\"", PEOPLE_S, study_p -> st_name_s);
+																																																		}
+
+																																																}
 																																														}
 
 																																												}

@@ -264,6 +264,63 @@ json_t *GetPersonAsJSON (const Person * const person_p, const ViewFormat format,
 }
 
 
+json_t *GetPersonAsFrictionlessData (const Person * const person_p)
+{
+	json_t *person_json_p = json_object ();
+
+	if (person_json_p)
+		{
+			const char * const name_key_s = "name";
+
+			if (SetNonTrivialString (person_json_p, name_key_s, person_p -> pe_name_s, true))
+				{
+					const char * const email_key_s = "email";
+
+					if (SetNonTrivialString (person_json_p, email_key_s, person_p -> pe_email_s, true))
+						{
+							const char * const role_key_s = "role";
+
+							if (SetNonTrivialString (person_json_p, role_key_s, person_p -> pe_role_s, true))
+								{
+									const char * const affiliation_key_s = "affiliation";
+
+									if (SetNonTrivialString (person_json_p, affiliation_key_s, person_p -> pe_affiliation_s, true))
+										{
+											if (SetNonTrivialString (person_json_p, PE_ORCID_S, person_p -> pe_orcid_s, true))
+												{
+													return person_json_p;
+												}
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", PE_ORCID_S, person_p -> pe_orcid_s);
+												}
+										}
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", affiliation_key_s, person_p -> pe_affiliation_s);
+										}
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", role_key_s, person_p -> pe_role_s);
+								}
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", email_key_s, person_p -> pe_email_s);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add \"%s\": \"%s\"", name_key_s, person_p -> pe_name_s);
+				}
+
+			json_decref (person_json_p);
+		}
+
+	return NULL;
+}
+
 
 
 Person *GetPersonFromJSON (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)

@@ -732,7 +732,17 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 
 															if (SetNonTrivialString (trial_fd_p, PROGRAMME_S, trial_p -> ft_parent_p -> pr_name_s, false))
 																{
-																	success_flag = true;
+																	const char * const PEOPLE_S = "people";
+
+																	if (AddPeopleToFrictionlessData (trial_p -> ft_people_p, PEOPLE_S, trial_fd_p))
+																		{
+																			success_flag = true;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to set \"%s\" for \"%s\"", PEOPLE_S, trial_p -> ft_name_s);
+																		}
+
 																}
 															else
 																{
