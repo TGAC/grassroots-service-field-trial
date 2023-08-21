@@ -355,6 +355,13 @@ bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *js
 }
 
 
+bool AddPeopleAsFrictionlessData (LinkedList *people_p, const char * const key_s, json_t *json_p, const FieldTrialServiceData *data_p)
+{
+	return AddPeopleToJSON (people_p, key_s, json_p, VF_CLIENT_MINIMAL, data_p);
+}
+
+
+
 OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_person_fn) (Person *person_p, void *user_data_p, MEM_FLAG *mem_p), void *user_data_p, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;

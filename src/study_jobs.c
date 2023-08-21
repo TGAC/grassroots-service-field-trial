@@ -2186,110 +2186,117 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																{
 																	if (AddPersonAsFrictionlessData (study_p -> st_contact_p, study_fd_p, "contact_name", "contact_email"))
 																		{
-																			if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false))
+																			if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, "contributors", study_fd_p, data_p))
 																				{
-																					KEY_S = "design";
-
-																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_s, false))
+																					if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false))
 																						{
-																							KEY_S = "growing_conditions";
+																							KEY_S = "design";
 
-																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
+																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_s, false))
 																								{
-																									KEY_S = "phenotype_notes";
+																									KEY_S = "growing_conditions";
 
-																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_phenotype_gathering_notes_s, false))
+																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
 																										{
-																											KEY_S = "weather";
+																											KEY_S = "phenotype_notes";
 
-																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
+																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_phenotype_gathering_notes_s, false))
 																												{
-																													if (AddCropAsFrictionlessData (study_p -> st_current_crop_p, study_fd_p, "crop"))
+																													KEY_S = "weather";
+
+																													if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
 																														{
-																															if (AddCropAsFrictionlessData (study_p -> st_previous_crop_p, study_fd_p, "previous_crop"))
+																															if (AddCropAsFrictionlessData (study_p -> st_current_crop_p, study_fd_p, "crop"))
 																																{
-																																	KEY_S = "link";
-
-																																	if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_data_url_s, false))
+																																	if (AddCropAsFrictionlessData (study_p -> st_previous_crop_p, study_fd_p, "previous_crop"))
 																																		{
-																																			const json_t *shape_p = study_p -> st_shape_p;
+																																			KEY_S = "link";
 
-																																			if ((!shape_p) || (shape_p == json_null ()) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0))
+																																			if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_data_url_s, false))
 																																				{
-																																					KEY_S = "plots_gps_notes";
+																																					const json_t *shape_p = study_p -> st_shape_p;
 
-																																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_shape_notes_s, false))
+																																					if ((!shape_p) || (shape_p == json_null ()) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0))
 																																						{
-																																							KEY_S = "aspect";
+																																							KEY_S = "plots_gps_notes";
 
-																																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_aspect_s, false))
+																																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_shape_notes_s, false))
 																																								{
-																																									KEY_S = "slope";
+																																									KEY_S = "aspect";
 
-																																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
+																																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_aspect_s, false))
 																																										{
-																																											if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
+																																											KEY_S = "slope";
+
+																																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
 																																												{
-																																													if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
+																																													if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
 																																														{
-																																															if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
+																																															if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
 																																																{
-																																																	success_flag = true;
+																																																	if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
+																																																		{
+																																																			success_flag = true;
+																																																		}
+
 																																																}
 
 																																														}
 
 																																												}
-
 																																										}
 																																								}
+
+
+
+																																						}		/* if ((! (study_p -> st_shape_p)) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0)) */
+																																					else
+																																						{
+																																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add the plots gps");
 																																						}
-
-
-
-																																				}		/* if ((! (study_p -> st_shape_p)) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0)) */
-																																			else
-																																				{
-																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add the plots gps");
 																																				}
 																																		}
+
 																																}
 
+
+
+																														}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_weather_link_s, false)) */
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_weather_link_s);
 																														}
 
 
-
-																												}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_weather_link_s, false)) */
+																												}		/* if (SetNonTrivialString (study_fd_p, key_S, study_p -> st_phenotype_gathering_notes_s, false)) */
 																											else
 																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_weather_link_s);
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_phenotype_gathering_notes_s);
 																												}
 
-
-																										}		/* if (SetNonTrivialString (study_fd_p, key_S, study_p -> st_phenotype_gathering_notes_s, false)) */
+																										}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false)) */
 																									else
 																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_phenotype_gathering_notes_s);
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_growing_conditions_s);
 																										}
 
-																								}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false)) */
+																								}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_, false)) */
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_growing_conditions_s);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_design_s);
 																								}
 
-																						}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_, false)) */
+
+																						}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
 																					else
 																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_design_s);
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, study_p -> st_description_s);
 																						}
 
 
-																				}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, study_p -> st_description_s);
-																				}
+																					
+																				}		/* if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, "contributors", study_fd_p, data_p)) */
+
 
 
 																		}		/* if (AddPersonAsFrictionlessData (study_p -> st_contact_p, study_fd_p, "contact_name", "contact_email")) */
