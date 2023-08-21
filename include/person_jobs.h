@@ -73,7 +73,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPeopleToJSON (LinkedList *people_p, const 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus AddPeopleFromJSON (const json_t *people_json_p, bool (*add_person_fn) (Person *person_p, void *user_data_p, MEM_FLAG *mem_p), void *user_data_p, const FieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPeopleAsFrictionlessData (LinkedList *people_p, const char * const key_s, json_t *json_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPeopleAsFrictionlessData (LinkedList *people_p, const char * const key_s, json_t *json_p, const FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

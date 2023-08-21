@@ -288,6 +288,73 @@ OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, boo
 }
 
 
+bool AddPeopleToFrictionlessData (LinkedList *people_p, const char * const key_s, json_t *frictionless_json_p)
+{
+	bool success_flag = false;
+
+	if (people_p -> ll_size > 0)
+		{
+			json_t *people_json_p = json_array ();
+
+			if (people_json_p)
+				{
+					PersonNode *node_p = (PersonNode *) (people_p -> ll_head_p);
+					bool ok_flag = true;
+
+					while (node_p && ok_flag)
+						{
+							json_t *person_json_p = GetPersonAsFrictionlessData (node_p -> pn_person_p);
+
+							if (person_json_p)
+								{
+									if (json_array_append_new (people_json_p, person_json_p) == 0)
+										{
+											node_p = (PersonNode *) (node_p -> pn_node.ln_next_p);
+										}
+									else
+										{
+											ok_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, person_json_p, "Failed to add Person json to array");
+											json_decref (person_json_p);
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get Person json for person \"%s\"", node_p -> pn_person_p -> pe_name_s);
+								}
+						}		/* while (node_p && success_flag) */
+
+					if (ok_flag)
+						{
+							if (json_object_set_new (frictionless_json_p, key_s, people_json_p) == 0)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, people_json_p, "Failed to add people json for \"%s\"", key_s);
+
+									json_decref (people_json_p);
+								}
+						}
+
+				}		/* if (people_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate people json object for \"%s\"", key_s);
+				}
+
+		}		/* if (trial_p -> ft_studies_p -> ll_size > 0) */
+	else
+		{
+			/* nothing to add */
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
 bool AddPeopleToJSON (LinkedList *people_p, const char * const key_s, json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = true;
