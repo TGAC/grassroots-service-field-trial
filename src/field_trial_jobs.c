@@ -734,7 +734,7 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 																{
 																	const char * const PEOPLE_S = "people";
 
-																	if (AddPeopleToFrictionlessData (trial_p -> ft_people_p, PEOPLE_S, trial_fd_p))
+																	if (AddPeopleAsFrictionlessData (trial_p -> ft_people_p, PEOPLE_S, trial_fd_p, data_p))
 																		{
 																			success_flag = true;
 																		}

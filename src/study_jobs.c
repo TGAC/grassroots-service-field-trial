@@ -2234,26 +2234,19 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																																														{
 																																															if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
 																																																{
-<<<<<<< HEAD
 																																																	if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
 																																																		{
-																																																			success_flag = true;
-																																																		}
+																																																			const char * const PEOPLE_S = "contributors";
 
-																																																}
-=======
-																																																	const char * const PEOPLE_S = "contributors";
->>>>>>> d5971118b2fedb4c9c6b43913e6365f3654048c7
-
-																																																	if (AddPeopleToFrictionlessData (study_p -> st_contributors_p, PEOPLE_S, study_fd_p))
-																																																		{
-																																																			success_flag = true;
+																																																			if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, PEOPLE_S, study_fd_p, data_p))
+																																																				{
+																																																					success_flag = true;
+																																																				}
+																																																			else
+																																																				{
+																																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\" for \"%s\"", PEOPLE_S, study_p -> st_name_s);
+																																																				}
 																																																		}
-																																																	else
-																																																		{
-																																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\" for \"%s\"", PEOPLE_S, study_p -> st_name_s);
-																																																		}
-
 																																																}
 																																														}
 
