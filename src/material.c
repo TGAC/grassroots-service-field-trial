@@ -359,7 +359,7 @@ bool SaveMaterial (Material *material_p, const FieldTrialServiceData *data_p)
 
 			if (material_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, material_json_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, material_json_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL], data_p -> dftsd_backup_collection_ss [DFTD_MATERIAL], selector_p, DFT_TIMESTAMP_S);
 
 					json_decref (material_json_p);
 				}		/* if (material_json_p) */

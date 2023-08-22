@@ -318,7 +318,7 @@ bool SavePlot (Plot *plot_p, const FieldTrialServiceData *data_p)
 
 			if (plot_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], data_p -> dftsd_backup_collection_ss [DFTD_PLOT], selector_p, DFT_TIMESTAMP_S);
 
 					json_decref (plot_json_p);
 				}		/* if (plot_json_p) */

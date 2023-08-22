@@ -435,7 +435,7 @@ bool SaveCrop (Crop *crop_p, const FieldTrialServiceData *data_p)
 
 			if (crop_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, crop_json_p, data_p -> dftsd_collection_ss [DFTD_CROP], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, crop_json_p, data_p -> dftsd_collection_ss [DFTD_CROP], data_p -> dftsd_backup_collection_ss [DFTD_CROP], selector_p, DFT_TIMESTAMP_S);
 
 					json_decref (crop_json_p);
 				}		/* if (crop_json_p) */

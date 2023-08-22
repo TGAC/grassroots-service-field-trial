@@ -944,7 +944,7 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 
 			if (observation_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, observation_json_p, data_p -> dftsd_collection_ss [DFTD_OBSERVATION], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, observation_json_p, data_p -> dftsd_collection_ss [DFTD_OBSERVATION], data_p -> dftsd_backup_collection_ss [DFTD_OBSERVATION], selector_p, DFT_TIMESTAMP_S);
 
 					json_decref (observation_json_p);
 				}		/* if (observation_json_p) */

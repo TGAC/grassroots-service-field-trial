@@ -187,6 +187,15 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
 	/**
 	 * @private
 	 *
+	 * The names of the collections to use to store the historical versions for the data
+	 * for each of the different types of objects.
+	 */
+	const char *dftsd_backup_collection_ss [DFTD_NUM_TYPES];
+
+
+	/**
+	 * @private
+	 *
 	 * The key used for facets in Lucene
 	 */
 	const char *dftsd_facet_key_s;
@@ -345,6 +354,8 @@ typedef struct /*DFW_FIELD_TRIAL_SERVICE_LOCAL*/ FieldTrialServiceData
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PROGRAM_S DFW_FIELD_TRIAL_VAL ("Programs");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PROGRAM_BACKUP_S DFW_FIELD_TRIAL_VAL ("Programs_versions");
+
 
 /**
  * The key for specifying the object containing the fields data
@@ -353,6 +364,8 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PROGRAM_S DFW_FIELD_TRIAL_VAL ("Programs"
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_TRIALS_S DFW_FIELD_TRIAL_VAL ("FieldTrials");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_TRIALS_BACKUP_S DFW_FIELD_TRIAL_VAL ("FieldTrials_versions");
+
 /**
  * The key for specifying the object containing the experimental area data
  *
@@ -360,6 +373,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_FIELD_TRIALS_S DFW_FIELD_TRIAL_VAL ("Fiel
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_STUDIES_S DFW_FIELD_TRIAL_VAL ("Studies");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_STUDIES_BACKUP_S DFW_FIELD_TRIAL_VAL ("Studies_versions");
 
 /**
  * The key for specifying the object containing the location data
@@ -368,6 +382,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_STUDIES_S DFW_FIELD_TRIAL_VAL ("Studies")
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("Locations");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_BACKUP_S DFW_FIELD_TRIAL_VAL ("Locations_versions");
 
 /**
  * The key for specifying the object containing the plot data
@@ -376,6 +391,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_LOCATION_S DFW_FIELD_TRIAL_VAL ("Location
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("Plots");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_BACKUP_S DFW_FIELD_TRIAL_VAL ("Plots_versions");
 
 /**
  * The key for specifying the object containing the drilling data
@@ -384,6 +400,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PLOT_S DFW_FIELD_TRIAL_VAL ("Plots");
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("Drillings");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_BACKUP_S DFW_FIELD_TRIAL_VAL ("Drillings_versions");
 
 
 /**
@@ -393,6 +410,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_DRILLING_S DFW_FIELD_TRIAL_VAL ("Drilling
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_MATERIAL_S DFW_FIELD_TRIAL_VAL ("Materials");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_MATERIAL_BACKUP_S DFW_FIELD_TRIAL_VAL ("Materials_versions");
 
 /**
  * The key for specifying the object containing the  phenotype data
@@ -401,6 +419,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_MATERIAL_S DFW_FIELD_TRIAL_VAL ("Material
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("Phenotypes");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_BACKUP_S DFW_FIELD_TRIAL_VAL ("Phenotypes_versions");
 
 /**
  * The key for specifying the object containing the observation data
@@ -409,6 +428,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_S DFW_FIELD_TRIAL_VAL ("Phenoty
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("Observations");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_OBSERVATION_BACKUP_S DFW_FIELD_TRIAL_VAL ("Observations_versions");
 
 /**
  * The key for specifying the object containing the instruments
@@ -417,6 +437,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_OBSERVATION_S DFW_FIELD_TRIAL_VAL ("Obser
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_S DFW_FIELD_TRIAL_VAL ("Instruments");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_BACKUP_S DFW_FIELD_TRIAL_VAL ("Instruments_versions");
 
 /**
  * The key for specifying the object containing the Gene Banks
@@ -425,6 +446,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_INSTRUMENT_S DFW_FIELD_TRIAL_VAL ("Instru
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBanks");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_BACKUP_S DFW_FIELD_TRIAL_VAL ("GeneBanks_versions");
 
 
 /**
@@ -442,6 +464,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_GENE_BANK_S DFW_FIELD_TRIAL_VAL ("GeneBan
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_BACKUP_S DFW_FIELD_TRIAL_VAL ("Crops_versions");
 
 /**
  * The key for specifying the object containing the treatments.
@@ -450,6 +473,7 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_CROP_S DFW_FIELD_TRIAL_VAL ("Crops");
  */
 DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_S DFW_FIELD_TRIAL_VAL ("Treatments");
 
+DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_BACKUP_S DFW_FIELD_TRIAL_VAL ("Treatments_versions");
 
 
 /**

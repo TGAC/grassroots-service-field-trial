@@ -920,7 +920,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 			if (study_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p, DFT_TIMESTAMP_S))
+					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], data_p -> dftsd_backup_collection_ss [DFTD_STUDY], selector_p, DFT_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 

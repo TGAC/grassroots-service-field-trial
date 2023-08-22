@@ -353,7 +353,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 
 			if (phenotype_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], selector_p, DFT_TIMESTAMP_S))
+					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], data_p -> dftsd_backup_collection_ss [DFTD_MEASURED_VARIABLE], selector_p, DFT_TIMESTAMP_S))
 						{
 							status = IndexData (job_p, phenotype_json_p, NULL);
 

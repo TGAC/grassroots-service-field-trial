@@ -166,6 +166,11 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p);
 static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
+static OperationStatus CreateMongoRevisionsCollections (FieldTrialServiceData *data_p);
+
+static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const char *database_s, const char *collection_s);
+
+
 /*
  * API definitions
  */
@@ -1914,3 +1919,67 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 	return status;
 }
 
+
+static OperationStatus CreateMongoRevisionsCollections (FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+	uint32 num_successes = 0;
+
+	for (uint32 i = 0; i < DFTD_NUM_TYPES; ++ i)
+		{
+			if (CreateMongoRevisionsCollection (tool_p, data_p -> dftsd_database_s, * ((data_p -> dftsd_backup_collection_ss) + i)))
+				{
+					++ num_successes;
+				}
+		}
+
+	if (num_successes == DFTD_NUM_TYPES)
+		{
+			status = OS_SUCCEEDED;
+		}
+	else if (num_successes > 0)
+		{
+			status = OS_PARTIALLY_SUCCEEDED;
+		}
+
+
+	return status;
+}
+
+
+static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const char *database_s, const char *collection_s)
+{
+	OperationStatus status = OS_FAILED;
+
+	if (CreateMongoToolCollection (tool_p, collection_s, NULL))
+		{
+			/*
+			 * In the revisions collection there will be multiple entries with the same _if
+			 * so we need to drop the default index and which assumes that this value be unique
+			 * and replace it with one that allows for repeated ids.
+			 */
+			if (DropCollectionIndex (tool_p, MONGO_ID_S))
+				{
+					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_ID_S, false, false))
+						{
+							status = OS_SUCCEEDED;
+						}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_ID_S, false, false)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, MONGO_ID_S);
+						}
+				}		/* if (DropCollectionIndex (tool_p, MONGO_ID_S)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "DropCollectionIndex () failed for \"%s\"", MONGO_ID_S);
+				}
+
+		}		/* if (CreateMongoToolCollection (tool_p, collection_s, NULL)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CreateMongoToolCollection () failed for \"%s\"", collection_s);
+		}
+
+	return status;
+}
