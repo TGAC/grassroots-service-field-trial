@@ -920,7 +920,8 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 			if (study_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], data_p -> dftsd_backup_collection_ss [DFTD_STUDY], selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], 
+							data_p -> dftsd_backup_collection_ss [DFTD_STUDY], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
@@ -967,7 +968,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 						}
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveAndBackupMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
 						}
 
 					json_decref (study_json_p);

@@ -138,7 +138,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceDa
 
 			if (field_trial_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], data_p -> dftsd_backup_collection_ss [DFTD_FIELD_TRIAL], selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], data_p -> dftsd_backup_collection_ss [DFTD_FIELD_TRIAL], DFT_BACKUPS_ID_KEY_S,  selector_p, DFT_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 							status = IndexData (job_p, field_trial_json_p, NULL);

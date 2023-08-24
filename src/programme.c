@@ -741,7 +741,8 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 
 			if (programme_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME], data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME], 
+							data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
 							json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_INDEXING, data_p);
