@@ -1882,6 +1882,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 						{
 							uint32 i = 0;
 							const uint32 num_keys = 2;
+							OperationStatus revisions_status = OS_FAILED;
 
 							/* Measured Variables */
 							char *key_s = GetMeasuredVariablesNameKey ();
@@ -1910,7 +1911,18 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 								}
 
 							status = (i == num_keys) ? OS_SUCCEEDED : OS_PARTIALLY_SUCCEEDED;
+
+							revisions_status = CreateMongoRevisionsCollections (data_p);
+
+							if (revisions_status != OS_SUCCEEDED)
+								{
+									if (status == OS_SUCCEEDED)
+										{
+											status = OS_PARTIALLY_SUCCEEDED;
+										}
+								}
 						}
+
 				}
 
 		}		/* if (AddCollectionIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MATERIAL], MA_ACCESSION_S, false, false)) */
@@ -1963,11 +1975,14 @@ static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const 
 				{
 					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_ID_S, false, false))
 						{
-							status = OS_SUCCEEDED;
-						}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_ID_S, false, false)) */
+							if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false))
+								{
+									status = OS_SUCCEEDED;
+								}
+						}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, MONGO_ID_S);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, DFT_TIMESTAMP_S);
 						}
 				}		/* if (DropCollectionIndex (tool_p, MONGO_ID_S)) */
 			else
