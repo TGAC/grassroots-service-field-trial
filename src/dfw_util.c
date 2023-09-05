@@ -341,7 +341,6 @@ void *GetDFWObjectByNamedId (const bson_oid_t *id_p, DFWFieldTrialData collectio
 		}
 
 	return result_p;
-
 }
 
 
@@ -922,9 +921,9 @@ json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s)
 }
 
 
-const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *params_json_p)
+const char *GetNamedParameterDefaultValueFromJSON (const char *param_s, const json_t *params_json_p)
 {
-	const char *id_s = NULL;
+	const char *value_s = NULL;
 
 	if (params_json_p)
 		{
@@ -938,13 +937,13 @@ const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *par
 
 					if (name_s)
 						{
-							if (strcmp (name_s, id_param_s) == 0)
+							if (strcmp (name_s, param_s) == 0)
 								{
-									id_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
+									value_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
 
-									if (!id_s)
+									if (!value_s)
 										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, id_param_s);
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, param_s);
 										}
 
 									/* force exit from loop */
@@ -956,7 +955,7 @@ const char *GetIDDefaultValueFromJSON (const char *id_param_s, const json_t *par
 
 		}		/* if (params_json_p) */
 
-	return id_s;
+	return value_s;
 }
 
 

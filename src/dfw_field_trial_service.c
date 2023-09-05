@@ -48,6 +48,7 @@
 #include "submit_treatment.h"
 #include "submit_treatment_factor.h"
 #include "study_manager.h"
+#include "browse_trial_history.h"
 
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
@@ -94,6 +95,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 	Service *treatments_submission_service_p = GetTreatmentSubmissionService (grassroots_p);
 	Service *treatment_factor_submission_service_p = GetTreatmentFactorSubmissionService (grassroots_p);
 	Service *study_manager_service_p = GetStudyManagerService (grassroots_p);
+	Service *trial_history_browser_service_p = GetBrowseTrialHistoryService (grassroots_p);
 
 	if (all_in_one_submission_service_p)
 		{
@@ -181,7 +183,10 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 				++ num_services;
 			}
 
-
+	if (trial_history_browser_service_p)
+		{
+			++ num_services;
+		}
 
 
 	if (num_services)
@@ -210,6 +215,7 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, treatments_submission_service_p);
 					service_pp = AddValidService (service_pp, treatment_factor_submission_service_p);
 					service_pp = AddValidService (service_pp, study_manager_service_p);
+					service_pp = AddValidService (service_pp, trial_history_browser_service_p);
 
 					return services_p;
 				}
@@ -299,6 +305,12 @@ ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
 		{
 			FreeService (study_manager_service_p);
 		}
+
+	if (trial_history_browser_service_p)
+		{
+			FreeService (trial_history_browser_service_p);
+		}
+
 
 	return NULL;
 }

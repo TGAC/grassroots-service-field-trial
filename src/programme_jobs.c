@@ -1114,7 +1114,7 @@ Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParame
 
 					if (params_json_p)
 						{
-							const char *program_id_s = GetIDDefaultValueFromJSON (program_param_type.npt_name_s, params_json_p);
+							const char *program_id_s = GetNamedParameterDefaultValueFromJSON (program_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing program id?

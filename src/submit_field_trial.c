@@ -163,8 +163,10 @@ static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
+			FieldTrialServiceData *fts_data_p = (FieldTrialServiceData *) data_p;
+			FieldTrial *active_trial_p = GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, fts_data_p);
 
-			if (AddSubmissionFieldTrialParams (data_p, params_p, resource_p))
+			if (AddSubmissionFieldTrialParams (data_p, params_p, resource_p, false))
 				{
 					return params_p;
 				}

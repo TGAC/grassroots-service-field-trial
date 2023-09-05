@@ -61,7 +61,8 @@ extern "C"
 {
 #endif
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, FieldTrial *active_trial_p, const bool read_only_flag);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
@@ -100,6 +101,16 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialAsFrictionlessDataResource (c
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_s, const bool regex_flag, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char **programme_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp, ParameterSet *param_set_p, FieldTrialServiceData *dfw_data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialEditor (const char * const name_s, const char * const team_s, const char * const programme_id_s, 	LinkedList *existing_people_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p);
+
 
 
 #ifdef __cplusplus

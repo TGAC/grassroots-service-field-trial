@@ -62,6 +62,7 @@ INCLUDES = \
 	
 SRCS 	= \
 	blank_row.c \
+	browse_trial_history.c \
 	crop.c \
 	crop_jobs.c \
 	crop_ontology_tool.c \

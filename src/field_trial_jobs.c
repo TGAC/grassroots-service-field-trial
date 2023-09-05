@@ -58,109 +58,139 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 static bool ProcessPersonForFieldTrial (Person *person_p, void *user_data_p);
 
 
-bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
+
+
+
+bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, FieldTrial *active_trial_p, const bool read_only_flag)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
-	Parameter *param_p = NULL;
 	char *id_s = NULL;
 	char *programme_id_s = NULL;
 	const char *name_s = NULL;
 	const char *team_s = NULL;
-	FieldTrial *active_trial_p = GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, dfw_data_p);
-	bool defaults_flag = false;
 	LinkedList *existing_people_p = NULL;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, data_p, param_set_p);
+
+	if (PopulaterActiveTrialValues (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, dfw_data_p))
+		{
+			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
+
+			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, read_only_flag, dfw_data_p))
+				{
+					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
+						{
+							success_flag = true;
+						}
+				}
+
+		}
+
+
+	return success_flag;
+}
+
+
+bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char **programme_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp, ParameterSet *param_set_p, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
 
 	if (active_trial_p)
 		{
-			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p))
+			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, id_ss, programme_id_ss, name_ss, team_ss, existing_people_pp))
 				{
-					defaults_flag = true;
+					success_flag = true;
 				}
 		}
 	else
 		{
-			if (SetUpDefaults (&id_s, &programme_id_s, &name_s, &team_s, &existing_people_p))
+			if (SetUpDefaults (id_ss, programme_id_ss, name_ss, team_ss, existing_people_pp))
 				{
-					defaults_flag = true;
+					success_flag = true;
 				}
 		}
 
+	return success_flag;
+}
 
-	if (defaults_flag)
+
+bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
+	ServiceData *data_p = (ServiceData *) dfw_data_p;
+	Parameter *param_p = NULL;
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
+			param_p -> pa_read_only_flag = read_only_flag;
+
+			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
 				{
-					if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
+					/*
+					 * We want to update all of the values in the form
+					 * when a user selects a study from the list so
+					 * we need to make the parameter automatically
+					 * refresh the values. So we set the
+					 * pa_refresh_service_flag to true.
+					 */
+					param_p -> pa_refresh_service_flag = true;
+
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool AddTrialEditor (const char * const name_s, const char * const team_s, const char * const programme_id_s, 	LinkedList *existing_people_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
+	ServiceData *data_p = (ServiceData *) dfw_data_p;
+	Parameter *param_p = NULL;
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
+		{
+			param_p -> pa_required_flag = true;
+			param_p -> pa_read_only_flag = read_only_flag;
+
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Programme", "The Programme that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
+				{
+					Programme *programme_p = NULL;
+
+					if (programme_id_s && (strcmp (programme_id_s, S_EMPTY_LIST_OPTION_S) != 0))
 						{
-							/*
-							 * We want to update all of the values in the form
-							 * when a user selects a study from the list so
-							 * we need to make the parameter automatically
-							 * refresh the values. So we set the
-							 * pa_refresh_service_flag to true.
-							 */
-							param_p -> pa_refresh_service_flag = true;
+							programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+						}
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
+					param_p -> pa_read_only_flag = read_only_flag;
+
+					if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, programme_p, false))
+						{
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 								{
-									param_p -> pa_required_flag = true;
+									param_p -> pa_read_only_flag = read_only_flag;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Programme", "The Programme that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
+									if (AddMultiplePeopleParameters (param_set_p, "Investigators", existing_people_p, dfw_data_p))
 										{
-											Programme *programme_p = NULL;
-
-											if (programme_id_s && (strcmp (programme_id_s, S_EMPTY_LIST_OPTION_S) != 0))
-												{
-													programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
-												}
-
-											if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, programme_p, false))
-												{
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
-														{
-															if (AddMultiplePeopleParameters (param_set_p, "Investigators", existing_people_p, dfw_data_p))
-																{
-																	success_flag = true;																	
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", name_s ? name_s : "NULL");
-																}
-																	
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
-														}
-												}
-
-											if (programme_p)
-												{
-													FreeProgramme (programme_p);
-												}
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", name_s ? name_s : "NULL");
 										}
 
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
 								}
+						}
+				}
 
-
-
-
-
-						}		/* if (SetUpFieldTrialsListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, true)) */
-
-				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ADVANCED)) != NULL) */
-
-		}		/* if (defaults_flag) */
-
-	if (active_trial_p)
+		}
+	else
 		{
-			FreeFieldTrial (active_trial_p);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
 		}
 
 	return success_flag;
@@ -1115,7 +1145,7 @@ FieldTrial *GetFieldTrialFromResource (DataResource *resource_p, const NamedPara
 
 					if (params_json_p)
 						{
-							const char *trial_id_s = GetIDDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
+							const char *trial_id_s = GetNamedParameterDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing trial id?

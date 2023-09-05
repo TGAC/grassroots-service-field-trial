@@ -1963,31 +1963,20 @@ static OperationStatus CreateMongoRevisionsCollections (FieldTrialServiceData *d
 static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const char *database_s, const char *collection_s)
 {
 	OperationStatus status = OS_FAILED;
+	int collection_status = DoesCollectionExist (tool_p, collection_s);
 
-	if (CreateMongoToolCollection (tool_p, collection_s, NULL))
+	if ((collection_status == 1) || (CreateMongoToolCollection (tool_p, collection_s, NULL)))
 		{
-			/*
-			 * In the revisions collection there will be multiple entries with the same _if
-			 * so we need to drop the default index and which assumes that this value be unique
-			 * and replace it with one that allows for repeated ids.
-			 */
-			if (DropCollectionIndex (tool_p, MONGO_ID_S))
+			if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_BACKUPS_ID_KEY_S, false, false))
 				{
-					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_ID_S, false, false))
+					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false))
 						{
-							if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false))
-								{
-									status = OS_SUCCEEDED;
-								}
-						}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false)) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, DFT_TIMESTAMP_S);
+							status = OS_SUCCEEDED;
 						}
-				}		/* if (DropCollectionIndex (tool_p, MONGO_ID_S)) */
+				}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false)) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "DropCollectionIndex () failed for \"%s\"", MONGO_ID_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, DFT_TIMESTAMP_S);
 				}
 
 		}		/* if (CreateMongoToolCollection (tool_p, collection_s, NULL)) */
