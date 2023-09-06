@@ -40,6 +40,9 @@ static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *da
 static char *GetIdBasedFilename (const char *id_s, const char *directory_s, const char *suffix_s);
 
 
+static bool RunVersionSearch (const char * const collection_s, const char * const key_s, const char * const id_s, json_t *results_p, bson_t *extra_opts_p, const FieldTrialServiceData *data_p);
+
+
 
 bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
 																	 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p),
@@ -378,8 +381,10 @@ void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collect
 
 
 
-static bool RunVersionSearch (const char * const collection_s, const char * const id_s, const char * const key_s, json_t *results_p, const DFWFieldTrialData collection_type, bson_t *extra_opts_p. const FieldTrialServiceData *data_p)
+static bool RunVersionSearch (const char * const collection_s, const char * const key_s, const char * const id_s, json_t *results_p, bson_t *extra_opts_p, const FieldTrialServiceData *data_p)
 {
+	bool success_flag = false;
+
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, collection_s))
 		{
 			bson_t *query_p = bson_new ();
@@ -392,105 +397,74 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 
 					if (BSON_APPEND_OID (query_p, key_s, &oid))
 						{
-							if (PopulateJSONWithAllMongoResults (tool_p, query_p, extra_opts_p, results_p))
+							if (PopulateJSONWithAllMongoResults (data_p -> dftsd_mongo_p, query_p, extra_opts_p, results_p))
 								{
-									
+									success_flag = true;
 								}		/* if (temp_p) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for id \"%s\"", id_s);
+									PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for key \"%s\" value \"%s\"", key_s, id_s);
 								}
 
 						}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for field trial with id \"%s\"", field_trial_id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append query for key \"%s\" value \"%s\"", key_s, id_s);
 						}
 
 					bson_destroy (query_p);
 				}		/* if (query_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for field trial with id \"%s\"", field_trial_id_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for key \"%s\" value \"%s\"", key_s, id_s);
 				}
 
 		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set collection to \"%s\"", collection_s);
 		}	
+
+	return success_flag;
 }
+
+
 
 
 json_t *GetAllVersionsOfObject (const char *id_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p)
 {
-	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+	json_t *results_p = NULL;
 
 	if (bson_oid_is_valid (id_s, strlen (id_s)))
 		{
-			/* 
-			 * Get the current version first 
-			 */
-			
-			if (SetMongoToolCollection (tool_p, data_p -> dftsd_backup_collection_ss [collection_type]))
+			results_p = json_array ();
+
+			if (results_p)
 				{
-					bson_t *query_p = bson_new ();
-
-					if (query_p)
+					/*
+					 * Get the current version first
+					 */
+					if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], MONGO_ID_S, id_s, results_p, NULL, data_p))
 						{
-							bson_oid_t oid;
+						  bson_t *opts_p = BCON_NEW ("sort", "{", DFT_TIMESTAMP_S, BCON_INT32 (-1), "}");
 
-							bson_oid_init_from_string (&oid, field_trial_id_s);
-
-							if (BSON_APPEND_OID (query_p, DFT_BACKUPS_ID_KEY_S, &oid))
+							if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, results_p, NULL, data_p))
 								{
-									json_t *results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL);
+									return results_p;
+								}		/* if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
 
-									if (results_p)
-										{
-											if (json_is_array (results_p))
-												{
-													
-													
-												}		/* if (json_is_array (results_p) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array");
-												}
+						}		/* if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
 
-											json_decref (results_p);
-										}		/* if (results_p) */
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for field trial with id \"%s\"", field_trial_id_s);
-										}
-
-								}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid)) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for field trial with id \"%s\"", field_trial_id_s);
-								}
-
-							bson_destroy (query_p);
-						}		/* if (query_p) */
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for field trial with id \"%s\"", field_trial_id_s);
-						}
-
-				}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL])) */
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]);
-				}
+					json_decref (results_p);
+				}		/* if (results_p) */
 
 		}		/* if (bson_oid_is_valid (field_trial_id_s, strlen (field_trial_id_s))) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" is not a valid oid", field_trial_id_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" is not a valid oid", id_s);
 		}
 
-	return trial_p;
+	return NULL;
 }
 
 
