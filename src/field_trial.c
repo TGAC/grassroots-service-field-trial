@@ -40,7 +40,7 @@ static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *me
 
 
 
-FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p)
+FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p, const char *time_s)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -50,34 +50,48 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, Programm
 
 			if ((team_s == NULL) || (copied_team_s = EasyCopyToNewString (team_s)))
 				{
-					LinkedList *studies_p = AllocateLinkedList (FreeStudyNode);
+					char *copied_time_s = NULL;
 
-					if (studies_p)
+					if ((time_s == NULL) || (copied_time_s = EasyCopyToNewString (time_s)))
 						{
-							LinkedList *people_p = AllocateLinkedList (FreePersonNode);
+							LinkedList *studies_p = AllocateLinkedList (FreeStudyNode);
 
-							if (people_p)
+							if (studies_p)
 								{
-									FieldTrial *trial_p = (FieldTrial *) AllocMemory (sizeof (FieldTrial));
+									LinkedList *people_p = AllocateLinkedList (FreePersonNode);
 
-									if (trial_p)
+									if (people_p)
 										{
-											trial_p -> ft_name_s = copied_name_s;
-											trial_p -> ft_team_s = copied_team_s;
-											trial_p -> ft_id_p = id_p;
-											trial_p -> ft_studies_p = studies_p;
-											trial_p -> ft_people_p = people_p;
-											trial_p -> ft_parent_p = parent_program_p;
-											trial_p -> ft_parent_program_mem = parent_program_mem;
+											FieldTrial *trial_p = (FieldTrial *) AllocMemory (sizeof (FieldTrial));
 
-											return trial_p;
-										}
+											if (trial_p)
+												{
+													trial_p -> ft_name_s = copied_name_s;
+													trial_p -> ft_team_s = copied_team_s;
+													trial_p -> ft_id_p = id_p;
+													trial_p -> ft_timestamp_s = copied_time_s;
+													trial_p -> ft_studies_p = studies_p;
+													trial_p -> ft_people_p = people_p;
+													trial_p -> ft_parent_p = parent_program_p;
+													trial_p -> ft_parent_program_mem = parent_program_mem;
+
+													return trial_p;
+												}
+
+											FreeLinkedList (people_p);
+										}		/* if (people_p) */
 										
-									FreeLinkedList (people_p);
-								}		/* if (people_p) */
-								
-							FreeLinkedList (studies_p);
-						}		/* if (studies_p) */
+									FreeLinkedList (studies_p);
+								}		/* if (studies_p) */
+
+
+							if (copied_time_s)
+								{
+									FreeCopiedString (copied_time_s);
+								}
+
+						}		/* if ((time_s == NULL) || (copied_time_s = EasyCopyToNewString (time_s))) */
+
 
 					if (copied_team_s)
 						{
@@ -280,73 +294,81 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, Field
 				{
 					if (SetNonTrivialString (trial_json_p, FT_TEAM_S, trial_p -> ft_team_s, true))
 						{
-							if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
+							if (SetNonTrivialString (trial_json_p, DFT_TIMESTAMP_S, trial_p -> ft_timestamp_s, true))
 								{
-									bool success_flag = false;
-									
-									if (AddPeopleToJSON (trial_p -> ft_people_p, FT_PEOPLE_S, trial_json_p, format, data_p))
+									if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 										{
-											if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
-												{
-													if (trial_p -> ft_parent_p)
-														{
-															json_t *program_p = GetProgrammeAsJSON (trial_p -> ft_parent_p, format, data_p);
+											bool success_flag = false;
 
-															if (program_p)
+											if (AddPeopleToJSON (trial_p -> ft_people_p, FT_PEOPLE_S, trial_json_p, format, data_p))
+												{
+													if ((format == VF_CLIENT_FULL) || (format == VF_CLIENT_MINIMAL))
+														{
+															if (trial_p -> ft_parent_p)
 																{
-																	if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0)
+																	json_t *program_p = GetProgrammeAsJSON (trial_p -> ft_parent_p, format, data_p);
+
+																	if (program_p)
 																		{
-																			success_flag = true;
-																		}		/* if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0) */
+																			if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0)
+																				{
+																					success_flag = true;
+																				}		/* if (json_object_set_new (trial_json_p, FT_PARENT_PROGRAM_S, program_p) == 0) */
+																			else
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add program \"%s\" to json", trial_p -> ft_parent_p -> pr_name_s);
+																					json_decref (program_p);
+																				}
+																		}		/* if (program_p) */
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to add program \"%s\" to json", trial_p -> ft_parent_p -> pr_name_s);
-																			json_decref (program_p);
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to get json for program \"%s\" in format %d", trial_p -> ft_parent_p -> pr_name_s, format);
 																		}
-																}		/* if (program_p) */
+
+																}		/* if (trial_p -> ft_parent_p) */
 															else
 																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to get json for program \"%s\" in format %d", trial_p -> ft_parent_p -> pr_name_s, format);
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_name_s);
 																}
 
-														}		/* if (trial_p -> ft_parent_p) */
-													else
+															if (format == VF_CLIENT_FULL)
+																{
+																	if (!AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStudiesToFieldTrialJSON () failed for trial \"%s\"", trial_p -> ft_name_s);
+																			success_flag = false;
+																		}		/* if (!AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
+																}
+														}
+													else if (format == VF_STORAGE)
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "trial \"%s\" has no parent program", trial_p -> ft_name_s);
+															if ((! (trial_p -> ft_parent_p)) || (AddNamedCompoundIdToJSON (trial_json_p, trial_p -> ft_parent_p -> pr_id_p, FT_PARENT_PROGRAM_S)))
+																{
+																	success_flag = true;
+																}
+
 														}
 													
-													if (format == VF_CLIENT_FULL)
-														{
-															if (!AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p))
-																{																										
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStudiesToFieldTrialJSON () failed for trial \"%s\"", trial_p -> ft_name_s);
-																	success_flag = false;
-																}		/* if (!AddStudiesToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
-														}
-												}
-											else if (format == VF_STORAGE)
+												}		/* if (AddPeopleToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
+											else
 												{
-													if ((! (trial_p -> ft_parent_p)) || (AddNamedCompoundIdToJSON (trial_json_p, trial_p -> ft_parent_p -> pr_id_p, FT_PARENT_PROGRAM_S)))
-														{
-															success_flag = true;
-														}
 
 												}
-											
-										}		/* if (AddPeopleToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
-									else
-										{
-										
-										}
-									
 
-									if (success_flag)
-										{
-											if (AddDatatype (trial_json_p, DFTD_FIELD_TRIAL))
+
+											if (success_flag)
 												{
-													return trial_json_p;
+													if (AddDatatype (trial_json_p, DFTD_FIELD_TRIAL))
+														{
+															return trial_json_p;
+														}
 												}
 										}
+
+								}		/* if (SetNonTrivialString (trial_json_p, DFT_TIMESTAMP_S, trial_p -> ft_timestamp_s, true)) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to set \"%s\": \"%s\"", DFT_TIMESTAMP_S, trial_p -> ft_timestamp_s ?  trial_p -> ft_timestamp_s : "null");
 								}
 
 						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
@@ -485,7 +507,8 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 
 									if (success_flag)
 										{
-											trial_p = AllocateFieldTrial (name_s, team_s, program_p, MF_SHALLOW_COPY, id_p);
+											const char *timestamp_s = GetJSONString (json_p, DFT_TIMESTAMP_S);
+											trial_p = AllocateFieldTrial (name_s, team_s, program_p, MF_SHALLOW_COPY, id_p, timestamp_s);
 
 											if (trial_p)
 												{

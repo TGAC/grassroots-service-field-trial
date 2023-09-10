@@ -51,6 +51,10 @@ typedef struct FieldTrial
 {
 	bson_oid_t *ft_id_p;
 
+	/**
+	 * The time when this Field Trial was saved.
+	 */
+	const char *ft_timestamp_s;
 
 	/**
 	 * The Programme that this Field Trial is a part of.
@@ -146,7 +150,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, struct Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, struct Programme *parent_program_p, MEM_FLAG parent_program_mem, bson_oid_t *id_p, const char *time_s);
 
 /**
  * Free a given FieldTrial.

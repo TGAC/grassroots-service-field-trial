@@ -403,7 +403,7 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 								}		/* if (temp_p) */
 							else
 								{
-									PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for key \"%s\" value \"%s\"", key_s, id_s);
+									PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, "Failed to get results searching for key \"%s\" value \"%s\"", key_s, id_s);
 								}
 
 						}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid)) */
@@ -448,10 +448,10 @@ json_t *GetAllVersionsOfObject (const char *id_s, DFWFieldTrialData collection_t
 						{
 						  bson_t *opts_p = BCON_NEW ("sort", "{", DFT_TIMESTAMP_S, BCON_INT32 (-1), "}");
 
-							if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, results_p, NULL, data_p))
+							if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, results_p, opts_p, data_p))
 								{
 									return results_p;
-								}		/* if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
+								}		/* if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
 
 						}		/* if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
 

@@ -44,9 +44,6 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
 
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, LinkedList *people_p, FieldTrialServiceData *data_p);
-
-
 
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
@@ -75,7 +72,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 		{
 			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
 
-			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, read_only_flag, dfw_data_p))
+			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
 				{
 					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
 						{
@@ -113,7 +110,7 @@ bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char 
 }
 
 
-bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
+bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p)
 {
 	bool success_flag = false;
 	ServiceData *data_p = (ServiceData *) dfw_data_p;
@@ -123,7 +120,7 @@ bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
-			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
+			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, empty_option_flag))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -278,7 +275,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-					trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, trial_id_p);
+					trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, trial_id_p, NULL);
 
 					if (trial_p)
 						{
@@ -825,25 +822,6 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 
 	return trial_fd_p;
 
-}
-
-
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, LinkedList *people_p, FieldTrialServiceData *data_p)
-{
-	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, id_p);
-
-	if (trial_p)
-		{
-			if (people_p)
-				{
-
-				}
-
-			SaveFieldTrial (trial_p, job_p, data_p);
-			FreeFieldTrial (trial_p);
-		}
-
-	return ((job_p -> sj_status == OS_PARTIALLY_SUCCEEDED) || (job_p -> sj_status == OS_SUCCEEDED));
 }
 
 
