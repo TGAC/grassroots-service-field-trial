@@ -167,7 +167,25 @@ static const char *GetBrowseTrialHistoryServiceInformationUri (const Service *se
 
 static bool GetBrowseTrialHistoryServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetBrowseTrialHistoryParameterTypeForNamedParameter (param_name_s, pt_p);
+	bool success_flag = false;
+	
+	const NamedParameterType params [] =
+		{
+			S_TIMESTAMP,
+			NULL
+		};
+
+
+	if (DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
+		{
+			success_flag = true;
+		}
+	else
+		{
+			success_flag = GetSubmissionFieldTrialParameterTypeForNamedParameter (param_name_s, pt_p);
+		}
+
+	return success_flag;
 }
 
 
@@ -470,10 +488,10 @@ static ServiceJobSet *RunBrowseTrialHistoryService (Service *service_p, Paramete
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForBrowseTrialHistoryParams (data_p, param_set_p, job_p))
-				{
+	//		if (!RunForBrowseTrialHistoryParams (data_p, param_set_p, job_p))
+	//			{
 
-				}		/* if (!RunForBrowseTrialHistoryParams (data_p, param_set_p, job_p)) */
+	//			}		/* if (!RunForBrowseTrialHistoryParams (data_p, param_set_p, job_p)) */
 
 
 			LogServiceJob (job_p);
