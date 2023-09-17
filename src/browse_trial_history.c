@@ -347,19 +347,22 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 
 											if (trial_p)
 												{
+													char *value_s = "current";
+
 													if (trial_p -> ft_timestamp_s)
 														{
-															if (param_value_s && (strcmp (param_value_s, trial_p -> ft_timestamp_s) == 0))
+															value_s = trial_p -> ft_timestamp_s;
+
+															if (param_value_s && (strcmp (param_value_s, value_s) == 0))
 																{
 																	value_set_flag = true;
 																}
+														}
 
-															if (!CreateAndAddStringParameterOption (param_p, trial_p -> ft_timestamp_s, trial_p -> ft_timestamp_s))
-																{
-																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option for \"%s\"", trial_p -> ft_timestamp_s);
-																}
-
+													if (!CreateAndAddStringParameterOption (param_p, value_s, value_s))
+														{
+															success_flag = false;
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option for \"%s\"", value_s);
 														}
 
 													FreeFieldTrial (trial_p);
@@ -417,36 +420,81 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	char *id_s = NULL;
-	char *programme_id_s = NULL;
-	const char *name_s = NULL;
-	const char *team_s = NULL;
 	LinkedList *existing_people_p = NULL;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
+	const bool read_only_flag = true;
+	json_t *trials_p = GetAllFieldTrialsAsJSON (dfw_data_p, NULL);
 
-	if (PopulaterActiveTrialValues (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, dfw_data_p))
+	if (trials_p)
 		{
-			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
-			const bool read_only_flag = true;
-
-			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, false, false, dfw_data_p))
+			/*
+			 * If we don't have an active trial, use the first one in the json results array
+			 */
+			if (!active_trial_p)
 				{
-					if (id_s != NULL)
+					if (json_is_array (trials_p))
 						{
-							if (AddTrialVersionsList (active_trial_p, id_s, param_set_p, group_p, false, dfw_data_p))
+							if (json_array_size (trials_p) > 0)
 								{
+									json_t *trial_json_p = json_array_get (trials_p, 0);
 
+									active_trial_p = GetFieldTrialFromJSON (trial_json_p, VF_CLIENT_MINIMAL, data_p);
+
+									if (!active_trial_p)
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "GetFieldTrialFromJSON () failed");
+										}
 								}
-
-						}
-
-
-					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
-						{
-							success_flag = true;
 						}
 				}
 
+			if (active_trial_p)
+				{
+					id_s = GetBSONOidAsString (active_trial_p -> ft_id_p);
+
+					if (id_s)
+						{
+							if (AddTrialsListFromJSON (active_trial_p, id_s, trials_p, param_set_p, group_p, false, false, dfw_data_p))
+								{
+									char *programme_id_s = NULL;
+									const char *name_s = NULL;
+									const char *team_s = NULL;
+
+									if (PopulaterActiveTrialValues (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, dfw_data_p))
+										{
+											if (id_s != NULL)
+												{
+													if (AddTrialVersionsList (active_trial_p, id_s, param_set_p, group_p, false, dfw_data_p))
+														{
+
+														}
+
+												}
+										}
+
+									if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
+										{
+											success_flag = true;
+										}
+								}
+
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id from \"%s\"", active_trial_p -> ft_name_s);
+						}
+
+
+
+				}
+
+			json_decref (trials_p);
 		}
 
+	if (id_s)
+		{
+			FreeBSONOidString (id_s);
+		}
 
 	return success_flag;
 }
