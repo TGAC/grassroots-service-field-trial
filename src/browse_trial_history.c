@@ -79,6 +79,8 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 
 static NamedParameterType S_TIMESTAMP = { "FT Timestamp", PT_STRING };
 
+static const char * const S_DEFAULT_TIMESTAMP_S = "current";
+
 /*
  * API definitions
  */
@@ -250,7 +252,7 @@ static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p,
 							 */
 							if (trial_id_s)
 								{
-									if (version_timestamp_s)
+									if ((!IsStringEmpty (version_timestamp_s)) && (strcmp (version_timestamp_s, S_DEFAULT_TIMESTAMP_S) != 0))
 										{
 
 										}
@@ -347,7 +349,7 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 
 											if (trial_p)
 												{
-													char *value_s = "current";
+													const char *value_s = S_DEFAULT_TIMESTAMP_S;
 
 													if (trial_p -> ft_timestamp_s)
 														{
@@ -417,13 +419,13 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 
 static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *param_set_p, FieldTrial *active_trial_p)
 {
-	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
+	FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	char *id_s = NULL;
 	LinkedList *existing_people_p = NULL;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (ft_data_p -> dftsd_base_data), param_set_p);
 	const bool read_only_flag = true;
-	json_t *trials_p = GetAllFieldTrialsAsJSON (dfw_data_p, NULL);
+	json_t *trials_p = GetAllFieldTrialsAsJSON (ft_data_p, NULL);
 
 	if (trials_p)
 		{
@@ -438,7 +440,7 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 								{
 									json_t *trial_json_p = json_array_get (trials_p, 0);
 
-									active_trial_p = GetFieldTrialFromJSON (trial_json_p, VF_CLIENT_MINIMAL, data_p);
+									active_trial_p = GetFieldTrialFromJSON (trial_json_p, VF_CLIENT_MINIMAL, ft_data_p);
 
 									if (!active_trial_p)
 										{
@@ -454,17 +456,17 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 
 					if (id_s)
 						{
-							if (AddTrialsListFromJSON (active_trial_p, id_s, trials_p, param_set_p, group_p, false, false, dfw_data_p))
+							if (AddTrialsListFromJSON (active_trial_p, id_s, trials_p, param_set_p, group_p, false, false, ft_data_p))
 								{
 									char *programme_id_s = NULL;
 									const char *name_s = NULL;
 									const char *team_s = NULL;
 
-									if (PopulaterActiveTrialValues (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, dfw_data_p))
+									if (PopulaterActiveTrialValues (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, ft_data_p))
 										{
 											if (id_s != NULL)
 												{
-													if (AddTrialVersionsList (active_trial_p, id_s, param_set_p, group_p, false, dfw_data_p))
+													if (AddTrialVersionsList (active_trial_p, id_s, param_set_p, group_p, false, ft_data_p))
 														{
 
 														}
@@ -472,7 +474,7 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 												}
 										}
 
-									if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
+									if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, ft_data_p))
 										{
 											success_flag = true;
 										}
