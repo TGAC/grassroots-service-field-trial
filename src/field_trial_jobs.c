@@ -600,13 +600,14 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 	bool success_flag = false;
 	json_t *results_p = GetAllFieldTrialsAsJSON (data_p, NULL);
 	bool value_set_flag = false;
-
+	
 	if (results_p)
 		{
 			if (json_is_array (results_p))
 				{
 					const size_t num_results = json_array_size (results_p);
-
+					const char *first_id_s = NULL;
+					
 					success_flag = true;
 
 					if (num_results > 0)
@@ -639,6 +640,12 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 
 															if (id_s)
 																{
+																	if ((i == 0) && (!active_trial_p))
+																		{
+																			
+																		}
+																	
+																	
 																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																		{
 																			value_set_flag = true;
