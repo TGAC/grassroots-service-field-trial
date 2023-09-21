@@ -72,7 +72,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 		{
 			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
 
-			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
+			if (AddTrialsList (&active_trial_p, id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
 				{
 					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
 						{
@@ -110,7 +110,8 @@ bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char 
 }
 
 
-bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p)
+
+bool AddTrialsListFromJSON (FieldTrial *active_trial_p, const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p)
 {
 	bool success_flag = false;
 	ServiceData *data_p = (ServiceData *) dfw_data_p;
@@ -120,7 +121,7 @@ bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
-			if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, empty_option_flag))
+			if (SetUpFieldTrialsListParameterFromJSON (dfw_data_p, (StringParameter *) param_p, active_trial_p, empty_option_flag, trials_json_p))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -133,6 +134,21 @@ bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *
 
 					success_flag = true;
 				}
+		}
+
+	return success_flag;
+}
+
+
+bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+
+	if (trials_p)
+		{
+			success_flag = AddTrialsListFromJSON (active_trial_p, id_s, trials_p, param_set_p, group_p, read_only_flag, empty_option_flag, data_p);
+			json_decref (trials_p);
 		}
 
 	return success_flag;
@@ -598,118 +614,122 @@ json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *op
 bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *results_p = GetAllFieldTrialsAsJSON (data_p, NULL);
-	bool value_set_flag = false;
-	
-	if (results_p)
+	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+
+	if (trials_p)
 		{
-			if (json_is_array (results_p))
+			success_flag = SetUpFieldTrialsListParameterFromJSON (data_p, param_p, active_trial_p, empty_option_flag, trials_p);
+			json_decref (trials_p);
+		}
+
+	return success_flag;
+}
+
+
+bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag, json_t *trials_p)
+{
+	bool success_flag = false;
+	bool value_set_flag = false;
+
+	if (json_is_array (trials_p))
+		{
+			const size_t num_results = json_array_size (trials_p);
+
+			success_flag = true;
+
+			if (num_results > 0)
 				{
-					const size_t num_results = json_array_size (results_p);
-					const char *first_id_s = NULL;
-					
-					success_flag = true;
-
-					if (num_results > 0)
+					/*
+					 * If there's an empty option, add it
+					 */
+					if (empty_option_flag)
 						{
-							/*
-							 * If there's an empty option, add it
-							 */
-							if (empty_option_flag)
-								{
-									success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
-								}
+							success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
+						}
 
-							if (success_flag)
-								{
-									size_t i = 0;
-									const char *param_value_s = GetStringParameterDefaultValue (param_p);
 
-									while ((i < num_results) && success_flag)
+					if (success_flag)
+						{
+							size_t i = 0;
+							const char *param_value_s = GetStringParameterDefaultValue (param_p);
+
+							while ((i < num_results) && success_flag)
+								{
+									json_t *entry_p = json_array_get (trials_p, i);
+									FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
+
+									if (trial_p)
 										{
-											json_t *entry_p = json_array_get (results_p, i);
-											FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
+											char *name_s = GetFieldTrialAsString (trial_p);
 
-											if (trial_p)
+											if (name_s)
 												{
-													char *name_s = GetFieldTrialAsString (trial_p);
+													char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
-													if (name_s)
+													if (id_s)
 														{
-															char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
-
-															if (id_s)
+															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																{
-																	if ((i == 0) && (!active_trial_p))
-																		{
-																			
-																		}
-																	
-																	
-																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																		{
-																			value_set_flag = true;
-																		}
-
-																	if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
-																		{
-																			success_flag = false;
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
-																		}
-
-																	FreeBSONOidString (id_s);
+																	value_set_flag = true;
 																}
-															else
+
+															if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
 																{
 																	success_flag = false;
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial BSON oid");
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
 																}
 
-															FreeCopiedString (name_s);
-														}		/* if (name_s) */
+															FreeBSONOidString (id_s);
+														}
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial as string");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial BSON oid");
 														}
 
-													FreeFieldTrial (trial_p);
-												}		/* if (trial_p) */
+													FreeCopiedString (name_s);
+												}		/* if (name_s) */
 											else
 												{
 													success_flag = false;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial as string");
 												}
 
-											if (success_flag)
-												{
-													++ i;
-												}
-
-										}		/* while ((i < num_results) && success_flag) */
-
-									/*
-									 * If the parameter's value isn't on the list, reset it
-									 */
-									if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
+											FreeFieldTrial (trial_p);
+										}		/* if (trial_p) */
+									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
+											success_flag = false;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial");
 										}
 
-								}		/* if (success_flag) */
+									if (success_flag)
+										{
+											++ i;
+										}
+
+								}		/* while ((i < num_results) && success_flag) */
+
+							/*
+							 * If the parameter's value isn't on the list, reset it
+							 */
+							if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
+								}
+
+						}		/* if (success_flag) */
 
 
-						}		/* if (num_results > 0) */
-					else
-						{
-							/* nothing to add */
-							success_flag = true;
-						}
+				}		/* if (num_results > 0) */
+			else
+				{
+					/* nothing to add */
+					success_flag = true;
+				}
 
-				}		/* if (json_is_array (results_p)) */
+		}		/* if (json_is_array (results_p)) */
 
-			json_decref (results_p);
-		}		/* if (results_p) */
 
 
 	if (success_flag)

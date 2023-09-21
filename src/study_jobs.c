@@ -4323,7 +4323,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 
 							if (param_p)
 								{
-									if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_parent_p : NULL, false))
+									if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? (active_study_p -> st_parent_p) : NULL, false))
 										{
 											if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Sowing year", "The year that the Study was started", active_study_p ? active_study_p -> st_predicted_sowing_year_p : NULL, PL_ALL)) != NULL)
 												{
