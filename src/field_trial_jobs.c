@@ -72,7 +72,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 		{
 			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
 
-			if (AddTrialsList (&active_trial_p, id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
+			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
 				{
 					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
 						{
