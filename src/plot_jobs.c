@@ -261,6 +261,28 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 }
 
 
+bool AddSearchPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plot", false, data_p, param_set_p);
+	bool list_flag = false;
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PL_ID.npt_type, PL_ID.npt_name_s, "Plot Id", "The id of the Plot", NULL, PL_ADVANCED)) != NULL)
+		{
+			success_flag = true;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PL_ID.npt_name_s);
+		}
+
+	return success_flag;
+}
+
+
+
+
 bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
@@ -373,6 +395,69 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 }
 
 
+bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+{
+	bool job_done_flag = false;
+	const char *id_s = NULL;
+
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, PL_ID.npt_name_s, &id_s))
+		{
+			if (!IsStringEmpty (id_s))
+				{
+					OperationStatus status = OS_FAILED;
+					bson_oid_t *id_p = GetBSONOidFromString (id_s);
+
+					job_done_flag = true;
+
+					if (id_p)
+						{
+							const ViewFormat vf = VF_CLIENT_FULL;
+							Plot *plot_p = GetPlotById (id_p, NULL, vf, data_p);
+
+							if (plot_p)
+								{
+									json_t *json_p = GetPlotAsJSON (plot_p, vf, NULL, data_p);
+
+									if (json_p)
+										{
+											json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, NULL,  json_p);
+
+											if (job_result_p)
+												{
+													if (AddResultToServiceJob (job_p, job_result_p))
+														{
+															status = OS_SUCCEEDED;
+														}		/* if (AddResultToServiceJob (job_p, job_result_p)) */
+													else
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, job_result_p, "Failed to add result to ServiceJob");
+
+															json_decref (job_result_p);
+														}
+												}		/* if (job_result_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to create result to ServiceJob");
+												}
+
+											json_decref (json_p);
+										}
+
+									FreePlot (plot_p);
+								}
+
+							FreeBSONOid (id_p);
+						}
+
+					MergeServiceJobStatus (job_p, status);
+				}
+		}
+
+
+	return job_done_flag;
+}
+
+
 
 bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
@@ -398,6 +483,19 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 
 	return success_flag;
 }
+
+
+bool GetSearchPlotParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
+{
+	const NamedParameterType params [] =
+		{
+			PL_ID,
+			NULL
+		};
+
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
+}
+
 
 
 json_t *GetPlotsAsFDTabularPackage (const Study *study_p, const FieldTrialServiceData *service_data_p)
