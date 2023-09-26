@@ -293,20 +293,28 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 												{
 													if (AddSearchStudyParams (& (data_p -> dftsd_base_data), params_p))
 														{
-															if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
+															if (AddSearchPlotParams (& (data_p -> dftsd_base_data), params_p))
 																{
-																	if (AddSearchMaterialParams (& (data_p -> dftsd_base_data), params_p))
+																	if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
 																		{
-																			return params_p;
+																			if (AddSearchMaterialParams (& (data_p -> dftsd_base_data), params_p))
+																				{
+																					return params_p;
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchMaterialParams failed");
+																				}
 																		}
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchMaterialParams failed");
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
 																		}
+
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchPlotParams failed");
 																}
 														}
 													else
@@ -380,17 +388,21 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 				{
 					if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p))
 						{
-							if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
+							if (!GetSearchPlotParameterTypeForNamedParameter (param_name_s, pt_p))
 								{
-									if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
+									if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
 										{
-											if (!GetSearchProgrammeParameterTypeForNamedParameter (param_name_s, pt_p))
+											if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
 												{
-													success_flag = false;
-												}
-										}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+													if (!GetSearchProgrammeParameterTypeForNamedParameter (param_name_s, pt_p))
+														{
+															success_flag = false;
+														}
+												}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
-								}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+										}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+								}		/* if (!GetSearchPlotParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
 						}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
@@ -527,18 +539,22 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 								{
 									if (!RunForSearchStudyParams (data_p, param_set_p, job_p))
 										{
-											if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
+											if (!RunForSearchPlotParams (data_p, param_set_p, job_p))
 												{
-													if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
+													if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
 														{
-															if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p))
+															if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
 																{
+																	if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p))
+																		{
 
-																}		/* if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p)) */
+																		}		/* if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p)) */
 
-														}		/* if (!RunForSearchMaterialParams (data_p, param_set_p, job_p)) */
+																}		/* if (!RunForSearchMaterialParams (data_p, param_set_p, job_p)) */
 
-												}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+														}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+
+												}
 
 										}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
 

@@ -265,10 +265,9 @@ bool AddSearchPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
-	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plot", false, data_p, param_set_p);
-	bool list_flag = false;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Plots and Racks", false, data_p, param_set_p);
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PL_ID.npt_type, PL_ID.npt_name_s, "Plot Id", "The id of the Plot", NULL, PL_ADVANCED)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PL_ID.npt_type, PL_ID.npt_name_s, "Id", "The id of the Plot or Rack", NULL, PL_ADVANCED)) != NULL)
 		{
 			success_flag = true;
 		}
@@ -413,37 +412,72 @@ bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_
 						{
 							const ViewFormat vf = VF_CLIENT_FULL;
 							Plot *plot_p = GetPlotById (id_p, NULL, vf, data_p);
+							json_t *result_json_p = NULL;
+							bool success_flag = false;
 
 							if (plot_p)
 								{
-									json_t *json_p = GetPlotAsJSON (plot_p, vf, NULL, data_p);
+									result_json_p = GetPlotAsJSON (plot_p, vf, NULL, data_p);
 
-									if (json_p)
+									if (result_json_p)
 										{
-											json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, NULL,  json_p);
-
-											if (job_result_p)
+											/*
+											 * Add the study id in
+											 */
+											if (AddNamedCompoundIdToJSON (result_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
 												{
-													if (AddResultToServiceJob (job_p, job_result_p))
-														{
-															status = OS_SUCCEEDED;
-														}		/* if (AddResultToServiceJob (job_p, job_result_p)) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, job_result_p, "Failed to add result to ServiceJob");
-
-															json_decref (job_result_p);
-														}
-												}		/* if (job_result_p) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "Failed to create result to ServiceJob");
+													success_flag = true;
 												}
-
-											json_decref (json_p);
 										}
 
 									FreePlot (plot_p);
+								}		/* if (plot_p) */
+							else
+								{
+									Row *row_p = GetRowByIdString (id_s, vf, data_p);
+
+									if (row_p)
+										{
+											result_json_p = GetRowAsJSON (row_p, vf, NULL, data_p);
+
+											if (result_json_p)
+												{
+													/*
+													 * Add the study id in
+													 */
+													if (AddNamedCompoundIdToJSON (result_json_p, row_p -> ro_study_p -> st_id_p, PL_PARENT_STUDY_S))
+														{
+															success_flag = true;
+														}
+												}
+
+											FreeRow (row_p);
+										}
+								}
+
+							if (result_json_p)
+								{
+									json_t *job_result_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, NULL,  result_json_p);
+
+									if (job_result_p)
+										{
+											if (AddResultToServiceJob (job_p, job_result_p))
+												{
+													status = OS_SUCCEEDED;
+												}		/* if (AddResultToServiceJob (job_p, job_result_p)) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, job_result_p, "Failed to add result to ServiceJob");
+
+													json_decref (job_result_p);
+												}
+										}		/* if (job_result_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, result_json_p, "GetDataResourceAsJSONByParts () failed");
+										}
+
+									json_decref (result_json_p);
 								}
 
 							FreeBSONOid (id_p);
@@ -1854,7 +1888,7 @@ static Plot *GetUniquePlot (bson_t *query_p, Study *study_p, const ViewFormat fo
 								{
 									if (must_exist_flag)
 										{
-											PrintBSONToLog (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "query produced " SIZET_FMT " results for study \"%s\"", num_results, study_p -> st_name_s);
+											PrintBSONToLog (STM_LEVEL_WARNING, __FILE__, __LINE__, query_p, "query produced " SIZET_FMT " results for study \"%s\"", num_results, study_p ? study_p -> st_name_s : "NULL");
 										}
 								}
 

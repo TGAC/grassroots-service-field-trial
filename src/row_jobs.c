@@ -402,6 +402,26 @@ OperationStatus AddTreatmentFactorValuesToStandardRow (StandardRow *row_p, json_
 //}
 
 
+bool AddSearchRowParams (ServiceData *data_p, ParameterSet *param_set_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Rows", false, data_p, param_set_p);
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PL_ID.npt_type, PL_ID.npt_name_s, "Id", "The id of the Plot", NULL, PL_ADVANCED)) != NULL)
+		{
+			success_flag = true;
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PL_ID.npt_name_s);
+		}
+
+	return success_flag;
+}
+
+
+
 OperationStatus AddStatsValuesToBaseRow (Row *row_p, json_t *stats_json_p, Study *study_p, ServiceJob *job_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
