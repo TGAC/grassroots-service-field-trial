@@ -350,6 +350,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *st_id_p, const Vi
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *study_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *plot_p);
 

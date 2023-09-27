@@ -72,8 +72,6 @@ static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, con
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
-
 static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
@@ -2438,7 +2436,7 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 }
 
 
-static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 

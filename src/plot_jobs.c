@@ -182,6 +182,9 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p);
 
 
+static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const study_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
 /*
  * API definitions
  */
@@ -394,6 +397,8 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 }
 
 
+
+
 bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
@@ -421,10 +426,7 @@ bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_
 
 									if (result_json_p)
 										{
-											/*
-											 * Add the study id in
-											 */
-											if (AddNamedCompoundIdToJSON (result_json_p, plot_p -> pl_parent_p -> st_id_p, PL_PARENT_STUDY_S))
+											if (AddStudyDetailsToJSON (result_json_p, plot_p -> pl_parent_p, vf, data_p))
 												{
 													success_flag = true;
 												}
@@ -442,10 +444,7 @@ bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_
 
 											if (result_json_p)
 												{
-													/*
-													 * Add the study id in
-													 */
-													if (AddNamedCompoundIdToJSON (result_json_p, row_p -> ro_study_p -> st_id_p, PL_PARENT_STUDY_S))
+													if (AddStudyDetailsToJSON (result_json_p, row_p -> ro_study_p, vf, data_p))
 														{
 															success_flag = true;
 														}
@@ -2236,10 +2235,27 @@ static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unkno
 	 * Remove any columns that we have previously seen that we don't recognise
 	 */
 	json_object_foreach (unknown_cols_p, key_s, value_p)
-	{
-		json_object_del (table_row_json_p, key_s);
-	}
+		{
+			json_object_del (table_row_json_p, key_s);
+		}
 
+}
+
+
+
+static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const study_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (AddPhenotypesToJSON (study_p, result_json_p, format, data_p))
+		{
+			if (AddNamedCompoundIdToJSON (result_json_p, study_p -> st_id_p, PL_PARENT_STUDY_S))
+				{
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
 }
 
 
