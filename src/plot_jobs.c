@@ -2249,9 +2249,24 @@ static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const st
 
 	if (AddPhenotypesToJSON (study_p, result_json_p, format, data_p))
 		{
-			if (AddNamedCompoundIdToJSON (result_json_p, study_p -> st_id_p, PL_PARENT_STUDY_S))
+			json_t *study_json_p = json_object ();
+
+			if (study_json_p)
 				{
-					success_flag = true;
+					if (json_object_set_new (result_json_p, "study", study_json_p) == 0)
+						{
+							if (AddCompoundIdToJSON (study_json_p, study_p -> st_id_p))
+								{
+									if (SetJSONString (study_json_p, ST_NAME_S, study_p -> st_name_s))
+										{
+											success_flag = true;
+										}
+								}
+						}
+					else
+						{
+							json_decref (study_json_p);
+						}
 				}
 		}
 
