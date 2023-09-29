@@ -153,7 +153,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchStudyParams (FieldTrialServiceDat
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p, bool full_data_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag);

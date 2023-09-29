@@ -365,7 +365,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 json_t *GetOldStudyIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-	json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
+	json_t *src_studies_p = GetAllStudiesAsJSON (data_p, true);
 
 
 	if (src_studies_p)
@@ -1530,7 +1530,7 @@ bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat f
 }
 
 
-json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
+json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p, bool full_data_flag)
 {
 	json_t *results_p = NULL;
 
@@ -1538,6 +1538,18 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
 		{
 			bson_t *query_p = NULL;
 			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+
+
+			if (full_data_flag)
+				{
+					opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+				}
+			else
+				{
+					opts_p =  BCON_NEW ("projection", "{", "so:name", BCON_BOOL (true), "}",
+															"sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+
+				}
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
@@ -1716,7 +1728,7 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+	json_t *all_studies_p = GetAllStudiesAsJSON (data_p, true);
 
 	if (all_studies_p)
 		{
@@ -3038,7 +3050,7 @@ static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p)
 bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *results_p = GetAllStudiesAsJSON (data_p);
+	json_t *results_p = GetAllStudiesAsJSON (data_p, false);
 	bool value_set_flag = false;
 
 	if (results_p)
@@ -3064,46 +3076,68 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 									size_t i = 0;
 									const char *param_value_s = GetStringParameterCurrentValue (param_p);
 
-									while ((i < num_results) && success_flag)
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+									if (id_p)
 										{
-											json_t *entry_p = json_array_get (results_p, i);
-											Study *study_p = GetStudyFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-											if (study_p)
+											while ((i < num_results) && success_flag)
 												{
-													char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+													json_t *entry_p = json_array_get (results_p, i);
 
-													if (id_s)
+													if (GetMongoIdFromJSON (entry_p, id_p))
 														{
-															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																{
-																	value_set_flag = true;
-																}
+															char *id_s = GetBSONOidAsString (id_p);
 
-															if (!CreateAndAddStringParameterOption (param_p, id_s, study_p -> st_name_s))
+															if (id_s)
+																{
+																	const char *name_s = GetJSONString (entry_p, ST_NAME_S);
+
+																	if (name_s)
+																		{
+																			if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																				{
+																					value_set_flag = true;
+																				}
+
+																			if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																				{
+																					success_flag = false;
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																				}
+
+																		}		/* if (name_s) */
+																	else
+																		{
+																			success_flag = false;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", ST_NAME_S);
+																		}
+
+																	FreeBSONOidString (id_s);
+																}
+															else
 																{
 																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s,  study_p -> st_name_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Study BSON oid");
 																}
 
-															FreeBSONOidString (id_s);
-														}
+														}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Study BSON oid");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
+
 														}
 
-													FreeStudy (study_p);
-												}		/* if (study_p) */
+													if (success_flag)
+														{
+															++ i;
+														}
 
+												}		/* while ((i < num_results) && success_flag) */
 
-											if (success_flag)
-												{
-													++ i;
-												}
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
 
-										}		/* while ((i < num_results) && success_flag) */
 
 									/*
 									 * If the parameter's value isn't on the list, reset it
@@ -3154,7 +3188,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 
 json_t *GetAllStudiesAsJSONInViewFormat (FieldTrialServiceData *data_p, const ViewFormat format)
 {
-	json_t *raw_results_p = GetAllStudiesAsJSON (data_p);
+	json_t *raw_results_p = GetAllStudiesAsJSON (data_p, true);
 	json_t *formatted_results_p = NULL;
 
 	if (raw_results_p)

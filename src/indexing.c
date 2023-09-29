@@ -1178,7 +1178,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 									if (strcmp (id_s, "*") == 0)
 										{
-											json_t *studies_json_p = GetAllStudiesAsJSON (data_p);
+											json_t *studies_json_p = GetAllStudiesAsJSON (data_p, true);
 
 											if (studies_json_p)
 												{
@@ -1794,7 +1794,7 @@ static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, Fi
 
 	if (data_p -> dftsd_assets_path_s)
 		{
-			json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+			json_t *all_studies_p = GetAllStudiesAsJSON (data_p, true);
 
 			if (all_studies_p)
 				{
