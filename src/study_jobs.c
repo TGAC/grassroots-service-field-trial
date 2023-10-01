@@ -1537,18 +1537,16 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p, bool full_data
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
 			bson_t *query_p = NULL;
-			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
-
+			bson_t *opts_p = NULL;
 
 			if (full_data_flag)
 				{
-					opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+					opts_p = BCON_NEW ("sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
 				}
 			else
 				{
-					opts_p =  BCON_NEW ("projection", "{", "so:name", BCON_BOOL (true), "}",
+					opts_p = BCON_NEW ("projection", "{", ST_NAME_S, BCON_BOOL (true), "}",
 															"sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
-
 				}
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);

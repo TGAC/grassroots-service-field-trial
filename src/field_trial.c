@@ -80,7 +80,7 @@ FieldTrial *AllocateFieldTrial (const char *name_s, const char *team_s, Programm
 
 											FreeLinkedList (people_p);
 										}		/* if (people_p) */
-										
+
 									FreeLinkedList (studies_p);
 								}		/* if (studies_p) */
 
@@ -348,7 +348,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, Field
 																}
 
 														}
-													
+
 												}		/* if (AddPeopleToFieldTrialJSON (trial_p, trial_json_p, format, data_p)) */
 											else
 												{
@@ -513,7 +513,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 											if (trial_p)
 												{
 													const json_t *people_json_p = json_object_get (json_p, FT_PEOPLE_S);
-													
+
 													if (people_json_p)
 														{
 															AddPeopleFromJSON (people_json_p, AddPersonFromJSON, trial_p, data_p);
@@ -620,6 +620,32 @@ FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, 
 	return trial_p;
 }
 
+
+FieldTrial *GetVersionedFieldTrial (const char *field_trial_id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	FieldTrial *trial_p = NULL;
+	json_t *trials_json_p = GetSpecificVersionOfObject (field_trial_id_s, timestamp_s, DFTD_FIELD_TRIAL, data_p);
+
+	if (trials_json_p)
+		{
+			if (json_array_size (trials_json_p) == 1)
+				{
+					json_t *trial_json_p = json_array_get (trials_json_p, 0);
+
+					trial_p = GetFieldTrialFromJSON (trial_json_p, format, data_p);
+
+					if (trial_p)
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, trial_json_p, "GetFieldTrialFromJSON () failed");
+						}
+				}
+
+			json_decref (trials_json_p);
+		}
+
+
+	return trial_p;
+}
 
 
 FieldTrial *GetFieldTrialByIdString (const char *field_trial_id_s, const ViewFormat format, const FieldTrialServiceData *data_p)
@@ -823,7 +849,7 @@ bool GetAllFieldTrialStudies (FieldTrial *trial_p, const ViewFormat format, cons
 char *GetFieldTrialAsString (const FieldTrial *trial_p)
 {
 	char *trial_s = NULL;
-	
+
 	if (! (trial_p -> ft_team_s))
 		{
 			trial_s = EasyCopyToNewString (trial_p -> ft_name_s);
@@ -831,7 +857,7 @@ char *GetFieldTrialAsString (const FieldTrial *trial_p)
 	else
 		{
 			trial_s = ConcatenateVarargsStrings (trial_p -> ft_team_s, " - ", trial_p -> ft_name_s, NULL);
-			
+
 			if (!trial_s)
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get trial as string: team \"%s\", name \"%s\"", 
@@ -839,7 +865,7 @@ char *GetFieldTrialAsString (const FieldTrial *trial_p)
 											(trial_p -> ft_name_s != NULL) ? trial_p -> ft_name_s : "NULL");
 				}
 		}
-	
+
 
 	return trial_s;
 }
@@ -849,12 +875,12 @@ static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *me
 	bool success_flag = false;
 	FieldTrial *trial_p = (FieldTrial *) user_data_p;
 	MEM_FLAG mf = MF_SHALLOW_COPY;
-	
+
 	if (AddFieldTrialPerson (trial_p, person_p, mf))
 		{
 			*mem_p = mf;
 			success_flag = true;
 		}
-		
+
 	return success_flag;
 }

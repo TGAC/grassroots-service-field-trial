@@ -220,15 +220,33 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 
 
 
-json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, const bool full_data_flag)
 {
 	json_t *results_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME]))
 		{
 			bson_t *query_p = NULL;
+			bson_t *opts_p = NULL;
+
+			if (full_data_flag)
+				{
+					opts_p =  BCON_NEW ( "sort", "{", PR_NAME_S, BCON_INT32 (1), "}");
+				}
+			else
+				{
+					opts_p =  BCON_NEW ("projection", "{", PR_NAME_S, BCON_BOOL (true), "}",
+															"sort", "{", PR_NAME_S, BCON_INT32 (1), "}");
+				}
+
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME])) */
 
 	return results_p;
@@ -238,7 +256,7 @@ json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opt
 bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Programme *active_program_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *results_p = GetAllProgrammesAsJSON (data_p, NULL);
+	json_t *results_p = GetAllProgrammesAsJSON (data_p, false);
 	bool value_set_flag = false;
 
 	if (results_p)
@@ -264,46 +282,66 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 									size_t i = 0;
 									const char *param_value_s = GetStringParameterCurrentValue (param_p);
 
-									while ((i < num_results) && success_flag)
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+									if (id_p)
 										{
-											json_t *entry_p = json_array_get (results_p, i);
-											Programme *program_p = GetProgrammeFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-											if (program_p)
+											while ((i < num_results) && success_flag)
 												{
-													char *id_s = GetBSONOidAsString (program_p -> pr_id_p);
+													json_t *entry_p = json_array_get (results_p, i);
 
-													if (id_s)
+													if (GetMongoIdFromJSON (entry_p, id_p))
 														{
-															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																{
-																	value_set_flag = true;
-																}
+															char *id_s = GetBSONOidAsString (id_p);
 
-															if (!CreateAndAddStringParameterOption (param_p, id_s, program_p -> pr_name_s))
+															if (id_s)
+																{
+																	const char *name_s = GetJSONString (entry_p, PR_NAME_S);
+
+																	if (name_s)
+																		{
+																			if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																				{
+																					value_set_flag = true;
+																				}
+
+																			if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																				{
+																					success_flag = false;
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																				}
+
+																		}		/* if (name_s) */
+																	else
+																		{
+																			success_flag = false;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", PR_NAME_S);
+																		}
+
+																	FreeBSONOidString (id_s);
+																}
+															else
 																{
 																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, program_p -> pr_name_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Programme BSON oid");
 																}
 
-															FreeBSONOidString (id_s);
-														}
+														}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Programme BSON oid");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
 														}
 
-													FreeProgramme (program_p);
-												}		/* if (program_p) */
+													if (success_flag)
+														{
+															++ i;
+														}
 
+												}		/* while ((i < num_results) && success_flag) */
 
-											if (success_flag)
-												{
-													++ i;
-												}
-
-										}		/* while ((i < num_results) && success_flag) */
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
 
 									/*
 									 * If the parameter's value isn't on the list, reset it
@@ -372,7 +410,7 @@ bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 			if (strcmp (programme_id_s, "*") == 0)
 				{
-					json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
+					json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, true);
 
 					if (programmes_json_p)
 						{
@@ -540,7 +578,7 @@ bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s,
 json_t *GetProgrammeIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-	json_t *src_programs_p = GetAllProgrammesAsJSON (data_p, NULL);
+	json_t *src_programs_p = GetAllProgrammesAsJSON (data_p, true);
 
 	if (src_programs_p)
 		{
@@ -1026,7 +1064,7 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 							OperationStatus status = OS_FAILED;
 
 							/* Get all programmes */
-							json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
+							json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, true);
 
 							if (programmes_json_p)
 								{

@@ -143,7 +143,7 @@ bool AddTrialsListFromJSON (FieldTrial *active_trial_p, const char *id_s, json_t
 bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
-	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
 
 	if (trials_p)
 		{
@@ -371,7 +371,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 json_t *GetFieldTrialIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-	json_t *src_trials_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+	json_t *src_trials_p = GetAllFieldTrialsAsJSON (data_p, true);
 
 	if (src_trials_p)
 		{
@@ -596,15 +596,32 @@ bool RunForSearchFieldTrialParams (FieldTrialServiceData *data_p, ParameterSet *
 }
 
 
-json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, const bool full_data_flag)
 {
 	json_t *results_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
 		{
 			bson_t *query_p = NULL;
+			bson_t *opts_p = NULL;
+
+			if (full_data_flag)
+				{
+					opts_p =  BCON_NEW ( "sort", "{", FT_NAME_S, BCON_INT32 (1), "}");
+				}
+			else
+				{
+					opts_p =  BCON_NEW ("projection", "{", FT_NAME_S, BCON_BOOL (true), "}",
+															"sort", "{", FT_NAME_S, BCON_INT32 (1), "}");
+				}
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
 
 	return results_p;
@@ -614,7 +631,7 @@ json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *op
 bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
 
 	if (trials_p)
 		{
@@ -652,31 +669,40 @@ bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p,
 						{
 							size_t i = 0;
 							const char *param_value_s = GetStringParameterDefaultValue (param_p);
+							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-							while ((i < num_results) && success_flag)
+							if (id_p)
 								{
-									json_t *entry_p = json_array_get (trials_p, i);
-									FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-									if (trial_p)
+									while ((i < num_results) && success_flag)
 										{
-											char *name_s = GetFieldTrialAsString (trial_p);
+											json_t *entry_p = json_array_get (trials_p, i);
 
-											if (name_s)
+											if (GetMongoIdFromJSON (entry_p, id_p))
 												{
-													char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+													char *id_s = GetBSONOidAsString (id_p);
 
 													if (id_s)
 														{
-															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																{
-																	value_set_flag = true;
-																}
+															const char *name_s = GetJSONString (entry_p, FT_NAME_S);
 
-															if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+															if (name_s)
+																{
+																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																		{
+																			value_set_flag = true;
+																		}
+
+																	if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																		{
+																			success_flag = false;
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																		}
+
+																}		/* if (name_s) */
+															else
 																{
 																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", FT_NAME_S);
 																}
 
 															FreeBSONOidString (id_s);
@@ -684,31 +710,26 @@ bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p,
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial BSON oid");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Field Trial BSON oid");
 														}
 
-													FreeCopiedString (name_s);
-												}		/* if (name_s) */
+												}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
 											else
 												{
 													success_flag = false;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial as string");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
+
 												}
 
-											FreeFieldTrial (trial_p);
-										}		/* if (trial_p) */
-									else
-										{
-											success_flag = false;
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial");
-										}
+											if (success_flag)
+												{
+													++ i;
+												}
 
-									if (success_flag)
-										{
-											++ i;
-										}
+										}		/* while ((i < num_results) && success_flag) */
 
-								}		/* while ((i < num_results) && success_flag) */
+									FreeBSONOid (id_p);
+								}		/* if (id_p) */
 
 							/*
 							 * If the parameter's value isn't on the list, reset it

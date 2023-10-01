@@ -82,7 +82,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *da
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, const bool full_data_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);

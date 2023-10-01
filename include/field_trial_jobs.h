@@ -85,7 +85,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameterFromJSON (const 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialIndexingData (Service *service_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, const bool full_data_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddFieldTrialToServiceJobFromJSON (ServiceJob *job_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);

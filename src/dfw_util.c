@@ -40,7 +40,7 @@ static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *da
 static char *GetIdBasedFilename (const char *id_s, const char *directory_s, const char *suffix_s);
 
 
-static bool RunVersionSearch (const char * const collection_s, const char * const key_s, const char * const id_s, json_t *results_p, bson_t *extra_opts_p, const FieldTrialServiceData *data_p);
+static bool RunVersionSearch (const char * const collection_s, const char * const key_s, const char * const id_s, const char *timestamp_s, json_t *results_p, bson_t *extra_opts_p, const FieldTrialServiceData *data_p);
 
 
 
@@ -381,7 +381,7 @@ void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collect
 
 
 
-static bool RunVersionSearch (const char * const collection_s, const char * const key_s, const char * const id_s, json_t *results_p, bson_t *extra_opts_p, const FieldTrialServiceData *data_p)
+static bool RunVersionSearch (const char * const collection_s, const char * const key_s, const char * const id_s, const char *timestamp_s, json_t *results_p, bson_t *extra_opts_p, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -397,13 +397,20 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 
 					if (BSON_APPEND_OID (query_p, key_s, &oid))
 						{
-							if (PopulateJSONWithAllMongoResults (data_p -> dftsd_mongo_p, query_p, extra_opts_p, results_p))
+							if ((timestamp_s == NULL) || (BSON_APPEND_UTF8 (query_p, DFT_TIMESTAMP_S, timestamp_s)))
 								{
-									success_flag = true;
-								}		/* if (temp_p) */
+									if (PopulateJSONWithAllMongoResults (data_p -> dftsd_mongo_p, query_p, extra_opts_p, results_p))
+										{
+											success_flag = true;
+										}		/* if (temp_p) */
+									else
+										{
+											PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, "Failed to get results searching for key \"%s\" value \"%s\"", key_s, id_s);
+										}
+								}
 							else
 								{
-									PrintBSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, query_p, "Failed to get results searching for key \"%s\" value \"%s\"", key_s, id_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append query for key \"%s\" value \"%s\"", DFT_TIMESTAMP_S, timestamp_s);
 								}
 
 						}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid)) */
@@ -430,6 +437,46 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 
 
 
+json_t *GetSpecificVersionOfObject (const char *id_s, const char *timestamp_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p)
+{
+	json_t *results_p = NULL;
+
+	if (bson_oid_is_valid (id_s, strlen (id_s)))
+		{
+			results_p = json_array ();
+
+			if (results_p)
+				{
+					/*
+					 * Get the current version first
+					 */
+					if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], MONGO_ID_S, id_s, timestamp_s, results_p, NULL, data_p))
+						{
+						  bson_t *opts_p = BCON_NEW ("sort", "{", DFT_TIMESTAMP_S, BCON_INT32 (-1), "}");
+
+							if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, timestamp_s, results_p, opts_p, data_p))
+								{
+									if (json_array_size (results_p) == 1)
+										{
+											return results_p;
+										}
+								}		/* if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
+
+						}		/* if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */
+
+					json_decref (results_p);
+				}		/* if (results_p) */
+
+		}		/* if (bson_oid_is_valid (field_trial_id_s, strlen (field_trial_id_s))) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "\"%s\" is not a valid oid", id_s);
+		}
+
+	return NULL;
+}
+
+
 
 json_t *GetAllVersionsOfObject (const char *id_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p)
 {
@@ -444,11 +491,11 @@ json_t *GetAllVersionsOfObject (const char *id_s, DFWFieldTrialData collection_t
 					/*
 					 * Get the current version first
 					 */
-					if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], MONGO_ID_S, id_s, results_p, NULL, data_p))
+					if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], MONGO_ID_S, id_s, NULL, results_p, NULL, data_p))
 						{
 						  bson_t *opts_p = BCON_NEW ("sort", "{", DFT_TIMESTAMP_S, BCON_INT32 (-1), "}");
 
-							if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, results_p, opts_p, data_p))
+							if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, NULL, results_p, opts_p, data_p))
 								{
 									return results_p;
 								}		/* if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], id_s, MONGO_ID_S, results_p, NULL, data_p)) */

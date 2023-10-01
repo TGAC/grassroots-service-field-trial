@@ -127,6 +127,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetStringDefaultValueFromJSON (const c
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllVersionsOfObject (const char *id_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetSpecificVersionOfObject (const char *id_s, const char *timestamp_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

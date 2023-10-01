@@ -227,7 +227,7 @@ static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p,
 
 
 
-static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *dfw_data_p)
+static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, FieldTrialServiceData *ft_data_p)
 {
 	FieldTrial *trial_p = NULL;
 
@@ -254,11 +254,11 @@ static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p,
 								{
 									if ((!IsStringEmpty (version_timestamp_s)) && (strcmp (version_timestamp_s, S_DEFAULT_TIMESTAMP_S) != 0))
 										{
-
+											trial_p = GetVersionedFieldTrial (trial_id_s, version_timestamp_s, VF_CLIENT_MINIMAL, ft_data_p);
 										}
 									else
 										{
-											trial_p = GetFieldTrialByIdString (trial_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+											trial_p = GetFieldTrialByIdString (trial_id_s, VF_CLIENT_MINIMAL, ft_data_p);
 										}
 
 									if (!trial_p)
@@ -425,7 +425,7 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 	LinkedList *existing_people_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (ft_data_p -> dftsd_base_data), param_set_p);
 	const bool read_only_flag = true;
-	json_t *trials_p = GetAllFieldTrialsAsJSON (ft_data_p, NULL);
+	json_t *trials_p = GetAllFieldTrialsAsJSON (ft_data_p, false);
 
 	if (trials_p)
 		{
