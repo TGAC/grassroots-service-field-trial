@@ -4355,8 +4355,20 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 
 							if (param_p)
 								{
-									if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? (active_study_p -> st_parent_p) : NULL, false))
+									char *trial_id_s = NULL;
+
+									if (active_study_p && (active_study_p -> st_parent_p))
 										{
+											trial_id_s = GetBSONOidAsString (active_study_p -> st_parent_p -> ft_id_p);
+										}
+
+									if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, trial_id_s, false))
+										{
+											if (trial_id_s)
+												{
+													FreeBSONOidString (trial_id_s);
+												}
+
 											if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Sowing year", "The year that the Study was started", active_study_p ? active_study_p -> st_predicted_sowing_year_p : NULL, PL_ALL)) != NULL)
 												{
 													if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Harvest year", "The year that the Study was finished", active_study_p ? active_study_p -> st_predicted_harvest_year_p : NULL, PL_ALL)) != NULL)
