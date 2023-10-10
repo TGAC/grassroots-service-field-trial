@@ -72,7 +72,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 		{
 			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
 
-			if (AddTrialsList (active_trial_p, id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
+			if (AddTrialsList (id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
 				{
 					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
 						{
@@ -111,7 +111,7 @@ bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char 
 
 
 
-bool AddTrialsListFromJSON (FieldTrial *active_trial_p, const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p)
+bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p)
 {
 	bool success_flag = false;
 	ServiceData *data_p = (ServiceData *) dfw_data_p;
@@ -121,7 +121,7 @@ bool AddTrialsListFromJSON (FieldTrial *active_trial_p, const char *id_s, json_t
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
-			if (SetUpFieldTrialsListParameterFromJSON (dfw_data_p, (StringParameter *) param_p, active_trial_p, empty_option_flag, trials_json_p))
+			if (SetUpFieldTrialsListParameterFromJSON (dfw_data_p, (StringParameter *) param_p, id_s, empty_option_flag, trials_json_p))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -140,14 +140,14 @@ bool AddTrialsListFromJSON (FieldTrial *active_trial_p, const char *id_s, json_t
 }
 
 
-bool AddTrialsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *data_p)
+bool AddTrialsList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
 
 	if (trials_p)
 		{
-			success_flag = AddTrialsListFromJSON (active_trial_p, id_s, trials_p, param_set_p, group_p, read_only_flag, empty_option_flag, data_p);
+			success_flag = AddTrialsListFromJSON (id_s, trials_p, param_set_p, group_p, read_only_flag, empty_option_flag, data_p);
 			json_decref (trials_p);
 		}
 
@@ -628,14 +628,14 @@ json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, const bool
 }
 
 
-bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag)
+bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
 
 	if (trials_p)
 		{
-			success_flag = SetUpFieldTrialsListParameterFromJSON (data_p, param_p, active_trial_p, empty_option_flag, trials_p);
+			success_flag = SetUpFieldTrialsListParameterFromJSON (data_p, param_p, active_trial_id_s, empty_option_flag, trials_p);
 			json_decref (trials_p);
 		}
 
@@ -643,7 +643,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 }
 
 
-bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag, json_t *trials_p)
+bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *active_trial_id_s, const bool empty_option_flag, json_t *trials_p)
 {
 	bool success_flag = false;
 	bool value_set_flag = false;
@@ -755,20 +755,9 @@ bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p,
 
 	if (success_flag)
 		{
-			if (active_trial_p)
+			if (active_trial_id_s)
 				{
-					char *id_s = GetBSONOidAsString (active_trial_p -> ft_id_p);
-
-					if (id_s)
-						{
-							success_flag = SetStringParameterDefaultValue (param_p, id_s);
-							FreeBSONOidString (id_s);
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id string for active trial \"%s\"", active_trial_p -> ft_name_s);
-							success_flag = false;
-						}
+					success_flag = SetStringParameterDefaultValue (param_p, active_trial_id_s);
 				}
 		}
 
