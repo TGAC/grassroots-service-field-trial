@@ -232,6 +232,10 @@ void FreeFieldTrial (FieldTrial *trial_p)
 				}
 		}
 
+	if (trial_p -> ft_timestamp_s)
+		{
+			FreeCopiedString (trial_p -> ft_timestamp_s);
+		}
 
 	FreeMemory (trial_p);
 }

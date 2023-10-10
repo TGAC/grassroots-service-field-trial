@@ -47,6 +47,12 @@ typedef struct Programme
 	bson_oid_t *pr_id_p;
 
 	/**
+	 * The time when this Field Trial was saved.
+	 */
+	char *pr_timestamp_s;
+
+
+	/**
 	 * The abbreviation for this Programme.
 	 */
 	char *pr_abbreviation_s;
@@ -163,7 +169,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s);
 
 
 /**

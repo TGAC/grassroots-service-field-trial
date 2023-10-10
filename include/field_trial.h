@@ -54,7 +54,7 @@ typedef struct FieldTrial
 	/**
 	 * The time when this Field Trial was saved.
 	 */
-	const char *ft_timestamp_s;
+	char *ft_timestamp_s;
 
 	/**
 	 * The Programme that this Field Trial is a part of.

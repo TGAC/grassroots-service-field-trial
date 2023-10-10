@@ -73,7 +73,7 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 static Programme *GetVersionedProgrammeFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p);
 
 
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const DFWProgrammeData dt);
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const DFWFieldTrialData dt);
 
 
 
@@ -301,12 +301,12 @@ static bool AddTrialVersionsList (Programme *active_programme_p, const char *id_
 	Parameter *param_p = NULL;
 	const char *timestamp_s = NULL;
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_TIMESTAMP.npt_type, S_TIMESTAMP.npt_name_s, "Version", "View Field Trial revisions", timestamp_s, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_TIMESTAMP.npt_type, S_TIMESTAMP.npt_name_s, "Version", "View Programme revisions", timestamp_s, PL_ALL)) != NULL)
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
 
-			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, active_programme_p  ? active_programme_p -> ft_timestamp_s : NULL, DFTD_FIELD_TRIAL))
+			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, active_programme_p  ? active_programme_p -> pr_timestamp_s : NULL, DFTD_FIELD_TRIAL))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -359,9 +359,9 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 												{
 													const char *value_s = S_DEFAULT_TIMESTAMP_S;
 
-													if (programme_p -> ft_timestamp_s)
+													if (programme_p -> pr_timestamp_s)
 														{
-															value_s = programme_p -> ft_timestamp_s;
+															value_s = programme_p -> pr_timestamp_s;
 
 															if (param_value_s && (strcmp (param_value_s, value_s) == 0))
 																{

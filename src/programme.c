@@ -48,7 +48,7 @@ static bool AddFundingToClientProgrammeJSON (const Programme *programme_p, json_
 
 
 
-Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s)
+Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s)
 {
 	char *copied_abbreviation_s = NULL;
 
@@ -79,39 +79,52 @@ Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop
 													if ((project_code_s == NULL) || (copied_project_code_s = EasyCopyToNewString (project_code_s)))
 														{
 
-															LinkedList *trials_p = AllocateLinkedList (FreeFieldTrialNode);
+															char *copied_timestamp_s = NULL;
 
-															if (trials_p)
+															if ((timestamp_s == NULL) || (copied_timestamp_s = EasyCopyToNewString (timestamp_s)))
 																{
+																	LinkedList *trials_p = AllocateLinkedList (FreeFieldTrialNode);
 
-																	if (pi_p)
+																	if (trials_p)
 																		{
-																			Programme *programme_p = (Programme *) AllocMemory (sizeof (Programme));
 
-																			if (programme_p)
+																			if (pi_p)
 																				{
-																					programme_p -> pr_abbreviation_s = copied_abbreviation_s;
-																					programme_p -> pr_crop_p = crop_p;
-																					programme_p -> pr_documentation_url_s = copied_documentation_url_s;
-																					programme_p -> pr_id_p = id_p;
-																					programme_p -> pr_name_s = copied_name_s;
-																					programme_p -> pr_objective_s = copied_objective_s;
-																					programme_p -> pr_pi_p = pi_p;
-																					programme_p -> pr_trials_p = trials_p;
-																					programme_p -> pr_logo_url_s = copied_logo_url_s;
-																					programme_p -> pr_project_code_s = copied_project_code_s;
-																					programme_p -> pr_funding_organisation_s = copied_funders_s;
-																					programme_p -> pr_pi_p = pi_p;
+																					Programme *programme_p = (Programme *) AllocMemory (sizeof (Programme));
 
-																					return programme_p;
-																				}		/* if (programme_p) */
+																					if (programme_p)
+																						{
+																							programme_p -> pr_abbreviation_s = copied_abbreviation_s;
+																							programme_p -> pr_crop_p = crop_p;
+																							programme_p -> pr_documentation_url_s = copied_documentation_url_s;
+																							programme_p -> pr_id_p = id_p;
+																							programme_p -> pr_timestamp_s = copied_timestamp_s;
+																							programme_p -> pr_name_s = copied_name_s;
+																							programme_p -> pr_objective_s = copied_objective_s;
+																							programme_p -> pr_pi_p = pi_p;
+																							programme_p -> pr_trials_p = trials_p;
+																							programme_p -> pr_logo_url_s = copied_logo_url_s;
+																							programme_p -> pr_project_code_s = copied_project_code_s;
+																							programme_p -> pr_funding_organisation_s = copied_funders_s;
+																							programme_p -> pr_pi_p = pi_p;
 
-																			FreePerson (pi_p);
+																							return programme_p;
+																						}		/* if (programme_p) */
+
+																					FreePerson (pi_p);
+																				}
+
+
+																			FreeLinkedList (trials_p);
+																		}		/* if (trials_p) */
+
+
+																	if (copied_timestamp_s)
+																		{
+																			FreeCopiedString (copied_timestamp_s);
 																		}
+																}
 
-
-																	FreeLinkedList (trials_p);
-																}		/* if (trials_p) */
 
 															if (copied_project_code_s)
 																{
@@ -201,6 +214,11 @@ void FreeProgramme (Programme *programme_p)
 			FreeCopiedString (programme_p -> pr_logo_url_s);
 		}
 
+	if (programme_p -> pr_timestamp_s)
+		{
+			FreeCopiedString (programme_p -> pr_timestamp_s);
+		}
+
 	FreeCopiedString (programme_p -> pr_name_s);
 
 	FreeLinkedList (programme_p -> pr_trials_p);
@@ -259,45 +277,20 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 						{
 							if (SetNonTrivialString (programme_json_p, PR_LOGO_S, programme_p -> pr_logo_url_s, true))
 								{
-									if (AddDatatype (programme_json_p, DFTD_PROGRAMME))
+									if (SetNonTrivialString (programme_json_p, DFT_TIMESTAMP_S, programme_p -> pr_timestamp_s, true))
 										{
-											if (AddFullDetailsToProgrammeJSON (programme_p, programme_json_p, true))
+											if (AddDatatype (programme_json_p, DFTD_PROGRAMME))
 												{
-													bool success_flag = false;
-
-													switch (format)
+													if (AddFullDetailsToProgrammeJSON (programme_p, programme_json_p, true))
 														{
-															case VF_CLIENT_FULL:
-															case VF_CLIENT_MINIMAL:
+															bool success_flag = false;
+
+															switch (format)
 																{
-																	if (AddFundingToClientProgrammeJSON (programme_p, programme_json_p))
+																	case VF_CLIENT_FULL:
+																	case VF_CLIENT_MINIMAL:
 																		{
-																			if (programme_p -> pr_crop_p)
-																				{
-																					if (SetJSONString (programme_json_p, PR_CROP_S, programme_p -> pr_crop_p -> cr_name_s))
-																						{
-																							success_flag = true;
-																						}
-																					else
-																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to add crop \"%s\"", programme_p -> pr_crop_p -> cr_name_s);
-																						}
-																				}		/* if (programme_p -> pr_crop_id_p) */
-																			else
-																				{
-																					success_flag = true;
-																				}
-
-																		}
-																}
-																break;
-
-
-															case VF_INDEXING:
-																{
-																	if ((programme_p -> pr_funding_organisation_s == NULL) || (SetJSONString (programme_json_p, PR_FUNDERS_S, programme_p -> pr_funding_organisation_s)))
-																		{
-																			if ((programme_p -> pr_project_code_s == NULL) || (SetJSONString (programme_json_p, PR_CODE_S, programme_p -> pr_project_code_s)))
+																			if (AddFundingToClientProgrammeJSON (programme_p, programme_json_p))
 																				{
 																					if (programme_p -> pr_crop_p)
 																						{
@@ -314,40 +307,69 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 																						{
 																							success_flag = true;
 																						}
+
 																				}
 																		}
-																}
-															break;
+																		break;
 
 
-															case VF_STORAGE:
-																{
-																	if ((programme_p -> pr_funding_organisation_s == NULL) || (SetJSONString (programme_json_p, PR_FUNDERS_S, programme_p -> pr_funding_organisation_s)))
+																	case VF_INDEXING:
 																		{
-																			if ((programme_p -> pr_project_code_s == NULL) || (SetJSONString (programme_json_p, PR_CODE_S, programme_p -> pr_project_code_s)))
+																			if ((programme_p -> pr_funding_organisation_s == NULL) || (SetJSONString (programme_json_p, PR_FUNDERS_S, programme_p -> pr_funding_organisation_s)))
 																				{
-																					if ((! (programme_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (programme_json_p, programme_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
+																					if ((programme_p -> pr_project_code_s == NULL) || (SetJSONString (programme_json_p, PR_CODE_S, programme_p -> pr_project_code_s)))
 																						{
-																							success_flag = true;
+																							if (programme_p -> pr_crop_p)
+																								{
+																									if (SetJSONString (programme_json_p, PR_CROP_S, programme_p -> pr_crop_p -> cr_name_s))
+																										{
+																											success_flag = true;
+																										}
+																									else
+																										{
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to add crop \"%s\"", programme_p -> pr_crop_p -> cr_name_s);
+																										}
+																								}		/* if (programme_p -> pr_crop_id_p) */
+																							else
+																								{
+																									success_flag = true;
+																								}
 																						}
 																				}
 																		}
+																	break;
+
+
+																	case VF_STORAGE:
+																		{
+																			if ((programme_p -> pr_funding_organisation_s == NULL) || (SetJSONString (programme_json_p, PR_FUNDERS_S, programme_p -> pr_funding_organisation_s)))
+																				{
+																					if ((programme_p -> pr_project_code_s == NULL) || (SetJSONString (programme_json_p, PR_CODE_S, programme_p -> pr_project_code_s)))
+																						{
+																							if ((! (programme_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (programme_json_p, programme_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
+																								{
+																									success_flag = true;
+																								}
+																						}
+																				}
+																		}
+																		break;
+
+																	default:
+																		success_flag = true;
+																		break;
 																}
-																break;
 
-															default:
-																success_flag = true;
-																break;
-														}
+															if (success_flag)
+																{
+																	return programme_json_p;
+																}
 
-													if (success_flag)
-														{
-															return programme_json_p;
-														}
+														}		/* if (AddFullDetailsToProgrammeJSON (programme_p, programme_json_p, format == VF_STORAGE)) */
 
-												}		/* if (AddFullDetailsToProgrammeJSON (programme_p, programme_json_p, format == VF_STORAGE)) */
+												}
 
-										}
+										}		/*if (SetNonTrivialString (programme_json_p, DFT_TIMESTAMP_S, programme_p -> pr_timestamp_s, true)) */
 
 								}		/* if (SetNonTrivialString (programme_json_p, PR_LOGO_S, programme_p -> pr_logo_url_s)) */
 
@@ -386,6 +408,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									const char *logo_s = GetJSONString (json_p, PR_LOGO_S);
 									const char *funders_s = GetJSONString (json_p, PR_FUNDERS_S);
 									const char *project_code_s = GetJSONString (json_p, PR_CODE_S);
+									const char *timestamp_s = GetJSONString (json_p, DFT_TIMESTAMP_S);
 									Crop *crop_p = NULL;
 									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
 
@@ -399,7 +422,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 											FreeBSONOid (crop_id_p);
 										}
 
-									programme_p = AllocateProgramme (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s);
+									programme_p = AllocateProgramme (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s, timestamp_s);
 
 									if (programme_p)
 										{
