@@ -340,7 +340,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 
 
-const char *GetDatatypeAsString (const DFWFieldTrialData data_type)
+const char *GetDatatypeAsString (const FieldTrialDatatype data_type)
 {
 	const char *type_s = NULL;
 
@@ -353,7 +353,7 @@ const char *GetDatatypeAsString (const DFWFieldTrialData data_type)
 }
 
 
-const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type)
+const char *GetDatatypeDescriptionAsString (const FieldTrialDatatype data_type)
 {
 	const char *type_s = NULL;
 
@@ -366,11 +366,11 @@ const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type)
 }
 
 
-DFWFieldTrialData GetDatatypeFromString (const char *type_s)
+FieldTrialDatatype GetDatatypeFromString (const char *type_s)
 {
 	if (type_s)
 		{
-			DFWFieldTrialData i = 0;
+			FieldTrialDatatype i = 0;
 
 			for ( ; i < DFTD_NUM_TYPES; ++ i)
 				{

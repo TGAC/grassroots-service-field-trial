@@ -855,6 +855,18 @@ bool RemoveProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p)
 }
 
 
+
+
+Programme *GetVersionedProgramme (const char *programme_id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	Programme *programme_p = GetVersionedObject (programme_id_s, timestamp_s, format, DFTD_PROGRAMME, data_p, GetProgrammeFromJSON);
+	return programme_p;
+}
+
+
+
+
+
 /*
 
 {

@@ -52,7 +52,7 @@ typedef enum
 	DFTD_CROP,
 	DFTD_TREATMENT,
 	DFTD_NUM_TYPES
-} DFWFieldTrialData;
+} FieldTrialDatatype;
 
 
 
@@ -533,13 +533,13 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeFieldTrialServiceData (FieldTrialServiceD
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer *grassroots_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const DFWFieldTrialData data_type);
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeAsString (const FieldTrialDatatype data_type);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type);
+DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetDatatypeDescriptionAsString (const FieldTrialDatatype data_type);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL DFWFieldTrialData GetDatatypeFromString (const char *type_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL FieldTrialDatatype GetDatatypeFromString (const char *type_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetImageForDatatype (const FieldTrialServiceData *data_p, const char *data_type_s);

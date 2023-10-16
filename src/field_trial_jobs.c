@@ -40,10 +40,6 @@ static NamedParameterType S_FUZZY_SEARCH_FIELD_TRIALS = { "Fuzzy Search", PT_BOO
 static NamedParameterType S_FULL_DATA = { "Get full data from search", PT_BOOLEAN };
 
 
-static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
-
-
-
 
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
@@ -72,7 +68,7 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 		{
 			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
 
-			if (AddTrialsList (id_s, param_set_p, group_p, read_only_flag, true, dfw_data_p))
+			if (AddTrialsList (id_s, param_set_p, group_p, read_only_flag, FT_EMPTY_LIST_OPTION_S, dfw_data_p))
 				{
 					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
 						{
@@ -81,7 +77,6 @@ bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set
 				}
 
 		}
-
 
 	return success_flag;
 }
@@ -111,17 +106,17 @@ bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char 
 
 
 
-bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p)
+bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char *empty_option_s, FieldTrialServiceData *ft_data_p)
 {
 	bool success_flag = false;
-	ServiceData *data_p = (ServiceData *) dfw_data_p;
+	ServiceData *data_p = (ServiceData *) ft_data_p;
 	Parameter *param_p = NULL;
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
-			if (SetUpFieldTrialsListParameterFromJSON (dfw_data_p, (StringParameter *) param_p, id_s, empty_option_flag, trials_json_p))
+			if (SetUpListParameterFromJSON (ft_data_p, (StringParameter *) param_p, id_s, empty_option_s, FT_NAME_S, trials_json_p))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -140,14 +135,14 @@ bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSe
 }
 
 
-bool AddTrialsList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *data_p)
+bool AddTrialsList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char * const empty_option_s, FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
 
 	if (trials_p)
 		{
-			success_flag = AddTrialsListFromJSON (id_s, trials_p, param_set_p, group_p, read_only_flag, empty_option_flag, data_p);
+			success_flag = AddTrialsListFromJSON (id_s, trials_p, param_set_p, group_p, read_only_flag, empty_option_s, data_p);
 			json_decref (trials_p);
 		}
 
@@ -170,7 +165,7 @@ bool AddTrialEditor (const char * const name_s, const char * const team_s, const
 				{
 					Programme *programme_p = NULL;
 
-					if (programme_id_s && (strcmp (programme_id_s, S_EMPTY_LIST_OPTION_S) != 0))
+					if (programme_id_s && (strcmp (programme_id_s, FT_EMPTY_LIST_OPTION_S) != 0))
 						{
 							programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
 						}
@@ -226,7 +221,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 	if (id_s)
 		{
-			if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
+			if (strcmp (FT_EMPTY_LIST_OPTION_S, id_s) != 0)
 				{
 					trial_id_p = GetBSONOidFromString (id_s);
 
@@ -255,7 +250,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 	if (programme_id_s)
 		{
-			if (strcmp (S_EMPTY_LIST_OPTION_S, programme_id_s) != 0)
+			if (strcmp (FT_EMPTY_LIST_OPTION_S, programme_id_s) != 0)
 				{
 					programme_p = GetProgrammeByIdString (programme_id_s, VF_STORAGE, data_p);
 
@@ -661,7 +656,7 @@ bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p,
 					 */
 					if (empty_option_flag)
 						{
-							success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
+							success_flag = CreateAndAddStringParameterOption (param_p, FT_EMPTY_LIST_OPTION_S, FT_EMPTY_LIST_OPTION_S);
 						}
 
 
@@ -734,7 +729,7 @@ bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p,
 							/*
 							 * If the parameter's value isn't on the list, reset it
 							 */
-							if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
+							if ((param_value_s != NULL) && (strcmp (param_value_s, FT_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
 								}
@@ -1095,8 +1090,8 @@ static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name
 {
 	bool success_flag = true;
 
-	*id_ss = (char *) S_EMPTY_LIST_OPTION_S;
-	*program_id_ss = (char *) S_EMPTY_LIST_OPTION_S;
+	*id_ss = (char *) FT_EMPTY_LIST_OPTION_S;
+	*program_id_ss = (char *) FT_EMPTY_LIST_OPTION_S;
 	*name_ss = NULL;
 	*team_ss = NULL;
 	*existing_people_pp = NULL;

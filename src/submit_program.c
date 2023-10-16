@@ -154,7 +154,7 @@ static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 
-			if (AddSubmissionProgrammeParams (data_p, params_p, resource_p))
+			if (AddSubmissionProgrammeParams (data_p, params_p, resource_p, false))
 				{
 					return params_p;
 				}

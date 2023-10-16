@@ -20,6 +20,7 @@
  *      Author: billy
  */
 
+#define ALLOCATE_DFW_UTIL_TAGS (1)
 #include "dfw_util.h"
 #include "streams.h"
 #include "time_util.h"
@@ -46,7 +47,7 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 
 bool FindAndAddResultToServiceJob (const char *id_s, const ViewFormat format, ServiceJob *job_p, JSONProcessor *processor_p,
 																	 json_t *(get_json_fn) (const char *id_s, const ViewFormat format, JSONProcessor *processor_p, char **name_ss, const FieldTrialServiceData *data_p),
-																	 const DFWFieldTrialData datatype, const FieldTrialServiceData *data_p)
+																	 const FieldTrialDatatype datatype, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	char *name_s = NULL;
@@ -262,7 +263,7 @@ char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialSe
 }
 
 
-void *GetDFWObjectByNamedId (const bson_oid_t *id_p, DFWFieldTrialData collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetDFWObjectByNamedId (const bson_oid_t *id_p, FieldTrialDatatype collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
@@ -347,13 +348,13 @@ void *GetDFWObjectByNamedId (const bson_oid_t *id_p, DFWFieldTrialData collectio
 }
 
 
-void *GetDFWObjectById (const bson_oid_t *id_p, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetDFWObjectById (const bson_oid_t *id_p, FieldTrialDatatype collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	return GetDFWObjectByNamedId (id_p, collection_type, MONGO_ID_S, get_obj_from_json_fn, format, data_p);
 }
 
 
-void *GetDFWObjectByNamedIdString (const char *object_id_s, DFWFieldTrialData collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetDFWObjectByNamedIdString (const char *object_id_s, FieldTrialDatatype collection_type, const char *id_key_s, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	void *result_p = NULL;
 
@@ -374,7 +375,7 @@ void *GetDFWObjectByNamedIdString (const char *object_id_s, DFWFieldTrialData co
 }
 
 
-void *GetDFWObjectByIdString (const char *object_id_s, DFWFieldTrialData collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
+void *GetDFWObjectByIdString (const char *object_id_s, FieldTrialDatatype collection_type, void *(*get_obj_from_json_fn) (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p), const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	return GetDFWObjectByNamedIdString (object_id_s, collection_type, MONGO_ID_S, get_obj_from_json_fn, format, data_p);
 }
@@ -436,8 +437,101 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 }
 
 
+void *GetVersionedObjectFromResource (DataResource *resource_p, const NamedParameterType param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p,
+																			void *(*get_versioned_obj_fn) (const char *id_s, const char *timestamp_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p),
+																			void *(*get_obj_by_id_fn) (const char *id_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p))
+{
+	void *res_p = NULL;
 
-json_t *GetSpecificVersionOfObject (const char *id_s, const char *timestamp_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p)
+	/*GetProgrammeFromResourceGetProgrammeFromResource
+	 * Have we been set some parameter values to refresh from?
+	 */
+	if (resource_p && (resource_p -> re_data_p))
+		{
+			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
+
+			if (param_set_json_p)
+				{
+					json_t *params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
+
+					if (params_json_p)
+						{
+							const char *id_s = GetNamedParameterDefaultValueFromJSON (param_type.npt_name_s, params_json_p);
+							const char *version_timestamp_s = GetNamedParameterDefaultValueFromJSON (FT_TIMESTAMP.npt_name_s, params_json_p);
+
+							/*
+							 * Do we have an existing programme id?
+							 */
+							if (id_s)
+								{
+									*original_id_ss = id_s;
+
+									if ((!IsStringEmpty (version_timestamp_s)) && (strcmp (version_timestamp_s, FT_DEFAULT_TIMESTAMP_S) != 0))
+										{
+											res_p = get_versioned_obj_fn (id_s, version_timestamp_s, VF_CLIENT_MINIMAL, ft_data_p);
+										}
+
+									/*
+									 * The request may be requesting a new field programme but sending the timestamp from the
+									 * previous one so if we failed to get the versioned field programme get the current one
+									 */
+									if (!res_p)
+										{
+											res_p = get_obj_by_id_fn (id_s, VF_CLIENT_MINIMAL, ft_data_p);
+										}
+
+									if (!res_p)
+										{
+											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load object with id \"%s\"", id_s);
+										}
+
+								}		/* if (study_id_s) */
+
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
+						}
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
+				}
+
+		}		/* if (resource_p && (resource_p -> re_data_p)) */
+
+	return res_p;
+}
+
+
+
+void *GetVersionedObject (const char *id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialDatatype dt, const FieldTrialServiceData *data_p, void *(*callback_fn) (json_t *json_p, ViewFormat format, const FieldTrialServiceData *data_p))
+{
+	void *res_p = NULL;
+	json_t *versions_p = GetSpecificJSONVersionOfObject (id_s, timestamp_s, dt, data_p);
+
+	if (versions_p)
+		{
+			if (json_array_size (versions_p) == 1)
+				{
+					json_t *json_p = json_array_get (versions_p, 0);
+
+					res_p = callback_fn (json_p, format, data_p);
+
+					if (!res_p)
+						{
+							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "callback failed");
+						}
+				}
+
+			json_decref (versions_p);
+		}
+
+	return res_p;
+}
+
+
+json_t *GetSpecificJSONVersionOfObject (const char *id_s, const char *timestamp_s, FieldTrialDatatype collection_type, const FieldTrialServiceData *data_p)
 {
 	json_t *results_p = NULL;
 
@@ -478,7 +572,7 @@ json_t *GetSpecificVersionOfObject (const char *id_s, const char *timestamp_s, D
 
 
 
-json_t *GetAllVersionsOfObject (const char *id_s, DFWFieldTrialData collection_type, const FieldTrialServiceData *data_p)
+json_t *GetAllJSONVersionsOfObject (const char *id_s, FieldTrialDatatype collection_type, const FieldTrialServiceData *data_p)
 {
 	json_t *results_p = NULL;
 
@@ -787,7 +881,7 @@ bool AddContext (json_t *data_p)
 }
 
 
-bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
+bool AddDatatype (json_t *doc_p, const FieldTrialDatatype data_type)
 {
 	bool success_flag = false;
 	const char *type_s = GetDatatypeAsString (data_type);
@@ -830,7 +924,7 @@ bool AddDatatype (json_t *doc_p, const DFWFieldTrialData data_type)
 
 
 
-bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const FieldTrialServiceData *data_p)
+bool AddImage (json_t *doc_p, const FieldTrialDatatype data_type, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 	const char *type_s = GetDatatypeAsString (data_type);
@@ -852,7 +946,7 @@ bool AddImage (json_t *doc_p, const DFWFieldTrialData data_type, const FieldTria
 }
 
 
-LinkedList *SearchObjects (const FieldTrialServiceData *data_p, const DFWFieldTrialData collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const FieldTrialServiceData *service_data_p))
+LinkedList *SearchObjects (const FieldTrialServiceData *data_p, const FieldTrialDatatype collection_type, const char **keys_ss, const char **values_ss, void (*free_list_item_fn) (ListItem * const item_p), bool (*add_result_to_list_fn) (const json_t *result_p, LinkedList *list_p, const FieldTrialServiceData *service_data_p))
 {
 	LinkedList *results_list_p = AllocateLinkedList (free_list_item_fn);
 
@@ -1135,6 +1229,131 @@ static char *GetIdBasedFilename (const char *id_s, const char *directory_s, cons
 
 	return filename_s;
 }
+
+
+
+bool SetUpListParameterFromJSON (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *active_id_s, const char *empty_option_s, const char *name_key_s, json_t *objects_p)
+{
+	bool success_flag = false;
+	bool value_set_flag = false;
+
+	if (json_is_array (objects_p))
+		{
+			const size_t num_results = json_array_size (objects_p);
+
+			success_flag = true;
+
+			if (num_results > 0)
+				{
+					/*
+					 * If there's an empty option, add it
+					 */
+					if (empty_option_s)
+						{
+							success_flag = CreateAndAddStringParameterOption (param_p, empty_option_s, empty_option_s);
+						}
+
+
+					if (success_flag)
+						{
+							size_t i = 0;
+							const char *param_value_s = GetStringParameterDefaultValue (param_p);
+							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+							if (id_p)
+								{
+									while ((i < num_results) && success_flag)
+										{
+											json_t *entry_p = json_array_get (objects_p, i);
+
+											if (GetMongoIdFromJSON (entry_p, id_p))
+												{
+													char *id_s = GetBSONOidAsString (id_p);
+
+													if (id_s)
+														{
+															const char *name_s = GetJSONString (entry_p, name_key_s);
+
+															if (name_s)
+																{
+																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																		{
+																			value_set_flag = true;
+																		}
+
+																	if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																		{
+																			success_flag = false;
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																		}
+
+																}		/* if (name_s) */
+															else
+																{
+																	success_flag = false;
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", name_key_s);
+																}
+
+															FreeBSONOidString (id_s);
+														}
+													else
+														{
+															success_flag = false;
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get BSON oid");
+														}
+
+												}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
+											else
+												{
+													success_flag = false;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
+
+												}
+
+											if (success_flag)
+												{
+													++ i;
+												}
+
+										}		/* while ((i < num_results) && success_flag) */
+
+									FreeBSONOid (id_p);
+								}		/* if (id_p) */
+
+							/*
+							 * If the parameter's value isn't on the list, reset it
+							 */
+							if ((param_value_s != NULL) && (empty_option_s != NULL) && (strcmp (param_value_s, empty_option_s) != 0) && (value_set_flag == false))
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
+								}
+
+						}		/* if (success_flag) */
+
+
+				}		/* if (num_results > 0) */
+			else
+				{
+					/* nothing to add */
+					success_flag = true;
+				}
+
+		}		/* if (json_is_array (results_p)) */
+
+
+
+	if (success_flag)
+		{
+			if (active_id_s)
+				{
+					success_flag = SetStringParameterDefaultValue (param_p, active_id_s);
+				}
+		}
+
+
+	return success_flag;
+}
+
 
 
 static char *GetCacheFilename (const char *id_s, const FieldTrialServiceData *data_p)

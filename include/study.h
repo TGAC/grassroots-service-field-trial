@@ -182,6 +182,8 @@ typedef struct Study
 {
 	bson_oid_t *st_id_p;
 
+	char *st_timestamp_s;
+
 	FieldTrial *st_parent_p;
 
 	MEM_FLAG st_parent_field_trial_mem;

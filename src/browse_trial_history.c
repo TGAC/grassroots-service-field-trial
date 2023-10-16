@@ -73,13 +73,10 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p);
 
 
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const DFWFieldTrialData dt);
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt);
 
+static bool AddTrialVersionsList (FieldTrial *active_trial_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p);
 
-
-static NamedParameterType S_TIMESTAMP = { "FT Timestamp", PT_STRING };
-
-static const char * const S_DEFAULT_TIMESTAMP_S = "current";
 
 /*
  * API definitions
@@ -173,7 +170,7 @@ static bool GetBrowseTrialHistoryServiceParameterTypesForNamedParameters (const 
 	
 	const NamedParameterType params [] =
 		{
-			S_TIMESTAMP,
+			FT_TIMESTAMP,
 			NULL
 		};
 
@@ -224,70 +221,10 @@ static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p,
 
 
 
-
-
-
-
 static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
 {
-	FieldTrial *trial_p = NULL;
-
-	/*GetFieldTrialFromResourceGetFieldTrialFromResource
-	 * Have we been set some parameter values to refresh from?
-	 */
-	if (resource_p && (resource_p -> re_data_p))
-		{
-			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
-
-			if (param_set_json_p)
-				{
-					json_t *params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
-
-					if (params_json_p)
-						{
-							const char *trial_id_s = GetNamedParameterDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
-							const char *version_timestamp_s = GetNamedParameterDefaultValueFromJSON (S_TIMESTAMP.npt_name_s, params_json_p);
-
-							/*
-							 * Do we have an existing trial id?
-							 */
-							if (trial_id_s)
-								{
-									*original_id_ss = trial_id_s;
-
-									if ((!IsStringEmpty (version_timestamp_s)) && (strcmp (version_timestamp_s, S_DEFAULT_TIMESTAMP_S) != 0))
-										{
-											trial_p = GetVersionedFieldTrial (trial_id_s, version_timestamp_s, VF_CLIENT_MINIMAL, ft_data_p);
-										}
-
-									/*
-									 * The request may be requesting a new field trial but sending the timestamp from the
-									 * previous one so if we failed to get the versioned field trial get the current one
-									 */
-									if (!trial_p)
-										{
-											trial_p = GetFieldTrialByIdString (trial_id_s, VF_CLIENT_MINIMAL, ft_data_p);
-										}
-
-									if (!trial_p)
-										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Field Trial with id \"%s\"", trial_id_s);
-										}
-
-								}		/* if (study_id_s) */
-
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
-						}
-				}
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
-				}
-
-		}		/* if (resource_p && (resource_p -> re_data_p)) */
+	FieldTrial *trial_p = (FieldTrial *) GetVersionedObjectFromResource (resource_p, trial_param_type, original_id_ss, ft_data_p,
+																																			 GetVersionedFieldTrial, GetFieldTrialByIdString);
 
 	return trial_p;
 }
@@ -301,7 +238,7 @@ static bool AddTrialVersionsList (FieldTrial *active_trial_p, const char *id_s, 
 	Parameter *param_p = NULL;
 	const char *timestamp_s = NULL;
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_TIMESTAMP.npt_type, S_TIMESTAMP.npt_name_s, "Version", "View Field Trial revisions", timestamp_s, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FT_TIMESTAMP.npt_type, FT_TIMESTAMP.npt_name_s, "Version", "View Field Trial revisions", timestamp_s, PL_ALL)) != NULL)
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
@@ -327,11 +264,11 @@ static bool AddTrialVersionsList (FieldTrial *active_trial_p, const char *id_s, 
 
 
 
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const DFWFieldTrialData dt)
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt)
 {
 	bool success_flag = false;
 
-	json_t *results_p = GetAllVersionsOfObject (id_s, dt, data_p);
+	json_t *results_p = GetAllJSONVersionsOfObject (id_s, dt, data_p);
 
 
 	if (results_p)
@@ -357,7 +294,7 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 
 											if (trial_p)
 												{
-													const char *value_s = S_DEFAULT_TIMESTAMP_S;
+													const char *value_s = FT_DEFAULT_TIMESTAMP_S;
 
 													if (trial_p -> ft_timestamp_s)
 														{
@@ -470,7 +407,7 @@ static bool AddBrowseTrialHistoryParams (ServiceData *data_p, ParameterSet *para
 
 					if (id_to_use_s)
 						{
-							if (AddTrialsListFromJSON (id_to_use_s, trials_p, param_set_p, group_p, false, false, ft_data_p))
+							if (AddTrialsListFromJSON (id_to_use_s, trials_p, param_set_p, group_p, false, NULL, ft_data_p))
 								{
 									char *programme_id_s = NULL;
 									const char *name_s = NULL;

@@ -627,27 +627,7 @@ FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, 
 
 FieldTrial *GetVersionedFieldTrial (const char *field_trial_id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	FieldTrial *trial_p = NULL;
-	json_t *trials_json_p = GetSpecificVersionOfObject (field_trial_id_s, timestamp_s, DFTD_FIELD_TRIAL, data_p);
-
-	if (trials_json_p)
-		{
-			if (json_array_size (trials_json_p) == 1)
-				{
-					json_t *trial_json_p = json_array_get (trials_json_p, 0);
-
-					trial_p = GetFieldTrialFromJSON (trial_json_p, format, data_p);
-
-					if (trial_p)
-						{
-							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, trial_json_p, "GetFieldTrialFromJSON () failed");
-						}
-				}
-
-			json_decref (trials_json_p);
-		}
-
-
+	FieldTrial *trial_p = GetVersionedObject (field_trial_id_s, timestamp_s, format, DFTD_FIELD_TRIAL, data_p, GetFieldTrialFromJSON);
 	return trial_p;
 }
 

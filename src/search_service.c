@@ -907,7 +907,7 @@ static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, con
 
 			if (type_s)
 				{
-					DFWFieldTrialData datatype = GetDatatypeFromString (type_s);
+					FieldTrialDatatype datatype = GetDatatypeFromString (type_s);
 
 					switch (datatype)
 						{

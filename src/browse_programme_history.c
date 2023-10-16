@@ -64,7 +64,7 @@ static bool CloseBrowseProgrammeHistoryService (Service *service_p);
 static ServiceMetadata *GetBrowseProgrammeHistoryServiceMetadata (Service *service_p);
 
 
-static Parameter *CreateSubmitTrialParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
+static Parameter *CreateSubmitProgrammeParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag);
 
 
 static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *param_set_p, Programme *active_programme_p, const char *original_id_s);
@@ -73,13 +73,15 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 static Programme *GetVersionedProgrammeFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p);
 
 
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const DFWFieldTrialData dt);
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt);
 
 
 
-static NamedParameterType S_TIMESTAMP = { "PR Timestamp", PT_STRING };
 
-static const char * const S_DEFAULT_TIMESTAMP_S = "current";
+
+
+
+
 
 /*
  * API definitions
@@ -116,9 +118,9 @@ Service *GetBrowseProgrammeHistoryService (GrassrootsServer *grassroots_p)
 														 grassroots_p))
 						{
 
-							if (ConfigureProgrammeService (data_p, grassroots_p))
+							if (ConfigureFieldTrialService (data_p, grassroots_p))
 								{
-									service_p -> se_custom_parameter_decoder_fn = CreateSubmitTrialParameterFromJSON;
+									service_p -> se_custom_parameter_decoder_fn = CreateSubmitProgrammeParameterFromJSON;
 
 									return service_p;
 								}
@@ -137,14 +139,13 @@ Service *GetBrowseProgrammeHistoryService (GrassrootsServer *grassroots_p)
 
 static const char *GetBrowseProgrammeHistoryServiceName (const Service * UNUSED_PARAM (service_p))
 {
-	return "Browse Field Trial Revisions";
+	return "Browse Programme Revisions";
 }
 
 
 static const char *GetBrowseProgrammeHistoryServiceDescription (const Service * UNUSED_PARAM (service_p))
 {
-	return "Browse all of the revisions of a given Field Trial. Following the same nomenclature as <a href='https://brapi.docs.apiary.io/'>BrAPI</a>,"
-			" a Field Trial contains multiple Studies. This is equivalent to an Investigation in <a href='https://www.miappe.org/'>MIAPPE</a>.";
+	return "Browse all of the revisions of a given Programme";
 }
 
 
@@ -173,7 +174,7 @@ static bool GetBrowseProgrammeHistoryServiceParameterTypesForNamedParameters (co
 	
 	const NamedParameterType params [] =
 		{
-			S_TIMESTAMP,
+			FT_TIMESTAMP,
 			NULL
 		};
 
@@ -194,14 +195,14 @@ static bool GetBrowseProgrammeHistoryServiceParameterTypesForNamedParameters (co
 
 static ParameterSet *GetBrowseProgrammeHistoryServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
 {
-	ParameterSet *params_p = AllocateParameterSet ("Programme History Browser service parameters", "The parameters used for the Browse Field Trial versions service");
+	ParameterSet *params_p = AllocateParameterSet ("FieldTrial History Browser service parameters", "The parameters used for the Browse Field Trial versions service");
 
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
 			FieldTrialServiceData *fts_data_p = (FieldTrialServiceData *) data_p;
 			const char *original_id_s = NULL;
-			Programme *active_programme_p = GetVersionedProgrammeFromResource (resource_p, FIELD_TRIAL_ID, &original_id_s, fts_data_p);
+			Programme *active_programme_p = GetVersionedProgrammeFromResource (resource_p, PROGRAMME_ID, &original_id_s, fts_data_p);
 
 			if (AddBrowseProgrammeHistoryParams (data_p, params_p, active_programme_p, original_id_s))
 				{
@@ -224,84 +225,25 @@ static ParameterSet *GetBrowseProgrammeHistoryServiceParameters (Service *servic
 
 
 
-
-
-
-
-static Programme *GetVersionedProgrammeFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
+static Programme *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
 {
-	Programme *programme_p = NULL;
-
-	/*GetProgrammeFromResourceGetProgrammeFromResource
-	 * Have we been set some parameter values to refresh from?
-	 */
-	if (resource_p && (resource_p -> re_data_p))
-		{
-			const json_t *param_set_json_p = json_object_get (resource_p -> re_data_p, PARAM_SET_KEY_S);
-
-			if (param_set_json_p)
-				{
-					json_t *params_json_p = json_object_get (param_set_json_p, PARAM_SET_PARAMS_S);
-
-					if (params_json_p)
-						{
-							const char *programme_id_s = GetNamedParameterDefaultValueFromJSON (programme_param_type.npt_name_s, params_json_p);
-							const char *version_timestamp_s = GetNamedParameterDefaultValueFromJSON (S_TIMESTAMP.npt_name_s, params_json_p);
-
-							/*
-							 * Do we have an existing programme id?
-							 */
-							if (programme_id_s)
-								{
-									*original_id_ss = programme_id_s;
-
-									if ((!IsStringEmpty (version_timestamp_s)) && (strcmp (version_timestamp_s, S_DEFAULT_TIMESTAMP_S) != 0))
-										{
-											programme_p = GetVersionedProgramme (programme_id_s, version_timestamp_s, VF_CLIENT_MINIMAL, ft_data_p);
-										}
-
-									/*
-									 * The request may be requesting a new field programme but sending the timestamp from the
-									 * previous one so if we failed to get the versioned field programme get the current one
-									 */
-									if (!programme_p)
-										{
-											programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, ft_data_p);
-										}
-
-									if (!programme_p)
-										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Field Trial with id \"%s\"", programme_id_s);
-										}
-
-								}		/* if (study_id_s) */
-
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_set_json_p, "Failed to get params with key \"%s\"", PARAM_SET_PARAMS_S);
-						}
-				}
-			else
-				{
-					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, resource_p -> re_data_p, "Failed to get param set with key \"%s\"", PARAM_SET_KEY_S);
-				}
-
-		}		/* if (resource_p && (resource_p -> re_data_p)) */
+	Programme *programme_p = (Programme *) GetVersionedObjectFromResource (resource_p, programme_param_type, original_id_ss, ft_data_p,
+																																				 GetVersionedProgramme, GetProgrammeByIdString);
 
 	return programme_p;
 }
 
 
 
-static bool AddTrialVersionsList (Programme *active_programme_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
+
+static bool AddProgrammeVersionsList (Programme *active_programme_p, const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
 {
 	bool success_flag = false;
 	ServiceData *data_p = (ServiceData *) dfw_data_p;
 	Parameter *param_p = NULL;
 	const char *timestamp_s = NULL;
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_TIMESTAMP.npt_type, S_TIMESTAMP.npt_name_s, "Version", "View Programme revisions", timestamp_s, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FT_TIMESTAMP.npt_type, FT_TIMESTAMP.npt_name_s, "Version", "View Programme revisions", timestamp_s, PL_ALL)) != NULL)
 		{
 			param_p -> pa_read_only_flag = read_only_flag;
 
@@ -326,12 +268,11 @@ static bool AddTrialVersionsList (Programme *active_programme_p, const char *id_
 
 
 
-
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const DFWProgrammeData dt)
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt)
 {
 	bool success_flag = false;
 
-	json_t *results_p = GetAllVersionsOfObject (id_s, dt, data_p);
+	json_t *results_p = GetAllJSONVersionsOfObject (id_s, dt, data_p);
 
 
 	if (results_p)
@@ -357,7 +298,7 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 
 											if (programme_p)
 												{
-													const char *value_s = S_DEFAULT_TIMESTAMP_S;
+													const char *value_s = FT_DEFAULT_TIMESTAMP_S;
 
 													if (programme_p -> pr_timestamp_s)
 														{
@@ -432,7 +373,7 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 	LinkedList *existing_people_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (ft_data_p -> dftsd_base_data), param_set_p);
 	const bool read_only_flag = true;
-	json_t *programmes_p = GetAllProgrammesAsJSON (ft_data_p, false);
+	json_t *programmes_p = GetAllProgrammesAsJSON (ft_data_p, true);
 
 	if (programmes_p)
 		{
@@ -464,21 +405,21 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 
 					if (!id_to_use_s)
 						{
-							id_s = GetBSONOidAsString (active_programme_p -> ft_id_p);
+							id_s = GetBSONOidAsString (active_programme_p -> pr_id_p);
 							id_to_use_s = id_s;
 						}
 
 					if (id_to_use_s)
 						{
-							if (AddTrialsListFromJSON (id_to_use_s, programmes_p, param_set_p, group_p, false, false, ft_data_p))
+							if (AddProgrammesListFromJSON (id_to_use_s, programmes_p, param_set_p, group_p, false, false, ft_data_p))
 								{
 									char *programme_id_s = NULL;
 									const char *name_s = NULL;
 									const char *team_s = NULL;
 
-									if (PopulaterActiveTrialValues (active_programme_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, ft_data_p))
+									if (PopulaterActiveProgrammeValues (active_programme_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, ft_data_p))
 										{
-											if (AddTrialVersionsList (active_programme_p, id_to_use_s, param_set_p, group_p, false, ft_data_p))
+											if (AddProgrammeVersionsList (active_programme_p, id_to_use_s, param_set_p, group_p, false, ft_data_p))
 												{
 
 												}
@@ -498,7 +439,7 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id from \"%s\"", active_programme_p -> ft_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id from \"%s\"", active_programme_p -> pr_name_s);
 						}
 
 
@@ -560,16 +501,6 @@ static ServiceJobSet *RunBrowseProgrammeHistoryService (Service *service_p, Para
 
 	return service_p -> se_jobs_p;
 }
-
-
-
-bool AddBrowseProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
-{
-	bool success_flag = false;
-
-	return success_flag;
-}
-
 
 
 static ServiceMetadata *GetBrowseProgrammeHistoryServiceMetadata (Service *service_p)
@@ -756,7 +687,7 @@ static ParameterSet *IsResourceForBrowseProgrammeHistoryService (Service * UNUSE
 }
 
 
-static Parameter *CreateSubmitTrialParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag)
+static Parameter *CreateSubmitProgrammeParameterFromJSON (struct Service *service_p, json_t *param_json_p, const bool concise_flag)
 {
 	Parameter *param_p = NULL;
 	const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
@@ -834,3 +765,13 @@ static Parameter *CreateSubmitTrialParameterFromJSON (struct Service *service_p,
 
 	return param_p;
 }
+
+
+static Programme *GetVersionedProgrammeFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
+{
+	Programme *programme_p = (Programme *) GetVersionedObjectFromResource (resource_p, programme_param_type, original_id_ss, ft_data_p,
+																																			 GetVersionedProgramme, GetProgrammeByIdString);
+
+	return programme_p;
+}
+

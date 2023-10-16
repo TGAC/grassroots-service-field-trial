@@ -76,7 +76,7 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Programme *active_program_p, const bool empty_option_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p, const bool read_only_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
@@ -112,6 +112,15 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetProgrammeAsFrictionlessDataPackage (con
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SaveProgrammeAsFrictionlessData (const Programme *programme_p, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammesListFromJSON (const char *id_s, json_t *programmes_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammeEditor (Programme *active_programme_p, const char *id_s, const char *abbreviation_s, const char *documentation_url_s,
+																											 const char *name_s, const char *objective_s, const char *logo_s,
+																											 const char *funder_s, const char *project_code_s, const Crop *crop_p, const Person *pi_p,
+																											 ParameterSet *param_set_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p);
 
 
 #ifdef __cplusplus

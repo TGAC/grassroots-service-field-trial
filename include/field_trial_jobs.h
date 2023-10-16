@@ -109,10 +109,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SearchFieldTrials (ServiceJob *job_p, const c
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char **programme_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp, ParameterSet *param_set_p, FieldTrialServiceData *dfw_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialsList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialsList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char * const empty_option_s, FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const bool empty_option_flag, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char *empty_option_s, FieldTrialServiceData *dfw_data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTrialEditor (const char * const name_s, const char * const team_s, const char * const programme_id_s, 	LinkedList *existing_people_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p);

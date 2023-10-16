@@ -232,6 +232,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RemoveProgrammeFieldTrial (Programme *program
 DFW_FIELD_TRIAL_SERVICE_LOCAL LinkedList *GetProgrammesByName (const char * const programme_s, const FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetVersionedProgramme (const char *programme_id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -63,6 +63,7 @@ INCLUDES = \
 SRCS 	= \
 	blank_row.c \
 	browse_programme_history.c \
+	browse_study_history.c \
 	browse_trial_history.c \
 	crop.c \
 	crop_jobs.c \
