@@ -92,12 +92,22 @@ to install the library into the Grassroots system where it will be available for
 Under Windows, there is a Visual Studio project in the `build/windows` folder that allows you to build the geocoder library.
 
 
-## Services
+## Services and configuration
 
-There are a number of services as part of the Field Trials service module and these are detailed below
+There are a number of services as part of the Field Trials service module and these are detailed 
+below. As well as their individual configuration options, they all share the following keys:
 
+
+ * **so:image**: The web address of the image to use for this service's logo
+ * **database**: The name of the database that the service should query
+
+
+We will now describe each of the individual services and their configuration options.
 
 ### Browse Field Trial Revisions	
+
+Within Grassroots, each piece of Field Trial data can be potentially edited multiple times 
+
 
 Browse all of the revisions of a given Field Trial. Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. This is equivalent to an Investigation in MIAPPE.	
 
@@ -136,7 +146,9 @@ Search field trial treatments
 
 ### Submit Field Trial Crop	
 
-A service to submit field trial crop data	
+This is a service to define crops that are available within the system. 
+The only configuration keys that it has are the common ones of `so:image` and 
+`database`.
 
 
 ### Submit Field Trial Gene Banks	
@@ -159,7 +171,7 @@ Add a Programme to the system. A Programme contains one or more Trials.
 
 ### Submit Field Trial Study	
 
-Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. One or more Studies can take place within a single Trial.	
+Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. One or more Studies can take place within a single Trial. It contains substantial amounts of metadata 	
 
 
 
