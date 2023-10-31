@@ -190,4 +190,6 @@ Add Treatments to the system
 
 ### Submit Field Trials
 
-Add a Field Trial to the system. Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. This is equivalent to an Investigation in MIAPPE.
+Add a Field Trial to the system. 
+Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. 
+This is equivalent to an Investigation in MIAPPE. 
