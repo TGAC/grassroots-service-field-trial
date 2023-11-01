@@ -228,6 +228,20 @@ relevant information.
 The only configuration keys that this service has are the common ones of `so:image` and `database`.
 
 
+### Submit Field Trial Crop	
+
+This is a service to define crops that are available within the system. 
+The only configuration keys that it has are the common ones of `so:image` and `database`.
+
+
+### Submit Field Trial Gene Banks	
+
+A service to submit field trial gene banks. 
+These are seed banks that store and allow purchase of seeds for different 
+species and varieties of crops.
+The only configuration keys that this service has are the common ones of `so:image` and `database`.
+
+
 ### Browse Field Trial Revisions	
 
 Within Grassroots, each piece of Field Trial data can be potentially edited multiple times 
@@ -251,20 +265,10 @@ Following the same nomenclature as BrAPI, a Study is a phenotyping experiment ta
 A service to search field trial data	
 
 
-### Submit Field Trial Crop	
-
-This is a service to define crops that are available within the system. 
-The only configuration keys that it has are the common ones of `so:image` and `database`.
-
-
-### Submit Field Trial Gene Banks	
-
-A service to submit field trial Gene Banks	
-
-
-
-
-
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/search_portal.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+These are:
 
 ### Submit Field Trial Treatment Factor	
 
