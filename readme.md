@@ -132,18 +132,6 @@ Following the same nomenclature as BrAPI, a Study is a phenotyping experiment ta
 A service to search field trial data	
 
 
-
-### Search Measured Phenotype Variables	
-
-Search field trial measured phenotype variables	
-
-
-### Search Treatments	
-
-Search field trial treatments	
-
-
-
 ### Submit Field Trial Crop	
 
 This is a service to define crops that are available within the system. 
@@ -166,12 +154,36 @@ A service to submit field trial measured variables
 ### Submit Field Trial Programme	
 
 Add a Programme to the system. A Programme contains one or more Trials.	
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_programme.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+
+These are:
+
+*	**cache_path**: When generating the programmes, you can choose that rather than generate these files each time, they can be generated after each submission or edit of that programme and then stored for future access.
+This key specifies the directory to use to store these files
+*	**view_programme_url**: When a programme has been submitted or edited, it can be useful to give the submitter a direct link to view the programme in the field trials portal. 
+The system will automatically append the programme's unique identifier to this value and present the resultant web address to the user.
 
 
 
 ### Submit Field Trial Study	
 
-Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. One or more Studies can take place within a single Trial. It contains substantial amounts of metadata 	
+Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. 
+One or more Studies can take place within a single Trial. 
+It contains substantial amounts of metadata and these are described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_study.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+These are:
+
+*	**cache_path**: When generating the studies, the resultant files can potentially be very large if there are many plots or gps data. 
+Rather than generate these files each time, with the resultant time that they take, when a given study is requested, these can be generated after each submission or edit of that study and then stored for future access.
+This key specifies the directory to use to store these files
+* **fd_path**: Grassroots can generate both [Frictionless Data Packages]() and PDF handbooks for each Study. 
+This is the filesystem path to where these files will be created.
+* **fd_url**: This is the web address to the path specified by the `fd_path` key detailed above.
+*	**view_study_url**: When a study has been submitted or edited, it can be useful to give the submitter a direct link to view the study in the field trials portal. 
+The system will automatically append the study's unique identifier to this value and present the resultant web address to the user.
 
 
 
@@ -193,3 +205,14 @@ Add Treatments to the system
 Add a Field Trial to the system. 
 Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. 
 This is equivalent to an Investigation in MIAPPE. 
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_trial.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+
+These are:
+
+*	**cache_path**: When generating the programmes, you can choose that rather than generate these files each time, they can be generated after each submission or edit of that programme and then stored for future access.
+This key specifies the directory to use to store these files
+*	**view_trial_url**: When a trial has been submitted or edited, it can be useful to give the submitter a direct link to view the trial in the field trials portal. 
+The system will automatically append the trial's unique identifier to this value and present the resultant web address to the user.
+
