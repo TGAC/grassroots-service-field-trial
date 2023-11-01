@@ -99,10 +99,134 @@ below. As well as their individual configuration options, they all share the fol
 
 
  * **so:image**: The web address of the image to use for this service's logo
- * **database**: The name of the database that the service should query
+ * **database**: The name of the database that the service should query. 
+This database should be set to the same value for all of the field trial services described below.
 
 
 We will now describe each of the individual services and their configuration options.
+
+
+
+### Submit Field Trial Programme	
+
+Add a Programme to the system. A Programme contains one or more Trials.	
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_programme.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+
+These are:
+
+*	**cache_path**: When generating the programmes, you can choose that rather than generate these files each time, they can be generated after each submission or edit of that programme and then stored for future access.
+This key specifies the directory to use to store these files
+*	**view_programme_url**: When a programme has been submitted or edited, it can be useful to give the submitter a direct link to view the programme in the field trials portal. 
+The system will automatically append the programme's unique identifier to this value and present the resultant web address to the user.
+
+
+### Submit Field Trials
+
+Add a Field Trial to the system. 
+Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. 
+This is equivalent to an Investigation in MIAPPE. 
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_trial.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+
+These are:
+
+*	**cache_path**: When generating the programmes, you can choose that rather than generate these files each time, they can be generated after each submission or edit of that programme and then stored for future access.
+This key specifies the directory to use to store these files
+*	**view_trial_url**: When a trial has been submitted or edited, it can be useful to give the submitter a direct link to view the trial in the field trials portal. 
+The system will automatically append the trial's unique identifier to this value and present the resultant web address to the user.
+
+
+
+### Submit Field Trial Study	
+
+Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. 
+One or more Studies can take place within a single Trial. 
+It contains substantial amounts of metadata and these are described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_study.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+These are:
+
+*	**cache_path**: When generating the studies, the resultant files can potentially be very large if there are many plots or gps data. 
+Rather than generate these files each time, with the resultant time that they take, when a given study is requested, these can be generated after each submission or edit of that study and then stored for future access.
+This key specifies the directory to use to store these files
+* **fd_path**: Grassroots can generate both [Frictionless Data Packages](https://frictionlessdata.io/) and PDF handbooks for each Study. 
+This is the filesystem path to where these files will be created.
+* **fd_url**: This is the web address to the path specified by the `fd_path` key detailed above.
+*	**view_study_url**: When a study has been submitted or edited, it can be useful to give the submitter a direct link to view the study in the field trials portal. 
+The system will automatically append the study's unique identifier to this value and present the resultant web address to the user.
+
+
+
+### Submit Field Trial Plots	
+
+This is a service to submit field trial plots for a given study. 
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_plots.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+These are:
+
+*	**cache_path**: When generating the studies, the resultant files can potentially be very large if there are many plots or gps data. 
+Rather than generate these files each time, with the resultant time that they take, when a given study is requested, these can be generated after each submission or edit of that study and then stored for future access.
+This key specifies the directory to use to store these files
+* **fd_path**: Grassroots can generate both [Frictionless Data Packages](https://frictionlessdata.io/) and PDF handbooks for each Study. 
+This is the filesystem path to where these files will be created.
+* **fd_url**: This is the web address to the path specified by the `fd_path` key detailed above.
+*	**view_plots_url**: When some plots have been submitted or edited, it can be useful to give the submitter a direct link to view the new set of plots in the field trials portal. 
+The system will automatically append the study's unique identifier to this value and present the resultant web address to the user.
+
+
+
+### Edit Field Trial Rack	
+
+A service to edit an individual field trial plot or rack.
+This is useful if you wish to edit just a single plot rather than building a spreadsheet.
+For example, if you are walking through a field experiment or greenhouse and measuring values at each plot/rack in turn.
+
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/edit_rack.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+These are:
+
+*	**cache_path**: When generating the studies, the resultant files can potentially be very large if there are many plots or gps data. 
+Rather than generate these files each time, with the resultant time that they take, when a given study is requested, these can be generated after each submission or edit of that study and then stored for future access.
+This key specifies the directory to use to store these files
+* **fd_path**: Grassroots can generate both [Frictionless Data Packages](https://frictionlessdata.io/) and PDF handbooks for each Study. 
+This is the filesystem path to where these files will be created.
+* **fd_url**: This is the web address to the path specified by the `fd_path` key detailed above.
+*	**view_plots_url**: When some plots have been submitted or edited, it can be useful to give the submitter a direct link to view the new set of plots in the field trials portal. 
+The system will automatically append the study's unique identifier to this value and present the resultant web address to the user.
+
+
+### Submit Field Trial Location
+
+This is a service to define crops that are available within the system. 
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_location.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it has a number of additional parameters.
+These are:
+
+*	**view_location_url**: When a location has been submitted or edited, it can be useful to give the submitter a direct link to view the location, along with any studies performed there, in the field trials portal. 
+The system will automatically append the trial's unique identifier to this value and present the resultant web address to the user.
+
+
+### Submit Field Trial Measured Variables	
+
+A service to submit field trial measured variables	
+For each Study, you can specify the set of phenotypes that will be measured and these are called *Measured Phenotype Variables*.
+Each of these consist of unique triples (three distinct pieces of information) that define:
+
+* Trait: This is a phenotype *e.g.* plant height.
+* Method: How the phenotype has been measured *e.g.*
+from ground to top of spike, excluding awns.
+* Unit: Which units have been used *e.g.* cm.
+
+These are added to Grassroots by compiling a spreadsheet with the
+relevant information.
+The only configuration keys that this service has are the common ones of `so:image` and `database`.
+
 
 ### Browse Field Trial Revisions	
 
@@ -110,11 +234,6 @@ Within Grassroots, each piece of Field Trial data can be potentially edited mult
 
 
 Browse all of the revisions of a given Field Trial. Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. This is equivalent to an Investigation in MIAPPE.	
-
-
-### Edit Field Trial Rack	
-
-A service to edit an individual field trial rack.	
 
 
 ### Manage Field Trial data	
@@ -135,55 +254,15 @@ A service to search field trial data
 ### Submit Field Trial Crop	
 
 This is a service to define crops that are available within the system. 
-The only configuration keys that it has are the common ones of `so:image` and 
-`database`.
+The only configuration keys that it has are the common ones of `so:image` and `database`.
 
 
 ### Submit Field Trial Gene Banks	
 
-A service to submit field trial GeneBanks	
+A service to submit field trial Gene Banks	
 
 
 
-### Submit Field Trial Measured Variables	
-
-A service to submit field trial measured variables	
-
-
-
-### Submit Field Trial Programme	
-
-Add a Programme to the system. A Programme contains one or more Trials.	
-It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_programme.md) guide for this service.
-As well as the common `so:image` and 
-`database` configuration options, it has a number of additional parameters.
-
-These are:
-
-*	**cache_path**: When generating the programmes, you can choose that rather than generate these files each time, they can be generated after each submission or edit of that programme and then stored for future access.
-This key specifies the directory to use to store these files
-*	**view_programme_url**: When a programme has been submitted or edited, it can be useful to give the submitter a direct link to view the programme in the field trials portal. 
-The system will automatically append the programme's unique identifier to this value and present the resultant web address to the user.
-
-
-
-### Submit Field Trial Study	
-
-Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. 
-One or more Studies can take place within a single Trial. 
-It contains substantial amounts of metadata and these are described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_study.md) guide for this service.
-As well as the common `so:image` and 
-`database` configuration options, it has a number of additional parameters.
-These are:
-
-*	**cache_path**: When generating the studies, the resultant files can potentially be very large if there are many plots or gps data. 
-Rather than generate these files each time, with the resultant time that they take, when a given study is requested, these can be generated after each submission or edit of that study and then stored for future access.
-This key specifies the directory to use to store these files
-* **fd_path**: Grassroots can generate both [Frictionless Data Packages]() and PDF handbooks for each Study. 
-This is the filesystem path to where these files will be created.
-* **fd_url**: This is the web address to the path specified by the `fd_path` key detailed above.
-*	**view_study_url**: When a study has been submitted or edited, it can be useful to give the submitter a direct link to view the study in the field trials portal. 
-The system will automatically append the study's unique identifier to this value and present the resultant web address to the user.
 
 
 
@@ -199,20 +278,4 @@ Add a Treatment Factor to the system
 Add Treatments to the system	
 
 
-
-### Submit Field Trials
-
-Add a Field Trial to the system. 
-Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. 
-This is equivalent to an Investigation in MIAPPE. 
-It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/submit_trial.md) guide for this service.
-As well as the common `so:image` and 
-`database` configuration options, it has a number of additional parameters.
-
-These are:
-
-*	**cache_path**: When generating the programmes, you can choose that rather than generate these files each time, they can be generated after each submission or edit of that programme and then stored for future access.
-This key specifies the directory to use to store these files
-*	**view_trial_url**: When a trial has been submitted or edited, it can be useful to give the submitter a direct link to view the trial in the field trials portal. 
-The system will automatically append the trial's unique identifier to this value and present the resultant web address to the user.
 
