@@ -214,7 +214,7 @@ The system will automatically append the trial's unique identifier to this value
 
 ### Submit Field Trial Measured Variables	
 
-A service to submit field trial measured variables	
+This is a service to submit field trial measured variables.
 For each Study, you can specify the set of phenotypes that will be measured and these are called *Measured Phenotype Variables*.
 Each of these consist of unique triples (three distinct pieces of information) that define:
 
@@ -242,12 +242,62 @@ species and varieties of crops.
 The only configuration keys that this service has are the common ones of `so:image` and `database`.
 
 
+### Search Field Trials	
+
+This is a service to search field trial data.
+It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/search_portal.md) guide for this service.
+As well as the common `so:image` and 
+`database` configuration options, it also has the following parameters.
+
+* **images**: There are the following facet types defined for the different classes of field trial data. 
+
+	* Grassroots:FieldTrial
+	* Grassroots:Location
+	* Grassroots:Phenotype
+	* Grassroots:Programme
+	* Grassroots:Study
+	* Grassroots:Treatment
+
+For each of these, you can specify the icon image used for any hits of these types within a set of search results. For example:
+
+```json
+	"images": {
+		"Grassroots:FieldTrial": "http://localhost:images/trial.jpeg",
+		"Grassroots:Location": "http://localhost:images/location.jpeg",
+		"Grassroots:Phenotype": "http://localhost:images/phenotype.jpeg",
+		"Grassroots:Programme": "http://localhost:images/programme.jpeg",
+		"Grassroots:Study": "http://localhost:images/study.jpeg",
+		"Grassroots:Treatment": "http://localhost:images/treatment.jpeg"
+	}
+```
+
+### Submit Field Trial Treatments	
+
+This is a service to add Treatments for a given Study.
+Although this service can be used, there is a section for adding treatments and treatment 
+factors within the *Submit Field Trial Study* service which is the preferred method of doing this.
+As well as the common `so:image` and 
+`database` configuration options, it has the following additional parameters:
+
+*	**cache_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+
+### Submit Field Trial Treatment Factor	
+
+This is a service to add Treatment Factors for one of a given study's treatments.
+Although this service can be used, there is a section for adding treatments and treatment 
+factors within the *Submit Field Trial Study* service which is the preferred method of doing this.
+As well as the common `so:image` and 
+`database` configuration options, it has the following additional parameters:
+
+*	**cache_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+
+
 ### Browse Field Trial Revisions	
 
 Within Grassroots, each piece of Field Trial data can be potentially edited multiple times 
 
-
-Browse all of the revisions of a given Field Trial. Following the same nomenclature as BrAPI, a Field Trial contains multiple Studies. This is equivalent to an Investigation in MIAPPE.	
 
 
 ### Manage Field Trial data	
@@ -258,28 +308,5 @@ A service to manage field trial data
 ### Manage Study	
 
 Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. One or more Studies can take place within a single Trial.	
-
-
-### Search Field Trials	
-
-A service to search field trial data	
-
-
-It is described in the [user](https://grassroots.tools/docs/user/services/field_trial/search_portal.md) guide for this service.
-As well as the common `so:image` and 
-`database` configuration options, it has a number of additional parameters.
-These are:
-
-### Submit Field Trial Treatment Factor	
-
-
-Add a Treatment Factor to the system	
-
-
-
-### Submit Field Trial Treatments	
-
-Add Treatments to the system	
-
 
 
