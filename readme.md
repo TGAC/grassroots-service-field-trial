@@ -158,6 +158,17 @@ This is the filesystem path to where these files will be created.
 *	**view_study_url**: When a study has been submitted or edited, it can be useful to give the submitter a direct link to view the study in the field trials portal. 
 The system will automatically append the study's unique identifier to this value and present the resultant web address to the user.
 
+* **pdflatex_path**: Grassroots uses PDFLatex to create the study handbooks. This value is the path to the `pdflatex` program that will be used to generate them.
+
+* **geoapify_api_key**: [Geoapify](https://www.geoapify.com/) is a web platform to create maps, route optimization, and location intelligence apps. 
+When generating the handbook files, Grassroots will attempt to insert a map tile graphic of the study's location into the handbook. 
+It does this by calling Geoapigy's REST web services. 
+To do this you need to have an API key from them and it's this value that is added here.
+
+*	**handbook_phenotype_images**: Part of the [Django-based Grassroots front-end]() server is its ability to generate heatmaps for each set of phenotypic observations within a study. 
+These can then be inserted When generating the handbooks.
+This value is the filesystem path to where they are generated. For more information, refer to the Django server guide.
+
 
 
 ### Submit Field Trial Plots	
@@ -293,20 +304,57 @@ As well as the common `so:image` and
 *	**cache_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
 
 
+### Manage Study	
 
-### Browse Field Trial Revisions	
+This is a service that allows you to perform various administrative tasks for a given study such as clearing its cache, regenerating its PDF handbook, *etc.* 
 
-Within Grassroots, each piece of Field Trial data can be potentially edited multiple times 
+As well as the common `so:image` and 
+`database` configuration options, it has the following additional parameters:
 
+*	**cache_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **fd_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **fd_url**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **view_study_url**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **pdflatex_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **geoapify_api_key**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **handbook_phenotype_images**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
 
 
 ### Manage Field Trial data	
 
-A service to manage field trial data	
+This is a service that allows you to perform various administrative tasks for the different types of data within the system.  
+
+As well as the common `so:image` and 
+`database` configuration options, it has the following additional parameters:
+
+*	**cache_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **fd_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **fd_url**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **view_study_url**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **pdflatex_path**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **geoapify_api_key**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
+
+* **handbook_phenotype_images**: This should be the same as the value set for the *Submit Field Trial Study* service and is described there.
 
 
-### Manage Study	
 
-Following the same nomenclature as BrAPI, a Study is a phenotyping experiment taking place at a single location. One or more Studies can take place within a single Trial.	
+### Browse Field Trial Revisions	
 
+Within Grassroots, each piece of Field Trial data can be potentially edited multiple times. 
+There can often be occasions when you would like to view previous revisions of these items and this service allows you to do that for field trials.
 
+As well as the common `so:image` and 
+`database` configuration options, it has the following additional parameters:
+
+*	**view_trial_url**: This is the same as the *view_trial_url* within the *Submit Field Trials* service and is described there.
