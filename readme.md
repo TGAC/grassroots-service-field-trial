@@ -165,7 +165,7 @@ When generating the handbook files, Grassroots will attempt to insert a map tile
 It does this by calling Geoapigy's REST web services. 
 To do this you need to have an API key from them and it's this value that is added here.
 
-*	**handbook_phenotype_images**: Part of the [Django-based Grassroots front-end]() server is its ability to generate heatmaps for each set of phenotypic observations within a study. 
+*	**handbook_phenotype_images**: Part of the [Django-based Grassroots front-end](../servers/django) server is its ability to generate heatmaps for each set of phenotypic observations within a study. 
 These can then be inserted When generating the handbooks.
 This value is the filesystem path to where they are generated. For more information, refer to the Django server guide.
 
