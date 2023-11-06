@@ -413,19 +413,13 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 						{
 							if (AddProgrammesListFromJSON (id_to_use_s, programmes_p, param_set_p, group_p, false, false, ft_data_p))
 								{
-									char *programme_id_s = NULL;
-									const char *name_s = NULL;
-									const char *team_s = NULL;
 
-									if (PopulaterActiveProgrammeValues (active_programme_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, ft_data_p))
+									if (AddProgrammeVersionsList (active_programme_p, id_to_use_s, param_set_p, group_p, false, ft_data_p))
 										{
-											if (AddProgrammeVersionsList (active_programme_p, id_to_use_s, param_set_p, group_p, false, ft_data_p))
-												{
 
-												}
 										}
 
-									if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, ft_data_p))
+									if (AddProgrammesEditor (active_programme_p, existing_people_p, param_set_p, group_p, read_only_flag, ft_data_p))
 										{
 											success_flag = true;
 										}
