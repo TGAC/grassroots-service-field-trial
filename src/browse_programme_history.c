@@ -248,7 +248,7 @@ static bool AddProgrammeVersionsList (Programme *active_programme_p, const char 
 			param_p -> pa_read_only_flag = read_only_flag;
 
 
-			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, active_programme_p  ? active_programme_p -> pr_timestamp_s : NULL, DFTD_FIELD_TRIAL))
+			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, active_programme_p  ? active_programme_p -> pr_timestamp_s : NULL, DFTD_PROGRAMME))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -419,7 +419,7 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 
 										}
 
-									if (AddProgrammesEditor (active_programme_p, existing_people_p, param_set_p, group_p, read_only_flag, ft_data_p))
+									if (AddProgrammeEditor (active_programme_p, id_to_use_s, param_set_p, read_only_flag, ft_data_p))
 										{
 											success_flag = true;
 										}
