@@ -128,7 +128,7 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 	bool success_flag = false;
 	ServiceData *data_p = (ServiceData *) dfw_data_p;
 	Parameter *param_p = NULL;
-	ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Principal Investigator", false, data_p, param_set_p);
+	ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Programme data", false, data_p, param_set_p);
 
 	const char *name_s = NULL;
 	const char *abbreviation_s = NULL;
@@ -688,7 +688,7 @@ bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s,
 	const NamedParameterType params [] =
 		{
 			PROGRAMME_SEARCH,
-			NULL
+			(NamedParameterType *) NULL
 		};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);

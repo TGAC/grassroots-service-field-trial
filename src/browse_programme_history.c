@@ -419,7 +419,7 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 
 										}
 
-									if (AddProgrammesEditor (active_programme_p, existing_people_p, param_set_p, group_p, read_only_flag, ft_data_p))
+									if (AddProgrammeEditor (active_programme_p, id_to_use_s, param_set_p, read_only_flag, ft_data_p))
 										{
 											success_flag = true;
 										}
