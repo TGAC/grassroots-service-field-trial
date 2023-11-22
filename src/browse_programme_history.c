@@ -248,7 +248,7 @@ static bool AddProgrammeVersionsList (Programme *active_programme_p, const char 
 			param_p -> pa_read_only_flag = read_only_flag;
 
 
-			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, active_programme_p  ? active_programme_p -> pr_timestamp_s : NULL, DFTD_FIELD_TRIAL))
+			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, active_programme_p  ? active_programme_p -> pr_timestamp_s : NULL, DFTD_PROGRAMME))
 				{
 					/*
 					 * We want to update all of the values in the form
