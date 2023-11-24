@@ -81,7 +81,7 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 
 	if (defaults_flag)
 		{
-			ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Programme", false, data_p, param_set_p);
+			ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, data_p, param_set_p);
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_ID.npt_type, PROGRAMME_ID.npt_name_s, "Load Programme", "Edit an existing Programme", id_s, PL_ALL)) != NULL)
 				{
