@@ -137,67 +137,57 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 				{
 					bool success_flag = false;
 
-					switch (format)
+					if (format == VF_CLIENT_MINIMAL)
 						{
-							case VF_STORAGE:
-								{
-									if (AddCommonTermsToJSON (mv_p, phenotype_json_p))
-										{
-											if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
-												{
-													if (mv_p -> mv_scale_class_p)
-														{
-															json_t *scale_json_p = GetScaleClassAsJSON (mv_p -> mv_scale_class_p);
+							const char *variable_s = GetMeasuredVariableName (mv_p);
 
-															if (scale_json_p)
+							if (SetJSONString (phenotype_json_p, MV_VARIABLE_S, variable_s))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, MV_VARIABLE_S, variable_s);
+								}
+						}
+					else
+						{
+							if (AddCommonTermsToJSON (mv_p, phenotype_json_p))
+								{
+									if (mv_p -> mv_scale_class_p)
+										{
+											json_t *scale_json_p = GetScaleClassAsJSON (mv_p -> mv_scale_class_p);
+
+											if (scale_json_p)
+												{
+													if (json_object_set_new (phenotype_json_p, MV_SCALE_S, scale_json_p) == 0)
+														{
+															if (format == VF_STORAGE)
 																{
-																	if (json_object_set_new (phenotype_json_p, MV_SCALE_S, scale_json_p) == 0)
+																	if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
 																		{
 																			success_flag = true;
 																		}
-																	else
-																		{
-																			json_decref (scale_json_p);
-																		}
+																}
+															else
+																{
+																	success_flag = true;
 																}
 														}
-
-												}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
-											else
-												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddCompoundIdToJSON () failed for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
+													else
+														{
+															json_decref (scale_json_p);
+														}
 												}
-
-										}		/* if (AddCommonTermsToJSON (mv_p, phenotype_json_p)) */
-
-								}		/* case VF_STORAGE: */
-								break;
-
-							case VF_CLIENT_FULL:
-							case VF_INDEXING:
-								{
-									success_flag = AddCommonTermsToJSON (mv_p, phenotype_json_p);
-								}		/* case VF_CLIENT_FULL: */
-								break;
-
-							case VF_CLIENT_MINIMAL:
-								{
-									const char *variable_s = GetMeasuredVariableName (mv_p);
-
-									if (SetJSONString (phenotype_json_p, MV_VARIABLE_S, variable_s))
-										{
-											success_flag = true;
-										}
+										}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, MV_VARIABLE_S, variable_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddCompoundIdToJSON () failed for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
 										}
 
-								}		/* case VF_CLIENT_FULL: */
-								break;
+								}		/* if (AddCommonTermsToJSON (mv_p, phenotype_json_p)) */
 
-						}		/* switch (format) */
-
+						}
 
 					if (success_flag)
 						{
