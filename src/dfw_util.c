@@ -398,7 +398,7 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 
 					if (BSON_APPEND_OID (query_p, key_s, &oid))
 						{
-							if ((timestamp_s == NULL) || (BSON_APPEND_UTF8 (query_p, DFT_TIMESTAMP_S, timestamp_s)))
+							if ((timestamp_s == NULL) || (BSON_APPEND_UTF8 (query_p, MONGO_TIMESTAMP_S, timestamp_s)))
 								{
 									if (PopulateJSONWithAllMongoResults (data_p -> dftsd_mongo_p, query_p, extra_opts_p, results_p))
 										{
@@ -411,7 +411,7 @@ static bool RunVersionSearch (const char * const collection_s, const char * cons
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append query for key \"%s\" value \"%s\"", DFT_TIMESTAMP_S, timestamp_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to append query for key \"%s\" value \"%s\"", MONGO_TIMESTAMP_S, timestamp_s);
 								}
 
 						}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, &oid)) */
@@ -546,7 +546,7 @@ json_t *GetSpecificJSONVersionOfObject (const char *id_s, const char *timestamp_
 					 */
 					if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], MONGO_ID_S, id_s, timestamp_s, results_p, NULL, data_p))
 						{
-						  bson_t *opts_p = BCON_NEW ("sort", "{", DFT_TIMESTAMP_S, BCON_INT32 (-1), "}");
+						  bson_t *opts_p = BCON_NEW ("sort", "{", MONGO_TIMESTAMP_S, BCON_INT32 (-1), "}");
 
 							if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, timestamp_s, results_p, opts_p, data_p))
 								{
@@ -587,7 +587,7 @@ json_t *GetAllJSONVersionsOfObject (const char *id_s, FieldTrialDatatype collect
 					 */
 					if (RunVersionSearch (data_p -> dftsd_collection_ss [collection_type], MONGO_ID_S, id_s, NULL, results_p, NULL, data_p))
 						{
-						  bson_t *opts_p = BCON_NEW ("sort", "{", DFT_TIMESTAMP_S, BCON_INT32 (-1), "}");
+						  bson_t *opts_p = BCON_NEW ("sort", "{", MONGO_TIMESTAMP_S, BCON_INT32 (-1), "}");
 
 							if (RunVersionSearch (data_p -> dftsd_backup_collection_ss [collection_type], DFT_BACKUPS_ID_KEY_S, id_s, NULL, results_p, opts_p, data_p))
 								{
@@ -827,29 +827,6 @@ bool CreateValidDateFromJSON (const json_t *json_p, const char *key_s, struct tm
 
 
 
-bool PrepareSaveData (bson_oid_t **id_pp, bson_t **selector_pp)
-{
-	bool success_flag = false;
-
-	if (*id_pp)
-		{
-			*selector_pp = BCON_NEW (MONGO_ID_S, BCON_OID (*id_pp));
-
-			if (*selector_pp)
-				{
-					success_flag = true;
-				}
-		}
-	else
-		{
-			if ((*id_pp = GetNewBSONOid ()) != NULL)
-				{
-					success_flag = true;
-				}
-		}
-
-	return success_flag;
-}
 
 
 bool AddContext (json_t *data_p)
@@ -1154,42 +1131,6 @@ json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s)
 }
 
 
-const char *GetNamedParameterDefaultValueFromJSON (const char *param_s, const json_t *params_json_p)
-{
-	const char *value_s = NULL;
-
-	if (params_json_p)
-		{
-			const size_t num_entries = json_array_size (params_json_p);
-			size_t i;
-
-			for (i = 0; i < num_entries; ++ i)
-				{
-					const json_t *param_json_p = json_array_get (params_json_p, i);
-					const char *name_s = GetJSONString (param_json_p, PARAM_NAME_S);
-
-					if (name_s)
-						{
-							if (strcmp (name_s, param_s) == 0)
-								{
-									value_s = GetJSONString (param_json_p, PARAM_CURRENT_VALUE_S);
-
-									if (!value_s)
-										{
-											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, param_json_p, "Failed to get \"%s\" from \"%s\"", PARAM_CURRENT_VALUE_S, param_s);
-										}
-
-									/* force exit from loop */
-									i = num_entries;
-								}
-						}		/* if (name_s) */
-
-				}		/* for (i = 0; i < num_entries; ++ i) */
-
-		}		/* if (params_json_p) */
-
-	return value_s;
-}
 
 
 static char *GetIdBasedFilename (const char *id_s, const char *directory_s, const char *suffix_s)

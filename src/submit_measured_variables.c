@@ -44,13 +44,13 @@ static const char *GetMeasuredVariableSubmissionServiceAlias (const Service *ser
 
 static const char *GetMeasuredVariableSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseMeasuredVariableSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool CloseMeasuredVariableSubmissionService (Service *service_p);
@@ -151,7 +151,7 @@ static bool GetMeasuredVariableSubmissionServiceParameterTypesForNamedParameters
 
 
 
-static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetMeasuredVariableSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -202,7 +202,7 @@ static bool CloseMeasuredVariableSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

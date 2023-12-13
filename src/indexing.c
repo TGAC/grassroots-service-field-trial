@@ -132,9 +132,9 @@ static const char *GetFieldTrialIndexingServiceInformationUri (const Service *se
 
 static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
-static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
@@ -1043,7 +1043,7 @@ OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_
 }
 
 
-static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -1522,7 +1522,7 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 }
 
 
-static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial indexing service parameters", "The parameters used for the Field Trial indexing service");
 
@@ -1969,14 +1969,14 @@ static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const 
 		{
 			if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_BACKUPS_ID_KEY_S, false, false))
 				{
-					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false))
+					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_TIMESTAMP_S, false, false))
 						{
 							status = OS_SUCCEEDED;
 						}
 				}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false)) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, DFT_TIMESTAMP_S);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, MONGO_TIMESTAMP_S);
 				}
 
 		}		/* if (CreateMongoToolCollection (tool_p, collection_s, NULL)) */

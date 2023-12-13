@@ -41,6 +41,7 @@
 #include "phenotype_statistics.h"
 #include "handbook_generator.h"
 #include "person_jobs.h"
+#include "mongodb_util.h"
 
 /*
  * DB COLUMN NAMES
@@ -919,7 +920,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 			if (study_json_p)
 				{
 					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], 
-							data_p -> dftsd_backup_collection_ss [DFTD_STUDY], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S))
+							data_p -> dftsd_backup_collection_ss [DFTD_STUDY], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 

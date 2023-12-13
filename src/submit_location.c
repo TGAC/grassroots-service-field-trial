@@ -41,13 +41,13 @@ static const char *GetLocationSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetLocationSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (const  Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseLocationSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunLocationSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunLocationSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool CloseLocationSubmissionService (Service *service_p);
@@ -146,7 +146,7 @@ static bool GetLocationSubmissionServiceParameterTypesForNamedParameters (const 
 
 
 
-static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetLocationSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial Location submission service parameters", "The parameters used for the Field Trial Location submission service");
 
@@ -197,7 +197,7 @@ static bool CloseLocationSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunLocationSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunLocationSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

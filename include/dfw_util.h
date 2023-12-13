@@ -95,7 +95,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddValidDateToJSON (struct tm *time_p, json_t
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddValidDateAsEpochToJSON (struct tm *time_p, json_t *json_p, const char *key_s);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool PrepareSaveData (bson_oid_t **id_pp, bson_t **selector_pp);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddContext (json_t *data_p);
@@ -131,9 +130,6 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetValidUnsignedIntFromJSON (const json_t *st
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetImageObject (const char *image_url_s, const char *thumbnail_url_s);
-
-
-DFW_FIELD_TRIAL_SERVICE_LOCAL const char *GetNamedParameterDefaultValueFromJSON (const char *id_param_s, const json_t *params_json_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetFrictionlessDataFilename (const char * const name_s, const FieldTrialServiceData *data_p);

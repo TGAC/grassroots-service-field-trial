@@ -28,13 +28,13 @@ static const char *GetTreatmentSubmissionServiceAlias (const Service *service_p)
 
 static const char *GetTreatmentSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseTreatmentSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 static ParameterSet *IsResourceForTreatmentSubmissionService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
@@ -133,7 +133,7 @@ static bool GetTreatmentSubmissionServiceParameterTypesForNamedParameters (const
 
 
 
-static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetTreatmentSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Treatment submission service parameters", "The parameters used for the Treatment submission service");
 
@@ -184,7 +184,7 @@ static bool CloseTreatmentSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunTreatmentSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

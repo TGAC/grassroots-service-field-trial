@@ -34,6 +34,7 @@
 #include "streams.h"
 #include "typedefs.h"
 #include "math_utils.h"
+#include "mongodb_util.h"
 
 #define ALLOCATE_OBSERVATION_TAGS (1)
 #include "observation.h"
@@ -945,7 +946,7 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 			if (observation_json_p)
 				{
 					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, observation_json_p, data_p -> dftsd_collection_ss [DFTD_OBSERVATION], 
-													data_p -> dftsd_backup_collection_ss [DFTD_OBSERVATION], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S);
+													data_p -> dftsd_backup_collection_ss [DFTD_OBSERVATION], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (observation_json_p);
 				}		/* if (observation_json_p) */

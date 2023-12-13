@@ -45,13 +45,13 @@ static const char *GetFieldTrialSubmissionServiceAlias (const Service *service_p
 
 static const char *GetFieldTrialSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseFieldTrialSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 static ParameterSet *IsResourceForFieldTrialSubmissionService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
@@ -156,7 +156,7 @@ static bool GetFieldTrialSubmissionServiceParameterTypesForNamedParameters (cons
 
 
 
-static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetFieldTrialSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -209,7 +209,7 @@ static bool CloseFieldTrialSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunFieldTrialSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

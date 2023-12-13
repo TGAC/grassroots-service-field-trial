@@ -49,13 +49,13 @@ static const char *GetBrowseTrialHistoryServiceAlias (const Service *service_p);
 
 static const char *GetBrowseTrialHistoryServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetBrowseTrialHistoryServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseBrowseTrialHistoryServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunBrowseTrialHistoryService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunBrowseTrialHistoryService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 static ParameterSet *IsResourceForBrowseTrialHistoryService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
@@ -189,7 +189,7 @@ static bool GetBrowseTrialHistoryServiceParameterTypesForNamedParameters (const 
 
 
 
-static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial History Browser service parameters", "The parameters used for the Browse Field Trial versions service");
 
@@ -472,7 +472,7 @@ static bool CloseBrowseTrialHistoryService (Service *service_p)
 
 
 
-static ServiceJobSet *RunBrowseTrialHistoryService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunBrowseTrialHistoryService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

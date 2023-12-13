@@ -77,7 +77,7 @@ static Service **AddValidService (Service **service_pp, Service *service_p);
  */
 
 
-ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p)
+ServicesArray *GetServices (User *user_p, GrassrootsServer *grassroots_p)
 {
 	uint32 num_services = 0;
 	Service *all_in_one_submission_service_p = NULL; // GetDFWFieldTrialSubmissionService (grassroots_p);

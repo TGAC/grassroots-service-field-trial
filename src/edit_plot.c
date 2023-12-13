@@ -92,13 +92,13 @@ static const char *GetPlotEditingServiceAlias (const Service *service_p);
 
 static const char *GetPlotEditingServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetPlotEditingServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetPlotEditingServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleasePlotEditingServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunPlotEditingService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunPlotEditingService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool ClosePlotEditingService (Service *service_p);
@@ -273,7 +273,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 
 
 
-static ParameterSet *GetPlotEditingServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetPlotEditingServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Plot edit service parameters", "The parameters used for the plot editing service");
 
@@ -322,7 +322,7 @@ static bool ClosePlotEditingService (Service *service_p)
 
 
 
-static ServiceJobSet *RunPlotEditingService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunPlotEditingService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

@@ -26,6 +26,7 @@
 #include "string_utils.h"
 #include "gene_bank.h"
 #include "dfw_util.h"
+#include "mongodb_util.h"
 
 
 static bool ReplaceMaterialField (const char *new_value_s, char **value_ss);
@@ -360,7 +361,7 @@ bool SaveMaterial (Material *material_p, const FieldTrialServiceData *data_p)
 			if (material_json_p)
 				{
 					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, material_json_p, data_p -> dftsd_collection_ss [DFTD_MATERIAL], 
-						data_p -> dftsd_backup_collection_ss [DFTD_MATERIAL], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S);
+						data_p -> dftsd_backup_collection_ss [DFTD_MATERIAL], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (material_json_p);
 				}		/* if (material_json_p) */

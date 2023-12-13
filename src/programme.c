@@ -29,6 +29,7 @@
 #include "indexing.h"
 
 #include "programme_jobs.h"
+#include "mongodb_util.h"
 
 
 
@@ -277,7 +278,7 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 						{
 							if (SetNonTrivialString (programme_json_p, PR_LOGO_S, programme_p -> pr_logo_url_s, true))
 								{
-									if (SetNonTrivialString (programme_json_p, DFT_TIMESTAMP_S, programme_p -> pr_timestamp_s, true))
+									if (SetNonTrivialString (programme_json_p, MONGO_TIMESTAMP_S, programme_p -> pr_timestamp_s, true))
 										{
 											if (AddDatatype (programme_json_p, DFTD_PROGRAMME))
 												{
@@ -408,7 +409,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									const char *logo_s = GetJSONString (json_p, PR_LOGO_S);
 									const char *funders_s = GetJSONString (json_p, PR_FUNDERS_S);
 									const char *project_code_s = GetJSONString (json_p, PR_CODE_S);
-									const char *timestamp_s = GetJSONString (json_p, DFT_TIMESTAMP_S);
+									const char *timestamp_s = GetJSONString (json_p, MONGO_TIMESTAMP_S);
 									Crop *crop_p = NULL;
 									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
 
@@ -765,7 +766,7 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 			if (programme_json_p)
 				{
 					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME], 
-							data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S))
+							data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
 							json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_INDEXING, data_p);
