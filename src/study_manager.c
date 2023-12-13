@@ -87,13 +87,13 @@ static const char *GetStudyManagerServiceAlias (const Service *service_p);
 
 static const char *GetStudyManagerServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetStudyManagerServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseStudyManagerServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool CloseStudyManagerService (Service *service_p);
@@ -211,7 +211,7 @@ static bool GetStudyManagerServiceParameterTypesForNamedParameters (const struct
 }
 
 
-static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Study manager service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -373,7 +373,7 @@ static bool CloseStudyManagerService (Service *service_p)
 
 
 
-static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

@@ -41,13 +41,13 @@ static const char *GetTreatmentFactorSubmissionServiceAlias (const Service *serv
 
 static const char *GetTreatmentFactorSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetTreatmentFactorSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetTreatmentFactorSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetTreatmentFactorSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseTreatmentFactorSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunTreatmentFactorSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunTreatmentFactorSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 static ParameterSet *IsResourceForTreatmentFactorSubmissionService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
@@ -146,7 +146,7 @@ static bool GetTreatmentFactorSubmissionServiceParameterTypesForNamedParameters 
 
 
 
-static ParameterSet *GetTreatmentFactorSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetTreatmentFactorSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("TreatmentFactor submission service parameters", "The parameters used for the TreatmentFactor submission service");
 
@@ -197,7 +197,7 @@ static bool CloseTreatmentFactorSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunTreatmentFactorSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunTreatmentFactorSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

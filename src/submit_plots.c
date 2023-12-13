@@ -42,13 +42,13 @@ static const char *GetPlotsSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetPlotsSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleasePlotsSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunPlotsSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunPlotsSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool ClosePlotsSubmissionService (Service *service_p);
@@ -150,7 +150,7 @@ static bool GetPlotsSubmissionServiceParameterTypesForNamedParameters (const Ser
 
 
 
-static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetPlotsSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Plot submission service parameters", "The parameters used for the Plot submission service");
 
@@ -199,7 +199,7 @@ static bool ClosePlotsSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunPlotsSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunPlotsSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

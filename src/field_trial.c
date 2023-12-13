@@ -34,6 +34,8 @@
 #include "json_processor.h"
 #include "programme.h"
 #include "person_jobs.h"
+#include "mongodb_util.h"
+
 
 static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *mem_p);
 
@@ -152,7 +154,7 @@ bool SaveFieldTrial (FieldTrial *trial_p, ServiceJob *job_p, FieldTrialServiceDa
 
 			if (field_trial_json_p)
 				{
-					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], data_p -> dftsd_backup_collection_ss [DFTD_FIELD_TRIAL], DFT_BACKUPS_ID_KEY_S,  selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, field_trial_json_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL], data_p -> dftsd_backup_collection_ss [DFTD_FIELD_TRIAL], DFT_BACKUPS_ID_KEY_S,  selector_p, MONGO_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 							status = IndexData (job_p, field_trial_json_p, NULL);
@@ -298,7 +300,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, Field
 				{
 					if (SetNonTrivialString (trial_json_p, FT_TEAM_S, trial_p -> ft_team_s, true))
 						{
-							if (SetNonTrivialString (trial_json_p, DFT_TIMESTAMP_S, trial_p -> ft_timestamp_s, true))
+							if (SetNonTrivialString (trial_json_p, MONGO_TIMESTAMP_S, trial_p -> ft_timestamp_s, true))
 								{
 									if (AddCompoundIdToJSON (trial_json_p, trial_p -> ft_id_p))
 										{
@@ -372,7 +374,7 @@ json_t *GetFieldTrialAsJSON (FieldTrial *trial_p, const ViewFormat format, Field
 								}		/* if (SetNonTrivialString (trial_json_p, DFT_TIMESTAMP_S, trial_p -> ft_timestamp_s, true)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to set \"%s\": \"%s\"", DFT_TIMESTAMP_S, trial_p -> ft_timestamp_s ?  trial_p -> ft_timestamp_s : "null");
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_json_p, "Failed to set \"%s\": \"%s\"", MONGO_TIMESTAMP_S, trial_p -> ft_timestamp_s ?  trial_p -> ft_timestamp_s : "null");
 								}
 
 						}		/* if (json_object_set_new (trial_json_p, team_key_s, json_string (trial_p -> ft_team_s)) == 0) */
@@ -511,7 +513,7 @@ FieldTrial *GetFieldTrialFromJSON (const json_t *json_p, const ViewFormat format
 
 									if (success_flag)
 										{
-											const char *timestamp_s = GetJSONString (json_p, DFT_TIMESTAMP_S);
+											const char *timestamp_s = GetJSONString (json_p, MONGO_TIMESTAMP_S);
 											trial_p = AllocateFieldTrial (name_s, team_s, program_p, MF_SHALLOW_COPY, id_p, timestamp_s);
 
 											if (trial_p)

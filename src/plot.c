@@ -30,6 +30,7 @@
 #include "time_util.h"
 #include "study.h"
 #include "int_linked_list.h"
+#include "mongodb_util.h"
 
 
 static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
@@ -319,7 +320,7 @@ bool SavePlot (Plot *plot_p, const FieldTrialServiceData *data_p)
 			if (plot_json_p)
 				{
 					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], 
-					data_p -> dftsd_backup_collection_ss [DFTD_PLOT], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S);
+					data_p -> dftsd_backup_collection_ss [DFTD_PLOT], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (plot_json_p);
 				}		/* if (plot_json_p) */

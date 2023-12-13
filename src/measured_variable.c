@@ -28,6 +28,7 @@
 #include "dfw_util.h"
 #include "time_util.h"
 #include "indexing.h"
+#include "mongodb_util.h"
 
 /*
  * static declarations
@@ -354,7 +355,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 			if (phenotype_json_p)
 				{
 					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], 
-							data_p -> dftsd_backup_collection_ss [DFTD_MEASURED_VARIABLE], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S))
+							data_p -> dftsd_backup_collection_ss [DFTD_MEASURED_VARIABLE], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							status = IndexData (job_p, phenotype_json_p, NULL);
 

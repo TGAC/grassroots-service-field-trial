@@ -26,6 +26,7 @@
 
 #include "memory_allocations.h"
 #include "string_utils.h"
+#include "mongodb_util.h"
 
 
 static void *GetCropCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
@@ -435,7 +436,7 @@ bool SaveCrop (Crop *crop_p, const FieldTrialServiceData *data_p)
 
 			if (crop_json_p)
 				{
-					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, crop_json_p, data_p -> dftsd_collection_ss [DFTD_CROP], data_p -> dftsd_backup_collection_ss [DFTD_CROP], DFT_BACKUPS_ID_KEY_S, selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, crop_json_p, data_p -> dftsd_collection_ss [DFTD_CROP], data_p -> dftsd_backup_collection_ss [DFTD_CROP], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (crop_json_p);
 				}		/* if (crop_json_p) */
