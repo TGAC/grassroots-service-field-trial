@@ -91,7 +91,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionProgrammeParameterTypeForNamedPa
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, User *user_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);

@@ -33,7 +33,7 @@
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
-static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
+static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p, User *user_p);
 
 static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
@@ -509,9 +509,9 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 }
 
 
-bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, User *user_p)
 {
-	bool success_flag = AddProgramme (job_p, param_set_p, data_p);
+	bool success_flag = AddProgramme (job_p, param_set_p, data_p, user_p);
 
 	return success_flag;
 }
@@ -944,7 +944,7 @@ json_t *GetProgrammeAsFrictionlessDataResource (const Programme *programme_p, co
 
 
 
-static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
+static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p, User *user_p)
 {
 	OperationStatus status = OS_FAILED;
 	const char *id_s = NULL;
@@ -1022,7 +1022,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															if (programme_p)
 																{
-																	status = SaveProgramme (programme_p, job_p, data_p);
+																	status = SaveProgramme (programme_p, job_p, data_p, user_p);
 
 																	if (status == OS_FAILED)
 																		{

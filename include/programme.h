@@ -212,7 +212,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeById (const bson_oid_t *id_
 DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p, User *user_p);
 
 
 

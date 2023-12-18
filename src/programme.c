@@ -753,7 +753,7 @@ Programme *GetProgrammeByIdString (const char *program_id_s, const ViewFormat fo
 
 
 
-OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p, User *user_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -765,52 +765,63 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 
 			if (programme_json_p)
 				{
-					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME], 
-							data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
+					const char *user_key_s = "saved_by";
+
+					if (user_p)
 						{
-							char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
-							json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_INDEXING, data_p);
-
-							if (programme_indexing_p)
+							if (AddUserToJSON (user_p, programme_json_p, user_key_s))
 								{
-									status = IndexData (job_p, programme_indexing_p, NULL);
-									json_decref (programme_indexing_p);
-								}
-
-							if (status != OS_SUCCEEDED)
-								{
-									status = OS_PARTIALLY_SUCCEEDED;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to index Programme \"%s\" as JSON to Lucene", programme_p -> pr_name_s);
-									AddGeneralErrorMessageToServiceJob (job_p, "Programme saved but failed to index for searching");
-								}
-
-							if (data_p -> dftsd_assets_path_s)
-								{
-									if (!SaveProgrammeAsFrictionlessData (programme_p, data_p))
+									if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME],
+											data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 										{
+											char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
+											json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_INDEXING, data_p);
+
+											if (programme_indexing_p)
+												{
+													status = IndexData (job_p, programme_indexing_p, NULL);
+													json_decref (programme_indexing_p);
+												}
+
+											if (status != OS_SUCCEEDED)
+												{
+													status = OS_PARTIALLY_SUCCEEDED;
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to index Programme \"%s\" as JSON to Lucene", programme_p -> pr_name_s);
+													AddGeneralErrorMessageToServiceJob (job_p, "Programme saved but failed to index for searching");
+												}
+
+											if (data_p -> dftsd_assets_path_s)
+												{
+													if (!SaveProgrammeAsFrictionlessData (programme_p, data_p))
+														{
+
+														}
+												}
+
+											if (id_s)
+												{
+													/*
+													 * If we have the front-end web address to view the trial,
+													 * save it to the ServiceJob.
+													 */
+													if (data_p -> dftsd_view_programme_url_s)
+														{
+															SetFieldTrialServiceJobURL (job_p, data_p -> dftsd_view_programme_url_s, id_s);
+														}
+
+													FreeBSONOidString (id_s);
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", programme_p -> pr_name_s);
+												}
 
 										}
+
 								}
 
-							if (id_s)
-								{
-									/*
-									 * If we have the front-end web address to view the trial,
-									 * save it to the ServiceJob.
-									 */
-									if (data_p -> dftsd_view_programme_url_s)
-										{
-											SetFieldTrialServiceJobURL (job_p, data_p -> dftsd_view_programme_url_s, id_s);
-										}
+						}		/* if (AddUserToJSON (user_p, programme_json_p, user_key_s)) */
 
-									FreeBSONOidString (id_s);
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", programme_p -> pr_name_s);
-								}
-
-						}
 
 					json_decref (programme_json_p);
 				}		/* if (programme_json_p) */

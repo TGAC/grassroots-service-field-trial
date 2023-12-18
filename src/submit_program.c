@@ -197,7 +197,7 @@ static bool CloseProgrammeSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -211,7 +211,7 @@ static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, Paramet
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionProgrammeParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionProgrammeParams (data_p, param_set_p, job_p, user_p))
 				{
 
 				}		/* if (!RunForProgrammeParams (data_p, param_set_p, job_p)) */
