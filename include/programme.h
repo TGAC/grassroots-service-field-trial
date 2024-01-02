@@ -34,6 +34,7 @@
 
 #include "typedefs.h"
 #include "person.h"
+#include "permission.h"
 
 
 /**
@@ -45,6 +46,9 @@
 typedef struct Programme
 {
 	bson_oid_t *pr_id_p;
+
+
+	PermissionsGroup *pr_permissions_p;
 
 	/**
 	 * The time when this Field Trial was saved.

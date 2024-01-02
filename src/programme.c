@@ -769,7 +769,7 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 
 					if (user_p)
 						{
-							if (AddUserToJSON (user_p, programme_json_p, user_key_s))
+							if (AddUserToJSON (user_p, programme_json_p, user_key_s, false))
 								{
 									if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME],
 											data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
