@@ -138,6 +138,7 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 	const char *funder_s = NULL;
 	const char *logo_s = NULL;
 	const char *code_s = NULL;
+	const char *user_email_s = NULL;
 	const char *pi_name_s = NULL;
 	const char *pi_email_s = NULL;
 	const char *pi_role_s = NULL;
@@ -157,6 +158,11 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 			funder_s = programme_p -> pr_funding_organisation_s;
 			logo_s = programme_p -> pr_logo_url_s;
 			code_s = programme_p -> pr_project_code_s;
+
+			if (programme_p -> pr_user_p)
+				{
+					user_email_s = programme_p -> pr_user_p -> us_email_s;
+				}
 
 			if (pi_p)
 				{
@@ -231,7 +237,16 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 																												{
 																													param_p -> pa_read_only_flag = read_only_flag;
 
-																													success_flag = true;
+																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_USER.npt_type, PROGRAMME_USER.npt_name_s, "Saved by", "The person who saved this version of this Programme", user_email_s, PL_ALL)) != NULL)
+																														{
+																															param_p -> pa_read_only_flag = true;
+
+																															success_flag = true;
+																														}
+																													else
+																														{
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_USER.npt_name_s);
+																														}
 																												}
 																											else
 																												{
@@ -1018,11 +1033,11 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															crop_p = GetCropByIdString (crop_id_s, data_p);
 
-															programme_p = AllocateProgramme (programme_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s, NULL);
+															programme_p = AllocateProgramme (programme_id_p, user_p, false, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s, NULL);
 
 															if (programme_p)
 																{
-																	status = SaveProgramme (programme_p, job_p, data_p, user_p);
+																	status = SaveProgramme (programme_p, job_p, data_p);
 
 																	if (status == OS_FAILED)
 																		{

@@ -48,8 +48,7 @@ static bool AddFundingToClientProgrammeJSON (const Programme *programme_p, json_
 
 
 
-
-Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s)
+Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s)
 {
 	char *copied_abbreviation_s = NULL;
 
@@ -79,7 +78,6 @@ Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop
 
 													if ((project_code_s == NULL) || (copied_project_code_s = EasyCopyToNewString (project_code_s)))
 														{
-
 															char *copied_timestamp_s = NULL;
 
 															if ((timestamp_s == NULL) || (copied_timestamp_s = EasyCopyToNewString (timestamp_s)))
@@ -108,6 +106,9 @@ Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop
 																							programme_p -> pr_project_code_s = copied_project_code_s;
 																							programme_p -> pr_funding_organisation_s = copied_funders_s;
 																							programme_p -> pr_pi_p = pi_p;
+
+																							programme_p -> pr_user_p = user_p;
+																							programme_p -> pr_owns_user_flag = owns_user_flag;
 
 																							return programme_p;
 																						}		/* if (programme_p) */
@@ -236,6 +237,11 @@ void FreeProgramme (Programme *programme_p)
 		}
 
 
+	if ((programme_p -> pr_user_p) && (programme_p -> pr_owns_user_flag))
+		{
+			FreeUser (programme_p -> pr_user_p);
+		}
+
 	FreeMemory (programme_p);
 }
 
@@ -291,6 +297,7 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 																	case VF_CLIENT_FULL:
 																	case VF_CLIENT_MINIMAL:
 																		{
+
 																			if (AddFundingToClientProgrammeJSON (programme_p, programme_json_p))
 																				{
 																					if (programme_p -> pr_crop_p)
@@ -307,6 +314,17 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 																					else
 																						{
 																							success_flag = true;
+																						}
+
+																					if (success_flag)
+																						{
+																							if (programme_p -> pr_user_p)
+																								{
+																									if (!AddUserToJSON (programme_p -> pr_user_p, programme_json_p, FT_USER_S, true))
+																										{
+																											success_flag = false;
+																										}
+																								}
 																						}
 
 																				}
@@ -349,7 +367,10 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 																						{
 																							if ((! (programme_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (programme_json_p, programme_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
 																								{
-																									success_flag = true;
+																									if ((! (programme_p -> pr_user_p)) || (AddUserToJSON (programme_p -> pr_user_p, programme_json_p, FT_USER_S, true)))
+																										{
+																											success_flag = true;
+																										}
 																								}
 																						}
 																				}
@@ -412,6 +433,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									const char *timestamp_s = GetJSONString (json_p, MONGO_TIMESTAMP_S);
 									Crop *crop_p = NULL;
 									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
+									User *user_p = GetUserFromNamedJSON (json_p, FT_USER_S);
 
 									if (crop_id_p)
 										{
@@ -423,7 +445,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 											FreeBSONOid (crop_id_p);
 										}
 
-									programme_p = AllocateProgramme (id_p, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s, timestamp_s);
+									programme_p = AllocateProgramme (id_p, user_p, true, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s, timestamp_s);
 
 									if (programme_p)
 										{
@@ -439,6 +461,11 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									if (crop_p)
 										{
 											FreeCrop (crop_p);
+										}
+
+									if (user_p)
+										{
+											FreeUser (user_p);
 										}
 
 								}
@@ -753,7 +780,7 @@ Programme *GetProgrammeByIdString (const char *program_id_s, const ViewFormat fo
 
 
 
-OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p, User *user_p)
+OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -765,64 +792,52 @@ OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldT
 
 			if (programme_json_p)
 				{
-					const char *user_key_s = "saved_by";
-
-					if (user_p)
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME],
+							data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
-							if (AddUserToJSON (user_p, programme_json_p, user_key_s, false))
+							char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
+							json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_INDEXING, data_p);
+
+							if (programme_indexing_p)
 								{
-									if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, programme_json_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME],
-											data_p -> dftsd_backup_collection_ss [DFTD_PROGRAMME], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
-										{
-											char *id_s = GetBSONOidAsString (programme_p -> pr_id_p);
-											json_t *programme_indexing_p = GetProgrammeAsJSON (programme_p, VF_INDEXING, data_p);
-
-											if (programme_indexing_p)
-												{
-													status = IndexData (job_p, programme_indexing_p, NULL);
-													json_decref (programme_indexing_p);
-												}
-
-											if (status != OS_SUCCEEDED)
-												{
-													status = OS_PARTIALLY_SUCCEEDED;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to index Programme \"%s\" as JSON to Lucene", programme_p -> pr_name_s);
-													AddGeneralErrorMessageToServiceJob (job_p, "Programme saved but failed to index for searching");
-												}
-
-											if (data_p -> dftsd_assets_path_s)
-												{
-													if (!SaveProgrammeAsFrictionlessData (programme_p, data_p))
-														{
-
-														}
-												}
-
-											if (id_s)
-												{
-													/*
-													 * If we have the front-end web address to view the trial,
-													 * save it to the ServiceJob.
-													 */
-													if (data_p -> dftsd_view_programme_url_s)
-														{
-															SetFieldTrialServiceJobURL (job_p, data_p -> dftsd_view_programme_url_s, id_s);
-														}
-
-													FreeBSONOidString (id_s);
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", programme_p -> pr_name_s);
-												}
-
-										}
-
+									status = IndexData (job_p, programme_indexing_p, NULL);
+									json_decref (programme_indexing_p);
 								}
 
-						}		/* if (AddUserToJSON (user_p, programme_json_p, user_key_s)) */
+							if (status != OS_SUCCEEDED)
+								{
+									status = OS_PARTIALLY_SUCCEEDED;
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, programme_json_p, "Failed to index Programme \"%s\" as JSON to Lucene", programme_p -> pr_name_s);
+									AddGeneralErrorMessageToServiceJob (job_p, "Programme saved but failed to index for searching");
+								}
 
+							if (data_p -> dftsd_assets_path_s)
+								{
+									if (!SaveProgrammeAsFrictionlessData (programme_p, data_p))
+										{
 
+										}
+								}
+
+							if (id_s)
+								{
+									/*
+									 * If we have the front-end web address to view the trial,
+									 * save it to the ServiceJob.
+									 */
+									if (data_p -> dftsd_view_programme_url_s)
+										{
+											SetFieldTrialServiceJobURL (job_p, data_p -> dftsd_view_programme_url_s, id_s);
+										}
+
+									FreeBSONOidString (id_s);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get bson oid string for trial \"%s\"", programme_p -> pr_name_s);
+								}
+
+						}
 					json_decref (programme_json_p);
 				}		/* if (programme_json_p) */
 
@@ -867,12 +882,26 @@ bool RemoveProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p)
 }
 
 
-
-
 Programme *GetVersionedProgramme (const char *programme_id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	Programme *programme_p = GetVersionedObject (programme_id_s, timestamp_s, format, DFTD_PROGRAMME, data_p, GetProgrammeFromJSON);
 	return programme_p;
+}
+
+
+
+
+
+
+void SetProgrammeUser (Programme *programme_p, User *user_p, bool owns_user_flag)
+{
+	if ((programme_p -> pr_user_p) && (programme_p -> pr_owns_user_flag))
+		{
+			FreeUser (programme_p -> pr_user_p);
+		}
+
+	programme_p -> pr_user_p = user_p;
+	programme_p -> pr_owns_user_flag = owns_user_flag;
 }
 
 

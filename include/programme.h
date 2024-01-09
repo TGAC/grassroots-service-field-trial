@@ -51,6 +51,13 @@ typedef struct Programme
 	PermissionsGroup *pr_permissions_p;
 
 	/**
+	 * The User that saved this version of the Programme.
+	 */
+	User *pr_user_p;
+
+	bool pr_owns_user_flag;
+
+	/**
 	 * The time when this Field Trial was saved.
 	 */
 	char *pr_timestamp_s;
@@ -173,8 +180,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s);
 
 /**
  * Free a given Programme.
@@ -190,6 +196,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL ProgrammeNode *AllocateProgrammeNode (Programme *p
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeProgrammeNode (ListItem *node_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetProgrammeUser (Programme *programme_p, User *user_p, bool owns_user_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddProgrammeFieldTrial (Programme *programme_p, FieldTrial *trial_p, MEM_FLAG mf);
@@ -216,7 +224,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeById (const bson_oid_t *id_
 DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *GetProgrammeByIdString (const char *program_id_s, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p, User *user_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveProgramme (Programme *programme_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 

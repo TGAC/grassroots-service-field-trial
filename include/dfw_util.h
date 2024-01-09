@@ -57,6 +57,9 @@ DFW_UTIL_PREFIX const char * const FT_DEFAULT_TIMESTAMP_S DFW_UTIL_VAL("current"
 
 DFW_UTIL_PREFIX const char * const FT_EMPTY_LIST_OPTION_S DFW_UTIL_VAL("<empty>");
 
+DFW_UTIL_PREFIX const char * const FT_USER_S DFW_UTIL_VAL("user");
+
+
 
 
 #ifdef __cplusplus
