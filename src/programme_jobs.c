@@ -689,6 +689,7 @@ bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_nam
 			PROGRAMME_LOGO,
 			PROGRAMME_CODE,
 			PROGRAMME_FUNDER,
+			PROGRAMME_USER,
 			NULL
 		};
 

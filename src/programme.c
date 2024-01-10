@@ -367,7 +367,7 @@ json_t *GetProgrammeAsJSON (Programme *programme_p, const ViewFormat format, con
 																						{
 																							if ((! (programme_p -> pr_crop_p)) || (AddNamedCompoundIdToJSON (programme_json_p, programme_p -> pr_crop_p -> cr_id_p, PR_CROP_S)))
 																								{
-																									if ((! (programme_p -> pr_user_p)) || (AddUserToJSON (programme_p -> pr_user_p, programme_json_p, FT_USER_S, true)))
+																									if ((! (programme_p -> pr_user_p)) || (AddUserToJSON (programme_p -> pr_user_p, programme_json_p, FT_USER_S, false)))
 																										{
 																											success_flag = true;
 																										}
@@ -432,17 +432,28 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									const char *project_code_s = GetJSONString (json_p, PR_CODE_S);
 									const char *timestamp_s = GetJSONString (json_p, MONGO_TIMESTAMP_S);
 									Crop *crop_p = NULL;
-									bson_oid_t *crop_id_p = GetNewUnitialisedBSONOid ();
-									User *user_p = GetUserFromNamedJSON (json_p, FT_USER_S);
+									bson_oid_t *temp_id_p = GetNewUnitialisedBSONOid ();
+									User *user_p = NULL;
+									GrassrootsServer *grassroots_p = data_p -> dftsd_base_data.sd_service_p -> se_grassroots_p;
 
-									if (crop_id_p)
+									if (temp_id_p)
 										{
-											if (GetNamedIdFromJSON (json_p, PR_CROP_S, crop_id_p))
+											json_t *user_json_p = json_object_get (json_p, FT_USER_S);
+
+											if (GetNamedIdFromJSON (json_p, PR_CROP_S, temp_id_p))
 												{
-													crop_p = GetCropById (crop_id_p, data_p);
+													crop_p = GetCropById (temp_id_p, data_p);
 												}
 
-											FreeBSONOid (crop_id_p);
+											if (user_json_p)
+												{
+													if (GetMongoIdFromJSON (user_json_p, temp_id_p))
+														{
+															user_p = GetUserById (grassroots_p, temp_id_p);
+														}
+												}
+
+											FreeBSONOid (temp_id_p);
 										}
 
 									programme_p = AllocateProgramme (id_p, user_p, true, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s, timestamp_s);
@@ -450,12 +461,6 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									if (programme_p)
 										{
 											return programme_p;
-										}
-
-
-									if (crop_id_p)
-										{
-											FreeBSONOid (crop_id_p);
 										}
 
 									if (crop_p)
