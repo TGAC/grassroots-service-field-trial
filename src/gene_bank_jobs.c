@@ -180,7 +180,7 @@ bool SetUpGenBanksListParameter (const FieldTrialServiceData *data_p, StringPara
 												{
 													if (SetStringParameterDefaultValue (param_p, id_s))
 														{
-															success_flag = CreateAndAddStringParameterOption (param_p, id_s, gene_bank_p -> gb_name_s);
+															success_flag = CreateAndAddStringParameterOption (& (param_p -> sp_base_param), id_s, gene_bank_p -> gb_name_s);
 														}
 
 												}

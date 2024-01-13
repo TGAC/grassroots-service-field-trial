@@ -440,7 +440,7 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 																					value_set_flag = true;
 																				}
 
-																			if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																			if (!CreateAndAddStringParameterOption (& (param_p -> sp_base_param), id_s, name_s))
 																				{
 																					success_flag = false;
 																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);

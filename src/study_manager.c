@@ -331,7 +331,7 @@ static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *grou
 {
 	bool success_flag = false;
 
-	StringParameter *param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
 
 	if (param_p)
 		{

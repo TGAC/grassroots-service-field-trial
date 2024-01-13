@@ -623,7 +623,7 @@ json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, const bool
 }
 
 
-bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag)
+bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, Parameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
@@ -638,7 +638,7 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 }
 
 
-bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, StringParameter *param_p, const char *active_trial_id_s, const bool empty_option_flag, json_t *trials_p)
+bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, Parameter *param_p, const char *active_trial_id_s, const bool empty_option_flag, json_t *trials_p)
 {
 	bool success_flag = false;
 	bool value_set_flag = false;

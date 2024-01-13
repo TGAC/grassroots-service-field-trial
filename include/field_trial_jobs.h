@@ -76,10 +76,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchFieldTrialParams (FieldTrialServi
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, Parameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, StringParameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag, json_t *trials_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, Parameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag, json_t *trials_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetFieldTrialIndexingData (Service *service_p);

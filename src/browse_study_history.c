@@ -375,7 +375,7 @@ static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringP
 																}
 														}
 
-													if (!CreateAndAddStringParameterOption (param_p, value_s, value_s))
+													if (!CreateAndAddStringParameterOption (& (param_p -> sp_base_param), value_s, value_s))
 														{
 															success_flag = false;
 															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option for \"%s\"", value_s);

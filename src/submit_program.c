@@ -156,7 +156,14 @@ static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p
 
 			if (AddSubmissionProgrammeParams (data_p, params_p, resource_p, false))
 				{
-					return params_p;
+					PermissionsGroup *perms_group_p = NULL;
+					bool read_only_flag = false;
+					const char *id_s = NULL;
+
+					if (AddPermissionsEditor (perms_group_p, id_s, params_p, read_only_flag, (FieldTrialServiceData *) data_p))
+						{
+							return params_p;
+						}
 				}
 			else
 				{

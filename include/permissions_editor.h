@@ -21,7 +21,10 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPermissionsEditor (PermissionsGroup *permissions_group_p, const char *id_s, ParameterSet *param_set_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPermissionsEditor (PermissionsGroup *permissions_group_p, const char *id_s, ParameterSet *param_set_p, const bool read_only_flag, FieldTrialServiceData *ft_data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPermissionsEditorParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
 #ifdef __cplusplus

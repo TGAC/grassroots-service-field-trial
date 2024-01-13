@@ -91,22 +91,21 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 
 	if (group_p)
 		{
-			StringParameter *string_param_p = NULL;
+			Parameter *param_p = NULL;
 
-			if ((string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
 				{
 					const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
-					if (SetUpStudiesListParameter (dfw_service_data_p, string_param_p, NULL, false))
+					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL, false))
 						{
-							string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
+							param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
 
-							if (string_param_p)
+							if (param_p)
 								{
-									if (SetUpGenBanksListParameter ((FieldTrialServiceData *) data_p, string_param_p))
+									if (SetUpGenBanksListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p))
 										{
 											const char c = DFT_DEFAULT_COLUMN_DELIMITER;
-											Parameter *param_p;
 
 											if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 												{

@@ -92,6 +92,7 @@ SRCS 	= \
 	measured_variable_jobs.c \
 	numeric_observation.c \
 	observation.c \
+	permissions_editor.c \
 	person.c \
 	person_jobs.c \
 	phenotype_jobs.c \

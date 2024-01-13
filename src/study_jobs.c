@@ -241,11 +241,11 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 								{
 									const bool new_study_flag = active_study_p ? false : true;
 
-									if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_current_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
+									if (SetUpCropsListParameter (dfw_data_p, param_p, active_study_p ? active_study_p -> st_current_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
 												{
-													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_previous_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
+													if (SetUpCropsListParameter (dfw_data_p, param_p, active_study_p ? active_study_p -> st_previous_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
 														{
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", active_study_p ? active_study_p -> st_data_url_s : NULL, PL_ALL)) != NULL)
 																{
@@ -3045,7 +3045,7 @@ static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p)
 }
 
 
-bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
+bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const Study *active_study_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	json_t *results_p = GetAllStudiesAsJSON (data_p, false);
@@ -4362,7 +4362,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 											trial_id_s = GetBSONOidAsString (active_study_p -> st_parent_p -> ft_id_p);
 										}
 
-									if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, trial_id_s, false))
+									if (SetUpFieldTrialsListParameter (dfw_data_p, param_p, trial_id_s, false))
 										{
 											if (trial_id_s)
 												{

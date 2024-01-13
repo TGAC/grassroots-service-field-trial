@@ -69,7 +69,7 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_TREATMENT_ID.npt_type, TFJ_TREATMENT_ID.npt_name_s, "Load Treatment", "Edit an existing treatment", treatment_id_s, PL_ALL)) != NULL)
 						{
-							if (SetUpTreatmentFactorsListParameter (ft_data_p, (StringParameter *) param_p, active_study_p, active_tf_p, true))
+							if (SetUpTreatmentFactorsListParameter (ft_data_p, param_p, active_study_p, active_tf_p, true))
 								{
 									const char *active_tf_name_s = NULL;
 
@@ -325,7 +325,7 @@ bool RunForSubmissionTreatmentFactorParams (FieldTrialServiceData *data_p, Param
 
 
 
-bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const TreatmentFactor *active_tf_p, const bool empty_option_flag)
+bool SetUpTreatmentFactorsListParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const Study *active_study_p, const TreatmentFactor *active_tf_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
 	bool value_set_flag = false;
