@@ -34,6 +34,8 @@
 #include "service.h"
 #include "mongodb_tool.h"
 //#include "sqlite_tool.h"
+#include "view_format.h"
+
 
 typedef enum
 {
@@ -55,49 +57,6 @@ typedef enum
 } FieldTrialDatatype;
 
 
-
-/**
- * An indicator of what the output destination
- * is for the JSON data values. This lets us
- * know whether we need to e.g. expand fields
- * to full objects from their ids, or omit
- * certain fields entirely
- *
- * @ingroup field_trials_service
- */
-typedef enum
-{
-	/**
-	 * This is for generating JSON to be stored in the
-	 * server-side mongo db.
-	 */
-	VF_STORAGE,
-
-	/**
-	 * This is for generating a full data set for displaying
-	 * within a client.
-	 */
-	VF_CLIENT_FULL,
-
-	/**
-	 * This is for generating a minimal data set for displaying
-	 * within a client. This is used when doing LinkedService
-	 * calls to get subsequent child data.
-	 */
-	VF_CLIENT_MINIMAL,
-
-
-	/**
-	 * Get the object with all of the relevant data
-	 * needed for indexing into the Lucene component
-	 */
-	VF_INDEXING,
-
-	/**
-	 * The number of available formats
-	 */
-	VF_NUM_FORMATS
-} ViewFormat;
 
 
 

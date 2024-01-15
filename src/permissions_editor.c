@@ -13,7 +13,7 @@
 
 static NamedParameterType PERMISSION_READ = { "PE Read", PT_STRING_ARRAY } ;
 static NamedParameterType PERMISSION_WRITE = { "PE Write", PT_STRING_ARRAY } ;
-static NamedParameterType PERMISSION_FULL = { "PE Full", PT_STRING_ARRAY } ;
+static NamedParameterType PERMISSION_DELETE = { "PE Delete", PT_STRING_ARRAY } ;
 
 
 static bool GetUserEmailsForUserList (const LinkedList * const users_p, char ***emails_sss);
@@ -32,26 +32,26 @@ bool AddPermissionsEditor (PermissionsGroup *permissions_group_p, const char *id
 
 	if (success_flag)
 		{
-			Permissions *permissions_p = permissions_group_p ? permissions_group_p -> pg_read_only_access_p : NULL;
+			Permissions *permissions_p = permissions_group_p ? permissions_group_p -> pg_read_access_p : NULL;
 
 			if (AddPermissionsParameter (permissions_p, PERMISSION_READ.npt_name_s, "Read", "Users with Read access",
 																	 all_users_p, perms_group_p, param_set_p, ft_data_p))
 				{
-					permissions_p = permissions_group_p ? permissions_group_p -> pg_read_write_access_p : NULL;
+					permissions_p = permissions_group_p ? permissions_group_p -> pg_write_access_p : NULL;
 
 					if (AddPermissionsParameter (permissions_p, PERMISSION_WRITE.npt_name_s, "Write", "Users with Write access",
 																			 all_users_p, perms_group_p, param_set_p, ft_data_p))
 						{
-							permissions_p = permissions_group_p ? permissions_group_p -> pg_full_access_p : NULL;
+							permissions_p = permissions_group_p ? permissions_group_p -> pg_delete_access_p : NULL;
 
-							if (AddPermissionsParameter (permissions_p, PERMISSION_FULL.npt_name_s, "Read", "Users with Full Access",
+							if (AddPermissionsParameter (permissions_p, PERMISSION_DELETE.npt_name_s, "Delete", "Users with Delete Access",
 																					 all_users_p, perms_group_p, param_set_p, ft_data_p))
 								{
 
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPermissionsParameter () failed for \"%s\"", PERMISSION_FULL.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPermissionsParameter () failed for \"%s\"", PERMISSION_DELETE.npt_name_s);
 								}
 
 						}
@@ -80,15 +80,36 @@ bool AddPermissionsEditor (PermissionsGroup *permissions_group_p, const char *id
 bool GetPermissionsEditorParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	const NamedParameterType params [] =
-	{
+		{
 			PERMISSION_READ,
 			PERMISSION_WRITE,
-			PERMISSION_FULL,
+			PERMISSION_DELETE,
 			NULL
-	};
+		};
 
-return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
+
+
+
+bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
+{
+	bool success_flag = false;
+	const char **values_ss = NULL;
+	size_t num_entries = 0;
+
+	if (GetCurrentStringArrayParameterValuesFromParameterSet (param_set_p, PERMISSION_WRITE.npt_name_s, &values_ss, &num_entries))
+		{
+
+		}
+
+	return success_flag;
+}
+
+
+/*
+ * Static declarations
+ */
 
 static bool AddPermissionsParameter (const Permissions *permissions_p, const char * const name_s, const char * const display_name_s, const char * const description_s,
 																		 LinkedList *all_users_p, ParameterGroup *perms_group_p, ParameterSet *param_set_p, FieldTrialServiceData *ft_data_p)

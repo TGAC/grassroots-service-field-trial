@@ -27,6 +27,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPermissionsEditor (PermissionsGroup *permi
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPermissionsEditorParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif
