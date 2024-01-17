@@ -95,17 +95,60 @@ bool GetPermissionsEditorParameterTypeForNamedParameter (const char *param_name_
 bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
 {
 	bool success_flag = false;
+	GrassrootsServer *grassroots_p = data_p -> sd_service_p -> se_grassroots_p;
+
+	return success_flag;
+}
+
+
+static bool UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p)
+{
+	bool success_flag = false;
 	const char **values_ss = NULL;
 	size_t num_entries = 0;
 
-	if (GetCurrentStringArrayParameterValuesFromParameterSet (param_set_p, PERMISSION_WRITE.npt_name_s, &values_ss, &num_entries))
+	if (GetCurrentStringArrayParameterValuesFromParameterSet (param_set_p, param_s, &values_ss, &num_entries))
 		{
+			size_t i;
+			const char **value_ss = values_ss;
+
+			ClearPermissions (permissions_p);
+
+			for (i = 0; i < num_entries; ++ i, ++ value_ss)
+				{
+					const char *email_s = *value_ss;
+					User *user_p = GetUserByEmailAddress (grassroots_p, email_s);
+
+					if (user_p)
+						{
+							if (AddUserToPermissions (permissions_p, user_p))
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPermissionsParameter () failed for \"%s\"", param_s);
+									FreeUser (user_p);
+								}
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPermissionsParameter () failed for \"%s\" with email \"%s\"", param_s, email_s);
+
+							char *error_s = ConcatenateVarargsStrings ("No user found with email address: ", email_s, NULL);
+
+							if (error_s)
+								{
+									AddParameterErrorMessageToServiceJob (job_p, param_s, PT_STRING_ARRAY, error_s);
+									FreeCopiedString (error_s);
+								}
+						}
+				}
 
 		}
 
 	return success_flag;
 }
-
 
 /*
  * Static declarations
