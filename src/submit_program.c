@@ -26,6 +26,7 @@
 #include "audit.h"
 
 #include "programme_jobs.h"
+#include "permissions_editor.h"
 
 /*
  * Static declarations
