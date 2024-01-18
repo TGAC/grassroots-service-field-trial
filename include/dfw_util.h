@@ -59,6 +59,7 @@ DFW_UTIL_PREFIX const char * const FT_EMPTY_LIST_OPTION_S DFW_UTIL_VAL("<empty>"
 
 DFW_UTIL_PREFIX const char * const FT_USER_S DFW_UTIL_VAL("user");
 
+DFW_UTIL_PREFIX const char * const FT_PERMISSIONS_S DFW_UTIL_VAL("permissions");
 
 
 

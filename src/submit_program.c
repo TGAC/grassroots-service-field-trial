@@ -142,7 +142,14 @@ static const char *GetProgrammeSubmissionServiceInformationUri (const Service *s
 
 static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionProgrammeParameterTypeForNamedParameter (param_name_s, pt_p);
+	bool success_flag = GetSubmissionProgrammeParameterTypeForNamedParameter (param_name_s, pt_p);
+
+	if (!success_flag)
+		{
+			success_flag = GetPermissionsEditorParameterTypeForNamedParameter (param_name_s, pt_p);
+		}
+
+	return success_flag;
 }
 
 

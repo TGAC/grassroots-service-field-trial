@@ -1038,11 +1038,14 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															if (programme_p)
 																{
-																	status = SaveProgramme (programme_p, job_p, data_p);
-
-																	if (status == OS_FAILED)
+																	if (RunForPermissionEditor (param_set_p, programme_p -> pr_permissions_p, job_p, user_p, & (data_p -> dftsd_base_data)))
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Programme named \"%s\"", name_s);
+																			status = SaveProgramme (programme_p, job_p, data_p);
+
+																			if (status == OS_FAILED)
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Programme named \"%s\"", name_s);
+																				}
 																		}
 
 																	FreeProgramme (programme_p);
