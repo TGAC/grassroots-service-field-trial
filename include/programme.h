@@ -180,7 +180,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, PermissionsGroup *permissions_group_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s);
 
 /**
  * Free a given Programme.

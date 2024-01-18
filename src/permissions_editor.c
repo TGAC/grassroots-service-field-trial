@@ -94,6 +94,24 @@ bool GetPermissionsEditorParameterTypeForNamedParameter (const char *param_name_
 }
 
 
+PermissionsGroup *GetPermissionsGroupFromPermissionsEditor (ParameterSet *param_set_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
+{
+	PermissionsGroup *perms_group_p = AllocatePermissionsGroup ();
+
+	if (perms_group_p)
+		{
+			if (RunForPermissionEditor (param_set_p, perms_group_p, job_p, user_p, data_p))
+				{
+					return perms_group_p;
+				}
+
+			FreePermissionsGroup (perms_group_p);
+		}
+
+	return NULL;
+}
+
+
 
 bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
 {

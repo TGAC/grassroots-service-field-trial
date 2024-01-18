@@ -48,7 +48,7 @@ static bool AddFundingToClientProgrammeJSON (const Programme *programme_p, json_
 
 
 
-Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s)
+Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, PermissionsGroup *permissions_group_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s)
 {
 	char *copied_abbreviation_s = NULL;
 
@@ -86,9 +86,19 @@ Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_us
 
 																	if (trials_p)
 																		{
-																			PermissionsGroup *perms_group_p = AllocatePermissionsGroup ();
+																			bool alloc_perms_flag = false;
 
-																			if (perms_group_p)
+																			if (!permissions_group_p)
+																				{
+																					permissions_group_p = AllocatePermissionsGroup ();
+
+																					if (permissions_group_p)
+																						{
+																							alloc_perms_flag = true;
+																						}
+																				}
+
+																			if (permissions_group_p)
 																				{
 																					if (pi_p)
 																						{
@@ -113,7 +123,7 @@ Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_us
 																									programme_p -> pr_user_p = user_p;
 																									programme_p -> pr_owns_user_flag = owns_user_flag;
 
-																									programme_p -> pr_permissions_p = perms_group_p;
+																									programme_p -> pr_permissions_p = permissions_group_p;
 
 
 																									return programme_p;
@@ -122,12 +132,12 @@ Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, const bool owns_us
 																							FreePerson (pi_p);
 																						}
 
-																					FreePermissionsGroup (perms_group_p);
-																				}		/* if (perms_group_p) */
+																					if (alloc_perms_flag)
+																						{
+																							FreePermissionsGroup (permissions_group_p);
+																						}
 
-
-
-
+																				}		/* if (permissions_group_p) */
 
 																			FreeLinkedList (trials_p);
 																		}		/* if (trials_p) */
@@ -475,6 +485,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									bson_oid_t *temp_id_p = GetNewUnitialisedBSONOid ();
 									User *user_p = NULL;
 									GrassrootsServer *grassroots_p = data_p -> dftsd_base_data.sd_service_p -> se_grassroots_p;
+									PermissionsGroup *perms_group_p = GetPermissionsGroupFromJSON (json_p, grassroots_p);
 
 									if (temp_id_p)
 										{
@@ -496,7 +507,9 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 											FreeBSONOid (temp_id_p);
 										}
 
-									programme_p = AllocateProgramme (id_p, user_p, true, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s, timestamp_s);
+
+
+									programme_p = AllocateProgramme (id_p, user_p, perms_group_p, true, abbreviation_s, crop_p, documentation_url_s, name_s, objective_s, pi_p, logo_s, funders_s, project_code_s, timestamp_s);
 
 									if (programme_p)
 										{

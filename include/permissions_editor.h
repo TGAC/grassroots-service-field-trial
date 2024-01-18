@@ -30,6 +30,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetPermissionsEditorParameterTypeForNamedPara
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL PermissionsGroup *GetPermissionsGroupFromPermissionsEditor (ParameterSet *param_set_p, ServiceJob *job_p, User *user_p, ServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

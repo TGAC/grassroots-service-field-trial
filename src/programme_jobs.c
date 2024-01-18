@@ -55,13 +55,12 @@ bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, D
 }
 
 
-bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p, const bool read_only_flag)
+bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Programme *active_programme_p, const bool read_only_flag)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	char *id_s = NULL;
-	Programme *active_programme_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, dfw_data_p);
 	bool defaults_flag = false;
 
 
@@ -107,11 +106,6 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 
 		}		/* if (defaults_flag) */
 
-
-	if (active_programme_p)
-		{
-			FreeProgramme (active_programme_p);
-		}
 
 	if (id_s != S_EMPTY_LIST_OPTION_S)
 		{
@@ -1023,6 +1017,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 															const char *funders_s = NULL;
 															const char *project_code_s = NULL;
 															Crop *crop_p = NULL;
+															PermissionsGroup *perms_group_p = GetPermissionsGroupFromPermissionsEditor (param_set_p, job_p, user_p, data_p);
 
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CROP.npt_name_s, &crop_id_s);
@@ -1034,7 +1029,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															crop_p = GetCropByIdString (crop_id_s, data_p);
 
-															programme_p = AllocateProgramme (programme_id_p, user_p, false, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s, NULL);
+															programme_p = AllocateProgramme (programme_id_p, user_p, perms_group_p, false, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s, NULL);
 
 															if (programme_p)
 																{
@@ -1266,7 +1261,7 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 
 Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p)
 {
-	Programme *program_p = NULL;
+	Programme *programme_p = NULL;
 
 	/*
 	 * Have we been set some parameter values to refresh from?
@@ -1288,9 +1283,9 @@ Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParame
 							 */
 							if (program_id_s)
 								{
-									program_p = GetProgrammeByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+									programme_p = GetProgrammeByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
 
-									if (!program_p)
+									if (!programme_p)
 										{
 											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Programme with id \"%s\"", program_id_s);
 										}
@@ -1310,7 +1305,7 @@ Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParame
 
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
-	return program_p;
+	return programme_p;
 }
 
 

@@ -161,10 +161,12 @@ static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
+			FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
+			Programme *active_programme_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, ft_data_p);
 
-			if (AddSubmissionProgrammeParams (data_p, params_p, resource_p, false))
+			if (AddSubmissionProgrammeParams (data_p, params_p, active_programme_p, false))
 				{
-					PermissionsGroup *perms_group_p = NULL;
+					PermissionsGroup *perms_group_p = active_programme_p ? active_programme_p -> pr_permissions_p : NULL;
 					bool read_only_flag = false;
 					const char *id_s = NULL;
 
@@ -176,6 +178,11 @@ static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p
 			else
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionProgrammeParams failed");
+				}
+
+			if (active_programme_p)
+				{
+					FreeProgramme (active_programme_p);
 				}
 
 			FreeParameterSet (params_p);

@@ -77,7 +77,7 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Programme *active_program_p, const bool empty_option_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p, const bool read_only_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Programme *active_programme_p, const bool read_only_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
