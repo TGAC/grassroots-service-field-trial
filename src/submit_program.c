@@ -154,25 +154,34 @@ static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const
 
 
 
-static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p)
 {
 	ParameterSet *params_p = AllocateParameterSet ("Programme submission service parameters", "The parameters used for the Programme submission service");
 
 	if (params_p)
 		{
+			bool success_flag = false;
 			ServiceData *data_p = service_p -> se_data_p;
 			FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
 			Programme *active_programme_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, ft_data_p);
+			PermissionsGroup *perms_group_p = active_programme_p ? active_programme_p -> pr_permissions_p : NULL;
+			bool read_only_flag = false;
 
-			if (AddSubmissionProgrammeParams (data_p, params_p, active_programme_p, false))
+			if (perms_group_p)
 				{
-					PermissionsGroup *perms_group_p = active_programme_p ? active_programme_p -> pr_permissions_p : NULL;
-					bool read_only_flag = false;
+					if (user_p)
+						{
+							read_only_flag = !CheckPermissionsGroupForUser (perms_group_p, user_p, AM_WRITE);
+						}
+				}
+
+			if (AddSubmissionProgrammeParams (data_p, params_p, active_programme_p, read_only_flag))
+				{
 					const char *id_s = NULL;
 
 					if (AddPermissionsEditor (perms_group_p, id_s, params_p, read_only_flag, (FieldTrialServiceData *) data_p))
 						{
-							return params_p;
+							success_flag = true;
 						}
 				}
 			else
@@ -183,6 +192,11 @@ static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p
 			if (active_programme_p)
 				{
 					FreeProgramme (active_programme_p);
+				}
+
+			if (success_flag)
+				{
+					return params_p;
 				}
 
 			FreeParameterSet (params_p);

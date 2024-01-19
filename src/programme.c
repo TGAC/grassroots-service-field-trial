@@ -202,14 +202,25 @@ Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, PermissionsGroup *
 
 void FreeProgramme (Programme *programme_p)
 {
-	if (programme_p -> pr_funding_organisation_s)
+	if (programme_p -> pr_id_p)
 		{
-			FreeCopiedString (programme_p -> pr_funding_organisation_s);
+			FreeBSONOid (programme_p -> pr_id_p);
 		}
 
-	if (programme_p -> pr_project_code_s)
+
+	if (programme_p -> pr_permissions_p)
 		{
-			FreeCopiedString (programme_p -> pr_project_code_s);
+			FreePermissionsGroup (programme_p -> pr_permissions_p);
+		}
+
+	if ((programme_p -> pr_user_p) && (programme_p -> pr_owns_user_flag))
+		{
+			FreeUser (programme_p -> pr_user_p);
+		}
+
+	if (programme_p -> pr_timestamp_s)
+		{
+			FreeCopiedString (programme_p -> pr_timestamp_s);
 		}
 
 	if (programme_p -> pr_abbreviation_s)
@@ -227,47 +238,35 @@ void FreeProgramme (Programme *programme_p)
 			FreeCopiedString (programme_p -> pr_documentation_url_s);
 		}
 
+	FreeCopiedString (programme_p -> pr_name_s);
+
 	if (programme_p -> pr_objective_s)
 		{
 			FreeCopiedString (programme_p -> pr_objective_s);
 		}
-
-
-	if (programme_p -> pr_logo_url_s)
-		{
-			FreeCopiedString (programme_p -> pr_logo_url_s);
-		}
-
-	if (programme_p -> pr_timestamp_s)
-		{
-			FreeCopiedString (programme_p -> pr_timestamp_s);
-		}
-
-	FreeCopiedString (programme_p -> pr_name_s);
-
-	FreeLinkedList (programme_p -> pr_trials_p);
-
 
 	if (programme_p -> pr_pi_p)
 		{
 			FreePerson (programme_p -> pr_pi_p);
 		}
 
-	if (programme_p -> pr_id_p)
+	FreeLinkedList (programme_p -> pr_trials_p);
+
+	if (programme_p -> pr_logo_url_s)
 		{
-			FreeBSONOid (programme_p -> pr_id_p);
+			FreeCopiedString (programme_p -> pr_logo_url_s);
 		}
 
-
-	if ((programme_p -> pr_user_p) && (programme_p -> pr_owns_user_flag))
+	if (programme_p -> pr_funding_organisation_s)
 		{
-			FreeUser (programme_p -> pr_user_p);
+			FreeCopiedString (programme_p -> pr_funding_organisation_s);
 		}
 
-	if (programme_p -> pr_permissions_p)
+	if (programme_p -> pr_project_code_s)
 		{
-			FreePermissionsGroup (programme_p -> pr_permissions_p);
+			FreeCopiedString (programme_p -> pr_project_code_s);
 		}
+
 
 	FreeMemory (programme_p);
 }
@@ -485,7 +484,7 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									bson_oid_t *temp_id_p = GetNewUnitialisedBSONOid ();
 									User *user_p = NULL;
 									GrassrootsServer *grassroots_p = data_p -> dftsd_base_data.sd_service_p -> se_grassroots_p;
-									PermissionsGroup *perms_group_p = GetPermissionsGroupFromJSON (json_p, grassroots_p);
+									PermissionsGroup *perms_group_p = GetPermissionsGroupFromChildJSON (json_p, FT_PERMISSIONS_S, grassroots_p);
 
 									if (temp_id_p)
 										{

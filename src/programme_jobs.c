@@ -30,6 +30,8 @@
 
 #include "frictionless_data_util.h"
 
+#include "permissions_editor.h"
+
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
@@ -188,7 +190,7 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 						{
 							param_p -> pa_read_only_flag = read_only_flag;
 
-							if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, crop_p, FT_EMPTY_LIST_OPTION_S, programme_p ? false : true))
+							if (SetUpCropsListParameter (dfw_data_p, param_p, crop_p, FT_EMPTY_LIST_OPTION_S, programme_p ? false : true))
 								{
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_OBJECTIVE.npt_type, PROGRAMME_OBJECTIVE.npt_name_s, "Objective", "The Programme's objective", objective_s, PL_ALL)) != NULL)
 										{
@@ -401,7 +403,7 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 					 */
 					if (empty_option_flag)
 						{
-							success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
+							success_flag = CreateAndAddStringParameterOption (& (param_p -> sp_base_param), S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
 						}
 
 					if (success_flag)
@@ -1017,7 +1019,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 															const char *funders_s = NULL;
 															const char *project_code_s = NULL;
 															Crop *crop_p = NULL;
-															PermissionsGroup *perms_group_p = GetPermissionsGroupFromPermissionsEditor (param_set_p, job_p, user_p, data_p);
+															PermissionsGroup *perms_group_p = GetPermissionsGroupFromPermissionsEditor (param_set_p, job_p, user_p, & (data_p -> dftsd_base_data));
 
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CROP.npt_name_s, &crop_id_s);
