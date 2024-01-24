@@ -203,11 +203,26 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 													param_p -> pa_read_only_flag = read_only_flag;
 													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_NAME.npt_type, PROGRAMME_PI_NAME.npt_name_s, "Principal Investigator Name", "The name of the Programme's lead", pi_name_s, PL_ALL)) != NULL)
 														{
-															param_p -> pa_required_flag = true;
+															if (read_only_flag)
+																{
+																	param_p -> pa_read_only_flag = true;
+																}
+															else
+																{
+																	param_p -> pa_required_flag = true;
+																}
+
 
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_EMAIL.npt_type, PROGRAMME_PI_EMAIL.npt_name_s, "Principal Investigator Email", "The email address of the Programme's lead", pi_email_s, PL_ALL)) != NULL)
 																{
-																	param_p -> pa_required_flag = true;
+																	if (read_only_flag)
+																		{
+																			param_p -> pa_read_only_flag = true;
+																		}
+																	else
+																		{
+																			param_p -> pa_required_flag = true;
+																		}
 
 																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_ROLE.npt_type, PROGRAMME_PI_ROLE.npt_name_s, "Principal Investigator Role", "The role of the Programme's lead", pi_role_s, PL_ALL)) != NULL)
 																		{

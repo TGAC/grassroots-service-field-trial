@@ -100,6 +100,12 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 static const char * const S_UNKNOWN_CROP_OPTION_S = "Unknown";
 
+static const char * const S_DETAIL_LEVEL_IDS_S = "Names and Ids only";
+
+static const char * const S_DETAIL_LEVEL_METADATA_S = "Metadata";
+
+static const char * const S_DETAIL_LEVEL_FULL_S = "Full";
+
 /*
  * STATIC DECLARATIONS
  */
@@ -192,6 +198,7 @@ static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *p
 
 static bool ProcessPersonForStudy (Person *person_p, void *user_data_p);
 
+static bool AddStudyLevelDetailParameter (ParameterSet *param_set_p, ParameterGroup *group_p, ServiceData * data_p);
 
 /*
  * API DEFINITIONS
@@ -781,7 +788,8 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 			{
 					STUDY_SEARCH_STUDIES,
 					STUDY_ID,
-					STUDY_GET_ALL_PLOTS,
+					//STUDY_GET_ALL_PLOTS,
+					STUDY_DETAIL_LEVEL,
 					STUDY_LOCATIONS_LIST,
 					STUDY_HARVEST_YEAR,
 					STUDY_SOWING_YEAR,
@@ -791,7 +799,6 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
-
 
 
 bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
@@ -809,7 +816,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 				{
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Id", "The id of the Study", NULL, PL_ADVANCED)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, STUDY_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", &search_flag, PL_ADVANCED)) != NULL)
+							if (AddStudyLevelDetailParameter (param_set_p, group_p, data_p))
 								{
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_TRIAL_ID_S.npt_type, S_SEARCH_TRIAL_ID_S.npt_name_s, "Parent Field Trial", "Get all Studies for a given Field Trial", NULL, PL_ADVANCED)) != NULL)
 										{
@@ -856,7 +863,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_GET_ALL_PLOTS.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStudyLevelDetailParameter () failed");
 								}
 						}
 					else
@@ -890,15 +897,26 @@ bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param
 			if ((search_flag_p != NULL) && (*search_flag_p == true))
 				{
 					const char *id_s = NULL;
+					const char *level_s = NULL;
 
-					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, STUDY_GET_ALL_PLOTS.npt_name_s, &search_flag_p))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_DETAIL_LEVEL.npt_name_s, &level_s))
 						{
-							if ((search_flag_p != NULL) && (*search_flag_p == true))
+							if (!IsStringEmpty (level_s))
 								{
-									format = VF_CLIENT_FULL;
-								}		/* if (value.st_boolean_value) */
-
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
+									if (strcmp (level_s, S_DETAIL_LEVEL_FULL_S) == 0)
+										{
+											format = VF_CLIENT_FULL;
+										}
+									else if (strcmp (level_s, S_DETAIL_LEVEL_METADATA_S) == 0)
+										{
+											format = VF_CLIENT_MINIMAL;
+										}
+									if (strcmp (level_s, S_DETAIL_LEVEL_IDS_S) == 0)
+										{
+											format = VF_REFERENCE;
+										}
+								}
+						}
 
 					/*
 					 * Are we searching for all studies within a trial?
@@ -1485,6 +1503,31 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 }
 
 
+static bool AddStudyLevelDetailParameter (ParameterSet *param_set_p, ParameterGroup *group_p, ServiceData * data_p)
+{
+	bool success_flag = false;
+
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DETAIL_LEVEL.npt_type, STUDY_DETAIL_LEVEL.npt_name_s, "Study Detail Level", "The level of detail to return for matching Studies", NULL, PL_ADVANCED);
+
+	if (param_p)
+		{
+			if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+				{
+					if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+						{
+							if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+								{
+									success_flag = true;
+								}
+
+						}
+
+				}
+
+		}
+
+	return success_flag;
+}
 
 
 
@@ -3430,65 +3473,76 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 
 							for (i = 0; i < num_results; ++ i)
 								{
-									Study *study_p = NULL;
+									json_t *study_json_p = NULL;
 									json_t *entry_p = json_array_get (results_p, i);
+									char *study_s = NULL;
 
-									if (format == VF_CLIENT_FULL)
+									if (format != VF_INDEXING)
 										{
-											bson_oid_t id;
+											Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
 
-											if (GetMongoIdFromJSON (entry_p, &id))
+											if (study_p)
 												{
-													char *id_s = GetBSONOidAsString (&id);
+													study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
-													if (id_s)
+													if (study_json_p)
 														{
-
-															FreeBSONOidString (id_s);
-														}		/* if (id_s) */
-
-												}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
-
-										}		/* if (format == VF_CLIENT_FULL) */
-
-									study_p = GetStudyFromJSON (entry_p, format, data_p);
-
-									if (study_p)
-										{
-											json_t *study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
-
-											if (study_json_p)
-												{
-													bool added_flag = false;
-
-													if (AddContext (study_json_p))
-														{
-															json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
-
-															if (dest_record_p)
-																{
-																	if (AddResultToServiceJob (job_p, dest_record_p))
-																		{
-																			++ num_added;
-																			added_flag = true;
-																		}
-																	else
-																		{
-																			json_decref (dest_record_p);
-																		}
-
-																}		/* if (dest_record_p) */
-
-														}		/* if (AddContext (trial_json_p)) */
-
-													if (!added_flag)
-														{
-															json_decref (study_json_p);
+															study_s = EasyCopyToNewString (study_p -> st_name_s);
 														}
 
-												}		/* if (study_json_p) */
+													FreeStudy (study_p);
+												}
+										}		/* if (format == VF_CLIENT_FULL) */
+									else
+										{
+											const char *value_s = GetJSONString (entry_p, ST_NAME_S);
 
-										}		/* if (study_p) */
+											if (value_s)
+												{
+													study_json_p = json_deep_copy (entry_p);
+
+													if (study_json_p)
+														{
+															study_s = EasyCopyToNewString (value_s);
+														}
+												}
+										}
+
+									if (study_json_p)
+										{
+											bool added_flag = false;
+
+											if (AddContext (study_json_p))
+												{
+													json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_s, study_json_p);
+
+													if (dest_record_p)
+														{
+															if (AddResultToServiceJob (job_p, dest_record_p))
+																{
+																	++ num_added;
+																	added_flag = true;
+																}
+															else
+																{
+																	json_decref (dest_record_p);
+																}
+
+														}		/* if (dest_record_p) */
+
+												}		/* if (AddContext (trial_json_p)) */
+
+											if (!added_flag)
+												{
+													json_decref (study_json_p);
+												}
+
+											if (study_s)
+												{
+													FreeCopiedString (study_s);
+												}
+
+										}		/* if (study_json_p) */
 
 								}		/* if (num_results > 0) */
 

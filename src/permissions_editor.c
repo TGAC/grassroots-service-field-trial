@@ -20,7 +20,8 @@ static bool GetUserEmailsForUserList (const LinkedList * const users_p, char ***
 
 
 static bool AddPermissionsParameter (const Permissions *permissions_p, const char * const name_s, const char * const display_name_s, const char * const description_s,
-																		 LinkedList *all_users_p, ParameterGroup *perms_group_p, ParameterSet *param_set_p, FieldTrialServiceData *ft_data_p);
+																		 LinkedList *all_users_p, ParameterGroup *perms_group_p, ParameterSet *param_set_p, const bool read_only_flag,
+																		 FieldTrialServiceData *ft_data_p);
 
 static bool UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p);
 
@@ -38,17 +39,17 @@ bool AddPermissionsEditor (PermissionsGroup *permissions_group_p, const char *id
 			Permissions *permissions_p = permissions_group_p ? permissions_group_p -> pg_read_access_p : NULL;
 
 			if (AddPermissionsParameter (permissions_p, PERMISSION_READ.npt_name_s, "Read", "Users with Read access",
-																	 all_users_p, perms_group_p, param_set_p, ft_data_p))
+																	 all_users_p, perms_group_p, param_set_p, read_only_flag, ft_data_p))
 				{
 					permissions_p = permissions_group_p ? permissions_group_p -> pg_write_access_p : NULL;
 
 					if (AddPermissionsParameter (permissions_p, PERMISSION_WRITE.npt_name_s, "Write", "Users with Write access",
-																			 all_users_p, perms_group_p, param_set_p, ft_data_p))
+																			 all_users_p, perms_group_p, param_set_p, read_only_flag, ft_data_p))
 						{
 							permissions_p = permissions_group_p ? permissions_group_p -> pg_delete_access_p : NULL;
 
 							if (AddPermissionsParameter (permissions_p, PERMISSION_DELETE.npt_name_s, "Delete", "Users with Delete Access",
-																					 all_users_p, perms_group_p, param_set_p, ft_data_p))
+																					 all_users_p, perms_group_p, param_set_p, read_only_flag, ft_data_p))
 								{
 
 								}
@@ -201,7 +202,7 @@ static bool UpdatePermissionsValues (Permissions *permissions_p, const char *par
  */
 
 static bool AddPermissionsParameter (const Permissions *permissions_p, const char * const name_s, const char * const display_name_s, const char * const description_s,
-																		 LinkedList *all_users_p, ParameterGroup *perms_group_p, ParameterSet *param_set_p, FieldTrialServiceData *ft_data_p)
+																		 LinkedList *all_users_p, ParameterGroup *perms_group_p, ParameterSet *param_set_p, const bool read_only_flag, FieldTrialServiceData *ft_data_p)
 {
 	bool success_flag = true;
 	Parameter *param_p = NULL;
@@ -224,6 +225,8 @@ static bool AddPermissionsParameter (const Permissions *permissions_p, const cha
 
 			if (param_p)
 				{
+					param_p -> pa_read_only_flag = read_only_flag;
+
 					if (all_users_p)
 						{
 							UserNode *user_node_p = (UserNode *) (all_users_p -> ll_head_p);
