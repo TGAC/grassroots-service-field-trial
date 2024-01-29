@@ -84,14 +84,14 @@ static const char *GetDFWFieldTrialSearchServiceAlias (const Service *service_p)
 
 static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 
 static void ReleaseDFWFieldTrialSearchServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 static ParameterSet *IsResourceForDFWFieldTrialSearchService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
@@ -209,7 +209,7 @@ static const char *GetDFWFieldTrialSearchServiceInformationUri (const Service *s
 
 static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *data_p)
 {
-	StringParameter *param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", S_ANY_FACET_S, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_FACET.npt_type, S_FACET.npt_name_s, "Type", "The type of data to search for", S_ANY_FACET_S, PL_ALL);
 
 	if (param_p)
 		{
@@ -225,7 +225,7 @@ static Parameter *AddFacetParameter (ParameterSet *params_p, ParameterGroup *gro
 												{
 													if (CreateAndAddStringParameterOption (param_p, S_TREATMENT_FACET_S, S_TREATMENT_FACET_S))
 														{
-															return & (param_p -> sp_base_param);
+															return param_p;
 														}
 												}
 										}
@@ -267,7 +267,7 @@ static bool AddFacetParameters (ParameterSet *params_p, ParameterGroup *group_p,
 
 
 
-static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("DFWFieldTrial search service parameters", "The parameters used for the DFWFieldTrial search service");
 
@@ -293,20 +293,28 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 												{
 													if (AddSearchStudyParams (& (data_p -> dftsd_base_data), params_p))
 														{
-															if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
+															if (AddSearchPlotParams (& (data_p -> dftsd_base_data), params_p))
 																{
-																	if (AddSearchMaterialParams (& (data_p -> dftsd_base_data), params_p))
+																	if (AddSearchLocationParams (& (data_p -> dftsd_base_data), params_p))
 																		{
-																			return params_p;
+																			if (AddSearchMaterialParams (& (data_p -> dftsd_base_data), params_p))
+																				{
+																					return params_p;
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchMaterialParams failed");
+																				}
 																		}
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchMaterialParams failed");
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
 																		}
+
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchLocationParams failed");
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSearchPlotParams failed");
 																}
 														}
 													else
@@ -380,17 +388,21 @@ static bool GetDFWFieldTrialSearchServiceParameterTypesForNamedParameters (const
 				{
 					if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p))
 						{
-							if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
+							if (!GetSearchPlotParameterTypeForNamedParameter (param_name_s, pt_p))
 								{
-									if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
+									if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p))
 										{
-											if (!GetSearchProgrammeParameterTypeForNamedParameter (param_name_s, pt_p))
+											if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p))
 												{
-													success_flag = false;
-												}
-										}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
+													if (!GetSearchProgrammeParameterTypeForNamedParameter (param_name_s, pt_p))
+														{
+															success_flag = false;
+														}
+												}		/* if (!GetSearchMaterialParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
-								}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+										}		/* if (!GetSearchLocationParameterTypeForNamedParameter (param_name_s, pt_p)) */
+
+								}		/* if (!GetSearchPlotParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
 						}		/* if (!GetSearchStudyParameterTypeForNamedParameter (param_name_s, pt_p)) */
 
@@ -478,7 +490,7 @@ static LinkedList *GetFacets (ParameterSet *params_p)
 }
 
 
-static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -527,18 +539,22 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 								{
 									if (!RunForSearchStudyParams (data_p, param_set_p, job_p))
 										{
-											if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
+											if (!RunForSearchPlotParams (data_p, param_set_p, job_p))
 												{
-													if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
+													if (!RunForSearchLocationParams (data_p, param_set_p, job_p))
 														{
-															if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p))
+															if (!RunForSearchMaterialParams (data_p, param_set_p, job_p))
 																{
+																	if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p))
+																		{
 
-																}		/* if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p)) */
+																		}		/* if (!RunForSearchProgrammeParams (data_p, param_set_p, job_p)) */
 
-														}		/* if (!RunForSearchMaterialParams (data_p, param_set_p, job_p)) */
+																}		/* if (!RunForSearchMaterialParams (data_p, param_set_p, job_p)) */
 
-												}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+														}		/* if (!RunForLocationParams (data_p, param_set_p, job_p)) */
+
+												}
 
 										}		/* if (!RunForStudyParams (data_p, param_set_p, job_p)) */
 
@@ -891,7 +907,7 @@ static bool AddFieldTrialResultsFromLuceneResults (const json_t *document_p, con
 
 			if (type_s)
 				{
-					DFWFieldTrialData datatype = GetDatatypeFromString (type_s);
+					FieldTrialDatatype datatype = GetDatatypeFromString (type_s);
 
 					switch (datatype)
 						{

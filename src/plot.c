@@ -30,6 +30,7 @@
 #include "time_util.h"
 #include "study.h"
 #include "int_linked_list.h"
+#include "mongodb_util.h"
 
 
 static bool AddRowsToJSON (const Plot *plot_p, json_t *plot_json_p, const ViewFormat format, JSONProcessor *processor_p, const FieldTrialServiceData *data_p);
@@ -318,7 +319,8 @@ bool SavePlot (Plot *plot_p, const FieldTrialServiceData *data_p)
 
 			if (plot_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, plot_json_p, data_p -> dftsd_collection_ss [DFTD_PLOT], 
+					data_p -> dftsd_backup_collection_ss [DFTD_PLOT], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (plot_json_p);
 				}		/* if (plot_json_p) */
@@ -617,19 +619,37 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const V
 																	if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_STUDY_S, parent_study_id_p))
 																		{
 																			parent_study_p = GetStudyById (parent_study_id_p, VF_CLIENT_MINIMAL, data_p);
+
+																			if (!parent_study_p)
+																				{
+																					char *parent_study_id_s = GetBSONOidAsString (parent_study_id_p);
+
+																					if (parent_study_id_s)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get parent study with id \"%s\"", parent_study_id_s);
+
+																							FreeBSONOidString (parent_study_id_s);
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get parent study");
+																						}
+																				}
+
 																		}		/* if (GetNamedIdFromJSON (plot_json_p, PL_PARENT_FIELD_TRIAL_S, field_trial_id_p)) */
 																	else
 																		{
 																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "Failed to get id for \"%s\"", PL_PARENT_STUDY_S);
 																		}
 
-																}		/* if (parent_area_id_p) */
+																	FreeBSONOid (parent_study_id_p);
+																}		/* if (parent_study_id_p) */
 															else
 																{
 																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate id for \"%s\"", PL_PARENT_STUDY_S);
 																}
 
-														}		/* if (!parent_area_p) */
+														}		/* if (!parent_study_p) */
 
 													plot_p = AllocatePlot (id_p, sowing_date_p, harvest_date_p, width_p, length_p, row, column, treatments_s, comment_s, image_s, thumbnail_s,
 																								 sowing_order_p, walking_order_p, parent_study_p);
@@ -640,8 +660,9 @@ Plot *GetPlotFromJSON (const json_t *plot_json_p, Study *parent_study_p, const V
 
 															if (rows_array_p)
 																{
-																	if (GetPlotRows (plot_p, rows_array_p, parent_study_p, format, data_p))
+																	if (!GetPlotRows (plot_p, rows_array_p, parent_study_p, format, data_p))
 																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plot_json_p, "GetPlotRows () failed for format %d in study \"%s\"", format, parent_study_p ? parent_study_p -> st_name_s : "NULL");
 
 																		}
 																}
@@ -804,11 +825,23 @@ bool GetPlotRows (Plot *plot_p, json_t *rows_array_p, const Study *study_p, cons
 								}
 							else
 								{
+									char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+									bson_oid_to_string (plot_p -> pl_id_p, id_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "AddRowToPlot () failed for plot with id \"%s\"", id_s);
+
 									FreeRow (row_p);
 								}
 
 						}		/* if (row_p) */
+					else
+						{
+							char id_s [MONGO_OID_STRING_BUFFER_SIZE];
 
+							bson_oid_to_string (plot_p -> pl_id_p, id_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, row_json_p, "Failed to get row from json for plot with id \"%s\"", id_s);
+						}	
+						
 				}		/* json_array_foreach (results_p, i, entry_p) */
 
 		}		/* if (num_results > 0) */

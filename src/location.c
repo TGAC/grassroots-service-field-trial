@@ -26,6 +26,7 @@
 #include "study.h"
 #include "dfw_util.h"
 #include "indexing.h"
+#include "mongodb_util.h"
 
 
 
@@ -318,7 +319,8 @@ OperationStatus SaveLocation (Location *location_p, ServiceJob *job_p, FieldTria
 
 			if (location_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, location_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, location_json_p, data_p -> dftsd_collection_ss [DFTD_LOCATION], 
+							data_p -> dftsd_backup_collection_ss [DFTD_LOCATION], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							status = IndexData (job_p, location_json_p, NULL);
 

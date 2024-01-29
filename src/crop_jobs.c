@@ -234,7 +234,7 @@ bool GetSubmissionCropParameterTypeForNamedParameter (const char *param_name_s, 
 }
 
 
-bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Crop *active_crop_p, const char *empty_option_s, const bool new_study_flag)
+bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const Crop *active_crop_p, const char *empty_option_s, const bool new_study_flag)
 {
 	bool success_flag = false;
 

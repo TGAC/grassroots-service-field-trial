@@ -26,6 +26,7 @@
 #include "audit.h"
 
 #include "programme_jobs.h"
+#include "permissions_editor.h"
 
 /*
  * Static declarations
@@ -41,13 +42,13 @@ static const char *GetProgrammeSubmissionServiceAlias (const Service *service_p)
 
 static const char *GetProgrammeSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseProgrammeSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 static ParameterSet *IsResourceForProgrammeSubmissionService (Service *service_p, DataResource *resource_p, Handler *handler_p);
 
@@ -141,26 +142,61 @@ static const char *GetProgrammeSubmissionServiceInformationUri (const Service *s
 
 static bool GetProgrammeSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p)
 {
-	return GetSubmissionProgrammeParameterTypeForNamedParameter (param_name_s, pt_p);
+	bool success_flag = GetSubmissionProgrammeParameterTypeForNamedParameter (param_name_s, pt_p);
+
+	if (!success_flag)
+		{
+			success_flag = GetPermissionsEditorParameterTypeForNamedParameter (param_name_s, pt_p);
+		}
+
+	return success_flag;
 }
 
 
 
-static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p)
 {
 	ParameterSet *params_p = AllocateParameterSet ("Programme submission service parameters", "The parameters used for the Programme submission service");
 
 	if (params_p)
 		{
+			bool success_flag = false;
 			ServiceData *data_p = service_p -> se_data_p;
+			FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
+			Programme *active_programme_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, ft_data_p);
+			PermissionsGroup *perms_group_p = active_programme_p ? active_programme_p -> pr_permissions_p : NULL;
+			bool read_only_flag = false;
 
-			if (AddSubmissionProgrammeParams (data_p, params_p, resource_p))
+			if (perms_group_p)
 				{
-					return params_p;
+					if (user_p)
+						{
+							read_only_flag = !CheckPermissionsGroupForUser (perms_group_p, user_p, AM_WRITE);
+						}
+				}
+
+			if (AddSubmissionProgrammeParams (data_p, params_p, active_programme_p, read_only_flag))
+				{
+					const char *id_s = NULL;
+
+					if (AddPermissionsEditor (perms_group_p, id_s, params_p, read_only_flag, (FieldTrialServiceData *) data_p))
+						{
+							success_flag = true;
+						}
 				}
 			else
 				{
 					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddSubmissionProgrammeParams failed");
+				}
+
+			if (active_programme_p)
+				{
+					FreeProgramme (active_programme_p);
+				}
+
+			if (success_flag)
+				{
+					return params_p;
 				}
 
 			FreeParameterSet (params_p);
@@ -197,7 +233,7 @@ static bool CloseProgrammeSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -211,7 +247,7 @@ static ServiceJobSet *RunProgrammeSubmissionService (Service *service_p, Paramet
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionProgrammeParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionProgrammeParams (data_p, param_set_p, job_p, user_p))
 				{
 
 				}		/* if (!RunForProgrammeParams (data_p, param_set_p, job_p)) */

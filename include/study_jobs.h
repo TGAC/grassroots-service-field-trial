@@ -55,8 +55,9 @@ STUDY_JOB_PREFIX NamedParameterType STUDY_LINK STUDY_JOB_STRUCT_VAL("ST Link", P
 STUDY_JOB_PREFIX NamedParameterType STUDY_ASPECT STUDY_JOB_STRUCT_VAL("ST Field Aspect", PT_STRING);
 STUDY_JOB_PREFIX NamedParameterType STUDY_SLOPE STUDY_JOB_STRUCT_VAL("ST Slope", PT_STRING);
 
-STUDY_JOB_PREFIX NamedParameterType STUDY_GET_ALL_PLOTS STUDY_JOB_STRUCT_VAL("Get all Plots for Study", PT_BOOLEAN);
+//STUDY_JOB_PREFIX NamedParameterType STUDY_GET_ALL_PLOTS STUDY_JOB_STRUCT_VAL("Get all Plots for Study", PT_BOOLEAN);
 
+STUDY_JOB_PREFIX NamedParameterType STUDY_DETAIL_LEVEL STUDY_JOB_STRUCT_VAL("The level of data to get for matching Studies", PT_STRING);
 
 STUDY_JOB_PREFIX NamedParameterType STUDY_ADD_STUDY STUDY_JOB_STRUCT_VAL("Add Study", PT_BOOLEAN);
 
@@ -153,10 +154,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchStudyParams (FieldTrialServiceDat
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p, bool full_data_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const Study *active_study_p, const bool empty_option_flag);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat format, JSONProcessor *processor_p, FieldTrialServiceData *data_p);

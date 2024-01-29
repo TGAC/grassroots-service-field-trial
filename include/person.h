@@ -29,6 +29,7 @@
 
 #include "address.h"
 #include "typedefs.h"
+#include "linked_list.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -59,6 +60,14 @@ typedef struct Person
 
 	char *pe_orcid_s;
 } Person;
+
+
+typedef struct 
+{
+	ListItem pn_node;
+	
+	Person *pn_person_p;
+} PersonNode;
 
 
 PERSON_PREFIX const char *PE_NAME_S PERSON_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
@@ -95,6 +104,15 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPersonToCompoundJSON (const Person *person
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Person *GetPersonFromCompoundJSON (const json_t *json_p, const char * const key_s, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL PersonNode *AllocatePersonNode (Person *person_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePersonNode (ListItem *person_node_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPersonAsFrictionlessData (const Person * const person_p);
 
 
 #ifdef __cplusplus

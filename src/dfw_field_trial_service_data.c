@@ -213,7 +213,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 					if (SetMongoToolDatabase (data_p -> dftsd_mongo_p, data_p -> dftsd_database_s))
 						{
 							bool enable_db_cache_flag = false;
-
+							const char * const BACKUP_SUFFIX_S = "_backup";
 							success_flag = true;
 
 							data_p -> dftsd_study_cache_path_s = GetJSONString (service_config_p, "cache_path");
@@ -282,6 +282,23 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
 
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_STUDY) = DFT_STUDIES_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_LOCATION) = DFT_LOCATION_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_PLOT) = DFT_PLOT_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_MATERIAL) = DFT_MATERIAL_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_DRILLING) = DFT_DRILLING_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_MEASURED_VARIABLE) = DFT_PHENOTYPE_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_OBSERVATION) = DFT_OBSERVATION_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_INSTRUMENT) = DFT_INSTRUMENT_BACKUP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_GENE_BANK) = DFT_GENE_BANK_BACKUP_S;
+							// * ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_CROP) = DFT_CROP_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
+
+
+
 							GetJSONBoolean (service_config_p, "use_mv_cache", &enable_db_cache_flag);
 
 							if (enable_db_cache_flag)
@@ -323,7 +340,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 
 
-const char *GetDatatypeAsString (const DFWFieldTrialData data_type)
+const char *GetDatatypeAsString (const FieldTrialDatatype data_type)
 {
 	const char *type_s = NULL;
 
@@ -336,7 +353,7 @@ const char *GetDatatypeAsString (const DFWFieldTrialData data_type)
 }
 
 
-const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type)
+const char *GetDatatypeDescriptionAsString (const FieldTrialDatatype data_type)
 {
 	const char *type_s = NULL;
 
@@ -349,11 +366,11 @@ const char *GetDatatypeDescriptionAsString (const DFWFieldTrialData data_type)
 }
 
 
-DFWFieldTrialData GetDatatypeFromString (const char *type_s)
+FieldTrialDatatype GetDatatypeFromString (const char *type_s)
 {
 	if (type_s)
 		{
-			DFWFieldTrialData i = 0;
+			FieldTrialDatatype i = 0;
 
 			for ( ; i < DFTD_NUM_TYPES; ++ i)
 				{

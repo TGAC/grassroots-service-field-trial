@@ -30,14 +30,16 @@
 
 #include "frictionless_data_util.h"
 
+#include "permissions_editor.h"
+
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
-static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
+static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p, User *user_p);
 
 static bool AddProgrammeToServiceJobResult (ServiceJob *job_p, Programme *program_p, json_t *program_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, Person *pi_p, char **logo_ss, char **funder_ss, char **project_code_ss);
+static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss);
 
 
 bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
@@ -55,29 +57,18 @@ bool AddSearchProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, D
 }
 
 
-bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
+bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_p, Programme *active_programme_p, const bool read_only_flag)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	char *id_s = NULL;
-	char *abbreviation_s = NULL;
-	char *documentation_url_s = NULL;
-	char *name_s = NULL;
-	char *objective_s = NULL;
-	char *logo_s = NULL;
-	char *funder_s = NULL;
-	char *project_code_s = NULL;
-	Crop *crop_p = NULL;
-	Person pi;
-	Programme *active_programme_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, dfw_data_p);
 	bool defaults_flag = false;
 
-	InitPerson (&pi);
 
 	if (active_programme_p)
 		{
-			if (SetUpDefaultsFromExistingProgramme (active_programme_p, &id_s,  &name_s, &abbreviation_s, &crop_p, &documentation_url_s, &objective_s, &pi, &logo_s, &funder_s, &project_code_s))
+			if (SetUpDefaultsFromExistingProgramme (active_programme_p, &id_s))
 				{
 					defaults_flag = true;
 				}
@@ -91,7 +82,7 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 
 	if (defaults_flag)
 		{
-			ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Programme", false, data_p, param_set_p);
+			ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, data_p, param_set_p);
 
 			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_ID.npt_type, PROGRAMME_ID.npt_name_s, "Load Programme", "Edit an existing Programme", id_s, PL_ALL)) != NULL)
 				{
@@ -106,101 +97,9 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 							 */
 							param_p -> pa_refresh_service_flag = true;
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_NAME.npt_type, PROGRAMME_NAME.npt_name_s, "Name", "The name of the Programme", name_s, PL_ALL)) != NULL)
+							if (AddProgrammeEditor (active_programme_p, id_s, param_set_p, read_only_flag, dfw_data_p))
 								{
-									param_p -> pa_required_flag = true;
-
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_ABBREVIATION.npt_type, PROGRAMME_ABBREVIATION.npt_name_s, "Abbreviation", "The abbreviation for the Programme", abbreviation_s, PL_ALL)) != NULL)
-										{
-											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_CROP.npt_type, PROGRAMME_CROP.npt_name_s, "Crop", "The crop for the Programme", NULL, PL_ALL)) != NULL)
-												{
-													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, crop_p, S_EMPTY_LIST_OPTION_S, active_programme_p ? false : true))
-														{
-															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_OBJECTIVE.npt_type, PROGRAMME_OBJECTIVE.npt_name_s, "Objective", "The Programme's objective", objective_s, PL_ALL)) != NULL)
-																{
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_URL.npt_type, PROGRAMME_URL.npt_name_s, "Web Address", "The web page documenting this Programme", documentation_url_s, PL_ALL)) != NULL)
-																		{
-																			ParameterGroup *pi_group_p = CreateAndAddParameterGroupToParameterSet ("Principal Investigator", false, data_p, param_set_p);
-
-																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_NAME.npt_type, PROGRAMME_PI_NAME.npt_name_s, "Principal Investigator Name", "The name of the Programme's lead", pi.pe_name_s, PL_ALL)) != NULL)
-																				{
-																					param_p -> pa_required_flag = true;
-
-																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_EMAIL.npt_type, PROGRAMME_PI_EMAIL.npt_name_s, "Principal Investigator Email", "The email address of the Programme's lead", pi.pe_email_s, PL_ALL)) != NULL)
-																						{
-																							param_p -> pa_required_flag = true;
-
-																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_ROLE.npt_type, PROGRAMME_PI_ROLE.npt_name_s, "Principal Investigator Role", "The role of the Programme's lead", pi.pe_role_s, PL_ALL)) != NULL)
-																								{
-																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_AFFILATION.npt_type, PROGRAMME_PI_AFFILATION.npt_name_s, "Principal Investigator Affiliation", "The affiliation of the Programme's lead", pi.pe_affiliation_s, PL_ALL)) != NULL)
-																										{
-
-																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_ORCID.npt_type, PROGRAMME_PI_ORCID.npt_name_s, "Principal Investigator OrCID", "The OrCID of the Programme's lead", pi.pe_orcid_s, PL_ALL)) != NULL)
-																												{
-																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_LOGO.npt_type, PROGRAMME_LOGO.npt_name_s, "Logo", "The web address of the programme logo", logo_s, PL_ALL)) != NULL)
-																														{
-
-																															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_FUNDER.npt_type, PROGRAMME_FUNDER.npt_name_s, "Funder", "The Programme's funding organization", funder_s, PL_ALL)) != NULL)
-																																{
-																																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_CODE.npt_type, PROGRAMME_CODE.npt_name_s, "Project Code", "The Programme's project code", project_code_s, PL_ALL)) != NULL)
-																																		{
-																																			success_flag = true;
-																																		}
-																																	else
-																																		{
-																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_CODE.npt_name_s);
-																																		}
-
-																																}
-																															else
-																																{
-																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_FUNDER.npt_name_s);
-																																}
-
-																														}
-																													else
-																														{
-																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_LOGO.npt_name_s);
-																														}
-
-																												}
-																											else
-																												{
-																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_ORCID.npt_name_s);
-																												}
-																										}
-																									else
-																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_AFFILATION.npt_name_s);
-																										}
-																								}
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_ROLE.npt_name_s);
-																								}
-
-
-																						}
-																					else
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_EMAIL.npt_name_s);
-																						}
-																				}
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_NAME.npt_name_s);
-																				}
-																		}
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_URL.npt_name_s);
-																		}
-																}
-
-														}
-
-												}
-										}
+									success_flag = true;
 								}
 
 						}		/* if (SetUpFieldTrialsListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, true)) */
@@ -210,9 +109,209 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 		}		/* if (defaults_flag) */
 
 
-	if (active_programme_p)
+	if (id_s != S_EMPTY_LIST_OPTION_S)
 		{
-			FreeProgramme (active_programme_p);
+			FreeBSONOidString (id_s);
+		}
+
+	return success_flag;
+}
+
+
+bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
+												 ParameterSet *param_set_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
+	ServiceData *data_p = (ServiceData *) dfw_data_p;
+	Parameter *param_p = NULL;
+	ParameterGroup *programme_group_p = CreateAndAddParameterGroupToParameterSet ("Programme", false, data_p, param_set_p);
+
+	const char *name_s = NULL;
+	const char *abbreviation_s = NULL;
+	Crop *crop_p = NULL;
+	const char *objective_s = NULL;
+	const char *url_s = NULL;
+	const char *funder_s = NULL;
+	const char *logo_s = NULL;
+	const char *code_s = NULL;
+	const char *user_email_s = NULL;
+	const char *pi_name_s = NULL;
+	const char *pi_email_s = NULL;
+	const char *pi_role_s = NULL;
+	const char *pi_affiliation_s = NULL;
+	const char *pi_orcid_s = NULL;
+
+
+	if (programme_p)
+		{
+			Person *pi_p = programme_p -> pr_pi_p;
+
+			name_s = programme_p -> pr_name_s;
+			abbreviation_s = programme_p -> pr_abbreviation_s;
+			crop_p = programme_p -> pr_crop_p;
+			objective_s = programme_p -> pr_objective_s;
+			url_s = programme_p -> pr_documentation_url_s;
+			funder_s = programme_p -> pr_funding_organisation_s;
+			logo_s = programme_p -> pr_logo_url_s;
+			code_s = programme_p -> pr_project_code_s;
+
+			if (programme_p -> pr_user_p)
+				{
+					user_email_s = programme_p -> pr_user_p -> us_email_s;
+				}
+
+			if (pi_p)
+				{
+					pi_name_s = pi_p -> pe_name_s;
+					pi_email_s = pi_p -> pe_email_s;
+					pi_role_s = pi_p -> pe_role_s;
+					pi_affiliation_s = pi_p -> pe_affiliation_s;
+					pi_orcid_s = pi_p -> pe_orcid_s;
+				}
+		}
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_NAME.npt_type, PROGRAMME_NAME.npt_name_s, "Name", "The name of the Programme", name_s, PL_ALL)) != NULL)
+		{
+			if (read_only_flag)
+				{
+					param_p -> pa_read_only_flag = true;
+				}
+			else
+				{
+					param_p -> pa_required_flag = true;
+				}
+
+
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_ABBREVIATION.npt_type, PROGRAMME_ABBREVIATION.npt_name_s, "Abbreviation", "The abbreviation for the Programme", abbreviation_s, PL_ALL)) != NULL)
+				{
+					param_p -> pa_read_only_flag = read_only_flag;
+
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_CROP.npt_type, PROGRAMME_CROP.npt_name_s, "Crop", "The crop for the Programme", NULL, PL_ALL)) != NULL)
+						{
+							param_p -> pa_read_only_flag = read_only_flag;
+
+							if (SetUpCropsListParameter (dfw_data_p, param_p, crop_p, FT_EMPTY_LIST_OPTION_S, programme_p ? false : true))
+								{
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_OBJECTIVE.npt_type, PROGRAMME_OBJECTIVE.npt_name_s, "Objective", "The Programme's objective", objective_s, PL_ALL)) != NULL)
+										{
+											param_p -> pa_read_only_flag = read_only_flag;
+
+											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_URL.npt_type, PROGRAMME_URL.npt_name_s, "Web Address", "The web page documenting this Programme", url_s, PL_ALL)) != NULL)
+												{
+													ParameterGroup *pi_group_p = CreateAndAddParameterGroupToParameterSet ("Principal Investigator", false, data_p, param_set_p);
+
+													param_p -> pa_read_only_flag = read_only_flag;
+													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_NAME.npt_type, PROGRAMME_PI_NAME.npt_name_s, "Principal Investigator Name", "The name of the Programme's lead", pi_name_s, PL_ALL)) != NULL)
+														{
+															if (read_only_flag)
+																{
+																	param_p -> pa_read_only_flag = true;
+																}
+															else
+																{
+																	param_p -> pa_required_flag = true;
+																}
+
+
+															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_EMAIL.npt_type, PROGRAMME_PI_EMAIL.npt_name_s, "Principal Investigator Email", "The email address of the Programme's lead", pi_email_s, PL_ALL)) != NULL)
+																{
+																	if (read_only_flag)
+																		{
+																			param_p -> pa_read_only_flag = true;
+																		}
+																	else
+																		{
+																			param_p -> pa_required_flag = true;
+																		}
+
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_ROLE.npt_type, PROGRAMME_PI_ROLE.npt_name_s, "Principal Investigator Role", "The role of the Programme's lead", pi_role_s, PL_ALL)) != NULL)
+																		{
+																			param_p -> pa_read_only_flag = read_only_flag;
+
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_AFFILATION.npt_type, PROGRAMME_PI_AFFILATION.npt_name_s, "Principal Investigator Affiliation", "The affiliation of the Programme's lead", pi_affiliation_s, PL_ALL)) != NULL)
+																				{
+																					param_p -> pa_read_only_flag = read_only_flag;
+
+																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, pi_group_p, PROGRAMME_PI_ORCID.npt_type, PROGRAMME_PI_ORCID.npt_name_s, "Principal Investigator OrCID", "The OrCID of the Programme's lead", pi_orcid_s, PL_ALL)) != NULL)
+																						{
+																							param_p -> pa_read_only_flag = read_only_flag;
+
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_LOGO.npt_type, PROGRAMME_LOGO.npt_name_s, "Logo", "The web address of the programme logo", logo_s, PL_ALL)) != NULL)
+																								{
+																									param_p -> pa_read_only_flag = read_only_flag;
+
+																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_FUNDER.npt_type, PROGRAMME_FUNDER.npt_name_s, "Funder", "The Programme's funding organization", funder_s, PL_ALL)) != NULL)
+																										{
+																											param_p -> pa_read_only_flag = read_only_flag;
+
+																											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_CODE.npt_type, PROGRAMME_CODE.npt_name_s, "Project Code", "The Programme's project code", code_s, PL_ALL)) != NULL)
+																												{
+																													param_p -> pa_read_only_flag = read_only_flag;
+
+																													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, programme_group_p, PROGRAMME_USER.npt_type, PROGRAMME_USER.npt_name_s, "Saved by", "The person who saved this version of this Programme", user_email_s, PL_ALL)) != NULL)
+																														{
+																															param_p -> pa_read_only_flag = true;
+
+																															success_flag = true;
+																														}
+																													else
+																														{
+																															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_USER.npt_name_s);
+																														}
+																												}
+																											else
+																												{
+																													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_CODE.npt_name_s);
+																												}
+
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_FUNDER.npt_name_s);
+																										}
+
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_LOGO.npt_name_s);
+																								}
+
+																						}
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_ORCID.npt_name_s);
+																						}
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_AFFILATION.npt_name_s);
+																				}
+																		}
+																	else
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_ROLE.npt_name_s);
+																		}
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_EMAIL.npt_name_s);
+																}
+														}
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_PI_NAME.npt_name_s);
+														}
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", PROGRAMME_URL.npt_name_s);
+												}
+										}
+
+								}
+
+						}
+				}
 		}
 
 	return success_flag;
@@ -220,15 +319,80 @@ bool AddSubmissionProgrammeParams (ServiceData *data_p, ParameterSet *param_set_
 
 
 
-json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
+
+
+bool AddProgrammesList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char * const empty_option_s, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *programmes_p = GetAllProgrammesAsJSON (data_p, false);
+
+	if (programmes_p)
+		{
+			success_flag = AddProgrammesListFromJSON (id_s, programmes_p, param_set_p, group_p, read_only_flag, empty_option_s, data_p);
+			json_decref (programmes_p);
+		}
+
+	return success_flag;
+}
+
+
+bool AddProgrammesListFromJSON (const char *id_s, json_t *programmes_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char *empty_option_s, FieldTrialServiceData *ft_data_p)
+{
+	bool success_flag = false;
+	ServiceData *data_p = (ServiceData *) (& (ft_data_p -> dftsd_base_data));
+	Parameter *param_p = NULL;
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PROGRAMME_ID.npt_type, PROGRAMME_ID.npt_name_s, "Load Programme", "Edit an existing Programme", id_s, PL_ALL)) != NULL)
+		{
+			param_p -> pa_read_only_flag = read_only_flag;
+
+			if (SetUpListParameterFromJSON (ft_data_p, (StringParameter *) param_p, id_s, empty_option_s, PR_NAME_S, programmes_json_p))
+				{
+					/*
+					 * We want to update all of the values in the form
+					 * when a user selects a study from the list so
+					 * we need to make the parameter automatically
+					 * refresh the values. So we set the
+					 * pa_refresh_service_flag to true.
+					 */
+					param_p -> pa_refresh_service_flag = true;
+
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+
+json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, const bool full_data_flag)
 {
 	json_t *results_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME]))
 		{
 			bson_t *query_p = NULL;
+			bson_t *opts_p = NULL;
+
+			if (full_data_flag)
+				{
+					opts_p =  BCON_NEW ( "sort", "{", PR_NAME_S, BCON_INT32 (1), "}");
+				}
+			else
+				{
+					opts_p =  BCON_NEW ("projection", "{", PR_NAME_S, BCON_BOOL (true), "}",
+															"sort", "{", PR_NAME_S, BCON_INT32 (1), "}");
+				}
+
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_PROGRAMME])) */
 
 	return results_p;
@@ -238,7 +402,7 @@ json_t *GetAllProgrammesAsJSON (const FieldTrialServiceData *data_p, bson_t *opt
 bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Programme *active_program_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *results_p = GetAllProgrammesAsJSON (data_p, NULL);
+	json_t *results_p = GetAllProgrammesAsJSON (data_p, false);
 	bool value_set_flag = false;
 
 	if (results_p)
@@ -254,7 +418,7 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 					 */
 					if (empty_option_flag)
 						{
-							success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
+							success_flag = CreateAndAddStringParameterOption (& (param_p -> sp_base_param), S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
 						}
 
 					if (success_flag)
@@ -264,46 +428,66 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 									size_t i = 0;
 									const char *param_value_s = GetStringParameterCurrentValue (param_p);
 
-									while ((i < num_results) && success_flag)
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+									if (id_p)
 										{
-											json_t *entry_p = json_array_get (results_p, i);
-											Programme *program_p = GetProgrammeFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-											if (program_p)
+											while ((i < num_results) && success_flag)
 												{
-													char *id_s = GetBSONOidAsString (program_p -> pr_id_p);
+													json_t *entry_p = json_array_get (results_p, i);
 
-													if (id_s)
+													if (GetMongoIdFromJSON (entry_p, id_p))
 														{
-															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																{
-																	value_set_flag = true;
-																}
+															char *id_s = GetBSONOidAsString (id_p);
 
-															if (!CreateAndAddStringParameterOption (param_p, id_s, program_p -> pr_name_s))
+															if (id_s)
+																{
+																	const char *name_s = GetJSONString (entry_p, PR_NAME_S);
+
+																	if (name_s)
+																		{
+																			if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																				{
+																					value_set_flag = true;
+																				}
+
+																			if (!CreateAndAddStringParameterOption (& (param_p -> sp_base_param), id_s, name_s))
+																				{
+																					success_flag = false;
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																				}
+
+																		}		/* if (name_s) */
+																	else
+																		{
+																			success_flag = false;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", PR_NAME_S);
+																		}
+
+																	FreeBSONOidString (id_s);
+																}
+															else
 																{
 																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, program_p -> pr_name_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Programme BSON oid");
 																}
 
-															FreeBSONOidString (id_s);
-														}
+														}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Programme BSON oid");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
 														}
 
-													FreeProgramme (program_p);
-												}		/* if (program_p) */
+													if (success_flag)
+														{
+															++ i;
+														}
 
+												}		/* while ((i < num_results) && success_flag) */
 
-											if (success_flag)
-												{
-													++ i;
-												}
-
-										}		/* while ((i < num_results) && success_flag) */
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
 
 									/*
 									 * If the parameter's value isn't on the list, reset it
@@ -351,9 +535,9 @@ bool SetUpProgrammesListParameter (const FieldTrialServiceData *data_p, StringPa
 }
 
 
-bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, User *user_p)
 {
-	bool success_flag = AddProgramme (job_p, param_set_p, data_p);
+	bool success_flag = AddProgramme (job_p, param_set_p, data_p, user_p);
 
 	return success_flag;
 }
@@ -372,7 +556,7 @@ bool RunForSearchProgrammeParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 			if (strcmp (programme_id_s, "*") == 0)
 				{
-					json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
+					json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, true);
 
 					if (programmes_json_p)
 						{
@@ -516,6 +700,7 @@ bool GetSubmissionProgrammeParameterTypeForNamedParameter (const char *param_nam
 			PROGRAMME_LOGO,
 			PROGRAMME_CODE,
 			PROGRAMME_FUNDER,
+			PROGRAMME_USER,
 			NULL
 		};
 
@@ -530,7 +715,7 @@ bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s,
 	const NamedParameterType params [] =
 		{
 			PROGRAMME_SEARCH,
-			NULL
+			(NamedParameterType *) NULL
 		};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
@@ -540,7 +725,7 @@ bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s,
 json_t *GetProgrammeIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-	json_t *src_programs_p = GetAllProgrammesAsJSON (data_p, NULL);
+	json_t *src_programs_p = GetAllProgrammesAsJSON (data_p, true);
 
 	if (src_programs_p)
 		{
@@ -786,7 +971,7 @@ json_t *GetProgrammeAsFrictionlessDataResource (const Programme *programme_p, co
 
 
 
-static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
+static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p, User *user_p)
 {
 	OperationStatus status = OS_FAILED;
 	const char *id_s = NULL;
@@ -849,6 +1034,7 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 															const char *funders_s = NULL;
 															const char *project_code_s = NULL;
 															Crop *crop_p = NULL;
+															PermissionsGroup *perms_group_p = GetPermissionsGroupFromPermissionsEditor (param_set_p, job_p, user_p, & (data_p -> dftsd_base_data));
 
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CROP.npt_name_s, &crop_id_s);
@@ -860,15 +1046,18 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															crop_p = GetCropByIdString (crop_id_s, data_p);
 
-															programme_p = AllocateProgramme (programme_id_p, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s);
+															programme_p = AllocateProgramme (programme_id_p, user_p, perms_group_p, false, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s, NULL);
 
 															if (programme_p)
 																{
-																	status = SaveProgramme (programme_p, job_p, data_p);
-
-																	if (status == OS_FAILED)
+																	if (RunForPermissionEditor (param_set_p, programme_p -> pr_permissions_p, job_p, user_p, & (data_p -> dftsd_base_data)))
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Programme named \"%s\"", name_s);
+																			status = SaveProgramme (programme_p, job_p, data_p);
+
+																			if (status == OS_FAILED)
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Programme named \"%s\"", name_s);
+																				}
 																		}
 
 																	FreeProgramme (programme_p);
@@ -953,23 +1142,13 @@ bool AddProgrammeToServiceJob (ServiceJob *job_p, Programme *program_p, const Vi
 
 
 
-static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss,  char **name_ss, char **abbreviation_ss, Crop **crop_pp, char **documentation_url_ss, char **objective_ss, Person *pi_p, char **logo_ss, char **funder_ss, char **project_code_ss)
+static bool SetUpDefaultsFromExistingProgramme (const Programme *programme_p, char **id_ss)
 {
 	char *program_id_s = GetBSONOidAsString (programme_p -> pr_id_p);
 
 	if (program_id_s)
 		{
 			*id_ss = program_id_s;
-			*name_ss = programme_p -> pr_name_s;
-			*abbreviation_ss = programme_p -> pr_abbreviation_s;
-			*crop_pp = programme_p -> pr_crop_p;
-			*documentation_url_ss = programme_p -> pr_documentation_url_s;
-			*objective_ss = programme_p -> pr_objective_s;
-			*logo_ss = programme_p -> pr_logo_url_s;
-			*funder_ss = programme_p -> pr_funding_organisation_s;
-			*project_code_ss = programme_p -> pr_project_code_s;
-
-			pi_p = programme_p -> pr_pi_p;
 
 			return true;
 		}		/* if (tprogrma_id_s) */
@@ -1026,7 +1205,7 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 							OperationStatus status = OS_FAILED;
 
 							/* Get all programmes */
-							json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, NULL);
+							json_t *programmes_json_p = GetAllProgrammesAsJSON (data_p, true);
 
 							if (programmes_json_p)
 								{
@@ -1099,7 +1278,7 @@ bool RunForSearchProgrammes (FieldTrialServiceData *data_p, ParameterSet *param_
 
 Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParameterType program_param_type, FieldTrialServiceData *dfw_data_p)
 {
-	Programme *program_p = NULL;
+	Programme *programme_p = NULL;
 
 	/*
 	 * Have we been set some parameter values to refresh from?
@@ -1114,16 +1293,16 @@ Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParame
 
 					if (params_json_p)
 						{
-							const char *program_id_s = GetIDDefaultValueFromJSON (program_param_type.npt_name_s, params_json_p);
+							const char *program_id_s = GetNamedParameterDefaultValueFromJSON (program_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing program id?
 							 */
 							if (program_id_s)
 								{
-									program_p = GetProgrammeByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+									programme_p = GetProgrammeByIdString (program_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
 
-									if (!program_p)
+									if (!programme_p)
 										{
 											PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, params_json_p, "Failed to load Programme with id \"%s\"", program_id_s);
 										}
@@ -1143,7 +1322,7 @@ Programme *GetProgrammeFromResource (DataResource *resource_p, const NamedParame
 
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
-	return program_p;
+	return programme_p;
 }
 
 

@@ -1,10 +1,11 @@
 NAME 		:= dfw_field_trial_service
-DIR_BUILD :=  $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-DIR_SRC := $(realpath $(DIR_BUILD)/../../src)
-DIR_INCLUDE :=$(realpath $(DIR_BUILD)/../../include)
+DIR_BUILD :=  $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/$(PLATFORM))
+DIR_SRC := $(realpath $(DIR_BUILD)/../../../src)
+DIR_INCLUDE := $(realpath $(DIR_BUILD)/../../../include)
 
 ifeq ($(DIR_BUILD_CONFIG),)
-export DIR_BUILD_CONFIG := $(realpath $(DIR_BUILD)/../../../../build-config/linux)
+export DIR_BUILD_CONFIG = $(realpath $(DIR_BUILD)/../../../../../build-config/unix/)
+#export DIR_BUILD_CONFIG = /Users/tyrrells/Projects/grassroots/build-config/unix/
 endif
 
 include $(DIR_BUILD_CONFIG)/project.properties
@@ -37,6 +38,7 @@ VPATH	= \
 
 INCLUDES = \
 	-I$(DIR_INCLUDE) \
+	-I$(DIR_GRASSROOTS_USERS_INC) \
 	-I$(DIR_GRASSROOTS_UUID_INC) \
 	-I$(DIR_GRASSROOTS_MONGODB_INC) \
 	-I$(DIR_GRASSROOTS_SQLITE_INC) \
@@ -56,12 +58,13 @@ INCLUDES = \
 	-I$(DIR_UUID_INC) \
 	-I$(DIR_MONGODB_INC) \
 	-I$(DIR_BSON_INC) \
-	-I$(DIR_SQLITE_INC) \
 	-I$(DIR_GRASSROOTS_LUCENE_INC) \
 	-I$(DIR_LIBEXIF_INC) \
 	
 SRCS 	= \
 	blank_row.c \
+	browse_programme_history.c \
+	browse_trial_history.c \
 	crop.c \
 	crop_jobs.c \
 	crop_ontology_tool.c \
@@ -89,7 +92,9 @@ SRCS 	= \
 	measured_variable_jobs.c \
 	numeric_observation.c \
 	observation.c \
+	permissions_editor.c \
 	person.c \
+	person_jobs.c \
 	phenotype_jobs.c \
 	phenotype_statistics.c \
 	plot.c \
@@ -130,13 +135,11 @@ CPPFLAGS += -DDFW_FIELD_TRIAL_LIBRARY_EXPORTS
 LIB_LDFLAGS = 	\
 	-L$(DIR_GRASSROOTS_UTIL_LIB) -l$(GRASSROOTS_UTIL_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_UUID_LIB) -l$(GRASSROOTS_UUID_LIB_NAME) \
+	-L$(DIR_GRASSROOTS_USERS_LIB) -l$(GRASSROOTS_USERS_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_SERVICES_LIB) -l$(GRASSROOTS_SERVICES_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_SERVER_LIB) -l$(GRASSROOTS_SERVER_LIB_NAME) \
-	-L$(DIR_GRASSROOTS_PARAMS_LIB) -l$(GRASSROOTS_PARAMS_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_MONGODB_LIB) -l$(GRASSROOTS_MONGODB_LIB_NAME)  \
-	-L$(DIR_GRASSROOTS_SQLITE_LIB) -l$(GRASSROOTS_SQLITE_LIB_NAME)  \
 	-L$(DIR_GRASSROOTS_GEOCODER_LIB) -l$(GRASSROOTS_GEOCODER_LIB_NAME) \
-	-L$(DIR_GRASSROOTS_FRICTIONLESS_LIB) -l$(GRASSROOTS_FRICTIONLESS_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_LUCENE_LIB) -l$(GRASSROOTS_LUCENE_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_HANDLER_LIB) -l$(GRASSROOTS_HANDLER_LIB_NAME) \
 	-L$(DIR_GRASSROOTS_FRICTIONLESS_LIB) -l$(GRASSROOTS_FRICTIONLESS_LIB_NAME) \
@@ -146,6 +149,7 @@ LIB_LDFLAGS = 	\
 	-L$(DIR_LIBEXIF_LIB) -lexif \
 	-L$(DIR_UUID_LIB) -luuid \
 	-L$(DIR_GRASSROOTS_NETWORK_LIB) -l$(GRASSROOTS_NETWORK_LIB_NAME) \
+	-lcurl
 	
 LDFLAGS += $(LIB_LDFLAGS)
 

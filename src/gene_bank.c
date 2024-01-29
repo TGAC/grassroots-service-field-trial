@@ -26,6 +26,7 @@
 
 #include "memory_allocations.h"
 #include "string_utils.h"
+#include "mongodb_util.h"
 
 
 /*
@@ -255,7 +256,7 @@ bool SaveGeneBank (GeneBank *gene_bank_p, FieldTrialServiceData *data_p)
 
 			if (gene_bank_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, gene_bank_json_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK], selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, gene_bank_json_p, data_p -> dftsd_collection_ss [DFTD_GENE_BANK], data_p -> dftsd_backup_collection_ss [DFTD_GENE_BANK], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							success_flag = true;
 						}

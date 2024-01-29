@@ -210,7 +210,7 @@ bool SetIntegerObservationRawValueFromJSON (IntegerObservation *observation_p, c
 
 bool SetIntegerObservationCorrectedValueFromJSON (IntegerObservation *observation_p, const json_t *value_p)
 {
-	return SetValueFromJSON (& (observation_p -> io_raw_value_p), value_p);
+	return SetValueFromJSON (& (observation_p -> io_corrected_value_p), value_p);
 }
 
 
@@ -260,20 +260,30 @@ static bool SetIntegerObservationValueFromString (Observation *observation_p, Ob
 static bool SetIntegerObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p)
 {
 	bool success_flag = false;
-	IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
 
-	switch (ovt)
+	if (json_is_string (value_p))
 		{
-			case OVT_RAW_VALUE:
-				success_flag = SetIntegerObservationRawValueFromJSON (int_obs_p, value_p);
-				break;
+			const char *value_s = json_string_value (value_p);
 
-			case OVT_CORRECTED_VALUE:
-				success_flag = SetIntegerObservationCorrectedValueFromJSON (int_obs_p, value_p);
-				break;
+			success_flag = SetIntegerObservationValueFromString (observation_p, ovt, value_s);
+		}
+	else
+		{
+			IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;
 
-			default:
-				break;
+			switch (ovt)
+				{
+					case OVT_RAW_VALUE:
+						success_flag = SetIntegerObservationRawValueFromJSON (int_obs_p, value_p);
+						break;
+
+					case OVT_CORRECTED_VALUE:
+						success_flag = SetIntegerObservationCorrectedValueFromJSON (int_obs_p, value_p);
+						break;
+
+					default:
+						break;
+				}
 		}
 
 	return success_flag;

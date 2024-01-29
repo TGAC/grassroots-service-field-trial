@@ -132,9 +132,9 @@ static const char *GetFieldTrialIndexingServiceInformationUri (const Service *se
 
 static bool GetIndexingParameterTypeForNamedParameter (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
-static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
-static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool RunReindexing (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
@@ -164,6 +164,11 @@ static OperationStatus StoreAllRResScaleUnits (json_t *terms_p, FieldTrialServic
 static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p);
 
 static void GenerateStudyHandbook (Study *study_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
+
+
+static OperationStatus CreateMongoRevisionsCollections (FieldTrialServiceData *data_p);
+
+static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const char *database_s, const char *collection_s);
 
 
 /*
@@ -1038,7 +1043,7 @@ OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_
 }
 
 
-static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -1173,7 +1178,7 @@ static ServiceJobSet *RunFieldTrialIndexingService (Service *service_p, Paramete
 
 									if (strcmp (id_s, "*") == 0)
 										{
-											json_t *studies_json_p = GetAllStudiesAsJSON (data_p);
+											json_t *studies_json_p = GetAllStudiesAsJSON (data_p, true);
 
 											if (studies_json_p)
 												{
@@ -1517,7 +1522,7 @@ static bool GetIndexingParameterTypeForNamedParameter (const Service * UNUSED_PA
 }
 
 
-static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetFieldTrialIndexingServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial indexing service parameters", "The parameters used for the Field Trial indexing service");
 
@@ -1789,7 +1794,7 @@ static OperationStatus GenerateAllFrictionlessDataStudies (ServiceJob *job_p, Fi
 
 	if (data_p -> dftsd_assets_path_s)
 		{
-			json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+			json_t *all_studies_p = GetAllStudiesAsJSON (data_p, true);
 
 			if (all_studies_p)
 				{
@@ -1853,7 +1858,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 	OperationStatus status = OS_FAILED;
 	MongoTool *tool_p = data_p -> dftsd_mongo_p;
 
-	const char *keys_array_ss [4];
+	const char *keys_array_ss [5];
 	const char **keys_ss = keys_array_ss;
 
 	keys_array_ss [0] = MA_ACCESSION_S;
@@ -1867,6 +1872,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 			keys_array_ss [0] = PL_PARENT_STUDY_S;
 			keys_array_ss [1] = PL_ROW_INDEX_S;
 			keys_array_ss [2] = PL_COLUMN_INDEX_S;
+			keys_array_ss [3] = SR_RACK_INDEX_S;
 			keys_array_ss [3] = NULL;
 
 			/* Plots */
@@ -1876,6 +1882,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 						{
 							uint32 i = 0;
 							const uint32 num_keys = 2;
+							OperationStatus revisions_status = OS_FAILED;
 
 							/* Measured Variables */
 							char *key_s = GetMeasuredVariablesNameKey ();
@@ -1904,7 +1911,18 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 								}
 
 							status = (i == num_keys) ? OS_SUCCEEDED : OS_PARTIALLY_SUCCEEDED;
+
+							revisions_status = CreateMongoRevisionsCollections (data_p);
+
+							if (revisions_status != OS_SUCCEEDED)
+								{
+									if (status == OS_SUCCEEDED)
+										{
+											status = OS_PARTIALLY_SUCCEEDED;
+										}
+								}
 						}
+
 				}
 
 		}		/* if (AddCollectionIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MATERIAL], MA_ACCESSION_S, false, false)) */
@@ -1913,3 +1931,59 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 	return status;
 }
 
+
+static OperationStatus CreateMongoRevisionsCollections (FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+	uint32 num_successes = 0;
+
+	for (uint32 i = 0; i < DFTD_NUM_TYPES; ++ i)
+		{
+			if (CreateMongoRevisionsCollection (tool_p, data_p -> dftsd_database_s, * ((data_p -> dftsd_backup_collection_ss) + i)))
+				{
+					++ num_successes;
+				}
+		}
+
+	if (num_successes == DFTD_NUM_TYPES)
+		{
+			status = OS_SUCCEEDED;
+		}
+	else if (num_successes > 0)
+		{
+			status = OS_PARTIALLY_SUCCEEDED;
+		}
+
+
+	return status;
+}
+
+
+static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const char *database_s, const char *collection_s)
+{
+	OperationStatus status = OS_FAILED;
+	int collection_status = DoesCollectionExist (tool_p, collection_s);
+
+	if ((collection_status == 1) || (CreateMongoToolCollection (tool_p, collection_s, NULL)))
+		{
+			if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_BACKUPS_ID_KEY_S, false, false))
+				{
+					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_TIMESTAMP_S, false, false))
+						{
+							status = OS_SUCCEEDED;
+						}
+				}		/* if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_TIMESTAMP_S, false, false)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCollectionSingleIndex () failed for \"%s\", \"%s\", \"%s\"", database_s, collection_s, MONGO_TIMESTAMP_S);
+				}
+
+		}		/* if (CreateMongoToolCollection (tool_p, collection_s, NULL)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CreateMongoToolCollection () failed for \"%s\"", collection_s);
+		}
+
+	return status;
+}

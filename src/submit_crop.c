@@ -43,13 +43,13 @@ static const char *GetCropSubmissionServiceAlias (const Service *service_p);
 
 static const char *GetCropSubmissionServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetCropSubmissionServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseCropSubmissionServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunCropSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunCropSubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool CloseCropSubmissionService (Service *service_p);
@@ -142,7 +142,7 @@ static bool GetCropSubmissionServiceParameterTypesForNamedParameters (const Serv
 
 
 
-static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetCropSubmissionServiceParameters (Service *service_p, DataResource * UNUSED_PARAM (resource_p), User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Field Trial Crop submission service parameters", "The parameters used for the Field Trial Crop submission service");
 
@@ -193,7 +193,7 @@ static bool CloseCropSubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunCropSubmissionService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunCropSubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 

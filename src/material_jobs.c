@@ -91,22 +91,21 @@ bool AddSubmissionMaterialParams (ServiceData *data_p, ParameterSet *param_set_p
 
 	if (group_p)
 		{
-			StringParameter *string_param_p = NULL;
+			Parameter *param_p = NULL;
 
-			if ((string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The available studies", NULL, PL_ALL)) != NULL)
 				{
 					const FieldTrialServiceData *dfw_service_data_p = (FieldTrialServiceData *) data_p;
 
-					if (SetUpStudiesListParameter (dfw_service_data_p, string_param_p, NULL, false))
+					if (SetUpStudiesListParameter (dfw_service_data_p, param_p, NULL, false))
 						{
-							string_param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
+							param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_GENE_BANKS_LIST.npt_type, S_GENE_BANKS_LIST.npt_name_s, "Gene Bank", "The available gene banks", NULL, PL_ALL);
 
-							if (string_param_p)
+							if (param_p)
 								{
-									if (SetUpGenBanksListParameter ((FieldTrialServiceData *) data_p, string_param_p))
+									if (SetUpGenBanksListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p))
 										{
 											const char c = DFT_DEFAULT_COLUMN_DELIMITER;
-											Parameter *param_p;
 
 											if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_MATERIAL_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 												{
@@ -263,36 +262,41 @@ bool RunForSearchMaterialParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION.npt_name_s, &accession_s))
 		{
-			OperationStatus status = OS_FAILED_TO_START;
-			bool case_senstive_search_flag = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
-			GeneBank *gene_bank_p = NULL;
-			Material *material_p = NULL;
-			const bool *sens_flag_p = NULL;
-
-			GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &sens_flag_p);
-
-			if (sens_flag_p != NULL)
+			if (!IsStringEmpty (accession_s))
 				{
-					case_senstive_search_flag = *sens_flag_p;
-				}
+					OperationStatus status = OS_FAILED_TO_START;
+					bool case_senstive_search_flag = S_DEFAULT_SEARCH_CASE_SENSITIVITY_FLAG;
+					GeneBank *gene_bank_p = NULL;
+					Material *material_p = NULL;
+					const bool *sens_flag_p = NULL;
 
-			material_p = GetMaterialByAccession (accession_s, gene_bank_p, case_senstive_search_flag, data_p);
+					GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_CASE_SENSITIVE.npt_name_s, &sens_flag_p);
 
-			if (material_p)
-				{
-					ViewFormat format = VF_CLIENT_FULL;
-					status = GetAllStudiesContainingMaterial (material_p, job_p, format, data_p);
+					if (sens_flag_p != NULL)
+						{
+							case_senstive_search_flag = *sens_flag_p;
+						}
 
-					FreeMaterial (material_p);
-				}		/* if (material_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_s, job_p -> sj_name_s);
-					status = OS_SUCCEEDED;
-				}
+					material_p = GetMaterialByAccession (accession_s, gene_bank_p, case_senstive_search_flag, data_p);
 
-			SetServiceJobStatus (job_p, status);
-			job_done_flag = true;
+					if (material_p)
+						{
+							ViewFormat format = VF_CLIENT_FULL;
+							status = GetAllStudiesContainingMaterial (material_p, job_p, format, data_p);
+
+							FreeMaterial (material_p);
+						}		/* if (material_p) */
+					else
+						{
+							PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to find material \"%s\" for job \"%s\"", accession_s, job_p -> sj_name_s);
+							status = OS_SUCCEEDED;
+						}
+
+					SetServiceJobStatus (job_p, status);
+					job_done_flag = true;
+
+				}		/* if (!IsStringEmpty (accession_s)) */
+
 		}		/* if (GetParameterValueFromParameterSet (param_set_p, S_MATERIAL_ACCESSION_S.npt_name_s, &value, true)) */
 
 	return job_done_flag;

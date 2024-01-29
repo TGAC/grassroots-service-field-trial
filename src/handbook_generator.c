@@ -46,7 +46,8 @@ typedef enum
 
 
 static bool InsertLatexTabularRow (FILE *out_f, const char * const key_s, const char * const value_s, const CapitalizeState capitalize, ByteBuffer *buffer_p);
-static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
+static bool InsertPersonAsLatexTabularRow (FILE *out_f, const Person * const person_p);
+static bool InsertPersonWithHeadingAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p);
 static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const key_s, const char * const value_s, ByteBuffer *buffer_p);
 static bool InsertLatexTabularRowAsUint (FILE *out_f, const char * const key_s, const uint32 * const value_p);
 
@@ -77,6 +78,7 @@ static bool InsertLine (FILE *study_tex_f);
 
 static bool InsertPhenotypeHeatmap (FILE *study_tex_f, const char * const study_uuid_s, char * const variable_name_s, const FieldTrialServiceData *data_p);
 
+static bool PrintPeople (FILE *study_tex_f, const char * const heading_s, const LinkedList * const people_p, const char * const name_s);
 
 
 
@@ -157,7 +159,7 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 							fputs ("\n\\usepackage{calc}\n", study_tex_f);
 							fputs ("\\newlength{\\imgwidth}\n\n", study_tex_f);
 
-							fputs ("\\newcommand\\scalegraphics[1]{\\%%\n", study_tex_f);
+							fputs ("\\newcommand\\scalegraphics[1]{\%\%\n", study_tex_f);
 							fputs ("\t\\settowidth{\\imgwidth}{\\includegraphics{#1}}\%\%\n", study_tex_f);
 							fputs ("\t\\setlength{\\imgwidth}{\\minof{\\imgwidth}{\\textwidth}}\%\%\n", study_tex_f);
 							fputs ("\t\\includegraphics[width=\\imgwidth,keepaspectratio]{#1}\%\%\n}\n", study_tex_f);
@@ -263,7 +265,10 @@ OperationStatus GenerateStudyAsPDF (const Study *study_p, FieldTrialServiceData 
 
 					fclose (study_tex_f);
 
-					RunLatex (data_p -> dftsd_latex_commmand_s, data_p -> dftsd_assets_path_s, full_filename_s);
+					if (RunLatex (data_p -> dftsd_latex_commmand_s, data_p -> dftsd_assets_path_s, full_filename_s))
+						{
+							status = OS_SUCCEEDED;
+						}
 
 
 				}		/* if (study_tex_f) */
@@ -458,8 +463,15 @@ static bool PrintStudy (FILE *study_tex_f, const Study * const study_p, ByteBuff
 	InsertLatexTabularRow (study_tex_f, "Design", study_p -> st_design_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Growing Conditions", study_p -> st_growing_conditions_s, CS_FIRST_WORD_ONLY, buffer_p);
 
-	InsertPersonAsLatexTabularRow (study_tex_f, "Contact", study_p -> st_contact_p);
-	InsertPersonAsLatexTabularRow (study_tex_f, "Curator", study_p -> st_curator_p);
+	InsertPersonWithHeadingAsLatexTabularRow (study_tex_f, "Contact", study_p -> st_contact_p);
+	InsertPersonWithHeadingAsLatexTabularRow (study_tex_f, "Curator", study_p -> st_curator_p);
+
+	if (study_p -> st_contributors_p -> ll_size > 0)
+		{
+			fputs ("\\end{tabularx}\n", study_tex_f);
+			PrintPeople (study_tex_f, "Contributors", study_p -> st_contributors_p, study_p -> st_name_s);
+			fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f);
+		}
 
 	InsertLatexTabularRow (study_tex_f, "Phenotype Gathering Notes", study_p -> st_phenotype_gathering_notes_s, CS_FIRST_WORD_ONLY, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Physical Samples Collected", study_p -> st_physical_samples_collected_s, CS_FIRST_WORD_ONLY, buffer_p);
@@ -773,7 +785,7 @@ static bool PrintProgramme (FILE *study_tex_f, const Programme * const programme
 	InsertLatexTabularRow (study_tex_f, "Abbreviation", programme_p -> pr_abbreviation_s, CS_NORMAL, buffer_p);
 	InsertLatexTabularRow (study_tex_f, "Objective", programme_p -> pr_objective_s, CS_FIRST_WORD_ONLY, buffer_p);
 
-	InsertPersonAsLatexTabularRow (study_tex_f, "Principal Investigator", programme_p -> pr_pi_p);
+	InsertPersonWithHeadingAsLatexTabularRow (study_tex_f, "Principal Investigator", programme_p -> pr_pi_p);
 
 	InsertLatexTabularRowAsHyperlink (study_tex_f, "Web Address", programme_p -> pr_documentation_url_s, buffer_p);
 
@@ -800,7 +812,10 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 								{
 									if (fputs ("\\end{tabularx}\n", study_tex_f) > 0)
 										{
-											return true;
+											if (PrintPeople (study_tex_f, "Contributors", trial_p -> ft_people_p, trial_p -> ft_name_s))
+												{
+													return true;
+												}										
 										}
 								}
 						}
@@ -808,6 +823,60 @@ static bool PrintTrial (FILE *study_tex_f, const FieldTrial * const trial_p, Byt
 		}
 
 	return false;
+}
+
+
+static bool PrintPeople (FILE *study_tex_f, const char * const heading_s, const LinkedList * const people_p, const char * const name_s)
+{
+	bool success_flag = true;
+	
+	if (heading_s)
+		{
+			if (fprintf (study_tex_f, "\\subsection* {\%s}\n", heading_s) <= 0)			
+				{
+					success_flag = false;
+				}
+		}
+	
+	if (success_flag)
+		{
+			if (people_p)
+				{
+					if (fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f) > 0)
+						{
+							PersonNode *node_p = (PersonNode *) (people_p -> ll_head_p);
+
+							while (node_p && success_flag)
+								{
+									Person *person_p = node_p -> pn_person_p;
+
+									if (InsertPersonAsLatexTabularRow (study_tex_f, person_p))
+										{
+											node_p = (PersonNode *) (node_p -> pn_node.ln_next_p);
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add \"%s\" to the handbook for the \"%s\" trial",
+																	node_p -> pn_person_p -> pe_name_s, name_s);
+
+											success_flag = false;
+										}
+								}
+
+							if (fputs ("\\end{tabularx}\n", study_tex_f) <= 0)
+								{
+									success_flag = false;
+								}
+
+						}		/* if (fputs ("\\begin{tabularx}{1\\textwidth}{l X}\n", study_tex_f) > 0) */
+
+
+					
+				}	
+			
+		}
+
+	return success_flag;
 }
 
 
@@ -1029,8 +1098,13 @@ static bool InsertLatexTabularRowAsHyperlink (FILE *out_f, const char * const ke
 }
 
 
+static bool InsertPersonAsLatexTabularRow (FILE *out_f, const Person * const person_p)
+{
+	return InsertPersonWithHeadingAsLatexTabularRow (out_f, person_p -> pe_role_s, person_p);
+}
 
-static bool InsertPersonAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p)
+
+static bool InsertPersonWithHeadingAsLatexTabularRow (FILE *out_f, const char * const key_s, const Person * const person_p)
 {
 	bool success_flag = false;
 
@@ -1143,45 +1217,82 @@ static bool InsertPhenotypeHeatmap (FILE *study_tex_f, const char * const study_
 
 			if (dir_s)
 				{
-					char *full_filename_without_extension_s = MakeFilename (dir_s, variable_name_s);
+					char *escaped_variable_s = NULL;
 
-					if (full_filename_without_extension_s)
+					if (SearchAndReplaceInString (variable_name_s, &escaped_variable_s, "%", "\letterpercent"))
 						{
-							char *full_filename_s = NULL;
+							char *full_filename_without_extension_s = NULL;
+							const char sep = GetFileSeparatorChar ();
 
 							/* Any variable names that contain the file separator character get replaced with a -. */
-							ReplaceCharacter (full_filename_without_extension_s + strlen (dir_s), GetFileSeparatorChar (), '-');
 
-							full_filename_s = ConcatenateStrings (full_filename_without_extension_s, ".png");
-
-							if (full_filename_s)
+							if (escaped_variable_s)
 								{
-									if (DoesFileExist (full_filename_s))
-										{
-											fputs ("\\begin{center}\n\\begin{figure}[H]\n", study_tex_f);
-											fprintf (study_tex_f, "\\scalegraphics{%s}\n", full_filename_without_extension_s);
-											fputs ("\\end{figure}\n\\end{center}\n\n", study_tex_f);
+									ReplaceCharacter (escaped_variable_s, sep, '-');
 
-											success_flag = true;
-										}		/* if (DoesFileExist (full_filename_s)) */
-									else
-										{
-											PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "static heatmap image \"%s\" does not exist", full_filename_s);
-										}
+									full_filename_without_extension_s = MakeFilename (dir_s, escaped_variable_s);
 
-									FreeCopiedString (full_filename_s);
-								}		/* if (full_filename_s) */
+									FreeCopiedString (escaped_variable_s);
+								}
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ConcatenateStrings () failed for \"%s\" and \".png\"", full_filename_without_extension_s);
+									full_filename_without_extension_s = MakeFilename (dir_s, variable_name_s);
+
+									if (full_filename_without_extension_s)
+										{
+											size_t offset = strlen (dir_s);
+											char *c_p = dir_s + offset - 1;
+
+											while (*c_p == sep)
+												{
+													++ offset;
+													++ c_p;
+												}
+
+											ReplaceCharacter (c_p, sep, '-');
+										}
 								}
 
-							FreeCopiedString (full_filename_without_extension_s);
-						}		/* if (full_filename_without_extension_s) */
+							if (full_filename_without_extension_s)
+								{
+									const char * const suffix_s = ".png";
+									char *full_filename_s = ConcatenateStrings (full_filename_without_extension_s, suffix_s);
+
+									if (full_filename_s)
+										{
+											if (DoesFileExist (full_filename_s))
+												{
+													fputs ("\\begin{center}\n\\begin{figure}[H]\n", study_tex_f);
+													fprintf (study_tex_f, "\\scalegraphics{%s}\n", full_filename_without_extension_s);
+													fputs ("\\end{figure}\n\\end{center}\n\n", study_tex_f);
+
+													success_flag = true;
+												}		/* if (DoesFileExist (full_filename_s)) */
+											else
+												{
+													PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "static heatmap image \"%s\" does not exist", full_filename_s);
+												}
+
+											FreeCopiedString (full_filename_s);
+										}		/* if (full_filename_s) */
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "ConcatenateStrings () failed for \"%s\" and \"%s\"", full_filename_without_extension_s, suffix_s);
+										}
+
+									FreeCopiedString (full_filename_without_extension_s);
+								}		/* if (full_filename_without_extension_s) */
+							else
+								{
+									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "MakeFilename () failed for \"%s\" and \"%s\"", dir_s, variable_name_s);
+								}
+						}
 					else
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "MakeFilename () failed for \"%s\" and \"%s\"", dir_s, variable_name_s);
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "SearchAndReplaceInString () failed for \"%s\" when replacing \"%\", \"\\%\"", variable_name_s);
 						}
+
+
 
 					FreeCopiedString (dir_s);
 				}		/* if (dir_s) */

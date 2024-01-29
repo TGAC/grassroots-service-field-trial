@@ -155,7 +155,7 @@ bool SetNumericObservationRawValueFromJSON (NumericObservation *observation_p, c
 
 bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observation_p, const json_t *value_p)
 {
-	return SetValueFromJSON (& (observation_p -> no_raw_value_p), value_p);
+	return SetValueFromJSON (& (observation_p -> no_corrected_value_p), value_p);
 }
 
 
@@ -261,20 +261,30 @@ static bool SetNumericObservationValueFromString (Observation *observation_p, Ob
 static bool SetNumericObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p)
 {
 	bool success_flag = false;
-	NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
 
-	switch (ovt)
+	if (json_is_string (value_p))
 		{
-			case OVT_RAW_VALUE:
-				success_flag = SetNumericObservationRawValueFromJSON (numeric_obs_p, value_p);
-				break;
+			const char *value_s = json_string_value (value_p);
 
-			case OVT_CORRECTED_VALUE:
-				success_flag = SetNumericObservationCorrectedValueFromJSON (numeric_obs_p, value_p);
-				break;
+			success_flag = SetNumericObservationValueFromString (observation_p, ovt, value_s);
+		}
+	else
+		{
+			NumericObservation *numeric_obs_p = (NumericObservation *) observation_p;
 
-			default:
-				break;
+			switch (ovt)
+				{
+					case OVT_RAW_VALUE:
+						success_flag = SetNumericObservationRawValueFromJSON (numeric_obs_p, value_p);
+						break;
+
+					case OVT_CORRECTED_VALUE:
+						success_flag = SetNumericObservationCorrectedValueFromJSON (numeric_obs_p, value_p);
+						break;
+
+					default:
+						break;
+				}
 		}
 
 	return success_flag;

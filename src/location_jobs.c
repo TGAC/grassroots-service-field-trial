@@ -776,7 +776,7 @@ bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringPar
 							 */
 							if (extra_option_s)
 								{
-									success_flag = CreateAndAddStringParameterOption (param_p, extra_option_s, extra_option_s);
+									success_flag = CreateAndAddStringParameterOption (& (param_p -> sp_base_param), extra_option_s, extra_option_s);
 								}
 
 							if (success_flag)
@@ -804,7 +804,7 @@ bool SetUpLocationsListParameter (const FieldTrialServiceData *data_p, StringPar
 																			value_set_flag = true;
 																		}
 
-																	if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																	if (!CreateAndAddStringParameterOption (& (param_p -> sp_base_param), id_s, name_s))
 																		{
 																			success_flag = false;
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);

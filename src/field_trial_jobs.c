@@ -29,7 +29,7 @@
 #include "dfw_util.h"
 #include "programme_jobs.h"
 #include "boolean_parameter.h"
-
+#include "person_jobs.h"
 #include "frictionless_data_util.h"
 
 /*
@@ -40,115 +40,165 @@ static NamedParameterType S_FUZZY_SEARCH_FIELD_TRIALS = { "Fuzzy Search", PT_BOO
 static NamedParameterType S_FULL_DATA = { "Get full data from search", PT_BOOLEAN };
 
 
-static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
-
-
-
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p);
-
-
 
 static bool AddFieldTrialToServiceJobResult (ServiceJob *job_p, FieldTrial *trial_p, json_t *trial_json_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
-static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
+static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp);
 
-static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss);
+static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp);
+
+
+static bool ProcessPersonForFieldTrial (Person *person_p, void *user_data_p);
 
 
 
-bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
+
+
+bool AddSubmissionFieldTrialParams (ServiceData *data_p, ParameterSet *param_set_p, FieldTrial *active_trial_p, const bool read_only_flag)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 	bool success_flag = false;
-	Parameter *param_p = NULL;
 	char *id_s = NULL;
 	char *programme_id_s = NULL;
 	const char *name_s = NULL;
 	const char *team_s = NULL;
-	FieldTrial *active_trial_p = GetFieldTrialFromResource (resource_p, FIELD_TRIAL_ID, dfw_data_p);
-	bool defaults_flag = false;
+	LinkedList *existing_people_p = NULL;
+
+	if (PopulaterActiveTrialValues (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s, &existing_people_p, param_set_p, dfw_data_p))
+		{
+			ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Main", false, & (dfw_data_p -> dftsd_base_data), param_set_p);
+
+			if (AddTrialsList (id_s, param_set_p, group_p, read_only_flag, FT_EMPTY_LIST_OPTION_S, dfw_data_p))
+				{
+					if (AddTrialEditor (name_s, team_s, programme_id_s, existing_people_p, param_set_p, group_p, read_only_flag, dfw_data_p))
+						{
+							success_flag = true;
+						}
+				}
+
+		}
+
+	return success_flag;
+}
+
+
+bool PopulaterActiveTrialValues (FieldTrial *active_trial_p, char **id_ss, char **programme_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp, ParameterSet *param_set_p, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
 
 	if (active_trial_p)
 		{
-			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, &id_s, &programme_id_s, &name_s, &team_s))
+			if (SetUpDefaultsFromExistingFieldTrial (active_trial_p, id_ss, programme_id_ss, name_ss, team_ss, existing_people_pp))
 				{
-					defaults_flag = true;
+					success_flag = true;
 				}
 		}
 	else
 		{
-			if (SetUpDefaults (&id_s, &programme_id_s, &name_s, &team_s))
+			if (SetUpDefaults (id_ss, programme_id_ss, name_ss, team_ss, existing_people_pp))
 				{
-					defaults_flag = true;
+					success_flag = true;
 				}
 		}
 
+	return success_flag;
+}
 
-	if (defaults_flag)
+
+
+bool AddTrialsListFromJSON (const char *id_s, json_t *trials_json_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char *empty_option_s, FieldTrialServiceData *ft_data_p)
+{
+	bool success_flag = false;
+	ServiceData *data_p = (ServiceData *) ft_data_p;
+	Parameter *param_p = NULL;
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
 		{
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ALL)) != NULL)
+			param_p -> pa_read_only_flag = read_only_flag;
+
+			if (SetUpListParameterFromJSON (ft_data_p, (StringParameter *) param_p, id_s, empty_option_s, FT_NAME_S, trials_json_p))
 				{
-					if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_trial_p, true))
+					/*
+					 * We want to update all of the values in the form
+					 * when a user selects a study from the list so
+					 * we need to make the parameter automatically
+					 * refresh the values. So we set the
+					 * pa_refresh_service_flag to true.
+					 */
+					param_p -> pa_refresh_service_flag = true;
+
+					success_flag = true;
+				}
+		}
+
+	return success_flag;
+}
+
+
+bool AddTrialsList (const char *id_s, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, const char * const empty_option_s, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
+
+	if (trials_p)
+		{
+			success_flag = AddTrialsListFromJSON (id_s, trials_p, param_set_p, group_p, read_only_flag, empty_option_s, data_p);
+			json_decref (trials_p);
+		}
+
+	return success_flag;
+}
+
+
+bool AddTrialEditor (const char * const name_s, const char * const team_s, const char * const programme_id_s, 	LinkedList *existing_people_p, ParameterSet *param_set_p, ParameterGroup *group_p, const bool read_only_flag, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
+	ServiceData *data_p = (ServiceData *) dfw_data_p;
+	Parameter *param_p = NULL;
+
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
+		{
+			param_p -> pa_required_flag = true;
+			param_p -> pa_read_only_flag = read_only_flag;
+
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Programme", "The Programme that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
+				{
+					Programme *programme_p = NULL;
+
+					if (programme_id_s && (strcmp (programme_id_s, FT_EMPTY_LIST_OPTION_S) != 0))
 						{
-							/*
-							 * We want to update all of the values in the form
-							 * when a user selects a study from the list so
-							 * we need to make the parameter automatically
-							 * refresh the values. So we set the
-							 * pa_refresh_service_flag to true.
-							 */
-							param_p -> pa_refresh_service_flag = true;
+							programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
+						}
 
-							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_NAME.npt_type, FIELD_TRIAL_NAME.npt_name_s, "Name", "The name of the Field Trial", name_s, PL_ALL)) != NULL)
+					param_p -> pa_read_only_flag = read_only_flag;
+
+					if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, programme_p, false))
+						{
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
 								{
-									param_p -> pa_required_flag = true;
+									param_p -> pa_read_only_flag = read_only_flag;
 
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_PARENT_ID.npt_type, FIELD_TRIAL_PARENT_ID.npt_name_s, "Programme", "The Programme that this trial is a part of", programme_id_s, PL_ALL)) != NULL)
+									if (AddMultiplePeopleParameters (param_set_p, "Investigators", existing_people_p, dfw_data_p))
 										{
-											Programme *programme_p = NULL;
-
-											if (programme_id_s && (strcmp (programme_id_s, S_EMPTY_LIST_OPTION_S) != 0))
-												{
-													programme_p = GetProgrammeByIdString (programme_id_s, VF_CLIENT_MINIMAL, dfw_data_p);
-												}
-
-											if (SetUpProgrammesListParameter (dfw_data_p, (StringParameter *) param_p, programme_p, false))
-												{
-													if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_TEAM.npt_type, FIELD_TRIAL_TEAM.npt_name_s, "Team", "The team name of the Field Trial", team_s, PL_ALL)) != NULL)
-														{
-															success_flag = true;
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
-														}
-												}
-
-											if (programme_p)
-												{
-													FreeProgramme (programme_p);
-												}
+											success_flag = true;
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", name_s ? name_s : "NULL");
 										}
 
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_TEAM.npt_name_s);
 								}
+						}
+				}
 
-
-
-
-
-						}		/* if (SetUpFieldTrialsListParameter ((FieldTrialServiceData *) data_p, (StringParameter *) param_p, NULL, true)) */
-
-				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, FIELD_TRIAL_ID.npt_type, FIELD_TRIAL_ID.npt_name_s, "Load Field Trial", "Edit an existing Field Trial", id_s, PL_ADVANCED)) != NULL) */
-
-		}		/* if (defaults_flag) */
-
-	if (active_trial_p)
+		}
+	else
 		{
-			FreeFieldTrial (active_trial_p);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", FIELD_TRIAL_NAME.npt_name_s);
 		}
 
 	return success_flag;
@@ -163,7 +213,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 	bson_oid_t *trial_id_p = NULL;
 	const char *programme_id_s = NULL;
 	Programme *programme_p = NULL;
-
+	
 	/*
 	 * Get the existing study id if specified
 	 */
@@ -171,7 +221,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 	if (id_s)
 		{
-			if (strcmp (S_EMPTY_LIST_OPTION_S, id_s) != 0)
+			if (strcmp (FT_EMPTY_LIST_OPTION_S, id_s) != 0)
 				{
 					trial_id_p = GetBSONOidFromString (id_s);
 
@@ -200,7 +250,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 	if (programme_id_s)
 		{
-			if (strcmp (S_EMPTY_LIST_OPTION_S, programme_id_s) != 0)
+			if (strcmp (FT_EMPTY_LIST_OPTION_S, programme_id_s) != 0)
 				{
 					programme_p = GetProgrammeByIdString (programme_id_s, VF_STORAGE, data_p);
 
@@ -232,11 +282,58 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 
 			if (!IsStringEmpty (name_s))
 				{
+					FieldTrial *trial_p = NULL;
+
 					GetCurrentStringParameterValueFromParameterSet (param_set_p, FIELD_TRIAL_TEAM.npt_name_s, &team_s);
 
-					if (!AddFieldTrial (job_p, name_s, team_s, trial_id_p, programme_p, data_p))
+					trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, trial_id_p, NULL);
+
+					if (trial_p)
 						{
-							char *error_s = ConcatenateVarargsStrings ("Failed to add trial, name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
+							OperationStatus people_status = ProcessPeople (job_p, param_set_p, ProcessPersonForFieldTrial, trial_p, data_p);
+
+							if ((people_status == OS_SUCCEEDED) || (people_status == OS_PARTIALLY_SUCCEEDED))
+								{
+									if (!SaveFieldTrial (trial_p, job_p, data_p))
+										{
+											char *error_s = ConcatenateVarargsStrings ("Failed to save trial with name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
+
+											if (error_s)
+												{
+													AddGeneralErrorMessageToServiceJob (job_p, error_s);
+													FreeCopiedString (error_s);
+												}
+											else
+												{
+													AddGeneralErrorMessageToServiceJob (job_p, "Failed to save Field Trial");
+												}
+
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
+										}
+								}
+							else
+								{
+									char *error_s = ConcatenateVarargsStrings ("Failed to add people for trial with name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
+
+									if (error_s)
+										{
+											AddGeneralErrorMessageToServiceJob (job_p, error_s);
+											FreeCopiedString (error_s);
+										}
+									else
+										{
+											AddGeneralErrorMessageToServiceJob (job_p, "Failed to add people for Field Trial");
+										}
+
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add people for trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
+
+								}
+
+							FreeFieldTrial (trial_p);
+						}		/* if (trial_p) */
+					else
+						{
+							char *error_s = ConcatenateVarargsStrings ("Failed to create trial with name: '", name_s, "' team: '", team_s, "' id: '", id_s, "' programme: '", programme_id_s, "'", NULL);
 
 							if (error_s)
 								{
@@ -245,10 +342,10 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 								}
 							else
 								{
-									AddGeneralErrorMessageToServiceJob (job_p, "Failed to add Field Trial");
+									AddGeneralErrorMessageToServiceJob (job_p, "Failed to create Field Trial");
 								}
 
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create trial, name: \"%s\" team: \"%s\", id: \"%s\", programme: \"%s\"", name_s, team_s, id_s, programme_id_s);
 						}
 
 				}		/* if (!IsStringEmpty (name_s)) */
@@ -269,7 +366,7 @@ bool RunForSubmissionFieldTrialParams (FieldTrialServiceData *data_p, ParameterS
 json_t *GetFieldTrialIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-	json_t *src_trials_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+	json_t *src_trials_p = GetAllFieldTrialsAsJSON (data_p, true);
 
 	if (src_trials_p)
 		{
@@ -305,31 +402,26 @@ json_t *GetFieldTrialIndexingData (Service *service_p)
 
 bool GetSubmissionFieldTrialParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	bool success_flag = false;
 
-	if (strcmp (param_name_s, FIELD_TRIAL_NAME.npt_name_s) == 0)
+
+	const NamedParameterType params [] =
 		{
-			*pt_p = FIELD_TRIAL_NAME.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_TEAM.npt_name_s) == 0)
+			FIELD_TRIAL_NAME,
+			FIELD_TRIAL_TEAM,
+			FIELD_TRIAL_ID,
+			FIELD_TRIAL_ADD,
+			FIELD_TRIAL_PARENT_ID,
+			NULL
+		};
+
+	if (DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params))
 		{
-			*pt_p = FIELD_TRIAL_TEAM.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_ID.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_ID.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_ADD.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_ADD.npt_type;
-		}
-	else if (strcmp (param_name_s, FIELD_TRIAL_PARENT_ID.npt_name_s) == 0)
-		{
-			*pt_p = FIELD_TRIAL_PARENT_ID.npt_type;
+			success_flag = true;
 		}
 	else
 		{
-			success_flag = false;
+			success_flag = GetPersonParameterTypeForNamedParameter (param_name_s, pt_p);
 		}
 
 	return success_flag;
@@ -499,64 +591,96 @@ bool RunForSearchFieldTrialParams (FieldTrialServiceData *data_p, ParameterSet *
 }
 
 
-json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, bson_t *opts_p)
+json_t *GetAllFieldTrialsAsJSON (const FieldTrialServiceData *data_p, const bool full_data_flag)
 {
 	json_t *results_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_FIELD_TRIAL]))
 		{
 			bson_t *query_p = NULL;
+			bson_t *opts_p = NULL;
+
+			if (full_data_flag)
+				{
+					opts_p =  BCON_NEW ( "sort", "{", FT_NAME_S, BCON_INT32 (1), "}");
+				}
+			else
+				{
+					opts_p =  BCON_NEW ("projection", "{", FT_NAME_S, BCON_BOOL (true), "}",
+															"sort", "{", FT_NAME_S, BCON_INT32 (1), "}");
+				}
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
+
+			if (opts_p)
+				{
+					bson_destroy (opts_p);
+				}
+
 		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_LOCATION])) */
 
 	return results_p;
 }
 
 
-bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const FieldTrial *active_trial_p, const bool empty_option_flag)
+bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, Parameter *param_p,  const char *active_trial_id_s, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *results_p = GetAllFieldTrialsAsJSON (data_p, NULL);
+	json_t *trials_p = GetAllFieldTrialsAsJSON (data_p, false);
+
+	if (trials_p)
+		{
+			success_flag = SetUpFieldTrialsListParameterFromJSON (data_p, param_p, active_trial_id_s, empty_option_flag, trials_p);
+			json_decref (trials_p);
+		}
+
+	return success_flag;
+}
+
+
+bool SetUpFieldTrialsListParameterFromJSON (const FieldTrialServiceData *data_p, Parameter *param_p, const char *active_trial_id_s, const bool empty_option_flag, json_t *trials_p)
+{
+	bool success_flag = false;
 	bool value_set_flag = false;
 
-	if (results_p)
+	if (json_is_array (trials_p))
 		{
-			if (json_is_array (results_p))
+			const size_t num_results = json_array_size (trials_p);
+
+			success_flag = true;
+
+			if (num_results > 0)
 				{
-					const size_t num_results = json_array_size (results_p);
-
-					success_flag = true;
-
-					if (num_results > 0)
+					/*
+					 * If there's an empty option, add it
+					 */
+					if (empty_option_flag)
 						{
-							/*
-							 * If there's an empty option, add it
-							 */
-							if (empty_option_flag)
-								{
-									success_flag = CreateAndAddStringParameterOption (param_p, S_EMPTY_LIST_OPTION_S, S_EMPTY_LIST_OPTION_S);
-								}
+							success_flag = CreateAndAddStringParameterOption (param_p, FT_EMPTY_LIST_OPTION_S, FT_EMPTY_LIST_OPTION_S);
+						}
 
-							if (success_flag)
-								{
-									size_t i = 0;
-									const char *param_value_s = GetStringParameterDefaultValue (param_p);
 
+					if (success_flag)
+						{
+							size_t i = 0;
+							const char *param_value_s = GetStringParameterDefaultValue (param_p);
+							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+							if (id_p)
+								{
 									while ((i < num_results) && success_flag)
 										{
-											json_t *entry_p = json_array_get (results_p, i);
-											FieldTrial *trial_p = GetFieldTrialFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
+											json_t *entry_p = json_array_get (trials_p, i);
 
-											if (trial_p)
+											if (GetMongoIdFromJSON (entry_p, id_p))
 												{
-													char *name_s = GetFieldTrialAsString (trial_p);
+													char *id_s = GetBSONOidAsString (id_p);
 
-													if (name_s)
+													if (id_s)
 														{
-															char *id_s = GetBSONOidAsString (trial_p -> ft_id_p);
+															const char *name_s = GetJSONString (entry_p, FT_NAME_S);
 
-															if (id_s)
+															if (name_s)
 																{
 																	if (param_value_s && (strcmp (param_value_s, id_s) == 0))
 																		{
@@ -569,28 +693,27 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
 																		}
 
-																	FreeBSONOidString (id_s);
-																}
+																}		/* if (name_s) */
 															else
 																{
 																	success_flag = false;
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial BSON oid");
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", FT_NAME_S);
 																}
 
-															FreeCopiedString (name_s);
-														}		/* if (name_s) */
+															FreeBSONOidString (id_s);
+														}
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial as string");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Field Trial BSON oid");
 														}
 
-													FreeFieldTrial (trial_p);
-												}		/* if (trial_p) */
+												}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
 											else
 												{
 													success_flag = false;
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get FieldTrial");
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
+
 												}
 
 											if (success_flag)
@@ -600,46 +723,36 @@ bool SetUpFieldTrialsListParameter (const FieldTrialServiceData *data_p, StringP
 
 										}		/* while ((i < num_results) && success_flag) */
 
-									/*
-									 * If the parameter's value isn't on the list, reset it
-									 */
-									if ((param_value_s != NULL) && (strcmp (param_value_s, S_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
-										}
+									FreeBSONOid (id_p);
+								}		/* if (id_p) */
 
-								}		/* if (success_flag) */
+							/*
+							 * If the parameter's value isn't on the list, reset it
+							 */
+							if ((param_value_s != NULL) && (strcmp (param_value_s, FT_EMPTY_LIST_OPTION_S) != 0) && (value_set_flag == false))
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "param value \"%s\" not on list of existing trials", param_value_s);
+								}
+
+						}		/* if (success_flag) */
 
 
-						}		/* if (num_results > 0) */
-					else
-						{
-							/* nothing to add */
-							success_flag = true;
-						}
+				}		/* if (num_results > 0) */
+			else
+				{
+					/* nothing to add */
+					success_flag = true;
+				}
 
-				}		/* if (json_is_array (results_p)) */
+		}		/* if (json_is_array (results_p)) */
 
-			json_decref (results_p);
-		}		/* if (results_p) */
 
 
 	if (success_flag)
 		{
-			if (active_trial_p)
+			if (active_trial_id_s)
 				{
-					char *id_s = GetBSONOidAsString (active_trial_p -> ft_id_p);
-
-					if (id_s)
-						{
-							success_flag = SetStringParameterDefaultValue (param_p, id_s);
-							FreeBSONOidString (id_s);
-						}
-					else
-						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get id string for active trial \"%s\"", active_trial_p -> ft_name_s);
-							success_flag = false;
-						}
+					success_flag = SetStringParameterDefaultValue (param_p, active_trial_id_s);
 				}
 		}
 
@@ -678,7 +791,17 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 
 															if (SetNonTrivialString (trial_fd_p, PROGRAMME_S, trial_p -> ft_parent_p -> pr_name_s, false))
 																{
-																	success_flag = true;
+																	const char * const PEOPLE_S = "people";
+
+																	if (AddPeopleAsFrictionlessData (trial_p -> ft_people_p, PEOPLE_S, trial_fd_p, data_p))
+																		{
+																			success_flag = true;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, trial_fd_p, "Failed to set \"%s\" for \"%s\"", PEOPLE_S, trial_p -> ft_name_s);
+																		}
+
 																}
 															else
 																{
@@ -731,20 +854,6 @@ json_t *GetFieldTrialAsFrictionlessDataResource (const FieldTrial *trial_p, cons
 
 	return trial_fd_p;
 
-}
-
-
-static bool AddFieldTrial (ServiceJob *job_p, const char *name_s, const char *team_s, bson_oid_t *id_p, Programme *programme_p, FieldTrialServiceData *data_p)
-{
-	FieldTrial *trial_p = AllocateFieldTrial (name_s, team_s, programme_p, MF_ALREADY_FREED, id_p);
-
-	if (trial_p)
-		{
-			SaveFieldTrial (trial_p, job_p, data_p);
-			FreeFieldTrial (trial_p);
-		}
-
-	return ((job_p -> sj_status == OS_PARTIALLY_SUCCEEDED) || (job_p -> sj_status == OS_SUCCEEDED));
 }
 
 
@@ -977,21 +1086,22 @@ bool SearchFieldTrials (ServiceJob *job_p, const char *name_s, const char *team_
 
 
 
-static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss)
+static bool SetUpDefaults (char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp)
 {
 	bool success_flag = true;
 
-	*id_ss = (char *) S_EMPTY_LIST_OPTION_S;
-	*program_id_ss = (char *) S_EMPTY_LIST_OPTION_S;
+	*id_ss = (char *) FT_EMPTY_LIST_OPTION_S;
+	*program_id_ss = (char *) FT_EMPTY_LIST_OPTION_S;
 	*name_ss = NULL;
 	*team_ss = NULL;
+	*existing_people_pp = NULL;
 
 	return success_flag;
 }
 
 
 
-static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss)
+static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_p, char **id_ss, char **program_id_ss, const char **name_ss, const char **team_ss, LinkedList **existing_people_pp)
 {
 	char *trial_id_s = GetBSONOidAsString (trial_p -> ft_id_p);
 
@@ -1014,6 +1124,7 @@ static bool SetUpDefaultsFromExistingFieldTrial (const FieldTrial * const trial_
 			*program_id_ss = program_id_s;
 			*name_ss = trial_p -> ft_name_s;
 			*team_ss = trial_p -> ft_team_s;
+			*existing_people_pp = trial_p -> ft_people_p;
 
 			return true;
 		}		/* if (trial_id_s) */
@@ -1044,7 +1155,7 @@ FieldTrial *GetFieldTrialFromResource (DataResource *resource_p, const NamedPara
 
 					if (params_json_p)
 						{
-							const char *trial_id_s = GetIDDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
+							const char *trial_id_s = GetNamedParameterDefaultValueFromJSON (trial_param_type.npt_name_s, params_json_p);
 
 							/*
 							 * Do we have an existing trial id?
@@ -1074,5 +1185,13 @@ FieldTrial *GetFieldTrialFromResource (DataResource *resource_p, const NamedPara
 		}		/* if (resource_p && (resource_p -> re_data_p)) */
 
 	return trial_p;
+}
+
+
+static bool ProcessPersonForFieldTrial (Person *person_p, void *user_data_p)
+{
+	FieldTrial *trial_p = (FieldTrial *) user_data_p;
+
+	return AddFieldTrialPerson (trial_p, person_p, MF_SHALLOW_COPY);
 }
 

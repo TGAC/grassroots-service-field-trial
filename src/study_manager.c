@@ -69,7 +69,7 @@ static NamedParameterType S_REMOVE_STUDY_PLOTS = { "SM Remove Study Plots", PT_B
 static NamedParameterType S_GENERATE_HANDBOOK = { "SM Generate Handbook", PT_BOOLEAN };
 
 
-static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SM Generate Phenotypes", PT_BOOLEAN };
+static NamedParameterType S_GENERATE_STUDY_STATISTICS = { "SM Generate Phenotypes", PT_LARGE_STRING };
 
 static NamedParameterType S_INDEXER = { "SM indexer", PT_STRING };
 
@@ -87,13 +87,13 @@ static const char *GetStudyManagerServiceAlias (const Service *service_p);
 
 static const char *GetStudyManagerServiceInformationUri (const Service *service_p);
 
-static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, UserDetails *user_p);
+static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, User *user_p);
 
 static bool GetStudyManagerServiceParameterTypesForNamedParameters (const Service *service_p, const char *param_name_s, ParameterType *pt_p);
 
 static void ReleaseStudyManagerServiceParameters (Service *service_p, ParameterSet *params_p);
 
-static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, UserDetails *user_p, ProvidersStateTable *providers_p);
+static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable *providers_p);
 
 
 static bool CloseStudyManagerService (Service *service_p);
@@ -211,7 +211,7 @@ static bool GetStudyManagerServiceParameterTypesForNamedParameters (const struct
 }
 
 
-static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, UserDetails * UNUSED_PARAM (user_p))
+static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
 {
 	ParameterSet *params_p = AllocateParameterSet ("Study manager service parameters", "The parameters used for the FieldTrial submission service");
 
@@ -259,7 +259,7 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataR
 																{
 																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate a handbook for a Study ", &b, PL_ALL)) != NULL)
 																		{
-																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_type, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
 																				{
 																					if (SetUpIndexingParameter (params_p, group_p, data_p))
 																						{
@@ -331,7 +331,7 @@ static bool SetUpIndexingParameter (ParameterSet *params_p, ParameterGroup *grou
 {
 	bool success_flag = false;
 
-	StringParameter *param_p = (StringParameter *) EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_INDEXER.npt_type, S_INDEXER.npt_name_s, "Index Status", "Manage the existing study in the search engine", S_INDEXER_NONE_S, PL_ALL);
 
 	if (param_p)
 		{
@@ -373,7 +373,7 @@ static bool CloseStudyManagerService (Service *service_p)
 
 
 
-static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, UserDetails * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -389,6 +389,7 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 			if (param_set_p)
 				{
 					const char *id_s = NULL;
+					const char *phenotypes_s = NULL;
 
 					LogParameterSet (param_set_p, job_p);
 
@@ -514,25 +515,35 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 												}
 										}
 
-									run_flag = false;
-									if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &run_flag_p))
+									if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_GENERATE_STUDY_STATISTICS.npt_name_s, &phenotypes_s))
 										{
-											if ((run_flag_p != NULL) && (*run_flag_p == true))
+											if (!IsStringEmpty (phenotypes_s))
 												{
-													OperationStatus s = OS_FAILED;
-
-													if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+													/* do all phenotypes? */
+													if (strcmp (phenotypes_s, "*") == 0)
 														{
-															s = OS_SUCCEEDED;
+															OperationStatus s = OS_FAILED;
+
+															if (GenerateStatisticsForStudy (study_p, job_p, data_p))
+																{
+																	s = OS_SUCCEEDED;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+																}
+
+
+															MergeServiceJobStatus (job_p, s);
 														}
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p -> st_name_s);
+															/* Get the list of phenotypes tp regenerate */
 														}
 
 
-													MergeServiceJobStatus (job_p, s);
-												}
+												}		/* if (!IsStringEmpty (phenotypes_s)) */
+
 										}
 
 

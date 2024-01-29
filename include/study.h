@@ -68,6 +68,9 @@ STUDY_PREFIX const char *ST_CONTACT_S STUDY_VAL ("contact");
 STUDY_PREFIX const char *ST_CURATOR_S STUDY_VAL ("curator");
 
 
+STUDY_PREFIX const char *ST_CONTRIBUTORS_S STUDY_VAL ("contributors");
+
+
 STUDY_PREFIX const char *ST_ASPECT_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_NCI_THESAUSUS_ONTOLOGY_S, "C42677");
 
 STUDY_PREFIX const char *ST_SLOPE_S STUDY_CONCAT_VAL (CONTEXT_PREFIX_ENVIRONMENT_ONTOLOGY_S, "00002000");
@@ -179,6 +182,8 @@ typedef struct Study
 {
 	bson_oid_t *st_id_p;
 
+	char *st_timestamp_s;
+
 	FieldTrial *st_parent_p;
 
 	MEM_FLAG st_parent_field_trial_mem;
@@ -278,6 +283,12 @@ typedef struct Study
 
 	LinkedList *st_phenotypes_p;
 
+	/**
+	 * A LinkedList of PersonNodes of people who have contributed
+	 * to this Study.
+	 */
+	LinkedList *st_contributors_p;
+
 } Study;
 
 
@@ -341,6 +352,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *GetStudyById (bson_oid_t *st_id_p, const Vi
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool HasStudyGotPlotLayoutDetails (const Study *study_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *plot_p);
 
@@ -348,6 +361,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotToStudy (Study *study_p, struct Plot *
 DFW_FIELD_TRIAL_SERVICE_LOCAL int64 GetNumberOfPlotsInStudy (const Study *study_p, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, const char *job_name_s, FieldTrialServiceData *data_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudyContributor (Study *study_p, Person *person_p, MEM_FLAG mf);
 
 
 #ifdef __cplusplus

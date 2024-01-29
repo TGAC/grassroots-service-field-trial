@@ -40,6 +40,8 @@
 #include "person.h"
 #include "phenotype_statistics.h"
 #include "handbook_generator.h"
+#include "person_jobs.h"
+#include "mongodb_util.h"
 
 /*
  * DB COLUMN NAMES
@@ -71,8 +73,6 @@ static bool AddTreatmentsToJSON (const Study *study_p, json_t *study_json_p, con
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
-
 static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
@@ -90,6 +90,11 @@ static bool AddHandbookLinks (const Study * const study_p, json_t *study_json_p,
 static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint32 *year_p, const char *deprecated_key_s);
 
 static void DetachStudyFromParent (Study *study_p);
+
+static bool AddCommonPlotValuesToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
+
+static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *mem_p);
+
 
 
 /*
@@ -241,63 +246,78 @@ Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url
 
 																																																															if (CloneValidString (gps_notes_s, &copied_gps_notes_s))
 																																																																{
-																																																																	Study *study_p = (Study *) AllocMemory (sizeof (Study));
+																																																																	LinkedList *contributors_p = AllocateLinkedList (FreePersonNode);
 
-																																																																	if (study_p)
+																																																																	if (contributors_p)
 																																																																		{
-																																																																			study_p -> st_id_p = id_p;
-																																																																			study_p -> st_name_s = copied_name_s;
-																																																																			study_p -> st_data_url_s = copied_url_s;
-																																																																			study_p -> st_aspect_s = copied_aspect_s;
-																																																																			study_p -> st_slope_s = copied_slope_s;
-																																																																			study_p -> st_parent_p = parent_field_trial_p;
-																																																																			study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
-																																																																			study_p -> st_location_p = location_p;
-																																																																			study_p -> st_plots_p = plots_p;
-																																																																			study_p -> st_current_crop_p = current_crop_p;
-																																																																			study_p -> st_previous_crop_p = previous_crop_p;
-																																																																			study_p -> st_description_s = copied_description_s;
-																																																																			study_p -> st_growing_conditions_s = copied_growing_conditions_s;
-																																																																			study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
-																																																																			study_p -> st_design_s = copied_design_s;
+																																																																			Study *study_p = (Study *) AllocMemory (sizeof (Study));
 
-																																																																			study_p -> st_default_plot_width_p = copied_plot_width_p;
-																																																																			study_p -> st_default_plot_length_p = copied_plot_length_p;
-																																																																			study_p -> st_num_rows_p = copied_num_rows_p;
-																																																																			study_p -> st_num_columns_p = copied_num_cols_p;
-																																																																			study_p -> st_num_replicates_p = copied_num_replicates_p;
+																																																																			if (study_p)
+																																																																				{
+																																																																					study_p -> st_id_p = id_p;
+																																																																					study_p -> st_name_s = copied_name_s;
+																																																																					study_p -> st_data_url_s = copied_url_s;
+																																																																					study_p -> st_aspect_s = copied_aspect_s;
+																																																																					study_p -> st_slope_s = copied_slope_s;
+																																																																					study_p -> st_parent_p = parent_field_trial_p;
+																																																																					study_p -> st_parent_field_trial_mem = parent_field_trial_mem;
+																																																																					study_p -> st_location_p = location_p;
+																																																																					study_p -> st_plots_p = plots_p;
+																																																																					study_p -> st_current_crop_p = current_crop_p;
+																																																																					study_p -> st_previous_crop_p = previous_crop_p;
+																																																																					study_p -> st_description_s = copied_description_s;
+																																																																					study_p -> st_growing_conditions_s = copied_growing_conditions_s;
+																																																																					study_p -> st_phenotype_gathering_notes_s = copied_phenotype_notes_s;
+																																																																					study_p -> st_design_s = copied_design_s;
 
-																																																																			study_p -> st_weather_link_s = copied_weather_s;
-																																																																			study_p -> st_shape_p = copied_shape_p;
+																																																																					study_p -> st_default_plot_width_p = copied_plot_width_p;
+																																																																					study_p -> st_default_plot_length_p = copied_plot_length_p;
+																																																																					study_p -> st_num_rows_p = copied_num_rows_p;
+																																																																					study_p -> st_num_columns_p = copied_num_cols_p;
+																																																																					study_p -> st_num_replicates_p = copied_num_replicates_p;
 
-																																																																			study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
-																																																																			study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
-																																																																			study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
-																																																																			study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
-																																																																			study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
-																																																																			study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
+																																																																					study_p -> st_weather_link_s = copied_weather_s;
+																																																																					study_p -> st_shape_p = copied_shape_p;
 
-																																																																			study_p -> st_treatments_p = treatments_p;
+																																																																					study_p -> st_plot_horizontal_gap_p = copied_plot_hgap_p;
+																																																																					study_p -> st_plot_vertical_gap_p = copied_plot_vgap_p;
+																																																																					study_p -> st_plots_rows_per_block_p = copied_plot_rows_per_block_p;
+																																																																					study_p -> st_plots_columns_per_block_p = copied_plot_columns_per_block_p;
+																																																																					study_p -> st_plot_block_horizontal_gap_p = copied_plot_block_horizontal_gap_p;
+																																																																					study_p -> st_plot_block_vertical_gap_p = copied_plot_block_vertical_gap_p;
 
-																																																																			study_p -> st_curator_p = curator_p;
-																																																																			study_p -> st_contact_p = contact_p;
+																																																																					study_p -> st_treatments_p = treatments_p;
 
-																																																																			study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
-																																																																			study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
+																																																																					study_p -> st_curator_p = curator_p;
+																																																																					study_p -> st_contact_p = contact_p;
+
+																																																																					study_p -> st_predicted_sowing_year_p = copied_sowing_year_p;
+																																																																					study_p -> st_predicted_harvest_year_p = copied_harvest_year_p;
 
 
-																																																																			study_p -> st_plan_changes_s = copied_plan_changes_s;
-																																																																			study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
-																																																																			study_p -> st_data_not_included_s= copied_data_not_included_s;
+																																																																					study_p -> st_plan_changes_s = copied_plan_changes_s;
+																																																																					study_p -> st_physical_samples_collected_s = copied_physical_samples_collected_s;
+																																																																					study_p -> st_data_not_included_s= copied_data_not_included_s;
 
-																																																																			study_p -> st_photo_url_s = copied_photo_url_s;
-																																																																			study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
+																																																																					study_p -> st_photo_url_s = copied_photo_url_s;
+																																																																					study_p -> st_image_collection_notes_s = copied_image_collection_notes_s;
 
-																																																																			study_p -> st_shape_notes_s = copied_gps_notes_s;
-																																																																			study_p -> st_phenotypes_p = stats_p;
+																																																																					study_p -> st_shape_notes_s = copied_gps_notes_s;
+																																																																					study_p -> st_phenotypes_p = stats_p;
 
-																																																																			return study_p;
+																																																																					study_p -> st_contributors_p = contributors_p;
+																																																																					return study_p;
+																																																																				}
+
+																																																																			FreeLinkedList (contributors_p);
+																																																																		}		/* if (contributors_p) */
+																																																																	else
+																																																																		{
+																																																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate Contributors list");
+
 																																																																		}
+
+
 
 																																																																	if (copied_gps_notes_s)
 																																																																		{
@@ -737,6 +757,11 @@ void FreeStudy (Study *study_p)
 			FreeCopiedString (study_p -> st_name_s);
 		}
 
+	if (study_p -> st_contributors_p)
+		{
+			FreeLinkedList (study_p -> st_contributors_p);
+		}
+
 
 	FreeMemory (study_p);
 }
@@ -894,7 +919,8 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 			if (study_json_p)
 				{
-					if (SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], selector_p, DFT_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, study_json_p, data_p -> dftsd_collection_ss [DFTD_STUDY], 
+							data_p -> dftsd_backup_collection_ss [DFTD_STUDY], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							char *id_s = GetBSONOidAsString (study_p -> st_id_p);
 
@@ -941,7 +967,7 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 						}
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "SaveAndBackupMongoDataWithTimestamp () failed for Study \"%s\"", study_p -> st_name_s);
 						}
 
 					json_decref (study_json_p);
@@ -996,6 +1022,21 @@ OperationStatus IndexStudy (Study *study_p, ServiceJob *job_p, const char *job_n
 		}
 
 	return status;
+}
+
+
+bool AddStudyContributor (Study *study_p, Person *person_p, MEM_FLAG mf)
+{
+	bool success_flag = false;
+	PersonNode *node_p = AllocatePersonNode (person_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (study_p -> st_contributors_p, & (node_p -> pn_node));
+			success_flag  = true;
+		}
+
+	return success_flag;
 }
 
 
@@ -1357,6 +1398,8 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 
 													if (study_p)
 														{
+															const json_t *contributors_json_p = json_object_get (json_p, ST_CONTRIBUTORS_S);
+
 															if (!AddStatisticsFromJSON (study_p, json_p, data_p))
 																{
 																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddStatistcsFromJSON () failed");
@@ -1366,6 +1409,15 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 															if (!AddTreatmentsFromJSON (study_p, json_p, data_p))
 																{
 																	PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddTreatmentsFromJSON () failed");
+																}
+
+
+															if (contributors_json_p)
+																{
+																	if (!AddPeopleFromJSON (contributors_json_p, AddPersonFromJSON, study_p, data_p))
+																		{
+																			PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, json_p, "AddPeopleFromJSON () failed");
+																		}
 																}
 														}
 
@@ -1790,22 +1842,13 @@ static bool AddParentFieldTrialToJSON (Study *study_p, json_t *study_json_p, con
 {
 	if (study_p -> st_parent_p)
 		{
-			json_t *field_trial_json_p = json_object ();
+			json_t *field_trial_json_p = GetFieldTrialAsJSON (study_p -> st_parent_p, VF_CLIENT_MINIMAL, data_p);
 
 			if (field_trial_json_p)
 				{
-					if (AddCompoundIdToJSON (field_trial_json_p, study_p -> st_parent_p -> ft_id_p))
+					if (json_object_set_new (study_json_p, ST_PARENT_FIELD_TRIAL_S, field_trial_json_p) == 0)
 						{
-							if (SetJSONString (field_trial_json_p, FT_NAME_S, study_p -> st_parent_p -> ft_name_s))
-								{
-									if (SetJSONString (field_trial_json_p, FT_TEAM_S, study_p -> st_parent_p -> ft_team_s))
-										{
-											if (json_object_set_new (study_json_p, ST_PARENT_FIELD_TRIAL_S, field_trial_json_p) == 0)
-												{
-													return true;
-												}
-										}
-								}
+							return true;
 						}
 
 					json_decref (field_trial_json_p);
@@ -1979,52 +2022,35 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 																														{
 																															if (AddValidAspectToJSON (study_p, study_json_p))
 																																{
-																																	if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
+																																	if (AddCommonPlotValuesToJSON (study_p, study_json_p, format, data_p))
 																																		{
-																																			if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+																																			if (AddTreatmentsToJSON (study_p, study_json_p, format))
 																																				{
-																																					if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+																																					if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
 																																						{
-																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+																																							if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
 																																								{
-																																									if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+																																									if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
 																																										{
-																																											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+																																											if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
 																																												{
-																																													if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+																																													if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
 																																														{
-																																															if (AddTreatmentsToJSON (study_p, study_json_p, format))
+																																															if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
 																																																{
-																																																	if (SetNonTrivialUnsignedInt (study_json_p, ST_SOWING_YEAR_S, study_p -> st_predicted_sowing_year_p, true))
+																																																	if (AddPeopleToJSON (study_p -> st_contributors_p, ST_CONTRIBUTORS_S, study_json_p, format, data_p))
 																																																		{
-																																																			if (SetNonTrivialUnsignedInt (study_json_p, ST_HARVEST_YEAR_S, study_p -> st_predicted_harvest_year_p, true))
-																																																				{
-																																																					if ((study_p -> st_curator_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_curator_p, study_json_p, ST_CURATOR_S, format, data_p)))
-																																																						{
-																																																							if ((study_p -> st_contact_p == NULL) || (AddPersonToCompoundJSON (study_p -> st_contact_p, study_json_p, ST_CONTACT_S, format, data_p)))
-																																																								{
-																																																									if (AddPhenotypesToJSON (study_p, study_json_p, format, data_p))
-																																																										{
-																																																											if (AddAccessionsToJSON (study_p, study_json_p, format, data_p))
-																																																												{
-																																																													success_flag = true;
-																																																												}
-																																																										}
-																																																									else
-																																																										{
-																																																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
-																																																										}
-
-																																																								}
-
-																																																						}
-
-																																																				}
-
+																																																			success_flag = true;
 																																																		}
-
-																																																}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
-
+																																																	else
+																																																		{
+																																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add contributors to study \"%s\"", study_p -> st_name_s);
+																																																		}
+																																																}
+																																														}
+																																													else
+																																														{
+																																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "Failed to add statistics to study \"%s\"", study_p -> st_parent_p -> ft_name_s);
 																																														}
 
 																																												}
@@ -2035,13 +2061,10 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 
 																																						}
 
-																																				}
+																																				}		/* if (AddTreatmentsToJSON (study_p, study_json_p, format)) */
 
-																																		}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
-																																	else
-																																		{
-																																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
-																																		}
+																																		}		/* if (AddCommonPlotValuesToJSON (study_p, study_json_p, format, data_p)) */
+
 
 																																}		/* if (AddValidAspectToJSON (study_p, study_json_p)) */
 																														}		/* if (SetNonTrivialString (study_json_p, ST_SHAPE_NOTES_S, study_p -> st_shape_notes_s, true)) */
@@ -2079,6 +2102,46 @@ static bool AddCommonStudyJSONValues (Study *study_p, json_t *study_json_p, cons
 	return success_flag;
 }
 
+
+static bool AddCommonPlotValuesToJSON (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+
+	if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p))
+		{
+			if (SetNonTrivialDouble (study_json_p, ST_PLOT_H_GAP_S, study_p -> st_plot_horizontal_gap_p, true))
+				{
+					if (SetNonTrivialDouble (study_json_p, ST_PLOT_V_GAP_S, study_p -> st_plot_vertical_gap_p, true))
+						{
+							if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_ROWS_PER_BLOCK_S, study_p -> st_plots_rows_per_block_p, true))
+								{
+									if (SetNonTrivialUnsignedInt (study_json_p, ST_PLOT_COLS_PER_BLOCK_S, study_p -> st_plots_columns_per_block_p, true))
+										{
+											if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_H_GAP_S, study_p -> st_plot_block_horizontal_gap_p, true))
+												{
+													if (SetNonTrivialDouble (study_json_p, ST_PLOT_BLOCK_V_GAP_S, study_p -> st_plot_block_vertical_gap_p, true))
+														{
+															success_flag = true;
+														}
+
+												}
+
+										}
+
+								}
+
+						}
+
+				}
+
+		}		/* if (AddDefaultPlotValuesToJSON (study_p, study_json_p, data_p)) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "AddDefaultPlotValuesToJSON failed for study \"%s\"", study_p -> st_parent_p -> ft_name_s);
+		}
+
+	return success_flag;
+}
 
 
 static bool AddTreatmentsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *data_p)
@@ -2374,7 +2437,7 @@ static bool AddAccessionsToJSON (const Study *study_p, json_t *study_json_p, con
 }
 
 
-static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
+bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -2450,6 +2513,7 @@ static bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, con
 }
 
 
+
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = true;
@@ -2486,6 +2550,7 @@ static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, c
 
 	return success_flag;
 }
+
 
 
 
@@ -2537,6 +2602,23 @@ static bool SetDateFromStudyJSON (const json_t *json_p, const char *key_s, uint3
 								}
 						}
 				}		/* if (deprecated_date_p) */
+		}
+
+	return success_flag;
+}
+
+
+
+static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *mem_p)
+{
+	bool success_flag = false;
+	Study *study_p = (Study *) user_data_p;
+	MEM_FLAG mf = MF_SHALLOW_COPY;
+
+	if (AddStudyContributor (study_p, person_p, mf))
+		{
+			*mem_p = mf;
+			success_flag = true;
 		}
 
 	return success_flag;

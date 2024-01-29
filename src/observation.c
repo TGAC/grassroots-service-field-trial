@@ -34,6 +34,7 @@
 #include "streams.h"
 #include "typedefs.h"
 #include "math_utils.h"
+#include "mongodb_util.h"
 
 #define ALLOCATE_OBSERVATION_TAGS (1)
 #include "observation.h"
@@ -102,7 +103,7 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 								{
 									char *copied_notes_s = NULL;
 
-									if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL))
+									if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
 										{
 											observation_p -> ob_id_p = id_p;
 											observation_p -> ob_phenotype_p = phenotype_p;
@@ -175,8 +176,24 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 }
 
 
-Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type)
+
+
+
+Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
+																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
+																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type)
+{
+	return AllocateObservationWithErrorHandler (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s,
+																							method_s, instrument_p, nature, index_p, notes_s, obs_type, NULL, NULL, NULL);
+}
+
+Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
+																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
+																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
+																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
+																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p),
+																	ServiceJob *job_p, void *user_data_p)
 {
 	Observation *observation_p = NULL;
 	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
@@ -205,10 +222,26 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												{
 													raw_p = &raw_value;
 												}
+											else
+												{
+													const char *value_s = json_string_value (raw_value_p);
+													
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", value_s);
+
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+														}	
+												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json Numeric type: %d", json_typeof (raw_value_p));
+
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+												}	
 										}
 								}
 
@@ -225,10 +258,24 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												{
 													corrected_p = &corrected_value;
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (corrected_value_p));
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+														}	
+												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+												}	
 										}
 
 								}
@@ -268,10 +315,25 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												{
 													raw_p = &raw_value;
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+														}	
+												}
+
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+												}	
 										}
 								}
 
@@ -290,10 +352,24 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 												{
 													corrected_p = &corrected_value;
 												}
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+														}	
+												}
 										}
 									else
 										{
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+												}	
 										}
 
 								}
@@ -352,6 +428,12 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 									if (!raw_time_p)
 										{
 											success_flag = false;
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", raw_value_s);
+											
+											if (on_error_callback_fn && job_p)
+												{
+													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+												}	
 										}
 								}
 
@@ -360,11 +442,17 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 									if (json_is_string (corrected_value_p))
 										{
 											const char *corrected_value_s = json_string_value (corrected_value_p);
-											corrected_value_p = GetTimeFromString (corrected_value_s);
+											corrected_time_p = GetTimeFromString (corrected_value_s);
 
 											if (!corrected_time_p)
 												{
 													success_flag = false;
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", corrected_value_s);
+													
+													if (on_error_callback_fn && job_p)
+														{
+															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+														}				
 												}
 										}
 								}
@@ -780,16 +868,20 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 
 																	if (obs_type != OT_NUM_TYPES)
 																		{
+																			char *error_s = NULL;
 																			GetObservationNatureFromJSON (&nature, observation_json_p);
 
-																			observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature, &index, notes_s, class_p -> sc_type);
+																			observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s,
+																																					 instrument_p, nature, &index, notes_s, class_p -> sc_type);
+
+																			if (!observation_p)
+																				{
+																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
+																				}
 																		}
 																}
 
-															if (!observation_p)
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
-																}
+
 														}		/* if (! ((IsStringEmpty (raw_value_s)) && (IsStringEmpty (corrected_value_s)))) */
 													else
 														{
@@ -853,7 +945,8 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 
 			if (observation_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, observation_json_p, data_p -> dftsd_collection_ss [DFTD_OBSERVATION], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, observation_json_p, data_p -> dftsd_collection_ss [DFTD_OBSERVATION], 
+													data_p -> dftsd_backup_collection_ss [DFTD_OBSERVATION], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (observation_json_p);
 				}		/* if (observation_json_p) */

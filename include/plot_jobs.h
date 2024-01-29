@@ -70,6 +70,9 @@ PLOT_JOB_PREFIX const char * const PL_GENE_BANK_S PLOT_JOB_VAL ("Gene Bank");
 PLOT_JOB_PREFIX NamedParameterType PL_PLOT_TABLE PLOT_VARIABLE_JOB_STRUCT_VAL ("PL Upload", PT_JSON_TABLE);
 
 
+PLOT_JOB_PREFIX NamedParameterType PL_ID PLOT_VARIABLE_JOB_STRUCT_VAL("Plot ID", PT_STRING);
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -80,13 +83,19 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSearchPlotParams (ServiceData *data_p, ParameterSet *param_set_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowAndColumn (const uint32 row, const uint32 column, Study *area_p, const ViewFormat format, FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchPlotParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotByRowColumnRack (const uint32 row, const uint32 column, const uint32 rack, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *GetPlotById (bson_oid_t *id_p, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
@@ -114,6 +123,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPlotAsFrictionlessData (const Plot *plo
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPlotAsFrictionlessData (const Plot *plot_p, json_t *plots_array_p, const Study * const study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 #ifdef __cplusplus

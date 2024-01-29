@@ -24,14 +24,14 @@ extern "C"
 /**
  * Get the Service available for running the DFW Field Trial Service.
  *
- * @param user_p The UserDetails for the user trying to access the services.
+ * @param user_p The User for the user trying to access the services.
  * This can be <code>NULL</code>.
  * @return The ServicesArray containing the DFW Field Trial Service. or
  * <code>NULL</code> upon error.
  *
  * @ingroup field_trials_service
  */
-DFW_FIELD_TRIAL_SERVICE_API ServicesArray *GetServices (UserDetails *user_p, GrassrootsServer *grassroots_p);
+DFW_FIELD_TRIAL_SERVICE_API ServicesArray *GetServices (User *user_p, GrassrootsServer *grassroots_p);
 
 
 /**

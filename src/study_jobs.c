@@ -58,6 +58,7 @@
 #include "lucene_tool.h"
 #include "statistics.h"
 #include "phenotype_statistics.h"
+#include "person_jobs.h"
 
 
 typedef struct
@@ -99,6 +100,12 @@ static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 static const char * const S_UNKNOWN_CROP_OPTION_S = "Unknown";
 
+static const char * const S_DETAIL_LEVEL_IDS_S = "Names and Ids only";
+
+static const char * const S_DETAIL_LEVEL_METADATA_S = "Metadata";
+
+static const char * const S_DETAIL_LEVEL_FULL_S = "Full";
+
 /*
  * STATIC DECLARATIONS
  */
@@ -126,6 +133,7 @@ static Parameter *GetAndAddAspectParameter (const char *aspect_s, FieldTrialServ
 static bool GetValidCrop (const char *crop_s, Crop **crop_pp, const FieldTrialServiceData *data_p);
 
 static Study *GetStudyFromJSONResource (const json_t *resource_data_p, ServiceData *data_p);
+
 
 static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **id_ss, char **this_crop_ss, char **previous_crop_ss, char **trial_ss, char **location_ss);
 
@@ -188,6 +196,9 @@ static bool AddCuratorSubmissionParams (const Person *curator_p, ParameterSet *p
 static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *params_p, ServiceData *data_p);
 
 
+static bool ProcessPersonForStudy (Person *person_p, void *user_data_p);
+
+static bool AddStudyLevelDetailParameter (ParameterSet *param_set_p, ParameterGroup *group_p, ServiceData * data_p);
 
 /*
  * API DEFINITIONS
@@ -237,11 +248,11 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 								{
 									const bool new_study_flag = active_study_p ? false : true;
 
-									if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_current_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
+									if (SetUpCropsListParameter (dfw_data_p, param_p, active_study_p ? active_study_p -> st_current_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
 												{
-													if (SetUpCropsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_previous_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
+													if (SetUpCropsListParameter (dfw_data_p, param_p, active_study_p ? active_study_p -> st_previous_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
 														{
 															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", active_study_p ? active_study_p -> st_data_url_s : NULL, PL_ALL)) != NULL)
 																{
@@ -251,7 +262,14 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 																				{
 																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_NOTES.npt_type, STUDY_SHAPE_NOTES.npt_name_s, "Plots GPS Notes", "Any notes relating to the GPS data of the plots", active_study_p ? active_study_p -> st_shape_notes_s : NULL, PL_ALL)) != NULL)
 																						{
-																							success_flag = true;
+																							if (AddMultiplePeopleParameters (params_p, "Contributors", active_study_p ? active_study_p -> st_contributors_p : NULL, dfw_data_p))
+																								{
+																									success_flag = true;
+																								}
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", active_study_p ? active_study_p -> st_name_s : "NULL");
+																								}
 																						}
 																					else
 																						{
@@ -354,7 +372,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 json_t *GetOldStudyIndexingData (Service *service_p)
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
-	json_t *src_studies_p = GetAllStudiesAsJSON (data_p);
+	json_t *src_studies_p = GetAllStudiesAsJSON (data_p, true);
 
 
 	if (src_studies_p)
@@ -699,9 +717,13 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 		{
 			success_flag = true;
 		}
+	else if (GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (param_name_s, pt_p))
+		{
+			success_flag = true;
+		}
 	else
 		{
-			success_flag = GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (param_name_s, pt_p);
+			success_flag = GetPersonParameterTypeForNamedParameter (param_name_s, pt_p);
 		}
 
 	return success_flag;
@@ -766,7 +788,8 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 			{
 					STUDY_SEARCH_STUDIES,
 					STUDY_ID,
-					STUDY_GET_ALL_PLOTS,
+					//STUDY_GET_ALL_PLOTS,
+					STUDY_DETAIL_LEVEL,
 					STUDY_LOCATIONS_LIST,
 					STUDY_HARVEST_YEAR,
 					STUDY_SOWING_YEAR,
@@ -776,7 +799,6 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
-
 
 
 bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
@@ -794,7 +816,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 				{
 					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Id", "The id of the Study", NULL, PL_ADVANCED)) != NULL)
 						{
-							if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, STUDY_GET_ALL_PLOTS.npt_name_s, "Plots", "Get all of the plots", &search_flag, PL_ADVANCED)) != NULL)
+							if (AddStudyLevelDetailParameter (param_set_p, group_p, data_p))
 								{
 									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_TRIAL_ID_S.npt_type, S_SEARCH_TRIAL_ID_S.npt_name_s, "Parent Field Trial", "Get all Studies for a given Field Trial", NULL, PL_ADVANCED)) != NULL)
 										{
@@ -841,7 +863,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", STUDY_GET_ALL_PLOTS.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddStudyLevelDetailParameter () failed");
 								}
 						}
 					else
@@ -875,15 +897,26 @@ bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param
 			if ((search_flag_p != NULL) && (*search_flag_p == true))
 				{
 					const char *id_s = NULL;
+					const char *level_s = NULL;
 
-					if (GetCurrentBooleanParameterValueFromParameterSet (param_set_p, STUDY_GET_ALL_PLOTS.npt_name_s, &search_flag_p))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_DETAIL_LEVEL.npt_name_s, &level_s))
 						{
-							if ((search_flag_p != NULL) && (*search_flag_p == true))
+							if (!IsStringEmpty (level_s))
 								{
-									format = VF_CLIENT_FULL;
-								}		/* if (value.st_boolean_value) */
-
-						}		/* if (GetParameterValueFromParameterSet (param_set_p, S_GET_ALL_PLOTS.npt_name_s, &value, true)) */
+									if (strcmp (level_s, S_DETAIL_LEVEL_FULL_S) == 0)
+										{
+											format = VF_CLIENT_FULL;
+										}
+									else if (strcmp (level_s, S_DETAIL_LEVEL_METADATA_S) == 0)
+										{
+											format = VF_CLIENT_MINIMAL;
+										}
+									if (strcmp (level_s, S_DETAIL_LEVEL_IDS_S) == 0)
+										{
+											format = VF_REFERENCE;
+										}
+								}
+						}
 
 					/*
 					 * Are we searching for all studies within a trial?
@@ -1078,6 +1111,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 													 *plot_block_horizontal_gap_pp = study_p -> st_plot_block_horizontal_gap_p;
 													 *plot_block_vertical_gap_pp = study_p -> st_plot_block_vertical_gap_p;
 													 */
+
 													return true;
 
 												}		/* if (got_crops_flag) */
@@ -1334,11 +1368,16 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 																													if (AddTreatmentFactorsToStudy (study_p, treatment_names_p, treatment_levels_p, num_treatment_levels, job_p, data_p))
 																														{
-																															status = SaveStudy (study_p, job_p, data_p, NULL);
+																															status = ProcessPeople (job_p, param_set_p, ProcessPersonForStudy, study_p, data_p);
 
-																															if (status == OS_FAILED)
+																															if (status == OS_SUCCEEDED)
 																																{
-																																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																																	status = SaveStudy (study_p, job_p, data_p, NULL);
+
+																																	if (status == OS_FAILED)
+																																		{
+																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																																		}
 																																}
 
 																														}
@@ -1464,6 +1503,31 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 }
 
 
+static bool AddStudyLevelDetailParameter (ParameterSet *param_set_p, ParameterGroup *group_p, ServiceData * data_p)
+{
+	bool success_flag = false;
+
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_DETAIL_LEVEL.npt_type, STUDY_DETAIL_LEVEL.npt_name_s, "Study Detail Level", "The level of detail to return for matching Studies", NULL, PL_ADVANCED);
+
+	if (param_p)
+		{
+			if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+				{
+					if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+						{
+							if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+								{
+									success_flag = true;
+								}
+
+						}
+
+				}
+
+		}
+
+	return success_flag;
+}
 
 
 
@@ -1509,14 +1573,24 @@ bool AddStudyToServiceJob (ServiceJob *job_p, Study *study_p, const ViewFormat f
 }
 
 
-json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p)
+json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p, bool full_data_flag)
 {
 	json_t *results_p = NULL;
 
 	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY]))
 		{
 			bson_t *query_p = NULL;
-			bson_t *opts_p =  BCON_NEW ( "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+			bson_t *opts_p = NULL;
+
+			if (full_data_flag)
+				{
+					opts_p = BCON_NEW ("sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+				}
+			else
+				{
+					opts_p = BCON_NEW ("projection", "{", ST_NAME_S, BCON_BOOL (true), "}",
+															"sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+				}
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
 
@@ -1695,7 +1769,7 @@ static bool AddPhenotypeAsFrictionlessData (const char *oid_s, json_t *values_p,
 OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *all_studies_p = GetAllStudiesAsJSON (data_p);
+	json_t *all_studies_p = GetAllStudiesAsJSON (data_p, true);
 
 	if (all_studies_p)
 		{
@@ -2173,110 +2247,124 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																{
 																	if (AddPersonAsFrictionlessData (study_p -> st_contact_p, study_fd_p, "contact_name", "contact_email"))
 																		{
-																			if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false))
+																			if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, "contributors", study_fd_p, data_p))
 																				{
-																					KEY_S = "design";
-
-																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_s, false))
+																					if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false))
 																						{
-																							KEY_S = "growing_conditions";
+																							KEY_S = "design";
 
-																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
+																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_s, false))
 																								{
-																									KEY_S = "phenotype_notes";
+																									KEY_S = "growing_conditions";
 
-																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_phenotype_gathering_notes_s, false))
+																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
 																										{
-																											KEY_S = "weather";
+																											KEY_S = "phenotype_notes";
 
-																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
+																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_phenotype_gathering_notes_s, false))
 																												{
-																													if (AddCropAsFrictionlessData (study_p -> st_current_crop_p, study_fd_p, "crop"))
+																													KEY_S = "weather";
+
+																													if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false))
 																														{
-																															if (AddCropAsFrictionlessData (study_p -> st_previous_crop_p, study_fd_p, "previous_crop"))
+																															if (AddCropAsFrictionlessData (study_p -> st_current_crop_p, study_fd_p, "crop"))
 																																{
-																																	KEY_S = "link";
-
-																																	if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_data_url_s, false))
+																																	if (AddCropAsFrictionlessData (study_p -> st_previous_crop_p, study_fd_p, "previous_crop"))
 																																		{
-																																			const json_t *shape_p = study_p -> st_shape_p;
+																																			KEY_S = "link";
 
-																																			if ((!shape_p) || (shape_p == json_null ()) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0))
+																																			if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_data_url_s, false))
 																																				{
-																																					KEY_S = "plots_gps_notes";
+																																					const json_t *shape_p = study_p -> st_shape_p;
 
-																																					if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_shape_notes_s, false))
+																																					if ((!shape_p) || (shape_p == json_null ()) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0))
 																																						{
-																																							KEY_S = "aspect";
+																																							KEY_S = "plots_gps_notes";
 
-																																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_aspect_s, false))
+																																							if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_shape_notes_s, false))
 																																								{
-																																									KEY_S = "slope";
+																																									KEY_S = "aspect";
 
-																																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
+																																									if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_aspect_s, false))
 																																										{
-																																											if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
-																																												{
-																																													if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
-																																														{
-																																															if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
-																																																{
-																																																	success_flag = true;
-																																																}
+																																											KEY_S = "slope";
 
+																																											if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_slope_s, false))
+																																												{
+																																													if (AddTreatmentFactorsAsFrictionlessData (study_fd_p, study_p -> st_treatments_p, "treatments"))
+																																														{
+																																															if (SetNonTrivialUnsignedInt (study_fd_p, "sowing_year", study_p -> st_predicted_sowing_year_p, false))
+																																																{
+																																																	if (SetNonTrivialUnsignedInt (study_fd_p, "harvest_year", study_p -> st_predicted_harvest_year_p, false))
+																																																		{
+																																																			const char * const PEOPLE_S = "contributors";
+
+																																																			if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, PEOPLE_S, study_fd_p, data_p))
+																																																				{
+																																																					success_flag = true;
+																																																				}
+																																																			else
+																																																				{
+																																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\" for \"%s\"", PEOPLE_S, study_p -> st_name_s);
+																																																				}
+																																																		}
+																																																}
 																																														}
 
 																																												}
-
 																																										}
 																																								}
+
+
+
+																																						}		/* if ((! (study_p -> st_shape_p)) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0)) */
+																																					else
+																																						{
+																																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add the plots gps");
 																																						}
-
-
-
-																																				}		/* if ((! (study_p -> st_shape_p)) || (json_object_set (study_fd_p, "plots_gps", study_p -> st_shape_p) == 0)) */
-																																			else
-																																				{
-																																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to add the plots gps");
 																																				}
 																																		}
+
 																																}
 
+
+
+																														}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_weather_link_s, false)) */
+																													else
+																														{
+																															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_weather_link_s);
 																														}
 
 
-
-																												}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_weather_link_s, false)) */
+																												}		/* if (SetNonTrivialString (study_fd_p, key_S, study_p -> st_phenotype_gathering_notes_s, false)) */
 																											else
 																												{
-																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_weather_link_s);
+																													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_phenotype_gathering_notes_s);
 																												}
 
-
-																										}		/* if (SetNonTrivialString (study_fd_p, key_S, study_p -> st_phenotype_gathering_notes_s, false)) */
+																										}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false)) */
 																									else
 																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_phenotype_gathering_notes_s);
+																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_growing_conditions_s);
 																										}
 
-																								}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_growing_conditions_s, false)) */
+																								}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_, false)) */
 																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_growing_conditions_s);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_design_s);
 																								}
 
-																						}		/* if (SetNonTrivialString (study_fd_p, KEY_S, study_p -> st_design_, false)) */
+
+																						}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
 																					else
 																						{
-																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", KEY_S, study_p -> st_design_s);
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, study_p -> st_description_s);
 																						}
 
 
-																				}		/* if (SetNonTrivialString (study_fd_p, FD_DESCRIPTION_S, study_p -> st_description_s, false)) */
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_fd_p, "Failed to set \"%s\": \"%s\"", FD_DESCRIPTION_S, study_p -> st_description_s);
-																				}
+																					
+																				}		/* if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, "contributors", study_fd_p, data_p)) */
+
 
 
 																		}		/* if (AddPersonAsFrictionlessData (study_p -> st_contact_p, study_fd_p, "contact_name", "contact_email")) */
@@ -3008,10 +3096,10 @@ static bool AddTermToJSON (const SchemaTerm *term_p, json_t *phenotypes_p)
 }
 
 
-bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const Study *active_study_p, const bool empty_option_flag)
+bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const Study *active_study_p, const bool empty_option_flag)
 {
 	bool success_flag = false;
-	json_t *results_p = GetAllStudiesAsJSON (data_p);
+	json_t *results_p = GetAllStudiesAsJSON (data_p, false);
 	bool value_set_flag = false;
 
 	if (results_p)
@@ -3037,46 +3125,68 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 									size_t i = 0;
 									const char *param_value_s = GetStringParameterCurrentValue (param_p);
 
-									while ((i < num_results) && success_flag)
+									bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+									if (id_p)
 										{
-											json_t *entry_p = json_array_get (results_p, i);
-											Study *study_p = GetStudyFromJSON (entry_p, VF_CLIENT_MINIMAL, data_p);
-
-											if (study_p)
+											while ((i < num_results) && success_flag)
 												{
-													char *id_s = GetBSONOidAsString (study_p -> st_id_p);
+													json_t *entry_p = json_array_get (results_p, i);
 
-													if (id_s)
+													if (GetMongoIdFromJSON (entry_p, id_p))
 														{
-															if (param_value_s && (strcmp (param_value_s, id_s) == 0))
-																{
-																	value_set_flag = true;
-																}
+															char *id_s = GetBSONOidAsString (id_p);
 
-															if (!CreateAndAddStringParameterOption (param_p, id_s, study_p -> st_name_s))
+															if (id_s)
+																{
+																	const char *name_s = GetJSONString (entry_p, ST_NAME_S);
+
+																	if (name_s)
+																		{
+																			if (param_value_s && (strcmp (param_value_s, id_s) == 0))
+																				{
+																					value_set_flag = true;
+																				}
+
+																			if (!CreateAndAddStringParameterOption (param_p, id_s, name_s))
+																				{
+																					success_flag = false;
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s, name_s);
+																				}
+
+																		}		/* if (name_s) */
+																	else
+																		{
+																			success_flag = false;
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get \"%s\"", ST_NAME_S);
+																		}
+
+																	FreeBSONOidString (id_s);
+																}
+															else
 																{
 																	success_flag = false;
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add param option \"%s\": \"%s\"", id_s,  study_p -> st_name_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Study BSON oid");
 																}
 
-															FreeBSONOidString (id_s);
-														}
+														}		/* if (GetMongoIdFromJSON (entry_p, id_p)) */
 													else
 														{
 															success_flag = false;
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get Study BSON oid");
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "GetMongoIdFromJSON () failed");
+
 														}
 
-													FreeStudy (study_p);
-												}		/* if (study_p) */
+													if (success_flag)
+														{
+															++ i;
+														}
 
+												}		/* while ((i < num_results) && success_flag) */
 
-											if (success_flag)
-												{
-													++ i;
-												}
+											FreeBSONOid (id_p);
+										}		/* if (id_p) */
 
-										}		/* while ((i < num_results) && success_flag) */
 
 									/*
 									 * If the parameter's value isn't on the list, reset it
@@ -3127,7 +3237,7 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, StringParam
 
 json_t *GetAllStudiesAsJSONInViewFormat (FieldTrialServiceData *data_p, const ViewFormat format)
 {
-	json_t *raw_results_p = GetAllStudiesAsJSON (data_p);
+	json_t *raw_results_p = GetAllStudiesAsJSON (data_p, true);
 	json_t *formatted_results_p = NULL;
 
 	if (raw_results_p)
@@ -3371,65 +3481,76 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 
 							for (i = 0; i < num_results; ++ i)
 								{
-									Study *study_p = NULL;
+									json_t *study_json_p = NULL;
 									json_t *entry_p = json_array_get (results_p, i);
+									char *study_s = NULL;
 
-									if (format == VF_CLIENT_FULL)
+									if (format != VF_INDEXING)
 										{
-											bson_oid_t id;
+											Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
 
-											if (GetMongoIdFromJSON (entry_p, &id))
+											if (study_p)
 												{
-													char *id_s = GetBSONOidAsString (&id);
+													study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
-													if (id_s)
+													if (study_json_p)
 														{
-
-															FreeBSONOidString (id_s);
-														}		/* if (id_s) */
-
-												}		/* if (GetMongoIdFromJSON (entry_p, &id)) */
-
-										}		/* if (format == VF_CLIENT_FULL) */
-
-									study_p = GetStudyFromJSON (entry_p, format, data_p);
-
-									if (study_p)
-										{
-											json_t *study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
-
-											if (study_json_p)
-												{
-													bool added_flag = false;
-
-													if (AddContext (study_json_p))
-														{
-															json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_p -> st_name_s, study_json_p);
-
-															if (dest_record_p)
-																{
-																	if (AddResultToServiceJob (job_p, dest_record_p))
-																		{
-																			++ num_added;
-																			added_flag = true;
-																		}
-																	else
-																		{
-																			json_decref (dest_record_p);
-																		}
-
-																}		/* if (dest_record_p) */
-
-														}		/* if (AddContext (trial_json_p)) */
-
-													if (!added_flag)
-														{
-															json_decref (study_json_p);
+															study_s = EasyCopyToNewString (study_p -> st_name_s);
 														}
 
-												}		/* if (study_json_p) */
+													FreeStudy (study_p);
+												}
+										}		/* if (format == VF_CLIENT_FULL) */
+									else
+										{
+											const char *value_s = GetJSONString (entry_p, ST_NAME_S);
 
-										}		/* if (study_p) */
+											if (value_s)
+												{
+													study_json_p = json_deep_copy (entry_p);
+
+													if (study_json_p)
+														{
+															study_s = EasyCopyToNewString (value_s);
+														}
+												}
+										}
+
+									if (study_json_p)
+										{
+											bool added_flag = false;
+
+											if (AddContext (study_json_p))
+												{
+													json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, study_s, study_json_p);
+
+													if (dest_record_p)
+														{
+															if (AddResultToServiceJob (job_p, dest_record_p))
+																{
+																	++ num_added;
+																	added_flag = true;
+																}
+															else
+																{
+																	json_decref (dest_record_p);
+																}
+
+														}		/* if (dest_record_p) */
+
+												}		/* if (AddContext (trial_json_p)) */
+
+											if (!added_flag)
+												{
+													json_decref (study_json_p);
+												}
+
+											if (study_s)
+												{
+													FreeCopiedString (study_s);
+												}
+
+										}		/* if (study_json_p) */
 
 								}		/* if (num_results > 0) */
 
@@ -4296,8 +4417,20 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 
 							if (param_p)
 								{
-									if (SetUpFieldTrialsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_parent_p : NULL, false))
+									char *trial_id_s = NULL;
+
+									if (active_study_p && (active_study_p -> st_parent_p))
 										{
+											trial_id_s = GetBSONOidAsString (active_study_p -> st_parent_p -> ft_id_p);
+										}
+
+									if (SetUpFieldTrialsListParameter (dfw_data_p, param_p, trial_id_s, false))
+										{
+											if (trial_id_s)
+												{
+													FreeBSONOidString (trial_id_s);
+												}
+
 											if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_SOWING_YEAR.npt_name_s, "Sowing year", "The year that the Study was started", active_study_p ? active_study_p -> st_predicted_sowing_year_p : NULL, PL_ALL)) != NULL)
 												{
 													if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Harvest year", "The year that the Study was finished", active_study_p ? active_study_p -> st_predicted_harvest_year_p : NULL, PL_ALL)) != NULL)
@@ -4659,6 +4792,14 @@ static void ReportTreatmentFactorError (Study *study_p, const char *name_s, cons
 }
 
 
+static bool ProcessPersonForStudy (Person *person_p, void *user_data_p)
+{
+	Study *study_p = (Study *) user_data_p;
+
+	return AddStudyContributor (study_p, person_p, MF_SHALLOW_COPY);
+}
+
+
 static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set_p, const char *name_param_s, const char *email_param_s,
 																		 const char *role_param_s, const char *affilation_param_s, const char *orcid_param_s)
 {
@@ -4691,3 +4832,6 @@ static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set
 
 	return success_flag;
 }
+
+
+

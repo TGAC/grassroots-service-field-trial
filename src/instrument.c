@@ -25,6 +25,7 @@
 #include "memory_allocations.h"
 #include "string_utils.h"
 #include "dfw_util.h"
+#include "mongodb_util.h"
 
 
 
@@ -146,7 +147,7 @@ bool SaveInstrument (Instrument *instrument_p, const FieldTrialServiceData *data
 
 			if (instrument_json_p)
 				{
-					success_flag = SaveMongoDataWithTimestamp (data_p -> dftsd_mongo_p, instrument_json_p, data_p -> dftsd_collection_ss [DFTD_INSTRUMENT], selector_p, DFT_TIMESTAMP_S);
+					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, instrument_json_p, data_p -> dftsd_collection_ss [DFTD_INSTRUMENT], data_p -> dftsd_backup_collection_ss [DFTD_INSTRUMENT], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (instrument_json_p);
 				}		/* if (instrument_json_p) */
