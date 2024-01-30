@@ -3219,8 +3219,10 @@ bool SetUpStudiesListParameter (const FieldTrialServiceData *data_p, Parameter *
 
 					if (id_s)
 						{
-							success_flag = SetStringParameterDefaultValue (param_p, id_s);
-							success_flag = SetStringParameterCurrentValue (param_p, id_s);
+							StringParameter *str_param_p = (StringParameter *) param_p;
+
+							success_flag = SetStringParameterDefaultValue (str_param_p, id_s);
+							success_flag = SetStringParameterCurrentValue (str_param_p, id_s);
 							FreeBSONOidString (id_s);
 						}
 					else
@@ -3628,7 +3630,7 @@ static Parameter *GetAndAddAspectParameter (const char *aspect_s, FieldTrialServ
 			 */
 			while (success_flag & (i > 0))
 				{
-					if (CreateAndAddStringParameterOption ((StringParameter *) param_p, direction_p -> kvp_value_s, direction_p -> kvp_key_s))
+					if (CreateAndAddStringParameterOption (param_p, direction_p -> kvp_value_s, direction_p -> kvp_key_s))
 						{
 							-- i;
 							++ direction_p;
@@ -4398,7 +4400,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 
 	if (param_p)
 		{
-			if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL, true))
+			if (SetUpStudiesListParameter (dfw_data_p, param_p, NULL, true))
 				{
 					/*
 					 * We want to update all of the values in the form

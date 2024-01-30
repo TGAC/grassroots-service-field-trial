@@ -55,7 +55,7 @@ bool AddSubmissionTreatmentFactorParams (ServiceData *data_p, ParameterSet *para
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, NULL, TFJ_STUDY_ID.npt_type, TFJ_STUDY_ID.npt_name_s, "Study", "Study to load Treatment Factors for", study_id_s, PL_ALL)) != NULL)
 		{
-			if (SetUpStudiesListParameter (ft_data_p, (StringParameter *) param_p, active_study_p, true))
+			if (SetUpStudiesListParameter (ft_data_p, param_p, active_study_p, true))
 				{
 					const char *treatment_id_s = S_EMPTY_LIST_OPTION_S;
 

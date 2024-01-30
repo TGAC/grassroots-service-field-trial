@@ -233,7 +233,7 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataR
 
 			if (param_p)
 				{
-					if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, NULL, false))
+					if (SetUpStudiesListParameter (dfw_data_p, param_p, NULL, false))
 						{
 							/*
 							 * We want to update all of the values in the form
