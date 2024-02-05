@@ -1513,9 +1513,9 @@ static bool AddStudyLevelDetailParameter (ParameterSet *param_set_p, ParameterGr
 		{
 			if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
 				{
-					if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+					if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_METADATA_S, S_DETAIL_LEVEL_METADATA_S))
 						{
-							if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_IDS_S, S_DETAIL_LEVEL_IDS_S))
+							if (CreateAndAddStringParameterOption (param_p, S_DETAIL_LEVEL_FULL_S, S_DETAIL_LEVEL_FULL_S))
 								{
 									success_flag = true;
 								}
@@ -3487,35 +3487,83 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 									json_t *entry_p = json_array_get (results_p, i);
 									char *study_s = NULL;
 
-									if (format != VF_INDEXING)
+									switch (format)
 										{
-											Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
-
-											if (study_p)
+											case VF_CLIENT_FULL:
+											case VF_CLIENT_MINIMAL:
 												{
-													study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
+													Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
 
-													if (study_json_p)
+													if (study_p)
 														{
-															study_s = EasyCopyToNewString (study_p -> st_name_s);
-														}
+															study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
-													FreeStudy (study_p);
-												}
-										}		/* if (format == VF_CLIENT_FULL) */
-									else
-										{
-											const char *value_s = GetJSONString (entry_p, ST_NAME_S);
+															if (study_json_p)
+																{
+																	study_s = EasyCopyToNewString (study_p -> st_name_s);
+																}
 
-											if (value_s)
-												{
-													study_json_p = json_deep_copy (entry_p);
-
-													if (study_json_p)
-														{
-															study_s = EasyCopyToNewString (value_s);
+															FreeStudy (study_p);
 														}
 												}
+												break;
+
+											case VF_INDEXING:
+												{
+													const char *value_s = GetJSONString (entry_p, ST_NAME_S);
+
+													if (value_s)
+														{
+															study_json_p = json_deep_copy (entry_p);
+
+															if (study_json_p)
+																{
+																	study_s = EasyCopyToNewString (value_s);
+																}
+														}
+
+												}
+												break;
+
+											case VF_REFERENCE:
+												{
+													const char *name_s = GetJSONString (entry_p, ST_NAME_S);
+
+													if (name_s)
+														{
+															bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+
+															if (id_p)
+																{
+																	if (GetMongoIdFromJSON (entry_p, id_p))
+																		{
+																			study_json_p = json_object ();
+
+																			if (study_json_p)
+																				{
+																					if (SetJSONString (study_json_p, ST_NAME_S, name_s))
+																						{
+																							if (!AddCompoundIdToJSON (study_json_p, id_p))
+																								{
+																									json_decref (study_json_p);
+																									study_json_p = NULL;
+																								}
+																						}
+																					else
+																						{
+																							json_decref (study_json_p);
+																							study_json_p = NULL;
+																						}
+																				}
+																		}
+
+																	FreeBSONOid (id_p);
+																}
+														}
+
+												}
+												break;
+
 										}
 
 									if (study_json_p)
