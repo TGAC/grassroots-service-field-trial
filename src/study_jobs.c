@@ -2731,22 +2731,22 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 															 */
 
 															json_array_foreach (oid_values_p, i, oid_value_p)
-															{
-																const char *oid_s = GetJSONString (oid_value_p, "$oid");
+																{
+																	const char *oid_s = GetJSONString (oid_value_p, "$oid");
 
-																if (oid_s)
-																	{
-																		if (process_value_fn (oid_s, user_data_p, service_data_p))
-																			{
-																				++ num_successes;
-																			}
-																		else
-																			{
-																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
-																			}
-																	}		/* if (oid_s) */
+																	if (oid_s)
+																		{
+																			if (process_value_fn (oid_s, user_data_p, service_data_p))
+																				{
+																					++ num_successes;
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
+																				}
+																		}		/* if (oid_s) */
 
-															}		/* json_array_foreach (oids_p, i, oid_p) */
+																}		/* json_array_foreach (oids_p, i, oid_p) */
 
 
 															if (num_successes == size)
@@ -4877,6 +4877,67 @@ static bool GetPersonFromParameters (Person **person_pp, ParameterSet *param_set
 			else
 				{
 					success_flag = false;
+				}
+		}
+
+	return success_flag;
+}
+
+
+static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Measured Variables", true, & (data_p -> dftsd_base_data), params_p);
+
+	if (group_p)
+		{
+			Parameter *name_param_p = NULL;
+			Parameter *values_param_p = NULL;
+			const char * const display_name_s = "Measured Variable name";
+			const char * const description_s = "The name of the Measured Variable";
+			size_t num_mvs = 0;
+			json_t *tf_json_p = NULL;
+
+			if (study_p)
+				{
+				}
+
+			if (num_mvs > 1)
+				{
+					const char **mvs_ss = (const char **) AllocMemoryArray (num_mvs, sizeof (const char *));
+
+					if (mvs_ss)
+						{
+							FreeMemory (mvs_ss);
+						}		/* if (mvs_ss) */
+					else
+						{
+							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to copy measured variables for Study \"%s\"", study_p -> st_name_s);
+						}
+
+
+
+				}		/* if (num_treatments > 1) */
+			else
+				{
+					const char *active_tf_url_s = NULL;
+
+					if (num_mvs == 1)
+						{
+							TreatmentFactor *tf_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p)) -> tfn_p;
+							tf_json_p = GetTreatmentFactorAsJSON (tf_p, VF_CLIENT_FULL);
+
+							active_tf_url_s = GetTreatmentFactorUrl (tf_p);
+						}
+
+					name_param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, tf_name_display_name_s, tf_name_description_s, active_tf_url_s, PL_ALL);
+				}
+
+			if (name_param_p)
+				{
+					if (AddRepeatableParameterGroupLabelParam (group_p, name_param_p))
+						{
+						}
 				}
 		}
 

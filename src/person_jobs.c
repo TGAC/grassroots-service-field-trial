@@ -5,7 +5,6 @@
 #include "string_parameter.h"
 #include "string_array_parameter.h"
 
-static bool CopyAndAddStringValue (const char * const src_s, char **dest_ss);
 static bool PopulateValues (LinkedList *existing_people_p, char ***existing_names_sss, char ***existing_emails_sss, char ***existing_roles_sss,
 													char ***existing_affiliations_sss, char ***existing_orcids_sss);
 
@@ -636,30 +635,3 @@ static bool PopulateValues (LinkedList *existing_people_p, char ***existing_name
 	return false;
 }
 
-
-static bool CopyAndAddStringValue (const char * const src_s, char **dest_ss)
-{
-	bool success_flag = false;
-	
-	if (src_s)
-		{
-			char *copied_value_s = EasyCopyToNewString (src_s);
-
-			if (copied_value_s)
-				{
-					*dest_ss = copied_value_s;
-					success_flag = true;
-				}
-			else
-				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy \"%s\"", src_s);
-				}
-		}
-	else
-		{
-			*dest_ss = NULL;
-			success_flag = true;
-		}
-		
-	return success_flag;
-}
