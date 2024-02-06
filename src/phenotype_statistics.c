@@ -219,7 +219,7 @@ bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, jso
 }
 
 
-bool AddPhenotypeStatisticsNodeFromJSON (LinkedList *nodes_p, const json_t *phenotype_p, const FieldTrialServiceData *service_data_p)
+bool AddPhenotypeStatisticsNodeFromJSON (Study *study_p, const json_t *phenotype_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = false;
 	const json_t *mv_json_p = json_object_get (phenotype_p, ST_PHENOTYPE_DEFINITION_S);
@@ -272,11 +272,9 @@ bool AddPhenotypeStatisticsNodeFromJSON (LinkedList *nodes_p, const json_t *phen
 					if (stats_flag)
 						{
 							const char *mv_s = GetMeasuredVariableName (mv_p);
-							PhenotypeStatisticsNode *node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
 
-							if (node_p)
+							if (AddPhenotypeStatisticsToStudy (study_p, mv_s, stats_p))
 								{
-									LinkedListAddTail (nodes_p, & (node_p -> psn_node));
 									success_flag = true;
 								}
 

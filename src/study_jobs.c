@@ -72,7 +72,7 @@ typedef struct
  * Study parameters
  */
 
-static NamedParameterType S_SEARCH_TRIAL_ID_S = { "Get all studies for this Field Trial", PT_STRING };
+static NamedParameterType S_SEARCH_TRIAL_ID = { "Get all studies for this Field Trial", PT_STRING };
 
 
 
@@ -200,6 +200,12 @@ static bool ProcessPersonForStudy (Person *person_p, void *user_data_p);
 
 static bool AddStudyLevelDetailParameter (ParameterSet *param_set_p, ParameterGroup *group_p, ServiceData * data_p);
 
+static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *data_p);
+
+
+static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet *param_set_p, Study *study_p, FieldTrialServiceData *ft_service_data_p);
+
+
 /*
  * API DEFINITIONS
  */
@@ -284,18 +290,25 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Data
 
 																			if (AddTreatmentFactorParameters (params_p, active_study_p, dfw_data_p))
 																				{
-
+																					if (AddMeasuredVariableParameters (params_p, active_study_p, dfw_data_p))
+																						{
+																							success_flag = true;
+																						}
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMeasuredVariableParameters () failed");
+																						}
 																				}
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddTreatmentFactorParameters failed");
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddTreatmentFactorParameters () failed");
 																				}
 
 
 																		}
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddDefaultPlotsParameters failed");
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddDefaultPlotsParameters () failed");
 																		}
 
 
@@ -666,7 +679,7 @@ bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *pa
 
 bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag;
+	bool success_flag = false;
 
 	const NamedParameterType params [] =
 			{
@@ -710,6 +723,7 @@ bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s,
 					STUDY_PHOTO,
 					STUDY_IMAGE_NOTES,
 					STUDY_SHAPE_NOTES,
+					STUDY_MEASURED_VARIABLES,
 					NULL
 			};
 
@@ -793,7 +807,7 @@ bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, Par
 					STUDY_LOCATIONS_LIST,
 					STUDY_HARVEST_YEAR,
 					STUDY_SOWING_YEAR,
-					S_SEARCH_TRIAL_ID_S,
+					S_SEARCH_TRIAL_ID,
 					NULL
 			};
 
@@ -818,7 +832,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 						{
 							if (AddStudyLevelDetailParameter (param_set_p, group_p, data_p))
 								{
-									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_TRIAL_ID_S.npt_type, S_SEARCH_TRIAL_ID_S.npt_name_s, "Parent Field Trial", "Get all Studies for a given Field Trial", NULL, PL_ADVANCED)) != NULL)
+									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_TRIAL_ID.npt_type, S_SEARCH_TRIAL_ID.npt_name_s, "Parent Field Trial", "Get all Studies for a given Field Trial", NULL, PL_ADVANCED)) != NULL)
 										{
 											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", NULL, PL_ADVANCED)) != NULL)
 												{
@@ -857,7 +871,7 @@ bool AddSearchStudyParams (ServiceData *data_p, ParameterSet *param_set_p)
 										}		/* if ((param_p = EasyCreateAndAddParameterToParameterSet (data_p, param_set_p, group_p, S_SEARCH_TRIAL_ID_S.npt_type, S_SEARCH_TRIAL_ID_S.npt_name_s, "Parent Field Trial", "Get all Studies for a given Field Trial", def, PL_ADVANCED)) != NULL) */
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_TRIAL_ID_S.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_SEARCH_TRIAL_ID.npt_name_s);
 										}
 
 								}
@@ -921,7 +935,7 @@ bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param
 					/*
 					 * Are we searching for all studies within a trial?
 					 */
-					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_SEARCH_TRIAL_ID_S.npt_name_s, &id_s))
+					if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_SEARCH_TRIAL_ID.npt_name_s, &id_s))
 						{
 							if (!IsStringEmpty (id_s))
 								{
@@ -956,12 +970,12 @@ bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param
 
 													if (error_s)
 														{
-															AddParameterErrorMessageToServiceJob  (job_p, S_SEARCH_TRIAL_ID_S.npt_name_s, S_SEARCH_TRIAL_ID_S.npt_type, error_s);
+															AddParameterErrorMessageToServiceJob  (job_p, S_SEARCH_TRIAL_ID.npt_name_s, S_SEARCH_TRIAL_ID.npt_type, error_s);
 															FreeCopiedString (error_s);
 														}
 													else
 														{
-															AddParameterErrorMessageToServiceJob  (job_p, S_SEARCH_TRIAL_ID_S.npt_name_s, S_SEARCH_TRIAL_ID_S.npt_type, prefix_s);
+															AddParameterErrorMessageToServiceJob  (job_p, S_SEARCH_TRIAL_ID.npt_name_s, S_SEARCH_TRIAL_ID.npt_type, prefix_s);
 														}
 												}
 										}		/* if (query_p) */
@@ -1372,12 +1386,20 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 																															if (status == OS_SUCCEEDED)
 																																{
-																																	status = SaveStudy (study_p, job_p, data_p, NULL);
+																																	status = ProcessMeasuredVariables (job_p, param_set_p, study_p, data_p);
 
-																																	if (status == OS_FAILED)
+																																	if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 																																		{
-																																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																																			OperationStatus s = SaveStudy (study_p, job_p, data_p, NULL);
+
+																																			if (status == OS_FAILED)
+																																				{
+																																					status = s;
+																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
+																																				}
+
 																																		}
+
 																																}
 
 																														}
@@ -2670,12 +2692,8 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 				}		/* if (class_p) */
 
 
-			node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
-
-			if (node_p)
+			if (AddPhenotypeStatisticsToStudy (study_p, mv_s, stats_p))
 				{
-					LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
-
 					success_flag = true;
 				}
 
@@ -4891,23 +4909,45 @@ static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *
 
 	if (group_p)
 		{
-			Parameter *name_param_p = NULL;
-			Parameter *values_param_p = NULL;
+			Parameter *param_p = NULL;
 			const char * const display_name_s = "Measured Variable name";
 			const char * const description_s = "The name of the Measured Variable";
 			size_t num_mvs = 0;
-			json_t *tf_json_p = NULL;
 
-			if (study_p)
+			if ((study_p != NULL) && (study_p -> st_phenotypes_p != NULL))
 				{
+					num_mvs = study_p -> st_phenotypes_p -> ll_size;
 				}
 
 			if (num_mvs > 1)
 				{
-					const char **mvs_ss = (const char **) AllocMemoryArray (num_mvs, sizeof (const char *));
+					char **mvs_ss = (char **) AllocMemoryArray (num_mvs, sizeof (const char *));
 
 					if (mvs_ss)
 						{
+							PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
+							bool loop_success_flag = true;
+							char **mv_ss = mvs_ss;
+
+							while (loop_success_flag && node_p)
+								{
+									if (CopyAndAddStringValue (node_p -> psn_measured_variable_name_s, mv_ss))
+										{
+											node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
+											++ mv_ss;
+										}
+									else
+										{
+											loop_success_flag = false;
+										}
+								}
+
+
+							if (loop_success_flag)
+								{
+									param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, STUDY_MEASURED_VARIABLES.npt_name_s, display_name_s, description_s, mvs_ss, num_mvs, PL_ALL);
+								}
+
 							FreeMemory (mvs_ss);
 						}		/* if (mvs_ss) */
 					else
@@ -4915,33 +4955,150 @@ static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *
 							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to copy measured variables for Study \"%s\"", study_p -> st_name_s);
 						}
 
-
-
 				}		/* if (num_treatments > 1) */
 			else
 				{
-					const char *active_tf_url_s = NULL;
+					const char *mv_s = NULL;
 
 					if (num_mvs == 1)
 						{
-							TreatmentFactor *tf_p = ((TreatmentFactorNode *) (study_p -> st_treatments_p -> ll_head_p)) -> tfn_p;
-							tf_json_p = GetTreatmentFactorAsJSON (tf_p, VF_CLIENT_FULL);
+							PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
 
-							active_tf_url_s = GetTreatmentFactorUrl (tf_p);
+							mv_s = node_p -> psn_measured_variable_name_s;
 						}
 
-					name_param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, TFJ_TREATMENT_NAME.npt_type, TFJ_TREATMENT_NAME.npt_name_s, tf_name_display_name_s, tf_name_description_s, active_tf_url_s, PL_ALL);
+					param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, STUDY_MEASURED_VARIABLES.npt_type, STUDY_MEASURED_VARIABLES.npt_name_s, display_name_s, description_s, mv_s, PL_ALL);
 				}
 
-			if (name_param_p)
+			if (param_p)
 				{
-					if (AddRepeatableParameterGroupLabelParam (group_p, name_param_p))
+					if (AddRepeatableParameterGroupLabelParam (group_p, param_p))
 						{
+							success_flag = true;
 						}
 				}
 		}
 
 	return success_flag;
+}
+
+
+static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet *param_set_p, Study *study_p, FieldTrialServiceData *ft_service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+	Parameter *mvs_param_p = GetParameterFromParameterSetByName (param_set_p, STUDY_MEASURED_VARIABLES.npt_name_s);
+	size_t num_mvs = 0;
+	const char *value_s = NULL;
+	const char **mvs_ss = NULL;
+
+	if (mvs_param_p)
+		{
+			if (IsStringArrayParameter (mvs_param_p))
+				{
+					StringArrayParameter *sap_p = (StringArrayParameter *) mvs_param_p;
+					num_mvs = GetNumberOfStringArrayCurrentParameterValues (sap_p);
+					mvs_ss = GetStringArrayParameterCurrentValues (sap_p);
+				}
+			else if (IsStringParameter (mvs_param_p))
+				{
+					StringParameter *sp_p = (StringParameter *) mvs_param_p;
+
+					value_s = GetStringParameterCurrentValue (sp_p);
+
+					if (value_s)
+						{
+							num_mvs = 1;
+							*mvs_ss = value_s;
+						}
+				}
+		}
+
+
+	if (mvs_ss)
+		{
+			size_t i;
+			const char **mv_ss = mvs_ss;
+			size_t num_valid_mvs = 0;
+
+			for (i = 0; i < num_mvs; ++ i, ++ mv_ss)
+				{
+					/* remove any leading or trailing whitespace */
+					char *mv_s = CopyToNewString (*mv_ss, 0, true);
+
+					if (mv_s)
+						{
+							/* Is this measured variable already in the study? ... */
+							if (IsMeasuredVariableOnStudy (study_p, *mv_ss))
+								{
+									++ num_valid_mvs;
+								}
+							else
+								{
+									/* ... if not, then check that it's a valid name ... */
+									MeasuredVariable *mv_p = GetMeasuredVariableByName (*mv_ss, ft_service_data_p);
+
+									if (mv_p)
+										{
+											if (AddPhenotypeStatisticsToStudy (study_p, mv_s, NULL))
+												{
+													++ num_valid_mvs;
+												}
+											else
+												{
+													char *error_s = ConcatenateVarArgsStrings ("Failed to add \"", mv_s, "\" to Study, please contact Grassroots support to investigate", NULL);
+
+													if (error_s)
+														{
+															AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, error_s);
+															FreeCopiedString (error_s);
+														}
+													else
+														{
+															AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, "Failed to add one or more Measured Variables to Study, please contact Grassroots support to investigate");
+														}
+
+												}
+
+											FreeMeasuredVariable (mv_p);
+										}
+									else
+										{
+											char *error_s = ConcatenateVarArgsStrings ("\"", mv_s, "\" is not a valid Measured Variable name", NULL);
+
+											if (error_s)
+												{
+													AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, error_s);
+													FreeCopiedString (error_s);
+												}
+											else
+												{
+													AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, "Invalid Measured Variable name");
+												}
+										}
+								}
+
+							FreeCopiedString (mv_s);
+						}
+
+				}		/* for (i = 0; i < num_mvs; ++ i, ++ mv_ss) */
+
+			if (num_mvs == num_valid_mvs)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_valid_mvs > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+
+
+		}		/* if (mvs_ss) */
+	else
+		{
+			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", STUDY_MEASURED_VARIABLES.npt_name_s);
+		}
+
+	return status;
 }
 
 

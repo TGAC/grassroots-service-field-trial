@@ -38,6 +38,7 @@
 #include "typedefs.h"
 #include "address.h"
 #include "json_processor.h"
+#include "statistics.h"
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -365,6 +366,11 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus IndexStudy (Study *study_p, Servic
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddStudyContributor (Study *study_p, Person *person_p, MEM_FLAG mf);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsMeasuredVariableOnStudy (const Study * const study_p, const char *mv_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeStatisticsToStudy (Study * const study_p, const char *mv_s, const Statistics *stats_p);
 
 #ifdef __cplusplus
 }

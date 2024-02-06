@@ -522,6 +522,37 @@ static Parameter *CreateStudyParameterFromJSON (struct Service *service_p, json_
 				}
 
 		}		/* if (GetPersonParameterTypeForNamedParameter (name_s, &pt)) */
+	else if (strcmp (name_s, STUDY_MEASURED_VARIABLES.npt_name_s) == 0)
+		{
+			json_t *current_value_p = json_object_get (param_json_p, PARAM_CURRENT_VALUE_S);
+
+			if (current_value_p)
+				{
+					if (json_is_array (current_value_p))
+						{
+							StringArrayParameter *string_array_param_p = AllocateStringArrayParameterFromJSON (param_json_p, service_p, concise_flag, NULL);
+
+							if (string_array_param_p)
+								{
+									param_p = & (string_array_param_p -> sap_base_param);
+									pt = PT_STRING_ARRAY;
+								}
+						}		/* if (json_is_array (current_value_p)) */
+					else
+						{
+							StringParameter *string_param_p  = AllocateStringParameterFromJSON (param_json_p, service_p, concise_flag, &pt);
+
+							if (string_param_p)
+								{
+									param_p = & (string_param_p -> sp_base_param);
+									pt = PT_STRING;
+								}
+
+						}		/* if (json_is_array (current_value_p)) */
+
+				}		/* if (current_value_p) */
+
+		}
 
 
 	if (!param_p)

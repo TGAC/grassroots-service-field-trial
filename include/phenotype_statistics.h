@@ -13,6 +13,7 @@
 #include "measured_variable.h"
 #include "dfw_field_trial_service_library.h"
 
+#include "study.h"
 
 /**
  * A datatype for having the statistics of a
@@ -56,7 +57,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePhenotypeStatisticsNode (ListItem *psn_p)
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, json_t *parent_p, const ViewFormat format, const FieldTrialServiceData *service_data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeStatisticsNodeFromJSON (LinkedList *nodes_p, const json_t *phenotype_p, const FieldTrialServiceData *service_data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeStatisticsNodeFromJSON (Study *study_p, const json_t *phenotype_p, const FieldTrialServiceData *service_data_p);
 
 #ifdef __cplusplus
 }

@@ -1630,6 +1630,31 @@ bool HasStudyGotPlotLayoutDetails (const Study *study_p)
 }
 
 
+
+bool IsMeasuredVariableOnStudy (const Study * const study_p, const char *mv_s)
+{
+	if (study_p && (study_p -> st_phenotypes_p))
+		{
+			PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
+
+			while (node_p)
+				{
+					if (strcmp (node_p -> psn_measured_variable_name_s, mv_s) == 0)
+						{
+							return true;
+						}
+					else
+						{
+							node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
+						}
+				}
+		}
+
+	return false;
+}
+
+
+
 static bool AddValidAspectToJSON (const Study *study_p, json_t *study_json_p)
 {
 	bool success_flag = true;
@@ -2514,6 +2539,23 @@ bool AddPhenotypesToJSON (const Study *study_p, json_t *study_json_p, const View
 
 
 
+bool AddPhenotypeStatisticsToStudy (Study * const study_p, const char *mv_s, const Statistics *stats_p)
+{
+	bool success_flag = false;
+	PhenotypeStatisticsNode *node_p = AllocatePhenotypeStatisticsNode (mv_s, stats_p);
+
+	if (node_p)
+		{
+			LinkedListAddTail (study_p -> st_phenotypes_p, & (node_p -> psn_node));
+
+			success_flag = true;
+		}
+
+	return success_flag;
+}
+
+
+
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = true;
@@ -2528,7 +2570,7 @@ static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, c
 
 			json_object_foreach (phenotypes_p, key_s, phenotype_json_p)
 				{
-					if (AddPhenotypeStatisticsNodeFromJSON (study_p -> st_phenotypes_p, phenotype_json_p, service_data_p))
+					if (AddPhenotypeStatisticsNodeFromJSON (study_p, phenotype_json_p, service_data_p))
 						{
 							++ num_added;
 						}
