@@ -58,6 +58,8 @@ typedef struct StandardRow
 
 	bool sr_replicate_control_flag;
 
+	char *sr_store_code_s;
+
 } StandardRow;
 
 
@@ -87,6 +89,8 @@ STANDARD_ROW_PREFIX const char *SR_MATERIAL_ID_S STANDARD_ROW_VAL ("material_id"
 
 STANDARD_ROW_PREFIX const char *SR_MATERIAL_S STANDARD_ROW_VAL ("material");
 
+STANDARD_ROW_PREFIX const char *SR_STORE_CODE_S STANDARD_ROW_VAL ("store_code");
+
 
 STANDARD_ROW_PREFIX const char *SR_OBSERVATIONS_S  STANDARD_ROW_VAL ("observations");
 
@@ -110,8 +114,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, Plot *parent_plot_p);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, const char * const store_code_s, Plot *parent_plot_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL StandardRow *GetStandardRowFromJSON (const json_t *json_p, Plot *plot_p, Material *material_p, const struct Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
@@ -127,8 +130,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void SetStandardRowGenotypeControl (StandardRow *r
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsStandardRowGenotypeControl (const StandardRow *row_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetStandardRowStoreCode (StandardRow *row_p, const char * const store_code_s);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateStandardRow (StandardRow *row_p, const uint32 rack_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void UpdateStandardRow (StandardRow *row_p, const uint32 rack_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, const char * const store_code_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValueToStandardRow (StandardRow *row_p, TreatmentFactorValue *tf_value_p);

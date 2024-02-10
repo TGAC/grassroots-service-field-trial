@@ -1159,6 +1159,7 @@ static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, 
 							int32 replicate = 1;
 							bool success_flag = true;
 							const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
+							const char *store_code_s = GetJSONString (table_row_json_p, PL_STORE_CODE_TABLE_TITLE_S);
 
 							GetJSONStringAsInteger (table_row_json_p, PL_RACK_TITLE_S, &rack_plotwise_index);
 
@@ -1189,13 +1190,13 @@ static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, 
 
 									if (existing_row_p)
 										{
-											UpdateStandardRow (existing_row_p, rack_plotwise_index, control_rep_flag, replicate, material_p, material_mem);
+											UpdateStandardRow (existing_row_p, rack_plotwise_index, control_rep_flag, replicate, material_p, material_mem, store_code_s);
 
 											sr_p = existing_row_p;
 										}
 									else
 										{
-											sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, control_rep_flag, replicate, material_p, material_mem, plot_p);
+											sr_p = AllocateStandardRow (NULL, rack_plotwise_index, rack_studywise_index, control_rep_flag, replicate, material_p, material_mem, store_code_s, plot_p);
 										}
 
 									if (sr_p)
