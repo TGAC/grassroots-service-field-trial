@@ -1878,7 +1878,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 			/* Plots */
 			if (AddCollectionCompoundIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], keys_ss, true, false))
 				{
-					if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], PL_PARENT_STUDY_S, false, false))
+					if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], PL_PARENT_STUDY_S, NULL, false, false))
 						{
 							uint32 i = 0;
 							const uint32 num_keys = 2;
@@ -1889,7 +1889,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 
 							if (key_s)
 								{
-									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], key_s, true, false))
+									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], key_s, NULL, true, false))
 										{
 											++ i;
 										}
@@ -1902,7 +1902,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 
 							if (key_s)
 								{
-									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], key_s, true, false))
+									if (AddCollectionSingleIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], key_s, NULL, true, false))
 										{
 											++ i;
 										}
@@ -1967,9 +1967,9 @@ static OperationStatus CreateMongoRevisionsCollection (MongoTool *tool_p, const 
 
 	if ((collection_status == 1) || (CreateMongoToolCollection (tool_p, collection_s, NULL)))
 		{
-			if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_BACKUPS_ID_KEY_S, false, false))
+			if (AddCollectionSingleIndex (tool_p, database_s, collection_s, DFT_BACKUPS_ID_KEY_S, NULL, false, false))
 				{
-					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_TIMESTAMP_S, false, false))
+					if (AddCollectionSingleIndex (tool_p, database_s, collection_s, MONGO_TIMESTAMP_S, NULL, false, false))
 						{
 							status = OS_SUCCEEDED;
 						}
