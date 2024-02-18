@@ -763,29 +763,6 @@ static LinkedList *GetFieldTrialFiles (const char * const path_s, const char * c
 }
 
 
-OperationStatus IndexData (ServiceJob *job_p, const json_t *data_to_index_p, const char *job_name_s)
-{
-	OperationStatus status = OS_FAILED;
-	GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (job_p -> sj_service_p);
-	LuceneTool *lucene_p = AllocateLuceneTool (grassroots_p, job_p -> sj_id);
-
-	if (lucene_p)
-		{
-			if (job_name_s)
-				{
-					if (!SetLuceneToolName (lucene_p, job_name_s))
-						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "SetLuceneToolName () failed for \"%s\"", job_name_s);
-						}
-				}
-
-			status = IndexLucene (lucene_p, data_to_index_p, true);
-
-			FreeLuceneTool (lucene_p);
-		}		/* if (lucene_p) */
-
-	return status;
-}
 
 
 OperationStatus ReindexAllData (ServiceJob *job_p, const bool update_flag, const FieldTrialServiceData *service_data_p)
