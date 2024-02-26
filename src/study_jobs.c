@@ -5045,7 +5045,7 @@ static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet
 												}
 											else
 												{
-													char *error_s = ConcatenateVarArgsStrings ("Failed to add \"", mv_s, "\" to Study, please contact Grassroots support to investigate", NULL);
+													char *error_s = ConcatenateVarargsStrings ("Failed to add \"", mv_s, "\" to Study, please contact Grassroots support to investigate", NULL);
 
 													if (error_s)
 														{
@@ -5063,7 +5063,7 @@ static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet
 										}
 									else
 										{
-											char *error_s = ConcatenateVarArgsStrings ("\"", mv_s, "\" is not a valid Measured Variable name", NULL);
+											char *error_s = ConcatenateVarargsStrings ("\"", mv_s, "\" is not a valid Measured Variable name", NULL);
 
 											if (error_s)
 												{
