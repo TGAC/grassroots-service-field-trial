@@ -66,6 +66,8 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 
 			if (column_s)
 				{
+					bool is_empty_row_flag = ((GetDiscardValueFromSubmissionJSON (table_row_json_p))
+																		|| (GetBlankValueFromSubmissionJSON (table_row_json_p)));
 					const char * const sep_s = " - ";
 					const char *rack_s = GetJSONString (table_row_json_p, PL_RACK_TITLE_S);
 					char *row_and_column_s = NULL;
@@ -99,7 +101,7 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 																{
 																	if (GetValidInteger (&index_s, index_p))
 																		{
-																			if (GetValidInteger (&rack_s, rack_p))
+																			if ((is_empty_row_flag) || (GetValidInteger (&rack_s, rack_p)))
 																				{
 																					success_flag = true;
 																				}		/* if (GetValidInteger (&index_s, index_p)) */

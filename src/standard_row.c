@@ -111,9 +111,9 @@ StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, con
 
 					if (tf_values_p)
 						{
-							char *copied_store_code_s = EasyCopyToNewString (store_code_s);
+							char *copied_store_code_s = NULL;
 
-							if (copied_store_code_s)
+							if ((store_code_s == NULL) || ((copied_store_code_s = EasyCopyToNewString (store_code_s)) != NULL))
 								{
 									StandardRow *row_p = (StandardRow *) AllocMemory (sizeof (StandardRow));
 
@@ -146,7 +146,10 @@ StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, con
 
 									FreeCopiedString (copied_store_code_s);
 								}		/* if (copied_store_code_s) */
-
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy store code %s for  " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", store_code_s, study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
+								}
 
 							FreeLinkedList (tf_values_p);
 						}		/* if (tf_values_p) */
