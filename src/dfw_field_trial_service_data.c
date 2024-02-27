@@ -114,6 +114,8 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 
 			memset (data_p -> dftsd_collection_ss, 0, DFTD_NUM_TYPES * sizeof (const char *));
 
+			data_p -> dftsd_marti_api_url_s = NULL;
+
 			return data_p;
 		}
 
@@ -266,6 +268,8 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 							data_p -> dftsd_phenotype_images_path_s = GetJSONString (service_config_p, "handbook_phenotype_images");
 
+
+							data_p -> dftsd_marti_api_url_s = GetJSONString (service_config_p, "marti_api_url");
 
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;

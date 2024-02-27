@@ -8,6 +8,7 @@
 
 #include "plots_cache.h"
 #include "plot_jobs.h"
+#include "row_jobs.h"
 
 #include "math_utils.h"
 
