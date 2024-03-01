@@ -982,7 +982,23 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 			 */
 			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 				{
-					IndexStudy (study_p, job_p, NULL, data_p);
+					OperationStatus s = IndexStudy (study_p, job_p, NULL, data_p);
+
+					if (s != OS_SUCCEEDED)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+							AddGeneralErrorMessageToServiceJob (job_p, "Saved study but failed to index for searching");
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "IndexStudy () failed for Study \"%s\"", study_p -> st_name_s);
+						}
+
+					s = GenerateStudyAsPDF (study_p, data_p);
+					if (s != OS_SUCCEEDED)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+							AddGeneralErrorMessageToServiceJob (job_p, "Saved study but failed to generate handbook");
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStudyAsPDF () failed for Study \"%s\" with status %d", study_p -> st_name_s, s);
+						}
+
 				}
 
 		}		/* if (success_flag) */

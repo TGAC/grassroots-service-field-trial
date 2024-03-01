@@ -217,26 +217,76 @@ OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, boo
 
 													for (i = 0; i < num_names; ++ i, ++ name_ss, ++ email_ss, ++ role_ss, ++ affiliation_ss, ++ orcid_ss)
 														{
-															Person *person_p = AllocatePerson (*name_ss, *email_ss, *role_ss, *affiliation_ss, *orcid_ss);
+															/*
+															   The front end can send json like
+															   {
+																		"param": "PE Name",
+																		"current_value": [
+																			null
+																		]
+																	},
+																	{
+																		"param": "PE Email",
+																		"current_value": [
+																			null
+																		]
+																	},
+																	{
+																		"param": "PE Role",
+																		"current_value": [
+																			null
+																		]
+																	},
+																	{
+																		"param": "PE Affiliation",
+																		"current_value": [
+																			null
+																		]
+																	},
+																	{
+																		"param": "PE Orcid",
+																		"current_value": [
+																			null
+																		]
+																	}
 
-															if (person_p)
+																so lets check for various null entries
+															 */
+
+															if ((*name_ss) && (*email_ss))
 																{
-																	if (process_person_fn (person_p, user_data_p))
+																	Person *person_p = AllocatePerson (*name_ss, *email_ss, *role_ss, *affiliation_ss, *orcid_ss);
+
+																	if (person_p)
 																		{
-																			++ num_successes;
+																			if (process_person_fn (person_p, user_data_p))
+																				{
+																					++ num_successes;
+																				}
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialPerson () failed for for \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
+																					FreePerson (person_p);
+																				}
+
+
 																		}
 																	else
-																		{																																					
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialPerson () failed for for \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);	 
-																			FreePerson (person_p);
+																		{
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocatePerson () failed for \"%s\"", *name_ss, *email_ss);
 																		}
 
-
+																}
+															else if ((*role_ss == NULL) && (*affiliation_ss == NULL) && (*orcid_ss == NULL))
+																{
+																	++ num_successes;
 																}
 															else
 																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocatePerson () failed for \"%s\"", *name_ss, *email_ss);		
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Name and email are null but with role \"%s\", affiliation \"%s\", orcid \"%s\"",
+																							 *role_ss ? *role_ss : "NULL", *affiliation_ss ? *affiliation_ss : "NULL", *orcid_ss ? *orcid_ss : "NULL");
 																}
+
 
 														}
 

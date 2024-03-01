@@ -1181,16 +1181,33 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 		{
 			if (IsStringArrayParameter (treatment_names_p))
 				{
+					size_t i;
 					StringArrayParameter *tf_names_p = (StringArrayParameter *) treatment_names_p;
+					size_t num_null_treatment_names = 0;
+
 					num_treatment_names = GetNumberOfStringArrayCurrentParameterValues (tf_names_p);
+
+					for (i = 0; i < num_treatment_names; ++ i)
+						{
+							const char *value_s = GetStringArrayParameterCurrentValueAtIndex (tf_names_p, i);
+
+							if (value_s == NULL)
+								{
+									++ num_null_treatment_names;
+								}
+						}
+
+					if (num_null_treatment_names == num_treatment_names)
+						{
+							num_treatment_names = 0;
+						}
 				}
 			else if (IsStringParameter (treatment_names_p))
 				{
 					StringParameter *tf_names_p = (StringParameter *) treatment_names_p;
-
 					const char *value_s = GetStringParameterCurrentValue (tf_names_p);
 
-					if (value_s)
+					if (value_s != NULL)
 						{
 							num_treatment_names = 1;
 						}
@@ -1209,7 +1226,24 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 				{
 					if (json_is_array (levels_json_p))
 						{
+							size_t i = 0;
+							size_t num_null_treatment_levels = 0;
 							num_treatment_levels = json_array_size (levels_json_p);
+
+							for (i = 0; i < num_treatment_levels; ++ i)
+								{
+									const json_t *level_json_p = json_array_get (levels_json_p, i);
+
+									if ((level_json_p == NULL) || (level_json_p == json_null ()))
+										{
+											++ num_null_treatment_levels;
+										}
+								}
+
+							if (num_null_treatment_levels == num_treatment_levels)
+								{
+									num_treatment_levels = 0;
+								}
 						}
 				}
 		}
