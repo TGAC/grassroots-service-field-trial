@@ -5022,6 +5022,7 @@ static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet
 	OperationStatus status = OS_FAILED;
 	Parameter *mvs_param_p = GetParameterFromParameterSetByName (param_set_p, STUDY_MEASURED_VARIABLES.npt_name_s);
 	size_t num_mvs = 0;
+	size_t num_null_mvs = 0;
 	const char *value_s = NULL;
 	const char **mvs_ss = NULL;
 
@@ -5056,30 +5057,50 @@ static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet
 
 			for (i = 0; i < num_mvs; ++ i, ++ mv_ss)
 				{
-					/* remove any leading or trailing whitespace */
-					char *mv_s = CopyToNewString (*mv_ss, 0, true);
-
-					if (mv_s)
+					if (*mv_ss != NULL)
 						{
-							/* Is this measured variable already in the study? ... */
-							if (IsMeasuredVariableOnStudy (study_p, *mv_ss))
-								{
-									++ num_valid_mvs;
-								}
-							else
-								{
-									/* ... if not, then check that it's a valid name ... */
-									MeasuredVariable *mv_p = GetMeasuredVariableByName (*mv_ss, ft_service_data_p);
+							/* remove any leading or trailing whitespace */
+							char *mv_s = CopyToNewString (*mv_ss, 0, true);
 
-									if (mv_p)
+							if (mv_s)
+								{
+									/* Is this measured variable already in the study? ... */
+									if (IsMeasuredVariableOnStudy (study_p, *mv_ss))
 										{
-											if (AddPhenotypeStatisticsToStudy (study_p, mv_s, NULL))
+											++ num_valid_mvs;
+										}
+									else
+										{
+											/* ... if not, then check that it's a valid name ... */
+											MeasuredVariable *mv_p = GetMeasuredVariableByName (*mv_ss, ft_service_data_p);
+
+											if (mv_p)
 												{
-													++ num_valid_mvs;
+													if (AddPhenotypeStatisticsToStudy (study_p, mv_s, NULL))
+														{
+															++ num_valid_mvs;
+														}
+													else
+														{
+															char *error_s = ConcatenateVarargsStrings ("Failed to add \"", mv_s, "\" to Study, please contact Grassroots support to investigate", NULL);
+
+															if (error_s)
+																{
+																	AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, error_s);
+																	FreeCopiedString (error_s);
+																}
+															else
+																{
+																	AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, "Failed to add one or more Measured Variables to Study, please contact Grassroots support to investigate");
+																}
+
+														}
+
+													FreeMeasuredVariable (mv_p);
 												}
 											else
 												{
-													char *error_s = ConcatenateVarargsStrings ("Failed to add \"", mv_s, "\" to Study, please contact Grassroots support to investigate", NULL);
+													char *error_s = ConcatenateVarargsStrings ("\"", mv_s, "\" is not a valid Measured Variable name", NULL);
 
 													if (error_s)
 														{
@@ -5088,35 +5109,22 @@ static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet
 														}
 													else
 														{
-															AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, "Failed to add one or more Measured Variables to Study, please contact Grassroots support to investigate");
+															AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, "Invalid Measured Variable name");
 														}
-
-												}
-
-											FreeMeasuredVariable (mv_p);
-										}
-									else
-										{
-											char *error_s = ConcatenateVarargsStrings ("\"", mv_s, "\" is not a valid Measured Variable name", NULL);
-
-											if (error_s)
-												{
-													AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, error_s);
-													FreeCopiedString (error_s);
-												}
-											else
-												{
-													AddParameterErrorMessageToServiceJob (job_p, STUDY_MEASURED_VARIABLES.npt_name_s, STUDY_MEASURED_VARIABLES.npt_type, "Invalid Measured Variable name");
 												}
 										}
+
+									FreeCopiedString (mv_s);
 								}
-
-							FreeCopiedString (mv_s);
+						}
+					else
+						{
+							++ num_null_mvs;
 						}
 
 				}		/* for (i = 0; i < num_mvs; ++ i, ++ mv_ss) */
 
-			if (num_mvs == num_valid_mvs)
+			if (num_mvs == num_valid_mvs + num_null_mvs)
 				{
 					status = OS_SUCCEEDED;
 				}
