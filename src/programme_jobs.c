@@ -155,9 +155,9 @@ bool AddProgrammeEditor (Programme *programme_p, const char *id_s,
 			logo_s = programme_p -> pr_logo_url_s;
 			code_s = programme_p -> pr_project_code_s;
 
-			if (programme_p -> pr_user_p)
+			if ((programme_p -> pr_metadata_p) && (programme_p -> pr_metadata_p -> me_user_p))
 				{
-					user_email_s = programme_p -> pr_user_p -> us_email_s;
+					user_email_s = programme_p -> pr_metadata_p -> me_user_p -> us_email_s;
 				}
 
 			if (pi_p)
@@ -715,7 +715,7 @@ bool GetSearchProgrammeParameterTypeForNamedParameter (const char *param_name_s,
 	const NamedParameterType params [] =
 		{
 			PROGRAMME_SEARCH,
-			(NamedParameterType *) NULL
+			NULL
 		};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
@@ -1036,6 +1036,8 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 															Crop *crop_p = NULL;
 															PermissionsGroup *perms_group_p = GetPermissionsGroupFromPermissionsEditor (param_set_p, job_p, user_p, & (data_p -> dftsd_base_data));
 
+															Metadata *metadata_p = AllocateMetadata (perms_group_p, user_p, false, NULL);
+
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_ABBREVIATION.npt_name_s, &abbreviation_s);
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_CROP.npt_name_s, &crop_id_s);
 															GetCurrentStringParameterValueFromParameterSet (param_set_p, PROGRAMME_URL.npt_name_s, &url_s);
@@ -1046,11 +1048,11 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															crop_p = GetCropByIdString (crop_id_s, data_p);
 
-															programme_p = AllocateProgramme (programme_id_p, user_p, perms_group_p, false, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s, NULL);
+															programme_p = AllocateProgramme (programme_id_p, metadata_p, abbreviation_s, crop_p, url_s, name_s, objective_s, person_p, logo_s, funders_s, project_code_s);
 
 															if (programme_p)
 																{
-																	if (RunForPermissionEditor (param_set_p, programme_p -> pr_permissions_p, job_p, user_p, & (data_p -> dftsd_base_data)))
+																	if (RunForPermissionEditor (param_set_p, metadata_p -> me_permissions_p, job_p, user_p, & (data_p -> dftsd_base_data)))
 																		{
 																			status = SaveProgramme (programme_p, job_p, data_p);
 
@@ -1065,6 +1067,11 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 																}
 															else
 																{
+																	if (metadata_p)
+																		{
+																			FreeMetadata (metadata_p);
+																		}
+
 																	if (crop_p)
 																		{
 																			FreeCrop (crop_p);

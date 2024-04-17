@@ -164,8 +164,16 @@ static ParameterSet *GetProgrammeSubmissionServiceParameters (Service *service_p
 			ServiceData *data_p = service_p -> se_data_p;
 			FieldTrialServiceData *ft_data_p = (FieldTrialServiceData *) data_p;
 			Programme *active_programme_p = GetProgrammeFromResource (resource_p, PROGRAMME_ID, ft_data_p);
-			PermissionsGroup *perms_group_p = active_programme_p ? active_programme_p -> pr_permissions_p : NULL;
+			PermissionsGroup *perms_group_p = NULL;
 			bool read_only_flag = false;
+
+			if (active_programme_p)
+				{
+					if (active_programme_p -> pr_metadata_p)
+						{
+							perms_group_p = active_programme_p -> pr_metadata_p -> me_permissions_p;
+						}
+				}
 
 			if (perms_group_p)
 				{

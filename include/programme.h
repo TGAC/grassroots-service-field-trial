@@ -35,6 +35,7 @@
 #include "typedefs.h"
 #include "person.h"
 #include "permission.h"
+#include "metadata.h"
 
 
 /**
@@ -48,20 +49,7 @@ typedef struct Programme
 	bson_oid_t *pr_id_p;
 
 
-	PermissionsGroup *pr_permissions_p;
-
-	/**
-	 * The User that saved this version of the Programme.
-	 */
-	User *pr_user_p;
-
-	bool pr_owns_user_flag;
-
-	/**
-	 * The time when this Field Trial was saved.
-	 */
-	char *pr_timestamp_s;
-
+	Metadata *pr_metadata_p;
 
 	/**
 	 * The abbreviation for this Programme.
@@ -113,7 +101,7 @@ typedef struct Programme
 	char *pr_funding_organisation_s;
 
 	/**
-	 *  The programme's pproject or grant code.
+	 *  The programme's project or grant code.
 	 */
 	char *pr_project_code_s;
 
@@ -180,7 +168,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, User *user_p, PermissionsGroup *permissions_group_p, const bool owns_user_flag, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s, const char *timestamp_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Programme *AllocateProgramme (bson_oid_t *id_p, Metadata *metadata_p, const char *abbreviation_s, Crop *crop_p, const char *documentation_url_s, const char *name_s, const char *objective_s, Person *pi_p, const char *logo_url_s, const char *funders_s, const char *project_code_s);
 
 /**
  * Free a given Programme.

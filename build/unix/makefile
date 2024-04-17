@@ -90,6 +90,7 @@ SRCS 	= \
 	material_jobs.c \
 	measured_variable.c \
 	measured_variable_jobs.c \
+	metadata.c \
 	numeric_observation.c \
 	observation.c \
 	permissions_editor.c \

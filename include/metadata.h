@@ -10,12 +10,12 @@
 
 #include "dfw_field_trial_service_library.h"
 
+#include "service.h"
+
 #include "permission.h"
 
 typedef struct Metadata
 {
-	bson_oid_t *me_id_p;
-
 	PermissionsGroup *me_permissions_p;
 
 	/**
@@ -42,19 +42,30 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Metadata *AllocateMetadata ();
+DFW_FIELD_TRIAL_SERVICE_LOCAL Metadata *AllocateMetadata (PermissionsGroup *permissions_group_p, User *user_p, const bool owns_user_flag, const char *timestamp_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMetadata (Metadata *metadata_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMetadataToJSON (const Metadata * const metadata_p, json_t *parent_json_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddMetadataToJSON (const Metadata * const metadata_p, json_t *parent_json_p, const ViewFormat vf);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Metadata *GetMetadataFromJSON (const json_t * const json_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Metadata *GetMetadataFromJSON (const json_t * const json_p, const ServiceData *data_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMetadataAsJSON (const Metadata * const metadata_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Metadata *GetMetadataFromDefaultChildJSON (const json_t * const json_p, const ServiceData *data_p);
+
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMetadataAsJSON (const Metadata * const metadata_p, const ViewFormat vf);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL void SetMetadataUser (Metadata *metadata_p, User *user_p, bool owns_user_flag);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool MetadataHasUser (Metadata *metadata_p);
+
 
 
 #ifdef __cplusplus
