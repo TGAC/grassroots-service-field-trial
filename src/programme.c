@@ -426,8 +426,6 @@ Programme *GetProgrammeFromJSON (const json_t *json_p, const ViewFormat format, 
 									const char *project_code_s = GetJSONString (json_p, PR_CODE_S);
 									Crop *crop_p = NULL;
 									bson_oid_t *temp_id_p = GetNewUnitialisedBSONOid ();
-									GrassrootsServer *grassroots_p = data_p -> dftsd_base_data.sd_service_p -> se_grassroots_p;
-									PermissionsGroup *permissions_group_p = NULL;
 									Metadata *metadata_p = GetMetadataFromDefaultChildJSON (json_p, & (data_p -> dftsd_base_data));
 
 									if (temp_id_p)
