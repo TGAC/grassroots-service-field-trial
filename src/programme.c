@@ -87,6 +87,11 @@ Programme *AllocateProgramme (bson_oid_t *id_p, Metadata *metadata_p, const char
 																	if (pi_p)
 																		{
 
+																			if (!metadata_p)
+																				{
+
+																				}
+
 //																			if (metadata_p)
 //																				{
 
