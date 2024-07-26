@@ -597,7 +597,10 @@ static json_t *GetTableParameterHints (void)
 																																						{
 																																							if (AddColumnParameterHint (S_FORM_DESCRIPTION_S, NULL, PT_STRING, true, hints_p))
 																																								{
-																																									return hints_p;
+																																									if (AddColumnParameterHint (S_SCALE_CLASS_NAME_S, NULL, PT_STRING, true, hints_p))
+																																										{
+																																											return hints_p;
+																																										}
 																																								}
 																																						}
 																																				}
