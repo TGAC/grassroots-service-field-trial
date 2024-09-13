@@ -155,7 +155,7 @@ LIB_LDFLAGS = 	\
 LDFLAGS += $(LIB_LDFLAGS)
 
 APP_LDFLAGS = $(LIB_LDFLAGS) \
-	-L$(DIR_PCRE_LIB) -lpcre \
+	-L$(DIR_PCRE2_LIB) -l$(PCRE2_LIB_NAME) \
 	-lcurl	
 	
 ifeq ($(IRODS_ENABLED), 1)
@@ -184,7 +184,7 @@ SCALE_CLASS_APP_LDFLAGS = \
 	-L$(DIR_JANSSON_LIB) -ljansson \
 	-L$(DIR_MONGODB_LIB) -lmongoc-1.0 \
 	-L$(DIR_BSON_LIB) -lbson-1.0 \
-	-L$(DIR_PCRE_LIB) -lpcre 
+	-L$(DIR_PCRE2_LIB) -l$(PCRE2_LIB_NAME) 
 	
 	
 	
