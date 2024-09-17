@@ -88,23 +88,32 @@ void FreeMetadata (Metadata *metadata_p)
 bool AddMetadataToJSON (const Metadata * const metadata_p, json_t *parent_json_p, const ViewFormat vf)
 {
 	bool success_flag = false;
-	json_t *metadata_json_p = GetMetadataAsJSON (metadata_p, vf);
 
-	if (metadata_json_p)
+	if (metadata_p)
 		{
-			if (json_object_set_new (parent_json_p, S_METADATA_JSON_KEY_S, metadata_json_p) == 0)
+			json_t *metadata_json_p = GetMetadataAsJSON (metadata_p, vf);
+
+			if (metadata_json_p)
 				{
-					success_flag = true;
+					if (json_object_set_new (parent_json_p, S_METADATA_JSON_KEY_S, metadata_json_p) == 0)
+						{
+							success_flag = true;
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, metadata_json_p, "Failed to add metadata to json");
+							json_decref (metadata_json_p);
+						}
 				}
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, metadata_json_p, "Failed to add metadata to json");
-					json_decref (metadata_json_p);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, parent_json_p, "GetMetadataAsJSON () failed");
 				}
 		}
 	else
 		{
-			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, parent_json_p, "GetMetadataAsJSON () failed");
+			/* nothing to do */
+			success_flag = true;
 		}
 
 	return success_flag;
@@ -119,6 +128,29 @@ Metadata *GetMetadataFromDefaultChildJSON (const json_t * const json_p, const Se
 	if (metadata_json_p)
 		{
 			metadata_p = GetMetadataFromJSON (metadata_json_p, data_p);
+
+			if (!metadata_p)
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "GetMetadataFromJSON () failed");
+				}
+
+		}
+	else
+		{
+			/* Check for the old format */
+			const char *timestamp_s = GetJSONString (json_p, MONGO_TIMESTAMP_S);
+
+			if (timestamp_s)
+				{
+					metadata_p = AllocateMetadata (NULL, NULL, false, timestamp_s);
+
+					if (!metadata_p)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, json_p, "AllocateMetadata () with timestamp \"%s\" failed", timestamp_s);
+						}
+
+				}		/* if (timestamp_s) */
+
 		}
 
 	return metadata_p;
