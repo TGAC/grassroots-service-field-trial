@@ -61,6 +61,11 @@
 #include "person_jobs.h"
 
 
+#ifdef ENABLE_MARTI
+	#include "marti_service_data.h"
+#endif
+
+
 typedef struct
 {
 	Study *spd_study_p;
@@ -204,6 +209,11 @@ static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *
 
 
 static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet *param_set_p, Study *study_p, FieldTrialServiceData *ft_service_data_p);
+
+
+#ifdef ENABLE_MARTI
+	static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, FieldTrialServiceData *ft_service_data_p);
+#endif
 
 
 /*
@@ -794,6 +804,21 @@ Parameters
  */
 
 
+
+
+json_t *GetStudyDistinctAccessionsAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
+{
+	json_t *accessions_p = NULL;
+	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_MATERIAL_ID_S, NULL);
+
+	if (key_s)
+		{
+			accessions_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddAccession, data_p);
+			FreeCopiedString (key_s);
+		}
+
+	return accessions_p;
+}
 
 
 bool GetSearchStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
@@ -1688,21 +1713,6 @@ json_t *GetAllStudyIds (Service *service_p)
 	return id_results_p;
 }
 
-
-
-json_t *GetStudyDistinctAccessionsAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
-{
-	json_t *accessions_p = NULL;
-	char *key_s = ConcatenateVarargsStrings (PL_ROWS_S, ".", SR_MATERIAL_ID_S, NULL);
-
-	if (key_s)
-		{
-			accessions_p = GetDistinctValuesAsJSON (study_id_p, key_s, AddAccession, data_p);
-			FreeCopiedString (key_s);
-		}
-
-	return accessions_p;
-}
 
 
 json_t *GetStudyDistinctPhenotypesAsJSON (bson_oid_t *study_id_p, const FieldTrialServiceData *data_p)
@@ -5144,4 +5154,77 @@ static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet
 }
 
 
+/*
+  {
+    "so:name": "MARTi search service",
+    "start_service": true,
+    "parameter_set": {
+      "level": "simple",
+      "parameters": [
+        {
+          "param": "Latitude",
+          "current_value": 0.070000000000000007
+        },
+        {
+          "param": "Longitude",
+          "current_value": 52.778055999999999
+        },
+        {
+          "param": "Start Date",
+          "current_value": null
+        },
+        {
+          "param": "Maximum Distance",
+          "current_value": 10000
+        }
+      ]
+    }
+  }
+]
+ */
 
+#ifdef ENABLE_MARTI
+
+static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, FieldTrialServiceData *ft_service_data_p)
+{
+	OperationStatus status = OS_FAILED;
+
+	if (ft_service_data_p -> dftsd_grassroots_marti_search_url_s)
+		{
+			ParameterSet *param_set_p = AllocateParameterSet (NULL, NULL);
+
+			if (param_set_p)
+				{
+					ServiceData *service_data_p = & (ft_service_data_p -> dftsd_base_data);
+
+					if (AddCommonMartiSearchParametersByValues (param_set_p, NULL, latitude_p, longitude_p, date_p, service_data_p))
+						{
+							static const char *service_name_s = GetMartiSearchServiceName (NULL);
+							static const char *service_uri_s = ft_service_data_p -> dftsd_grassroots_marti_search_url_s;
+							GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (service_data_p -> sd_service_p);
+							ProvidersStateTable *providers_p = NULL;
+
+							json_t *res_p = MakeRemotePairedServiceCall (service_name_s, param_set_p, service_uri_s, providers_p, grassroots_p);
+
+							if (res_p)
+								{
+
+									json_decref (res_p);
+								}		/* if (res_p) */
+
+						}		/* if (AddCommonMartiSearchParameters (param_set_p, NULL, NULL, ServiceData *data_p)) */
+
+					FreeParameterSet (param_set_p);
+				}		/* if (param_set_p) */
+
+
+		}		/* if (ft_service_data_p -> dftsd_grassroots_marti_search_url_s) */
+	else
+		{
+			status = OS_IDLE;
+		}
+	return status;
+}
+
+
+#endif
