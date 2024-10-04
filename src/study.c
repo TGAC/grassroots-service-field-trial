@@ -43,6 +43,10 @@
 #include "person_jobs.h"
 #include "mongodb_util.h"
 
+#ifdef ENABLE_MARTI
+	#include "marti_util.h"
+#endif
+
 /*
  * DB COLUMN NAMES
  */
@@ -1089,6 +1093,10 @@ json_t *GetStudyAsJSON (Study *study_p, const ViewFormat format, JSONProcessor *
 																			AddFrictionlessDataLink (study_p, study_json_p, data_p);
 
 																			AddHandbookLinks (study_p, study_json_p, data_p);
+
+																			#ifdef ENABLE_MARTI
+																			AddMartiResults (study_p, study_json_p, format, data_p);
+																			#endif
 
 																			add_item_flag = true;
 																		}

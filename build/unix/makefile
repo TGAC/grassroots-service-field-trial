@@ -192,8 +192,11 @@ PLOT_ROW_APP_LDFLAGS += $(APP_LDFLAGS) \
 	-lcurl
 
 
-ifeq ($(DIR_MARTI), 1)
-CPPFLAGS += -DENABLE_MARTI=1-I$(DIR_MARTO)/include
+ifneq ($(DIR_MARTI),)
+	SRCS += marti_util.c
+	INCLUDES += -I$(DIR_MARTI)/include
+	CPPFLAGS += -DENABLE_MARTI=1
+	LDFLAGS += -L$(DIR_MARTI)/build/unix/$(PLATFORM)/$(BUILD) -lmarti_service
 endif
 
 
