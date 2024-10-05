@@ -116,6 +116,8 @@ FieldTrialServiceData *AllocateFieldTrialServiceData (void)
 
 			data_p -> dftsd_marti_api_url_s = NULL;
 
+			data_p -> dftsd_grassroots_marti_search_url_s = NULL;
+
 			return data_p;
 		}
 
@@ -270,6 +272,9 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 
 
 							data_p -> dftsd_marti_api_url_s = GetJSONString (service_config_p, "marti_api_url");
+
+							data_p -> dftsd_grassroots_marti_search_url_s = GetJSONString (service_config_p, "grassroots_marti_service_url");
+
 
 							* ((data_p -> dftsd_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_S;

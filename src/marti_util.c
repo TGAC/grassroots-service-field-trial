@@ -47,32 +47,42 @@ static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *
 {
 	OperationStatus status = OS_FAILED;
 
-	ParameterSet *param_set_p = AllocateParameterSet (NULL, NULL);
-
-	if (param_set_p)
+	if (ft_service_data_p -> dftsd_grassroots_marti_search_url_s)
 		{
-			const ServiceData *service_data_p = & (ft_service_data_p -> dftsd_base_data);
+			ParameterSet *param_set_p = AllocateParameterSet (NULL, NULL);
 
-			if (AddCommonMartiSearchParametersByValues (param_set_p, NULL, latitude_p, longitude_p, date_p, service_data_p))
+			if (param_set_p)
 				{
-					const char *service_name_s = "MARTi search service"; //GetMartiSearchServiceName (NULL);
-					const char *service_uri_s = ft_service_data_p -> dftsd_grassroots_marti_search_url_s;
-					GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (service_data_p -> sd_service_p);
-					ProvidersStateTable *providers_p = NULL;
+					const ServiceData *service_data_p = & (ft_service_data_p -> dftsd_base_data);
 
-					json_t *res_p = MakeRemotePairedServiceCall (service_name_s, param_set_p, service_uri_s, providers_p, grassroots_p);
-
-					if (res_p)
+					if (AddCommonMartiSearchParametersByValues (param_set_p, NULL, latitude_p, longitude_p, date_p, service_data_p))
 						{
-							PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, res_p, "Searching \"%lf, %lf\"", *latitude_p, *longitude_p);
-							json_decref (res_p);
-						}		/* if (res_p) */
+							const char *service_name_s = "MARTi search service"; //GetMartiSearchServiceName (NULL);
+							const char *service_uri_s = ft_service_data_p -> dftsd_grassroots_marti_search_url_s;
+							GrassrootsServer *grassroots_p = GetGrassrootsServerFromService (service_data_p -> sd_service_p);
+							ProvidersStateTable *providers_p = NULL;
 
-				}		/* if (AddCommonMartiSearchParameters (param_set_p, NULL, NULL, ServiceData *data_p)) */
+							json_t *res_p = MakeRemotePairedServiceCall (service_name_s, param_set_p, service_uri_s, providers_p, grassroots_p);
 
-			FreeParameterSet (param_set_p);
-		}		/* if (param_set_p) */
+							if (res_p)
+								{
+									PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, res_p, "Searching \"%lf, %lf\"", *latitude_p, *longitude_p);
 
+
+									json_decref (res_p);
+								}		/* if (res_p) */
+
+						}		/* if (AddCommonMartiSearchParameters (param_set_p, NULL, NULL, ServiceData *data_p)) */
+
+					FreeParameterSet (param_set_p);
+				}		/* if (param_set_p) */
+
+
+		}		/* if (ft_service_data_p -> dftsd_grassroots_marti_search_url_s) */
+	else
+		{
+			status = OS_IDLE;
+		}
 	return status;
 }
 
@@ -134,5 +144,113 @@ static bool AddMartiSearchParametersByValues (ParameterSet *param_set_p, Paramet
 	return success_flag;
 }
 
+
+static void ProcessMartiResults (const json_t *results_json_p, json_t *study_json_p, const char * const marti_service_name_s, const FieldTrialServiceData *service_data_p)
+{
+	json_t *services_json_p = json_object_get (results_json_p, SERVICE_RESULTS_S);
+
+	if (json_is_array (services_json_p))
+		{
+			size_t i;
+			json_t *job_p;
+
+			json_array_foreach (services_json_p, i, job_p)
+				{
+					const char *service_name_s = GetJSONString (job_p, JOB_SERVICE_S);
+
+					if (service_name_s)
+						{
+							if (strcmp (service_name_s, marti_service_name_s) == 0)
+								{
+									int32 status = OS_IDLE;
+
+									if (GetJSONInteger (job_p, SERVICES_STATUS_S, &status))
+										{
+											if (((OperationStatus) status) == OS_SUCCEEDED)
+												{
+													json_t *marti_links_p = json_array ();
+
+													if (marti_links_p)
+														{
+															json_t *results_p = json_object_get (job_p, SERVICE_RESULTS_S);
+
+															if (results_p)
+																{
+																	json_t *result_p;
+																	size_t j;
+																	const bool has_slash_flag = DoesStringEndWith (service_data_p -> dftsd_marti_api_url_s, "/");
+
+																	json_array_foreach (results_p, j, result_p)
+																		{
+																			const char *sample_name_s = GetJSONString (result_p, ME_NAME_S);
+																			const char *marti_id_s = GetJSONString (result_p, ME_MARTI_ID_S);
+																			char *url_s = NULL;
+
+																			if (has_slash_flag)
+																				{
+																					url_s = ConcatenateStrings (service_data_p -> dftsd_marti_api_url_s, marti_id_s);
+																				}
+																			else
+																				{
+																					url_s = ConcatenateVarargsStrings (service_data_p -> dftsd_marti_api_url_s, "/", marti_id_s, NULL);
+																				}
+
+																			if (url_s)
+																				{
+																					json_t *marti_p = json_object ();
+
+																					if (marti_p)
+																						{
+																							bool success_flag = false;
+
+																							if (SetJSONString (marti_p, JOB_NAME_S, sample_name_s))
+																								{
+																									if (SetJSONString (marti_p, JOB_URL_S, url_s))
+																										{
+																											if (json_array_append_new (marti_links_p, marti_p) == 0)
+																												{
+																													success_flag = true;
+																												}
+
+																										}
+
+																								}
+
+																							if (!success_flag)
+																								{
+																									json_decref (marti_p);
+																								}
+																						}
+																				}
+																		}
+
+																}		/* if (results_p) */
+
+
+															if (json_object_set_new (results_json_p, "marti_samples", marti_links_p) == 0)
+																{
+
+																}
+															else
+																{
+																	json_decref (marti_links_p);
+																}
+
+														}		/* if (marti_links_p) */
+
+
+												}		/* if (((OperationStatus) status) == OS_SUCCEEDED) */
+
+										}		/* if (GetJSONInteger (job_p, SERVICES_STATUS_S, &status)) */
+
+								}		/* if (strcmp (service_name_s, marti_service_name_s) == 0) */
+
+						}		/* if (service_name_s) */
+
+				}		/* json_array_foreach (services_json_p, i, job_p) */
+
+		}		/* if (json_is_array (services_json_p)) */
+
+}
 
 
