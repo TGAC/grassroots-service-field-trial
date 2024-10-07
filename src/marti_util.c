@@ -17,7 +17,9 @@
 
 static bool AddMartiSearchParametersByValues (ParameterSet *param_set_p, ParameterGroup *param_group_p, const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, ServiceData *data_p);
 
-static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, const FieldTrialServiceData *ft_service_data_p);
+static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, json_t *study_json_p, const FieldTrialServiceData *ft_service_data_p);
+
+static void ProcessMartiResults (json_t *results_json_p, json_t *study_json_p, const char * const marti_service_name_s, const FieldTrialServiceData *service_data_p);
 
 
 OperationStatus AddMartiResults (Study *study_p, json_t *study_json_p, const ViewFormat format, const FieldTrialServiceData *data_p)
@@ -34,7 +36,7 @@ OperationStatus AddMartiResults (Study *study_p, json_t *study_json_p, const Vie
 						{
 							const struct tm *date_p = NULL;
 
-							status = SearchMarti (& (c_p -> co_x), & (c_p -> co_y), date_p, data_p);
+							status = SearchMarti (& (c_p -> co_x), & (c_p -> co_y), date_p, study_json_p, data_p);
 
 						}
 				}
@@ -44,7 +46,7 @@ OperationStatus AddMartiResults (Study *study_p, json_t *study_json_p, const Vie
 }
 
 
-static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, const FieldTrialServiceData *ft_service_data_p)
+static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, json_t *study_json_p, const FieldTrialServiceData *ft_service_data_p)
 {
 	OperationStatus status = OS_FAILED;
 
@@ -68,6 +70,9 @@ static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *
 							if (res_p)
 								{
 									PrintJSONToLog (STM_LEVEL_INFO, __FILE__, __LINE__, res_p, "Searching \"%lf, %lf\"", *latitude_p, *longitude_p);
+
+
+									ProcessMartiResults (res_p, study_json_p, service_name_s,  ft_service_data_p);
 
 
 									json_decref (res_p);
@@ -146,7 +151,7 @@ static bool AddMartiSearchParametersByValues (ParameterSet *param_set_p, Paramet
 }
 
 
-static void ProcessMartiResults (const json_t *results_json_p, json_t *study_json_p, const char * const marti_service_name_s, const FieldTrialServiceData *service_data_p)
+static void ProcessMartiResults (json_t *results_json_p, json_t *study_json_p, const char * const marti_service_name_s, const FieldTrialServiceData *service_data_p)
 {
 	json_t *services_json_p = json_object_get (results_json_p, SERVICE_RESULTS_S);
 
@@ -183,52 +188,59 @@ static void ProcessMartiResults (const json_t *results_json_p, json_t *study_jso
 
 																	json_array_foreach (results_p, j, result_p)
 																		{
-																			const char *sample_name_s = GetJSONString (result_p, ME_NAME_S);
-																			const char *marti_id_s = GetJSONString (result_p, ME_MARTI_ID_S);
-																			char *url_s = NULL;
+																			json_t *marti_entry_p = json_object_get (result_p, RESOURCE_DATA_S);
 
-																			if (has_slash_flag)
+																			if (marti_entry_p)
 																				{
-																					url_s = ConcatenateStrings (service_data_p -> dftsd_marti_api_url_s, marti_id_s);
-																				}
-																			else
-																				{
-																					url_s = ConcatenateVarargsStrings (service_data_p -> dftsd_marti_api_url_s, "/", marti_id_s, NULL);
-																				}
+																					const char *sample_name_s = GetJSONString (marti_entry_p, ME_NAME_S);
+																					const char *marti_id_s = GetJSONString (marti_entry_p, ME_MARTI_ID_S);
+																					char *url_s = NULL;
 
-																			if (url_s)
-																				{
-																					json_t *marti_p = json_object ();
-
-																					if (marti_p)
+																					if (has_slash_flag)
 																						{
-																							bool success_flag = false;
+																							url_s = ConcatenateStrings (service_data_p -> dftsd_marti_api_url_s, marti_id_s);
+																						}
+																					else
+																						{
+																							url_s = ConcatenateVarargsStrings (service_data_p -> dftsd_marti_api_url_s, "/", marti_id_s, NULL);
+																						}
 
-																							if (SetJSONString (marti_p, JOB_NAME_S, sample_name_s))
+																					if (url_s)
+																						{
+																							json_t *marti_p = json_object ();
+
+																							if (marti_p)
 																								{
-																									if (SetJSONString (marti_p, JOB_URL_S, url_s))
+																									bool success_flag = false;
+
+																									if (SetJSONString (marti_p, JOB_NAME_S, sample_name_s))
 																										{
-																											if (json_array_append_new (marti_links_p, marti_p) == 0)
+																											if (SetJSONString (marti_p, JOB_URL_S, url_s))
 																												{
-																													success_flag = true;
+																													if (json_array_append_new (marti_links_p, marti_p) == 0)
+																														{
+																															success_flag = true;
+																														}
+
 																												}
 
 																										}
 
-																								}
-
-																							if (!success_flag)
-																								{
-																									json_decref (marti_p);
+																									if (!success_flag)
+																										{
+																											json_decref (marti_p);
+																										}
 																								}
 																						}
-																				}
+
+																				}		/* if (marti_entry_p) */
+
 																		}
 
 																}		/* if (results_p) */
 
 
-															if (json_object_set_new (results_json_p, "marti_samples", marti_links_p) == 0)
+															if (json_object_set_new (study_json_p, "marti_samples", marti_links_p) == 0)
 																{
 
 																}
