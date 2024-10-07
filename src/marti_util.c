@@ -9,6 +9,7 @@
 
 #include "marti_service_data.h"
 #include "marti_search_service.h"
+#include "marti_entry.h"
 
 #include "double_parameter.h"
 #include "time_parameter.h"
