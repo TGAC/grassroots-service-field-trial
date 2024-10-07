@@ -4,3 +4,10 @@
 # Set this to where you have the libexif directory 
 # containing "include" and "lib" subdirectories.
 export LIBEXIF_HOME := /opt/libexif
+
+
+# If you want to compile with the MARTi integration enabled, set this directory 
+# to where the Grassroots MARTi service (https://github.com/TGAC/grassroots-service-marti)
+# is checked out to
+export DIR_MARTI := /Users/tyrrells/Projects/grassroots/services/marti
+
