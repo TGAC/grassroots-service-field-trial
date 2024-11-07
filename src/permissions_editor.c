@@ -119,19 +119,13 @@ PermissionsGroup *GetPermissionsGroupFromPermissionsEditor (ParameterSet *param_
 
 OperationStatus RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
 {
-	OperationStatus status = OS_FAILED;
-	bool success_flag = false;
 	GrassrootsServer *grassroots_p = data_p -> sd_service_p -> se_grassroots_p;
 
 	if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_read_access_p, PERMISSION_READ.npt_name_s, param_set_p, job_p, grassroots_p))
 		{
 			if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_write_access_p, PERMISSION_WRITE.npt_name_s, param_set_p, job_p, grassroots_p))
 				{
-					if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_delete_access_p, PERMISSION_DELETE.npt_name_s, param_set_p, job_p, grassroots_p))
-						{
-							success_flag = true;
-						}
-					else
+					if (!UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_delete_access_p, PERMISSION_DELETE.npt_name_s, param_set_p, job_p, grassroots_p))
 						{
 							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValuesAndStatus () failed for \"%s\"", PERMISSION_DELETE.npt_name_s);
 						}
@@ -148,7 +142,7 @@ OperationStatus RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGr
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValuesAndStatus () failed for \"%s\"", PERMISSION_READ.npt_name_s);
 		}
 
-	return status;
+	return job_p -> sj_status;
 }
 
 
