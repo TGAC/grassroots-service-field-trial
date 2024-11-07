@@ -121,6 +121,8 @@ OperationStatus RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGr
 {
 	GrassrootsServer *grassroots_p = data_p -> sd_service_p -> se_grassroots_p;
 
+	job_p -> sj_status = OS_IDLE;
+
 	if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_read_access_p, PERMISSION_READ.npt_name_s, param_set_p, job_p, grassroots_p))
 		{
 			if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_write_access_p, PERMISSION_WRITE.npt_name_s, param_set_p, job_p, grassroots_p))
@@ -140,6 +142,7 @@ OperationStatus RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGr
 	else
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValuesAndStatus () failed for \"%s\"", PERMISSION_READ.npt_name_s);
+			job_p -> sj_status = OS_FAILED;
 		}
 
 	return job_p -> sj_status;
