@@ -1052,7 +1052,9 @@ static bool AddProgramme (ServiceJob *job_p, ParameterSet *param_set_p, FieldTri
 
 															if (programme_p)
 																{
-																	if (RunForPermissionEditor (param_set_p, metadata_p -> me_permissions_p, job_p, user_p, & (data_p -> dftsd_base_data)))
+																	OperationStatus perms_status = RunForPermissionEditor (param_set_p, metadata_p -> me_permissions_p, job_p, user_p, & (data_p -> dftsd_base_data));
+
+																	if ((perms_status == OS_SUCCEEDED) || (perms_status == OS_PARTIALLY_SUCCEEDED) || (perms_status == OS_IDLE))
 																		{
 																			status = SaveProgramme (programme_p, job_p, data_p);
 

@@ -23,7 +23,7 @@ static bool AddPermissionsParameter (const Permissions *permissions_p, const cha
 																		 LinkedList *all_users_p, ParameterGroup *perms_group_p, ParameterSet *param_set_p, const bool read_only_flag,
 																		 FieldTrialServiceData *ft_data_p);
 
-static bool UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p);
+static OperationStatus UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p);
 
 
 
@@ -101,7 +101,9 @@ PermissionsGroup *GetPermissionsGroupFromPermissionsEditor (ParameterSet *param_
 
 	if (perms_group_p)
 		{
-			if (RunForPermissionEditor (param_set_p, perms_group_p, job_p, user_p, data_p))
+			OperationStatus status = RunForPermissionEditor (param_set_p, perms_group_p, job_p, user_p, data_p);
+
+			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED) || (status == OS_IDLE))
 				{
 					return perms_group_p;
 				}
@@ -114,8 +116,9 @@ PermissionsGroup *GetPermissionsGroupFromPermissionsEditor (ParameterSet *param_
 
 
 
-bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
+OperationStatus RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
 {
+	OperationStatus status = OS_FAILED;
 	bool success_flag = false;
 	GrassrootsServer *grassroots_p = data_p -> sd_service_p -> se_grassroots_p;
 
@@ -144,20 +147,23 @@ bool RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permis
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValues () failed for \"%s\"", PERMISSION_READ.npt_name_s);
 		}
 
-	return success_flag;
+	return status;
 }
 
 
-static bool UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p)
+static OperationStatus UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p)
 {
-	bool success_flag = false;
+	OperationStatus status = OS_FAILED;
 	const char **values_ss = NULL;
 	size_t num_entries = 0;
 
 	if (GetCurrentStringArrayParameterValuesFromParameterSet (param_set_p, param_s, &values_ss, &num_entries))
 		{
+
 			size_t i;
 			const char **value_ss = values_ss;
+			size_t num_successes = 0;
+
 
 			ClearPermissions (permissions_p);
 
@@ -170,7 +176,7 @@ static bool UpdatePermissionsValues (Permissions *permissions_p, const char *par
 						{
 							if (AddUserToPermissions (permissions_p, user_p))
 								{
-									success_flag = true;
+									++ num_successes;
 								}
 							else
 								{
@@ -190,11 +196,28 @@ static bool UpdatePermissionsValues (Permissions *permissions_p, const char *par
 									FreeCopiedString (error_s);
 								}
 						}
-				}
 
+				}		/*for (i = 0; i < num_entries; ++ i, ++ value_ss) */
+
+			if (num_successes == num_entries)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_successes > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+			else
+				{
+					status = OS_FAILED;
+				}
+		}
+	else
+		{
+			status = OS_IDLE;
 		}
 
-	return success_flag;
+	return status;
 }
 
 /*
