@@ -25,6 +25,8 @@ static bool AddPermissionsParameter (const Permissions *permissions_p, const cha
 
 static OperationStatus UpdatePermissionsValues (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p);
 
+static bool UpdatePermissionsValuesAndStatus (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p);
+
 
 
 bool AddPermissionsEditor (PermissionsGroup *permissions_group_p, const char *id_s, ParameterSet *param_set_p, const bool read_only_flag, FieldTrialServiceData *ft_data_p)
@@ -115,36 +117,35 @@ PermissionsGroup *GetPermissionsGroupFromPermissionsEditor (ParameterSet *param_
 }
 
 
-
 OperationStatus RunForPermissionEditor (ParameterSet *param_set_p, PermissionsGroup *permissions_group_p, ServiceJob *job_p, User *user_p, ServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bool success_flag = false;
 	GrassrootsServer *grassroots_p = data_p -> sd_service_p -> se_grassroots_p;
 
-	if (UpdatePermissionsValues (permissions_group_p -> pg_read_access_p, PERMISSION_READ.npt_name_s, param_set_p, job_p, grassroots_p))
+	if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_read_access_p, PERMISSION_READ.npt_name_s, param_set_p, job_p, grassroots_p))
 		{
-			if (UpdatePermissionsValues (permissions_group_p -> pg_write_access_p, PERMISSION_WRITE.npt_name_s, param_set_p, job_p, grassroots_p))
+			if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_write_access_p, PERMISSION_WRITE.npt_name_s, param_set_p, job_p, grassroots_p))
 				{
-					if (UpdatePermissionsValues (permissions_group_p -> pg_delete_access_p, PERMISSION_DELETE.npt_name_s, param_set_p, job_p, grassroots_p))
+					if (UpdatePermissionsValuesAndStatus (permissions_group_p -> pg_delete_access_p, PERMISSION_DELETE.npt_name_s, param_set_p, job_p, grassroots_p))
 						{
 							success_flag = true;
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValues () failed for \"%s\"", PERMISSION_DELETE.npt_name_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValuesAndStatus () failed for \"%s\"", PERMISSION_DELETE.npt_name_s);
 						}
 
 				}
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValues () failed for \"%s\"", PERMISSION_WRITE.npt_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValuesAndStatus () failed for \"%s\"", PERMISSION_WRITE.npt_name_s);
 				}
 
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValues () failed for \"%s\"", PERMISSION_READ.npt_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "UpdatePermissionsValuesAndStatus () failed for \"%s\"", PERMISSION_READ.npt_name_s);
 		}
 
 	return status;
@@ -324,3 +325,17 @@ static bool GetUserEmailsForUserList (const LinkedList * const users_p, char ***
 }
 
 
+
+static bool UpdatePermissionsValuesAndStatus (Permissions *permissions_p, const char *param_s, ParameterSet *param_set_p, ServiceJob *job_p, GrassrootsServer *grassroots_p)
+{
+	bool success_flag = false;
+	OperationStatus perms_status = UpdatePermissionsValues (permissions_p, PERMISSION_READ.npt_name_s, param_set_p, job_p, grassroots_p);
+
+	if ((perms_status == OS_IDLE) || (perms_status == OS_PARTIALLY_SUCCEEDED) || (perms_status == OS_SUCCEEDED))
+		{
+			MergeOperationStatuses (& (job_p -> sj_status), perms_status);
+			success_flag = true;
+		}
+
+	return success_flag;
+}
