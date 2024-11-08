@@ -57,7 +57,7 @@ typedef struct
 /**
  * Extract the Observation metadata from the column heading
  */
-static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *measured_variable_mem_p,  FieldTrialServiceData *data_p);
+static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, char **notes_ss, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p);
 
 
 /**
@@ -449,10 +449,11 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 					MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
 					struct tm *start_date_p = NULL;
 					struct tm *end_date_p = NULL;
+					char *notes_s = NULL;
 					bool corrected_value_flag = false;
 					uint32 observation_index = OB_DEFAULT_INDEX;
 
-					if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
+					if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &notes_s, &observation_index, job_p, row_index, &measured_variable_mem, data_p))
 						{
 							bool free_measured_variable_flag = false;
 							const json_t *raw_value_p = NULL;
@@ -472,7 +473,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 								}
 								
 							status = AddObservationValueToStandardRowByParts (job_p, row_p, measured_variable_p, start_date_p, end_date_p,
-																																 key_s, raw_value_p, corrected_value_p, NULL, observation_index, &free_measured_variable_flag, SetObservationError, &error_obj);
+																																 key_s, raw_value_p, corrected_value_p, notes_s, observation_index, &free_measured_variable_flag, SetObservationError, &error_obj);
 
 
 
@@ -500,6 +501,12 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 											FreeMeasuredVariable (measured_variable_p);
 											measured_variable_p = NULL;
 										}
+								}
+
+							if (notes_s)
+								{
+									FreeCopiedString (notes_s);
+									notes_s = NULL;
 								}
 						}		/* if (GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p)) */
 
@@ -1376,7 +1383,7 @@ Row *GetRowByIdString (const char *row_id_s, const ViewFormat format, const Fiel
 
 
 
-static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p)
+static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, char **notes_ss, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s, " ", true);
@@ -1392,6 +1399,7 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 				{
 					struct tm *start_date_p = NULL;
 					struct tm *end_date_p = NULL;
+					const char * const NOTES_KEY_S = "notes";
 					const char * const CORRECTED_KEY_S = "corrected";
 					const char * const INDEX_PREFIX_KEY_S = "sample_";
 					const size_t INDEX_PREFIX_KEY_LENGTH = strlen (INDEX_PREFIX_KEY_S);
@@ -1411,6 +1419,21 @@ static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariab
 							if (Stricmp (value_s, CORRECTED_KEY_S) == 0)
 								{
 									*corrected_value_flag_p = true;
+								}
+							else if (Stricmp (value_s, NOTES_KEY_S) == 0)
+								{
+									char *copied_notes_s = EasyCopyToNewString (value_s);
+
+									if (copied_notes_s)
+										{
+											*notes_ss = copied_notes_s;
+										}
+									else
+										{
+											ReportObservationMetadataError (job_p, "Failed to create note", key_s, value_s);
+											status = OS_FAILED;
+										}
+
 								}
 							else if (Strnicmp (value_s, INDEX_PREFIX_KEY_S, INDEX_PREFIX_KEY_LENGTH) == 0)
 								{
