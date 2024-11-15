@@ -167,7 +167,7 @@ static bool RemoveExistingPlotsForStudy (Study *study_p, const FieldTrialService
 static json_t *GetPlotsAsFrictionlessData (const Study *study_p, const FieldTrialServiceData *service_data_p, const char * const null_sequence_s);
 
 
-static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p);
+static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p);
 
 
 static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unknown_cols_p);
@@ -176,10 +176,10 @@ static void RemoveUnneededColumns (json_t *table_row_json_p, const json_t *unkno
 static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, const uint32 row_index, bool *new_plot_flag_p, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p);
 
 
-static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
+static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, FieldTrialServiceData *data_p);
 
 
-static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p);
+static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p);
 
 
 static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const study_p, const ViewFormat format, FieldTrialServiceData *data_p);
@@ -200,7 +200,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 
 	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", NULL, PL_ALL)) != NULL)
 		{
-			if (SetUpStudiesListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p, false))
+			if (SetUpStudiesListParameter (dfw_data_p, param_p, active_study_p, false))
 				{
 					char c = DFT_DEFAULT_COLUMN_DELIMITER;
 
@@ -1121,7 +1121,7 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
+static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	StandardRow *sr_p = NULL;
@@ -1201,7 +1201,7 @@ static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, 
 
 									if (sr_p)
 										{
-											status = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, row_index, data_p);
+											status = ProcessStandardRow (sr_p, job_p, table_row_json_p, study_p, unknown_cols_p, notes_cols_p, row_index, data_p);
 
 
 											if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
@@ -1255,7 +1255,7 @@ static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, 
 }
 
 
-static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p)
+static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, PlotsCache *plots_cache_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus add_status = OS_FAILED;
 	int32 rack_studywise_index = -1;
@@ -1289,7 +1289,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 									/* Assume a Standard Row */
 									StandardRow *sr_p = NULL;
 
-									add_status = CreateOrUpdateStandardRowFromJSON (&sr_p, job_p, table_row_json_p, (StandardRow *) row_p, study_p, gru_gene_bank_p, unknown_cols_p, row_index, rack_studywise_index, plot_p, data_p);
+									add_status = CreateOrUpdateStandardRowFromJSON (&sr_p, job_p, table_row_json_p, (StandardRow *) row_p, study_p, gru_gene_bank_p, unknown_cols_p, notes_cols_p, row_index, rack_studywise_index, plot_p, data_p);
 
 									if (sr_p)
 										{
@@ -1339,7 +1339,7 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 									/* Assume a Standard Row */
 									StandardRow *sr_p = NULL;
 
-									add_status = CreateOrUpdateStandardRowFromJSON (&sr_p, job_p, table_row_json_p, NULL, study_p, gru_gene_bank_p, unknown_cols_p, row_index, rack_studywise_index, plot_p, data_p);
+									add_status = CreateOrUpdateStandardRowFromJSON (&sr_p, job_p, table_row_json_p, NULL, study_p, gru_gene_bank_p, unknown_cols_p, notes_cols_p, row_index, rack_studywise_index, plot_p, data_p);
 
 									if (sr_p)
 										{
@@ -1435,13 +1435,75 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 
 
 
-static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, const uint32 row_index, FieldTrialServiceData *data_p)
+static OperationStatus GetAllNotesColumns (const json_t *table_row_json_p, json_t *notes_cols_p)
+{
+	OperationStatus status = OS_IDLE;
+	size_t num_notes_columns = 0;
+	size_t num_added = 0;
+	size_t num_columns = json_object_size (table_row_json_p);
+
+	if (num_columns > 0)
+		{
+			const char *key_s;
+			json_t *value_p;
+			void *iterator_p = json_object_iter (table_row_json_p);
+
+			while (iterator_p)
+				{
+					key_s = json_object_iter_key (iterator_p);
+
+					if (Stristr (key_s, "notes ") == 0)
+						{
+							++ num_notes_columns;
+
+							value_p = json_object_iter_value (iterator_p);
+
+							if (json_is_string (value_p))
+								{
+									const char *value_s = json_string_value (value_p);
+
+									if (!IsStringEmpty (value_s))
+										{
+											if (SetJSONString (notes_cols_p, key_s, value_s))
+												{
+													++ num_added;
+												}
+										}
+								}
+							else
+								{
+
+								}
+						}
+
+					iterator_p = json_object_iter_next (table_row_json_p, iterator_p);
+				}
+		}
+
+	/*
+	 * Remove the Notes columns from table row
+	 */
+	const char *key_s;
+	json_t *value_p;
+	json_object_foreach (notes_cols_p, key_s, value_p)
+		{
+			json_object_del (table_row_json_p, key_s);
+		}
+
+	return status;
+}
+
+
+static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p, json_t *table_row_json_p, Study *study_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_SUCCEEDED;
 	size_t num_columns;
 	size_t imported_columns = 0;
 
 	RemoveUnneededColumns (table_row_json_p, unknown_cols_p);
+
+	GetAllNotesColumns (table_row_json_p, notes_cols_p);
+
 
 	/*
 	 * If there are any columns left, try to add them as observations
@@ -1469,9 +1531,13 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 
 							value_p = json_object_iter_value (iterator_p);
 
+
+
 							/*
 							 * Is it an observation?
 							 */
+
+
 							add_status = AddObservationValueToStandardRow (row_p, row_index, key_s, value_p, job_p, data_p);
 
 							if (add_status == OS_SUCCEEDED)
@@ -1619,45 +1685,52 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 
 					if (unknown_cols_p)
 						{
-							PlotsCache *plots_cache_p = AllocatePlotsCache ();
+							json_t *notes_cols_p = json_object ();
 
-							if (plots_cache_p)
+							if (notes_cols_p)
 								{
-									for (i = 0; i < num_rows; ++ i)
+									PlotsCache *plots_cache_p = AllocatePlotsCache ();
+
+									if (plots_cache_p)
 										{
-											json_t *table_row_json_p = json_array_get (plots_json_p, i);
-
-											/*
-											 * Is the row non-empty?
-											 */
-											if (json_object_size (table_row_json_p) > 0)
+											for (i = 0; i < num_rows; ++ i)
 												{
-													OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, i + 1, plots_cache_p, data_p);
+													json_t *table_row_json_p = json_array_get (plots_json_p, i);
 
-													switch (add_status)
+													/*
+													 * Is the row non-empty?
+													 */
+													if (json_object_size (table_row_json_p) > 0)
 														{
-															case OS_SUCCEEDED:
-																++ num_fully_imported;
-																break;
+															OperationStatus add_status = AddPlotFromJSON (job_p, table_row_json_p, study_p, gru_gene_bank_p, unknown_cols_p, notes_cols_p, i + 1, plots_cache_p, data_p);
 
-															case OS_PARTIALLY_SUCCEEDED:
-																++ num_partially_imported;
-																break;
+															switch (add_status)
+																{
+																	case OS_SUCCEEDED:
+																		++ num_fully_imported;
+																		break;
 
-															default:
-																PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plots row");
-																break;
+																	case OS_PARTIALLY_SUCCEEDED:
+																		++ num_partially_imported;
+																		break;
+
+																	default:
+																		PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to import plots row");
+																		break;
+																}
+														}
+													else
+														{
+															++ num_empty_rows;
 														}
 												}
-											else
-												{
-													++ num_empty_rows;
-												}
+
+											FreePlotsCache (plots_cache_p);
 										}
 
-									FreePlotsCache (plots_cache_p);
-								}
 
+									json_decref (notes_cols_p);
+								}		/* if (notes_cols_p) */
 
 							json_decref (unknown_cols_p);
 						}		/* if (unknown_cols_p) */

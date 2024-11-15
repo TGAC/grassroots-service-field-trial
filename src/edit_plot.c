@@ -372,7 +372,7 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 							if (!append_flag)
 								{
-									/* remove existing obsevations */
+									/* remove existing observations */
 								}
 
 							obs_status = ProcessObservations ((StandardRow *) active_row_p, job_p, param_set_p, data_p);
