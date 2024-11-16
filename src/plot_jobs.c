@@ -1452,7 +1452,7 @@ static OperationStatus GetAllNotesColumns (const json_t *table_row_json_p, json_
 				{
 					key_s = json_object_iter_key (iterator_p);
 
-					if (Stristr (key_s, "notes ") == 0)
+					if ((Stristr (key_s, " notes") == 0) || (Stristr (key_s, "notes ") == 0))
 						{
 							++ num_notes_columns;
 
@@ -1531,6 +1531,8 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 
 							value_p = json_object_iter_value (iterator_p);
 
+
+							if ()
 
 
 							/*

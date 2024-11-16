@@ -14,6 +14,8 @@
 #include "typedefs.h"
 
 
+
+
 typedef struct ObservationMetadata
 {
 	struct tm *om_start_date_p;
@@ -22,6 +24,14 @@ typedef struct ObservationMetadata
 	uint32 om_index;
 } ObservationMetadata;
 
+
+typedef struct ObservationMetadata
+{
+	struct tm *om_start_date_p;
+	struct tm *om_end_date_p;
+	bool om_corrected_flag;
+	uint32 om_index;
+} ObservationMetadata;
 
 
 
