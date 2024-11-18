@@ -68,8 +68,11 @@ ObservationMetadata *AllocateObservationMetadata (const struct tm * const start_
 }
 
 
+/**
+ * Extract the Observation metadata from the column heading
+ */
 
-OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, ObservationMetadata *metadata_p, bool *notes_flag_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p)
+OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, ObservationMetadata **metadata_pp, bool *notes_flag_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
 	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s, " ", true);
@@ -92,8 +95,8 @@ OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **me
 					uint32 index = OB_DEFAULT_INDEX;
 					bool start_date_flag = true;
 					bool loop_flag = true;
+					bool corrected_flag = false;
 
-					*corrected_value_flag_p = false;
 					node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
 
 					status = OS_SUCCEEDED;
@@ -104,7 +107,7 @@ OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **me
 
 							if (Stricmp (value_s, CORRECTED_KEY_S) == 0)
 								{
-									*corrected_value_flag_p = true;
+									corrected_flag = true;
 								}
 							else if (Stricmp (value_s, NOTES_KEY_S) == 0)
 								{
@@ -162,7 +165,7 @@ OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **me
 										}
 								}
 
-							if (start_date_p && end_date_p && (*corrected_value_flag_p))
+							if (start_date_p && end_date_p && corrected_flag)
 								{
 									loop_flag = false;
 								}
@@ -175,10 +178,18 @@ OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **me
 
 					if (status == OS_SUCCEEDED)
 						{
-							*measured_variable_pp = measured_variable_p;
-							*start_date_pp = start_date_p;
-							*end_date_pp = end_date_p;
-							*ob_index_p = index;
+							ObservationMetadata *metadata_p = AllocateObservationMetadata (start_date_p, end_date_p, corrected_flag, index);
+
+							if (metadata_p)
+								{
+									*metadata_pp = metadata_p;
+									*measured_variable_pp = measured_variable_p;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateObservationMetadata () failed for \"%s\"", key_s);
+								}
+
 						}
 					else
 						{

@@ -36,12 +36,16 @@ typedef struct ObservationMetadata
 
 
 
-OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, ObservtionMetadata *metadata_p, bool *notes_flag_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p);
-
-
 void ClearObservationMetadata (ObservationMetadata *obs_metadata_p);
 
 void FreeObservationMetadata (ObservationMetadata *obs_metadata_p);
+
+
+/**
+ * Extract the Observation metadata from the column heading
+ */
+
+OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, ObservationMetadata **metadata_pp, bool *notes_flag_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p);
 
 
 

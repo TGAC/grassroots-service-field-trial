@@ -40,6 +40,8 @@
 
 #include "frictionless_data_util.h"
 
+#include "observation_metadata.h"
+
 /*
  * static declarations
  */
@@ -52,12 +54,6 @@ typedef struct
 	uint32 oe_row;
 	const char *oe_column_s;
 } ObservationError;
-
-
-/**
- * Extract the Observation metadata from the column heading
- */
-static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, bool *notes_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p);
 
 
 /**
@@ -447,13 +443,10 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 				{
 					MeasuredVariable *measured_variable_p = NULL;
 					MEM_FLAG measured_variable_mem = MF_ALREADY_FREED;
-					struct tm *start_date_p = NULL;
-					struct tm *end_date_p = NULL;
 					bool notes_flag = false;
-					bool corrected_value_flag = false;
-					uint32 observation_index = OB_DEFAULT_INDEX;
+					ObservationMetadata *metadata_p = NULL;
 
-					OperationStatus obs_metadata_status = GetObservationMetadata (key_s, &measured_variable_p, &start_date_p, &end_date_p, &corrected_value_flag, &notes_flag, &observation_index, job_p, row_index, &measured_variable_mem, data_p);
+					OperationStatus obs_metadata_status = GetObservationMetadata (key_s, &measured_variable_p, &metadata_p, &notes_flag, job_p, row_index, &measured_variable_mem, data_p);
 
 					if (obs_metadata_status == OS_SUCCEEDED)
 						{
@@ -461,12 +454,12 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 							const json_t *raw_value_p = NULL;
 							const json_t *corrected_value_p = NULL;
 							ObservationError error_obj;
-							const char *notes_s = NULL;
+							char *notes_s = NULL;
 							
 							error_obj.oe_row = row_index;
 							error_obj.oe_column_s = key_s;
 
-							if (corrected_value_flag)
+							if (metadata_p -> om_corrected_flag)
 								{
 									corrected_value_p = value_p;
 								}
@@ -477,21 +470,15 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 								
 
 
-							status = AddObservationValueToStandardRowByParts (job_p, row_p, measured_variable_p, start_date_p, end_date_p,
-																																 key_s, raw_value_p, corrected_value_p, notes_s, observation_index, &free_measured_variable_flag, SetObservationError, &error_obj);
+							status = AddObservationValueToStandardRowByParts (job_p, row_p, measured_variable_p, metadata_p, key_s, raw_value_p,
+																																corrected_value_p, notes_s, &free_measured_variable_flag, SetObservationError, &error_obj);
 
 
 
-							if (start_date_p)
+							if (metadata_p)
 								{
-									FreeTime (start_date_p);
-									start_date_p = NULL;
-								}
-
-							if (end_date_p)
-								{
-									FreeTime (end_date_p);
-									end_date_p = NULL;
+									FreeObservationMetadata (metadata_p);
+									metadata_p = NULL;
 								}
 
 							/*
@@ -533,7 +520,7 @@ OperationStatus AddObservationValueToStandardRow (StandardRow *row_p, const uint
 }
 
 
-OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, struct tm *start_date_p, struct tm *end_date_p,
+OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, StandardRow *row_p, MeasuredVariable *measured_variable_p, ObservationMetadata *metadata_p,
 											const char *key_s, const json_t *raw_value_p, const json_t *corrected_value_p, const char *notes_s, const uint32 observation_index, bool *free_measured_variable_flag_p,
 											void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p), void *user_data_p)
 {
@@ -1387,145 +1374,6 @@ Row *GetRowByIdString (const char *row_id_s, const ViewFormat format, const Fiel
 }
 
 
-static OperationStatus GetObservationMetadata (const char *key_s, MeasuredVariable **measured_variable_pp, struct tm **start_date_pp, struct tm **end_date_pp, bool *corrected_value_flag_p, bool *notes_flag_p, uint32 *ob_index_p, ServiceJob *job_p, const uint32 row_index, MEM_FLAG *mf_p, FieldTrialServiceData *data_p)
-{
-	OperationStatus status = OS_IDLE;
-	LinkedList *tokens_p = ParseStringToStringLinkedList (key_s, " ", true);
-
-
-	if (tokens_p)
-		{
-			StringListNode *node_p = (StringListNode *) (tokens_p -> ll_head_p);
-			MeasuredVariable *measured_variable_p = NULL;
-			measured_variable_p = GetMeasuredVariableByVariableName (node_p -> sln_string_s, mf_p, data_p);
-
-			if (measured_variable_p)
-				{
-					struct tm *start_date_p = NULL;
-					struct tm *end_date_p = NULL;
-					const char * const NOTES_KEY_S = "notes";
-					const char * const CORRECTED_KEY_S = "corrected";
-					const char * const INDEX_PREFIX_KEY_S = "sample_";
-					const size_t INDEX_PREFIX_KEY_LENGTH = strlen (INDEX_PREFIX_KEY_S);
-					uint32 index = OB_DEFAULT_INDEX;
-					bool start_date_flag = true;
-					bool loop_flag = true;
-
-					*corrected_value_flag_p = false;
-					node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
-
-					status = OS_SUCCEEDED;
-
-					while (node_p && loop_flag && (status == OS_SUCCEEDED))
-						{
-							const char *value_s = node_p -> sln_string_s;
-
-							if (Stricmp (value_s, CORRECTED_KEY_S) == 0)
-								{
-									*corrected_value_flag_p = true;
-								}
-							else if (Stricmp (value_s, NOTES_KEY_S) == 0)
-								{
-									*notes_flag_p = true;
-								}
-							else if (Strnicmp (value_s, INDEX_PREFIX_KEY_S, INDEX_PREFIX_KEY_LENGTH) == 0)
-								{
-									const char *temp_s = value_s + INDEX_PREFIX_KEY_LENGTH;
-									int32 answer;
-
-									if (GetValidInteger (&temp_s, &answer))
-										{
-											if (answer >= 1)
-												{
-													index = (uint32) answer;
-												}
-											else
-												{
-													ReportObservationMetadataError (job_p, "Invalid sample index from", key_s, value_s);
-													status = OS_FAILED;
-												}
-										}
-									else
-										{
-											ReportObservationMetadataError (job_p, "Failed to create sample index from", key_s, value_s);
-											status = OS_FAILED;
-										}
-								}
-							else
-								{
-									if (start_date_flag)
-										{
-											start_date_p = GetTimeFromString (value_s);
-
-											if (start_date_p)
-												{
-													start_date_flag = false;
-												}
-											else
-												{
-													ReportObservationMetadataError (job_p, "Failed to create start date from", key_s, value_s);
-													status = OS_FAILED;
-												}
-
-										}
-									else
-										{
-											end_date_p = GetTimeFromString (value_s);
-
-											if (!end_date_p)
-												{
-													ReportObservationMetadataError (job_p, "Failed to create end date from", key_s, value_s);
-													status = OS_FAILED;
-												}
-										}
-								}
-
-							if (start_date_p && end_date_p && (*corrected_value_flag_p))
-								{
-									loop_flag = false;
-								}
-							else
-								{
-									node_p = (StringListNode *) (node_p -> sln_node.ln_next_p);
-								}
-						}		/* while (node_p) */
-
-
-					if (status == OS_SUCCEEDED)
-						{
-							*measured_variable_pp = measured_variable_p;
-							*start_date_pp = start_date_p;
-							*end_date_pp = end_date_p;
-							*ob_index_p = index;
-						}
-					else
-						{
-							if (start_date_p)
-								{
-									FreeTime (start_date_p);
-								}
-
-							if (end_date_p)
-								{
-									FreeTime (end_date_p);
-								}
-
-							FreeMeasuredVariable (measured_variable_p);
-						}
-
-				}		/* if (measured_variable_p) */
-			else
-				{
-					PrintErrors (STM_LEVEL_FINE, __FILE__, __LINE__, "Failed to get Measured Variable for \"%s\"", node_p -> sln_string_s);
-				}
-
-
-			FreeLinkedList (tokens_p);
-		}		/* if (tokens_p) */
-
-
-	return status;
-}
 
 
 static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p)

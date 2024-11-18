@@ -1532,9 +1532,6 @@ static OperationStatus ProcessStandardRow (StandardRow *row_p, ServiceJob *job_p
 							value_p = json_object_iter_value (iterator_p);
 
 
-							if ()
-
-
 							/*
 							 * Is it an observation?
 							 */
