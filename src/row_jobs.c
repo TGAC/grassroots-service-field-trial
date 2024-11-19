@@ -1091,7 +1091,7 @@ void RemoveObservationNode (const StandardRow *row_p, ObservationNode *node_p)
 }
 
 
-ObservationNode *GetMatchingObservationNode (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
+ObservationNode *GetMatchingObservationNode (const StandardRow *row_p, const MeasuredVariable *variable_p, const ObservationMetadata *metadata_p)
 {
 	ObservationNode *node_p = (ObservationNode *) (row_p -> sr_observations_p -> ll_head_p);
 

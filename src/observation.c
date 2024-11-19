@@ -963,17 +963,17 @@ bool AreObservationsMatching (const Observation *observation_0_p, const Observat
 }
 
 
-bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
+bool AreObservationsMatchingByParts (const Observation *observation_p, const MeasuredVariable *variable_p, const ObservationMetadata *metadata_p)
 {
 	bool match_flag = false;
 
 	if (bson_oid_equal (variable_p -> mv_id_p, observation_p -> ob_phenotype_p -> mv_id_p))
 		{
-			if (CompareObservationDates (observation_p -> ob_start_date_p, start_date_p))
+			if (CompareObservationDates (observation_p -> ob_start_date_p, metadata_p -> om_start_date_p))
 				{
-					if (CompareObservationDates (observation_p -> ob_end_date_p, end_date_p))
+					if (CompareObservationDates (observation_p -> ob_end_date_p, metadata_p -> om_end_date_p))
 						{
-							if ((!index_p) || (observation_p -> ob_index == *index_p))
+							if ((metadata_p -> om_index_p) || (observation_p -> ob_index == * (metadata_p -> om_index_p)))
 								{
 									match_flag = true;
 								}

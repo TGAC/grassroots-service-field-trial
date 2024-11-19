@@ -73,6 +73,9 @@ static NamedParameterType S_STUDY_NAME  = { "RO Study Name", PT_STRING };
 static NamedParameterType S_STUDY_ID  = { "RO Study Id", PT_STRING };
 
 
+static NamedParameterType S_ACCESSION  = { "RO Accession", PT_STRING };
+
+
 static NamedParameterType S_STUDY_INDEX  = { "RO Study Index", PT_UNSIGNED_INT };
 
 static NamedParameterType S_ROW_INDEX  = { "PL Row Index", PT_UNSIGNED_INT };
@@ -261,6 +264,7 @@ static bool GetPlotEditingServiceParameterTypesForNamedParameters (const Service
 					S_RACK_INDEX,
 					S_RACK_NOTES,
 					S_APPEND_OBSERVATIONS,
+					S_ACCESSION,
 					{ NULL }
 				};
 
@@ -469,6 +473,13 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															uint32 observation_index = 1;
 															const Study *study_p = row_p -> sr_base.ro_study_p;
 															uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
+															ObservationMetadata *metadata_p = AllocateObservationMetadata (NULL, NULL, false, 1);
+
+															if (metadata_p)
+																{
+
+																	FreeObservationMetadata (metadata_p);
+																}		/* if (metadata_p) */
 
 															for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
 																{
@@ -488,6 +499,8 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																				{
 																					corrected_value_p = json_string (*corrected_value_ss);
 																				}
+
+
 
 
 																			bool free_measured_variable_flag = false;
@@ -543,6 +556,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																		}
 
 																}
+
 
 															if (num_successes == num_mv_entries)
 																{
@@ -858,35 +872,46 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 																{
 																	param_p -> pa_read_only_flag = true;
 
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_RACK_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
+
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_STRING, S_ACCESSION.npt_name_s, "Accession", "The accession for the line planted in this rack", rack_index_p, PL_ALL)) != NULL)
 																		{
-																			bool append_flag = true;
-
-																			if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND_OBSERVATIONS.npt_name_s, "Append observations", "Append to existing observations. Setting this to false, will clear any existing observations when you submit.",
-																																																		 &append_flag, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_RACK_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
 																				{
-																					const char *child_group_name_s = "Phenotypes";
+																					bool append_flag = true;
 
-																					if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+																					if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_APPEND_OBSERVATIONS.npt_name_s, "Append observations", "Append to existing observations. Setting this to false, will clear any existing observations when you submit.",
+																																																				 &append_flag, PL_ALL)) != NULL)
 																						{
-																							success_flag = true;
-																						}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																							const char *child_group_name_s = "Phenotypes";
+
+																							if (AddPhenotypeParameters (active_row_p, child_group_name_s, param_set_p, group_p, data_p))
+																								{
+																									success_flag = true;
+																								}		/* if (AddPhenotypeParameters (active_plot_p, child_group_name_s, param_set_p, group_p, dfw_data_p)) */
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																								}
+
+																						}
 																					else
 																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeParameters () failed");
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_APPEND_OBSERVATIONS.npt_name_s);
 																						}
 
-																				}
+																				}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL) */
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_APPEND_OBSERVATIONS.npt_name_s);
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_RACK_NOTES.npt_name_s);
 																				}
 
-																		}		/* if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL) */
+
+																		}		/*if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_STRING, S_ACCESSION.npt_name_s, "Accession", "The accession for the line planted in this rack", rack_index_p, PL_ALL)) != NULL)  */
 																	else
 																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_RACK_NOTES.npt_name_s);
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_ACCESSION.npt_name_s);
 																		}
+
 
 
 																}		/* if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_RACK_INDEX.npt_name_s, "Rack", "The rack index of this rack within the Study", rack_index_p, PL_ALL)) != NULL)*/
