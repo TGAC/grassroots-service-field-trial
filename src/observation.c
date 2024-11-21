@@ -82,95 +82,83 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
 	bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),
 	bool (*set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s),
-	bool (*get_value_as_string_fn) (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+	bool (*get_value_as_string_fn) (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 )
 {
-	struct tm *copied_start_date_p = NULL;
+	ObservationMetadata *metadata_p = AllocateObservationMetadata (start_date_p, end_date_p, false, OB_DEFAULT_INDEX);
 
-	if (CopyValidDate (start_date_p, &copied_start_date_p))
+	if (metadata_p)
 		{
-			struct tm *copied_end_date_p = NULL;
+			char *copied_growth_stage_s = NULL;
 
-			if (CopyValidDate (end_date_p, &copied_end_date_p))
+			if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
 				{
-					char *copied_growth_stage_s = NULL;
+					char *copied_method_s = NULL;
 
-					if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
+					if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
 						{
-							char *copied_method_s = NULL;
+							char *copied_notes_s = NULL;
 
-							if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
+							if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
 								{
-									char *copied_notes_s = NULL;
+									observation_p -> ob_id_p = id_p;
+									observation_p -> ob_phenotype_p = phenotype_p;
+									observation_p -> ob_phenotype_mem = phenotype_mem;
+									observation_p -> ob_metadata_p = metadata_p;
+									observation_p -> ob_instrument_p = instrument_p;
+									observation_p -> ob_growth_stage_s = copied_growth_stage_s;
+									observation_p -> ob_method_s = copied_method_s;
+									observation_p -> ob_notes_s = copied_notes_s;
+									observation_p -> ob_nature = nature;
+									observation_p -> ob_type = obs_type;
 
-									if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
+									if (index_p)
 										{
-											observation_p -> ob_id_p = id_p;
-											observation_p -> ob_phenotype_p = phenotype_p;
-											observation_p -> ob_phenotype_mem = phenotype_mem;
-											observation_p -> ob_start_date_p = copied_start_date_p;
-											observation_p -> ob_end_date_p = copied_end_date_p;
-											observation_p -> ob_instrument_p = instrument_p;
-											observation_p -> ob_growth_stage_s = copied_growth_stage_s;
-											observation_p -> ob_method_s = copied_method_s;
-											observation_p -> ob_notes_s = copied_notes_s;
-											observation_p -> ob_nature = nature;
-											observation_p -> ob_type = obs_type;
-
-											if (index_p)
-												{
-													observation_p -> ob_index = *index_p;
-												}
-											else
-												{
-													observation_p -> ob_index = OB_DEFAULT_INDEX;
-												}
-
-											observation_p -> ob_clear_fn = clear_fn;
-											observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
-											observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
-											observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
-											observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
-
-											return true;
-
-										}		/* if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL)) */
+											observation_p -> ob_index = *index_p;
+										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy notes_s \"%s\"", notes_s);
+											observation_p -> ob_index = OB_DEFAULT_INDEX;
 										}
 
+									observation_p -> ob_clear_fn = clear_fn;
+									observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
+									observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
+									observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
+									observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
 
-								}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
+									return true;
+
+								}		/* if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL)) */
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy notes_s \"%s\"", notes_s);
 								}
 
-							if (copied_growth_stage_s)
-								{
-									FreeCopiedString (copied_growth_stage_s);
-								}
 
-						}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
+						}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
 						}
 
-					if (copied_end_date_p)
+					if (copied_growth_stage_s)
 						{
-							FreeTime (copied_end_date_p);
-						}		/* if (copied_end_date_p) */
+							FreeCopiedString (copied_growth_stage_s);
+						}
 
-				}		/* if (CopyValidDate (end_date_p, &copied_end_date_p)) */
-
-			if (copied_start_date_p)
+				}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
+			else
 				{
-					FreeTime (copied_start_date_p);
-				}		/* if (copied_start_date_p) */
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
+				}
 
-		}		/* if (CopyValidDate (start_date_p, &copied_start_date_p)) */
+			FreeObservationMetadata (metadata_p);
+		}		/* if (metadata_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateObservationMetadata () failed");
+		}
 
 	return false;
 }
@@ -518,24 +506,11 @@ void ClearObservation (Observation *observation_p)
 			observation_p -> ob_phenotype_p = NULL;
 		}
 
-	if (observation_p -> ob_growth_stage_s)
+	if (observation_p -> ob_metadata_p)
 		{
-			FreeCopiedString (observation_p -> ob_growth_stage_s);
-			observation_p -> ob_growth_stage_s = NULL;
+			ClearObservationMetadata (observation_p -> ob_metadata_p);
 		}
 
-
-	if (observation_p -> ob_start_date_p)
-		{
-			FreeTime (observation_p -> ob_start_date_p);
-			observation_p -> ob_start_date_p = NULL;
-		}
-
-	if (observation_p -> ob_end_date_p)
-		{
-			FreeTime (observation_p -> ob_end_date_p);
-			observation_p -> ob_end_date_p = NULL;
-		}
 
 
 	if (observation_p -> ob_method_s)
@@ -973,7 +948,7 @@ bool AreObservationsMatchingByParts (const Observation *observation_p, const Mea
 				{
 					if (CompareObservationDates (observation_p -> ob_end_date_p, metadata_p -> om_end_date_p))
 						{
-							if ((metadata_p -> om_index_p) || (observation_p -> ob_index == * (metadata_p -> om_index_p)))
+							if (observation_p -> ob_index == metadata_p -> om_index)
 								{
 									match_flag = true;
 								}

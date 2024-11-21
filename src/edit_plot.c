@@ -369,7 +369,7 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 						{
 							const char *plot_notes_s = NULL;
 							bool append_flag = true;
-							bool *append_flag_p = &append_flag;
+							const bool *append_flag_p = &append_flag;
 							OperationStatus obs_status = OS_IDLE;
 
 							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND_OBSERVATIONS.npt_name_s, &append_flag_p);
@@ -472,7 +472,7 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
 															const Study *study_p = row_p -> sr_base.ro_study_p;
 															uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
-															ObservationMetadata *metadata_p = AllocateObservationMetadata (NULL, NULL, false, 1);
+															ObservationMetadata *metadata_p = AllocateObservationMetadata (NULL, NULL, false, OB_DEFAULT_INDEX);
 
 															if (metadata_p)
 																{
@@ -502,7 +502,8 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 																									bool free_measured_variable_flag = false;
 																									OperationStatus obs_status = OS_FAILED;
 
-																									metadata_p -> om_index = 1;
+																									metadata_p -> om_index = OB_DEFAULT_INDEX;
+
 
 																									obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, metadata_p, key_s,
 																																																				raw_value_p, corrected_value_p, *note_ss,
@@ -1392,6 +1393,7 @@ static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names
 																		while (obs_node_p && success_flag)
 																			{
 																				Observation *observation_p = obs_node_p -> on_observation_p;
+																				ObservationMetadata *metadata_p = observation_p -> ob_metadata_p;
 
 																				const char *mv_s = GetMeasuredVariableName (observation_p -> ob_phenotype_p);
 
@@ -1400,8 +1402,8 @@ static bool PopulateExistingValues (Row *active_row_p, char ***existing_mv_names
 																				if (copied_mv_s)
 																					{
 																						*existing_mv_name_ss = copied_mv_s;
-																						*existing_phenotype_start_date_pp = observation_p -> ob_start_date_p;
-																						*existing_phenotype_end_date_pp = observation_p -> ob_end_date_p;
+																						*existing_phenotype_start_date_pp = metadata_p -> om_start_date_p;
+																						*existing_phenotype_end_date_pp = metadata_p -> om_end_date_p;
 
 																						if (AddStringValueToArray (observation_p, OVT_RAW_VALUE, existing_phenotype_raw_value_ss))
 																							{

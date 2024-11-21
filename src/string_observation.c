@@ -18,7 +18,7 @@ static bool SetStringObservationValueFromString (Observation *observation_p, Obs
 
 static bool SetStringObservationValueFromJSON (Observation *observation_p, ObservationValueType ovt, const json_t *value_p);
 
-static bool GetStringObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
+static bool GetStringObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
 StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char * const raw_value_s, const char * const corrected_value_s,
@@ -175,10 +175,10 @@ static bool SetStringObservationValueFromString (Observation *observation_p, Obs
 }
 
 
-static bool GetStringObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+static bool GetStringObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 {
 	bool success_flag = false;
-	StringObservation *string_obs_p = (StringObservation *) observation_p;
+	const StringObservation *string_obs_p = (const StringObservation *) observation_p;
 
 	switch (ovt)
 		{

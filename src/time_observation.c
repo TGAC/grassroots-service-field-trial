@@ -218,13 +218,13 @@ bool SetTimeObservationCorrectedValueFromJSON (TimeObservation *observation_p, c
 }
 
 
-bool GetTimeObservationRawValueAsString (TimeObservation *observation_p, char **value_ss, bool *free_flag_p)
+bool GetTimeObservationRawValueAsString (const TimeObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
 	return GetValueAsString (observation_p -> to_raw_value_p, value_ss, free_flag_p);
 }
 
 
-bool GetTimeObservationCorrectedValueAsString (TimeObservation *observation_p, char **value_ss, bool *free_flag_p)
+bool GetTimeObservationCorrectedValueAsString (const TimeObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
 	return GetValueAsString (observation_p -> to_corrected_value_p, value_ss, free_flag_p);
 }
@@ -282,10 +282,10 @@ static bool SetTimeObservationValueFromJSON (Observation *observation_p, Observa
 }
 
 
-static bool GetTimeObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+static bool GetTimeObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 {
 	bool success_flag = false;
-	TimeObservation *time_obs_p = (TimeObservation *) observation_p;
+	const TimeObservation *time_obs_p = (const TimeObservation *) observation_p;
 
 	switch (ovt)
 		{

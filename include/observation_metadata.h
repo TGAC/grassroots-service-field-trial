@@ -32,6 +32,9 @@ extern "C"
 #endif
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL	ObservationMetadata *AllocateObservationMetadata (const struct tm * const start_date_p, const struct tm * const end_date_p, const bool corrected_flag, const uint32 index);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservationMetadata (ObservationMetadata *obs_metadata_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservationMetadata (ObservationMetadata *obs_metadata_p);

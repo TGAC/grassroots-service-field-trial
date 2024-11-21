@@ -30,7 +30,7 @@ HashTable *GetHashTableOfObservationMetadata (const uint32 initial_capacity, con
 }
 
 
-ObservationMetadata *AllocateObservationMetadata (const struct tm * const start_date_p, const struct tm * const end_date_p, const bool corrected_flag, const uint32 *index_p)
+ObservationMetadata *AllocateObservationMetadata (const struct tm * const start_date_p, const struct tm * const end_date_p, const bool corrected_flag, const uint32 index)
 {
 	struct tm *copied_start_date_p = NULL;
 
@@ -40,48 +40,16 @@ ObservationMetadata *AllocateObservationMetadata (const struct tm * const start_
 
 			if ((end_date_p == NULL) || ((copied_end_date_p = DuplicateTime (end_date_p)) != NULL))
 				{
-					uint32 *copied_index_p = NULL;
-					bool done_index_flag = false;
+					ObservationMetadata *metadata_p = (ObservationMetadata *) AllocMemory (sizeof (ObservationMetadata));
 
-					if (index_p)
+					if (metadata_p)
 						{
-							copied_index_p = (uint32 *) AllocMemory (sizeof (uint32));
+							metadata_p -> om_start_date_p = copied_start_date_p;
+							metadata_p -> om_end_date_p = copied_end_date_p;
+							metadata_p -> om_corrected_flag = corrected_flag;
+							metadata_p -> om_index = index;
 
-							if (copied_index_p)
-								{
-									*copied_index_p = *index_p;
-									done_index_flag = true;
-								}
-							else
-								{
-
-								}
-						}
-					else
-						{
-							done_index_flag = true;
-						}
-
-					if (done_index_flag)
-						{
-							ObservationMetadata *metadata_p = (ObservationMetadata *) AllocMemory (sizeof (ObservationMetadata));
-
-							if (metadata_p)
-								{
-									metadata_p -> om_start_date_p = copied_start_date_p;
-									metadata_p -> om_end_date_p = copied_end_date_p;
-									metadata_p -> om_corrected_flag = corrected_flag;
-									metadata_p -> om_index_p = copied_index_p;
-
-									return metadata_p;
-								}
-
-						}
-
-
-					if (copied_index_p)
-						{
-							FreeMemory (copied_index_p);
+							return metadata_p;
 						}
 
 					if (copied_end_date_p)
@@ -320,6 +288,13 @@ int CompareObservationMetadata (const ObservationMetadata * const om_0_p, const 
 	return res;
 }
 
+
+bool AddObservationMetadataToJSON (ObservationMetadata * const metadata_p, json_t *observation_json_p)
+{
+	bool success_flag = false;
+
+	return success_flag;
+}
 
 
 bool SetObservationMetadataStartDate (ObservationMetadata * const metadata_p, const struct tm * const time_p)

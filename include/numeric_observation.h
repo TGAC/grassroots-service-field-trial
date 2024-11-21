@@ -107,10 +107,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationRawValueToJSON (const Nu
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddNumericObservationCorrectedValueToJSON (const NumericObservation *obs_p, const char *key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetNumericObservationRawValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetNumericObservationRawValueAsString (const NumericObservation *observation_p, char **value_ss, bool *free_flag_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetNumericObservationCorrectedValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetNumericObservationCorrectedValueAsString (const NumericObservation *observation_p, char **value_ss, bool *free_flag_p);
 
 
 #ifdef __cplusplus

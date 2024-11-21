@@ -25,7 +25,7 @@ static bool SetNumericObservationValueFromJSON (Observation *observation_p, Obse
 
 static bool GetValueAsString (const double64 *value_p, char **value_ss, bool *free_flag_p);
 
-static bool GetNumericObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
+static bool GetNumericObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
 NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
@@ -159,13 +159,13 @@ bool SetNumericObservationCorrectedValueFromJSON (NumericObservation *observatio
 }
 
 
-bool GetNumericObservationRawValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
+bool GetNumericObservationRawValueAsString (const NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
 	return GetValueAsString (observation_p -> no_raw_value_p, value_ss, free_flag_p);
 }
 
 
-bool GetNumericObservationCorrectedValueAsString (NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
+bool GetNumericObservationCorrectedValueAsString (const NumericObservation *observation_p, char **value_ss, bool *free_flag_p)
 {
 	return GetValueAsString (observation_p -> no_corrected_value_p, value_ss, free_flag_p);
 }
@@ -412,10 +412,10 @@ static bool AddNumericValueToJSON (json_t *json_p, const char *key_s, const doub
 }
 
 
-static bool GetNumericObservationValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+static bool GetNumericObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 {
 	bool success_flag = false;
-	NumericObservation *num_obs_p = (NumericObservation *) observation_p;
+	const NumericObservation *num_obs_p = (const NumericObservation *) observation_p;
 
 	switch (ovt)
 		{

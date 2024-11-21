@@ -280,7 +280,7 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, Parameter *pa
 
 											if (!default_crop_s)
 												{
-													success_flag = SetDefaultCropValue (param_p, empty_option_s);
+													success_flag = SetDefaultCropValue ((StringParameter *) param_p, empty_option_s);
 
 													default_is_set_flag = true;
 												}
@@ -303,13 +303,13 @@ bool SetUpCropsListParameter (const FieldTrialServiceData *data_p, Parameter *pa
 																		{
 																			if (strcmp (crop_p -> cr_name_s, default_crop_s) == 0)
 																				{
-																					success_flag = SetDefaultCropValue (param_p, id_s);
+																					success_flag = SetDefaultCropValue ((StringParameter *) param_p, id_s);
 																					default_is_set_flag = true;
 																				}
 																		}
 																	else if (i == 0)
 																		{
-																			success_flag = SetDefaultCropValue (param_p, id_s);
+																			success_flag = SetDefaultCropValue ((StringParameter *) param_p, id_s);
 																			default_is_set_flag = true;
 																		}
 																}

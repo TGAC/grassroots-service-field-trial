@@ -25,7 +25,7 @@ static bool SetIntegerObservationValueFromJSON (Observation *observation_p, Obse
 
 static bool GetValueAsString (const int32 *value_p, char **value_ss, bool *free_flag_p);
 
-static bool GetIntegerValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
+static bool GetIntegerValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
 IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const int32 *raw_value_p, const int32 *corrected_value_p,
@@ -441,7 +441,7 @@ static bool AddIntegerValueToJSON (json_t *json_p, const char *key_s, const int3
 }
 
 
-static bool GetIntegerValueAsString (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+static bool GetIntegerValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 {
 	bool success_flag = false;
 	IntegerObservation *int_obs_p = (IntegerObservation *) observation_p;

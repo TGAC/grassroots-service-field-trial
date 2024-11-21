@@ -26,7 +26,7 @@
 #include "dfw_field_trial_service_data.h"
 #include "dfw_field_trial_service_library.h"
 #include "measured_variable.h"
-
+#include "observation_metadata.h"
 
 
 typedef enum ObservationType
@@ -64,17 +64,7 @@ typedef struct Observation
 {
 	bson_oid_t *ob_id_p;
 
-	/**
-	 * The date and time when the measuring for this Observation was started.
-	 * This can be <code>NULL</code> meaning that a date isn't applicable.
-	 */
-	struct tm *ob_start_date_p;
-
-	/**
-	 * The date and time when the measuring for this Observation was started.
-	 * This can be <code>NULL</code> meaning that a date isn't applicable.
-	 */
-	struct tm *ob_end_date_p;
+	ObservationMetadata *ob_metadata_p;
 
 	/**
 	 * The MeasuredVariable that this Observation is measuring.
@@ -125,7 +115,7 @@ typedef struct Observation
 
 	bool (*ob_set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s);
 
-	bool (*ob_get_value_as_string_fn) (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
+	bool (*ob_get_value_as_string_fn) (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 } Observation;
 
@@ -211,7 +201,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool InitObservation (Observation *observation_p, 
 	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
 	bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),
 	bool (*set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s),
-	bool (*get_value_as_string_fn) (struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+	bool (*get_value_as_string_fn) (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 );
 
 
