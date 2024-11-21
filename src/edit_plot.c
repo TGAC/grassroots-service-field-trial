@@ -470,92 +470,112 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 															const struct tm **end_date_pp = end_dates_pp;
 															const char *key_s = "";
 															MEM_FLAG mv_mem = MF_ALREADY_FREED;
-															uint32 observation_index = 1;
 															const Study *study_p = row_p -> sr_base.ro_study_p;
 															uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
 															ObservationMetadata *metadata_p = AllocateObservationMetadata (NULL, NULL, false, 1);
 
 															if (metadata_p)
 																{
+																	for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
+																		{
+																			MeasuredVariable *mv_p = GetMeasuredVariableByVariableName (*mv_ss, &mv_mem, data_p);
+
+																			if (mv_p)
+																				{
+																					json_t *raw_value_p = NULL;
+																					json_t *corrected_value_p = NULL;
+
+																					if (*raw_value_ss)
+																						{
+																							raw_value_p = json_string (*raw_value_ss);
+																						}
+
+																					if (*corrected_value_ss)
+																						{
+																							corrected_value_p = json_string (*corrected_value_ss);
+																						}
+
+																					if (SetObservationMetadataStartDate (metadata_p, *start_date_pp))
+																						{
+																							if (SetObservationMetadataEndDate (metadata_p, *end_date_pp))
+																								{
+																									bool free_measured_variable_flag = false;
+																									OperationStatus obs_status = OS_FAILED;
+
+																									metadata_p -> om_index = 1;
+
+																									obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, metadata_p, key_s,
+																																																				raw_value_p, corrected_value_p, *note_ss,
+																																																				&free_measured_variable_flag, SetObservationError, NULL);
+
+																									if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
+																										{
+																											++ num_successes;
+																										}
+																									else
+																										{
+																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationValueToStandardRowByParts () failed for " UINT32_FMT
+																																	" in study \"%s\" with raw value \"%s\", corrected value \"%s\", corrected flag %d, obervation index " UINT32_FMT,
+																																	row_p -> sr_base.ro_by_study_index, row_p -> sr_base.ro_study_p -> st_name_s, *raw_value_ss, *corrected_value_ss,
+																																	corrected_value_p, metadata_p -> om_index);
+																										}
+
+
+																									if ((mv_mem == MF_DEEP_COPY) || (mv_mem == MF_SHALLOW_COPY))
+																										{
+																											//FreeMeasuredVariable (mv_p);
+																										}
+
+																									/* check if the measured variable needs to be added to those referenced by the study */
+																									if (study_p -> st_phenotypes_p)
+																										{
+																											const char *mv_s = GetMeasuredVariableName (mv_p);
+																											PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
+																											bool new_mv_flag = true;
+
+																											while (node_p && new_mv_flag)
+																												{
+																													if (strcmp (mv_s, node_p -> psn_measured_variable_name_s) == 0)
+																														{
+																															new_mv_flag = false;
+																														}
+
+																													node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
+																												}
+
+																											if (new_mv_flag)
+																												{
+
+																												}
+																										}		/* if (study_p -> st_phenotypes_p) */
+
+
+
+																								}		/* if (SetObservationMetadataStartDate (metadata_p, *start_date_pp)) */
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set end date for mv " UINT32_FMT, i);
+																								}
+
+																						}		/* if (SetObservationMetadataStartDate (metadata_p, *start_date_pp)) */
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set start date for mv " UINT32_FMT, i);
+																						}
+
+
+																				}		/* if (mv_p) */
+																			else
+																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariableByVariableName () failed for \"%s\"", *mv_ss);
+																				}
+
+																		}
 
 																	FreeObservationMetadata (metadata_p);
 																}		/* if (metadata_p) */
 
-															for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
-																{
-																	MeasuredVariable *mv_p = GetMeasuredVariableByVariableName (*mv_ss, &mv_mem, data_p);
 
-																	if (mv_p)
-																		{
-																			json_t *raw_value_p = NULL;
-																			json_t *corrected_value_p = NULL;
-
-																			if (*raw_value_ss)
-																				{
-																					raw_value_p = json_string (*raw_value_ss);
-																				}
-
-																			if (*corrected_value_ss)
-																				{
-																					corrected_value_p = json_string (*corrected_value_ss);
-																				}
-
-
-
-
-																			bool free_measured_variable_flag = false;
-																			OperationStatus obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, *start_date_pp, *end_date_pp,
-																														key_s, raw_value_p, corrected_value_p, *note_ss, observation_index, &free_measured_variable_flag,
-																														SetObservationError, NULL);
-
-																			if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
-																				{
-																					++ num_successes;
-																				}
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationValueToStandardRowByParts () failed for " UINT32_FMT 
-																											" in study \"%s\" with raw value \"%s\", corrected value \"%s\", corrected flag %d, obervation index " UINT32_FMT, 
-																											row_p -> sr_base.ro_by_study_index, row_p -> sr_base.ro_study_p -> st_name_s, *raw_value_ss, *corrected_value_ss, 
-																											corrected_value_p, observation_index);																							
-																				}
-
-
-																			if ((mv_mem == MF_DEEP_COPY) || (mv_mem == MF_SHALLOW_COPY))
-																				{
-																					//FreeMeasuredVariable (mv_p);
-																				}
-
-																			/* check if the measured variable needs to be added to those referenced by the study */
-																			if (study_p -> st_phenotypes_p)
-																				{
-																					const char *mv_s = GetMeasuredVariableName (mv_p);
-																					PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
-																					bool new_mv_flag = true;
-
-																					while (node_p && new_mv_flag)
-																						{
-																							if (strcmp (mv_s, node_p -> psn_measured_variable_name_s) == 0)
-																								{
-																									new_mv_flag = false;
-																								}
-
-																							node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
-																						}
-
-																					if (new_mv_flag)
-																						{
-
-																						}
-																				}		/* if (study_p -> st_phenotypes_p) */
-
-																		}
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariableByVariableName () failed for \"%s\"", *mv_ss);		
-																		}
-
-																}
 
 
 															if (num_successes == num_mv_entries)
