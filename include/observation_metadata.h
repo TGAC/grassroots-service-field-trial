@@ -11,6 +11,7 @@
 
 #include <time.h>
 
+#include "jansson.h"
 #include "typedefs.h"
 
 #include "dfw_field_trial_service_library.h"
@@ -38,6 +39,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL	ObservationMetadata *AllocateObservationMetadata (
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearObservationMetadata (ObservationMetadata *obs_metadata_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeObservationMetadata (ObservationMetadata *obs_metadata_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddObservationMetadataToJSON (ObservationMetadata * const metadata_p, json_t *observation_json_p);
+
 
 
 /**

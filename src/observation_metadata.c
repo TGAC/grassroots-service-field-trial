@@ -20,10 +20,10 @@ static bool FillObservationMetadataHashBucket (HashBucket * const bucket_p, cons
 
 
 /**
-	* Get A HashTable of HashBuckets that have strings for their keys and values.
-	*
-	*
-	*/
+ * Get A HashTable of HashBuckets that have strings for their keys and values.
+ *
+ *
+ */
 HashTable *GetHashTableOfObservationMetadata (const uint32 initial_capacity, const uint8 load_percentage)
 {
 	return AllocateHashTable (initial_capacity, load_percentage, HashString, CreateDeepCopyHashBuckets, NULL, FillObservationMetadataHashBucket, CompareStringHashBuckets, NULL, NULL);
@@ -293,6 +293,44 @@ bool AddObservationMetadataToJSON (ObservationMetadata * const metadata_p, json_
 {
 	bool success_flag = false;
 
+	if (AddValidDateToJSON (metadata_p -> om_start_date_p, observation_json_p, OB_START_DATE_S, true))
+		{
+			if (AddValidDateToJSON (metadata_p -> om_end_date_p, observation_json_p, OB_END_DATE_S, true))
+				{
+					success_flag = true;
+				}		/*if (AddValidDateToJSON (metadata_p -> om_end_date_p, observation_json_p, OB_END_DATE_S, true)) */
+			else
+				{
+					char *date_s = GetTimeAsString (metadata_p -> om_end_date_p, false, NULL);
+
+					if (date_s)
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": \"%s\" to JSON", OB_END_DATE_S, date_s);
+							FreeCopiedString (date_s);
+						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": unknown end date to JSON", OB_END_DATE_S);
+						}
+				}
+
+
+
+		}		/* if (AddValidDateToJSON (metadata_p -> om_start_date_p, observation_json_p, OB_START_DATE_S)) */
+	else
+		{
+			char *date_s = GetTimeAsString (metadata_p -> om_start_date_p, false, NULL);
+
+			if (date_s)
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": \"%s\" to JSON", OB_START_DATE_S, date_s);
+					FreeCopiedString (date_s);
+				}
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": unknown start date to JSON", OB_START_DATE_S);
+				}
+		}
 	return success_flag;
 }
 
@@ -382,28 +420,28 @@ static bool FillObservationMetadataValue (const void *src_p, const void **dest_p
 	bool success_flag = true;
 
 	switch (mf)
-		{
-			case MF_DEEP_COPY:
-				{
-					ObservationMetadata *dest_p = CopyObservationMetadata ((const ObservationMetadata * const) src_p);
+	{
+		case MF_DEEP_COPY:
+			{
+				ObservationMetadata *dest_p = CopyObservationMetadata ((const ObservationMetadata * const) src_p);
 
-					if (dest_p)
-						{
-							*dest_pp = dest_p;
-						}
-					else
-						{
-							success_flag = false;
-						}
-				}
-				break;
+				if (dest_p)
+					{
+						*dest_pp = dest_p;
+					}
+				else
+					{
+						success_flag = false;
+					}
+			}
+			break;
 
-			case MF_SHALLOW_COPY:
-			case MF_SHADOW_USE:
-			case MF_ALREADY_FREED:
-				*dest_pp = src_p;
-				break;
-		}
+		case MF_SHALLOW_COPY:
+		case MF_SHADOW_USE:
+		case MF_ALREADY_FREED:
+			*dest_pp = src_p;
+			break;
+	}
 
 	return success_flag;
 }

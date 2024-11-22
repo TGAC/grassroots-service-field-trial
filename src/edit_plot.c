@@ -839,6 +839,7 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 					uint32 *column_index_p = NULL;
 					uint32 *rack_index_p = NULL;
 					const char *notes_s = NULL;
+					const char *accession_s = NULL;
 
 					if (active_row_p)
 						{
@@ -888,13 +889,11 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 														{
 															param_p -> pa_read_only_flag = true;
 
-
 															if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_RACK_INDEX.npt_name_s, "Rack", "The rack index of this rack within the Study", rack_index_p, PL_ALL)) != NULL)
 																{
 																	param_p -> pa_read_only_flag = true;
 
-
-																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_STRING, S_ACCESSION.npt_name_s, "Accession", "The accession for the line planted in this rack", rack_index_p, PL_ALL)) != NULL)
+																	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_STRING, S_ACCESSION.npt_name_s, "Accession", "The accession for the line planted in this rack", accession_s, PL_ALL)) != NULL)
 																		{
 																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, PT_LARGE_STRING, S_RACK_NOTES.npt_name_s, "Notes", "Any notes for this rack", notes_s, PL_ALL)) != NULL)
 																				{

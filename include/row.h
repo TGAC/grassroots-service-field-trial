@@ -57,7 +57,7 @@ struct Row
 
 	bson_oid_t *ro_id_p;
 
-	const struct Study *ro_study_p;
+	struct Study *ro_study_p;
 
 	struct Plot *ro_plot_p;
 

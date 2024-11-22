@@ -77,12 +77,12 @@ static bool GetObservationTypeFromJSON (ObservationType *type_p, const json_t *d
 
 
 bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
-	void (*clear_fn) (Observation *observation_p),
-	bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
-	bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),
-	bool (*set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s),
-	bool (*get_value_as_string_fn) (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
+											const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
+											void (*clear_fn) (Observation *observation_p),
+											bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
+											bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),
+											bool (*set_value_from_string_fn) (struct Observation *observation_p, ObservationValueType ovt, const char *value_s),
+											bool (*get_value_as_string_fn) (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 )
 {
 	ObservationMetadata *metadata_p = AllocateObservationMetadata (start_date_p, end_date_p, false, OB_DEFAULT_INDEX);
@@ -177,11 +177,11 @@ Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_
 }
 
 Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
-																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
-																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
-																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
-																	void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p),
-																	ServiceJob *job_p, void *user_data_p)
+																									MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
+																									const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
+																									const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
+																									void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p),
+																									ServiceJob *job_p, void *user_data_p)
 {
 	Observation *observation_p = NULL;
 	const ScaleClass *class_p = GetMeasuredVariableScaleClass (phenotype_p);
@@ -189,291 +189,291 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 	if (class_p)
 		{
 			switch (class_p -> sc_type)
-				{
-					case PT_SIGNED_REAL:
-						{
-							double64 *raw_p = NULL;
-							double64 *corrected_p = NULL;
-							double64 raw_value = 0.0;
-							double64 corrected_value = 0.0;
+			{
+				case PT_SIGNED_REAL:
+					{
+						double64 *raw_p = NULL;
+						double64 *corrected_p = NULL;
+						double64 raw_value = 0.0;
+						double64 corrected_value = 0.0;
 
-							if (raw_value_p)
-								{
-									if (json_is_number (raw_value_p))
-										{
-											raw_value = json_real_value (raw_value_p);
-											raw_p = &raw_value;
-										}
-									else if (json_is_string (raw_value_p))
-										{
-											if (GetRealValueFromJSONString (raw_value_p, &raw_value))
-												{
-													raw_p = &raw_value;
-												}
-											else
-												{
-													const char *value_s = json_string_value (raw_value_p);
-													
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", value_s);
+						if (raw_value_p)
+							{
+								if (json_is_number (raw_value_p))
+									{
+										raw_value = json_real_value (raw_value_p);
+										raw_p = &raw_value;
+									}
+								else if (json_is_string (raw_value_p))
+									{
+										if (GetRealValueFromJSONString (raw_value_p, &raw_value))
+											{
+												raw_p = &raw_value;
+											}
+										else
+											{
+												const char *value_s = json_string_value (raw_value_p);
 
-													if (on_error_callback_fn && job_p)
-														{
-															on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
-														}	
-												}
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json Numeric type: %d", json_typeof (raw_value_p));
+												PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", value_s);
 
-											if (on_error_callback_fn && job_p)
-												{
-													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
-												}	
-										}
-								}
+												if (on_error_callback_fn && job_p)
+													{
+														on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+													}
+											}
+									}
+								else
+									{
+										PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json Numeric type: %d", json_typeof (raw_value_p));
 
-							if (corrected_value_p)
-								{
-									if (json_is_number (corrected_value_p))
-										{
-											corrected_value = json_real_value (corrected_value_p);
-											corrected_p = &corrected_value;
-										}
-									else if (json_is_string (corrected_value_p))
-										{
-											if (GetRealValueFromJSONString (corrected_value_p, &corrected_value))
-												{
-													corrected_p = &corrected_value;
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (corrected_value_p));
-													
-													if (on_error_callback_fn && job_p)
-														{
-															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
-														}	
-												}
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
-											
-											if (on_error_callback_fn && job_p)
-												{
-													on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
-												}	
-										}
+										if (on_error_callback_fn && job_p)
+											{
+												on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+											}
+									}
+							}
 
-								}
+						if (corrected_value_p)
+							{
+								if (json_is_number (corrected_value_p))
+									{
+										corrected_value = json_real_value (corrected_value_p);
+										corrected_p = &corrected_value;
+									}
+								else if (json_is_string (corrected_value_p))
+									{
+										if (GetRealValueFromJSONString (corrected_value_p, &corrected_value))
+											{
+												corrected_p = &corrected_value;
+											}
+										else
+											{
+												PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetRealValueFromJSONString () failed for \"%s\"", json_string_value (corrected_value_p));
 
-							if (raw_p || corrected_p)
-								{
-									NumericObservation *numeric_obs_p = AllocateNumericObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+												if (on_error_callback_fn && job_p)
+													{
+														on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+													}
+											}
+									}
+								else
+									{
+										PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
 
-									if (numeric_obs_p)
-										{
-											observation_p = & (numeric_obs_p -> no_base_observation);
-										}
-								}
-						}
-						break;
+										if (on_error_callback_fn && job_p)
+											{
+												on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+											}
+									}
 
-					case PT_UNSIGNED_INT:
-					case PT_SIGNED_INT:
-						{
-							int32 *raw_p = NULL;
-							int32 *corrected_p = NULL;
-							int32 raw_value = 0;
-							int32 corrected_value = 0;
+							}
 
-							if (raw_value_p)
-								{
-									if (json_is_integer (raw_value_p))
-										{
-											raw_value = json_integer_value (raw_value_p);
-											raw_p = &raw_value;
-										}
-									else if (json_is_string (raw_value_p))
-										{
-											const char *value_s = json_string_value (raw_value_p);
+						if (raw_p || corrected_p)
+							{
+								NumericObservation *numeric_obs_p = AllocateNumericObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
 
-											if (GetValidInteger (&value_s, &raw_value))
-												{
-													raw_p = &raw_value;
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
-													
-													if (on_error_callback_fn && job_p)
-														{
-															on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
-														}	
-												}
+								if (numeric_obs_p)
+									{
+										observation_p = & (numeric_obs_p -> no_base_observation);
+									}
+							}
+					}
+					break;
 
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
-											
-											if (on_error_callback_fn && job_p)
-												{
-													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
-												}	
-										}
-								}
+				case PT_UNSIGNED_INT:
+				case PT_SIGNED_INT:
+					{
+						int32 *raw_p = NULL;
+						int32 *corrected_p = NULL;
+						int32 raw_value = 0;
+						int32 corrected_value = 0;
 
-							if (corrected_value_p)
-								{
-									if (json_is_integer (corrected_value_p))
-										{
-											corrected_value = json_integer_value (corrected_value_p);
-											corrected_p = &corrected_value;
-										}
-									else if (json_is_string (corrected_value_p))
-										{
-											const char *value_s = json_string_value (corrected_value_p);
+						if (raw_value_p)
+							{
+								if (json_is_integer (raw_value_p))
+									{
+										raw_value = json_integer_value (raw_value_p);
+										raw_p = &raw_value;
+									}
+								else if (json_is_string (raw_value_p))
+									{
+										const char *value_s = json_string_value (raw_value_p);
 
-											if (GetValidInteger (&value_s, &corrected_value))
-												{
-													corrected_p = &corrected_value;
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
-													
-													if (on_error_callback_fn && job_p)
-														{
-															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
-														}	
-												}
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
-											
-											if (on_error_callback_fn && job_p)
-												{
-													on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
-												}	
-										}
+										if (GetValidInteger (&value_s, &raw_value))
+											{
+												raw_p = &raw_value;
+											}
+										else
+											{
+												PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
 
-								}
+												if (on_error_callback_fn && job_p)
+													{
+														on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+													}
+											}
 
-							if (raw_p || corrected_p)
-								{
-									IntegerObservation *int_obs_p = AllocateIntegerObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+									}
+								else
+									{
+										PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (raw_value_p));
 
-									if (int_obs_p)
-										{
-											observation_p = & (int_obs_p -> io_base_observation);
-										}
-								}
-						}
-						break;
+										if (on_error_callback_fn && job_p)
+											{
+												on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+											}
+									}
+							}
+
+						if (corrected_value_p)
+							{
+								if (json_is_integer (corrected_value_p))
+									{
+										corrected_value = json_integer_value (corrected_value_p);
+										corrected_p = &corrected_value;
+									}
+								else if (json_is_string (corrected_value_p))
+									{
+										const char *value_s = json_string_value (corrected_value_p);
+
+										if (GetValidInteger (&value_s, &corrected_value))
+											{
+												corrected_p = &corrected_value;
+											}
+										else
+											{
+												PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetValidInteger () failed for \"%s\"", value_s);
+
+												if (on_error_callback_fn && job_p)
+													{
+														on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+													}
+											}
+									}
+								else
+									{
+										PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Invalid json type: %d", json_typeof (corrected_value_p));
+
+										if (on_error_callback_fn && job_p)
+											{
+												on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+											}
+									}
+
+							}
+
+						if (raw_p || corrected_p)
+							{
+								IntegerObservation *int_obs_p = AllocateIntegerObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+
+								if (int_obs_p)
+									{
+										observation_p = & (int_obs_p -> io_base_observation);
+									}
+							}
+					}
+					break;
 
 
-					case PT_STRING:
-						{
-							const char *raw_value_s = NULL;
-							const char *corrected_value_s = NULL;
+				case PT_STRING:
+					{
+						const char *raw_value_s = NULL;
+						const char *corrected_value_s = NULL;
 
-							if (json_is_string (raw_value_p))
-								{
-									raw_value_s = json_string_value (raw_value_p);
-								}
+						if (json_is_string (raw_value_p))
+							{
+								raw_value_s = json_string_value (raw_value_p);
+							}
 
-							if (json_is_string (corrected_value_p))
-								{
-									corrected_value_s = json_string_value (corrected_value_p);
-								}
+						if (json_is_string (corrected_value_p))
+							{
+								corrected_value_s = json_string_value (corrected_value_p);
+							}
 
-							if (raw_value_s || corrected_value_s)
-								{
-									StringObservation *string_obs_p = AllocateStringObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+						if (raw_value_s || corrected_value_s)
+							{
+								StringObservation *string_obs_p = AllocateStringObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
 
-									if (string_obs_p)
-										{
-											observation_p = & (string_obs_p -> so_base_observation);
-										}
-								}
-						}
-						break;
+								if (string_obs_p)
+									{
+										observation_p = & (string_obs_p -> so_base_observation);
+									}
+							}
+					}
+					break;
 
-					case PT_TIME:
-						{
-							struct tm *raw_time_p = NULL;
-							struct tm *corrected_time_p = NULL;
-							bool success_flag = true;
+				case PT_TIME:
+					{
+						struct tm *raw_time_p = NULL;
+						struct tm *corrected_time_p = NULL;
+						bool success_flag = true;
 
-							if (json_is_string (raw_value_p))
-								{
-									const char *raw_value_s = json_string_value (raw_value_p);
-									raw_time_p = GetTimeFromString (raw_value_s);
+						if (json_is_string (raw_value_p))
+							{
+								const char *raw_value_s = json_string_value (raw_value_p);
+								raw_time_p = GetTimeFromString (raw_value_s);
 
-									if (!raw_time_p)
-										{
-											success_flag = false;
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", raw_value_s);
-											
-											if (on_error_callback_fn && job_p)
-												{
-													on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
-												}	
-										}
-								}
+								if (!raw_time_p)
+									{
+										success_flag = false;
+										PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", raw_value_s);
 
-							if (success_flag)
-								{
-									if (json_is_string (corrected_value_p))
-										{
-											const char *corrected_value_s = json_string_value (corrected_value_p);
-											corrected_time_p = GetTimeFromString (corrected_value_s);
+										if (on_error_callback_fn && job_p)
+											{
+												on_error_callback_fn (job_p, OB_RAW_VALUE_S, raw_value_p, user_data_p);
+											}
+									}
+							}
 
-											if (!corrected_time_p)
-												{
-													success_flag = false;
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", corrected_value_s);
-													
-													if (on_error_callback_fn && job_p)
-														{
-															on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
-														}				
-												}
-										}
-								}
+						if (success_flag)
+							{
+								if (json_is_string (corrected_value_p))
+									{
+										const char *corrected_value_s = json_string_value (corrected_value_p);
+										corrected_time_p = GetTimeFromString (corrected_value_s);
 
-							if (success_flag)
-								{
-									if (raw_value_p || corrected_value_p)
-										{
-											TimeObservation *time_obs_p = AllocateTimeObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_time_p, corrected_time_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+										if (!corrected_time_p)
+											{
+												success_flag = false;
+												PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "GetTimeFromString () failed for \"%s\"", corrected_value_s);
 
-											if (time_obs_p)
-												{
-													observation_p = & (time_obs_p -> to_base_observation);
-												}
-										}
-								}
+												if (on_error_callback_fn && job_p)
+													{
+														on_error_callback_fn (job_p, OB_CORRECTED_VALUE_S, corrected_value_p, user_data_p);
+													}
+											}
+									}
+							}
 
-							if (raw_time_p)
-								{
-									FreeTime (raw_time_p);
-								}
+						if (success_flag)
+							{
+								if (raw_value_p || corrected_value_p)
+									{
+										TimeObservation *time_obs_p = AllocateTimeObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_time_p, corrected_time_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
 
-							if (corrected_time_p)
-								{
-									FreeTime (corrected_time_p);
-								}
+										if (time_obs_p)
+											{
+												observation_p = & (time_obs_p -> to_base_observation);
+											}
+									}
+							}
 
-						}
-						break;
+						if (raw_time_p)
+							{
+								FreeTime (raw_time_p);
+							}
 
-					default:
-						break;
-				}
+						if (corrected_time_p)
+							{
+								FreeTime (corrected_time_p);
+							}
+
+					}
+					break;
+
+				default:
+					break;
+			}
 
 		}
 	else
@@ -585,95 +585,46 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 	if (observation_json_p)
 		{
-			if (AddValidDateToJSON (observation_p -> ob_start_date_p, observation_json_p, OB_START_DATE_S, true))
+			if (AddObservationMetadataToJSON (observation_p -> ob_metadata_p, observation_json_p))
 				{
-					if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, true))
+					if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || (SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)))
 						{
-							if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || (SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)))
+							if ((IsStringEmpty (observation_p -> ob_method_s)) || (SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)))
 								{
-									if ((IsStringEmpty (observation_p -> ob_method_s)) || (SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)))
+									if ((IsStringEmpty (observation_p -> ob_notes_s)) || (SetJSONString (observation_json_p, OB_NOTES_S, observation_p -> ob_notes_s)))
 										{
-											if ((IsStringEmpty (observation_p -> ob_notes_s)) || (SetJSONString (observation_json_p, OB_NOTES_S, observation_p -> ob_notes_s)))
+											if (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))
 												{
-													if (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))
+													bool done_objects_flag = false;
+
+													if (format == VF_CLIENT_FULL)
 														{
-															bool done_objects_flag = false;
+															bool done_instrument_flag = false;
 
-															if (format == VF_CLIENT_FULL)
+															if (observation_p -> ob_instrument_p)
 																{
-																	bool done_instrument_flag = false;
+																	json_t *instrument_json_p = GetInstrumentAsJSON (observation_p -> ob_instrument_p);
 
-																	if (observation_p -> ob_instrument_p)
+																	if (instrument_json_p)
 																		{
-																			json_t *instrument_json_p = GetInstrumentAsJSON (observation_p -> ob_instrument_p);
-
-																			if (instrument_json_p)
+																			if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0)
 																				{
-																					if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0)
-																						{
-																							done_instrument_flag = true;
-																						}		/* if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0) */
-																					else
-																						{
-																							json_decref (instrument_json_p);
-																						}
+																					done_instrument_flag = true;
+																				}		/* if (json_object_set_new (observation_json_p, OB_INSTRUMENT_S, instrument_json_p) == 0) */
+																			else
+																				{
+																					json_decref (instrument_json_p);
 																				}
 																		}
-																	else
-																		{
-																			done_instrument_flag = true;
-																		}
-
-																	if (done_instrument_flag)
-																		{
-																			json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
-
-																			if (phenotype_json_p)
-																				{
-																					if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
-																						{
-																							done_objects_flag = true;
-																						}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
-																					else
-																						{
-																							json_decref (phenotype_json_p);
-																						}
-																				}
-																		}
-
-																}		/* iif (format == VF_CLIENT_FULL) */
-															else if (format == VF_STORAGE)
+																}
+															else
 																{
-																	if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
-																		{
-																			if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
-																				{
-																					if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
-																						{
-																							if (AddObservationNatureToJSON (observation_p -> ob_nature, observation_json_p))
-																								{
-																									done_objects_flag = true;
-																								}
-																							else
-																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_nature);
-																								}
-																						}
-																				}
+																	done_instrument_flag = true;
+																}
 
-																		}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
-																	else
-																		{
-																			char id_s [MONGO_OID_STRING_BUFFER_SIZE];
-
-																			bson_oid_to_string (observation_p -> ob_id_p, id_s);
-																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
-																		}
-
-																}		/* else if (format == VF_STORAGE) */
-															else if (format == VF_CLIENT_MINIMAL)
+															if (done_instrument_flag)
 																{
-																	json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, VF_CLIENT_MINIMAL);
+																	json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
 
 																	if (phenotype_json_p)
 																		{
@@ -686,87 +637,103 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 																					json_decref (phenotype_json_p);
 																				}
 																		}
+																}
 
-																}		/* else if (format == VF_CLIENT_MINIMAL) */
-
-
-															if (done_objects_flag)
+														}		/* iif (format == VF_CLIENT_FULL) */
+													else if (format == VF_STORAGE)
+														{
+															if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p))
 																{
-																	if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
+																	if ((! (observation_p -> ob_instrument_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_instrument_p -> in_id_p, OB_INSTRUMENT_ID_S)))
 																		{
-																			if (observation_p -> ob_add_values_to_json_fn (observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true))
+																			if ((! (observation_p -> ob_phenotype_p)) || (AddNamedCompoundIdToJSON (observation_json_p, observation_p -> ob_phenotype_p -> mv_id_p, OB_PHENOTYPE_ID_S)))
 																				{
-																					return observation_json_p;
+																					if (AddObservationNatureToJSON (observation_p -> ob_nature, observation_json_p))
+																						{
+																							done_objects_flag = true;
+																						}
+																					else
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": %d to JSON", OB_NATURE_S, observation_p -> ob_nature);
+																						}
 																				}
-																			else
-																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Unknown observation type %d", observation_p -> ob_type);
-																				}
+																		}
 
+																}		/* if (AddCompoundIdToJSON (observation_json_p, observation_p -> ob_id_p)) */
+															else
+																{
+																	char id_s [MONGO_OID_STRING_BUFFER_SIZE];
+
+																	bson_oid_to_string (observation_p -> ob_id_p, id_s);
+																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", MONGO_ID_S, id_s);
+																}
+
+														}		/* else if (format == VF_STORAGE) */
+													else if (format == VF_CLIENT_MINIMAL)
+														{
+															json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, VF_CLIENT_MINIMAL);
+
+															if (phenotype_json_p)
+																{
+																	if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0)
+																		{
+																			done_objects_flag = true;
+																		}		/* if (json_object_set_new (observation_json_p, OB_PHENOTYPE_S, phenotype_json_p) == 0) */
+																	else
+																		{
+																			json_decref (phenotype_json_p);
+																		}
+																}
+
+														}		/* else if (format == VF_CLIENT_MINIMAL) */
+
+
+													if (done_objects_flag)
+														{
+															if (AddDatatype (observation_json_p, DFTD_OBSERVATION))
+																{
+																	if (observation_p -> ob_add_values_to_json_fn (observation_p, OB_RAW_VALUE_S, OB_CORRECTED_VALUE_S, observation_json_p, NULL, true))
+																		{
+																			return observation_json_p;
+																		}
+																	else
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Unknown observation type %d", observation_p -> ob_type);
 																		}
 
 																}
 
-
-														}		/* if ((observation_p -> ob_index == 1) || (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))) */
-													else
-														{
-															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": " UINT32_FMT " to JSON", OB_INDEX_S, observation_p -> ob_index);
 														}
 
-												}		/* if ((IsStringEmpty (observation_p -> ob_notes_s)) || (SetJSONString (observation_json_p, OB_NOTES_S, observation_p -> ob_notes_s))) */
+
+												}		/* if ((observation_p -> ob_index == 1) || (SetJSONInteger (observation_json_p, OB_INDEX_S, observation_p -> ob_index))) */
 											else
 												{
-													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_NOTES_S, observation_p -> ob_notes_s);
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": " UINT32_FMT " to JSON", OB_INDEX_S, observation_p -> ob_index);
 												}
 
-
-
-										}		/* if ((IsStringEmpty (observation_p -> ob_method_s)) || SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)) */
+										}		/* if ((IsStringEmpty (observation_p -> ob_notes_s)) || (SetJSONString (observation_json_p, OB_NOTES_S, observation_p -> ob_notes_s))) */
 									else
 										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_METHOD_S, observation_p -> ob_method_s);
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_NOTES_S, observation_p -> ob_notes_s);
 										}
 
-								}		/* if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)) */
+
+
+								}		/* if ((IsStringEmpty (observation_p -> ob_method_s)) || SetJSONString (observation_json_p, OB_METHOD_S, observation_p -> ob_method_s)) */
 							else
 								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s);
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_METHOD_S, observation_p -> ob_method_s);
 								}
 
-						}		/* if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, false)) */
+						}		/* if ((IsStringEmpty (observation_p -> ob_growth_stage_s)) || SetJSONString (observation_json_p, OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s)) */
 					else
 						{
-							char *date_s = GetTimeAsString (observation_p -> ob_end_date_p, false, NULL);
-
-							if (date_s)
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": \"%s\" to JSON", OB_END_DATE_S, date_s);
-									FreeCopiedString (date_s);
-								}
-							else
-								{
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": unknown end date to JSON", OB_END_DATE_S);
-								}
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to set \"%s\": \"%s\" to JSON", OB_GROWTH_STAGE_S, observation_p -> ob_growth_stage_s);
 						}
 
+				}		/* if (AddValidDateToJSON (observation_p -> ob_end_date_p, observation_json_p, OB_END_DATE_S, false)) */
 
-
-				}		/* if (AddValidDateToJSON (observation_p -> ob_date_p, observation_json_p, OB_START_DATE_S)) */
-			else
-				{
-					char *date_s = GetTimeAsString (observation_p -> ob_start_date_p, false, NULL);
-
-					if (date_s)
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": \"%s\" to JSON", OB_START_DATE_S, date_s);
-							FreeCopiedString (date_s);
-						}
-					else
-						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to add \"%s\": unknown start date to JSON", OB_START_DATE_S);
-						}
-				}
 
 			json_decref (observation_json_p);
 		}		/* if (observation_json_p) */
@@ -921,7 +888,7 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 			if (observation_json_p)
 				{
 					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, observation_json_p, data_p -> dftsd_collection_ss [DFTD_OBSERVATION], 
-													data_p -> dftsd_backup_collection_ss [DFTD_OBSERVATION], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
+																															data_p -> dftsd_backup_collection_ss [DFTD_OBSERVATION], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (observation_json_p);
 				}		/* if (observation_json_p) */
@@ -1046,27 +1013,27 @@ ObservationType GetObservationTypeForScaleClass (const ScaleClass *class_p)
 	ObservationType obs_type = OT_NUM_TYPES;
 
 	switch (class_p -> sc_type)
-		{
-			case PT_SIGNED_REAL:
-				obs_type = OT_NUMERIC;
-				break;
+	{
+		case PT_SIGNED_REAL:
+			obs_type = OT_NUMERIC;
+			break;
 
-			case PT_STRING:
-				obs_type = OT_STRING;
-				break;
+		case PT_STRING:
+			obs_type = OT_STRING;
+			break;
 
-			case PT_SIGNED_INT:
-			case PT_UNSIGNED_INT:
-				obs_type = OT_INTEGER;
-				break;
+		case PT_SIGNED_INT:
+		case PT_UNSIGNED_INT:
+			obs_type = OT_INTEGER;
+			break;
 
-			case PT_TIME:
-				obs_type = OT_TIME;
-				break;
+		case PT_TIME:
+			obs_type = OT_TIME;
+			break;
 
-			default:
-				break;
-		}
+		default:
+			break;
+	}
 
 	return obs_type;
 }
