@@ -2657,7 +2657,7 @@ static bool ProcessStudyPhenotype (const char *phenotype_oid_s, void *user_data_
 															 */
 															if (standard_row_p -> sr_observations_p -> ll_size > 0)
 																{
-																	Observation *obs_p = GetMatchingObservation (standard_row_p, phenotype_p, NULL, NULL, NULL);
+																	Observation *obs_p = GetMatchingObservation (standard_row_p, phenotype_p, NULL);
 
 																	if (obs_p)
 																		{

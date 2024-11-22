@@ -91,6 +91,7 @@ SRCS 	= \
 	metadata.c \
 	numeric_observation.c \
 	observation.c \
+	observation_metadata.c \
 	permissions_editor.c \
 	person.c \
 	person_jobs.c \

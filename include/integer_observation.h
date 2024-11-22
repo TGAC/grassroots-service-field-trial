@@ -38,8 +38,8 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const int32 *raw_value_p, const int32 *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL IntegerObservation *AllocateIntegerObservation (bson_oid_t *id_p, const ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const int32 *raw_value_p, const int32 *corrected_value_p,
+																																							const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const char *notes_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearIntegerObservation (Observation *observation_p);

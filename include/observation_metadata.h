@@ -17,6 +17,10 @@
 #include "dfw_field_trial_service_library.h"
 #include "dfw_field_trial_service_data.h"
 
+#include "measured_variable.h"
+#include "string_hash_table.h"
+
+
 
 typedef struct ObservationMetadata
 {
@@ -57,6 +61,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationMetadataStartDate (ObservationM
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool SetObservationMetadataEndDate (ObservationMetadata * const metadata_p, const struct tm * const time_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL int CompareObservationMetadata (const ObservationMetadata * const om_0_p, const ObservationMetadata * const om_1_p);
 
 
 #ifdef __cplusplus

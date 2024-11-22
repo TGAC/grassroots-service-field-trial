@@ -40,9 +40,10 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const struct tm *raw_value_p, const struct tm *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s);
-
+DFW_FIELD_TRIAL_SERVICE_LOCAL TimeObservation *AllocateTimeObservation (bson_oid_t *id_p, ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p,
+																																				MEM_FLAG phenotype_mem, const struct tm *raw_value_p,
+																																				const struct tm *corrected_value_p, const char *growth_stage_s, const char *method_s,
+																																				Instrument *instrument_p, const ObservationNature nature, const char *notes_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearTimeObservation (Observation *observation_p);
 

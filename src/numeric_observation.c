@@ -28,8 +28,8 @@ static bool GetValueAsString (const double64 *value_p, char **value_ss, bool *fr
 static bool GetNumericObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
-NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s)
+NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const double *raw_value_p, const double *corrected_value_p,
+	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const char *notes_s)
 {
 	double64 *copied_raw_value_p = NULL;
 
@@ -45,7 +45,7 @@ NumericObservation *AllocateNumericObservation (bson_oid_t *id_p, const struct t
 						{
 							memset (observation_p, 0, sizeof (NumericObservation));
 
-							if (InitObservation (& (observation_p -> no_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s,
+							if (InitObservation (& (observation_p -> no_base_observation), id_p, metadata_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, notes_s,
 																	 OT_NUMERIC,
 																	 ClearNumericObservation,
 																	 AddNumericObservationValuesToJSON,

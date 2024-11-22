@@ -168,7 +168,7 @@ static void ProcessMartiResults (json_t *results_json_p, json_t *study_json_p, c
 						{
 							if (strcmp (service_name_s, marti_service_name_s) == 0)
 								{
-									int32 status = OS_IDLE;
+									json_int_t status = OS_IDLE;
 
 									if (GetJSONInteger (job_p, SERVICES_STATUS_S, &status))
 										{

@@ -11,12 +11,30 @@
 
 #include "time_util.h"
 
+#include "observation.h"
+
+#include "measured_variable_jobs.h"
+#include "math_utils.h"
+
+#include "plot_jobs.h"
+
+#include "dfw_util.h"
+
+#include "string_hash_table.h"
+
+
 
 static int CompareDatePointers (const struct tm *tm_0_p, const struct tm *tm_1_p);
 
 
 static bool FillObservationMetadataHashBucket (HashBucket * const bucket_p, const void * const key_p, const void * const value_p);
 
+static bool FillObservationMetadataValue (const void *src_p, const void **dest_pp, const MEM_FLAG mf);
+
+static bool SetObservationMetadataDate (const struct tm * const src_p, struct tm **dest_pp);
+
+
+static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s);
 
 
 /**
@@ -258,31 +276,35 @@ ObservationMetadata *CopyObservationMetadata (const ObservationMetadata * const 
 
 int CompareObservationMetadata (const ObservationMetadata * const om_0_p, const ObservationMetadata * const om_1_p)
 {
-	int res = CompareDatePointers (om_0_p, om_1_p);
+	int res = CompareDatePointers (om_0_p -> om_start_date_p, om_1_p -> om_start_date_p);
 
 	if (res == 0)
 		{
-			if (om_0_p -> om_corrected_flag == om_1_p -> om_corrected_flag)
+			res = CompareDatePointers (om_1_p -> om_end_date_p, om_1_p -> om_end_date_p);
+
+			if (res == 0)
 				{
-					if (om_0_p -> om_index < om_1_p -> om_index)
+					if (om_0_p -> om_corrected_flag == om_1_p -> om_corrected_flag)
 						{
-							res = -1;
+							if (om_0_p -> om_index < om_1_p -> om_index)
+								{
+									res = -1;
+								}
+							else if (om_0_p -> om_index > om_1_p -> om_index)
+								{
+									res = 1;
+								}
+
 						}
-					else if (om_0_p -> om_index > om_1_p -> om_index)
+					else if (om_0_p -> om_corrected_flag)
 						{
 							res = 1;
 						}
-
+					else
+						{
+							res = -1;
+						}
 				}
-			else if (om_0_p -> om_corrected_flag)
-				{
-					res = 1;
-				}
-			else
-				{
-					res = -1;
-				}
-
 		}
 
 	return res;
@@ -448,4 +470,20 @@ static bool FillObservationMetadataValue (const void *src_p, const void **dest_p
 
 
 
+static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s)
+{
+	char *error_s = ConcatenateVarargsStrings (prefix_s, " \"", value_s, "\" in column \"", key_s, "\"", NULL);
+
+	if (error_s)
+		{
+			AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
+			FreeCopiedString (error_s);
+		}
+	else
+		{
+			AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, prefix_s);
+		}
+
+	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "%s \"%s\" in column \"%s\"", prefix_s, value_s, key_s);
+}
 

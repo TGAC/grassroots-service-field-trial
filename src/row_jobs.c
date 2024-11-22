@@ -59,7 +59,6 @@ typedef struct
 /**
  * Report any errors from GetObservationMetadata ()
  */
-static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s);
 
 
 static void SetObservationError (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p);
@@ -530,7 +529,7 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 	const char *method_s = NULL;
 	ObservationNature nature = ON_ROW;
 	Instrument *instrument_p = NULL;
-	ObservationNode *observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, start_date_p, end_date_p, &observation_index);
+	ObservationNode *observation_node_p = GetMatchingObservationNode (row_p, measured_variable_p, metadata_p);
 
 	if (observation_node_p)
 		{
@@ -669,8 +668,9 @@ OperationStatus AddObservationValueToStandardRowByParts (ServiceJob *job_p, Stan
 
 							if (obs_type != OT_NUM_TYPES)
 								{
-									observation_p = AllocateObservationWithErrorHandler (observation_id_p, start_date_p, end_date_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p, corrected_value_p, growth_stage_s, method_s, instrument_p, nature,
-																											 &observation_index, notes_s, obs_type, on_error_callback_fn, job_p, user_data_p);
+									observation_p = AllocateObservationWithErrorHandler (observation_id_p, metadata_p, measured_variable_p, MF_SHALLOW_COPY, raw_value_p,
+																																			 corrected_value_p, growth_stage_s, method_s, instrument_p, nature,
+																																			 notes_s, obs_type, on_error_callback_fn, job_p, user_data_p);
 								}
 
 							if (observation_p)
@@ -1099,7 +1099,7 @@ ObservationNode *GetMatchingObservationNode (const StandardRow *row_p, const Mea
 		{
 			Observation *existing_observation_p = node_p -> on_observation_p;
 
-			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, start_date_p, end_date_p, index_p))
+			if (AreObservationsMatchingByParts (existing_observation_p, variable_p, metadata_p))
 				{
 					return node_p;
 				}
@@ -1113,9 +1113,9 @@ ObservationNode *GetMatchingObservationNode (const StandardRow *row_p, const Mea
 }
 
 
-Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const struct tm *start_date_p, const struct tm *end_date_p, const uint32 *index_p)
+Observation *GetMatchingObservation (const StandardRow *row_p, const MeasuredVariable *variable_p, const ObservationMetadata *metadata_p)
 {
-	ObservationNode *node_p = GetMatchingObservationNode (row_p, variable_p, start_date_p, end_date_p, index_p);
+	ObservationNode *node_p = GetMatchingObservationNode (row_p, variable_p, metadata_p);
 
 	if (node_p)
 		{
@@ -1432,19 +1432,4 @@ static void ReportJSONError (ServiceJob *job_p, const NamedParameterType *param_
 
 }
 
-static void ReportObservationMetadataError (ServiceJob *job_p, const char *prefix_s, const char *key_s, const char *value_s)
-{
-	char *error_s = ConcatenateVarargsStrings (prefix_s, " \"", value_s, "\" in column \"", key_s, "\"", NULL);
 
-	if (error_s)
-		{
-			AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, error_s);
-			FreeCopiedString (error_s);
-		}
-	else
-		{
-			AddParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, prefix_s);
-		}
-
-	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "%s \"%s\" in column \"%s\"", prefix_s, value_s, key_s);
-}

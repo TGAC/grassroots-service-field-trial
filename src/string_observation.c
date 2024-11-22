@@ -21,8 +21,9 @@ static bool SetStringObservationValueFromJSON (Observation *observation_p, Obser
 static bool GetStringObservationValueAsString (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p);
 
 
-StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem, const char * const raw_value_s, const char * const corrected_value_s,
-	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s)
+StringObservation *AllocateStringObservation (bson_oid_t *id_p, ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
+																							const char * const raw_value_s, const char * const corrected_value_s, const char *growth_stage_s,
+																							const char *method_s, Instrument *instrument_p, const ObservationNature nature, const char *notes_s)
 {
 	char *copied_raw_value_s = NULL;
 
@@ -38,7 +39,7 @@ StringObservation *AllocateStringObservation (bson_oid_t *id_p, const struct tm 
 						{
 							memset (observation_p, 0, sizeof (StringObservation));
 
-							if (InitObservation (& (observation_p -> so_base_observation), id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s,
+							if (InitObservation (& (observation_p -> so_base_observation), id_p, metadata_p, phenotype_p, phenotype_mem, growth_stage_s, method_s, instrument_p, nature, notes_s,
 																	 OT_STRING,
 																	 ClearStringObservation, AddStringObservationValuesToJSON, SetStringObservationValueFromJSON,
 																	 SetStringObservationValueFromString, GetStringObservationValueAsString))

@@ -76,8 +76,8 @@ static bool GetObservationTypeFromJSON (ObservationType *type_p, const json_t *d
  */
 
 
-bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
-											const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
+bool InitObservation (Observation *observation_p, bson_oid_t *id_p, ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p, MEM_FLAG phenotype_mem,
+											const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature, const char *notes_s, const ObservationType obs_type,
 											void (*clear_fn) (Observation *observation_p),
 											bool (*add_values_to_json_fn) (const struct Observation *obs_p, const char *raw_key_s, const char *corrected_key_s, json_t *json_p, const char *null_sequence_s, bool only_if_exists_flag),
 											bool (*set_value_from_json_fn) (struct Observation *observation_p, ObservationValueType ovt, const json_t *value_p),
@@ -85,79 +85,58 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 											bool (*get_value_as_string_fn) (const struct Observation *observation_p, ObservationValueType ovt, char **value_ss, bool *free_value_flag_p)
 )
 {
-	ObservationMetadata *metadata_p = AllocateObservationMetadata (start_date_p, end_date_p, false, OB_DEFAULT_INDEX);
+	char *copied_growth_stage_s = NULL;
 
-	if (metadata_p)
+	if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
 		{
-			char *copied_growth_stage_s = NULL;
+			char *copied_method_s = NULL;
 
-			if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL))
+			if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
 				{
-					char *copied_method_s = NULL;
+					char *copied_notes_s = NULL;
 
-					if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL))
+					if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
 						{
-							char *copied_notes_s = NULL;
+							observation_p -> ob_id_p = id_p;
+							observation_p -> ob_phenotype_p = phenotype_p;
+							observation_p -> ob_phenotype_mem = phenotype_mem;
+							observation_p -> ob_metadata_p = metadata_p;
+							observation_p -> ob_instrument_p = instrument_p;
+							observation_p -> ob_growth_stage_s = copied_growth_stage_s;
+							observation_p -> ob_method_s = copied_method_s;
+							observation_p -> ob_notes_s = copied_notes_s;
+							observation_p -> ob_nature = nature;
+							observation_p -> ob_type = obs_type;
+							observation_p -> ob_clear_fn = clear_fn;
+							observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
+							observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
+							observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
+							observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
 
-							if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
-								{
-									observation_p -> ob_id_p = id_p;
-									observation_p -> ob_phenotype_p = phenotype_p;
-									observation_p -> ob_phenotype_mem = phenotype_mem;
-									observation_p -> ob_metadata_p = metadata_p;
-									observation_p -> ob_instrument_p = instrument_p;
-									observation_p -> ob_growth_stage_s = copied_growth_stage_s;
-									observation_p -> ob_method_s = copied_method_s;
-									observation_p -> ob_notes_s = copied_notes_s;
-									observation_p -> ob_nature = nature;
-									observation_p -> ob_type = obs_type;
+							return true;
 
-									if (index_p)
-										{
-											observation_p -> ob_index = *index_p;
-										}
-									else
-										{
-											observation_p -> ob_index = OB_DEFAULT_INDEX;
-										}
-
-									observation_p -> ob_clear_fn = clear_fn;
-									observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
-									observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
-									observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
-									observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
-
-									return true;
-
-								}		/* if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL)) */
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy notes_s \"%s\"", notes_s);
-								}
-
-
-						}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
+						}		/* if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy notes_s \"%s\"", notes_s);
 						}
 
-					if (copied_growth_stage_s)
-						{
-							FreeCopiedString (copied_growth_stage_s);
-						}
 
-				}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
+				}		/* if ((IsStringEmpty (method_s)) || ((copied_method_s = EasyCopyToNewString (method_s)) != NULL)) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy method_s \"%s\"", method_s);
 				}
 
-			FreeObservationMetadata (metadata_p);
-		}		/* if (metadata_p) */
+			if (copied_growth_stage_s)
+				{
+					FreeCopiedString (copied_growth_stage_s);
+				}
+
+		}		/* if ((IsStringEmpty (growth_stage_s)) || ((copied_growth_stage_s = EasyCopyToNewString (growth_stage_s)) != NULL)) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateObservationMetadata () failed");
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy growth_stage_s \"%s\"", growth_stage_s);
 		}
 
 	return false;
@@ -167,19 +146,19 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, const struct
 
 
 
-Observation *AllocateObservation (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
+Observation *AllocateObservation (bson_oid_t *id_p, ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p,
 																	MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
 																	const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
-																	const uint32 *index_p, const char *notes_s, const ObservationType obs_type)
+																	const char *notes_s, const ObservationType obs_type)
 {
-	return AllocateObservationWithErrorHandler (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s,
-																							method_s, instrument_p, nature, index_p, notes_s, obs_type, NULL, NULL, NULL);
+	return AllocateObservationWithErrorHandler (id_p, metadata_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s,
+																							method_s, instrument_p, nature, notes_s, obs_type, NULL, NULL, NULL);
 }
 
-Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct tm *start_date_p, const struct tm *end_date_p, MeasuredVariable *phenotype_p,
+Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, ObservationMetadata *metadata_p, MeasuredVariable *phenotype_p,
 																									MEM_FLAG phenotype_mem, const json_t *raw_value_p, const json_t *corrected_value_p,
 																									const char *growth_stage_s, const char *method_s, Instrument *instrument_p, const ObservationNature nature,
-																									const uint32 *index_p, const char *notes_s, const ObservationType obs_type,
+																									const char *notes_s, const ObservationType obs_type,
 																									void (*on_error_callback_fn) (ServiceJob *job_p, const char * const observation_field_s, const void *value_p, void *user_data_p),
 																									ServiceJob *job_p, void *user_data_p)
 {
@@ -270,7 +249,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 
 						if (raw_p || corrected_p)
 							{
-								NumericObservation *numeric_obs_p = AllocateNumericObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+								NumericObservation *numeric_obs_p = AllocateNumericObservation (id_p, metadata_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, notes_s);
 
 								if (numeric_obs_p)
 									{
@@ -364,7 +343,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 
 						if (raw_p || corrected_p)
 							{
-								IntegerObservation *int_obs_p = AllocateIntegerObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+								IntegerObservation *int_obs_p = AllocateIntegerObservation (id_p, metadata_p, phenotype_p, phenotype_mem, raw_p, corrected_p, growth_stage_s, method_s, instrument_p, nature, notes_s);
 
 								if (int_obs_p)
 									{
@@ -392,7 +371,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 
 						if (raw_value_s || corrected_value_s)
 							{
-								StringObservation *string_obs_p = AllocateStringObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+								StringObservation *string_obs_p = AllocateStringObservation (id_p, metadata_p, phenotype_p, phenotype_mem, raw_value_s, corrected_value_s, growth_stage_s, method_s, instrument_p, nature, notes_s);
 
 								if (string_obs_p)
 									{
@@ -449,7 +428,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, const struct
 							{
 								if (raw_value_p || corrected_value_p)
 									{
-										TimeObservation *time_obs_p = AllocateTimeObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_time_p, corrected_time_p, growth_stage_s, method_s, instrument_p, nature, index_p, notes_s);
+										TimeObservation *time_obs_p = AllocateTimeObservation (id_p, metadata_p, phenotype_p, phenotype_mem, raw_time_p, corrected_time_p, growth_stage_s, method_s, instrument_p, nature, notes_s);
 
 										if (time_obs_p)
 											{
@@ -810,15 +789,24 @@ Observation *GetObservationFromJSON (const json_t *observation_json_p, FieldTria
 
 																	if (obs_type != OT_NUM_TYPES)
 																		{
-																			char *error_s = NULL;
-																			GetObservationNatureFromJSON (&nature, observation_json_p);
+																			ObservationMetadata *metadata_p = AllocateObservationMetadata (start_date_p, end_date_p, false, index);
 
-																			observation_p = AllocateObservation (id_p, start_date_p, end_date_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s,
-																																					 instrument_p, nature, &index, notes_s, class_p -> sc_type);
-
-																			if (!observation_p)
+																			if (metadata_p)
 																				{
-																					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
+																					char *error_s = NULL;
+
+																					GetObservationNatureFromJSON (&nature, observation_json_p);
+
+																					observation_p = AllocateObservation (id_p, metadata_p, phenotype_p, phenotype_mem, raw_value_p, corrected_value_p, growth_stage_s, method_s,
+																																							 instrument_p, nature, notes_s, class_p -> sc_type);
+
+																					if (!observation_p)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, observation_json_p, "Failed to allocate Observation");
+
+																							FreeObservationMetadata (metadata_p);
+																						}
+
 																				}
 																		}
 																}
@@ -901,7 +889,7 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 
 bool AreObservationsMatching (const Observation *observation_0_p, const Observation *observation_1_p)
 {
-	return AreObservationsMatchingByParts (observation_0_p, observation_1_p -> ob_phenotype_p, observation_1_p -> ob_start_date_p, observation_1_p -> ob_end_date_p, & (observation_1_p -> ob_index));
+	return AreObservationsMatchingByParts (observation_0_p, observation_1_p -> ob_phenotype_p, observation_1_p -> ob_metadata_p);
 }
 
 
@@ -911,14 +899,13 @@ bool AreObservationsMatchingByParts (const Observation *observation_p, const Mea
 
 	if (bson_oid_equal (variable_p -> mv_id_p, observation_p -> ob_phenotype_p -> mv_id_p))
 		{
-			if (CompareObservationDates (observation_p -> ob_start_date_p, metadata_p -> om_start_date_p))
+			int res = CompareObservationMetadata (observation_p -> ob_metadata_p, metadata_p);
+
+			if (res == 0)
 				{
-					if (CompareObservationDates (observation_p -> ob_end_date_p, metadata_p -> om_end_date_p))
+					if (observation_p -> ob_index == metadata_p -> om_index)
 						{
-							if (observation_p -> ob_index == metadata_p -> om_index)
-								{
-									match_flag = true;
-								}
+							match_flag = true;
 						}
 				}
 		}
@@ -936,16 +923,17 @@ bool AddObservationValuesToFrictionlessData (Observation *obs_p, json_t *fd_json
 	if (variable_s)
 		{
 			char *key_s = NULL;
+			const ObservationMetadata *metadata_p = obs_p -> ob_metadata_p;
 
-			if (obs_p -> ob_start_date_p)
+			if (metadata_p -> om_start_date_p)
 				{
-					char *start_time_s = GetTimeAsString (obs_p -> ob_start_date_p, true, NULL);
+					char *start_time_s = GetTimeAsString (metadata_p -> om_start_date_p, true, NULL);
 
 					if (start_time_s)
 						{
-							if (obs_p -> ob_end_date_p)
+							if (metadata_p -> om_end_date_p)
 								{
-									char *end_time_s = GetTimeAsString (obs_p -> ob_end_date_p, true, NULL);
+									char *end_time_s = GetTimeAsString (metadata_p -> om_end_date_p, true, NULL);
 
 									if (end_time_s)
 										{
