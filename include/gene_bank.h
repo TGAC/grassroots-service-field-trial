@@ -64,6 +64,7 @@ typedef struct GeneBank
 /* Location */
 
 
+GENE_BANK_PREFIX const char *GENE_BANK_GRU_S GENE_BANK_VAL ("Germplasm Resources Unit");
 
 GENE_BANK_PREFIX const char *GB_NAME_S GENE_BANK_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 

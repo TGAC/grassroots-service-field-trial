@@ -367,10 +367,95 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 				{
 					if (active_row_p -> ro_type == RT_STANDARD)
 						{
+							StandardRow *active_sr_p = (StandardRow *) active_row_p;
 							const char *plot_notes_s = NULL;
 							bool append_flag = true;
 							const bool *append_flag_p = &append_flag;
 							OperationStatus obs_status = OS_IDLE;
+							const char *accession_s = NULL;
+
+							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_ACCESSION.npt_name_s, &accession_s);
+
+							if (!IsStringEmpty (accession_s))
+								{
+									bool new_material_flag = false;
+
+									if (active_sr_p -> sr_material_p)
+										{
+											/* Check to see if the accession has been updated */
+
+											if (active_sr_p -> sr_material_p -> ma_accession_s)
+												{
+													if (Stricmp (accession_s, active_sr_p -> sr_material_p -> ma_accession_s))
+														{
+															/* Accession has changed */
+															new_material_flag = true;
+														}
+												}
+											else
+												{
+													new_material_flag = true;
+												}
+
+										}
+									else
+										{
+											new_material_flag = true;
+										}
+
+									/*
+									 * Do we have a new accession?
+									 */
+									if (new_material_flag)
+										{
+											GeneBank *gene_bank_p = NULL;
+
+											/* In the future we could have the gene bank name coming from the service */
+											if (!gene_bank_p)
+												{
+													gene_bank_p = GetGeneBankByName (GENE_BANK_GRU_S, data_p);
+												}
+
+											if (gene_bank_p)
+												{
+													Material *material_p = GetOrCreateMaterialByAccession (accession_s, gene_bank_p, data_p);
+
+													if (material_p)
+														{
+															if (active_sr_p -> sr_material_p)
+																{
+																	/*  remove accession */
+																	FreeMaterial (active_sr_p -> sr_material_p);
+																}
+
+															active_sr_p -> sr_material_p = material_p;
+														}
+													else
+														{
+															AddParameterErrorMessageToServiceJob (job_p, S_ACCESSION.npt_name_s, S_ACCESSION.npt_type, "Failed to find material for accession");
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get material for accession \"%s\"", accession_s);
+														}
+
+												}
+											else
+												{
+													AddParameterErrorMessageToServiceJob (job_p, S_ACCESSION.npt_name_s, S_ACCESSION.npt_type, "Failed to get GRU Gene Bank for getting accession");
+												}
+
+										}
+								}
+							else
+								{
+									if (active_sr_p -> sr_material_p)
+										{
+											/*  remove accession */
+											FreeMaterial (active_sr_p -> sr_material_p);
+											active_sr_p -> sr_material_p = NULL;
+										}
+
+								}
+
+
 
 							GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_APPEND_OBSERVATIONS.npt_name_s, &append_flag_p);
 
@@ -808,6 +893,9 @@ static ServiceMetadata *GetPlotEditingServiceMetadata (Service *service_p)
 }
 
 
+
+
+
 static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, DataResource *resource_p)
 {
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
@@ -855,6 +943,11 @@ static bool AddEditPlotParams (ServiceData *data_p, ParameterSet *param_set_p, D
 											StandardRow *sr_p = (StandardRow *) (active_row_p);
 
 											rack_index_p = & (sr_p -> sr_rack_index);
+
+											if (sr_p -> sr_material_p)
+												{
+													accession_s = sr_p -> sr_material_p -> ma_accession_s;
+												}
 										}
 								}
 

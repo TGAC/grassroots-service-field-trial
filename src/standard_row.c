@@ -198,6 +198,12 @@ void ClearStandardRow (Row *row_p)
 }
 
 
+void SetStandardRowMaterial (StandardRow *row_p, Material *material_p, MEM_FLAG material_mem)
+{
+
+}
+
+
 
 StandardRow *GetStandardRowFromJSON (const json_t *row_json_p, Plot *plot_p, Material *material_p, const Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
 {

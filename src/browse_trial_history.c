@@ -223,8 +223,15 @@ static ParameterSet *GetBrowseTrialHistoryServiceParameters (Service *service_p,
 
 static FieldTrial *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType trial_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
 {
+	void *(*get_versioned_obj_fn) (const char *id_s, const char *timestamp_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p) =
+			(void * (*) (const char *, const char *, const ViewFormat, FieldTrialServiceData *)) GetVersionedFieldTrial;
+
+	void *(*get_obj_by_id_fn) (const char *id_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p) =
+			(void *(*) (const char *id_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p)) GetFieldTrialByIdString;
+
+
 	FieldTrial *trial_p = (FieldTrial *) GetVersionedObjectFromResource (resource_p, trial_param_type, original_id_ss, ft_data_p,
-																																			 GetVersionedFieldTrial, GetFieldTrialByIdString);
+																																			 get_versioned_obj_fn, get_obj_by_id_fn);
 
 	return trial_p;
 }

@@ -1121,7 +1121,10 @@ static Parameter *GetTableParameter (ParameterSet *param_set_p, ParameterGroup *
 }
 
 
-static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p, StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p, json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index, int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
+static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, ServiceJob *job_p, json_t *table_row_json_p,
+																													StandardRow *existing_row_p, Study *study_p, GeneBank *gru_gene_bank_p,
+																													json_t *unknown_cols_p, json_t *notes_cols_p, const uint32 row_index,
+																													int32 rack_studywise_index, Plot *plot_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	StandardRow *sr_p = NULL;
@@ -1676,7 +1679,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 			size_t num_fully_imported = 0;
 			size_t num_partially_imported = 0;
 			char *study_id_s = NULL;
-			GeneBank *gru_gene_bank_p = GetGeneBankByName ("Germplasm Resources Unit", data_p);
+			GeneBank *gru_gene_bank_p = GetGeneBankByName (GENE_BANK_GRU_S, data_p);
 
 			if (gru_gene_bank_p)
 				{

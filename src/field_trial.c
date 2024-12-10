@@ -629,7 +629,10 @@ FieldTrial *GetFieldTrialById (const bson_oid_t *id_p, const ViewFormat format, 
 
 FieldTrial *GetVersionedFieldTrial (const char *field_trial_id_s, const char *timestamp_s, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	FieldTrial *trial_p = GetVersionedObject (field_trial_id_s, timestamp_s, format, DFTD_FIELD_TRIAL, data_p, GetFieldTrialFromJSON);
+	void *(*callback_fn) (json_t *json_p, ViewFormat format, const FieldTrialServiceData *data_p) =
+			(void * (*) (json_t *, ViewFormat, const FieldTrialServiceData *)) GetFieldTrialFromJSON;
+
+	FieldTrial *trial_p = GetVersionedObject (field_trial_id_s, timestamp_s, format, DFTD_FIELD_TRIAL, data_p, callback_fn);
 	return trial_p;
 }
 

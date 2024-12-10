@@ -57,6 +57,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSearchMaterialParameterTypeForNamedParamet
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GetAllStudiesContainingMaterial (Material *material_p, ServiceJob *job_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
+
 #ifdef __cplusplus
 }
 #endif

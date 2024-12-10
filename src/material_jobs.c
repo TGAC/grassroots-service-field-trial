@@ -824,4 +824,3 @@ Material *GetOrCreateMaterial (const json_t *plot_data_p, GeneBank *gene_bank_p,
 
 
 
-

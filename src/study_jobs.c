@@ -205,9 +205,12 @@ static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *
 
 static OperationStatus ProcessMeasuredVariables (ServiceJob *job_p, ParameterSet *param_set_p, Study *study_p, FieldTrialServiceData *ft_service_data_p);
 
+static bool AddFieldTrialSubmissionParameter (Study *active_study_p, ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *dfw_data_p);
+
+
 
 #ifdef ENABLE_MARTI
-	static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, FieldTrialServiceData *ft_service_data_p);
+static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *longitude_p, const struct tm *date_p, FieldTrialServiceData *ft_service_data_p);
 #endif
 
 
@@ -583,6 +586,21 @@ json_t *GetOldStudyIndexingData (Service *service_p)
 
 
 
+static bool AddWizardParams (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *dfw_data_p)
+{
+
+	/*
+	 * Study Name
+	 * Trial
+	 * Location
+	 * Plot Rows
+	 * Plot cols
+	 *
+	 * create the study and plots with their ids, bson oids, row and column
+	 */
+
+	return false;
+}
 
 
 
@@ -668,16 +686,16 @@ bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *p
 bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
 	const NamedParameterType params [] =
-		{
-			STUDY_NUM_PLOT_ROWS ,
-			STUDY_NUM_PLOT_COLS,
-			STUDY_NUM_REPLICATES,
-			STUDY_PLOT_WIDTH,
-			STUDY_PLOT_LENGTH,
-			STUDY_SOWING_YEAR,
-			STUDY_HARVEST_YEAR,
-			NULL
-		};
+			{
+					STUDY_NUM_PLOT_ROWS ,
+					STUDY_NUM_PLOT_COLS,
+					STUDY_NUM_REPLICATES,
+					STUDY_PLOT_WIDTH,
+					STUDY_PLOT_LENGTH,
+					STUDY_SOWING_YEAR,
+					STUDY_HARVEST_YEAR,
+					NULL
+			};
 
 	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
@@ -1665,7 +1683,7 @@ json_t *GetAllStudiesAsJSON (const FieldTrialServiceData *data_p, bool full_data
 			else
 				{
 					opts_p = BCON_NEW ("projection", "{", ST_NAME_S, BCON_BOOL (true), "}",
-															"sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
+														 "sort", "{", ST_NAME_S, BCON_INT32 (1), "}");
 				}
 
 			results_p = GetAllMongoResultsAsJSON (data_p -> dftsd_mongo_p, query_p, opts_p);
@@ -1843,53 +1861,53 @@ OperationStatus GenerateStatisticsForAllStudies (ServiceJob *job_p,  FieldTrialS
 
 			if (stats_filename_s)
 				{
-				json_array_foreach (all_studies_p, i, study_json_p)
-					{
-					Study *study_p = GetStudyFromJSON (study_json_p, VF_STORAGE, data_p);
-
-					if (study_p)
-						{
-						OperationStatus stats_status = GenerateStatisticsForStudy (study_p, job_p, data_p);
-
-						FILE *stats_f = fopen (stats_filename_s, "a");
-						if (stats_f)
+					json_array_foreach (all_studies_p, i, study_json_p)
 							{
-							char *id_s = GetBSONOidAsString (study_p->st_id_p);
-							int64 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+						Study *study_p = GetStudyFromJSON (study_json_p, VF_STORAGE, data_p);
 
-							fprintf (stats_f, "\"%s\" %s %ld\n", study_p->st_name_s, id_s ? id_s : "_", num_plots);
-
-							if (id_s)
-								{
-								FreeBSONOidString (id_s);
-								}
-
-							fclose (stats_f);
-							}
-
-
-						if (stats_status == OS_SUCCEEDED)
+						if (study_p)
 							{
-							++num_successes;
-							}
+								OperationStatus stats_status = GenerateStatisticsForStudy (study_p, job_p, data_p);
+
+								FILE *stats_f = fopen (stats_filename_s, "a");
+								if (stats_f)
+									{
+										char *id_s = GetBSONOidAsString (study_p->st_id_p);
+										int64 num_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+										fprintf (stats_f, "\"%s\" %s %ld\n", study_p->st_name_s, id_s ? id_s : "_", num_plots);
+
+										if (id_s)
+											{
+												FreeBSONOidString (id_s);
+											}
+
+										fclose (stats_f);
+									}
+
+
+								if (stats_status == OS_SUCCEEDED)
+									{
+										++num_successes;
+									}
+								else
+									{
+										PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p->st_name_s);
+									}
+
+								FreeStudy (study_p);
+							}		/* if (study_p) */
 						else
 							{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GenerateStatisticsForStudy () failed for \"%s\"", study_p->st_name_s);
+								PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
 							}
 
-						FreeStudy (study_p);
-						}		/* if (study_p) */
-					else
-						{
-						PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, study_json_p, "GetStudyFromJSON () failed");
-						}
-
-					}		/* json_array_foreach (all_studies_p, i, study_json_p) */
+							}		/* json_array_foreach (all_studies_p, i, study_json_p) */
 
 
 					FreeCopiedString (stats_filename_s);
 				}
-			
+
 
 			if (num_successes == num_studies)
 				{
@@ -2423,7 +2441,7 @@ json_t *GetStudyAsFrictionlessDataResource (const Study *study_p, const FieldTri
 																						}
 
 
-																					
+
 																				}		/* if (AddPeopleAsFrictionlessData (study_p -> st_contributors_p, "contributors", study_fd_p, data_p)) */
 
 
@@ -2788,22 +2806,22 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 															 */
 
 															json_array_foreach (oid_values_p, i, oid_value_p)
-																{
-																	const char *oid_s = GetJSONString (oid_value_p, "$oid");
+															{
+																const char *oid_s = GetJSONString (oid_value_p, "$oid");
 
-																	if (oid_s)
-																		{
-																			if (process_value_fn (oid_s, user_data_p, service_data_p))
-																				{
-																					++ num_successes;
-																				}
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
-																				}
-																		}		/* if (oid_s) */
+																if (oid_s)
+																	{
+																		if (process_value_fn (oid_s, user_data_p, service_data_p))
+																			{
+																				++ num_successes;
+																			}
+																		else
+																			{
+																				PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to process data for\"%s\"", oid_s);
+																			}
+																	}		/* if (oid_s) */
 
-																}		/* json_array_foreach (oids_p, i, oid_p) */
+															}		/* json_array_foreach (oids_p, i, oid_p) */
 
 
 															if (num_successes == size)
@@ -3545,83 +3563,83 @@ static bool GetMatchingStudies (bson_t *query_p, FieldTrialServiceData *data_p, 
 									char *study_s = NULL;
 
 									switch (format)
-										{
-											case VF_CLIENT_FULL:
-											case VF_CLIENT_MINIMAL:
-												{
-													Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
+									{
+										case VF_CLIENT_FULL:
+										case VF_CLIENT_MINIMAL:
+											{
+												Study *study_p = GetStudyFromJSON (entry_p, format, data_p);
 
-													if (study_p)
-														{
-															study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
+												if (study_p)
+													{
+														study_json_p = GetStudyAsJSON (study_p, format, NULL, data_p);
 
-															if (study_json_p)
-																{
-																	study_s = EasyCopyToNewString (study_p -> st_name_s);
-																}
+														if (study_json_p)
+															{
+																study_s = EasyCopyToNewString (study_p -> st_name_s);
+															}
 
-															FreeStudy (study_p);
-														}
-												}
-												break;
+														FreeStudy (study_p);
+													}
+											}
+											break;
 
-											case VF_INDEXING:
-												{
-													const char *value_s = GetJSONString (entry_p, ST_NAME_S);
+										case VF_INDEXING:
+											{
+												const char *value_s = GetJSONString (entry_p, ST_NAME_S);
 
-													if (value_s)
-														{
-															study_json_p = json_deep_copy (entry_p);
+												if (value_s)
+													{
+														study_json_p = json_deep_copy (entry_p);
 
-															if (study_json_p)
-																{
-																	study_s = EasyCopyToNewString (value_s);
-																}
-														}
+														if (study_json_p)
+															{
+																study_s = EasyCopyToNewString (value_s);
+															}
+													}
 
-												}
-												break;
+											}
+											break;
 
-											case VF_REFERENCE:
-												{
-													const char *name_s = GetJSONString (entry_p, ST_NAME_S);
+										case VF_REFERENCE:
+											{
+												const char *name_s = GetJSONString (entry_p, ST_NAME_S);
 
-													if (name_s)
-														{
-															bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
+												if (name_s)
+													{
+														bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
-															if (id_p)
-																{
-																	if (GetMongoIdFromJSON (entry_p, id_p))
-																		{
-																			study_json_p = json_object ();
+														if (id_p)
+															{
+																if (GetMongoIdFromJSON (entry_p, id_p))
+																	{
+																		study_json_p = json_object ();
 
-																			if (study_json_p)
-																				{
-																					if (SetJSONString (study_json_p, ST_NAME_S, name_s))
-																						{
-																							if (!AddCompoundIdToJSON (study_json_p, id_p))
-																								{
-																									json_decref (study_json_p);
-																									study_json_p = NULL;
-																								}
-																						}
-																					else
-																						{
-																							json_decref (study_json_p);
-																							study_json_p = NULL;
-																						}
-																				}
-																		}
+																		if (study_json_p)
+																			{
+																				if (SetJSONString (study_json_p, ST_NAME_S, name_s))
+																					{
+																						if (!AddCompoundIdToJSON (study_json_p, id_p))
+																							{
+																								json_decref (study_json_p);
+																								study_json_p = NULL;
+																							}
+																					}
+																				else
+																					{
+																						json_decref (study_json_p);
+																						study_json_p = NULL;
+																					}
+																			}
+																	}
 
-																	FreeBSONOid (id_p);
-																}
-														}
+																FreeBSONOid (id_p);
+															}
+													}
 
-												}
-												break;
+											}
+											break;
 
-										}
+									}
 
 									if (study_json_p)
 										{
@@ -4496,6 +4514,37 @@ static bool AddContactSubmissionParams (const Person *contact_p, ParameterSet *p
 }
 
 
+static bool AddFieldTrialSubmissionParameter (Study *active_study_p, ParameterSet *params_p, ParameterGroup *group_p, FieldTrialServiceData *dfw_data_p)
+{
+	bool success_flag = false;
+	Parameter *param_p = NULL;
+	char *trial_id_s = NULL;
+
+	if (active_study_p && (active_study_p -> st_parent_p))
+		{
+			trial_id_s = GetBSONOidAsString (active_study_p -> st_parent_p -> ft_id_p);
+		}
+
+	param_p = EasyCreateAndAddStringParameterToParameterSet (& (dfw_data_p -> dftsd_base_data), params_p, group_p, STUDY_FIELD_TRIALS_LIST.npt_type, STUDY_FIELD_TRIALS_LIST.npt_name_s, "Field trials", "The available field trials", trial_id_s, PL_ALL);
+
+
+	if (param_p)
+		{
+			if (SetUpFieldTrialsListParameter (dfw_data_p, param_p, trial_id_s, false))
+				{
+					success_flag = true;
+				}
+		}
+
+	if (trial_id_s)
+		{
+			FreeBSONOidString (trial_id_s);
+		}
+
+
+	return success_flag;
+}
+
 
 static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *id_s, const char *trial_s, const char *location_s, ParameterSet *params_p, ParameterGroup *group_p, ServiceData *data_p)
 {
@@ -4648,6 +4697,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 																				{
 																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddCuratorSubmissionParams () failed");
 																				}
+
 
 																		}
 																	else

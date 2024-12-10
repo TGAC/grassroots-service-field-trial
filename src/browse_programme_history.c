@@ -224,7 +224,7 @@ static ParameterSet *GetBrowseProgrammeHistoryServiceParameters (Service *servic
 }
 
 
-
+/*
 static Programme *GetVersionedFieldTrialFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
 {
 	Programme *programme_p = (Programme *) GetVersionedObjectFromResource (resource_p, programme_param_type, original_id_ss, ft_data_p,
@@ -232,7 +232,7 @@ static Programme *GetVersionedFieldTrialFromResource (DataResource *resource_p, 
 
 	return programme_p;
 }
-
+*/
 
 
 
@@ -768,8 +768,15 @@ static Parameter *CreateSubmitProgrammeParameterFromJSON (struct Service *servic
 
 static Programme *GetVersionedProgrammeFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p)
 {
+	void *(*get_versioned_obj_fn) (const char *id_s, const char *timestamp_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p) =
+			(void * (*) (const char *, const char *, const ViewFormat, FieldTrialServiceData *)) GetVersionedProgramme;
+
+	void *(*get_obj_by_id_fn) (const char *id_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p) =
+			(void *(*) (const char *id_s, const ViewFormat vf, FieldTrialServiceData *ft_data_p)) GetProgrammeByIdString;
+
+
 	Programme *programme_p = (Programme *) GetVersionedObjectFromResource (resource_p, programme_param_type, original_id_ss, ft_data_p,
-																																			 GetVersionedProgramme, GetProgrammeByIdString);
+																																				 get_versioned_obj_fn, get_obj_by_id_fn);
 
 	return programme_p;
 }
