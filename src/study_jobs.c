@@ -585,22 +585,91 @@ json_t *GetOldStudyIndexingData (Service *service_p)
 }
 
 
-
-static bool AddWizardParams (ParameterSet *params_p, const Study *study_p, FieldTrialServiceData *dfw_data_p)
+OperationStatus ImportStudy ()
 {
-
-	/*
-	 * Study Name
-	 * Trial
-	 * Location
-	 * Plot Rows
-	 * Plot cols
-	 *
-	 * create the study and plots with their ids, bson oids, row and column
-	 */
-
-	return false;
+	return OS_IDLE;
 }
+
+
+//static bool AddWizardParams (ParameterSet *params_p, Study *active_study_p, ServiceData *data_p)
+//{
+//
+//	/*
+//	 * Study Name
+//	 * Trial
+//	 * Location
+//	 * Plot Rows
+//	 * Plot cols
+//	 *
+//	 * create the study and plots with their ids, bson oids, row and column
+//	 */
+//	bool success_flag = false;
+//	Parameter *param_p = NULL;
+//	const FieldTrialServiceData *ft_data_p = (const FieldTrialServiceData  *) data_p;
+//	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, params_p);
+//
+//	bool defaults_flag = false;
+//
+//	char *id_s = NULL;
+//	char *this_crop_s = NULL;
+//	char *previous_crop_s = NULL;
+//	char *trial_s = NULL;
+//	char *location_s = NULL;
+//
+//	if (active_study_p)
+//		{
+//			if (SetUpDefaultsFromExistingStudy (active_study_p, &id_s, &this_crop_s, &previous_crop_s, &trial_s, &location_s))
+//				{
+//					defaults_flag = true;
+//				}
+//			else
+//				{
+//					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SetUpDefaultsFromExistingStudy () failed for \"%s\"", active_study_p -> st_name_s);
+//				}
+//		}
+//	else
+//		{
+//			id_s = (char *) S_EMPTY_LIST_OPTION_S;
+//			defaults_flag = true;
+//		}
+//
+//	if (defaults_flag)
+//		{
+//			if (AddGeneralSubmissionStudyParams (active_study_p, id_s, trial_s, location_s, params_p, group_p, data_p))
+//				{
+//					if (AddLayoutParams (params_p, active_study_p, ft_data_p))
+//						{
+//							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_THIS_CROP.npt_type, STUDY_THIS_CROP.npt_name_s, "Crop", "The crop variety for this study", this_crop_s, PL_ALL)) != NULL)
+//								{
+//									const bool new_study_flag = active_study_p ? false : true;
+//
+//									if (SetUpCropsListParameter (dfw_data_p, param_p, active_study_p ? active_study_p -> st_current_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
+//										{
+//											if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PREVIOUS_CROP.npt_type, STUDY_PREVIOUS_CROP.npt_name_s, "Previous Crop", "The previous crop variety planted in this field", previous_crop_s, PL_ALL)) != NULL)
+//												{
+//													if (SetUpCropsListParameter (dfw_data_p, param_p, active_study_p ? active_study_p -> st_previous_crop_p : NULL, S_UNKNOWN_CROP_OPTION_S, new_study_flag))
+//														{
+//															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LINK.npt_type, STUDY_LINK.npt_name_s, "Link", "The url for any downloads relating to this Study", active_study_p ? active_study_p -> st_data_url_s : NULL, PL_ALL)) != NULL)
+//																{
+//																	if (AddDefaultPlotsParameters (data_p, params_p, active_study_p))
+//																		{
+//																			if ((param_p = EasyCreateAndAddJSONParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_DATA.npt_type, STUDY_SHAPE_DATA.npt_name_s, "Plots GPS", "The GeoJSON for the vertices of the plots layout", active_study_p ? active_study_p -> st_shape_p : NULL, PL_ALL)) != NULL)
+//																				{
+//																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_SHAPE_NOTES.npt_type, STUDY_SHAPE_NOTES.npt_name_s, "Plots GPS Notes", "Any notes relating to the GPS data of the plots", active_study_p ? active_study_p -> st_shape_notes_s : NULL, PL_ALL)) != NULL)
+//																						{
+//																							if (AddMultiplePeopleParameters (params_p, "Contributors", active_study_p ? active_study_p -> st_contributors_p : NULL, dfw_data_p))
+//																								{
+//																									success_flag = true;
+//																								}
+//																							else
+//																								{
+//																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddMultiplePeopleParameters () failed for \"%s\"", active_study_p ? active_study_p -> st_name_s : "NULL");
+//																								}
+//																						}
+//																					else
+//
+//	return false;
+//}
 
 
 

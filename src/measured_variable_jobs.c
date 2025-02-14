@@ -40,7 +40,7 @@
 static const char * const S_VARIABLE_ID_S = "Variable Identifier";
 static const char * const S_VARIABLE_NAME_S = "Variable Name";
 static const char * const S_VARIABLE_DESCRIPTION_S = "Variable Description";
-static const char * const S_VARIABLE_ABBREVIATION_S = "Variable Abbreviation";
+static const char * const S_VARIABLE_ABBREVIATION_S = "Variable Description";
 static const char * const S_TRAIT_ID_S = "Trait Identifier";
 static const char * const S_TRAIT_ABBREVIATION_S = "Trait Abbreviation";
 static const char * const S_TRAIT_NAME_S = "Trait Name";
@@ -67,14 +67,41 @@ static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_JSON_TABLE};
 static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
 
 
-static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const FieldTrialServiceData *data_p);
-
+static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p,
+																					SchemaTerm *(*get_trait_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					SchemaTerm *(*get_method_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					SchemaTerm *(*get_unit_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					SchemaTerm *(*get_variable_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					const ScaleClass *(*get_scale_class_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					const FieldTrialServiceData *data_p);
 
 static SchemaTerm *GetSchemaTerm (const json_t *json_p, const char *id_key_s, const char *name_key_s, const char *description_key_s, const char *abbreviation_key_s, TermType expected_type, MongoTool *mongo_p);
 
 static json_t *GetTableParameterHints (void);
 
 static char *GetRowAsString (const int32 row);
+
+static SchemaTerm *GetTraitFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetMethodFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetUnitFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetVariableFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static const ScaleClass *GetScaleClassFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetTraitFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetMethodFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetUnitFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static SchemaTerm *GetVariableFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static const ScaleClass *GetScaleClassFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p);
+
+static int GetCropOntologyVariablesResponse (const char * const api_url_s, json_t **res_pp, const FieldTrialServiceData *data_p);
 
 
 
@@ -119,7 +146,9 @@ bool RunForSubmissionMeasuredVariableParams (FieldTrialServiceData *data_p, Para
 			 */
 			if (phenotypes_json_p && (json_array_size (phenotypes_json_p) > 0))
 				{
-					if (!AddMeasuredVariablesFromJSON (job_p, phenotypes_json_p, data_p))
+					if (!AddMeasuredVariablesFromJSON (job_p, phenotypes_json_p, GetTraitFromSpreadsheetJSON, GetMethodFromSpreadsheetJSON,
+																						 GetUnitFromSpreadsheetJSON, GetVariableFromSpreadsheetJSON,
+																						 GetScaleClassFromSpreadsheetJSON, data_p))
 						{
 							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotypes_json_p, "AddMeasuredVariablesFromJSON for failed");
 						}
@@ -552,6 +581,7 @@ static json_t *GetTableParameterHints (void)
 																				 S_METHOD_ID_S, delim_s, S_METHOD_ABBREVIATION_S, delim_s, S_METHOD_NAME_S, delim_s, S_METHOD_DESCRIPTION_S, delim_s,
 																				 S_UNIT_ID_S, delim_s, S_UNIT_ABBREVIATION_S, delim_s, S_UNIT_NAME_S, delim_s, S_UNIT_DESCRIPTION_S, delim_s,
 																				 S_FORM_ID_S, delim_s, S_FORM_ABBREVIATION_S, delim_s, S_FORM_NAME_S, delim_s, S_FORM_DESCRIPTION_S, delim_s,
+																				 S_SCALE_CLASS_NAME_S, delim_s,
 																				 NULL);
 
 	 */
@@ -681,10 +711,21 @@ static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_se
 	"Method Description": "Record date of heading (DS55) when 50% of the spike is emerged (i.e., middle of the spike at the flag leaf ligule) on 50% of all stems.",
 	"Unit Identifier": "CO_321:0000855",
 	"Unit Abbreviation": "",
-	"Unit Name": "Julian date (JD)"
+	"Unit Name": "Julian date (JD)",
+	"Scale Class": "Date"
+
 }
  */
-static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p, const FieldTrialServiceData *data_p)
+
+
+
+static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *phenotypes_json_p,
+																					SchemaTerm *(*get_trait_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					SchemaTerm *(*get_method_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					SchemaTerm *(*get_unit_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					SchemaTerm *(*get_variable_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					const ScaleClass *(*get_scale_class_fn) (const json_t *entry_p, MongoTool *mongo_p),
+																					const FieldTrialServiceData *data_p)
 {
 	bool success_flag	= true;
 	OperationStatus status = OS_FAILED;
@@ -707,19 +748,19 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 						{
 							MeasuredVariable *mv_p = NULL;
 							MongoTool *mongo_p = data_p -> dftsd_mongo_p;
-							SchemaTerm *trait_p = GetSchemaTerm (table_row_json_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, TT_TRAIT, mongo_p);
+							SchemaTerm *trait_p = get_trait_fn (table_row_json_p, mongo_p);
 
 							if (trait_p)
 								{
-									SchemaTerm *method_p = GetSchemaTerm (table_row_json_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S, TT_METHOD, mongo_p);
+									SchemaTerm *method_p = get_method_fn (table_row_json_p, mongo_p);
 
 									if (method_p)
 										{
-											SchemaTerm *unit_p = GetSchemaTerm (table_row_json_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S, TT_UNIT, mongo_p);
+											SchemaTerm *unit_p = get_unit_fn (table_row_json_p, mongo_p);
 
 											if (unit_p)
 												{
-													SchemaTerm *variable_p = GetSchemaTerm (table_row_json_p, S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S, TT_VARIABLE, mongo_p);
+													SchemaTerm *variable_p = get_variable_fn (table_row_json_p, mongo_p);
 
 													if (variable_p)
 														{
@@ -728,69 +769,58 @@ static bool AddMeasuredVariablesFromJSON (ServiceJob *job_p, const json_t *pheno
 															 */
 															if (!DoesStringContainWhitespace (variable_p -> st_name_s))
 																{
-																	const char *scale_s = GetJSONString (table_row_json_p, S_SCALE_CLASS_NAME_S);
+																	const ScaleClass *scale_p = get_scale_class_fn (table_row_json_p, mongo_p);
 
-																	if (scale_s)
+																	if (scale_p)
 																		{
-																			const ScaleClass *scale_p = GetScaleClassByName (scale_s);
+																			mv_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, scale_p);
 
-																			if (scale_p)
+																			if (mv_p)
 																				{
-																					mv_p = AllocateMeasuredVariable (NULL, trait_p, method_p, unit_p, variable_p, scale_p);
+																					int res = CheckMeasuredVariable (mv_p, data_p);
 
-																					if (mv_p)
+																					if (res == 0)
 																						{
-																							int res = CheckMeasuredVariable (mv_p, data_p);
+																							OperationStatus import_status;
 
-																							if (res == 0)
+																							PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
+
+																							import_status = SaveMeasuredVariable (mv_p, job_p, data_p);
+
+																							if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
 																								{
-																									OperationStatus import_status;
-
-																									PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row " SIZET_FMT, i);
-
-																									import_status = SaveMeasuredVariable (mv_p, job_p, data_p);
-
-																									if ((import_status == OS_SUCCEEDED) || (import_status == OS_PARTIALLY_SUCCEEDED))
-																										{
-																											++ num_imported;
-																										}
-																									else
-																										{
-																											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
-																											AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to save measured variable", i, NULL);
-																											success_flag = false;
-																										}
-
-																								}		/* if (res == 0) */
-																							else if (res == 1)
-																								{
-																									++ num_existing;
-																									PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
+																									++ num_imported;
 																								}
-																							else if (res == -1)
+																							else
 																								{
-																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "MeasuredVariable Trait, Measurement and Unit Combination already exist for different Variable " SIZET_FMT, i);
-																									AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "MeasuredVariable Trait, Measurement and Unit Combination already exist for different Variable", i, NULL);
+																									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to save MeasuredVariable for row " SIZET_FMT, i);
+																									AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to save measured variable", i, NULL);
+																									success_flag = false;
 																								}
-																						}		/* if (mv_p) */
-																					else
+
+																						}		/* if (res == 0) */
+																					else if (res == 1)
 																						{
-																							PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with name \"%s\"  for row " SIZET_FMT, variable_p -> st_name_s, i);
-																							AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create measured variable", i, NULL);
+																							++ num_existing;
+																							PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Ignoring existing MeasuredVariable for row " SIZET_FMT, i);
 																						}
-
-																				}		/*  if (scale_p) */
+																					else if (res == -1)
+																						{
+																							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "MeasuredVariable Trait, Measurement and Unit Combination already exist for different Variable " SIZET_FMT, i);
+																							AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "MeasuredVariable Trait, Measurement and Unit Combination already exist for different Variable", i, NULL);
+																						}
+																				}		/* if (mv_p) */
 																			else
 																				{
-																					PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to get scale class for \"%s\" for row " SIZET_FMT, scale_s, i);
-																					AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to get scale class", i, NULL);
+																					PrintJSONToErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, table_row_json_p, "AllocateMeasuredVariable failed with name \"%s\"  for row " SIZET_FMT, variable_p -> st_name_s, i);
+																					AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to create measured variable", i, NULL);
 																				}
 
-																		}		/* if (scale_s) */
+																		}		/*  if (scale_p) */
 																	else
 																		{
-																			PrintJSONToErrors (STM_LEVEL_INFO, __FILE__, __LINE__, table_row_json_p, "No scale class specified for row " SIZET_FMT, i);
-																			AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "No scale class specified", i, NULL);
+																			PrintErrors (STM_LEVEL_INFO, __FILE__, __LINE__, "Failed to get scale class for row " SIZET_FMT, i);
+																			AddTabularParameterErrorMessageToServiceJob (job_p, S_PHENOTYPE_TABLE.npt_name_s, S_PHENOTYPE_TABLE.npt_type, "Failed to get scale class", i, NULL);
 																		}
 
 																}
@@ -997,5 +1027,283 @@ int CheckMeasuredVariable (MeasuredVariable *var_p, const FieldTrialServiceData 
 		}
 
 	return res;
+}
+
+
+
+OperationStatus ImportFromCropOntology (const char * const api_url_s, const FieldTrialServiceData *data_p)
+{
+	/*
+	 * Iterate over the required number of pages to get
+	 * all of the variables for a given ontology
+	 */
+	OperationStatus status = OS_IDLE;
+	uint32 current_page_index = 0;
+	bool loop_flag = true;
+
+
+	while (loop_flag)
+		{
+			char *current_page_index_s = ConvertUnsignedIntegerToString (current_page_index);
+
+			if (current_page_index_s)
+				{
+					char *full_url_s = ConcatenateVarargsStrings (api_url_s, "?page=", current_page_index_s, NULL);
+
+					if (full_url_s)
+						{
+							json_t *res_p = NULL;
+							int res = GetCropOntologyVariablesResponse (full_url_s, &res_p, data_p);
+
+							if (res >= 0)
+								{
+
+
+									if (res == 0)
+										{
+											/* We've done the final page */
+											loop_flag = false;
+										}
+								}
+
+							FreeCopiedString (full_url_s);
+						}
+
+					FreeCopiedString (current_page_index_s);
+				}
+
+		}		/* while (loop_flag) */
+
+
+	return status;
+}
+
+
+static int GetCropOntologyVariablesResponse (const char * const api_url_s, json_t **res_pp, const FieldTrialServiceData *data_p)
+{
+	int res = -1;
+	CurlTool *curl_p = AllocateMemoryCurlTool (65536);
+
+	if (curl_p)
+		{
+			if (SetUriForCurlTool (curl_p, api_url_s))
+				{
+					CURLcode c = RunCurlTool (curl_p);
+
+					if (c == CURLE_OK)
+						{
+							const char *response_s = GetCurlToolData (curl_p);
+
+							if (response_s)
+								{
+									json_error_t err;
+									json_t *response_p = json_loads (response_s, 0, &err);
+
+									if (response_p)
+										{
+											/* Check whether we have more pages to subsequently request */
+											const json_t *metadata_p = json_object_get (response_p, "metadata");
+
+											if (metadata_p)
+												{
+													const json_t *pagination_p = json_object_get (metadata_p, "pagination");
+
+													if (pagination_p)
+														{
+															json_int_t current_page = 0;
+
+															if (GetJSONInteger (pagination_p, "currentPage", &current_page))
+																{
+																	json_int_t total_pages = 0;
+
+																	if (GetJSONInteger (pagination_p, "totalPages", &total_pages))
+																		{
+																			if (current_page < total_pages)
+																				{
+																					/* there are more pages to go */
+																					res = 1;
+																					*res_pp = response_p;
+																				}
+																			else if (current_page == total_pages)
+																				{
+																					/* this is the final page */
+																					res = 0;
+																					*res_pp = response_p;
+																				}
+																			else
+																				{
+																					/* error! */
+																				}
+
+																		}
+																}
+														}		/* if (pagination_p) */
+
+												}
+
+										}		/* if (response_p) */
+								}
+
+						}		/* if (c == CURLE_OK) */
+
+				}		/* if (SetUriForCurlTool (curl_p, api_url_s)) */
+
+			FreeCurlTool (curl_p);
+		}		/* if (curl_p) */
+
+	return res;
+}
+
+
+static uint32 ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *job_p, const FieldTrialServiceData *data_p)
+{
+	uint32 num_successes = 0;
+	const json_t *result_p = json_object_get (response_p, "result");
+
+	if (result_p)
+		{
+			if (json_is_array (result_p))
+				{
+					json_t *entry_p;
+					size_t index = 0;
+
+					json_array_foreach (result_p, index, entry_p)
+						{
+							if (AddMeasuredVariablesFromJSON (job_p, entry_p, GetTraitFromCropOntologyJSON, GetMethodFromCropOntologyJSON,
+																							 GetUnitFromCropOntologyJSON, GetVariableFromCropOntologyJSON,
+																							 GetScaleClassFromCropOntologyJSON, data_p))
+								{
+
+								}
+
+						}		/* json_array_for_each (result_p, index, entry_p) */
+
+				}		/* if (json_is_array (result_p)) */
+
+		}		/* if (result_p) */
+
+	return num_successes;
+}
+
+
+static SchemaTerm *GetTraitFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	return GetSchemaTerm (entry_p, S_TRAIT_ID_S, S_TRAIT_NAME_S, S_TRAIT_DESCRIPTION_S, S_TRAIT_ABBREVIATION_S, TT_TRAIT, mongo_p);
+}
+
+
+static SchemaTerm *GetMethodFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	return GetSchemaTerm (entry_p, S_METHOD_ID_S, S_METHOD_NAME_S, S_METHOD_DESCRIPTION_S, S_METHOD_ABBREVIATION_S, TT_METHOD, mongo_p);
+}
+
+
+static SchemaTerm *GetUnitFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	return GetSchemaTerm (entry_p, S_UNIT_ID_S, S_UNIT_NAME_S, S_UNIT_DESCRIPTION_S, S_UNIT_ABBREVIATION_S, TT_UNIT, mongo_p);
+}
+
+
+static SchemaTerm *GetVariableFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	return GetSchemaTerm (entry_p,  S_VARIABLE_ID_S, S_VARIABLE_NAME_S, S_VARIABLE_DESCRIPTION_S, S_VARIABLE_ABBREVIATION_S, TT_VARIABLE, mongo_p);
+}
+
+
+static const ScaleClass *GetScaleClassFromSpreadsheetJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	const char *scale_s = GetJSONString (entry_p, S_SCALE_CLASS_NAME_S);
+
+	if (scale_s)
+		{
+			return GetScaleClassByName (scale_s);
+		}
+
+	return NULL;
+}
+
+
+
+static SchemaTerm *GetTraitFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	const json_t *trait_json_p = json_object_get (entry_p, "trait");
+
+	if (trait_json_p)
+		{
+			return GetSchemaTerm (trait_json_p, "traitDbId", "name", "description", "mainAbbreviation", TT_TRAIT, mongo_p);
+		}		/* if (trait_json_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get trait");
+		}
+
+	return NULL;
+}
+
+
+static SchemaTerm *GetMethodFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	const json_t *method_json_p = json_object_get (entry_p, "method");
+
+	if (method_json_p)
+		{
+			return GetSchemaTerm (method_json_p, "methodDbId", "name", "description", NULL, TT_METHOD, mongo_p);
+		}		/* if (method_json_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get method");
+		}
+
+	return NULL;
+}
+
+
+static SchemaTerm *GetUnitFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	const json_t *scale_json_p = json_object_get (entry_p, "scale");
+
+	if (scale_json_p)
+		{
+			return GetSchemaTerm (scale_json_p, "scaleDbId", "name", NULL, NULL, TT_UNIT, mongo_p);
+		}		/* if (unit_json_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get scale");
+		}
+
+	return NULL;
+}
+
+
+static SchemaTerm *GetVariableFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	return GetSchemaTerm (entry_p, "observationVariableDbId", "name", NULL, NULL, TT_VARIABLE, mongo_p);
+}
+
+
+static const ScaleClass *GetScaleClassFromCropOntologyJSON (const json_t *entry_p, MongoTool *mongo_p)
+{
+	const json_t *scale_json_p = json_object_get (entry_p, "scale");
+
+	if (scale_json_p)
+		{
+			const char *scale_s = GetJSONString (scale_json_p, "dataType");
+
+			if (scale_s)
+				{
+					return GetScaleClassByName (scale_s);
+				}		/* if (scale_s) */
+			else
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, scale_json_p, "Failed to get data type");
+				}
+
+		}		/* if (scale_json_p) */
+	else
+		{
+			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, entry_p, "Failed to get scale");
+		}
+
+	return NULL;
 }
 
