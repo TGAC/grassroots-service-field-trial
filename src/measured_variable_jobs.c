@@ -61,7 +61,8 @@ static const char * const S_SCALE_CLASS_NAME_S = "Scale Class";
 
 
 static NamedParameterType S_PHENOTYPE_TABLE_COLUMN_DELIMITER = { "PH Data delimiter", PT_CHAR };
-static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_JSON_TABLE};
+static NamedParameterType S_PHENOTYPE_TABLE = { "PH Upload", PT_JSON_TABLE };
+static NamedParameterType S_CROP_ONTOLOGY_URL = { "PH Crop Ontology Brapi", PT_STRING };
 
 
 static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p);
@@ -103,6 +104,10 @@ static const ScaleClass *GetScaleClassFromCropOntologyJSON (const json_t *entry_
 
 static int GetCropOntologyVariablesResponse (const char * const api_url_s, json_t **res_pp, const FieldTrialServiceData *data_p);
 
+static OperationStatus ImportFromCropOntology (const char * const api_url_s, ServiceJob *job_p, const FieldTrialServiceData *data_p);
+
+static bool ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *job_p, size_t *num_pages_p, size_t *num_total_entries_p, size_t *current_page_size_p, size_t *num_successes_p, const FieldTrialServiceData *data_p);
+
 
 
 bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *param_set_p)
@@ -122,18 +127,38 @@ bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *par
 
 					if ((param_p = GetMeasuredVariablesDataTableParameter (param_set_p, group_p, dfw_service_data_p)) != NULL)
 						{
-							success_flag = true;
+							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_CROP_ONTOLOGY_URL.npt_type, S_CROP_ONTOLOGY_URL.npt_name_s, "Crop Ontology API", "The Crop Ontology REST API for getting defined Variables", NULL, PL_ALL)) != NULL)
+								{
+									success_flag = true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add \"%s\" parameter", S_CROP_ONTOLOGY_URL.npt_name_s);
+								}
 						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariablesDataTableParameter () failed");
+						}
+
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CreateAndAddParameterGroupToParameterSet () failed");
 				}
 
 		}		/* if (group_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add \"%s\" parameter", S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s);
+		}
 
 
 	return success_flag;
 }
 
 
-bool RunForSubmissionMeasuredVariableParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmittedSpreadsheet (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
 	const json_t *phenotypes_json_p = NULL;
@@ -165,22 +190,17 @@ bool RunForSubmissionMeasuredVariableParams (FieldTrialServiceData *data_p, Para
 
 bool GetSubmissionMeasuredVariableParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p)
 {
-	bool success_flag = true;
+	bool success_flag = false;
 
-	if (strcmp (param_name_s, S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_name_s) == 0)
+	const NamedParameterType params [] =
 		{
-			*pt_p = S_PHENOTYPE_TABLE_COLUMN_DELIMITER.npt_type;
-		}
-	else if (strcmp (param_name_s, S_PHENOTYPE_TABLE.npt_name_s) == 0)
-		{
-			*pt_p = S_PHENOTYPE_TABLE.npt_type;
-		}
-	else
-		{
-			success_flag = false;
-		}
+			S_PHENOTYPE_TABLE_COLUMN_DELIMITER,
+			S_PHENOTYPE_TABLE,
+			S_CROP_ONTOLOGY_URL,
+			NULL
+		};
 
-	return success_flag;
+	return DefaultGetParameterTypeForNamedParameter (param_name_s, pt_p, params);
 }
 
 
@@ -566,6 +586,21 @@ bool AddMeasuredVariableToServiceJob (ServiceJob *job_p, MeasuredVariable *treat
 }
 
 
+OperationStatus RunForCropOntologyAPIImport (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+	const char *crop_ontology_api_url_s = NULL;
+
+	if (GetCurrentStringParameterValueFromParameterSet (param_set_p, S_CROP_ONTOLOGY_URL.npt_name_s, &crop_ontology_api_url_s))
+		{
+			if (!IsStringEmpty (crop_ontology_api_url_s))
+				{
+					status = ImportFromCropOntology (crop_ontology_api_url_s, job_p, data_p);
+				}
+		}
+
+	return status;
+}
 
 
 /*
@@ -663,7 +698,7 @@ static json_t *GetTableParameterHints (void)
 
 static Parameter *GetMeasuredVariablesDataTableParameter (ParameterSet *param_set_p, ParameterGroup *group_p, const FieldTrialServiceData *data_p)
 {
-	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, S_PHENOTYPE_TABLE.npt_name_s, "MeasuredVariable data to upload", "The data to upload", NULL, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddJSONParameterToParameterSet (& (data_p -> dftsd_base_data), param_set_p, group_p, S_PHENOTYPE_TABLE.npt_type, S_PHENOTYPE_TABLE.npt_name_s, "MeasuredVariable data to upload", "The data to upload", NULL, PL_SIMPLE);
 
 	if (param_p)
 		{
@@ -1030,8 +1065,7 @@ int CheckMeasuredVariable (MeasuredVariable *var_p, const FieldTrialServiceData 
 }
 
 
-
-OperationStatus ImportFromCropOntology (const char * const api_url_s, const FieldTrialServiceData *data_p)
+static OperationStatus ImportFromCropOntology (const char * const api_url_s, ServiceJob *job_p,  const FieldTrialServiceData *data_p)
 {
 	/*
 	 * Iterate over the required number of pages to get
@@ -1040,7 +1074,10 @@ OperationStatus ImportFromCropOntology (const char * const api_url_s, const Fiel
 	OperationStatus status = OS_IDLE;
 	uint32 current_page_index = 0;
 	bool loop_flag = true;
-
+	size_t num_pages = 0;
+	size_t num_ontology_entries = 0;
+	size_t total_successes = 0;
+	size_t num_processed = 0;
 
 	while (loop_flag)
 		{
@@ -1052,18 +1089,29 @@ OperationStatus ImportFromCropOntology (const char * const api_url_s, const Fiel
 
 					if (full_url_s)
 						{
-							json_t *res_p = NULL;
-							int res = GetCropOntologyVariablesResponse (full_url_s, &res_p, data_p);
+							json_t *response_p = NULL;
+							int res = GetCropOntologyVariablesResponse (full_url_s, &response_p, data_p);
 
 							if (res >= 0)
 								{
+									size_t current_page_size = 0;
+									size_t num_imported = 0;
 
-
-									if (res == 0)
+									if (ImportFromCropOntologyJSON (response_p, job_p, &num_pages, &num_ontology_entries, &current_page_size, &num_imported, data_p))
 										{
-											/* We've done the final page */
+											total_successes += num_imported;
+											num_processed += current_page_size;
+
+											if (num_processed >= num_ontology_entries)
+												{
+													loop_flag = false;
+												}
+										}
+									else
+										{
 											loop_flag = false;
 										}
+
 								}
 
 							FreeCopiedString (full_url_s);
@@ -1072,7 +1120,21 @@ OperationStatus ImportFromCropOntology (const char * const api_url_s, const Fiel
 					FreeCopiedString (current_page_index_s);
 				}
 
+
 		}		/* while (loop_flag) */
+
+	if (total_successes == num_ontology_entries)
+		{
+			status = OS_SUCCEEDED;
+		}
+	else if (total_successes > 0)
+		{
+			status = OS_PARTIALLY_SUCCEEDED;
+		}
+	else
+		{
+			status = OS_FAILED;
+		}
 
 
 	return status;
@@ -1155,9 +1217,9 @@ static int GetCropOntologyVariablesResponse (const char * const api_url_s, json_
 }
 
 
-static uint32 ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *job_p, const FieldTrialServiceData *data_p)
+static bool ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *job_p, size_t *num_pages_p, size_t *num_total_entries_p, size_t *current_page_size_p, size_t *num_successes_p, const FieldTrialServiceData *data_p)
 {
-	uint32 num_successes = 0;
+	bool success_flag = false;
 	const json_t *result_p = json_object_get (response_p, "result");
 
 	if (result_p)
@@ -1166,6 +1228,42 @@ static uint32 ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *
 				{
 					json_t *entry_p;
 					size_t index = 0;
+					uint32 num_successes = 0;
+
+					if ((*num_pages_p == 0) || (*num_total_entries_p == 0))
+						{
+							const json_t *metadata_p = json_object_get (result_p, "metadata");
+
+							if (metadata_p)
+								{
+									const json_t *pagination_p = json_object_get (metadata_p, "pagination");
+
+									if (pagination_p)
+										{
+											if (*num_pages_p == 0)
+												{
+													uint32 page = 0;
+
+													if (GetJSONUnsignedInteger(pagination_p, "totalPages", &page))
+														{
+															*num_pages_p = (size_t) page;
+														}
+												}
+
+											if (*num_total_entries_p == 0)
+												{
+													uint32 entries = 0;
+
+													if (GetJSONUnsignedInteger(pagination_p, "totalCount", &entries))
+														{
+															*num_total_entries_p = (size_t) entries;
+														}
+												}
+
+										}
+
+								}
+						}
 
 					json_array_foreach (result_p, index, entry_p)
 						{
@@ -1173,16 +1271,28 @@ static uint32 ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *
 																							 GetUnitFromCropOntologyJSON, GetVariableFromCropOntologyJSON,
 																							 GetScaleClassFromCropOntologyJSON, data_p))
 								{
-
+									++ num_successes;
 								}
 
 						}		/* json_array_for_each (result_p, index, entry_p) */
 
+					if (current_page_size_p)
+						{
+							*current_page_size_p = json_array_size (result_p);
+						}
+
+					if (num_successes_p)
+						{
+							*num_successes_p = num_successes;
+						}
+
+					success_flag = true;
 				}		/* if (json_is_array (result_p)) */
 
 		}		/* if (result_p) */
 
-	return num_successes;
+
+	return success_flag;
 }
 
 

@@ -62,7 +62,7 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *param_set_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionMeasuredVariableParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmittedSpreadsheet (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionMeasuredVariableParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
@@ -97,6 +97,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL char *GetMeasuredVariablesNameKey (void);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariablesNameKey (char *key_s);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RunForCropOntologyAPIImport (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
 #ifdef __cplusplus

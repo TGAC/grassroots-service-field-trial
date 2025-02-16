@@ -53,6 +53,7 @@ typedef enum
 	DFTD_GENE_BANK,
 	DFTD_CROP,
 	DFTD_TREATMENT,
+	DFTD_ONTOLOGY,
 	DFTD_NUM_TYPES
 } FieldTrialDatatype;
 

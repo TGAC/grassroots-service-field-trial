@@ -216,11 +216,25 @@ static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, 
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p))
+			if (param_set_p)
 				{
+					/*
+					 * check for simple search first
+					 */
+					if (param_set_p -> ps_current_level == PL_SIMPLE)
+						{
+							if (!RunForSubmittedSpreadsheet (data_p, param_set_p, job_p))
+								{
 
-				}		/* if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p)) */
+								}		/* if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p)) */
 
+						}
+					else if (param_set_p -> ps_current_level == PL_ADVANCED)
+						{
+							RunForCropOntologyAPIImport (param_set_p, job_p, data_p);
+						}
+
+				}		/* if (param_set_p) */
 
 			LogServiceJob (job_p);
 		}		/* if (service_p -> se_jobs_p) */

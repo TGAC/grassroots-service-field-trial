@@ -65,6 +65,7 @@ SRCS 	= \
 	browse_trial_history.c \
 	crop.c \
 	crop_jobs.c \
+	crop_ontology.c \
 	crop_ontology_tool.c \
 	dfw_field_trial_service.c \
 	dfw_field_trial_service_data.c \
