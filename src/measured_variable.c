@@ -1,18 +1,18 @@
 /*
-** Copyright 2014-2018 The Earlham Institute
-**
-** Licensed under the Apache License, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     http://www.apache.org/licenses/LICENSE-2.0
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-*/
+ ** Copyright 2014-2018 The Earlham Institute
+ **
+ ** Licensed under the Apache License, Version 2.0 (the "License");
+ ** you may not use this file except in compliance with the License.
+ ** You may obtain a copy of the License at
+ **
+ **     http://www.apache.org/licenses/LICENSE-2.0
+ **
+ ** Unless required by applicable law or agreed to in writing, software
+ ** distributed under the License is distributed on an "AS IS" BASIS,
+ ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ** See the License for the specific language governing permissions and
+ ** limitations under the License.
+ */
 /*
  * phenotype.c
  *
@@ -62,15 +62,35 @@ static UnitTerm *GetUnitTermFromJSON (const json_t *phenotype_json_p, const Fiel
 		}
 
 }
-*/
+ */
 
 
 /*
  * API definitions
  */
-MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, const ScaleClass *class_p)
+MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, const ScaleClass *class_p,
+																						CropOntology *parent_ontology_p, MEM_FLAG parent_ontology_mem)
 {
-	MeasuredVariable *treatment_p = (MeasuredVariable *) AllocMemory (sizeof (MeasuredVariable));
+	MeasuredVariable *treatment_p = NULL;
+	CropOntology *ontology_to_use_p = NULL;
+
+	/* do we need to copy the ontology? */
+	if (parent_ontology_p && (parent_ontology_mem == MF_DEEP_COPY))
+		{
+			ontology_to_use_p = DuplicateCropOntology (parent_ontology_p);
+
+			if (!ontology_to_use_p)
+				{
+
+				}
+		}
+	else
+		{
+			ontology_to_use_p = parent_ontology_p;
+		}
+
+
+	treatment_p = (MeasuredVariable *) AllocMemory (sizeof (MeasuredVariable));
 
 	if (treatment_p)
 		{
@@ -80,6 +100,9 @@ MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_
 			treatment_p -> mv_unit_term_p = unit_p;
 			treatment_p -> mv_variable_term_p = variable_p;
 			treatment_p -> mv_scale_class_p = class_p;
+			treatment_p -> mv_parent_p = ontology_to_use_p;
+			treatment_p -> mv_parent_mem = parent_ontology_mem;
+
 
 			return treatment_p;
 		}		/* if (treatment_p) */
@@ -89,33 +112,41 @@ MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_
 
 
 
-void FreeMeasuredVariable (MeasuredVariable *treatment_p)
+void FreeMeasuredVariable (MeasuredVariable *measured_variable_p)
 {
-	if (treatment_p -> mv_id_p)
+	if (measured_variable_p -> mv_id_p)
 		{
-			FreeBSONOid (treatment_p -> mv_id_p);
+			FreeBSONOid (measured_variable_p -> mv_id_p);
 		}
 
-	if (treatment_p -> mv_trait_term_p)
+	if (measured_variable_p -> mv_trait_term_p)
 		{
-			FreeSchemaTerm (treatment_p -> mv_trait_term_p);
+			FreeSchemaTerm (measured_variable_p -> mv_trait_term_p);
 		}
 
-	if (treatment_p -> mv_measurement_term_p)
+	if (measured_variable_p -> mv_measurement_term_p)
 		{
-			FreeSchemaTerm (treatment_p -> mv_measurement_term_p);
+			FreeSchemaTerm (measured_variable_p -> mv_measurement_term_p);
 		}
 
-	if (treatment_p -> mv_unit_term_p)
+	if (measured_variable_p -> mv_unit_term_p)
 		{
-			FreeSchemaTerm (treatment_p -> mv_unit_term_p);
+			FreeSchemaTerm (measured_variable_p -> mv_unit_term_p);
 		}
 
-	if (treatment_p -> mv_variable_term_p)
+	if (measured_variable_p -> mv_variable_term_p)
 		{
-			FreeSchemaTerm (treatment_p -> mv_variable_term_p);
+			FreeSchemaTerm (measured_variable_p -> mv_variable_term_p);
 		}
 
+	if (measured_variable_p -> mv_parent_p)
+		{
+			if ((measured_variable_p -> mv_parent_mem == MF_DEEP_COPY) || (measured_variable_p -> mv_parent_mem == MF_SHALLOW_COPY))
+				{
+					FreeCropOntology (measured_variable_p -> mv_parent_p);
+				}
+
+		}
 
 
 	/*
@@ -124,12 +155,12 @@ void FreeMeasuredVariable (MeasuredVariable *treatment_p)
 	 * treatment_p -> mv_instrument_p
 	 */
 
-	FreeMemory (treatment_p);
+	FreeMemory (measured_variable_p);
 }
 
 
 
-json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewFormat format)
+json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *phenotype_json_p = json_object ();
 
@@ -151,7 +182,8 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 								{
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, MV_VARIABLE_S, variable_s);
 								}
-						}
+
+						}		/* if (format == VF_CLIENT_MINIMAL) */
 					else
 						{
 							if (AddCommonTermsToJSON (mv_p, phenotype_json_p))
@@ -168,28 +200,62 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 																{
 																	if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
 																		{
+																			if (mv_p -> mv_parent_p)
+																				{
+																					if (AddNamedCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p, MV_ONTOLOGY_S))
+																						{
+																							success_flag = true;
+																						}
+																				}
+																			else
+																				{
+																					success_flag = true;
+																				}
+																		}
+																}
+															else if (format == VF_CLIENT_FULL)
+																{
+																	/* Add the ontology details */
+																	if (mv_p -> mv_parent_p)
+																		{
+																			json_t *ontology_json_p = GetCropOntologyAsJSON (mv_p -> mv_parent_p, VF_CLIENT_FULL, data_p);
+
+																			if (ontology_json_p)
+																				{
+																					if (json_object_set_new (phenotype_json_p, MV_ONTOLOGY_S, ontology_json_p) == 0)
+																						{
+																							success_flag = true;
+																						}
+																					else
+																						{
+																							json_decref (ontology_json_p);
+																						}
+																				}
+
+																		}
+																	else
+																		{
 																			success_flag = true;
 																		}
 																}
 															else
 																{
-																	success_flag = true;
+																	json_decref (scale_json_p);
 																}
-														}
-													else
-														{
-															json_decref (scale_json_p);
-														}
+
+														}		/* if (json_object_set_new (phenotype_json_p, MV_SCALE_S, scale_json_p) == 0) */
+
+												}		/* if (scale_json_p) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddCompoundIdToJSON () failed for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
 												}
-										}		/* if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p)) */
-									else
-										{
-											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "AddCompoundIdToJSON () failed for \"%s\" to JSON", mv_p -> mv_variable_term_p -> st_url_s);
-										}
+
+										}		/* if (AddCommonTermsToJSON (mv_p, phenotype_json_p)) */
 
 								}		/* if (AddCommonTermsToJSON (mv_p, phenotype_json_p)) */
 
-						}
+						}		/* if (format == VF_CLIENT_MINIMAL) else ... */
 
 					if (success_flag)
 						{
@@ -255,10 +321,32 @@ MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, c
 										{
 											if (GetMongoIdFromJSON (phenotype_json_p, id_p))
 												{
+													CropOntology *ontology_p = NULL;
+													MEM_FLAG ontology_mem = MF_ALREADY_FREED;
 													const ScaleClass *class_p = NULL;
 													MeasuredVariable *treatment_p = NULL;
-
 													const json_t *scale_json_p = json_object_get (phenotype_json_p, MV_SCALE_S);
+													bson_oid_t *ontology_id_p = GetNewUnitialisedBSONOid ();
+
+													if (ontology_id_p)
+														{
+															if (GetNamedIdFromJSON (phenotype_json_p, MV_ONTOLOGY_S, ontology_id_p))
+																{
+																	ontology_p = GetCropOntologyById (ontology_id_p, data_p);
+
+																	if (ontology_p)
+																		{
+																			ontology_mem = MF_SHALLOW_COPY;
+																		}
+																	else
+																		{
+																			/* error */
+																		}
+
+																}		/* if (GetNamedIdFromJSON (phenotype_json_p, MV_ONTOLOGY_S, ontology_id_p)) */
+
+														}		/* if (ontology_id_p) */
+
 
 													if (scale_json_p)
 														{
@@ -270,7 +358,7 @@ MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, c
 																}
 														}
 
-													treatment_p = AllocateMeasuredVariable (id_p, trait_p, measurement_p, unit_p, variable_p, class_p);
+													treatment_p = AllocateMeasuredVariable (id_p, trait_p, measurement_p, unit_p, variable_p, class_p, ontology_p, ontology_mem);
 
 													if (treatment_p)
 														{
@@ -341,12 +429,12 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob 
 
 	if (PrepareSaveData (& (treatment_p -> mv_id_p), &selector_p))
 		{
-			json_t *phenotype_json_p = GetMeasuredVariableAsJSON (treatment_p, VF_STORAGE);
+			json_t *phenotype_json_p = GetMeasuredVariableAsJSON (treatment_p, VF_STORAGE, data_p);
 
 			if (phenotype_json_p)
 				{
-					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE], 
-							data_p -> dftsd_backup_collection_ss [DFTD_MEASURED_VARIABLE], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
+					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE],
+																									 data_p -> dftsd_backup_collection_ss [DFTD_MEASURED_VARIABLE], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
 							status = IndexData (job_p, phenotype_json_p, NULL);
 

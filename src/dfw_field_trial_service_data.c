@@ -47,7 +47,8 @@ static const char *S_TYPES_SS [DFTD_NUM_TYPES] =
 	"Grassroots:Instrument",
 	"Grassroots:GeneBank",
 	"Grassroots:Crop",
-	"Grassroots:Treatment"
+	"Grassroots:Treatment",
+	"Grassroots:Ontology"
 };
 
 
@@ -66,7 +67,8 @@ static const char *S_TYPE_DESCRIPTIONS_SS [DFTD_NUM_TYPES] =
 	"Instrument",
 	"Gene Bank",
 	"Crop",
-	"Treatment"
+	"Treatment",
+	"Ontology"
 };
 
 
@@ -290,6 +292,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							// * ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_CROP) = DFT_CROP_S;
 							* ((data_p -> dftsd_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
+							* ((data_p -> dftsd_collection_ss) + DFTD_ONTOLOGY) = DFT_PHENOTYPE_ONOTOLOGY_S;
 
 							* ((data_p -> dftsd_backup_collection_ss) + DFTD_PROGRAMME) = DFT_PROGRAM_BACKUP_S;
 							* ((data_p -> dftsd_backup_collection_ss) + DFTD_FIELD_TRIAL) = DFT_FIELD_TRIALS_BACKUP_S;
@@ -305,6 +308,7 @@ bool ConfigureFieldTrialService (FieldTrialServiceData *data_p, GrassrootsServer
 							// * ((data_p -> dftsd_collection_ss) + DFTD_ROW) = DFT_ROW_S;
 							* ((data_p -> dftsd_backup_collection_ss) + DFTD_CROP) = DFT_CROP_S;
 							* ((data_p -> dftsd_backup_collection_ss) + DFTD_TREATMENT) = DFT_TREATMENT_S;
+							* ((data_p -> dftsd_backup_collection_ss) + DFTD_ONTOLOGY) = DFT_PHENOTYPE_ONOTOLOGY_S;
 
 
 

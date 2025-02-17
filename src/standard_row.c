@@ -33,7 +33,7 @@
 #include "frictionless_data_util.h"
 
 
-static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format);
+static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 static bool GetObservationsFromJSON (const json_t *row_json_p, StandardRow *row_p, FieldTrialServiceData *data_p);
 
@@ -609,7 +609,7 @@ void UpdateStandardRow (StandardRow *row_p, const uint32 rack_index, const bool 
 }
 
 
-static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format)
+static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	bool success_flag = false;
 
@@ -628,7 +628,7 @@ static bool AddObservationsToJSON (json_t *row_json_p, LinkedList *observations_
 							while (node_p && success_flag)
 								{
 									const Observation *observation_p = node_p -> on_observation_p;
-									json_t *observation_json_p = GetObservationAsJSON (observation_p, format);
+									json_t *observation_json_p = GetObservationAsJSON (observation_p, format, data_p);
 
 									if (observation_json_p)
 										{
@@ -1003,7 +1003,7 @@ bool AddStandardRowToJSON (const Row *base_row_p, json_t *row_json_p, const View
 						{
 							const ViewFormat obs_format = (format == VF_STORAGE) ? VF_STORAGE : VF_CLIENT_MINIMAL;
 
-							if (AddObservationsToJSON (row_json_p, row_p -> sr_observations_p, obs_format))
+							if (AddObservationsToJSON (row_json_p, row_p -> sr_observations_p, obs_format, data_p))
 								{
 									if (AddTreatmentFactorsToJSON (row_json_p, row_p -> sr_treatment_factor_values_p, row_p -> sr_base.ro_study_p, format))
 										{

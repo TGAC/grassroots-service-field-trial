@@ -110,9 +110,9 @@ bool AddStringObservationValuesToJSON (const Observation *obs_p, const char *raw
 
 
 
-json_t *GetStringObservationAsJSON (const StringObservation *observation_p, const ViewFormat format)
+json_t *GetStringObservationAsJSON (const StringObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	json_t *observation_json_p = GetObservationAsJSON (& (observation_p -> so_base_observation), format);
+	json_t *observation_json_p = GetObservationAsJSON (& (observation_p -> so_base_observation), format, data_p);
 
 	if (observation_json_p)
 		{

@@ -99,9 +99,9 @@ void ClearIntegerObservation (Observation *observation_p)
 
 
 
-json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, const ViewFormat format)
+json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	json_t *obs_json_p = GetObservationAsJSON (& (observation_p -> io_base_observation), format);
+	json_t *obs_json_p = GetObservationAsJSON (& (observation_p -> io_base_observation), format, data_p);
 
 	if (obs_json_p)
 		{

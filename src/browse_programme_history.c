@@ -73,7 +73,7 @@ static bool AddBrowseProgrammeHistoryParams (ServiceData *data_p, ParameterSet *
 static Programme *GetVersionedProgrammeFromResource (DataResource *resource_p, const NamedParameterType programme_param_type, const char **original_id_ss, FieldTrialServiceData *ft_data_p);
 
 
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt);
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt);
 
 
 
@@ -253,7 +253,7 @@ static bool AddProgrammeVersionsList (Programme *active_programme_p, const char 
 				}
 
 
-			if (SetUpVersionsParameter (dfw_data_p, param_p, id_s, timestamp_s, DFTD_PROGRAMME))
+			if (SetUpVersionsParameter (dfw_data_p, (StringParameter *) param_p, id_s, timestamp_s, DFTD_PROGRAMME))
 				{
 					/*
 					 * We want to update all of the values in the form
@@ -273,7 +273,7 @@ static bool AddProgrammeVersionsList (Programme *active_programme_p, const char 
 
 
 
-static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, Parameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt)
+static bool SetUpVersionsParameter (const FieldTrialServiceData *data_p, StringParameter *param_p, const char * const id_s,  const char * const timestamp_s, const FieldTrialDatatype dt)
 {
 	bool success_flag = false;
 

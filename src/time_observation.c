@@ -102,9 +102,9 @@ void ClearTimeObservation (Observation *observation_p)
 }
 
 
-json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const ViewFormat format)
+json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
-	json_t *obs_json_p = GetObservationAsJSON (& (observation_p -> to_base_observation), format);
+	json_t *obs_json_p = GetObservationAsJSON (& (observation_p -> to_base_observation), format, data_p);
 
 	if (obs_json_p)
 		{

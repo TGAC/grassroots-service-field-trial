@@ -121,7 +121,7 @@ bool AddPhenotypeStatisticsNodeAsJSON (const PhenotypeStatisticsNode *psn_p, jso
 						}
 					else
 						{
-							mv_json_p = GetMeasuredVariableAsJSON (mv_p, format);
+							mv_json_p = GetMeasuredVariableAsJSON (mv_p, format, service_data_p);
 						}
 
 					if (mv_json_p)

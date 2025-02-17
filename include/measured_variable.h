@@ -33,7 +33,7 @@
 #include "schema_term.h"
 #include "schema_keys.h"
 #include "crop_ontology_tool.h"
-
+#include "crop_ontology.h"
 
 
 typedef struct MeasuredVariable
@@ -49,6 +49,14 @@ typedef struct MeasuredVariable
 	SchemaTerm *mv_unit_term_p;
 
 	const ScaleClass *mv_scale_class_p;
+
+	/**
+	 * The Ontology that this Measured Variable is a part of.
+	 */
+	struct CropOntology *mv_parent_p;
+
+	MEM_FLAG mv_parent_mem;
+
 
 } MeasuredVariable;
 
@@ -98,6 +106,8 @@ MEASURED_VARIABLE_PREFIX const char *MV_SCALE_S MEASURED_VARIABLE_VAL ("scale");
 
 MEASURED_VARIABLE_PREFIX const char *MV_NAME_S MEASURED_VARIABLE_CONCAT_VAL (CONTEXT_PREFIX_SCHEMA_ORG_S, "name");
 
+MEASURED_VARIABLE_PREFIX const char *MV_ONTOLOGY_S MEASURED_VARIABLE_VAL ("ontology");
+
 
 #ifdef __cplusplus
 extern "C"
@@ -105,11 +115,13 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, const ScaleClass *class_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *AllocateMeasuredVariable (bson_oid_t *id_p, SchemaTerm *trait_p, SchemaTerm *measurement_p, SchemaTerm *unit_p, SchemaTerm *variable_p, const ScaleClass *class_p,
+																						CropOntology *parent_ontology_p, MEM_FLAG parent_ontology_mem);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariable (MeasuredVariable *treatment_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *treatment_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p);
 

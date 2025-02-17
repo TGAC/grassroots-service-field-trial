@@ -558,7 +558,7 @@ void FreeObservationNode (ListItem *node_p)
 
 
 
-json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat format)
+json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *observation_json_p = json_object ();
 
@@ -603,7 +603,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 
 															if (done_instrument_flag)
 																{
-																	json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format);
+																	json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, format, data_p);
 
 																	if (phenotype_json_p)
 																		{
@@ -650,7 +650,7 @@ json_t *GetObservationAsJSON (const Observation *observation_p, const ViewFormat
 														}		/* else if (format == VF_STORAGE) */
 													else if (format == VF_CLIENT_MINIMAL)
 														{
-															json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, VF_CLIENT_MINIMAL);
+															json_t *phenotype_json_p = GetMeasuredVariableAsJSON (observation_p -> ob_phenotype_p, VF_CLIENT_MINIMAL, data_p);
 
 															if (phenotype_json_p)
 																{
@@ -871,7 +871,7 @@ bool SaveObservation (Observation *observation_p, const FieldTrialServiceData *d
 
 	if (success_flag)
 		{
-			json_t *observation_json_p = GetObservationAsJSON (observation_p, false);
+			json_t *observation_json_p = GetObservationAsJSON (observation_p, false, data_p);
 
 			if (observation_json_p)
 				{

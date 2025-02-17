@@ -45,7 +45,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL IntegerObservation *AllocateIntegerObservation (bs
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearIntegerObservation (Observation *observation_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetIntegerObservationAsJSON (const IntegerObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL IntegerObservation *GetIntegerObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p);

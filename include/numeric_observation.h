@@ -47,7 +47,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL NumericObservation *AllocateNumericObservation (bs
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearNumericObservation (Observation *observation_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetNumericObservationAsJSON (const NumericObservation *observation_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetNumericObservationAsJSON (const NumericObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL NumericObservation *GetNumericObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p);

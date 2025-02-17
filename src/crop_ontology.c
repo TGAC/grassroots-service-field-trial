@@ -59,7 +59,7 @@ CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const 
 										{
 											co_p -> co_id_p = id_p;
 											co_p -> co_name_s = copied_name_s;
-											co_p -> co_url_s = copied_url_s;
+											co_p -> co_id_s = copied_url_s;
 											co_p -> co_crop_s = copied_crop_s;
 											co_p -> co_image_s = copied_image_s;
 
@@ -99,9 +99,9 @@ void FreeCropOntology (CropOntology *co_p)
 			FreeCopiedString (co_p -> co_name_s);
 		}
 
-	if (co_p -> co_url_s)
+	if (co_p -> co_id_s)
 		{
-			FreeCopiedString (co_p -> co_url_s);
+			FreeCopiedString (co_p -> co_id_s);
 		}
 
 	if (co_p -> co_image_s)
@@ -110,11 +110,40 @@ void FreeCropOntology (CropOntology *co_p)
 		}
 
 
-
 	FreeCopiedString (co_p -> co_name_s);
 
 	FreeMemory (co_p);
 }
+
+
+CropOntology *DuplicateCropOntology (const CropOntology * const src_p)
+{
+	bson_oid_t *new_id_p = GetNewUnitialisedBSONOid ();
+
+	if (new_id_p)
+		{
+			CropOntology *dest_p = NULL;
+
+			bson_oid_copy (src_p -> co_id_p, new_id_p);
+
+			dest_p = AllocateCropOntology (new_id_p, src_p -> co_name_s, src_p -> co_id_s, src_p -> co_crop_s, src_p -> co_image_s);
+
+			if (dest_p)
+				{
+					return dest_p;
+				}
+
+			FreeBSONOid (new_id_p);
+		}
+	else
+		{
+
+		}
+
+	return NULL;
+}
+
+
 
 
 json_t *GetCropOntologyAsJSON (CropOntology *co_p, const ViewFormat format, const FieldTrialServiceData *data_p)
@@ -125,7 +154,7 @@ json_t *GetCropOntologyAsJSON (CropOntology *co_p, const ViewFormat format, cons
 		{
 			if (SetJSONString (res_p, CO_NAME_S, co_p -> co_name_s))
 				{
-					if (SetJSONString (res_p, CO_URL_S, co_p -> co_url_s))
+					if (SetJSONString (res_p, CO_ID_S, co_p -> co_id_s))
 						{
 							if (SetJSONString (res_p, CO_CROP_S, co_p -> co_crop_s))
 								{
@@ -163,7 +192,7 @@ json_t *GetCropOntologyAsJSON (CropOntology *co_p, const ViewFormat format, cons
 						}		/* if (SetJSONString (res_p, CO_AGROVOC_URL_S, co_p -> CO_agrovoc_uri_s)) */
 					else
 						{
-							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to add \"%s\": \"%s\"", CO_URL_S, co_p -> co_url_s);
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "Failed to add \"%s\": \"%s\"", CO_ID_S, co_p -> co_id_s);
 						}
 
 				}		/* if (SetJSONString (res_p, CO_NAME_S, co_p -> CO_name_s)) */
@@ -186,7 +215,7 @@ CropOntology *GetCropOntologyFromJSON (const json_t *crop_json_p, const FieldTri
 
 	if (name_s)
 		{
-			const char *url_s = GetJSONString (crop_json_p, CO_URL_S);
+			const char *url_s = GetJSONString (crop_json_p, CO_ID_S);
 
 			if (url_s)
 				{
@@ -235,7 +264,7 @@ CropOntology *GetCropOntologyFromJSON (const json_t *crop_json_p, const FieldTri
 				}		/* if (url_s) */
 			else
 				{
-					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, crop_json_p, "Failed to get \"%s\"", CO_URL_S);
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, crop_json_p, "Failed to get \"%s\"", CO_ID_S);
 				}
 
 		}		/* if (name_s) */
@@ -297,6 +326,89 @@ CropOntology *GetCropOntologyByIdString (const char *id_s, const FieldTrialServi
 
 	return co_p;
 }
+
+
+CropOntology *GetExistingCropOntologyByOntologyID (const char * const ontology_id_s, const FieldTrialServiceData *data_p)
+{
+	CropOntology *co_p = NULL;
+	MongoTool *tool_p = data_p -> dftsd_mongo_p;
+
+	if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [DFTD_ONTOLOGY]))
+		{
+			bson_t *query_p = bson_new ();
+
+			if (query_p)
+				{
+					if (BSON_APPEND_UTF8 (query_p, CO_ID_S, ontology_id_s))
+						{
+							json_t *results_p = NULL;
+
+							#if DFW_UTIL_DEBUG >= STM_LEVEL_FINER
+								{
+									PrintBSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, query_p, "GetExistingCropOntologyByOntologyID query ");
+								}
+							#endif
+
+							results_p = GetAllMongoResultsAsJSON (tool_p, query_p, NULL);
+
+							if (results_p)
+								{
+									if (json_is_array (results_p))
+										{
+											size_t num_results = json_array_size (results_p);
+
+											if (num_results == 1)
+												{
+													json_t *res_p = json_array_get (results_p, 0);
+
+													co_p = GetCropOntologyFromJSON (res_p, data_p);
+
+													if (!co_p)
+														{
+															PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, res_p, "GetCropOntologyFromJSON () failed for id \"%s\"", ontology_id_s);
+														}
+
+												}		/* if (num_results == 1) */
+											else
+												{
+													PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, SIZET_FMT " results when searching for object_id_s with id \"%s\"", num_results, ontology_id_s);
+												}
+
+										}		/* if (json_is_array (results_p) */
+									else
+										{
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, results_p, "Results are not an array");
+										}
+
+									json_decref (results_p);
+								}		/* if (results_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get results searching for object_id_s with id \"%s\"", ontology_id_s);
+								}
+
+						}		/* if (BSON_APPEND_OID (query_p, MONGO_ID_S, id_p)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for object_id_s with id \"%s\"", ontology_id_s);
+						}
+
+					bson_destroy (query_p);
+				}		/* if (query_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to create query for object_id_s with id \"%s\"", ontology_id_s);
+				}
+
+		}		/* if (SetMongoToolCollection (tool_p, data_p -> dftsd_collection_ss [collection_type])) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set collection to \"%s\"", data_p -> dftsd_collection_ss [DFTD_ONTOLOGY]);
+		}
+
+	return co_p;
+}
+
 
 
 static void *GetCropOntologyCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p)

@@ -49,7 +49,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL StringObservation *AllocateStringObservation (bson
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearStringObservation (Observation *observation_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStringObservationAsJSON (const StringObservation *observation_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetStringObservationAsJSON (const StringObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL StringObservation *GetStringObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p);

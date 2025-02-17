@@ -441,6 +441,18 @@ DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_S DFW_FIELD_TRIAL_VAL ("Treatme
 DFW_FIELD_TRIAL_PREFIX const char *DFT_TREATMENT_BACKUP_S DFW_FIELD_TRIAL_VAL ("Treatments_versions");
 
 
+
+/**
+ * The key for specifying the object containing the phenotype ontologies.
+ *
+ * @ingroup field_trials_service
+ */
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_ONOTOLOGY_S DFW_FIELD_TRIAL_VAL ("Phenotype_Ontologies");
+
+DFW_FIELD_TRIAL_PREFIX const char *DFT_PHENOTYPE_ONOTOLOGY_BACKUP_S DFW_FIELD_TRIAL_VAL ("Phenotype_Ontologies_versions");
+
+
+
 /**
  * The key for specifying whether a particular object in a JSON tree is
  * selected, e.g. matched a search.

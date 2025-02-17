@@ -3156,7 +3156,7 @@ static bool AddFullPhenotypeAsJSON (const char *oid_s, json_t *values_p, const F
 
 			if (variable_p)
 				{
-					json_t * mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL);
+					json_t * mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL, data_p);
 
 					if (mv_json_p)
 						{
@@ -3190,7 +3190,7 @@ static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTr
 
 			if (variable_p)
 				{
-					json_t *mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL);
+					json_t *mv_json_p = GetMeasuredVariableAsJSON (variable_p, VF_CLIENT_FULL, data_p);
 
 					if (mv_json_p)
 						{
@@ -3202,7 +3202,9 @@ static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTr
 								{
 									json_decref (mv_json_p);
 								}
-						}
+
+						}		/* if (mv_json_p) */
+
 					FreeMeasuredVariable (variable_p);
 				}		/* if (variable_p) */
 
@@ -3210,7 +3212,7 @@ static bool AddFullPhenotype (const char *oid_s, json_t *values_p, const FieldTr
 		}		/* if (phenotype_id_p) */
 
 	return success_flag;
-}		/* if (oid_s) */
+}
 
 
 

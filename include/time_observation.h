@@ -48,7 +48,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL TimeObservation *AllocateTimeObservation (bson_oid
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearTimeObservation (Observation *observation_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const ViewFormat format);
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetTimeObservationAsJSON (const TimeObservation *observation_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL TimeObservation *GetTimeObservationFromJSON (const json_t *phenotype_json_p, FieldTrialServiceData *data_p);
