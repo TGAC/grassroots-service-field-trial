@@ -202,7 +202,7 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 																		{
 																			if (mv_p -> mv_parent_p)
 																				{
-																					if (AddNamedCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p, MV_ONTOLOGY_S))
+																					if (AddNamedCompoundIdToJSON (phenotype_json_p, mv_p -> mv_parent_p -> co_id_p, MV_ONTOLOGY_S))
 																						{
 																							success_flag = true;
 																						}

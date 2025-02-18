@@ -62,7 +62,7 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const char *url_s, const char *crop_s, const char *image_s);
+DFW_FIELD_TRIAL_SERVICE_LOCAL CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const char *id_s, const char *crop_s, const char *image_s);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeCropOntology (CropOntology *co_p);

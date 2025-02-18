@@ -1211,6 +1211,7 @@ static int GetCropOntologyVariablesResponse (const char * const api_url_s, json_
 
 												}
 
+											json_decref (response_p);
 										}		/* if (response_p) */
 								}
 
@@ -1240,7 +1241,7 @@ static bool ImportFromCropOntologyJSON (const json_t *response_p, ServiceJob *jo
 
 					if ((*num_pages_p == 0) || (*num_total_entries_p == 0))
 						{
-							const json_t *metadata_p = json_object_get (result_p, "metadata");
+							const json_t *metadata_p = json_object_get (response_p, "metadata");
 
 							if (metadata_p)
 								{

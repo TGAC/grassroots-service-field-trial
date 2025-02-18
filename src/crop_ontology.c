@@ -35,7 +35,7 @@
 static void *GetCropOntologyCallback (const json_t *json_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 
-CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const char *url_s, const char *crop_s, const char *image_s)
+CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const char *id_s, const char *crop_s, const char *image_s)
 {
 	char *copied_name_s = EasyCopyToNewString (name_s);
 
@@ -45,13 +45,13 @@ CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const 
 
 			if (copied_crop_s)
 				{
-					char *copied_url_s = EasyCopyToNewString (url_s);
+					char *copied_copied_id_s = EasyCopyToNewString (id_s);
 
-					if (copied_url_s)
+					if (copied_copied_id_s)
 						{
 							char *copied_image_s = NULL;
 
-							if ((image_s == NULL) || ((copied_image_s = EasyCopyToNewString (url_s)) != NULL))
+							if ((image_s == NULL) || ((copied_image_s = EasyCopyToNewString (image_s)) != NULL))
 								{
 									CropOntology *co_p = (CropOntology *) AllocMemory (sizeof (CropOntology));
 
@@ -59,7 +59,7 @@ CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const 
 										{
 											co_p -> co_id_p = id_p;
 											co_p -> co_name_s = copied_name_s;
-											co_p -> co_id_s = copied_url_s;
+											co_p -> co_id_s = copied_copied_id_s;
 											co_p -> co_crop_s = copied_crop_s;
 											co_p -> co_image_s = copied_image_s;
 
@@ -72,7 +72,7 @@ CropOntology *AllocateCropOntology (bson_oid_t *id_p, const char *name_s, const 
 										}
 								}
 
-							FreeCopiedString (copied_url_s);
+							FreeCopiedString (copied_copied_id_s);
 						}		/* if (copied_agrovoc_uri_s) */
 
 					FreeCopiedString (copied_crop_s);
@@ -104,13 +104,15 @@ void FreeCropOntology (CropOntology *co_p)
 			FreeCopiedString (co_p -> co_id_s);
 		}
 
+	if (co_p -> co_crop_s)
+		{
+			FreeCopiedString (co_p -> co_crop_s);
+		}
+
 	if (co_p -> co_image_s)
 		{
 			FreeCopiedString (co_p -> co_image_s);
 		}
-
-
-	FreeCopiedString (co_p -> co_name_s);
 
 	FreeMemory (co_p);
 }
@@ -289,7 +291,7 @@ bool SaveCropOntology (CropOntology *co_p, const FieldTrialServiceData *data_p)
 
 			if (crop_json_p)
 				{
-					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, crop_json_p, data_p -> dftsd_collection_ss [DFTD_CROP], data_p -> dftsd_backup_collection_ss [DFTD_CROP], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
+					success_flag = SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, crop_json_p, data_p -> dftsd_collection_ss [DFTD_ONTOLOGY], data_p -> dftsd_backup_collection_ss [DFTD_ONTOLOGY], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S);
 
 					json_decref (crop_json_p);
 				}		/* if (crop_json_p) */
