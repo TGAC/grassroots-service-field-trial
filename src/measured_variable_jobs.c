@@ -1080,7 +1080,7 @@ static OperationStatus ImportFromCropOntology (const char * const api_url_s, Ser
 	 * all of the variables for a given ontology
 	 */
 	OperationStatus status = OS_IDLE;
-	uint32 current_page_index = 0;
+	uint32 current_page_index = 1;
 	bool loop_flag = true;
 	size_t num_pages = 0;
 	size_t num_ontology_entries = 0;
@@ -1122,10 +1122,17 @@ static OperationStatus ImportFromCropOntology (const char * const api_url_s, Ser
 
 								}
 
+							if (response_p)
+								{
+									json_decref (response_p);
+								}
+
 							FreeCopiedString (full_url_s);
 						}
 
 					FreeCopiedString (current_page_index_s);
+
+					++ current_page_index;
 				}
 
 
@@ -1211,7 +1218,11 @@ static int GetCropOntologyVariablesResponse (const char * const api_url_s, json_
 
 												}
 
-											json_decref (response_p);
+											/* If there was a failure, delete the response */
+											if (*res_pp != response_p)
+												{
+													json_decref (response_p);
+												}
 										}		/* if (response_p) */
 								}
 

@@ -170,6 +170,8 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 				{
 					bool success_flag = false;
 
+
+
 					if (format == VF_CLIENT_MINIMAL)
 						{
 							const char *variable_s = GetMeasuredVariableName (mv_p);
@@ -213,18 +215,29 @@ json_t *GetMeasuredVariableAsJSON (const MeasuredVariable *mv_p, const ViewForma
 																				}
 																		}
 																}
-															else if (format == VF_CLIENT_FULL)
+															else if ((format == VF_CLIENT_FULL) || (format == VF_INDEXING))
 																{
+
 																	/* Add the ontology details */
 																	if (mv_p -> mv_parent_p)
 																		{
-																			json_t *ontology_json_p = GetCropOntologyAsJSON (mv_p -> mv_parent_p, VF_CLIENT_FULL, data_p);
+																			json_t *ontology_json_p = GetCropOntologyAsJSON (mv_p -> mv_parent_p, format, data_p);
 
 																			if (ontology_json_p)
 																				{
 																					if (json_object_set_new (phenotype_json_p, MV_ONTOLOGY_S, ontology_json_p) == 0)
 																						{
-																							success_flag = true;
+																							if (format == VF_INDEXING)
+																								{
+																									if (AddCompoundIdToJSON (phenotype_json_p, mv_p -> mv_id_p))
+																										{
+																											success_flag = true;
+																										}
+																								}
+																							else
+																								{
+																									success_flag = true;
+																								}
 																						}
 																					else
 																						{
@@ -422,35 +435,62 @@ MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, c
 }
 
 
-OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob *job_p, const FieldTrialServiceData *data_p)
+OperationStatus SaveMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
 
-	if (PrepareSaveData (& (treatment_p -> mv_id_p), &selector_p))
+	if (PrepareSaveData (& (mv_p -> mv_id_p), &selector_p))
 		{
-			json_t *phenotype_json_p = GetMeasuredVariableAsJSON (treatment_p, VF_STORAGE, data_p);
+			json_t *phenotype_json_p = GetMeasuredVariableAsJSON (mv_p, VF_STORAGE, data_p);
 
 			if (phenotype_json_p)
 				{
 					if (SaveAndBackupMongoDataWithTimestamp (data_p -> dftsd_mongo_p, phenotype_json_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE],
 																									 data_p -> dftsd_backup_collection_ss [DFTD_MEASURED_VARIABLE], DFT_BACKUPS_ID_KEY_S, selector_p, MONGO_TIMESTAMP_S))
 						{
-							status = IndexData (job_p, phenotype_json_p, NULL);
+							json_t *index_json_p = GetMeasuredVariableAsJSON (mv_p, VF_INDEXING, data_p);
 
-							if (status != OS_SUCCEEDED)
+							if (index_json_p)
 								{
-									status = OS_PARTIALLY_SUCCEEDED;
-									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "Failed to index Measured Variable \"%s\" as JSON to Lucene", treatment_p -> mv_variable_term_p -> st_name_s);
+									status = IndexData (job_p, index_json_p, NULL);
+
+									if (status != OS_SUCCEEDED)
+										{
+											status = OS_PARTIALLY_SUCCEEDED;
+											PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, index_json_p, "Failed to index Measured Variable \"%s\" as JSON to Lucene", mv_p -> mv_variable_term_p -> st_name_s);
+											AddGeneralErrorMessageToServiceJob (job_p, "Measured Variable saved but failed to index for searching");
+										}
+
+									json_decref (index_json_p);
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to index generate Measured Variable \"%s\" as JSON for Lucene", mv_p -> mv_variable_term_p -> st_name_s);
 									AddGeneralErrorMessageToServiceJob (job_p, "Measured Variable saved but failed to index for searching");
 								}
 
 						}
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, phenotype_json_p, "SaveAndBackupMongoDataWithTimestamp () failed for Measured Variable \"%s\" as JSON to Lucene", mv_p -> mv_variable_term_p -> st_name_s);
+							AddGeneralErrorMessageToServiceJob (job_p, "Failed to save Measured Variable");
+						}
 
 					json_decref (phenotype_json_p);
 				}		/* if (phenotype_json_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariableAsJSON () failed for \"%s\"", mv_p -> mv_variable_term_p -> st_name_s);
+					AddGeneralErrorMessageToServiceJob (job_p, "Failed to save Measured Variable");
+				}
 
-		}		/* if (treatment_p -> mv_id_p) */
+		}		/* if (mv_p -> mv_id_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "PrepareSaveData () failed for Measured Variable \"%s\"", mv_p -> mv_variable_term_p -> st_name_s);
+			AddGeneralErrorMessageToServiceJob (job_p, "Failed to save Measured Variable");
+		}
 
 	SetServiceJobStatus (job_p, status);
 
