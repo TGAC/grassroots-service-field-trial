@@ -125,7 +125,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetMeasuredVariableAsJSON (const MeasuredV
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, const FieldTrialServiceData *data_p);
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveMeasuredVariable (MeasuredVariable *treatment_p, ServiceJob *job_p, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus SaveMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p, const char * const job_name_s, const FieldTrialServiceData *data_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariable *GetMeasuredVariableById (const bson_oid_t *id_p, const FieldTrialServiceData *data_p);
 
@@ -144,6 +144,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL MeasuredVariableNode *AllocateMeasuredVariableNode
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariableNode (ListItem *node_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL const struct ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus IndexMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p, const char *job_name_s, FieldTrialServiceData *data_p);
+
 
 #ifdef __cplusplus
 }

@@ -1003,18 +1003,54 @@ OperationStatus ReindexTrials (ServiceJob *job_p, LuceneTool *lucene_p, bool upd
 OperationStatus ReindexMeasuredVariables (ServiceJob *job_p, LuceneTool *lucene_p, bool update_flag, const FieldTrialServiceData *service_data_p)
 {
 	OperationStatus status = OS_FAILED;
-	json_t *variables_p = GetMeasuredVariableIndexingData (service_data_p -> dftsd_base_data.sd_service_p);
+	json_t *id_results_p = GetAllMeasuredVariableIds (service_data_p -> dftsd_base_data.sd_service_p);
 
 
-	if (variables_p)
+	if (id_results_p)
 		{
-			if (SetLuceneToolName (lucene_p, "index_measured_variables"))
-				{
-					status = IndexLucene (lucene_p, variables_p, update_flag);
-				}
+			json_t *id_result_p;
+			size_t i;
+			size_t num_successes = 0;
 
-			json_decref (variables_p);
-		}
+			json_array_foreach (id_results_p, i, id_result_p)
+				{
+					bson_oid_t id;
+
+					if (GetMongoIdFromJSON (id_result_p, &id))
+						{
+							char *id_s = GetBSONOidAsString (&id);
+
+							if (id_s)
+								{
+									MeasuredVariable *mv_p = GetMeasuredVariableByIdString  (id_s, service_data_p);
+
+									if (mv_p)
+										{
+											OperationStatus s = IndexMeasuredVariable (mv_p, job_p, id_s, service_data_p);
+
+											FreeMeasuredVariable (mv_p);
+										}		/* if (mv_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetStudyByIdString () failed for \"%s\"", id_s);
+										}
+								}		/* if (id_s) */
+							else
+								{
+									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, id_result_p, "GetBSONOidAsString () failed");
+								}
+
+						}		/* if (GetMongoIdFromJSON (id_result_p, &id)) */
+					else
+						{
+							PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, id_result_p, "GetMongoIdFromJSON () failed");
+						}
+
+				}		/* json_array_foreach (id_results_p, i, id_result_p) */
+
+			json_decref (id_results_p);
+		}		/* if (id_results_p) */
+
 
 	return status;
 }

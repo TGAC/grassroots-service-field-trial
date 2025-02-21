@@ -435,7 +435,7 @@ MeasuredVariable *GetMeasuredVariableFromJSON (const json_t *phenotype_json_p, c
 }
 
 
-OperationStatus SaveMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p, const FieldTrialServiceData *data_p)
+OperationStatus SaveMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p, const char * const job_name_s, const FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_FAILED;
 	bson_t *selector_p = NULL;
@@ -453,7 +453,7 @@ OperationStatus SaveMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p,
 
 							if (index_json_p)
 								{
-									status = IndexData (job_p, index_json_p, NULL);
+									status = IndexData (job_p, index_json_p, job_name_s);
 
 									if (status != OS_SUCCEEDED)
 										{
@@ -685,6 +685,30 @@ void FreeMeasuredVariableNode (ListItem *node_p)
 const ScaleClass *GetMeasuredVariableScaleClass (const MeasuredVariable * const variable_p)
 {
 	return variable_p -> mv_scale_class_p;
+}
+
+
+OperationStatus IndexMeasuredVariable (MeasuredVariable *mv_p, ServiceJob *job_p, const char *job_name_s, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_FAILED;
+	const ViewFormat format = VF_INDEXING;
+
+	json_t *mv_json_p = GetMeasuredVariableAsJSON (mv_p, format, data_p);
+
+	if (mv_json_p)
+		{
+			status = IndexData (job_p, mv_json_p, job_name_s);
+
+			if (status != OS_SUCCEEDED)
+				{
+					PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, mv_json_p, "Failed to index MeasuredVariable \"%s\" as JSON to Lucene", mv_p -> mv_variable_term_p -> st_name_s);
+					AddGeneralErrorMessageToServiceJob (job_p, "Study saved but failed to index for searching");
+				}
+
+			json_decref (mv_json_p);
+		}
+
+	return status;
 }
 
 

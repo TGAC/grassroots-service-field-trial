@@ -117,6 +117,8 @@ static CropOntology *GetOrCreateOntology (const json_t *entry_p, MEM_FLAG *ontol
 																					const char * const crop_key_s, const FieldTrialServiceData *data_p);
 
 
+
+
 bool AddSubmissionMeasuredVariableParams (ServiceData *data_p, ParameterSet *param_set_p)
 {
 	bool success_flag = false;
@@ -848,7 +850,8 @@ static OperationStatus AddMeasuredVariablesFromJSON (ServiceJob *job_p, const ui
 																		{
 																			PrintJSONToLog (STM_LEVEL_FINER, __FILE__, __LINE__, table_row_json_p, "Adding MeasuredVariable for row");
 
-																			status = SaveMeasuredVariable (mv_p, job_p, data_p);
+																			status = SaveMeasuredVariable (mv_p, job_p, variable_p -> st_name_s, data_p);
+
 
 																			if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
 																				{
@@ -1071,6 +1074,36 @@ int CheckMeasuredVariable (MeasuredVariable *var_p, const FieldTrialServiceData 
 
 	return res;
 }
+
+
+json_t *GetAllMeasuredVariableIds (Service *service_p)
+{
+	json_t *id_results_p = NULL;
+	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
+
+	if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_MEASURED_VARIABLE]))
+		{
+			bson_t query;
+			const char *fields_ss [] = { MONGO_ID_S, NULL };
+
+			bson_init (&query);
+
+			if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, &query, fields_ss, NULL))
+				{
+					id_results_p = GetAllExistingMongoResultsAsJSON (data_p -> dftsd_mongo_p);
+
+					if (!id_results_p)
+						{
+
+						}		/* if (id_results_p) */
+
+				}		/* if (FindMatchingMongoDocumentsByBSON (data_p -> dftsd_mongo_p, NULL, fields_ss, NULL)) */
+
+		}		/* if (SetMongoToolCollection (data_p -> dftsd_mongo_p, data_p -> dftsd_collection_ss [DFTD_STUDY])) */
+
+	return id_results_p;
+}
+
 
 
 static OperationStatus ImportFromCropOntology (const char * const api_url_s, ServiceJob *job_p,  const FieldTrialServiceData *data_p)
@@ -1505,3 +1538,4 @@ static CropOntology *GetOrCreateOntology (const json_t *entry_p, MEM_FLAG *ontol
 	return ontology_p;
 
 }
+

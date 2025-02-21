@@ -217,13 +217,13 @@ CropOntology *GetCropOntologyFromJSON (const json_t *crop_json_p, const FieldTri
 
 	if (name_s)
 		{
-			const char *url_s = GetJSONString (crop_json_p, CO_ID_S);
+			const char *id_s = GetJSONString (crop_json_p, CO_ID_S);
 
-			if (url_s)
+			if (id_s)
 				{
-					const char *term_s = GetJSONString (crop_json_p, CO_CROP_S);
+					const char *crop_s = GetJSONString (crop_json_p, CO_CROP_S);
 
-					if (term_s)
+					if (crop_s)
 						{
 							bson_oid_t *id_p = GetNewUnitialisedBSONOid ();
 
@@ -232,7 +232,7 @@ CropOntology *GetCropOntologyFromJSON (const json_t *crop_json_p, const FieldTri
 									if (GetMongoIdFromJSON (crop_json_p, id_p))
 										{
 											const char *logo_s = GetJSONString (crop_json_p, CO_IMAGE_S);
-											CropOntology *co_p = AllocateCropOntology (id_p, name_s, term_s, url_s, logo_s);
+											CropOntology *co_p = AllocateCropOntology (id_p, name_s, id_s, crop_s, logo_s);
 
 											if (co_p)
 												{

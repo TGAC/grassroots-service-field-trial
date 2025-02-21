@@ -102,6 +102,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeMeasuredVariablesNameKey (char *key_s);
 DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus RunForCropOntologyAPIImport (ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetAllMeasuredVariableIds (Service *service_p);
+
+
 #ifdef __cplusplus
 }
 #endif
