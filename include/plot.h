@@ -169,6 +169,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocatePlot (bson_oid_t *id_p, const struct
 										const uint32 *walking_order_p, const uint32 *sowing_order_p, Study *parent_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Plot *AllocateSkeletonPlot (const int32 row, const int32 column, Study *study_p, const FieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePlot (Plot *plot_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL PlotNode *AllocatePlotNode (Plot *plot_p);

@@ -129,10 +129,16 @@ static NamedParameterType S_AMEND = { "PL Amend", PT_BOOLEAN};
 
 static NamedParameterType S_STUDIES_LIST = { "PL Study", PT_STRING };
 
+static NamedParameterType S_NUM_ROWS = { "PL Number of rows", PT_UNSIGNED_INT };
+
+static NamedParameterType S_NUM_COLS = { "PL Number of columns", PT_UNSIGNED_INT };
 
 
 
 
+static const int32 S_DEFAULT_RACK_PLOTWISE_INDEX = 1;
+static const int32 S_DEFAULT_REPLICATE = 1;
+static const bool S_DEFAULT_CONTROL_REP_FLAG = false;
 
 /*
  * static declarations
@@ -185,6 +191,8 @@ static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, 
 static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const study_p, const ViewFormat format, FieldTrialServiceData *data_p);
 
 
+static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
+
 /*
  * API definitions
  */
@@ -219,30 +227,55 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 						}		/* if (AddPlotDefaultsFromStudy (active_study_p, data_p, param_set_p)) */
 
 
-					if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
+					if (param_set_p -> ps_current_level == PL_BASIC)
 						{
-
-							if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
+							/*
+							 * We're doing a wizard-based approach to generate
+							 * a skeleton layout with empty plots
+							 */
+							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_ROWS.npt_name_s, "Rows", "How many rows of Plots there are in the Study", NULL, PL_BASIC)) != NULL)
 								{
-									bool append_flag = false;
-
-									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_AMEND.npt_name_s, "Append to existing plot data", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
+									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_COLS.npt_name_s, "Columns", "How many columns of Plots there are in the Study", NULL, PL_BASIC)) != NULL)
 										{
 											success_flag = true;
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AMEND.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NUM_COLS.npt_name_s);
 										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTableParameter failed");
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NUM_ROWS.npt_name_s);
 								}
 						}
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s);
+							if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
+								{
+
+									if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
+										{
+											bool append_flag = false;
+
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_AMEND.npt_name_s, "Append to existing plot data", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
+												{
+													success_flag = true;
+												}
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AMEND.npt_name_s);
+												}
+										}
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTableParameter failed");
+										}
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s);
+								}
 						}
 				}
 			else
@@ -299,85 +332,116 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 					if (study_p)
 						{
-							json_t *plots_table_p = NULL;
-
-							if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, PL_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
+							if (param_set_p -> ps_current_level == PL_BASIC)
 								{
-									job_done_flag = true;
-
 									/*
-									 * Has a spreadsheet been uploaded?
+									 * Check that the study doesn't already have plots
 									 */
-									if (plots_table_p)
+									int64 num_existing_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+									if (num_existing_plots == 0)
 										{
-											const size_t num_rows = json_array_size (plots_table_p);
-
-											if (num_rows > 0)
-												{
-													const bool *append_flag_p = NULL;
-													bool success_flag = true;
-
-
-													if (data_p -> dftsd_plots_uploads_path_s)
-														{
-															char *uploads_path_s = GetPlotsUploadsFilename (study_id_s, data_p);
-
-															if (uploads_path_s)
-																{
-
-																}
-
-														}
-
-													GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_AMEND.npt_name_s, &append_flag_p);
-
-													if (!append_flag_p || (! (*append_flag_p)))
-														{
-															if (!RemoveExistingPlotsForStudy (study_p, data_p))
-																{
-																	success_flag = false;
-																	PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to remove existing plots for study \"%s\"", study_id_s);
-																}
-														}
-
-													if (success_flag)
-														{
-															if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
-																{
-																	PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
-																}
-														}
-
-												}		/* if (num_rows > 0) */
-											else
-												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
-												}
-
-										}		/* if (table_value.st_json_p) */
+											status = GenerateSkeletonPlots (study_p, param_set_p, job_p, data_p);
+										}
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
-										}
+											char *error_s = ConcatenateVarargsStrings ("Study ", study_p -> st_name_s, " already has plots", NULL);
 
-								}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
+											if (error_s)
+												{
+													AddGeneralErrorMessageToServiceJob (job_p, error_s);
+													FreeCopiedString (error_s);
+												}
+											else
+												{
+													AddGeneralErrorMessageToServiceJob (job_p, "Study already has plots");
+												}
+
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Study \"%s\" already has plots", study_p -> st_name_s);
+										}
+								}		/* if (param_set_p -> ps_current_level == PL_BASIC) */
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", PL_PLOT_TABLE.npt_name_s);
-								}
+									json_t *plots_table_p = NULL;
+
+									if (GetCurrentJSONParameterValueFromParameterSet (param_set_p, PL_PLOT_TABLE.npt_name_s, (const json_t **) &plots_table_p))
+										{
+											job_done_flag = true;
+
+											/*
+											 * Has a spreadsheet been uploaded?
+											 */
+											if (plots_table_p)
+												{
+													const size_t num_rows = json_array_size (plots_table_p);
+
+													if (num_rows > 0)
+														{
+															const bool *append_flag_p = NULL;
+															bool success_flag = true;
 
 
-							status = CalculateStudyStatistics (study_p, data_p);
+															if (data_p -> dftsd_plots_uploads_path_s)
+																{
+																	char *uploads_path_s = GetPlotsUploadsFilename (study_id_s, data_p);
 
-							if (status == OS_SUCCEEDED)
-								{
-									OperationStatus old_status = job_p -> sj_status;
+																	if (uploads_path_s)
+																		{
 
-									status = SaveStudy (study_p, job_p, data_p, data_p -> dftsd_view_plots_url_s);
+																		}
 
-									MergeServiceJobStatus(job_p, old_status);
+																}
 
-								}
+															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_AMEND.npt_name_s, &append_flag_p);
+
+															if (!append_flag_p || (! (*append_flag_p)))
+																{
+																	if (!RemoveExistingPlotsForStudy (study_p, data_p))
+																		{
+																			success_flag = false;
+																			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to remove existing plots for study \"%s\"", study_id_s);
+																		}
+																}
+
+															if (success_flag)
+																{
+																	if (!AddPlotsFromJSON (job_p, plots_table_p, study_p, data_p))
+																		{
+																			PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, plots_table_p, "AddPlotsFromJSON failed for study \"%s\"", study_p -> st_name_s);
+																		}
+																}
+
+														}		/* if (num_rows > 0) */
+													else
+														{
+															PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Empty JSON for uploaded plots for study \"%s\"", study_id_s);
+														}
+
+												}		/* if (table_value.st_json_p) */
+											else
+												{
+													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "NULL JSON for uploaded plots for study \"%s\"", study_id_s);
+												}
+
+										}		/* if (GetCurrentParameterValueFromParameterSet (param_set_p, S_PLOT_TABLE.npt_name_s, &table_value)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get param \"%s\"", PL_PLOT_TABLE.npt_name_s);
+										}
+
+									status = CalculateStudyStatistics (study_p, data_p);
+
+									if (status == OS_SUCCEEDED)
+										{
+											OperationStatus old_status = job_p -> sj_status;
+
+											status = SaveStudy (study_p, job_p, data_p, data_p -> dftsd_view_plots_url_s);
+
+											MergeServiceJobStatus(job_p, old_status);
+
+										}
+
+								}		/* if (param_set_p -> ps_current_level == PL_BASIC) else ... */
 
 							FreeStudy (study_p);
 						}		/* if (study_p) */
@@ -1157,9 +1221,9 @@ static OperationStatus CreateOrUpdateStandardRowFromJSON (StandardRow **row_pp, 
 
 					if (material_p)
 						{
-							int32 rack_plotwise_index = 1;
-							bool control_rep_flag = false;
-							int32 replicate = 1;
+							int32 rack_plotwise_index = S_DEFAULT_RACK_PLOTWISE_INDEX;
+							bool control_rep_flag = S_DEFAULT_CONTROL_REP_FLAG;
+							int32 replicate = S_DEFAULT_REPLICATE;
 							bool success_flag = true;
 							const char *rep_s = GetJSONString (table_row_json_p, PL_REPLICATE_TITLE_S);
 							const char *store_code_s = GetJSONString (table_row_json_p, PL_STORE_CODE_TABLE_TITLE_S);
@@ -1779,6 +1843,7 @@ static bool AddPlotsFromJSON (ServiceJob *job_p, json_t *plots_json_p, Study *st
 }
 
 
+
 static Plot *CreatePlotFromTabularJSON (const json_t *table_row_json_p, const int32 row, const int32 column, Study *study_p, const FieldTrialServiceData *data_p)
 {
 	double *width_p = NULL;
@@ -2353,4 +2418,88 @@ static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const st
 	return success_flag;
 }
 
+
+
+static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+	uint32 *num_rows_p = NULL;
+
+	if (GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_NUM_ROWS.npt_name_s, &num_rows_p))
+		{
+			if (*num_rows_p)
+				{
+					uint32 *num_cols_p = NULL;
+
+					if (GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_NUM_COLS.npt_name_s, &num_cols_p))
+						{
+							if (*num_cols_p)
+								{
+									GeneBank *gru_gene_bank_p = GetGeneBankByName (GENE_BANK_GRU_S, data_p);
+
+									if (gru_gene_bank_p)
+										{
+											const uint32 num_rows = *num_rows_p;
+											const uint32 num_cols = *num_cols_p;
+											const int32 rack_plotwise_index = S_DEFAULT_RACK_PLOTWISE_INDEX;
+											const bool control_rep_flag = S_DEFAULT_CONTROL_REP_FLAG;
+											const int32 replicate = S_DEFAULT_REPLICATE;
+											uint32 col = 0;
+											uint32 plot_id = 1;
+
+											for (col = 0; col < num_cols; ++ col)
+												{
+													uint32 row = 0;
+
+													for (row = 0; row < num_rows; ++ row, ++ plot_id)
+														{
+															bool success_flag = false;
+															Plot *plot_p = AllocateSkeletonPlot (row, col, study_p, data_p);
+
+															if (plot_p)
+																{
+																	StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, plot_id, control_rep_flag, replicate, NULL, MF_ALREADY_FREED, NULL, plot_p);
+
+																	if (sr_p)
+																		{
+																			if (AddRowToPlot (plot_p, & (sr_p -> sr_base)))
+																				{
+																					if (AddPlotToStudy (study_p, plot_p))
+																						{
+																							success_flag = true;
+																						}
+																				}
+																			else
+																				{
+																					FreeRow (& (sr_p -> sr_base));
+																				}
+
+																		}		/* if (sr_p) */
+																	else
+																		{
+
+																		}
+
+																	if (!success_flag)
+																		{
+																			FreePlot (plot_p);
+																		}
+																}		/* if (plot_p) */
+
+
+														}
+
+												}
+
+										}		/* if (gru_gene_bank_p) */
+
+
+								}
+						}
+
+				}
+		}
+
+	return status;
+}
 

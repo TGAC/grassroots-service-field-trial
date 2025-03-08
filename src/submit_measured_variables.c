@@ -218,20 +218,17 @@ static ServiceJobSet *RunMeasuredVariableSubmissionService (Service *service_p, 
 
 			if (param_set_p)
 				{
-					/*
-					 * check for simple search first
-					 */
-					if (param_set_p -> ps_current_level == PL_SIMPLE)
+					if (param_set_p -> ps_current_level == PL_ADVANCED)
+						{
+							RunForCropOntologyAPIImport (param_set_p, job_p, data_p);
+						}
+					else
 						{
 							if (!RunForSubmittedSpreadsheet (data_p, param_set_p, job_p))
 								{
 
-								}		/* if (!RunForSubmissionMeasuredVariableParams (data_p, param_set_p, job_p)) */
+								}		/* if (!RunForSubmittedSpreadsheet (data_p, param_set_p, job_p)) */
 
-						}
-					else if (param_set_p -> ps_current_level == PL_ADVANCED)
-						{
-							RunForCropOntologyAPIImport (param_set_p, job_p, data_p);
 						}
 
 				}		/* if (param_set_p) */

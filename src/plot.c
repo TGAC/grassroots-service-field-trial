@@ -873,6 +873,12 @@ void *GetPlotCallback (const json_t *json_p, const ViewFormat format, const Fiel
 }
 
 
+Plot *AllocateSkeletonPlot (const int32 row, const int32 column, Study *study_p, const FieldTrialServiceData *data_p)
+{
+	return  AllocatePlot (NULL, NULL, NULL, NULL, NULL, row, column, NULL, NULL, NULL, NULL, NULL, NULL, study_p);
+}
+
+
 
 //Plot *GetPlotByIndex (const Study *study_p, const uint32 plot_index, const FieldTrialServiceData *data_p)
 //{
