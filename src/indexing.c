@@ -1886,7 +1886,7 @@ static OperationStatus CreateMongoIndexes (FieldTrialServiceData *data_p)
 			keys_array_ss [1] = PL_ROW_INDEX_S;
 			keys_array_ss [2] = PL_COLUMN_INDEX_S;
 			keys_array_ss [3] = SR_RACK_INDEX_S;
-			keys_array_ss [3] = NULL;
+			keys_array_ss [4] = NULL;
 
 			/* Plots */
 			if (AddCollectionCompoundIndex (tool_p, NULL, data_p -> dftsd_collection_ss [DFTD_PLOT], keys_ss, true, false))
