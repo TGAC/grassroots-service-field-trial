@@ -193,6 +193,10 @@ static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const st
 
 static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p);
 
+
+static Plot *GetPlotByRowColumn (const uint32 row, const uint32 column, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p);
+
+
 /*
  * API definitions
  */
@@ -227,15 +231,15 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 						}		/* if (AddPlotDefaultsFromStudy (active_study_p, data_p, param_set_p)) */
 
 
-					if (param_set_p -> ps_current_level == PL_BASIC)
+					if (param_set_p -> ps_current_level == PL_SIMPLE)
 						{
 							/*
 							 * We're doing a wizard-based approach to generate
 							 * a skeleton layout with empty plots
 							 */
-							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_ROWS.npt_name_s, "Rows", "How many rows of Plots there are in the Study", NULL, PL_BASIC)) != NULL)
+							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_ROWS.npt_name_s, "Rows", "How many rows of Plots there are in the Study", NULL, PL_SIMPLE)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_COLS.npt_name_s, "Columns", "How many columns of Plots there are in the Study", NULL, PL_BASIC)) != NULL)
+									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_COLS.npt_name_s, "Columns", "How many columns of Plots there are in the Study", NULL, PL_SIMPLE)) != NULL)
 										{
 											success_flag = true;
 										}
@@ -332,7 +336,7 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 					if (study_p)
 						{
-							if (param_set_p -> ps_current_level == PL_BASIC)
+							if (param_set_p -> ps_current_level == PL_WIZARD)
 								{
 									/*
 									 * Check that the study doesn't already have plots
@@ -1330,7 +1334,6 @@ static OperationStatus AddPlotFromJSON (ServiceJob *job_p, json_t *table_row_jso
 	bool is_new_plot_flag = true;
 
 
-
 	if (GetJSONStringAsInteger (table_row_json_p, PL_INDEX_TABLE_TITLE_S, &rack_studywise_index))
 		{
 			/*
@@ -1698,7 +1701,8 @@ static Plot *GetPlotForUpdating (ServiceJob *job_p, json_t *table_row_json_p, St
 			/*
 			 * does the plot already exist?
 			 */
-			plot_p = GetPlotByRowColumnRack (row, column, rack, study_p, VF_STORAGE, data_p);
+			//plot_p = GetPlotByRowColumnRack (row, column, rack, study_p, VF_STORAGE, data_p);
+			plot_p = GetPlotByRowColumn (row, column, study_p, VF_STORAGE, data_p);
 
 			if (plot_p)
 				{
@@ -1954,6 +1958,21 @@ Plot *GetPlotByRowColumnRack (const uint32 row, const uint32 column, const uint3
 	return plot_p;
 }
 
+
+static Plot *GetPlotByRowColumn (const uint32 row, const uint32 column, Study *study_p, const ViewFormat format, FieldTrialServiceData *data_p)
+{
+	Plot *plot_p = NULL;
+	bson_t *query_p = BCON_NEW (PL_ROW_INDEX_S, BCON_INT32 (row), PL_COLUMN_INDEX_S, BCON_INT32 (column), PL_PARENT_STUDY_S, BCON_OID (study_p -> st_id_p));
+
+	if (query_p)
+		{
+			plot_p = GetUniquePlot (query_p, study_p, format, data_p, false);
+
+			bson_destroy (query_p);
+		}		/* if (query_p) */
+
+	return plot_p;
+}
 
 /*
  * https://frictionlessdata.io/data-package/#the-data-package-suite-of-specifications

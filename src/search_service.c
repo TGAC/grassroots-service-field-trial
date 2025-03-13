@@ -277,17 +277,17 @@ static ParameterSet *GetDFWFieldTrialSearchServiceParameters (Service *service_p
 			ParameterGroup *group_p = NULL;
 			Parameter *param_p = NULL;
 
-			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", NULL, PL_BASIC | PL_INTERMEDIATE)) != NULL)
+			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_KEYWORD.npt_type, S_KEYWORD.npt_name_s, "Search", "Search the field trial data", NULL, PL_SIMPLE)) != NULL)
 				{
 					if (AddFacetParameters (params_p, group_p, data_p))
 						{
 							uint32 def = S_DEFAULT_PAGE_NUMBER;
 
-							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_name_s, "Page", "The number of the results page to get", &def, PL_BASIC | PL_INTERMEDIATE)) != NULL)
+							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_NUMBER.npt_name_s, "Page", "The number of the results page to get", &def, PL_SIMPLE)) != NULL)
 								{
 									def = S_DEFAULT_PAGE_SIZE;
 
-									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", &def, PL_BASIC | PL_INTERMEDIATE)) != NULL)
+									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, S_PAGE_SIZE.npt_name_s, "Page size", "The maximum number of results on each page", &def, PL_SIMPLE)) != NULL)
 										{
 											if (AddSearchFieldTrialParams (& (data_p -> dftsd_base_data), params_p))
 												{
@@ -509,7 +509,7 @@ static ServiceJobSet *RunDFWFieldTrialSearchService (Service *service_p, Paramet
 					/*
 					 * check for simple search first
 					 */
-					if (param_set_p -> ps_current_level == PL_INTERMEDIATE)
+					if (param_set_p -> ps_current_level & PL_SIMPLE)
 						{
 							LinkedList *facets_p = GetFacets (param_set_p);
 

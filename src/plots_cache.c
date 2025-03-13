@@ -71,17 +71,16 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 																		|| (GetBlankValueFromSubmissionJSON (table_row_json_p)));
 					const char * const sep_s = " - ";
 					const char *rack_s = GetJSONString (table_row_json_p, PL_RACK_TITLE_S);
-					char *row_and_column_s = NULL;
+					char *key_s = NULL;
 
 					if (!rack_s)
 						{
 							rack_s = "1";
 						}
 
+					key_s = ConcatenateVarargsStrings (row_s, sep_s, column_s, sep_s, rack_s, NULL);
 
-					char *row_and_column_and_rack_s = ConcatenateVarargsStrings (row_s, sep_s, column_s, sep_s, rack_s, NULL);
-
-					if (row_and_column_and_rack_s)
+					if (key_s)
 						{
 							const char *index_s = GetJSONString (table_row_json_p, PL_INDEX_TABLE_TITLE_S);
 
@@ -92,7 +91,7 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 
 									if (res == 0)
 										{
-											res = IsCachedEntry (plots_cache_p -> pc_grid_cache_p, row_and_column_and_rack_s, row_index, &matched_row);
+											res = IsCachedEntry (plots_cache_p -> pc_grid_cache_p, key_s, row_index, &matched_row);
 
 											if (res == 0)
 												{
@@ -209,8 +208,8 @@ bool CheckPlotRequirements (PlotsCache *plots_cache_p, const json_t *table_row_j
 									PrintJSONToErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, table_row_json_p, "Failed to get \"%s\"", PL_INDEX_TABLE_TITLE_S);
 								}
 
-							FreeCopiedString (row_and_column_s);
-						}		/* if (row_and_column_s) */
+							FreeCopiedString (key_s);
+						}		/* if (key_s) */
 					else
 						{
 							AddTabularParameterErrorMessageToServiceJob (job_p, PL_PLOT_TABLE.npt_name_s, PL_PLOT_TABLE.npt_type, "Internal error parsing table", row_index, NULL);
