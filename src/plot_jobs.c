@@ -210,7 +210,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 	Study *active_study_p = GetStudyFromResource (resource_p, S_STUDIES_LIST, dfw_data_p);
 
 
-	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", NULL, PL_ALL)) != NULL)
+	if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, param_set_p, group_p, S_STUDIES_LIST.npt_type, S_STUDIES_LIST.npt_name_s, "Study", "The Study that these plots are from", NULL, PL_ALL_AND_WIZARD)) != NULL)
 		{
 			if (SetUpStudiesListParameter (dfw_data_p, param_p, active_study_p, false))
 				{
@@ -231,55 +231,45 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 						}		/* if (AddPlotDefaultsFromStudy (active_study_p, data_p, param_set_p)) */
 
 
-					if (param_set_p -> ps_current_level == PL_SIMPLE)
+					if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
 						{
-							/*
-							 * We're doing a wizard-based approach to generate
-							 * a skeleton layout with empty plots
-							 */
-							if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_ROWS.npt_name_s, "Rows", "How many rows of Plots there are in the Study", NULL, PL_SIMPLE)) != NULL)
+
+							if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
 								{
-									if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_COLS.npt_name_s, "Columns", "How many columns of Plots there are in the Study", NULL, PL_SIMPLE)) != NULL)
+									bool append_flag = false;
+
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_AMEND.npt_name_s, "Append to existing plot data", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
 										{
-											success_flag = true;
+											if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_ROWS.npt_name_s, "Rows", "The number of rows of plots in the Study", NULL, PL_WIZARD)) != NULL)
+												{
+													if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_COLS.npt_name_s, "Columns", "The number of columns of plots in the Study", NULL, PL_WIZARD)) != NULL)
+														{
+															success_flag = true;
+														}		/* if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_COLS.npt_type, S_NUM_COLS.npt_name_s, "Columns", "The number of columns of plots in the Study", NULL, PL_ALL)) != NULL) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NUM_COLS.npt_name_s);
+														}
+
+												}		/* if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, param_set_p, group_p, S_NUM_ROWS.npt_type, S_NUM_ROWS.npt_name_s, "Rows", "The number of rows of plots in the Study", NULL, PL_ALL)) != NULL) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NUM_ROWS.npt_name_s);
+												}
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NUM_COLS.npt_name_s);
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AMEND.npt_name_s);
 										}
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_NUM_ROWS.npt_name_s);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTableParameter failed");
 								}
 						}
 					else
 						{
-							if ((param_p = EasyCreateAndAddCharParameterToParameterSet (data_p, param_set_p, group_p, S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s, "Delimiter", "The character delimiting columns", &c, PL_ADVANCED)) != NULL)
-								{
-
-									if ((param_p = GetTableParameter (param_set_p, group_p, active_study_p, dfw_data_p)) != NULL)
-										{
-											bool append_flag = false;
-
-											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, param_set_p, group_p, S_AMEND.npt_name_s, "Append to existing plot data", "Append these plots to the already existing ones rather than removing the existing entries upon submission", &append_flag, PL_ALL)) != NULL)
-												{
-													success_flag = true;
-												}
-											else
-												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_AMEND.npt_name_s);
-												}
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetTableParameter failed");
-										}
-								}
-							else
-								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s);
-								}
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_PLOT_TABLE_COLUMN_DELIMITER.npt_name_s);
 						}
 				}
 			else
@@ -291,6 +281,7 @@ bool AddSubmissionPlotParams (ServiceData *data_p, ParameterSet *param_set_p, Da
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to add %s parameter", S_STUDIES_LIST.npt_name_s);
 		}
+
 
 	if (active_study_p)
 		{
@@ -435,17 +426,18 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 									status = CalculateStudyStatistics (study_p, data_p);
 
-									if (status == OS_SUCCEEDED)
-										{
-											OperationStatus old_status = job_p -> sj_status;
-
-											status = SaveStudy (study_p, job_p, data_p, data_p -> dftsd_view_plots_url_s);
-
-											MergeServiceJobStatus(job_p, old_status);
-
-										}
-
 								}		/* if (param_set_p -> ps_current_level == PL_BASIC) else ... */
+
+
+							if ((status == OS_SUCCEEDED) || (status == OS_PARTIALLY_SUCCEEDED))
+								{
+									OperationStatus old_status = job_p -> sj_status;
+
+									status = SaveStudy (study_p, job_p, data_p, data_p -> dftsd_view_plots_url_s);
+
+									MergeServiceJobStatus(job_p, old_status);
+								}
+
 
 							FreeStudy (study_p);
 						}		/* if (study_p) */
@@ -570,6 +562,8 @@ bool GetSubmissionPlotParameterTypeForNamedParameter (const char *param_name_s, 
 			S_PLOT_TABLE_COLUMN_DELIMITER,
 			PL_PLOT_TABLE,
 			S_AMEND,
+			S_NUM_ROWS,
+			S_NUM_COLS,
 			{ NULL }
 		};
 
@@ -2442,19 +2436,21 @@ static bool AddStudyDetailsToJSON (json_t *result_json_p, const Study * const st
 static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *param_set_p, ServiceJob *job_p, FieldTrialServiceData *data_p)
 {
 	OperationStatus status = OS_IDLE;
-	uint32 *num_rows_p = NULL;
+	const uint32 *num_rows_p = NULL;
 
 	if (GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_NUM_ROWS.npt_name_s, &num_rows_p))
 		{
 			if (*num_rows_p)
 				{
-					uint32 *num_cols_p = NULL;
+					const uint32 *num_cols_p = NULL;
 
 					if (GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_NUM_COLS.npt_name_s, &num_cols_p))
 						{
 							if (*num_cols_p)
 								{
 									GeneBank *gru_gene_bank_p = GetGeneBankByName (GENE_BANK_GRU_S, data_p);
+
+									status = OS_FAILED;
 
 									if (gru_gene_bank_p)
 										{
@@ -2463,14 +2459,15 @@ static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *para
 											const int32 rack_plotwise_index = S_DEFAULT_RACK_PLOTWISE_INDEX;
 											const bool control_rep_flag = S_DEFAULT_CONTROL_REP_FLAG;
 											const int32 replicate = S_DEFAULT_REPLICATE;
-											uint32 col = 0;
+											uint32 col;
 											uint32 plot_id = 1;
+											uint32 num_plots_created = 0;
 
-											for (col = 0; col < num_cols; ++ col)
+											for (col = 1; col <= num_cols; ++ col)
 												{
-													uint32 row = 0;
+													uint32 row;
 
-													for (row = 0; row < num_rows; ++ row, ++ plot_id)
+													for (row = 1; row <= num_rows; ++ row, ++ plot_id)
 														{
 															bool success_flag = false;
 															Plot *plot_p = AllocateSkeletonPlot (row, col, study_p, data_p);
@@ -2485,38 +2482,87 @@ static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *para
 																				{
 																					if (AddPlotToStudy (study_p, plot_p))
 																						{
-																							success_flag = true;
+																							if (SavePlot (plot_p, data_p))
+																								{
+																									success_flag = true;
+																									++ num_plots_created;
+																								}		/* if (SavePlot (plot_p, data_p)) */
+																							else
+																								{
+																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SavePlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+																								}
+
+																						}		/* if (AddPlotToStudy (study_p, plot_p)) */
+																					else
+																						{
+																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPlotToStudy () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
 																						}
-																				}
+
+																				}		/* if (AddRowToPlot (plot_p, & (sr_p -> sr_base))) */
 																			else
 																				{
+																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddRowToPlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
 																					FreeRow (& (sr_p -> sr_base));
 																				}
 
 																		}		/* if (sr_p) */
 																	else
 																		{
-
+																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateStandardRow () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
 																		}
 
 																	if (!success_flag)
 																		{
 																			FreePlot (plot_p);
 																		}
+
 																}		/* if (plot_p) */
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateSkeletonPlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+																}
 
+														}		/* for (row = 0; row < num_rows; ++ row, ++ plot_id) */
 
-														}
+												}		/* for (col = 0; col < num_cols; ++ col) */
 
+											if (num_plots_created == num_rows * num_cols)
+												{
+													status = OS_SUCCEEDED;
+												}
+											else if (num_plots_created > 0)
+												{
+													status = OS_PARTIALLY_SUCCEEDED;
 												}
 
 										}		/* if (gru_gene_bank_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get GRU gene bank");
+										}
 
-
+								}		/* if (*num_cols_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No value set for \"%s\"", S_NUM_COLS.npt_name_s);
 								}
+
+						}		/* if (GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_NUM_COLS.npt_name_s, &num_cols_p)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get value for \"%s\"", S_NUM_ROWS.npt_name_s);
 						}
 
+				}		/* if (*num_rows_p) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No value set for \"%s\"", S_NUM_ROWS.npt_name_s);
 				}
+
+		}		/* if (GetCurrentUnsignedIntParameterValueFromParameterSet (param_set_p, S_NUM_ROWS.npt_name_s, &num_rows_p)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get value for \"%s\"", S_NUM_ROWS.npt_name_s);
 		}
 
 	return status;
