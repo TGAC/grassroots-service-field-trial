@@ -33,10 +33,8 @@
 static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *key_s, size_t *num_values_p);
 
 
-static bool AddStringsToJSON (const char *key_s,  char **values_ss, json_t *json_p);
+static bool AddStringsToJSON (const char *key_s, char **values_ss, size_t num_values, json_t *json_p);
 
-
-static char **CopyArrayOfStrings (char **src_ss, const size_t num_values);
 
 
 Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const size_t num_parents, const bool copy_parents_flag, char **synonyms_ss, const size_t num_synonyms, const bool copy_synonyms_flag, bson_oid_t *id_p)
@@ -69,7 +67,7 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 
 					if (synonyms_ss && copy_synonyms_flag)
 						{
-							copied_synonyms_ss = CopyArrayOfStrings (synonyms_ss, num_synonyms);
+							copied_synonyms_ss = CopyStringArray (synonyms_ss, num_synonyms);
 
 							if (!copied_synonyms_ss)
 								{
@@ -207,9 +205,9 @@ bool AddTreatmentToJSON (const Treatment *treatment_p, json_t *root_p)
 
 	if (AddSchemaTermToJSON (treatment_p -> tr_ontology_term_p, root_p))
 		{
-			if ((! (treatment_p -> tr_parent_names_ss)) || (AddStringsToJSON (TR_PARENTS_S, treatment_p -> tr_parent_names_ss, root_p)))
+			if ((! (treatment_p -> tr_parent_names_ss)) || (AddStringsToJSON (TR_PARENTS_S, treatment_p -> tr_parent_names_ss, treatment_p -> tr_num_parents, root_p)))
 				{
-					if ((! (treatment_p -> tr_synonyms_ss)) || (AddStringsToJSON (TR_SYNONYMS_S, treatment_p -> tr_synonyms_ss, root_p)))
+					if ((! (treatment_p -> tr_synonyms_ss)) || (AddStringsToJSON (TR_SYNONYMS_S, treatment_p -> tr_synonyms_ss, treatment_p -> tr_num_synonyms, root_p)))
 						{
 							if (AddCompoundIdToJSON (root_p, treatment_p -> tr_id_p))
 								{
@@ -236,20 +234,9 @@ json_t *GetTreatmentAsJSON (const Treatment *treatment_p)
 
 	if (term_json_p)
 		{
-			if ((! (treatment_p -> tr_parent_names_ss)) || (AddStringsToJSON (TR_PARENTS_S, treatment_p -> tr_parent_names_ss, term_json_p)))
+			if (AddTreatmentToJSON (treatment_p, term_json_p))
 				{
-					if ((! (treatment_p -> tr_synonyms_ss)) || (AddStringsToJSON (TR_SYNONYMS_S, treatment_p -> tr_synonyms_ss, term_json_p)))
-						{
-							if (AddCompoundIdToJSON (term_json_p, treatment_p -> tr_id_p))
-								{
-									if (AddDatatype (term_json_p, DFTD_TREATMENT))
-										{
-											return term_json_p;
-										}
-								}
-
-						}
-
+					return term_json_p;
 				}
 
 			json_decref (term_json_p);
@@ -345,36 +332,33 @@ void FreeTreatmentNode (ListItem *node_p)
 
 
 
-static bool AddStringsToJSON (const char *key_s, char **values_ss, json_t *json_p)
+static bool AddStringsToJSON (const char *key_s, char **values_ss, size_t num_values, json_t *json_p)
 {
 	json_t *strings_p = json_array ();
 
 	if (strings_p)
 		{
-			bool b = true;
+			size_t i = 0;
+			bool error_flag = false;
 
-			while (b && (*values_ss))
+			for (i = 0; i < num_values; ++ i, ++ values_ss)
 				{
 					json_t *value_p = json_string (*values_ss);
 
 					if (value_p)
 						{
-							if (json_array_append_new (strings_p, value_p) == 0)
+							if (json_array_append_new (strings_p, value_p) != 0)
 								{
-									++ values_ss;
-								}
-							else
-								{
-									b = false;
+									error_flag = true;
 								}
 						}
 					else
 						{
-							b = false;
+							error_flag = true;
 						}
 				}
 
-			if (b)
+			if (!error_flag)
 				{
 					if (json_object_set_new (json_p, key_s, strings_p) == 0)
 						{
@@ -451,57 +435,4 @@ static char **GetStringsFromJSON (const json_t *treatment_json_p,  const char *k
 	return NULL;
 }
 
-
-
-static char **CopyArrayOfStrings (char **src_ss, const size_t num_values)
-{
-	size_t i = 0;
-	size_t size = 0;
-	char **array_ss = NULL;
-	char **value_ss = src_ss;
-
-	array_ss = (char **) AllocMemoryArray (size, sizeof (char *));
-
-	if (array_ss)
-		{
-			char **dest_ss = array_ss;
-			bool success_flag = true;
-
-			value_ss = src_ss;
-			i = 0;
-
-			while ((i < size) && success_flag)
-				{
-					char *value_s = EasyCopyToNewString (*value_ss);
-
-					if (value_s)
-						{
-							*dest_ss = value_s;
-							++ dest_ss;
-							++ i;
-						}
-					else
-						{
-							char **temp_ss = array_ss;
-							success_flag = false;
-
-							while (*temp_ss)
-								{
-									FreeCopiedString (*temp_ss);
-									++ temp_ss;
-								}
-
-							FreeMemory (array_ss);
-							array_ss = NULL;
-						}
-				}
-		}
-
-	if (array_ss)
-		{
-			return array_ss;
-		}
-
-	return NULL;
-}
 
