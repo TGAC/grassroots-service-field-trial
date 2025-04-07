@@ -101,74 +101,67 @@ static StandardRow *AllocateEmptyStandardRow (void)
 
 StandardRow *AllocateStandardRow (bson_oid_t *id_p, const uint32 rack_index, const uint32 study_index, const bool replicate_control_flag, const uint32 replicate, Material *material_p, MEM_FLAG material_mem, const char * const store_code_s, Plot *parent_plot_p)
 {
-	if (material_p != NULL)
+	LinkedList *observations_p = AllocateLinkedList (FreeObservationNode);
+
+	if (observations_p)
 		{
-			LinkedList *observations_p = AllocateLinkedList (FreeObservationNode);
+			LinkedList *tf_values_p = AllocateLinkedList (FreeTreatmentFactorValueNode);
 
-			if (observations_p)
+			if (tf_values_p)
 				{
-					LinkedList *tf_values_p = AllocateLinkedList (FreeTreatmentFactorValueNode);
+					char *copied_store_code_s = NULL;
 
-					if (tf_values_p)
+					if ((store_code_s == NULL) || ((copied_store_code_s = EasyCopyToNewString (store_code_s)) != NULL))
 						{
-							char *copied_store_code_s = NULL;
+							StandardRow *row_p = (StandardRow *) AllocMemory (sizeof (StandardRow));
 
-							if ((store_code_s == NULL) || ((copied_store_code_s = EasyCopyToNewString (store_code_s)) != NULL))
+							if (row_p)
 								{
-									StandardRow *row_p = (StandardRow *) AllocMemory (sizeof (StandardRow));
-
-									if (row_p)
+									if (InitRow (& (row_p -> sr_base), id_p, study_index, parent_plot_p, RT_STANDARD,
+															 ClearStandardRow,
+															 AddStandardRowToJSON,
+															 NULL,
+															 AddStandardRowFrictionlessDataDetails))
 										{
-											if (InitRow (& (row_p -> sr_base), id_p, study_index, parent_plot_p, RT_STANDARD,
-																	 ClearStandardRow,
-																	 AddStandardRowToJSON,
-																	 NULL,
-																	 AddStandardRowFrictionlessDataDetails))
-												{
-													row_p -> sr_rack_index = rack_index;
-													row_p -> sr_material_p = material_p;
-													row_p -> sr_material_mem = material_mem;
-													row_p -> sr_observations_p = observations_p;
-													row_p -> sr_treatment_factor_values_p = tf_values_p;
-													row_p -> sr_replicate_index = replicate;
-													row_p -> sr_replicate_control_flag = replicate_control_flag;
-													row_p -> sr_store_code_s = copied_store_code_s;
+											row_p -> sr_rack_index = rack_index;
+											row_p -> sr_material_p = material_p;
+											row_p -> sr_material_mem = material_mem;
+											row_p -> sr_observations_p = observations_p;
+											row_p -> sr_treatment_factor_values_p = tf_values_p;
+											row_p -> sr_replicate_index = replicate;
+											row_p -> sr_replicate_control_flag = replicate_control_flag;
+											row_p -> sr_store_code_s = copied_store_code_s;
 
-													return row_p;
-												}
-
-											FreeMemory (row_p);
-										}
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
+											return row_p;
 										}
 
-									FreeCopiedString (copied_store_code_s);
-								}		/* if (copied_store_code_s) */
+									FreeMemory (row_p);
+								}
 							else
 								{
-									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy store code %s for  " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", store_code_s, study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 								}
 
-							FreeLinkedList (tf_values_p);
-						}		/* if (tf_values_p) */
+							FreeCopiedString (copied_store_code_s);
+						}		/* if (copied_store_code_s) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate treatment factors list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy store code %s for  " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", store_code_s, study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 						}
 
-
-					FreeLinkedList (observations_p);
-				}
+					FreeLinkedList (tf_values_p);
+				}		/* if (tf_values_p) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observations list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate treatment factors list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 				}
+
+
+			FreeLinkedList (observations_p);
 		}
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "No valid material for row " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to allocate observations list " UINT32_FMT " at [" UINT32_FMT "," UINT32_FMT "]", study_index, parent_plot_p -> pl_row_index, parent_plot_p -> pl_column_index);
 		}
 
 	return NULL;
