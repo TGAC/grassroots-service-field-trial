@@ -181,156 +181,124 @@ OperationStatus ProcessPeople (ServiceJob *job_p, ParameterSet *param_set_p, boo
 {
 	OperationStatus status = OS_FAILED;
 	size_t num_names;
+	size_t num_emails;
+	size_t num_roles;
+	size_t num_affiliations;
+	size_t num_orcids;
 	const char **names_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_NAME.npt_name_s, &num_names);
+	const char **emails_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_EMAIL.npt_name_s, &num_emails);
+	const char **roles_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_ROLE.npt_name_s, &num_roles);
+	const char **affiliations_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_AFFILIATION.npt_name_s, &num_affiliations);
+	const char **orcids_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_ORCID.npt_name_s, &num_orcids);
 
-	if (names_ss)
+	if ((num_names == num_emails) && (num_roles == num_affiliations) && (num_orcids == num_names) && (num_names == num_roles))
 		{
-			size_t num_emails;
-			const char **emails_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_EMAIL.npt_name_s, &num_emails);
-
-			if (emails_ss)
+			if (num_names > 0)
 				{
-					size_t num_roles;
-					const char **roles_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_ROLE.npt_name_s, &num_roles);
+					size_t num_successes = 0;
+					size_t i;
+					const char **name_ss = names_ss;
+					const char **email_ss = emails_ss;
+					const char **role_ss = roles_ss;
+					const char **affiliation_ss = affiliations_ss;
+					const char **orcid_ss = orcids_ss;
 
-					if (roles_ss)
+					for (i = 0; i < num_names; ++ i, ++ name_ss, ++ email_ss, ++ role_ss, ++ affiliation_ss, ++ orcid_ss)
 						{
-							size_t num_affiliations;
-							const char **affiliations_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_AFFILIATION.npt_name_s, &num_affiliations);
+							/*
+								 The front end can send json like
+								 {
+										"param": "PE Name",
+										"current_value": [
+											null
+										]
+									},
+									{
+										"param": "PE Email",
+										"current_value": [
+											null
+										]
+									},
+									{
+										"param": "PE Role",
+										"current_value": [
+											null
+										]
+									},
+									{
+										"param": "PE Affiliation",
+										"current_value": [
+											null
+										]
+									},
+									{
+										"param": "PE Orcid",
+										"current_value": [
+											null
+										]
+									}
 
-							if (affiliations_ss)
+								so lets check for various null entries
+							 */
+
+							if ((*name_ss) && (*email_ss))
 								{
-									size_t num_orcids;
-									const char **orcids_ss = GetStringArrayValuesForParameter (param_set_p, PERSON_ORCID.npt_name_s, &num_orcids);
+									Person *person_p = AllocatePerson (*name_ss, *email_ss, *role_ss, *affiliation_ss, *orcid_ss);
 
-									if (orcids_ss)
+									if (person_p)
 										{
-											if ((num_names == num_emails) && (num_roles == num_affiliations) && (num_orcids == num_names) && (num_names == num_roles))
+											if (process_person_fn (person_p, user_data_p))
 												{
-													size_t num_successes = 0;
-													size_t i;
-													const char **name_ss = names_ss;
-													const char **email_ss = emails_ss;
-													const char **role_ss = roles_ss;
-													const char **affiliation_ss = affiliations_ss;
-													const char **orcid_ss = orcids_ss;
-
-													for (i = 0; i < num_names; ++ i, ++ name_ss, ++ email_ss, ++ role_ss, ++ affiliation_ss, ++ orcid_ss)
-														{
-															/*
-															   The front end can send json like
-															   {
-																		"param": "PE Name",
-																		"current_value": [
-																			null
-																		]
-																	},
-																	{
-																		"param": "PE Email",
-																		"current_value": [
-																			null
-																		]
-																	},
-																	{
-																		"param": "PE Role",
-																		"current_value": [
-																			null
-																		]
-																	},
-																	{
-																		"param": "PE Affiliation",
-																		"current_value": [
-																			null
-																		]
-																	},
-																	{
-																		"param": "PE Orcid",
-																		"current_value": [
-																			null
-																		]
-																	}
-
-																so lets check for various null entries
-															 */
-
-															if ((*name_ss) && (*email_ss))
-																{
-																	Person *person_p = AllocatePerson (*name_ss, *email_ss, *role_ss, *affiliation_ss, *orcid_ss);
-
-																	if (person_p)
-																		{
-																			if (process_person_fn (person_p, user_data_p))
-																				{
-																					++ num_successes;
-																				}
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialPerson () failed for for \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
-																					FreePerson (person_p);
-																				}
-
-
-																		}
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocatePerson () failed for \"%s\"", *name_ss, *email_ss);
-																		}
-
-																}
-															else if ((*role_ss == NULL) && (*affiliation_ss == NULL) && (*orcid_ss == NULL))
-																{
-																	++ num_successes;
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Name and email are null but with role \"%s\", affiliation \"%s\", orcid \"%s\"",
-																							 *role_ss ? *role_ss : "NULL", *affiliation_ss ? *affiliation_ss : "NULL", *orcid_ss ? *orcid_ss : "NULL");
-																}
-
-
-														}
-
-													if (num_successes == num_names)
-														{
-															status = OS_SUCCEEDED;
-														}
-													else if (num_successes > 0)
-														{
-															status = OS_PARTIALLY_SUCCEEDED;
-														}
-
-												}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
+													++ num_successes;
+												}
 											else
 												{
-													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "differing array lengths: num_names " SIZET_FMT " num_emails " SIZET_FMT 
-																			" num_roles " SIZET_FMT " num_affiliations " SIZET_FMT " num_orcids " SIZET_FMT, 
-																			num_names, num_emails, num_roles, num_affiliations, num_orcids);	
-												}																													
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddFieldTrialPerson () failed for for \"%s\"", person_p -> pe_name_s, person_p -> pe_email_s);
+													FreePerson (person_p);
+												}
+
+
 										}
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_ORCID.npt_name_s);		
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocatePerson () failed for \"%s\"", *name_ss, *email_ss);
 										}
+
+								}
+							else if ((*role_ss == NULL) && (*affiliation_ss == NULL) && (*orcid_ss == NULL))
+								{
+									++ num_successes;
 								}
 							else
 								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_AFFILIATION.npt_name_s);		
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Name and email are null but with role \"%s\", affiliation \"%s\", orcid \"%s\"",
+															 *role_ss ? *role_ss : "NULL", *affiliation_ss ? *affiliation_ss : "NULL", *orcid_ss ? *orcid_ss : "NULL");
 								}
+
+
 						}
-					else
+
+					if (num_successes == num_names)
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_ROLE.npt_name_s);		
+							status = OS_SUCCEEDED;
 						}
-				}
+					else if (num_successes > 0)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+						}
+
+
+				}		/* if (num_names > 0) */
 			else
 				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_EMAIL.npt_name_s);		
+					status = OS_SUCCEEDED;
 				}
-
-		}		/* if (mvs_ss) */
+		}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
 	else
 		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", PERSON_NAME.npt_name_s);		
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "differing array lengths: num_names " SIZET_FMT " num_emails " SIZET_FMT
+									" num_roles " SIZET_FMT " num_affiliations " SIZET_FMT " num_orcids " SIZET_FMT,
+									num_names, num_emails, num_roles, num_affiliations, num_orcids);
 		}
 		
 	return status;

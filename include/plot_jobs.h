@@ -132,6 +132,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchPlotParams (FieldTrialServiceData
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSearchPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL OperationStatus GenerateAndAddSkeletonPlotsToStudy (Study *study_p, const uint32 num_rows, const uint32 num_cols, ServiceJob *job_p, FieldTrialServiceData *data_p);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -313,6 +313,7 @@ bool AddSearchPlotParams (ServiceData *data_p, ParameterSet *param_set_p)
 
 
 
+
 bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
 {
 	bool job_done_flag = false;
@@ -354,7 +355,8 @@ bool RunForSubmissionPlotParams (FieldTrialServiceData *data_p, ParameterSet *pa
 
 											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Study \"%s\" already has plots", study_p -> st_name_s);
 										}
-								}		/* if (param_set_p -> ps_current_level == PL_BASIC) */
+
+								}		/* if (param_set_p -> ps_current_level == PL_WIZARD) */
 							else
 								{
 									json_t *plots_table_p = NULL;
@@ -2448,98 +2450,7 @@ static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *para
 						{
 							if (*num_cols_p)
 								{
-									GeneBank *gru_gene_bank_p = GetGeneBankByName (GENE_BANK_GRU_S, data_p);
-
-									status = OS_FAILED;
-
-									if (gru_gene_bank_p)
-										{
-											const uint32 num_rows = *num_rows_p;
-											const uint32 num_cols = *num_cols_p;
-											const int32 rack_plotwise_index = S_DEFAULT_RACK_PLOTWISE_INDEX;
-											const bool control_rep_flag = S_DEFAULT_CONTROL_REP_FLAG;
-											const int32 replicate = S_DEFAULT_REPLICATE;
-											uint32 col;
-											uint32 plot_id = 1;
-											uint32 num_plots_created = 0;
-
-											for (col = 1; col <= num_cols; ++ col)
-												{
-													uint32 row;
-
-													for (row = 1; row <= num_rows; ++ row, ++ plot_id)
-														{
-															bool success_flag = false;
-															Plot *plot_p = AllocateSkeletonPlot (row, col, study_p, data_p);
-
-															if (plot_p)
-																{
-																	StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, plot_id, control_rep_flag, replicate, NULL, MF_ALREADY_FREED, NULL, plot_p);
-
-																	if (sr_p)
-																		{
-																			if (AddRowToPlot (plot_p, & (sr_p -> sr_base)))
-																				{
-																					if (AddPlotToStudy (study_p, plot_p))
-																						{
-																							if (SavePlot (plot_p, data_p))
-																								{
-																									success_flag = true;
-																									++ num_plots_created;
-																								}		/* if (SavePlot (plot_p, data_p)) */
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SavePlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
-																								}
-
-																						}		/* if (AddPlotToStudy (study_p, plot_p)) */
-																					else
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPlotToStudy () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
-																						}
-
-																				}		/* if (AddRowToPlot (plot_p, & (sr_p -> sr_base))) */
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddRowToPlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
-																					FreeRow (& (sr_p -> sr_base));
-																				}
-
-																		}		/* if (sr_p) */
-																	else
-																		{
-																			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateStandardRow () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
-																		}
-
-																	if (!success_flag)
-																		{
-																			FreePlot (plot_p);
-																		}
-
-																}		/* if (plot_p) */
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateSkeletonPlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
-																}
-
-														}		/* for (row = 0; row < num_rows; ++ row, ++ plot_id) */
-
-												}		/* for (col = 0; col < num_cols; ++ col) */
-
-											if (num_plots_created == num_rows * num_cols)
-												{
-													status = OS_SUCCEEDED;
-												}
-											else if (num_plots_created > 0)
-												{
-													status = OS_PARTIALLY_SUCCEEDED;
-												}
-
-										}		/* if (gru_gene_bank_p) */
-									else
-										{
-											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get GRU gene bank");
-										}
+									status = GenerateAndAddSkeletonPlotsToStudy (study_p, *num_rows_p, *num_cols_p, job_p, data_p);
 
 								}		/* if (*num_cols_p) */
 							else
@@ -2564,6 +2475,107 @@ static OperationStatus GenerateSkeletonPlots (Study *study_p, ParameterSet *para
 		{
 			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get value for \"%s\"", S_NUM_ROWS.npt_name_s);
 		}
+
+	return status;
+}
+
+
+
+OperationStatus GenerateAndAddSkeletonPlotsToStudy (Study *study_p, const uint32 num_rows, const uint32 num_cols, ServiceJob *job_p, FieldTrialServiceData *data_p)
+{
+	OperationStatus status = OS_IDLE;
+
+	GeneBank *gru_gene_bank_p = GetGeneBankByName (GENE_BANK_GRU_S, data_p);
+
+	status = OS_FAILED;
+
+	if (gru_gene_bank_p)
+		{
+			const int32 rack_plotwise_index = S_DEFAULT_RACK_PLOTWISE_INDEX;
+			const bool control_rep_flag = S_DEFAULT_CONTROL_REP_FLAG;
+			const int32 replicate = S_DEFAULT_REPLICATE;
+			uint32 col;
+			uint32 plot_id = 1;
+			uint32 num_plots_created = 0;
+
+			for (col = 1; col <= num_cols; ++ col)
+				{
+					uint32 row;
+
+					for (row = 1; row <= num_rows; ++ row, ++ plot_id)
+						{
+							bool success_flag = false;
+							Plot *plot_p = AllocateSkeletonPlot (row, col, study_p, data_p);
+
+							if (plot_p)
+								{
+									StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, plot_id, control_rep_flag, replicate, NULL, MF_ALREADY_FREED, NULL, plot_p);
+
+									if (sr_p)
+										{
+											if (AddRowToPlot (plot_p, & (sr_p -> sr_base)))
+												{
+													if (AddPlotToStudy (study_p, plot_p))
+														{
+															if (SavePlot (plot_p, data_p))
+																{
+																	success_flag = true;
+																	++ num_plots_created;
+																}		/* if (SavePlot (plot_p, data_p)) */
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "SavePlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+																}
+
+														}		/* if (AddPlotToStudy (study_p, plot_p)) */
+													else
+														{
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPlotToStudy () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+														}
+
+												}		/* if (AddRowToPlot (plot_p, & (sr_p -> sr_base))) */
+											else
+												{
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddRowToPlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+													FreeRow (& (sr_p -> sr_base));
+												}
+
+										}		/* if (sr_p) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateStandardRow () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+										}
+
+									if (!success_flag)
+										{
+											FreePlot (plot_p);
+										}
+
+								}		/* if (plot_p) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateSkeletonPlot () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+								}
+
+						}		/* for (row = 0; row < num_rows; ++ row, ++ plot_id) */
+
+				}		/* for (col = 0; col < num_cols; ++ col) */
+
+			if (num_plots_created == num_rows * num_cols)
+				{
+					status = OS_SUCCEEDED;
+				}
+			else if (num_plots_created > 0)
+				{
+					status = OS_PARTIALLY_SUCCEEDED;
+				}
+
+		}		/* if (gru_gene_bank_p) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to get GRU gene bank");
+		}
+
 
 	return status;
 }

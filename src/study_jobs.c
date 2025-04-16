@@ -1548,7 +1548,55 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																																		{
 																																			OperationStatus s = SaveStudy (study_p, job_p, data_p, NULL);
 
-																																			if (status == OS_FAILED)
+																																			if ((s == OS_SUCCEEDED) || (s == OS_PARTIALLY_SUCCEEDED))
+																																				{
+																																					if (param_set_p -> ps_current_level == PL_WIZARD)
+																																						{
+																																							/*
+																																							 * If the study doesn't currently have plots and rows
+																																							 * and columns have been specified, we generate them here.
+																																							 */
+
+																																							if (num_rows_p && num_cols_p)
+																																								{
+																																									const uint32 num_rows = *num_rows_p;
+																																									const uint32 num_cols = *num_cols_p;
+
+																																									if ((num_rows > 0) && (num_cols > 0))
+																																										{
+																																											/*
+																																											 * Check that the study doesn't already have plots
+																																											 */
+																																											int64 num_existing_plots = GetNumberOfPlotsInStudy (study_p, data_p);
+
+																																											if (num_existing_plots == 0)
+																																												{
+																																													status = GenerateAndAddSkeletonPlotsToStudy (study_p, num_rows, num_cols, job_p, data_p);
+																																												}
+																																											else
+																																												{
+																																													char *error_s = ConcatenateVarargsStrings ("Study ", study_p -> st_name_s, " already has plots", NULL);
+
+																																													if (error_s)
+																																														{
+																																															AddGeneralErrorMessageToServiceJob (job_p, error_s);
+																																															FreeCopiedString (error_s);
+																																														}
+																																													else
+																																														{
+																																															AddGeneralErrorMessageToServiceJob (job_p, "Study already has plots");
+																																														}
+
+																																													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Study \"%s\" already has plots", study_p -> st_name_s);
+																																												}
+
+
+																																										}
+																																								}
+																																						}
+																																				}
+
+																																			if (s == OS_FAILED)
 																																				{
 																																					status = s;
 																																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to save Study named \"%s\"", name_s);
@@ -4480,9 +4528,9 @@ static bool AddDefaultPlotsParameters (ServiceData *data_p, ParameterSet *params
 	bool success_flag = false;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Default Plots data", false, data_p, params_p);
 
-	if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Number of plot rows", "The number of plot rows", study_p ? study_p -> st_num_rows_p : NULL, PL_ALL))
+	if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_PLOT_ROWS.npt_name_s, "Number of plot rows", "The number of plot rows", study_p ? study_p -> st_num_rows_p : NULL, PL_ALL_AND_WIZARD))
 		{
-			if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_PLOT_COLS.npt_name_s, "Number of plot columns", "The number of plot columns", study_p ? study_p -> st_num_columns_p : NULL, PL_ALL))
+			if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_PLOT_COLS.npt_name_s, "Number of plot columns", "The number of plot columns", study_p ? study_p -> st_num_columns_p : NULL, PL_ALL_AND_WIZARD))
 				{
 					if (EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_NUM_REPLICATES.npt_name_s, "Number of replicates", "The number of replicates", study_p ? study_p -> st_num_replicates_p : NULL, PL_ALL))
 						{
@@ -4636,7 +4684,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 {
 	bool success_flag = false;
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
-	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", id_s, PL_ALL);
+	Parameter *param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_ID.npt_type, STUDY_ID.npt_name_s, "Load Study", "Edit an existing study", id_s, PL_ALL_AND_WIZARD);
 
 	if (param_p)
 		{
@@ -4651,11 +4699,11 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 					 */
 					param_p -> pa_refresh_service_flag = true;
 
-					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", active_study_p ? active_study_p -> st_name_s : NULL, PL_ALL)) != NULL)
+					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_NAME.npt_type, STUDY_NAME.npt_name_s, "Name", "The name of the Study", active_study_p ? active_study_p -> st_name_s : NULL, PL_ALL_AND_WIZARD)) != NULL)
 						{
 							param_p -> pa_required_flag = true;
 
-							param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_FIELD_TRIALS_LIST.npt_type, STUDY_FIELD_TRIALS_LIST.npt_name_s, "Field trials", "The available field trials", trial_s, PL_ALL);
+							param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_FIELD_TRIALS_LIST.npt_type, STUDY_FIELD_TRIALS_LIST.npt_name_s, "Field trials", "The available field trials", trial_s, PL_ALL_AND_WIZARD);
 
 							if (param_p)
 								{
@@ -4677,7 +4725,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 												{
 													if ((param_p = EasyCreateAndAddUnsignedIntParameterToParameterSet (data_p, params_p, group_p, STUDY_HARVEST_YEAR.npt_name_s, "Harvest year", "The year that the Study was finished", active_study_p ? active_study_p -> st_predicted_harvest_year_p : NULL, PL_ALL)) != NULL)
 														{
-															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL)) != NULL)
+															if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_LOCATIONS_LIST.npt_type, STUDY_LOCATIONS_LIST.npt_name_s, "Locations", "The available locations", location_s, PL_ALL_AND_WIZARD)) != NULL)
 																{
 																	if (SetUpLocationsListParameter (dfw_data_p, (StringParameter *) param_p, active_study_p ? active_study_p -> st_location_p : NULL, NULL))
 																		{
@@ -4694,7 +4742,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 																				{
 																					if (AddContactSubmissionParams (contact_p, params_p, data_p))
 																						{
-																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the Study", active_study_p ? active_study_p -> st_description_s : NULL, PL_ALL)) != NULL)
+																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESCRIPTION.npt_type, STUDY_DESCRIPTION.npt_name_s, "Description", "A description of the Study", active_study_p ? active_study_p -> st_description_s : NULL, PL_ALL_AND_WIZARD)) != NULL)
 																								{
 																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_DESIGN.npt_type, STUDY_DESIGN.npt_name_s, "Design", "Information about the Study design", active_study_p ? active_study_p -> st_design_s : NULL, PL_ALL)) != NULL)
 																										{
@@ -4710,7 +4758,7 @@ static bool AddGeneralSubmissionStudyParams (Study *active_study_p, const char *
 																																				{
 																																					if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_type, STUDY_PHYSICAL_SAMPLES_COLLECTED.npt_name_s, "Physical samples collected", "Details about plant, soil or other samples collected",  active_study_p ? active_study_p -> st_physical_samples_collected_s : NULL, PL_ALL)) != NULL)
 																																						{
-																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHOTO.npt_type, STUDY_PHOTO.npt_name_s, "Photo", "The web address of a photo or image to represent the study", active_study_p ? active_study_p -> st_photo_url_s : NULL, PL_ALL)) != NULL)
+																																							if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_PHOTO.npt_type, STUDY_PHOTO.npt_name_s, "Photo", "The web address of a photo or image to represent the study", active_study_p ? active_study_p -> st_photo_url_s : NULL, PL_ALL_AND_WIZARD)) != NULL)
 																																								{
 																																									if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, STUDY_IMAGE_NOTES.npt_type, STUDY_IMAGE_NOTES.npt_name_s, "Image collection notes", "Details about any images collected",  active_study_p ? active_study_p -> st_image_collection_notes_s : NULL, PL_ALL)) != NULL)
 																																										{
@@ -4966,54 +5014,77 @@ static bool AddTreatmentFactorsToStudy (Study *study_p, Parameter *treatment_nam
 {
 	bool success_flag = true;
 
-	const json_t *levels_json_p = GetJSONParameterCurrentValue ((JSONParameter *) treatment_levels_p);
 
-	if (IsStringParameter (treatment_names_p))
+	if (treatment_names_p && treatment_levels_p)
 		{
-			const char *name_s = GetStringParameterCurrentValue ((StringParameter *) treatment_names_p);
-			const json_t *level_p = json_array_get (levels_json_p, 0);
+			const json_t *levels_json_p = GetJSONParameterCurrentValue ((JSONParameter *) treatment_levels_p);
 
-			if (!AddTreatmentFactorToStudy (name_s, level_p, study_p, data_p))
+			if (IsStringParameter (treatment_names_p))
 				{
+					const char *name_s = GetStringParameterCurrentValue ((StringParameter *) treatment_names_p);
+					const json_t *level_p = json_array_get (levels_json_p, 0);
 
-					ReportTreatmentFactorError (study_p, name_s, level_p, job_p);
+					if (!AddTreatmentFactorToStudy (name_s, level_p, study_p, data_p))
+						{
+
+							ReportTreatmentFactorError (study_p, name_s, level_p, job_p);
+							success_flag = false;
+						}
+				}
+			else if (IsStringArrayParameter (treatment_names_p))
+				{
+					const char **values_ss = GetStringArrayParameterCurrentValues ((StringArrayParameter *) treatment_names_p);
+
+					if (values_ss)
+						{
+							const char **value_ss = values_ss;
+							size_t i = 0;
+
+							while (success_flag && (*value_ss))
+								{
+									const json_t *level_p = json_array_get (levels_json_p, i);
+
+									if (AddTreatmentFactorToStudy (*value_ss, level_p, study_p, data_p))
+										{
+											++ i;
+											++ value_ss;
+										}
+									else
+										{
+											ReportTreatmentFactorError (study_p, *value_ss, level_p, job_p);
+											success_flag = false;
+										}
+								}
+
+						}
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Treatment Parameter \"%s\" is not a string or string array, its type is %lu, to study \"%s\"", treatment_names_p -> pa_type, treatment_names_p -> pa_name_s, study_p -> st_name_s);
+
+					AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, "Input value is not a string object or array");
+
 					success_flag = false;
 				}
-		}
-	else if (IsStringArrayParameter (treatment_names_p))
-		{
-			const char **values_ss = GetStringArrayParameterCurrentValues ((StringArrayParameter *) treatment_names_p);
 
-			if (values_ss)
-				{
-					const char **value_ss = values_ss;
-					size_t i = 0;
-
-					while (success_flag && (*value_ss))
-						{
-							const json_t *level_p = json_array_get (levels_json_p, i);
-
-							if (AddTreatmentFactorToStudy (*value_ss, level_p, study_p, data_p))
-								{
-									++ i;
-									++ value_ss;
-								}
-							else
-								{
-									ReportTreatmentFactorError (study_p, *value_ss, level_p, job_p);
-									success_flag = false;
-								}
-						}
-
-				}
-		}
+		}		/* if (treatment_names_p && treatment_levels_p) */
 	else
 		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Treatment Parameter \"%s\" is not a string or string array, its type is %lu, to study \"%s\"", treatment_names_p -> pa_type, treatment_names_p -> pa_name_s, study_p -> st_name_s);
+			if (treatment_names_p)
+				{
+					success_flag = false;
 
-			AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, "Input value is not a string object or array");
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Treatment names are set with NULL levels", treatment_names_p -> pa_type, treatment_names_p -> pa_name_s, study_p -> st_name_s);
+					AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, "Treatment names are set but no levels specified");
+				}
+			else if (treatment_levels_p)
+				{
+					success_flag = false;
 
-			success_flag = false;
+					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Treatment levels are set with NULL names", treatment_levels_p -> pa_type, treatment_levels_p -> pa_name_s, study_p -> st_name_s);
+					AddParameterErrorMessageToServiceJob (job_p, TFJ_TREATMENT_NAME.npt_name_s, TFJ_TREATMENT_NAME.npt_type, "Treatment levels are set but no names specified");
+				}
+
 		}
 
 	return success_flag;
@@ -5120,7 +5191,7 @@ static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *
 
 							if (loop_success_flag)
 								{
-									param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, STUDY_MEASURED_VARIABLES.npt_name_s, display_name_s, description_s, mvs_ss, num_mvs, PL_ALL);
+									param_p = EasyCreateAndAddStringArrayParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, STUDY_MEASURED_VARIABLES.npt_name_s, display_name_s, description_s, mvs_ss, num_mvs, PL_ALL_AND_WIZARD);
 								}
 
 							FreeMemory (mvs_ss);
@@ -5142,7 +5213,7 @@ static bool AddMeasuredVariableParameters (ParameterSet *params_p, const Study *
 							mv_s = node_p -> psn_measured_variable_name_s;
 						}
 
-					param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, STUDY_MEASURED_VARIABLES.npt_type, STUDY_MEASURED_VARIABLES.npt_name_s, display_name_s, description_s, mv_s, PL_ALL);
+					param_p = EasyCreateAndAddStringParameterToParameterSet (& (data_p -> dftsd_base_data), params_p, group_p, STUDY_MEASURED_VARIABLES.npt_type, STUDY_MEASURED_VARIABLES.npt_name_s, display_name_s, description_s, mv_s, PL_ALL_AND_WIZARD);
 				}
 
 			if (param_p)
