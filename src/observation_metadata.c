@@ -86,6 +86,20 @@ ObservationMetadata *AllocateObservationMetadata (const struct tm * const start_
 }
 
 
+ObservationMetadata *CopyObservationMetadata (const ObservationMetadata * const src_p)
+{
+	ObservationMetadata *dest_p = NULL;
+
+	if (src_p)
+		{
+			dest_p = AllocateObservationMetadata (src_p -> om_start_date_p, src_p -> om_end_date_p, src_p -> om_corrected_flag, src_p -> om_index);
+		}
+
+	return dest_p;
+}
+
+
+
 /**
  * Extract the Observation metadata from the column heading
  */
@@ -267,12 +281,6 @@ void FreeObservationMetadata (ObservationMetadata *obs_metadata_p)
 }
 
 
-ObservationMetadata *CopyObservationMetadata (const ObservationMetadata * const src_p)
-{
-	return AllocateObservationMetadata (src_p -> om_start_date_p, src_p -> om_start_date_p, src_p -> om_corrected_flag, src_p -> om_index);
-}
-
-
 
 int CompareObservationMetadata (const ObservationMetadata * const om_0_p, const ObservationMetadata * const om_1_p)
 {
@@ -373,20 +381,33 @@ static bool SetObservationMetadataDate (const struct tm * const src_p, struct tm
 {
 	bool success_flag = false;
 
-	if (*dest_pp)
+	if (src_p)
 		{
-			CopyTime (src_p, *dest_pp);
-			success_flag = true;
+			if (*dest_pp)
+				{
+					CopyTime (src_p, *dest_pp);
+					success_flag = true;
+				}
+			else
+				{
+					struct tm *dest_p = DuplicateTime (src_p);
+
+					if (dest_p)
+						{
+							*dest_pp = dest_p;
+							success_flag = true;
+						}
+				}
 		}
 	else
 		{
-			struct tm *dest_p = DuplicateTime (src_p);
-
-			if (dest_p)
+			if (*dest_pp)
 				{
-					*dest_pp = dest_p;
-					success_flag = true;
+					FreeTime (*dest_pp);
+					*dest_pp = NULL;
 				}
+
+			success_flag = true;
 		}
 
 	return success_flag;

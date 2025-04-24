@@ -97,24 +97,32 @@ bool InitObservation (Observation *observation_p, bson_oid_t *id_p, ObservationM
 
 					if ((IsStringEmpty (notes_s)) || ((copied_notes_s = EasyCopyToNewString (notes_s)) != NULL))
 						{
-							observation_p -> ob_id_p = id_p;
-							observation_p -> ob_phenotype_p = phenotype_p;
-							observation_p -> ob_phenotype_mem = phenotype_mem;
-							observation_p -> ob_metadata_p = metadata_p;
-							observation_p -> ob_instrument_p = instrument_p;
-							observation_p -> ob_growth_stage_s = copied_growth_stage_s;
-							observation_p -> ob_method_s = copied_method_s;
-							observation_p -> ob_notes_s = copied_notes_s;
-							observation_p -> ob_nature = nature;
-							observation_p -> ob_type = obs_type;
-							observation_p -> ob_clear_fn = clear_fn;
-							observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
-							observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
-							observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
-							observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
+							ObservationMetadata *copied_metadata_p = NULL;
 
-							return true;
+							if ((!metadata_p) || ((copied_metadata_p = CopyObservationMetadata (metadata_p)) != NULL))
+								{
+									observation_p -> ob_id_p = id_p;
+									observation_p -> ob_phenotype_p = phenotype_p;
+									observation_p -> ob_phenotype_mem = phenotype_mem;
+									observation_p -> ob_metadata_p = copied_metadata_p;
+									observation_p -> ob_instrument_p = instrument_p;
+									observation_p -> ob_growth_stage_s = copied_growth_stage_s;
+									observation_p -> ob_method_s = copied_method_s;
+									observation_p -> ob_notes_s = copied_notes_s;
+									observation_p -> ob_nature = nature;
+									observation_p -> ob_type = obs_type;
+									observation_p -> ob_clear_fn = clear_fn;
+									observation_p -> ob_add_values_to_json_fn = add_values_to_json_fn;
+									observation_p -> ob_set_value_from_json_fn = set_value_from_json_fn;
+									observation_p -> ob_set_value_from_string_fn = set_value_from_string_fn;
+									observation_p -> ob_get_value_as_string_fn = get_value_as_string_fn;
 
+									return true;
+								}
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CopyObservationMetadata () failed");
+								}
 						}		/* if ((IsStringEmpty (notes_s)) || ((copied_method_s = EasyCopyToNewString (notes_s)) != NULL)) */
 					else
 						{

@@ -930,6 +930,8 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 
 							if (id_s)
 								{
+									json_t *info_p = NULL;
+
 									status = OS_SUCCEEDED;
 
 									if (data_p -> dftsd_study_cache_path_s)
@@ -958,6 +960,43 @@ OperationStatus SaveStudy (Study *study_p, ServiceJob *job_p, FieldTrialServiceD
 										{
 											SetFieldTrialServiceJobURL (job_p, url_key_s, id_s);
 										}
+
+									info_p = json_object ();
+
+									if (info_p)
+										{
+											bool added_flag = false;
+
+											if (AddContext (info_p))
+												{
+													json_t *dest_record_p = GetDataResourceAsJSONByParts (PROTOCOL_INLINE_S, NULL, id_s, info_p);
+
+													if (dest_record_p)
+														{
+															added_flag = true;
+
+															AddImage (dest_record_p, DFTD_STUDY, data_p);
+
+															if (AddResultToServiceJob (job_p, dest_record_p))
+																{
+																	success_flag = true;
+																}
+															else
+																{
+																	json_decref (dest_record_p);
+																}
+
+														}		/* if (dest_record_p) */
+
+													if (!added_flag)
+														{
+															json_decref (info_p);
+														}
+												}		/* if (AddContext (trial_json_p)) */
+
+
+										}
+
 
 									FreeBSONOidString (id_s);
 								}
