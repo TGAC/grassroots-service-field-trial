@@ -475,6 +475,27 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 									if (SavePlot (active_row_p -> ro_plot_p, data_p))
 										{
 											status = OS_SUCCEEDED;
+
+											/* remove the cached study */
+
+											if ((active_row_p -> ro_study_p) && (active_row_p -> ro_study_p -> st_id_p))
+												{
+													char *id_s = GetBSONOidAsString (active_row_p -> ro_study_p -> st_id_p);
+
+													if (id_s)
+														{
+															RemoveCachedStudyById (id_s, data_p);
+															FreeCopiedString (id_s);
+														}
+													else
+														{
+															PrintErrors(STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get study id as string for plot " UINT32_FMT " in Study \"%s\"", active_row_p -> ro_by_study_index, active_row_p -> ro_study_p -> st_name_s);
+														}
+
+												}
+
+
+
 										}
 								}
 							else

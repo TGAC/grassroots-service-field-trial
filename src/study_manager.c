@@ -413,26 +413,8 @@ static ServiceJobSet *RunStudyManagerService (Service *service_p, ParameterSet *
 										{
 											if ((run_flag_p != NULL) && (*run_flag_p == true))
 												{
-													OperationStatus s = OS_FAILED;
-													char *filename_s = GetFullCacheFilename (id_s, data_p);
+													OperationStatus s = (RemoveCachedStudyById (id_s, data_p)) ? OS_SUCCEEDED : OS_FAILED;
 
-													if (filename_s)
-														{
-															if (RemoveFile (filename_s))
-																{
-																	s = OS_SUCCEEDED;
-																}
-															else
-																{
-																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", filename_s);
-																}
-
-															FreeCopiedString (filename_s);
-														}
-													else
-														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetFullCacheFilename () failed for \"%s\"", id_s);
-														}
 
 													MergeServiceJobStatus (job_p, s);
 												}

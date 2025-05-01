@@ -591,6 +591,34 @@ OperationStatus ImportStudy ()
 }
 
 
+
+bool RemoveCachedStudyById (const char * const id_s, FieldTrialServiceData *data_p)
+{
+	bool success_flag = false;
+	char *filename_s = GetFullCacheFilename (id_s, data_p);
+
+	if (filename_s)
+		{
+			if (RemoveFile (filename_s))
+				{
+					success_flag = true;
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to remove file \"%s\"", filename_s);
+				}
+
+			FreeCopiedString (filename_s);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetFullCacheFilename () failed for \"%s\"", id_s);
+		}
+
+	return success_flag;
+}
+
+
 static bool AddWizardParams (ParameterSet *params_p, Study *active_study_p, ServiceData *data_p)
 {
 
