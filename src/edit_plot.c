@@ -446,13 +446,15 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 								}
 							else
 								{
+
+									/*
 									if (active_sr_p -> sr_material_p)
 										{
-											/*  remove accession */
+											//  remove accession
 											FreeMaterial (active_sr_p -> sr_material_p);
 											active_sr_p -> sr_material_p = NULL;
 										}
-
+									*/
 								}
 
 
