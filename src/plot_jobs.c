@@ -140,6 +140,9 @@ static const int32 S_DEFAULT_RACK_PLOTWISE_INDEX = 1;
 static const int32 S_DEFAULT_REPLICATE = 1;
 static const bool S_DEFAULT_CONTROL_REP_FLAG = false;
 
+
+static const char * const S_DEFAULT_VARIETY_S = "variety";
+
 /*
  * static declarations
  */
@@ -2509,7 +2512,8 @@ OperationStatus GenerateAndAddSkeletonPlotsToStudy (Study *study_p, const uint32
 
 							if (plot_p)
 								{
-									StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, plot_id, control_rep_flag, replicate, NULL, MF_ALREADY_FREED, NULL, plot_p);
+									Material *material_p = GetOrCreateMaterialByAccession (S_DEFAULT_VARIETY_S, gru_gene_bank_p, data_p);
+									StandardRow *sr_p = AllocateStandardRow (NULL, rack_plotwise_index, plot_id, control_rep_flag, replicate, material_p, material_p ? MF_SHALLOW_COPY : MF_ALREADY_FREED, NULL, plot_p);
 
 									if (sr_p)
 										{
@@ -2544,12 +2548,19 @@ OperationStatus GenerateAndAddSkeletonPlotsToStudy (Study *study_p, const uint32
 									else
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateStandardRow () failed for [" UINT32_FMT ", " UINT32_FMT " in study \"%s\"", row, col, study_p -> st_name_s);
+
+											if (material_p)
+												{
+													FreeMaterial (material_p);
+												}
 										}
 
 									if (!success_flag)
 										{
 											FreePlot (plot_p);
 										}
+
+
 
 								}		/* if (plot_p) */
 							else
@@ -2560,6 +2571,7 @@ OperationStatus GenerateAndAddSkeletonPlotsToStudy (Study *study_p, const uint32
 						}		/* for (row = 0; row < num_rows; ++ row, ++ plot_id) */
 
 				}		/* for (col = 0; col < num_cols; ++ col) */
+
 
 			if (num_plots_created == num_rows * num_cols)
 				{
