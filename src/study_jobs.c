@@ -1090,6 +1090,14 @@ bool RunForSearchStudyParams (FieldTrialServiceData *data_p, ParameterSet *param
 							if (!IsStringEmpty (id_s))
 								{
 
+									/* Is it a single id or a list? */
+									if (DoesStringContainWhitespace (id_s))
+										{
+
+										}
+
+
+
 									/*
 									 * We're building up a query for the given parameters
 									 */
