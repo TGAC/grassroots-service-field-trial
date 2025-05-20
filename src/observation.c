@@ -188,7 +188,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, ObservationM
 							{
 								if (json_is_number (raw_value_p))
 									{
-										raw_value = json_real_value (raw_value_p);
+										raw_value = json_number_value (raw_value_p);
 										raw_p = &raw_value;
 									}
 								else if (json_is_string (raw_value_p))
@@ -224,7 +224,7 @@ Observation *AllocateObservationWithErrorHandler (bson_oid_t *id_p, ObservationM
 							{
 								if (json_is_number (corrected_value_p))
 									{
-										corrected_value = json_real_value (corrected_value_p);
+										corrected_value = json_number_value (corrected_value_p);
 										corrected_p = &corrected_value;
 									}
 								else if (json_is_string (corrected_value_p))
