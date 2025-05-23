@@ -68,6 +68,9 @@ static NamedParameterType S_OBSERVATION_NOTES  = { "RO Observation Notes", PT_ST
 static NamedParameterType S_APPEND_OBSERVATIONS  = { "RO Append Observations", PT_BOOLEAN };
 
 
+static NamedParameterType S_SAMPLE_INDEX  = { "RO Sample Index", PT_UNSIGNED_INT };
+
+
 static NamedParameterType S_STUDY_NAME  = { "RO Study Name", PT_STRING };
 
 static NamedParameterType S_STUDY_ID  = { "RO Study Id", PT_STRING };
@@ -373,12 +376,12 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 							const bool *append_flag_p = &append_flag;
 							OperationStatus obs_status = OS_IDLE;
 							const char *accession_s = NULL;
+							bool new_material_flag = false;
 
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_ACCESSION.npt_name_s, &accession_s);
 
 							if (!IsStringEmpty (accession_s))
 								{
-									bool new_material_flag = false;
 
 									if (active_sr_p -> sr_material_p)
 										{
@@ -470,7 +473,7 @@ static bool RunForEditPlotParams (FieldTrialServiceData *data_p, ParameterSet *p
 
 							GetCurrentStringParameterValueFromParameterSet (param_set_p, S_RACK_NOTES.npt_name_s, &plot_notes_s);
 
-							if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
+							if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED) || (obs_status == OS_IDLE) || new_material_flag)
 								{
 									if (SavePlot (active_row_p -> ro_plot_p, data_p))
 										{
@@ -538,205 +541,165 @@ static OperationStatus ProcessObservations (StandardRow *row_p, ServiceJob *job_
 	OperationStatus status = OS_FAILED;
 	size_t num_mv_entries;
 	const char **mvs_ss = GetStringArrayValuesForParameter (param_set_p, S_MEASURED_VARIABLE_NAME.npt_name_s, &num_mv_entries);
+	size_t num_raw_entries;
+	const char **raw_values_ss = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, &num_raw_entries);
+	size_t num_corrected_entries;
+	const char **corrected_values_ss = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, &num_corrected_entries);
+	size_t num_start_dates;
+	const struct tm **start_dates_pp = GetTimeArrayValuesForParameter (param_set_p, S_PHENOTYPE_START_DATE.npt_name_s, &num_start_dates);
+	size_t num_end_dates;
+	const struct tm **end_dates_pp = GetTimeArrayValuesForParameter (param_set_p, S_PHENOTYPE_END_DATE.npt_name_s, &num_end_dates);
+	size_t num_notes;
+	const char **notes_ss = GetStringArrayValuesForParameter (param_set_p, S_OBSERVATION_NOTES.npt_name_s, &num_notes);
 
-	if (mvs_ss)
+	if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes)
 		{
-			size_t num_raw_entries;
-			const char **raw_values_ss = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_RAW_VALUE.npt_name_s, &num_raw_entries);
-
-			if (raw_values_ss)
+			if (num_mv_entries > 0)
 				{
-					size_t num_corrected_entries;
-					const char **corrected_values_ss = GetStringArrayValuesForParameter (param_set_p, S_PHENOTYPE_CORRECTED_VALUE.npt_name_s, &num_corrected_entries);
+					size_t num_successes = 0;
+					size_t i;
+					const char **mv_ss = mvs_ss;
+					const char **raw_value_ss = raw_values_ss;
+					const char **corrected_value_ss = corrected_values_ss;
+					const char **note_ss = notes_ss;
+					const struct tm **start_date_pp = start_dates_pp;
+					const struct tm **end_date_pp = end_dates_pp;
+					const char *key_s = "";
+					MEM_FLAG mv_mem = MF_ALREADY_FREED;
+					const Study *study_p = row_p -> sr_base.ro_study_p;
+					uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
 
-					if (corrected_values_ss)
+
+					ObservationMetadata *metadata_p = AllocateObservationMetadata (NULL, NULL, false, OB_DEFAULT_INDEX);
+
+					if (metadata_p)
 						{
-							size_t num_start_dates;
-							const struct tm **start_dates_pp = GetTimeArrayValuesForParameter (param_set_p, S_PHENOTYPE_START_DATE.npt_name_s, &num_start_dates);
-
-							if (start_dates_pp)
+							for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
 								{
-									size_t num_end_dates;
-									const struct tm **end_dates_pp = GetTimeArrayValuesForParameter (param_set_p, S_PHENOTYPE_END_DATE.npt_name_s, &num_end_dates);
+									MeasuredVariable *mv_p = GetMeasuredVariableByVariableName (*mv_ss, &mv_mem, data_p);
 
-									if (end_dates_pp)
+									if (mv_p)
 										{
-											size_t num_notes;
-											const char **notes_ss = GetStringArrayValuesForParameter (param_set_p, S_OBSERVATION_NOTES.npt_name_s, &num_notes);
+											json_t *raw_value_p = NULL;
+											json_t *corrected_value_p = NULL;
 
-											if (notes_ss)
+											if (*raw_value_ss)
 												{
-													if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes)
+													raw_value_p = json_string (*raw_value_ss);
+												}
+
+											if (*corrected_value_ss)
+												{
+													corrected_value_p = json_string (*corrected_value_ss);
+												}
+
+											if (SetObservationMetadataStartDate (metadata_p, *start_date_pp))
+												{
+													if (SetObservationMetadataEndDate (metadata_p, *end_date_pp))
 														{
-															size_t num_successes = 0;
-															size_t i;
-															const char **mv_ss = mvs_ss;
-															const char **raw_value_ss = raw_values_ss;
-															const char **corrected_value_ss = corrected_values_ss;
-															const char **note_ss = notes_ss;
-															const struct tm **start_date_pp = start_dates_pp;
-															const struct tm **end_date_pp = end_dates_pp;
-															const char *key_s = "";
-															MEM_FLAG mv_mem = MF_ALREADY_FREED;
-															const Study *study_p = row_p -> sr_base.ro_study_p;
-															uint32 num_existing_phenotypes = study_p -> st_phenotypes_p -> ll_size;
-															ObservationMetadata *metadata_p = AllocateObservationMetadata (NULL, NULL, false, OB_DEFAULT_INDEX);
+															bool free_measured_variable_flag = false;
+															OperationStatus obs_status = OS_FAILED;
 
-															if (metadata_p)
+															metadata_p -> om_index = OB_DEFAULT_INDEX;
+
+
+															obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, metadata_p, key_s,
+																																										raw_value_p, corrected_value_p, *note_ss,
+																																										&free_measured_variable_flag, SetObservationError, NULL);
+
+															if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
 																{
-																	for (i = 0; i < num_mv_entries; ++ i, ++ mv_ss, ++ raw_value_ss, ++ corrected_value_ss, ++ note_ss, ++ start_date_pp, ++ end_date_pp)
+																	++ num_successes;
+																}
+															else
+																{
+																	PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationValueToStandardRowByParts () failed for " UINT32_FMT
+																							" in study \"%s\" with raw value \"%s\", corrected value \"%s\", corrected flag %d, obervation index " UINT32_FMT,
+																							row_p -> sr_base.ro_by_study_index, row_p -> sr_base.ro_study_p -> st_name_s, *raw_value_ss, *corrected_value_ss,
+																							corrected_value_p, metadata_p -> om_index);
+																}
+
+
+															if ((mv_mem == MF_DEEP_COPY) || (mv_mem == MF_SHALLOW_COPY))
+																{
+																	//FreeMeasuredVariable (mv_p);
+																}
+
+															/* check if the measured variable needs to be added to those referenced by the study */
+															if (study_p -> st_phenotypes_p)
+																{
+																	const char *mv_s = GetMeasuredVariableName (mv_p);
+																	PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
+																	bool new_mv_flag = true;
+
+																	while (node_p && new_mv_flag)
 																		{
-																			MeasuredVariable *mv_p = GetMeasuredVariableByVariableName (*mv_ss, &mv_mem, data_p);
-
-																			if (mv_p)
+																			if (strcmp (mv_s, node_p -> psn_measured_variable_name_s) == 0)
 																				{
-																					json_t *raw_value_p = NULL;
-																					json_t *corrected_value_p = NULL;
-
-																					if (*raw_value_ss)
-																						{
-																							raw_value_p = json_string (*raw_value_ss);
-																						}
-
-																					if (*corrected_value_ss)
-																						{
-																							corrected_value_p = json_string (*corrected_value_ss);
-																						}
-
-																					if (SetObservationMetadataStartDate (metadata_p, *start_date_pp))
-																						{
-																							if (SetObservationMetadataEndDate (metadata_p, *end_date_pp))
-																								{
-																									bool free_measured_variable_flag = false;
-																									OperationStatus obs_status = OS_FAILED;
-
-																									metadata_p -> om_index = OB_DEFAULT_INDEX;
-
-
-																									obs_status = AddObservationValueToStandardRowByParts (job_p, row_p, mv_p, metadata_p, key_s,
-																																																				raw_value_p, corrected_value_p, *note_ss,
-																																																				&free_measured_variable_flag, SetObservationError, NULL);
-
-																									if ((obs_status == OS_SUCCEEDED) || (obs_status == OS_PARTIALLY_SUCCEEDED))
-																										{
-																											++ num_successes;
-																										}
-																									else
-																										{
-																											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddObservationValueToStandardRowByParts () failed for " UINT32_FMT
-																																	" in study \"%s\" with raw value \"%s\", corrected value \"%s\", corrected flag %d, obervation index " UINT32_FMT,
-																																	row_p -> sr_base.ro_by_study_index, row_p -> sr_base.ro_study_p -> st_name_s, *raw_value_ss, *corrected_value_ss,
-																																	corrected_value_p, metadata_p -> om_index);
-																										}
-
-
-																									if ((mv_mem == MF_DEEP_COPY) || (mv_mem == MF_SHALLOW_COPY))
-																										{
-																											//FreeMeasuredVariable (mv_p);
-																										}
-
-																									/* check if the measured variable needs to be added to those referenced by the study */
-																									if (study_p -> st_phenotypes_p)
-																										{
-																											const char *mv_s = GetMeasuredVariableName (mv_p);
-																											PhenotypeStatisticsNode *node_p = (PhenotypeStatisticsNode *) (study_p -> st_phenotypes_p -> ll_head_p);
-																											bool new_mv_flag = true;
-
-																											while (node_p && new_mv_flag)
-																												{
-																													if (strcmp (mv_s, node_p -> psn_measured_variable_name_s) == 0)
-																														{
-																															new_mv_flag = false;
-																														}
-
-																													node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
-																												}
-
-																											if (new_mv_flag)
-																												{
-
-																												}
-																										}		/* if (study_p -> st_phenotypes_p) */
-
-
-
-																								}		/* if (SetObservationMetadataStartDate (metadata_p, *start_date_pp)) */
-																							else
-																								{
-																									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set end date for mv " UINT32_FMT, i);
-																								}
-
-																						}		/* if (SetObservationMetadataStartDate (metadata_p, *start_date_pp)) */
-																					else
-																						{
-																							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set start date for mv " UINT32_FMT, i);
-																						}
-
-
-																				}		/* if (mv_p) */
-																			else
-																				{
-																					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariableByVariableName () failed for \"%s\"", *mv_ss);
+																					new_mv_flag = false;
 																				}
 
+																			node_p = (PhenotypeStatisticsNode *) (node_p -> psn_node.ln_next_p);
 																		}
 
-																	FreeObservationMetadata (metadata_p);
-																}		/* if (metadata_p) */
+																	if (new_mv_flag)
+																		{
+
+																		}
+																}		/* if (study_p -> st_phenotypes_p) */
 
 
 
-
-															if (num_successes == num_mv_entries)
-																{
-																	status = OS_SUCCEEDED;
-																}
-															else if (num_successes > 0)
-																{
-																	status = OS_PARTIALLY_SUCCEEDED;
-																}
-
-
-
-
-														}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
+														}		/* if (SetObservationMetadataStartDate (metadata_p, *start_date_pp)) */
 													else
 														{
-															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "differing array lengths: num_mv_entries " SIZET_FMT " num_raw_entries " SIZET_FMT 
-																					" num_corrected_entries " SIZET_FMT " num_start_dates " SIZET_FMT " num_end_dates " SIZET_FMT
-																					" num_notes " SIZET_FMT, num_mv_entries, num_raw_entries, num_corrected_entries, num_start_dates, num_end_dates, num_notes);	
-														}																													
-												}
+															PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set end date for mv " UINT32_FMT, i);
+														}
+
+												}		/* if (SetObservationMetadataStartDate (metadata_p, *start_date_pp)) */
 											else
 												{
-													PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_OBSERVATION_NOTES.npt_name_s);		
+													PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to set start date for mv " UINT32_FMT, i);
 												}
-										}
+
+
+										}		/* if (mv_p) */
 									else
 										{
-											PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_END_DATE.npt_name_s);		
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetMeasuredVariableByVariableName () failed for \"%s\"", *mv_ss);
 										}
+
 								}
-							else
-								{
-									PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_START_DATE.npt_name_s);		
-								}
-						}
-					else
+
+							FreeObservationMetadata (metadata_p);
+						}		/* if (metadata_p) */
+
+
+					if (num_successes == num_mv_entries)
 						{
-							PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_CORRECTED_VALUE.npt_name_s);		
+							status = OS_SUCCEEDED;
 						}
-				}
+					else if (num_successes > 0)
+						{
+							status = OS_PARTIALLY_SUCCEEDED;
+						}
+
+				}		/* if (num_mv_entries > 0) */
+
 			else
 				{
-					PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_PHENOTYPE_RAW_VALUE.npt_name_s);		
+					/* No Observations submitted */
+					status = OS_IDLE;
 				}
 
-		}		/* if (mvs_ss) */
+		}		/* if (num_mv_entries == num_raw_entries == num_corrected_entries == num_start_dates == num_end_dates == num_notes) */
 	else
 		{
-			PrintErrors (STM_LEVEL_WARNING, __FILE__, __LINE__, "Failed to get %s parameter", S_MEASURED_VARIABLE_NAME.npt_name_s);		
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "differing array lengths: num_mv_entries " SIZET_FMT " num_raw_entries " SIZET_FMT
+									" num_corrected_entries " SIZET_FMT " num_start_dates " SIZET_FMT " num_end_dates " SIZET_FMT
+									" num_notes " SIZET_FMT, num_mv_entries, num_raw_entries, num_corrected_entries, num_start_dates, num_end_dates, num_notes);
 		}
+
 		
 	return status;
 }
