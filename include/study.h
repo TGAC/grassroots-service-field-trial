@@ -183,7 +183,7 @@ typedef struct Study
 {
 	bson_oid_t *st_id_p;
 
-	char *st_timestamp_s;
+	Metadata *st_metadata_p;
 
 	FieldTrial *st_parent_p;
 
@@ -315,7 +315,7 @@ extern "C"
 
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p,  Metadata *metadata_p, const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
 																										struct Location *location_p, FieldTrial *parent_field_trial_p,
 																										MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const char *description_s,
 																										const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,

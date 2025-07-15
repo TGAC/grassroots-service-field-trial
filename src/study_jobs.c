@@ -110,7 +110,7 @@ static const char * const S_DETAIL_LEVEL_FULL_S = "Full";
  * STATIC DECLARATIONS
  */
 
-static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p);
+static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p, User *user_p);
 
 
 static bool GetStudyForGivenId (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, ViewFormat format, JSONProcessor *processor_p);
@@ -219,16 +219,14 @@ static OperationStatus SearchMarti (const double64 *latitude_p, const double64 *
  */
 
 
-bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, DataResource *resource_p)
+bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Study *active_study_p)
 {
 	bool success_flag = false;
 	Parameter *param_p = NULL;
 	ParameterGroup *group_p = CreateAndAddParameterGroupToParameterSet ("Study", false, data_p, params_p);
 	FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
 
-	Study *active_study_p = GetStudyFromResource (resource_p, STUDY_ID, dfw_data_p);
 	bool defaults_flag = false;
-
 	char *id_s = NULL;
 	char *this_crop_s = NULL;
 	char *previous_crop_s = NULL;
@@ -1324,7 +1322,7 @@ static bool SetUpDefaultsFromExistingStudy (const Study * const study_p, char **
 
 
 
-static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p)
+static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialServiceData *data_p, User *user_p)
 {
 	OperationStatus status = OS_FAILED;
 	const char *id_s = NULL;
@@ -1512,6 +1510,11 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 																											const char *image_collection_notes_s = NULL;
 																											const char *gps_notes_s = NULL;
 
+																											PermissionsGroup *perms_group_p = GetPermissionsGroupFromPermissionsEditor (param_set_p, job_p, user_p, & (data_p -> dftsd_base_data));
+
+																											Metadata *metadata_p = AllocateMetadata (perms_group_p, user_p, false, NULL);
+
+
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_ASPECT.npt_name_s, &aspect_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_SLOPE.npt_name_s, &slope_s);
 																											GetCurrentStringParameterValueFromParameterSet (param_set_p, STUDY_LINK.npt_name_s, &data_link_s);
@@ -1554,7 +1557,7 @@ static bool AddStudy (ServiceJob *job_p, ParameterSet *param_set_p, FieldTrialSe
 
 
 
-																											study_p = AllocateStudy (study_id_p, name_s, data_link_s, aspect_s,
+																											study_p = AllocateStudy (study_id_p, metadata_p, name_s, data_link_s, aspect_s,
 																																							 slope_s, location_p, trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																																							 notes_s, design_s,
 																																							 growing_conditions_s, phenotype_notes_s,

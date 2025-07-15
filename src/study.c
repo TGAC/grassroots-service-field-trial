@@ -107,7 +107,7 @@ static bool AddPersonFromJSON (Person *person_p, void *user_data_p, MEM_FLAG *me
 
 
 
-Study *AllocateStudy (bson_oid_t *id_p, const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
+Study *AllocateStudy (bson_oid_t *id_p,  Metadata *metadata_p,  const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
 											struct Location *location_p, FieldTrial *parent_field_trial_p,
 											MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const char *description_s,
 											const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
@@ -1397,6 +1397,8 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 													const json_t *shape_p = json_object_get (json_p, ST_SHAPE_S);
 
 
+													Metadata *metadata_p = GetMetadataFromDefaultChildJSON (json_p, & (data_p -> dftsd_base_data));
+
 													/* use NULL rather than json's the_null */
 													if (shape_p == json_null ())
 														{
@@ -1446,7 +1448,7 @@ Study *GetStudyWithParentTrialFromJSON (const json_t *json_p, FieldTrial *parent
 														}
 
 
-													study_p = AllocateStudy (id_p, name_s, data_url_s, aspect_s, slope_s, location_p, parent_trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
+													study_p = AllocateStudy (id_p, metadata_p, name_s, data_url_s, aspect_s, slope_s, location_p, parent_trial_p, MF_SHALLOW_COPY, current_crop_p, previous_crop_p,
 																									 description_s, design_s, growing_conditions_s, phenotype_gathering_notes_s,
 																									 num_plot_rows_p, num_plot_columns_p, num_replicates_p, plot_width_p, plot_length_p,
 																									 weather_s, shape_p, plot_horizontal_gap_p, plot_vertical_gap_p, plot_rows_per_block_p, plots_columns_per_block_p, plot_block_horizontal_gap_p,

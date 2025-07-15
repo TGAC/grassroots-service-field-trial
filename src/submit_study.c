@@ -157,16 +157,44 @@ static bool GetStudySubmissionServiceParameterTypesForNamedParameters (const str
 
 
 
-static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, DataResource *resource_p, User * UNUSED_PARAM (user_p))
+static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, DataResource *resource_p, User *user_p)
 {
 	ParameterSet *params_p = AllocateParameterSet ("FieldTrial submission service parameters", "The parameters used for the FieldTrial submission service");
 
 	if (params_p)
 		{
 			ServiceData *data_p = service_p -> se_data_p;
+			FieldTrialServiceData *dfw_data_p = (FieldTrialServiceData *) data_p;
+			Study *active_study_p = GetStudyFromResource (resource_p, STUDY_ID, dfw_data_p);
 
-			if (AddSubmissionStudyParams (data_p, params_p, resource_p))
+			if (AddSubmissionStudyParams (data_p, params_p, active_study_p))
 				{
+					PermissionsGroup *perms_group_p = NULL;
+					bool read_only_flag = false;
+
+					if (active_study_p)
+						{
+							if (active_study_p -> pr_metadata_p)
+								{
+									perms_group_p = active_study_p -> pr_metadata_p -> me_permissions_p;
+								}
+						}
+
+					if (perms_group_p)
+						{
+							if (user_p)
+								{
+									read_only_flag = !CheckPermissionsGroupForUser (perms_group_p, user_p, AM_WRITE);
+								}
+						}
+
+
+					if (AddPermissionsEditor (perms_group_p, id_s, params_p, read_only_flag, (FieldTrialServiceData *) data_p))
+						{
+							success_flag = true;
+						}
+
+
 					return params_p;
 				}
 			else
