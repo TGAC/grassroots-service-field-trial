@@ -127,6 +127,8 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Location *AllocateLocation (Address *address_p, co
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeLocation (Location *location_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Location *CopyLocation (const Location * const src_p);
+
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL LocationNode *AllocateLocationNode (Location *location_p);
 

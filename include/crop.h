@@ -86,6 +86,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *AllocateCrop (bson_oid_t *id_p, const char *
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeCrop (Crop *crop_p);
 
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Crop *CopyCrop (const Crop * const src_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 

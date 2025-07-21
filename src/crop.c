@@ -178,6 +178,27 @@ void FreeCrop (Crop *crop_p)
 }
 
 
+Crop *CopyCrop (const Crop * const src_p)
+{
+	bson_oid_t *copied_id_p = CopyBSONOid (src_p -> cr_id_p);
+
+	if (copied_id_p)
+		{
+			Crop *dest_p = AllocateCrop (copied_id_p, src_p -> cr_name_s, src_p -> cr_argovoc_preferred_term_s, src_p -> cr_agrovoc_uri_s, src_p -> cr_synonyms_ss);
+
+			if (dest_p)
+				{
+					return dest_p;
+				}
+
+			FreeBSONOid (copied_id_p);
+		}
+
+
+	return NULL;
+}
+
+
 json_t *GetCropAsJSON (Crop *crop_p, const ViewFormat format, const FieldTrialServiceData *data_p)
 {
 	json_t *res_p = json_object ();

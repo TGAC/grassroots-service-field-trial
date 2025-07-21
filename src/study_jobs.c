@@ -59,7 +59,7 @@
 #include "statistics.h"
 #include "phenotype_statistics.h"
 #include "person_jobs.h"
-
+#include "permissions_editor.h"
 
 typedef struct
 {
@@ -784,13 +784,12 @@ static bool AddLayoutParams (ParameterSet *params_p, const Study *study_p, Field
 }
 
 
-bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p)
+bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, User *user_p)
 {
-	bool success_flag = AddStudy (job_p, param_set_p, data_p);
+	bool success_flag = AddStudy (job_p, param_set_p, data_p, user_p);
 
 	return success_flag;
 }
-
 
 
 bool GetSubmissionStudyParameterTypeForDefaultPlotNamedParameter (const char *param_name_s, ParameterType *pt_p)

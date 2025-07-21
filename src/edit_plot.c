@@ -46,6 +46,8 @@
 #include "measured_variable_jobs.h"
 #include "phenotype_statistics.h"
 
+#include "study_jobs.h"
+
 /*
  * Static declarations
  */

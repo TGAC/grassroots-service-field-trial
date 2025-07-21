@@ -164,6 +164,12 @@ void FreePerson (Person *person_p)
 }
 
 
+Person *CopyPerson (const Person * const src_p)
+{
+	return AllocatePerson (src_p -> pe_name_s, src_p -> pe_email_s, src_p -> pe_role_s, src_p -> pe_affiliation_s, src_p -> pe_orcid_s);
+}
+
+
 
 bool AddPersonToCompoundJSON (const Person *person_p, json_t *parent_json_p, const char * const key_s,  const ViewFormat format, const FieldTrialServiceData *data_p)
 {

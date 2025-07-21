@@ -32,6 +32,8 @@
 #include "string_array_parameter.h"
 #include "json_parameter.h"
 
+#include "permissions_editor.h"
+
 /*
  * Static declarations
  */
@@ -171,12 +173,14 @@ static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Da
 				{
 					PermissionsGroup *perms_group_p = NULL;
 					bool read_only_flag = false;
+					const char *id_s = NULL;
+					bool success_flag = true;
 
 					if (active_study_p)
 						{
-							if (active_study_p -> pr_metadata_p)
+							if (active_study_p -> st_metadata_p)
 								{
-									perms_group_p = active_study_p -> pr_metadata_p -> me_permissions_p;
+									perms_group_p = active_study_p -> st_metadata_p -> me_permissions_p;
 								}
 						}
 
@@ -195,7 +199,16 @@ static ParameterSet *GetStudySubmissionServiceParameters (Service *service_p, Da
 						}
 
 
-					return params_p;
+					if (active_study_p)
+						{
+							FreeStudy (active_study_p);
+						}
+
+					if (success_flag)
+						{
+							return params_p;
+						}
+
 				}
 			else
 				{
@@ -236,7 +249,7 @@ static bool CloseStudySubmissionService (Service *service_p)
 
 
 
-static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSet *param_set_p, User * UNUSED_PARAM (user_p), ProvidersStateTable * UNUSED_PARAM (providers_p))
+static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSet *param_set_p, User *user_p, ProvidersStateTable * UNUSED_PARAM (providers_p))
 {
 	FieldTrialServiceData *data_p = (FieldTrialServiceData *) (service_p -> se_data_p);
 
@@ -250,7 +263,7 @@ static ServiceJobSet *RunStudySubmissionService (Service *service_p, ParameterSe
 
 			SetServiceJobStatus (job_p, OS_FAILED_TO_START);
 
-			if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p))
+			if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p, user_p))
 				{
 
 				}		/* if (!RunForSubmissionStudyParams (data_p, param_set_p, job_p)) */

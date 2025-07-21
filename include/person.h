@@ -94,6 +94,9 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL void FreePerson (Person *person_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void ClearPerson (Person *person_p);
 
+DFW_FIELD_TRIAL_SERVICE_LOCAL Person *CopyPerson (const Person * const src_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL json_t *GetPersonAsJSON (const Person * const person_p, const ViewFormat format, const FieldTrialServiceData *data_p);
 
 

@@ -125,6 +125,53 @@ void FreeLocation (Location *location_p)
 }
 
 
+Location *CopyLocation (const Location * const src_p)
+{
+	bson_oid_t *id_p = GetNewBSONOid ();
+
+	if (id_p)
+		{
+			Address *address_p = CopyAddress (src_p ->lo_address_p);
+
+			if (address_p)
+				{
+					Location *location_p = NULL;
+
+					bson_oid_copy (src_p -> lo_id_p, id_p);
+
+
+					location_p = AllocateLocation (address_p, src_p -> lo_order, src_p -> lo_soil_s, src_p -> lo_min_ph_p, src_p -> lo_max_ph_p,
+																				 src_p -> lo_type, id_p);
+
+					if (location_p)
+						{
+							return location_p;
+						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateLocation () failed when copying location \"%s\"", (src_p -> lo_address_p) ? src_p -> lo_address_p -> ad_name_s : "UNKNOWN");
+						}
+
+
+					FreeAddress (address_p);
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CopyAddress () failed when copying location \"%s\"", (src_p -> lo_address_p) ? src_p -> lo_address_p -> ad_name_s : "UNKNOWN");
+				}
+
+
+			FreeBSONOid (id_p);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "GetNewBSONOid () failed when copying location \"%s\"", (src_p -> lo_address_p) ? src_p -> lo_address_p -> ad_name_s : "UNKNOWN");
+		}
+
+	return NULL;
+}
+
+
 
 LocationNode *AllocateLocationNode (Location *location_p)
 {

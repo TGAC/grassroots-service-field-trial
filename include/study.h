@@ -40,6 +40,8 @@
 #include "json_processor.h"
 #include "statistics.h"
 
+#include "metadata.h"
+
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

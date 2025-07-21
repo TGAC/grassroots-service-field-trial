@@ -2621,6 +2621,116 @@ bool AddPhenotypeStatisticsToStudy (Study * const study_p, const char *mv_s, con
 
 
 
+
+
+
+
+/*
+ * AllocateStudy (bson_oid_t *id_p,  Metadata *metadata_p, const char *name_s, const char *data_url_s, const char *aspect_s, const char *slope_s,
+	struct Location *location_p, FieldTrial *parent_field_trial_p,
+	MEM_FLAG parent_field_trial_mem, Crop *current_crop_p, Crop *previous_crop_p, const char *description_s,
+	const char *design_s, const char *growing_conditions_s, const char *phenotype_gathering_notes_s,
+	const uint32 *num_rows_p, const uint32 *num_cols_p, const uint32 *num_replicates_p, const double64 *plot_width_p, const double64 *plot_length_p,
+	const char *weather_s, const json_t *shape_p, const double64 *plot_horizontal_gap_p, const double64 *plot_vertical_gap_p,
+	const uint32 *plot_rows_per_block_p, const uint32 *plot_columns_per_block_p, const double64 *plot_block_horizontal_gap_p,
+	const double64 *plot_block_vertical_gap_p,
+	Person *curator_p, Person *contact_p,
+	const uint32 *sowing_year_p, const uint32 *harvest_year_p,
+	const char *plan_changes_s, const char *physical_samples_collected_s, const char *data_not_included_s,
+	const char *photo_url_s, const char *image_collection_notes_s,
+	const char *gps_notes_s,
+	const FieldTrialServiceData *data_p);
+ */
+Study *CopyStudy (const Study * const src_p, const char * const new_name_s, const FieldTrialServiceData *data_p)
+{
+	Metadata *metadata_p = NULL;
+	Location *location_p = NULL;
+	Crop *current_crop_p =  NULL;
+
+	if ((src_p -> st_current_crop_p == NULL)|| ((current_crop_p = CopyCrop (src_p -> st_current_crop_p)) != NULL))
+		{
+			Crop *previous_crop_p = NULL;
+
+			if ((src_p -> st_previous_crop_p == NULL)|| ((previous_crop_p = CopyCrop (src_p -> st_previous_crop_p)) != NULL))
+				{
+					Person *contact_p = NULL;
+
+					if ((src_p -> st_contact_p == NULL)|| ((contact_p = CopyPerson (src_p -> st_contact_p)) != NULL))
+						{
+							Person *curator_p = NULL;
+
+							if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL))
+								{
+									Study *dest_p = AllocateStudy (NULL, metadata_p,  new_name_s, src_p -> st_data_url_s, src_p -> st_aspect_s, src_p -> st_slope_s,
+																								 location_p, src_p -> st_parent_p, MF_SHADOW_USE, current_crop_p, previous_crop_p, src_p -> st_description_s,
+																								 src_p -> st_design_s, src_p -> st_growing_conditions_s, src_p -> st_phenotype_gathering_notes_s,
+																								 src_p -> st_num_rows_p, src_p -> st_num_columns_p, src_p -> st_num_replicates_p, src_p -> st_default_plot_width_p, src_p -> st_default_plot_length_p,
+																								 src_p -> st_weather_link_s, src_p -> st_shape_p, src_p -> st_plot_horizontal_gap_p, src_p -> st_plot_vertical_gap_p,
+																								 src_p -> st_plots_rows_per_block_p, src_p -> st_plots_columns_per_block_p, src_p -> st_plot_block_horizontal_gap_p, src_p -> st_plot_block_vertical_gap_p,
+																								 curator_p, contact_p,
+																								 src_p -> st_predicted_sowing_year_p, src_p -> st_predicted_harvest_year_p,
+																								 src_p -> st_plan_changes_s, src_p -> st_physical_samples_collected_s, src_p -> st_data_not_included_s,
+																								 src_p -> st_photo_url_s, src_p -> st_image_collection_notes_s,
+																								 src_p -> st_shape_notes_s,
+																								 data_p);
+
+									if (dest_p)
+										{
+											return dest_p;
+										}
+
+									if (curator_p)
+										{
+											FreePerson (curator_p);
+										}
+								}		/* if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL)) */
+							else
+								{
+									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy person \"%s\", \"%s\"", src_p -> st_contact_p -> pe_name_s, src_p -> st_contact_p -> pe_email_s);
+								}
+
+							if (contact_p)
+								{
+									FreePerson (contact_p);
+								}
+
+						}		/* if ((src_p -> st_contact_p == NULL)|| ((contact_p = CopyPerson (src_p -> st_contact_p)) != NULL)) */
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy person \"%s\", \"%s\"", src_p -> st_contact_p -> pe_name_s, src_p -> st_contact_p -> pe_email_s);
+						}
+
+
+					if (previous_crop_p)
+						{
+							FreeCrop (previous_crop_p);
+						}
+
+
+				}		/* if ((src_p -> st_previous_crop_p == NULL)|| ((previous_crop_p = CopyCrop (src_p -> st_previous_crop_p)) != NULL)) */
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy crop \"%s\"", src_p -> st_previous_crop_p -> cr_name_s);
+				}
+
+
+			if (current_crop_p)
+				{
+					FreeCrop (current_crop_p);
+				}
+
+		}		/* if ((src_p -> st_current_crop_p == NULL)|| ((current_crop_p = CopyCrop (src_p -> st_current_crop_p)) != NULL)) */
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy crop \"%s\"", src_p -> st_current_crop_p -> cr_name_s);
+		}
+
+
+	return NULL;
+}
+
+
+
 static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, const FieldTrialServiceData *service_data_p)
 {
 	bool success_flag = true;
@@ -2657,6 +2767,9 @@ static bool AddStatisticsFromJSON (Study *study_p, const json_t *study_json_p, c
 
 	return success_flag;
 }
+
+
+
 
 
 

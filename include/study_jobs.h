@@ -140,7 +140,7 @@ extern "C"
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *param_set_p, Study *active_study_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool RunForSubmissionStudyParams (FieldTrialServiceData *data_p, ParameterSet *param_set_p, ServiceJob *job_p, User *user_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool GetSubmissionStudyParameterTypeForNamedParameter (const char *param_name_s, ParameterType *pt_p);
