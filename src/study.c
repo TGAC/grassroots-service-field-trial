@@ -259,6 +259,7 @@ Study *AllocateStudy (bson_oid_t *id_p,  Metadata *metadata_p,  const char *name
 																																																																			if (study_p)
 																																																																				{
 																																																																					study_p -> st_id_p = id_p;
+																																																																					study_p -> st_metadata_p = metadata_p;
 																																																																					study_p -> st_name_s = copied_name_s;
 																																																																					study_p -> st_data_url_s = copied_url_s;
 																																																																					study_p -> st_aspect_s = copied_aspect_s;

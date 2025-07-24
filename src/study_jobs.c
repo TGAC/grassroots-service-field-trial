@@ -359,10 +359,7 @@ bool AddSubmissionStudyParams (ServiceData *data_p, ParameterSet *params_p, Stud
 		}		/* if (defaults_flag) */
 
 
-	if (active_study_p)
-		{
-			FreeStudy (active_study_p);
-		}
+
 
 	if (this_crop_s)
 		{
