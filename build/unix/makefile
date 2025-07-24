@@ -63,6 +63,7 @@ SRCS 	= \
 	blank_row.c \
 	browse_programme_history.c \
 	browse_trial_history.c \
+	copy_study.c \
 	crop.c \
 	crop_jobs.c \
 	crop_ontology.c \

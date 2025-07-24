@@ -335,6 +335,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p,  Metadata 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *CopyStudy (const Study * const src_p, const char * const new_name_s, const FieldTrialServiceData *data_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL StudyNode *AllocateStudyNode (Study *study_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudyNode (ListItem *node_p);
@@ -373,6 +377,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL bool IsMeasuredVariableOnStudy (const Study * cons
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddPhenotypeStatisticsToStudy (Study * const study_p, const char *mv_s, const Statistics *stats_p);
+
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL bool CopyAllPhenotypeStatistics (const Study * const src_p, Study *dest_p, const bool remove_existing_entries_flag);
+
 
 #ifdef __cplusplus
 }

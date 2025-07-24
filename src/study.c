@@ -2621,7 +2621,34 @@ bool AddPhenotypeStatisticsToStudy (Study * const study_p, const char *mv_s, con
 
 
 
+bool CopyAllPhenotypeStatistics (const Study * const src_p, Study *dest_p, const bool remove_existing_entries_flag)
+{
+	bool success_flag = true;
+	PhenotypeStatisticsNode *src_node_p = (PhenotypeStatisticsNode *) (src_p -> st_phenotypes_p ->ll_head_p);
 
+
+	if (remove_existing_entries_flag)
+		{
+			ClearLinkedList (dest_p -> st_phenotypes_p);
+		}
+
+	while (src_node_p && success_flag)
+		{
+			if (AddPhenotypeStatisticsToStudy (dest_p, src_node_p -> psn_measured_variable_name_s, src_node_p -> psn_stats_p))
+				{
+					src_node_p = (PhenotypeStatisticsNode *) (src_node_p -> psn_node.ln_next_p);
+				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AddPhenotypeStatisticsToStudy () failed copying \"%s\" from \"%s\" to \"%s\"",
+											 src_node_p -> psn_measured_variable_name_s, src_p -> st_name_s, dest_p -> st_name_s);
+
+					success_flag = false;
+				}
+		}
+
+	return success_flag;
+}
 
 
 
@@ -2661,6 +2688,8 @@ Study *CopyStudy (const Study * const src_p, const char * const new_name_s, cons
 
 							if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL))
 								{
+
+
 									Study *dest_p = AllocateStudy (NULL, metadata_p,  new_name_s, src_p -> st_data_url_s, src_p -> st_aspect_s, src_p -> st_slope_s,
 																								 location_p, src_p -> st_parent_p, MF_SHADOW_USE, current_crop_p, previous_crop_p, src_p -> st_description_s,
 																								 src_p -> st_design_s, src_p -> st_growing_conditions_s, src_p -> st_phenotype_gathering_notes_s,
@@ -2676,6 +2705,15 @@ Study *CopyStudy (const Study * const src_p, const char * const new_name_s, cons
 
 									if (dest_p)
 										{
+//											LinkedList *st_treatments_p;
+
+//											LinkedList *st_phenotypes_p;
+
+//												LinkedList *st_contributors_p;
+
+
+
+
 											return dest_p;
 										}
 

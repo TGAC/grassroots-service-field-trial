@@ -52,6 +52,8 @@
 #include "browse_trial_history.h"
 //#include "browse_study_history.h"
 
+#include "copy_study.h"
+
 #include "field_trial_jobs.h"
 #include "study_jobs.h"
 #include "location_jobs.h"
@@ -100,6 +102,7 @@ ServicesArray *GetServices (User *user_p, GrassrootsServer *grassroots_p)
 	Service *programme_history_browser_service_p = GetBrowseProgrammeHistoryService (grassroots_p);
 	Service *trial_history_browser_service_p = GetBrowseTrialHistoryService (grassroots_p);
 	Service *study_history_browser_service_p = NULL; // GetBrowseStudyHistoryService (grassroots_p);
+	Service *copy_study_service_p = GetStudyCopyService (grassroots_p);
 
 
 	if (all_in_one_submission_service_p)
@@ -206,6 +209,11 @@ ServicesArray *GetServices (User *user_p, GrassrootsServer *grassroots_p)
 		}
 
 
+	if (copy_study_service_p)
+		{
+			++ num_services;
+		}
+
 	if (num_services)
 		{
 			ServicesArray *services_p = AllocateServicesArray (num_services);
@@ -235,6 +243,8 @@ ServicesArray *GetServices (User *user_p, GrassrootsServer *grassroots_p)
 					service_pp = AddValidService (service_pp, programme_history_browser_service_p);
 					service_pp = AddValidService (service_pp, trial_history_browser_service_p);
 					service_pp = AddValidService (service_pp, study_history_browser_service_p);
+					service_pp = AddValidService (service_pp, copy_study_service_p);
+
 
 					return services_p;
 				}
@@ -338,6 +348,11 @@ ServicesArray *GetServices (User *user_p, GrassrootsServer *grassroots_p)
 	if (study_history_browser_service_p)
 		{
 			FreeService (trial_history_browser_service_p);
+		}
+
+	if (copy_study_service_p)
+		{
+			FreeService (copy_study_service_p);
 		}
 
 	return NULL;

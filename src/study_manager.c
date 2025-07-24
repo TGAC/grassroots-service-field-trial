@@ -259,7 +259,7 @@ static ParameterSet *GetStudyManagerServiceParameters (Service *service_p, DataR
 																{
 																	if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_HANDBOOK.npt_name_s, "Generate Handbook", "Generate a handbook for a Study ", &b, PL_ALL)) != NULL)
 																		{
-																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_type, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", &b, PL_ALL)) != NULL)
+																			if ((param_p = EasyCreateAndAddStringParameterToParameterSet (data_p, params_p, group_p, S_GENERATE_STUDY_STATISTICS.npt_type, S_GENERATE_STUDY_STATISTICS.npt_name_s, "Collate Phenotypes", "Create and store a list of all of the Phenotypes in a Study and generate statistics where appropriate", NULL, PL_ALL)) != NULL)
 																				{
 																					if (SetUpIndexingParameter (params_p, group_p, data_p))
 																						{
