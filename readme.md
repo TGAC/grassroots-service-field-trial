@@ -10,8 +10,9 @@ The field trials services also use the [libexif](https://github.com/libexif/libe
 we previously installed with the `install_dependencies` script that we ran previously. We need
 to let this service know the folder where we installed libexif. This is done by creating a 
 properties file which specifies this. An example file is part of the field trials directory 
-structure `build/unix/linux/example_user.prefs`. We copy this to a file called `linux/user.prefs` 
-which we will then edit to specify the location of libexif.
+structure `build/unix/example_user.prefs`. We copy this to a file called `linux/user.prefs` or 
+`mac/user.prefs` _etc._, depending upon which platform you are running on,
+and we will then edit to specify the location of libexif.
 
 
 ```

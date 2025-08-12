@@ -40,6 +40,12 @@ static NamedParameterType S_NAME = { "Name to copy the Study to", PT_STRING };
 static NamedParameterType S_SRC_STUDY_ID = { "Study to copy", PT_STRING };
 
 
+static NamedParameterType S_COPY_TREATMENT_FACTORS = { "Copy Treatment Factors?", PT_BOOLEAN };
+
+
+static NamedParameterType S_COPY_MEASURED_VARIABLES = { "Copy Measured Variables?", PT_BOOLEAN };
+
+
 static const char * const S_EMPTY_LIST_OPTION_S = "<empty>";
 
 
@@ -195,7 +201,15 @@ static ParameterSet *GetStudyCopyServiceParameters (Service *service_p, DataReso
 						{
 							if (SetUpStudiesListParameter (dfw_data_p, param_p, NULL, true))
 								{
-									success_flag = true;
+									bool b = false;
+
+									if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_COPY_TREATMENT_FACTORS.npt_name_s, "Copy Treatment Factors?", "Do you wish to copy the Treatment Factors?", &b, PL_ALL)) != NULL)
+										{
+											if ((param_p = EasyCreateAndAddBooleanParameterToParameterSet (data_p, params_p, group_p, S_COPY_MEASURED_VARIABLES.npt_name_s, "Copy Measured Variables?", "Do you wish to copy the Measured Variables?", &b, PL_ALL)) != NULL)
+												{
+													success_flag = true;
+												}
+										}
 								}
 						}
 
@@ -276,6 +290,12 @@ static ServiceJobSet *RunStudyCopyService (Service *service_p, ParameterSet *par
 
 													if (src_study_p)
 														{
+															bool copy_treatment_factors_flag = false;
+															bool copy_measured_variables_flag = false;
+
+															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_TREATMENT_FACTORS.npt_name_s, &copy_treatment_factors_flag);
+															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_MEASURED_VARIABLES.npt_name_s, &copy_measured_variables_flag);
+
 															Study *dest_study_p = CopyStudy (src_study_p, name_s, data_p);
 
 															if (dest_study_p)
