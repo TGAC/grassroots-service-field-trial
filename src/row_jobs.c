@@ -1175,7 +1175,7 @@ Row *GetRowByStudyIndex (const int32 by_study_index, Study *study_p, const ViewF
 														}		/* if (num_results == 1) */
 													else
 														{
-															char *query_json_s = bson_as_relaxed_extended_json (query_p, NULL);
+															char *query_json_s = ConvertBSONToJSON (query_p, NULL);
 
 															if (query_json_s)
 																{

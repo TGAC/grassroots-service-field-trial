@@ -828,7 +828,7 @@ OperationStatus StoreAllScaleUnits (FieldTrialServiceData *data_p)
 static bool UpdateScaleTerms (const bson_t *document_p, void *data_p)
 {
 	bool success_flag = false;
-	json_t *mv_json_p = ConvertBSONToJSON (document_p);
+	json_t *mv_json_p = ConvertBSONToJSON (document_p, NULL);
 
 	if (mv_json_p)
 		{

@@ -336,7 +336,7 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Study *AllocateStudy (bson_oid_t *id_p,  Metadata 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeStudy (Study *study_p);
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL Study *CopyStudy (const Study * const src_p, const char * const new_name_s, const FieldTrialServiceData *data_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL Study *CopyStudy (const Study * const src_p, const char * const new_name_s, const bool copy_treatment_factors_flag, const bool copy_measured_variables_flag, const FieldTrialServiceData *data_p);
 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL StudyNode *AllocateStudyNode (Study *study_p);

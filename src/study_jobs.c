@@ -2953,7 +2953,7 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 						{
 							if (reply_p)
 								{
-									json_t *results_p = ConvertBSONToJSON (reply_p);
+									json_t *results_p = ConvertBSONToJSON (reply_p, NULL);
 
 									if (results_p)
 										{
@@ -3018,7 +3018,7 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 							else
 								{
 									size_t length;
-									char *json_s = bson_as_relaxed_extended_json (command_p, &length);
+									char *json_s = ConvertBSONToJSON (command_p, &length);
 									if (json_s)
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply for \"%s\"", json_s);
@@ -3034,7 +3034,7 @@ static OperationStatus ProcessDistinctValues (bson_oid_t *study_id_p, const char
 					else
 						{
 							size_t length;
-							char *json_s = bson_as_relaxed_extended_json (command_p, &length);
+							char *json_s = ConvertBSONToJSON (command_p, &length);
 
 							if (json_s)
 								{
@@ -3085,7 +3085,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 						{
 							if (reply_p)
 								{
-									json_t *results_p = ConvertBSONToJSON (reply_p);
+									json_t *results_p = ConvertBSONToJSON (reply_p, NULL);
 
 									if (results_p)
 										{
@@ -3133,7 +3133,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 							else
 								{
 									size_t length;
-									char *json_s = bson_as_relaxed_extended_json (command_p, &length);
+									char *json_s = ConvertBSONToJSON (command_p, &length);
 									if (json_s)
 										{
 											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "RunMongoCommand had empty reply for \"%s\"", json_s);
@@ -3149,7 +3149,7 @@ static json_t *GetDistinctValuesAsJSON (bson_oid_t *study_id_p, const char *key_
 					else
 						{
 							size_t length;
-							char *json_s = bson_as_relaxed_extended_json (command_p, &length);
+							char *json_s = ConvertBSONToJSON (command_p, &length);
 
 							if (json_s)
 								{

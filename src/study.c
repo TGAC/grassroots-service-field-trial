@@ -2669,100 +2669,116 @@ bool CopyAllPhenotypeStatistics (const Study * const src_p, Study *dest_p, const
 	const char *gps_notes_s,
 	const FieldTrialServiceData *data_p);
  */
-Study *CopyStudy (const Study * const src_p, const char * const new_name_s, const FieldTrialServiceData *data_p)
+Study *CopyStudy (const Study * const src_p, const char * const new_name_s, const bool copy_treatment_factors_flag, const bool copy_measured_variables_flag, const FieldTrialServiceData *data_p)
 {
 	Metadata *metadata_p = NULL;
 	Location *location_p = NULL;
 	Crop *current_crop_p =  NULL;
 
-	if ((src_p -> st_current_crop_p == NULL)|| ((current_crop_p = CopyCrop (src_p -> st_current_crop_p)) != NULL))
+
+	location_p = CopyLocation (src_p);
+
+	if (location_p)
 		{
-			Crop *previous_crop_p = NULL;
-
-			if ((src_p -> st_previous_crop_p == NULL)|| ((previous_crop_p = CopyCrop (src_p -> st_previous_crop_p)) != NULL))
+			if ((src_p -> st_current_crop_p == NULL)|| ((current_crop_p = CopyCrop (src_p -> st_current_crop_p)) != NULL))
 				{
-					Person *contact_p = NULL;
+					Crop *previous_crop_p = NULL;
 
-					if ((src_p -> st_contact_p == NULL)|| ((contact_p = CopyPerson (src_p -> st_contact_p)) != NULL))
+					if ((src_p -> st_previous_crop_p == NULL)|| ((previous_crop_p = CopyCrop (src_p -> st_previous_crop_p)) != NULL))
 						{
-							Person *curator_p = NULL;
+							Person *contact_p = NULL;
 
-							if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL))
+							if ((src_p -> st_contact_p == NULL)|| ((contact_p = CopyPerson (src_p -> st_contact_p)) != NULL))
 								{
+									Person *curator_p = NULL;
 
-
-									Study *dest_p = AllocateStudy (NULL, metadata_p,  new_name_s, src_p -> st_data_url_s, src_p -> st_aspect_s, src_p -> st_slope_s,
-																								 location_p, src_p -> st_parent_p, MF_SHADOW_USE, current_crop_p, previous_crop_p, src_p -> st_description_s,
-																								 src_p -> st_design_s, src_p -> st_growing_conditions_s, src_p -> st_phenotype_gathering_notes_s,
-																								 src_p -> st_num_rows_p, src_p -> st_num_columns_p, src_p -> st_num_replicates_p, src_p -> st_default_plot_width_p, src_p -> st_default_plot_length_p,
-																								 src_p -> st_weather_link_s, src_p -> st_shape_p, src_p -> st_plot_horizontal_gap_p, src_p -> st_plot_vertical_gap_p,
-																								 src_p -> st_plots_rows_per_block_p, src_p -> st_plots_columns_per_block_p, src_p -> st_plot_block_horizontal_gap_p, src_p -> st_plot_block_vertical_gap_p,
-																								 curator_p, contact_p,
-																								 src_p -> st_predicted_sowing_year_p, src_p -> st_predicted_harvest_year_p,
-																								 src_p -> st_plan_changes_s, src_p -> st_physical_samples_collected_s, src_p -> st_data_not_included_s,
-																								 src_p -> st_photo_url_s, src_p -> st_image_collection_notes_s,
-																								 src_p -> st_shape_notes_s,
-																								 data_p);
-
-									if (dest_p)
+									if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL))
 										{
-//											LinkedList *st_treatments_p;
-
-//											LinkedList *st_phenotypes_p;
-
-//												LinkedList *st_contributors_p;
 
 
+											Study *dest_p = AllocateStudy (NULL, metadata_p,  new_name_s, src_p -> st_data_url_s, src_p -> st_aspect_s, src_p -> st_slope_s,
+																										 location_p, src_p -> st_parent_p, MF_SHADOW_USE, current_crop_p, previous_crop_p, src_p -> st_description_s,
+																										 src_p -> st_design_s, src_p -> st_growing_conditions_s, src_p -> st_phenotype_gathering_notes_s,
+																										 src_p -> st_num_rows_p, src_p -> st_num_columns_p, src_p -> st_num_replicates_p, src_p -> st_default_plot_width_p, src_p -> st_default_plot_length_p,
+																										 src_p -> st_weather_link_s, src_p -> st_shape_p, src_p -> st_plot_horizontal_gap_p, src_p -> st_plot_vertical_gap_p,
+																										 src_p -> st_plots_rows_per_block_p, src_p -> st_plots_columns_per_block_p, src_p -> st_plot_block_horizontal_gap_p, src_p -> st_plot_block_vertical_gap_p,
+																										 curator_p, contact_p,
+																										 src_p -> st_predicted_sowing_year_p, src_p -> st_predicted_harvest_year_p,
+																										 src_p -> st_plan_changes_s, src_p -> st_physical_samples_collected_s, src_p -> st_data_not_included_s,
+																										 src_p -> st_photo_url_s, src_p -> st_image_collection_notes_s,
+																										 src_p -> st_shape_notes_s,
+																										 data_p);
+
+											if (dest_p)
+												{
+		//											LinkedList *st_treatments_p;
+
+		//											LinkedList *st_phenotypes_p;
+
+		//												LinkedList *st_contributors_p;
+
+													if (copy_treatment_factors_flag)
+														{
+
+														}
 
 
-											return dest_p;
+
+													return dest_p;
+												}
+
+											if (curator_p)
+												{
+													FreePerson (curator_p);
+												}
+										}		/* if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL)) */
+									else
+										{
+											PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy person \"%s\", \"%s\"", src_p -> st_contact_p -> pe_name_s, src_p -> st_contact_p -> pe_email_s);
 										}
 
-									if (curator_p)
+									if (contact_p)
 										{
-											FreePerson (curator_p);
+											FreePerson (contact_p);
 										}
-								}		/* if ((src_p -> st_curator_p == NULL)|| ((curator_p = CopyPerson (src_p -> st_curator_p)) != NULL)) */
+
+								}		/* if ((src_p -> st_contact_p == NULL)|| ((contact_p = CopyPerson (src_p -> st_contact_p)) != NULL)) */
 							else
 								{
 									PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy person \"%s\", \"%s\"", src_p -> st_contact_p -> pe_name_s, src_p -> st_contact_p -> pe_email_s);
 								}
 
-							if (contact_p)
+
+							if (previous_crop_p)
 								{
-									FreePerson (contact_p);
+									FreeCrop (previous_crop_p);
 								}
 
-						}		/* if ((src_p -> st_contact_p == NULL)|| ((contact_p = CopyPerson (src_p -> st_contact_p)) != NULL)) */
+
+						}		/* if ((src_p -> st_previous_crop_p == NULL)|| ((previous_crop_p = CopyCrop (src_p -> st_previous_crop_p)) != NULL)) */
 					else
 						{
-							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy person \"%s\", \"%s\"", src_p -> st_contact_p -> pe_name_s, src_p -> st_contact_p -> pe_email_s);
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy crop \"%s\"", src_p -> st_previous_crop_p -> cr_name_s);
 						}
 
 
-					if (previous_crop_p)
+					if (current_crop_p)
 						{
-							FreeCrop (previous_crop_p);
+							FreeCrop (current_crop_p);
 						}
 
-
-				}		/* if ((src_p -> st_previous_crop_p == NULL)|| ((previous_crop_p = CopyCrop (src_p -> st_previous_crop_p)) != NULL)) */
+				}		/* if ((src_p -> st_current_crop_p == NULL)|| ((current_crop_p = CopyCrop (src_p -> st_current_crop_p)) != NULL)) */
 			else
 				{
-					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy crop \"%s\"", src_p -> st_previous_crop_p -> cr_name_s);
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy crop \"%s\"", src_p -> st_current_crop_p -> cr_name_s);
 				}
 
-
-			if (current_crop_p)
-				{
-					FreeCrop (current_crop_p);
-				}
-
-		}		/* if ((src_p -> st_current_crop_p == NULL)|| ((current_crop_p = CopyCrop (src_p -> st_current_crop_p)) != NULL)) */
+		}		/* if (location_p) */
 	else
 		{
-			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy crop \"%s\"", src_p -> st_current_crop_p -> cr_name_s);
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "Failed to copy location \"%s\"", src_p -> st_location_p -> lo_address_p -> ad_name_s);
 		}
+
 
 
 	return NULL;

@@ -296,12 +296,11 @@ static ServiceJobSet *RunStudyCopyService (Service *service_p, ParameterSet *par
 															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_TREATMENT_FACTORS.npt_name_s, &copy_treatment_factors_flag);
 															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_MEASURED_VARIABLES.npt_name_s, &copy_measured_variables_flag);
 
-															Study *dest_study_p = CopyStudy (src_study_p, name_s, data_p);
+															Study *dest_study_p = CopyStudy (src_study_p, name_s, copy_treatment_factors_flag, copy_measured_variables_flag, data_p);
 
 															if (dest_study_p)
 																{
 																	OperationStatus s = SaveStudy (dest_study_p, job_p, data_p, NULL);
-
 
 																	/* Did we have any errors saving the study? */
 																	if ((s != OS_SUCCEEDED) && (s != OS_PARTIALLY_SUCCEEDED))

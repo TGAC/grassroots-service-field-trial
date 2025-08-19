@@ -460,7 +460,7 @@ static json_t *GetNextDocAsJSON (mongoc_cursor_t *cursor_p)
 
 	if (mongoc_cursor_next (cursor_p, &doc_p))
 		{
-			char *doc_s = bson_as_canonical_extended_json (doc_p, NULL);
+			char *doc_s = ConvertBSONToJSON (doc_p, NULL);
 
 			if (doc_s)
 				{
@@ -852,7 +852,7 @@ static bool WritePlotRows (bson_oid_t *plot_id_p, mongoc_collection_t *plots_col
 
 									if (mongoc_collection_update_one (plots_collection_p, query_p, update_p, NULL, &reply, &error))
 										{
-											char *reply_s = bson_as_relaxed_extended_json (&reply, 0);
+											char *reply_s = ConvertBSONToJSON (&reply, NULL);
 
 											if (reply_s)
 												{
