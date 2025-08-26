@@ -30,6 +30,7 @@
 #include "permissions_editor.h"
 
 
+#include "boolean_parameter.h"
 
 /*
  * Study parameters
