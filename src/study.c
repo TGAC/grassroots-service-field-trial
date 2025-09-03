@@ -2676,7 +2676,7 @@ Study *CopyStudy (const Study * const src_p, const char * const new_name_s, cons
 	Crop *current_crop_p =  NULL;
 
 
-	location_p = CopyLocation (src_p);
+	location_p = CopyLocation (src_p -> st_location_p);
 
 	if (location_p)
 		{

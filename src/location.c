@@ -131,7 +131,7 @@ Location *CopyLocation (const Location * const src_p)
 
 	if (id_p)
 		{
-			Address *address_p = CopyAddress (src_p ->lo_address_p);
+			Address *address_p = CopyAddress (src_p -> lo_address_p);
 
 			if (address_p)
 				{

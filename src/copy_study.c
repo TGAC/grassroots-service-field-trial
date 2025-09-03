@@ -172,6 +172,8 @@ static bool GetStudyCopyServiceParameterTypesForNamedParameters (const struct Se
 		{
 			S_NAME,
 			S_SRC_STUDY_ID,
+			S_COPY_TREATMENT_FACTORS,
+			S_COPY_MEASURED_VARIABLES,
 			NULL
 		};
 
@@ -291,13 +293,17 @@ static ServiceJobSet *RunStudyCopyService (Service *service_p, ParameterSet *par
 
 													if (src_study_p)
 														{
-															bool copy_treatment_factors_flag = false;
-															bool copy_measured_variables_flag = false;
+															const bool *copy_treatment_factors_flag_p = NULL;
+															const bool *copy_measured_variables_flag_p = NULL;
+															Study *dest_study_p = NULL;
 
-															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_TREATMENT_FACTORS.npt_name_s, &copy_treatment_factors_flag);
-															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_MEASURED_VARIABLES.npt_name_s, &copy_measured_variables_flag);
+															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_TREATMENT_FACTORS.npt_name_s, &copy_treatment_factors_flag_p);
+															GetCurrentBooleanParameterValueFromParameterSet (param_set_p, S_COPY_MEASURED_VARIABLES.npt_name_s, &copy_measured_variables_flag_p);
 
-															Study *dest_study_p = CopyStudy (src_study_p, name_s, copy_treatment_factors_flag, copy_measured_variables_flag, data_p);
+
+															dest_study_p = CopyStudy (src_study_p, name_s,
+																												copy_treatment_factors_flag_p ? *copy_treatment_factors_flag_p : false,
+																												copy_measured_variables_flag_p ? *copy_measured_variables_flag_p : false, data_p);
 
 															if (dest_study_p)
 																{
