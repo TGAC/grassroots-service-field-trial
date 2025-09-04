@@ -90,8 +90,45 @@ TreatmentFactor *CopyTreatmentFactor (const TreatmentFactor * const src_p)
 
 	if (copied_treatment_p)
 		{
+			TreatmentFactor *dest_p = AllocateTreatmentFactor (copied_treatment_p, src_p -> tf_study_p);
 
-			FreeTreatment (copied_treatment_p);
+			if (dest_p)
+				{
+					bool success_flag = true;
+					KeyValuePairNode *src_node_p = (KeyValuePairNode *) (src_p -> tf_values_p -> ll_head_p);
+
+					while (src_node_p && success_flag)
+						{
+							KeyValuePair *pair_p = src_node_p -> kvpn_pair_p;
+
+
+							if (AddTreatmentFactorValue (dest_p, pair_p -> kvp_key_s, pair_p -> kvp_value_s))
+								{
+									src_node_p = (KeyValuePairNode *) (src_node_p -> kvpn_node.ln_next_p);
+								}
+							else
+								{
+									success_flag = false;
+								}
+
+						}
+
+
+					if (success_flag)
+						{
+							return dest_p;
+						}
+					else
+						{
+							FreeTreatmentFactor (dest_p);
+						}
+
+				}		/* if (dest_p) */
+			else
+				{
+					FreeTreatment (copied_treatment_p);
+				}
+
 		}		/* if (copied_treatment_p) */
 
 	return NULL;

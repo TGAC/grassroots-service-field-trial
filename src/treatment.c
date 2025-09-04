@@ -122,11 +122,24 @@ Treatment *CopyTreatment (const Treatment * const src_p)
 						{
 							return dest_p;
 						}
+					else
+						{
+							PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "AllocateTreatment () failed for \"%s\"", term_p -> st_name_s);
+						}
 
 					FreeBSONOid (id_p);
 				}
+			else
+				{
+					PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CopyBSONOid () failed for \"%s\"", src_p -> tr_ontology_term_p -> st_name_s);
+				}
+
 
 			FreeSchemaTerm (term_p);
+		}
+	else
+		{
+			PrintErrors (STM_LEVEL_SEVERE, __FILE__, __LINE__, "CopySchemaTerm () failed for \"%s\"", term_p -> st_name_s);
 		}
 
 	return NULL;
