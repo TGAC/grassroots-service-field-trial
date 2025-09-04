@@ -104,6 +104,10 @@ DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *AllocateTreatment (SchemaTerm *term_p, 
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatment (Treatment *treatment_p);
 
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL Treatment *CopyTreatment (const Treatment * const src_p);
+
+
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentValueByParts (Treatment *treatment_p, const char *name_s, const char *value_s);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentValue (Treatment *treatment_p, KeyValuePair *pair_p);

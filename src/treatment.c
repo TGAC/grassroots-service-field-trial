@@ -105,6 +105,34 @@ Treatment *AllocateTreatment (SchemaTerm *term_p, char **parent_names_ss, const 
 }
 
 
+
+Treatment *CopyTreatment (const Treatment * const src_p)
+{
+	SchemaTerm *term_p = CopySchemaTerm (src_p -> tr_ontology_term_p);
+
+	if (term_p)
+		{
+			bson_oid_t *id_p = CopyBSONOid (src_p -> tr_id_p);
+
+			if (id_p)
+				{
+					Treatment *dest_p = AllocateTreatment (term_p, src_p -> tr_parent_names_ss, src_p -> tr_num_parents, true, src_p -> tr_synonyms_ss, src_p -> tr_num_synonyms, true, id_p);
+
+					if (dest_p)
+						{
+							return dest_p;
+						}
+
+					FreeBSONOid (id_p);
+				}
+
+			FreeSchemaTerm (term_p);
+		}
+
+	return NULL;
+}
+
+
 void FreeTreatment (Treatment *treatment_p)
 {
 	FreeSchemaTerm (treatment_p -> tr_ontology_term_p);

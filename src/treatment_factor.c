@@ -83,6 +83,21 @@ void FreeTreatmentFactor (TreatmentFactor *treatment_factor_p)
 }
 
 
+
+TreatmentFactor *CopyTreatmentFactor (const TreatmentFactor * const src_p)
+{
+	Treatment *copied_treatment_p = CopyTreatment (src_p -> tf_treatment_p);
+
+	if (copied_treatment_p)
+		{
+
+			FreeTreatment (copied_treatment_p);
+		}		/* if (copied_treatment_p) */
+
+	return NULL;
+}
+
+
 bool AddTreatmentFactorValue (TreatmentFactor *treatment_factor_p, const char *name_s, const char *value_s)
 {
 	bool success_flag = false;

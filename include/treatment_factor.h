@@ -107,9 +107,11 @@ extern "C"
 #endif
 
 
-DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (Treatment *treatment_factor_p, struct Study *study_p);
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *AllocateTreatmentFactor (Treatment *treatment_p, struct Study *study_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL void FreeTreatmentFactor (TreatmentFactor *treatment_factor_p);
+
+DFW_FIELD_TRIAL_SERVICE_LOCAL TreatmentFactor *CopyTreatmentFactor (const TreatmentFactor * const src_p);
 
 DFW_FIELD_TRIAL_SERVICE_LOCAL bool AddTreatmentFactorValue (TreatmentFactor *treatment_p, const char *name_s, const char *value_s);
 

@@ -2720,8 +2720,18 @@ Study *CopyStudy (const Study * const src_p, const char * const new_name_s, cons
 													if (copy_treatment_factors_flag)
 														{
 
-														}
+															if (src_p -> st_treatments_p -> ll_size > 0)
+																{
+																	/* Copy all of the treatments */
+																}
 
+														}		/* if (copy_treatment_factors_flag) */
+
+
+													if (copy_measured_variables_flag)
+														{
+
+														}		/* if (copy_treatment_factors_flag) */
 
 
 													return dest_p;
